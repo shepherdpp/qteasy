@@ -2,7 +2,9 @@
 a python-based fast quantitative investment module
 
 Author: **Jackie PENG**
-email: jackie_pengzhao@163.com
+
+email: *jackie_pengzhao@163.com* 
+
 Project created on: 2019, July, 16
 
 This project is aiming at a fast quantitative investment package for python, with following functions:
