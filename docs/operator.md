@@ -1,0 +1,155 @@
+## Operation creating strategy:
+An operation list is created from a Operation Class, which creates operation lists by applying following modules to the historical price matrix, extracted from historical data,  of a given share set or portfolio: 
+
+* the Timing class: determins a long / short mask over the Price Matrix: LS_Mat
+* the Selecting class: creates a selection Matrix over the Price Matrix: Sel_Mat
+* the Risk Control (Ricon) class: determins risk exposures of the strategy and provide risk-control operation signals 
+
+the complete steps are as following:
+
+### INPUT: Input of Price Matrix:
+the Price Matrix is the input of the Operation Module
+
+|date | 000607 | 600848 | 600519 | 002442 |
+|:--:| :--: |:--:|:--:|:--:|
+2019-01-01 |8.33| 33.5 | 715.2 | 3.45
+2019-01-02 |8.24| 34.5 | 720.3 | 3.57
+2019-01-03 |8.15| 35.2 | 730.2 | 3.77
+2019-01-04 |8.20| 35.7 | 720.3 | 3.79
+2019-01-05 |8.30| 35.9 | 730.3 | 3.99
+... | ... | ... | ... | ...
+2019-02-12 |9.33| 39.45 | 812.5 | 5.99
+2019-02-13 |9.26| 40.15 | 828.1 | 6.24
+2019-02-14 |9.35| 41.52 | 855.3 | 6.45
+
+### Step 1: Creation of Selection Mask Sel_Masks:
+the selection matrix is created by Selecting classes, who splits the whole time period into multiple segmetns and assign differetn selection weights for each share of each segment. basically 1 represents selected and 0 means out of selection. potentially an integer larger than 1 can be assigned to indicate a higher selection weight. the selection weight will remain unchanged over the whole period segment:
+
+Further, the Selection Matrix is normalized so that the sum of all weights in a given date is equal to 1, thus this matrix can be used directly to distribute capital amount among all shares in a investment period
+
+date | 000607 | 600848 | 600519 | 002442 
+--| -- |--|--|--
+2019-01-01 |0| 0.4 | 0.6 | 0
+2019-01-02 |0| 0.4 | 0.6 | 0
+2019-01-03 |0| 0.4 | 0.6 | 0
+2019-01-04 |0| 0.4 | 0.6 | 0
+segment boundary | ... | ... | ... | ...
+2019-01-05 |0.3| 0.7 | 0 | 0
+... | ... | ... | ... | ...
+2019-02-12 |0.3| 0.7 | 0 | 0
+2019-02-13 |0.3| 0.7 | 0 | 0
+2019-02-14 |0.3| 0.7 | 0 | 0
+
+#### Blender of Selection Masks
+In practice there might be multiple criteria to be applied to the strategy in the same time, and complicated logical relationships are applied, for example, one may want to select portfolio from the total shares group according to following combination of criteria: 
+
+> "Choose all the shares that has a up-trend **(criterion 0)** from **(AND)** the shares in Industry A **(criterion 1)**, **OR** those reache a certain poe level in last season **(criterion 2)** **AND** are big enough **(criterion 3)**".
+
+that means the shares that are finally selected from the total group are result from a logical combination of multiple criteria instead of one. thus the Operation module shall perform to support such requirement by providing multiple selecting strategy and a selection mask blending engin.
+
+the blending engin or the selecting blender starts from a pure logical expression, for example, ```( 0 AND 1 ) OR ( 2 AND 3 )``` as for above mentioned combination of criteria. the blender solves the expression and work out a matrix manipulating sequence that would merge all the separately generated selecting masks into one in the way that fulfills the logical results as described by the expression.
+
+### Step 2: Creation of Long/short mask LS_Mask:
+the LS Matrix is determined by Timing classes, that reads price matrix and determins long/short position for each and every share in the matrix over whole time periods, a 1 is given representing long position and 0 stands for short position, potentially float number between 1 and 0 can be given to represent partial determination or uncertainties or partial operations
+
+
+date | 000607 | 600848 | 600519 | 002442 
+--| -- |--|--|--
+2019-01-01 |0| 0.5 | 0 | 0.5
+2019-01-02 |0| 0.5 | 0 | 0.5
+2019-01-03 |0| 1 | 0 | 0.5
+2019-01-04 |0| 1 | 0 | 0
+2019-01-05 |0| 1 | 0 | 0
+... | ... | ... | ... | ...
+2019-02-12 |1| 1 | 0 | 0
+2019-02-13 |1| 1 | 1 | 0
+2019-02-14 |0| 0.5 | 1 | 1
+
+### Step3: calculate intersection of selection and long/short masks and create segmented long/short mask LS_Seg_Mask
+apply the selection masks on the long-short mask, by multiply this two masks, we have got a matrix whose elements represents the "target holding position" of each share on different dates. following fomula is applied:
+$$THP = Mask_{LS} * Mask_{Sel}$$
+
+Table: the Target Holding Positions (THP)
+
+date | 000607 | 600848 | 600519 | 002442 
+--| -- |--|--|--
+2019-01-01 |0| 0.2 | 0 | 0
+2019-01-02 |0| 0.2 | 0 | 0
+2019-01-03 |0| 0.4 | 0 | 0
+2019-01-04 |0| 0.4 | 0 | 0
+segment boundary | ... | ... | ... | ...
+2019-01-05 |0.3| 0.7 | 0 | 0
+... | ... | ... | ... | ...
+2019-02-12 |0.3| 0.7 | 0 | 0
+2019-02-13 |0.3| 0.7 | 0 | 0
+2019-02-14 |0| 0.35 | 0 | 0
+
+### Step4: create buy/sell signals in the Operations Matrix: Op_Mat
+A buy/sell signal or operation signals can be generated by comparing two consecutive rows in the THP (Target Holdings). but two types of signals are created from different manner: 
+the buy signal is the difference between current and previous target holding position for any given share, because the THP represents the target percentage of capital to be invested into this share, the difference represents the percentage of additional capital to be invested:$$Op_{buy}(today) = THP(today) - THP(Last day) $$
+but sell signal should be determined by calculating the ratio of difference between two days to the target holdings on the previous day, as the percentage of amounts to be sold out of existing holdings. $$LS_{Seg\_Mask} - LS_{Seg\_Mask}$$
+
+date | 000607 | 600848 | 600519 | 002442 | explanation
+--| -- |--|--|--|--
+2019-01-01 |0| 0.2 | 0 | 0 | 20% capital invest into 600848
+2019-01-02 |0| 0 | 0 | 0 |
+2019-01-03 |0| 0.2 | 0 | 0 | increase holds 600848 to 40%
+2019-01-04 |0| 0 | 0 | 0 | 
+segment boundary | ... | ... | ... | ...
+2019-01-05 |0.3| 0.3 | 0 | 0 | increase 600848 holds to 70%, and create 30% holds 000607
+... | ... | ... | ... | ...
+2019-02-12 |0| 0 | 0 | 0 |
+2019-02-13 |0| 0 | 0 | 0 |
+2019-02-14 |-1| -0.5 | 0 | 0 | sell all 000607 and half of 600848
+
+### Step 5: Apply Risk Control operations in the matrix
+Risk control classes checks historical price data and monitors risk exposures of created operation matrix, generate risk-controlling operations in the matrix, the risk-control op matrix is then added to the operation matrix to create the final operation matrix
+
+date | 000607 | 600848 | 600519 | 002442 | RiCon_Op
+--| -- |--|--|--|--
+2019-01-01 |0| 0.2 | 0 | 0
+2019-01-02 |0| 0 | 0 | 0
+2019-01-03 |0| 0.2 | 0 | 0
+2019-01-04 |0| 0 | 0 | 0
+segment boundary | ... | ... | ... | ...
+2019-01-05 |0.3| 0.3 | 0 | 0
+... | ... | ... | ... | ...
+2019-02-12 |0| 0 | 0 | 0
+2019-02-13 |0| (-1) | 0 | 0 | sell all 600848 as result of risk control
+2019-02-14 |-1| -0.5 | 0 | 0
+
+### Step 6: Create Normalized Op_Matrix, Fine Tune the buy-in signals by applying weights to them
+the buy-in signals have to be fine tuned with weight information, thus enables Loop Class to distribute amount among all selected shares in a given period with correct percentage. and we can not let this weight impact sell-out signal because the signal is based on share count of single stock product. thus a proper mask is to be generated 
+
+date | 000607 | 600848 | 600519 | 002442 | comments
+--| -- |--|--|-- | --
+2019-01-01 |0| 0.2 | 0 | 0 |
+2019-01-02 |0| 0 | 0 | 0 |
+2019-01-03 |0| 0.2 | 0 | 0 |
+2019-01-04 |0| 0 | 0 | 0 | buy-in 600848 with 20% of total investment
+segment boundary | ... | ... | ... | ... | segment boundary
+2019-01-05 |0| 0.3 | 0 | 0 |
+... | ... | ... | ... | ... |
+2019-02-12 |0.3| 0 | 0 | 0 | buy-in 000607 with 33% of total investment
+2019-02-13 |0| (-1) | 0 | 0 | sell out all 600848 due to risk control
+2019-02-14 |-1| 0 | 0 | 0 | sell out all shares of 000607
+
+For each of above three moduels there can be multiple realization methods, combined with different parameters thousands of variations can be seen in realizing the final operation strategy. A design pattern combining simple factory pattern and template method pattern is employed to realize the strategy.
+
+the Operation class uses combination of a simple class factory pattern, that takes input parameters and create its property timing and selecting classes accordingly, and a template method pattern, that uses the result of both Timing class and selecting class as its intermediate results to create final result
+### Legalization of Signals
+
+### Interface with Optimization Module
+
+The optimization module works on a special iterator class, namely, Space class, that create repetitively possible combinations of valid input parameters of strategies for the operation module. by evaluating historical looping result of the strategies based on these parameters, the optimizer module tries to find out the GLOBAL optimal or LOCAL OPTIMAL parameter from all possible parameter combinations that generates the best or near best results.
+
+In practice, an Operation module contains multiple strategies, and combined, there will be many parameters that can be adjusted. However, too many parameters to be adjusted will create unnecessary burden to the optimizer module, and boost the number of possible combinations exponentially, and very quickly, turn the whole situation into a disaster.
+
+In order to limit the number of possible parameter combinations and, also, reduce unnecessary calculation burden, the Operation module provides mechanics to serve that purpose in three folded way:
+
+1. the **optimization_tag** for each parameter: each member strategy object in the operation module (the operation object) has an attribute of``````, that can be marked as either ```0-opt_open```, or ```1-opt_closed```, indicating either the parameters of this strategy shall be included or not included in the opimization loop
+2. the ```operation.get_opt_space_par()``` method: that checks the  of each member strategies, and create the input needed for the optimization searching space to be created: the searching range and searching space type pair. these parameters can be passed directly to the optimzation module to create a searching space for the Operation module
+3. the ```operation.set_opt_par()```method: that takes created parameters extracted from the optimization module, and fit them into the opt-open strategies 
+
+#### Improvement 190621:
+Multiple strategy is available. 

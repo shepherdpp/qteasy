@@ -1,11 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/setup.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test.py" />
+    <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="created folder and package structure for the project, right now still not very clear why the structure should be set and how to achieve a good structure, but learning...&#10;files updated in folders, with codes copied to each .py files, and descriptions being copied to docs folder">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/Looper.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/history.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/operator.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/optimizer.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/qteasy.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/strategy.md" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/looper.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/operator.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/optim.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon/none.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon/urgent.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon_template.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/random.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/simple.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/trend.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting_template.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/crossline.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/dma.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/macd.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/simple.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/trix.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing_template.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy_template.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/chart/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/event/__init__.py" />
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/history/history.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/qteasy/operator/__init__.py" afterPath="$PROJECT_DIR$/qteasy/app/__init__.py" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/qteasy/strategy/__init__.py" afterPath="$PROJECT_DIR$/qteasy/app/strategy/__init__.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/QTEasy2.ipynb" afterPath="$PROJECT_DIR$/QTEasy2.ipynb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,22 +43,48 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_TABLE_DETAILS" value="true" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <expand />
+    <select />
+  </component>
   <component name="FavoritesManager">
     <favorites_list name="qteasy-git" />
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="test.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/test.py">
+      <file leaf-file-name="looper.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/qteasy/app/looper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="120">
+              <caret line="6" column="26" lean-forward="true" selection-start-line="6" selection-start-column="26" selection-end-line="6" selection-end-column="26" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
     </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <replaceStrings>
+      <replace />
+    </replaceStrings>
+    <dirStrings>
+      <dir>$PROJECT_DIR$/qteasy/operator</dir>
+    </dirStrings>
   </component>
   <component name="Git.Settings">
     <option name="PREVIOUS_COMMIT_AUTHORS">
@@ -77,6 +132,33 @@
         <option value="$PROJECT_DIR$/QTEasy2.ipynb" />
         <option value="$PROJECT_DIR$/qteasy/app.py" />
         <option value="$PROJECT_DIR$/test.py" />
+        <option value="$PROJECT_DIR$/README.md" />
+        <option value="$PROJECT_DIR$/docs/qteasy.md" />
+        <option value="$PROJECT_DIR$/docs/Looper.md" />
+        <option value="$PROJECT_DIR$/docs/optimizer.md" />
+        <option value="$PROJECT_DIR$/docs/strategy.md" />
+        <option value="$PROJECT_DIR$/docs/history.md" />
+        <option value="$PROJECT_DIR$/docs/operator.md" />
+        <option value="$PROJECT_DIR$/qteasy/operator.py" />
+        <option value="$PROJECT_DIR$/qteasy/history/history.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/strategy_template.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy_template.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/timing_template.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/selecting_template.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/ricon_template.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/timing/timing_dma.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/timing/timing_trix.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/timing/timing_macd.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/timing/timing_crossline.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/timing/simple.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/ricon/simple.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/ricon/none.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/ricon/urgent.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/selecting/random.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/selecting/simple.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/strategy/selecting/trend.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/optim.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/looper.py" />
       </list>
     </option>
   </component>
@@ -105,6 +187,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -115,19 +198,43 @@
             <path>
               <item name="qteasy" type="b2602c69:ProjectViewProjectNode" />
               <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+              <item name="docs" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="qteasy" type="b2602c69:ProjectViewProjectNode" />
               <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+              <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="qteasy" type="b2602c69:ProjectViewProjectNode" />
+              <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+              <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+              <item name="app" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="qteasy" type="b2602c69:ProjectViewProjectNode" />
+              <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+              <item name="qteasy" type="462c0819:PsiDirectoryNode" />
+              <item name="history" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scratches" />
       <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="full.screen.before.presentation.mode" value="true" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/qteasy/app" />
+      <recent name="$PROJECT_DIR$/qteasy" />
+      <recent name="$PROJECT_DIR$/qteasy/operator" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -173,33 +280,70 @@
       <option name="project" value="LOCAL" />
       <updated>1581480515637</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="commit from PyCharm: added setup.py and test.py, re-run QTEasy2.ipynb from PyCharm, too">
+      <created>1581486560488</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1581486560488</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
+  </component>
+  <component name="TodoView" selected-index="4">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25" sideWeight="0.49598163" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3295063" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.49598163" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17916666" sideWeight="0.49598163" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.49598163" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.50401837" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
+    <layout-to-restore>
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17916666" sideWeight="0.49598163" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.49598163" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.50401837" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+    </layout-to-restore>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
@@ -210,13 +354,31 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="first commit from pyCharm" />
     <MESSAGE value="commit from PyCharm in to new branch" />
-    <option name="LAST_COMMIT_MESSAGE" value="commit from PyCharm in to new branch" />
+    <MESSAGE value="commit from PyCharm: added setup.py and test.py, re-run QTEasy2.ipynb from PyCharm, too" />
+    <MESSAGE value="created folder and package structure for the project, right now still not very clear why the structure should be set and how to achieve a good structure, but learning...&#10;files updated in folders, with codes copied to each .py files, and descriptions being copied to docs folder" />
+    <option name="LAST_COMMIT_MESSAGE" value="created folder and package structure for the project, right now still not very clear why the structure should be set and how to achieve a good structure, but learning...&#10;files updated in folders, with codes copied to each .py files, and descriptions being copied to docs folder" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -238,7 +400,6 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/LICENSE" />
     <entry file="file://$PROJECT_DIR$/qteasy/app.py" />
-    <entry file="file://$PROJECT_DIR$/README.md" />
     <entry file="file://$PROJECT_DIR$/setup.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -251,6 +412,603 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
           <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/README.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="80">
+            <caret line="4" column="0" lean-forward="true" selection-start-line="4" selection-start-column="0" selection-end-line="4" selection-end-column="0" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/qteasy.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="60">
+            <caret line="3" column="182" lean-forward="false" selection-start-line="3" selection-start-column="182" selection-end-line="3" selection-end-column="182" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/Looper.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="437">
+            <caret line="116" column="12" lean-forward="true" selection-start-line="116" selection-start-column="12" selection-end-line="116" selection-end-column="12" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/optimizer.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="360">
+            <caret line="18" column="0" lean-forward="true" selection-start-line="18" selection-start-column="0" selection-end-line="18" selection-end-column="0" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/strategy.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="140">
+            <caret line="7" column="76" lean-forward="false" selection-start-line="7" selection-start-column="76" selection-end-line="7" selection-end-column="76" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/history.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="400">
+            <caret line="20" column="28" lean-forward="false" selection-start-line="20" selection-start-column="28" selection-end-line="20" selection-end-column="28" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/docs/operator.md">
+      <provider selected="true" editor-type-id="split-provider[text-editor;markdown-preview-editor]">
+        <state split_layout="SPLIT">
+          <first_editor relative-caret-position="280">
+            <caret line="14" column="37" lean-forward="true" selection-start-line="14" selection-start-column="37" selection-end-line="14" selection-end-column="37" />
+            <folding />
+          </first_editor>
+          <second_editor />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/history/history.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="true" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581535842418" expanded="true" signature="30:13396" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="93:207" ph="'''...'''" />
+            <marker date="1581535842418" expanded="true" signature="212:261" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="418:1165" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="427:660" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1219:1272" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1313:1372" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1413:1469" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1504:1558" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1598:1653" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1693:1740" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1780:1826" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1910:1943" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="1964:2362" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="2025:2305" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="2427:2926" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="2436:2674" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="2985:3029" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="3094:3560" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="3214:3560" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="3610:7344" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="3619:3758" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="3815:3991" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="4021:7344" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="4410:4517" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="4531:4633" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="5148:5311" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="5382:5688" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="5530:5688" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="5701:5845" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="5970:6950" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="6018:6775" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="6345:6775" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="6567:6648" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="6799:6950" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="7079:7320" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="7375:7462" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="7494:7896" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="7552:7800" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="7950:8643" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8078:8460" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8095:8324" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8344:8460" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8474:8613" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8684:9360" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8756:9360" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="8805:9294" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="9045:9139" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="9161:9259" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="9410:10631" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="9419:9488" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="10508:10567" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="10719:10934" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="10965:11059" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="11117:11476" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="11126:11181" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="11316:11454" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="11535:12710" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="11544:11598" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="12167:12636" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="12234:12610" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="12760:13016" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="13057:13396" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="13125:13189" ph="..." />
+            <marker date="1581535842418" expanded="true" signature="13273:13396" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy_template.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="360">
+          <caret line="18" column="23" lean-forward="true" selection-start-line="18" selection-start-column="23" selection-end-line="18" selection-end-column="23" />
+          <folding>
+            <marker date="1581536126485" expanded="true" signature="33:1828" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="361:391" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="430:460" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="499:529" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="569:600" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="640:671" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="710:751" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="789:818" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="853:879" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="953:1027" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="1048:1454" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="1485:1531" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="1568:1623" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="1662:1731" ph="..." />
+            <marker date="1581536126485" expanded="true" signature="1776:1828" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/operator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="260">
+          <caret line="13" column="37" lean-forward="true" selection-start-line="13" selection-start-column="37" selection-end-line="13" selection-end-column="37" />
+          <folding>
+            <marker date="1581535615070" expanded="true" signature="34:21683" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="94:469" ph="'''...'''" />
+            <marker date="1581535615070" expanded="true" signature="641:4169" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="650:926" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="994:1059" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="1244:2038" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="1257:1357" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="1834:2038" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="2047:2143" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="2217:2585" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="2698:3643" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="3323:3482" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="3807:4169" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4070:4169" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4206:4235" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4275:4307" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4343:4371" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4412:4546" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4552:4748" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4807:5364" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="4875:5284" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="5225:5284" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="5442:6301" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="5573:6220" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="5919:5980" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6338:6746" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6434:6746" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6523:6623" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6658:6746" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6780:7204" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6855:7162" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="6956:7044" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="7079:7162" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="7210:7288" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="7308:8571" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="7317:7506" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="7646:7688" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="8608:12233" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="8617:9065" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="9353:9540" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="9549:9659" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="9742:9861" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="9967:10059" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10115:10427" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10156:10256" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10316:10427" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10436:10539" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10617:10758" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10817:10988" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="10997:11104" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="11186:11573" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="11672:11816" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="11893:12045" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="12313:12722" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="12322:12675" ph="&quot;&quot;&quot;设置择时策略混合方式，混合方式包括pos-N,chg-N，以及cumulate三种...&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="12792:13260" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="12801:12891" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="12949:13080" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="13094:13260" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="13311:13356" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="13397:15622" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="13406:13519" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="13756:14475" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="13788:14106" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="14294:14410" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="14489:15609" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="14705:14821" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="14857:15119" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="14874:15082" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="15157:15537" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="15174:15341" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="15665:17140" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="16033:16185" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="16312:16773" ph="'''...'''" />
+            <marker date="1581535615070" expanded="true" signature="16831:17140" ph="'''...'''" />
+            <marker date="1581535615070" expanded="true" signature="17185:17538" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="17332:17504" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="17580:17756" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="17622:17756" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="17794:18732" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="17803:18315" ph="&quot;&quot;&quot;将持仓蒙板转化为交易信号....&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="18325:18425" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="18471:18598" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="18764:19026" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="18773:18955" ph="&quot;&quot;&quot;交易信号合法化，整理生成的交易信号，使交易信号符合规则....&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="19069:20909" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="19078:19555" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581535615070" expanded="true" signature="19572:19605" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="19685:19878" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="19988:20795" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20032:20081" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20109:20172" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20200:20265" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20292:20442" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20477:20795" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20579:20647" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20669:20795" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="20945:21561" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="21035:21284" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="21048:21257" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="21310:21561" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="21323:21534" ph="..." />
+            <marker date="1581535615070" expanded="true" signature="21590:21683" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/timing_template.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536153043" expanded="true" signature="39:2383" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="181:233" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="283:361" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="390:1302" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="399:556" ph="&quot;&quot;&quot;基于_generate_one方法生成整个股票价格序列集合的多空状态矩阵....&quot;&quot;&quot;" />
+            <marker date="1581536153043" expanded="true" signature="743:1068" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="756:889" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="1082:1191" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="1201:1283" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="1351:1981" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="1360:1585" ph="&quot;&quot;&quot;基于numpy的高速指数移动平均值计算....&quot;&quot;&quot;" />
+            <marker date="1581536153043" expanded="true" signature="2014:2383" ph="..." />
+            <marker date="1581536153043" expanded="true" signature="2023:2212" ph="&quot;&quot;&quot;基于numpy的高速移动平均值计算...&quot;&quot;&quot;" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/ricon_template.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="14" lean-forward="true" selection-start-line="0" selection-start-column="14" selection-end-line="0" selection-end-column="14" />
+          <folding>
+            <marker date="1581536201552" expanded="true" signature="37:237" ph="..." />
+            <marker date="1581536201552" expanded="true" signature="224:237" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/selecting_template.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <marker date="1581536181635" expanded="true" signature="42:4565" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="156:207" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="270:386" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="279:373" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="423:820" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="432:576" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="675:820" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="862:1118" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="871:940" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="1160:2031" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="1169:1537" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="1831:1925" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="2083:4565" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="2092:2454" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="2520:2737" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="2917:2978" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="3130:4088" ph="'''...'''" />
+            <marker date="1581536181635" expanded="true" signature="4135:4433" ph="..." />
+            <marker date="1581536181635" expanded="true" signature="4442:4541" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/timing/dma.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536321532" expanded="true" signature="40:1209" ph="..." />
+            <marker date="1581536321532" expanded="true" signature="414:1209" ph="..." />
+            <marker date="1581536321532" expanded="true" signature="830:1070" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/timing/trix.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="14" lean-forward="true" selection-start-line="0" selection-start-column="14" selection-end-line="0" selection-end-column="14" />
+          <folding>
+            <marker date="1581536360825" expanded="true" signature="41:1364" ph="..." />
+            <marker date="1581536360825" expanded="true" signature="87:252" ph="..." />
+            <marker date="1581536360825" expanded="true" signature="564:1364" ph="..." />
+            <marker date="1581536360825" expanded="true" signature="573:726" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581536360825" expanded="true" signature="1137:1247" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/timing/macd.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/timing/crossline.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536630498" expanded="true" signature="46:1489" ph="..." />
+            <marker date="1581536630498" expanded="true" signature="51:174" ph="&quot;&quot;&quot;crossline择时策略类，利用长短均线的交叉确定多空状态...&quot;&quot;&quot;" />
+            <marker date="1581536630498" expanded="true" signature="584:1489" ph="..." />
+            <marker date="1581536630498" expanded="true" signature="714:865" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/timing/simple.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/ricon/none.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536914684" expanded="true" signature="39:225" ph="..." />
+            <marker date="1581536914684" expanded="true" signature="184:225" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/ricon/urgent.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536937264" expanded="true" signature="41:809" ph="..." />
+            <marker date="1581536937264" expanded="true" signature="371:809" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/selecting/random.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536959210" expanded="true" signature="49:690" ph="..." />
+            <marker date="1581536959210" expanded="true" signature="277:690" ph="..." />
+            <marker date="1581536959210" expanded="true" signature="297:416" ph="..." />
+            <marker date="1581536959210" expanded="true" signature="439:626" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/selecting/simple.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536975653" expanded="true" signature="49:312" ph="..." />
+            <marker date="1581536975653" expanded="true" signature="235:312" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/strategy/selecting/trend.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
+          <folding>
+            <marker date="1581536989551" expanded="true" signature="48:301" ph="..." />
+            <marker date="1581536989551" expanded="true" signature="210:291" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/optim.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="18" lean-forward="false" selection-start-line="1" selection-start-column="18" selection-end-line="1" selection-end-column="18" />
+          <folding>
+            <marker date="1581537237108" expanded="false" signature="33:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="150:328" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="409:501" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="783:2306" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="792:1006" ph="&quot;&quot;&quot;Optimizer对象包含三个子对象，分别是Looper、Operator和History对象...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="2345:2376" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="2413:2442" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="2481:2512" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="2550:2580" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="2612:2907" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="3005:5548" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="3014:3331" ph="&quot;&quot;&quot;开始优化，Optimizer类的主要动作调用入口函数...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="3340:3601" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="3655:3960" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="3974:4214" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="4574:4634" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="4655:4911" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="4934:5203" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="5226:5487" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="5613:5724" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="5829:6011" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="6108:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="6117:6779" ph="&quot;&quot;&quot;最优参数搜索算法1: 穷举法或间隔搜索法...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="false" signature="7344:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="7419:7558" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="7790:7878" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="7947:8094" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="8197:8501" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="8609:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="8626:9312" ph="&quot;&quot;&quot;最优参数搜索算法2: 蒙特卡洛法...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="10006:10923" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="11099:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="11120:12009" ph="&quot;&quot;&quot;最优参数搜索算法3: 递进搜索法...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="12651:18216" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="12769:14758" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="12847:12941" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="13065:14551" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="13098:13184" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="14854:16065" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="14883:15966" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="16160:16952" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="16189:16448" ph="&quot;&quot;&quot;评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="17010:17637" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="17039:17299" ph="&quot;&quot;&quot;评价函数 Future Value 终值评价...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="17352:17556" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="17385:17449" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="17696:18014" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="17725:17974" ph="&quot;&quot;&quot;评价函数 RoI 收益率'...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="18075:18115" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="18176:18216" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="18251:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="18276:18669" ph="&quot;&quot;&quot;结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果....&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="18773:19086" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="19161:19223" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="19299:19366" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="19445:19496" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="19552:19928" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="19581:19800" ph="&quot;&quot;&quot;将新的结果压入池中...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="false" signature="19987:20977" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="20016:20277" ph="&quot;&quot;&quot;将pool内的结果排序并剪切到capacity要求的大小...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="20778:20882" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="20994:26894" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="20999:21357" ph="&quot;&quot;&quot;定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="21398:22630" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="21407:22153" ph="&quot;&quot;&quot;参数空间对象初始化，根据输入的参数生成一个空间...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="22339:22462" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="22495:22630" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="22664:22705" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="22741:22937" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="22823:22916" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="22972:23165" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="23054:23145" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="23201:23350" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="23385:23529" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="23595:24225" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="23604:23849" ph="&quot;&quot;&quot;将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="23904:23998" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="24246:24633" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="24295:24581" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="24692:25798" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="24701:25073" ph="&quot;&quot;&quot;从空间中提取出一系列的点，并且把所有的点以迭代器对象的形式返回供迭代...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="true" signature="25428:25582" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="25861:26703" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="25870:26135" ph="&quot;&quot;&quot;在已知空间中以一个点为中心点生成一个字空间...&quot;&quot;&quot;" />
+            <marker date="1581537237108" expanded="false" signature="26292:26664" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="26332:26604" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="26752:26814" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="26837:26894" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="26909:31199" ph="..." />
+            <marker date="1581537237108" expanded="false" signature="26995:28570" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="27332:27430" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="27454:27869" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="27521:27795" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="27999:28099" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="28216:28384" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="28398:28570" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="28606:28864" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="28899:29091" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="29131:29158" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="29197:29337" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="29396:29838" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="29426:29627" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="29641:29838" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="29883:29972" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30009:30120" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30172:30254" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30308:30394" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30437:30500" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30554:30619" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30666:30922" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="30972:31061" ph="..." />
+            <marker date="1581537237108" expanded="true" signature="31104:31199" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/looper.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="120">
+          <caret line="6" column="26" lean-forward="true" selection-start-line="6" selection-start-column="26" selection-end-line="6" selection-end-column="26" />
           <folding />
         </state>
       </provider>
