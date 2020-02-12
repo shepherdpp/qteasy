@@ -1,40 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="created folder and package structure for the project, right now still not very clear why the structure should be set and how to achieve a good structure, but learning...&#10;files updated in folders, with codes copied to each .py files, and descriptions being copied to docs folder">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/Looper.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/history.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/operator.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/optimizer.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/qteasy.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/docs/strategy.md" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/looper.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/operator.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/optim.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon/none.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon/urgent.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/ricon_template.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/random.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/simple.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting/trend.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/selecting_template.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/crossline.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/dma.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/macd.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/simple.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing/trix.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy/timing_template.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/strategy_template.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/chart/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/event/__init__.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/history/history.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/qteasy/operator/__init__.py" afterPath="$PROJECT_DIR$/qteasy/app/__init__.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/qteasy/strategy/__init__.py" afterPath="$PROJECT_DIR$/qteasy/app/strategy/__init__.py" />
+    <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
+      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/qteasy/app/context.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/README.md" afterPath="$PROJECT_DIR$/README.md" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -59,11 +28,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="looper.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/qteasy/app/looper.py">
+      <file leaf-file-name="context.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/qteasy/app/context.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
-              <caret line="6" column="26" lean-forward="true" selection-start-line="6" selection-start-column="26" selection-end-line="6" selection-end-column="26" />
+            <state relative-caret-position="20">
+              <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
               <folding />
             </state>
           </provider>
@@ -159,6 +128,7 @@
         <option value="$PROJECT_DIR$/qteasy/app/strategy/selecting/trend.py" />
         <option value="$PROJECT_DIR$/qteasy/app/optim.py" />
         <option value="$PROJECT_DIR$/qteasy/app/looper.py" />
+        <option value="$PROJECT_DIR$/qteasy/app/context.py" />
       </list>
     </option>
   </component>
@@ -287,7 +257,14 @@
       <option name="project" value="LOCAL" />
       <updated>1581486560488</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="created folder and package structure for the project, right now still not very clear why the structure should be set and how to achieve a good structure, but learning...&#10;files updated in folders, with codes copied to each .py files, and descriptions being copied to docs folder">
+      <created>1581537546251</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1581537546251</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TodoView" selected-index="4">
@@ -1009,6 +986,44 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="120">
           <caret line="6" column="26" lean-forward="true" selection-start-line="6" selection-start-column="26" selection-end-line="6" selection-end-column="26" />
+          <folding>
+            <marker date="1581537300046" expanded="true" signature="28:9044" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="33:216" ph="&quot;&quot;&quot;回测器类，获取历史数据以及历史交易信号数据，根据交易信号进行模拟交易并计算模拟交易历史记录，...&quot;&quot;&quot;" />
+            <marker date="1581537300046" expanded="true" signature="307:981" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="316:676" ph="&quot;&quot;&quot;初始化回测器类,初始化回测器对象相关变量，主要包括计算交易费用的变量...&quot;&quot;&quot;" />
+            <marker date="1581537300046" expanded="true" signature="1020:1080" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="1101:1254" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="1283:1360" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="1423:4432" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="1432:1936" ph="&quot;&quot;&quot;对单次交易进行处理，采用向量化计算以提升效率...&quot;&quot;&quot;" />
+            <marker date="1581537300046" expanded="true" signature="2098:2187" ph="'''...'''" />
+            <marker date="1581537300046" expanded="true" signature="2208:2353" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="2367:2521" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="2930:3051" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="3173:3388" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="3402:3691" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="3700:3769" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="4507:5458" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="4516:4850" ph="&quot;&quot;&quot;完成历史交易回测后，填充完整的历史资产总价值清单...&quot;&quot;&quot;" />
+            <marker date="1581537300046" expanded="true" signature="4922:5023" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="5246:5436" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="5635:9044" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="5644:6143" ph="&quot;&quot;&quot;...&quot;&quot;&quot;" />
+            <marker date="1581537300046" expanded="true" signature="6329:6499" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="7028:8012" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="7156:7484" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="7502:7854" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="7519:7608" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="8334:9015" ph="..." />
+            <marker date="1581537300046" expanded="true" signature="8646:8900" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/app/context.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="20">
+          <caret line="1" column="0" lean-forward="false" selection-start-line="1" selection-start-column="0" selection-end-line="1" selection-end-column="0" />
           <folding />
         </state>
       </provider>
