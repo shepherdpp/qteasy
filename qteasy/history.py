@@ -1,5 +1,11 @@
 # coding=utf-8
 
+import pandas as pd
+import tushare as ts
+import numpy as np
+from datetime import datetime
+import datetime as dt
+
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'
     '''使用tushare包来下载各种历史数据，将所有历史数据打包存储为历史数据仓库格式，在需要使用的时候
