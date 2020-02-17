@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/qteasy-git.iml" filepath="$PROJECT_DIR$/.idea/qteasy-git.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/qteasy.iml" filepath="$PROJECT_DIR$/.idea/qteasy.iml" />
     </modules>
   </component>
 </project>

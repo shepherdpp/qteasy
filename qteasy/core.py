@@ -22,7 +22,7 @@ class Qteasy:
         return self.__optimizer
 
 
-class Context():
+class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及(伪)常量
 
     包含的常量：
@@ -183,7 +183,7 @@ class Looper:
         value = (amounts * prices).sum() + cash
         return cash, amounts, fee, value
 
-    def _get_complete_hist(h_list, with_price=False):
+    def _get_complete_hist(self, values, h_list, with_price=False):
         """完成历史交易回测后，填充完整的历史资产总价值清单
 
         输入：=====
@@ -274,7 +274,9 @@ class Looper:
         value_history['fee'] = fees
         value_history['value'] = values
         if visual:  # Visual参数为True时填充完整历史记录并
-            complete_value = self._get_complete_hist(h_list=history_list, with_price=price_visual)
+            complete_value = self._get_complete_hist(values=value_history,
+                                                     h_list=history_list,
+                                                     with_price=price_visual)
             # 输出相关资产价格
             if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
                 shares = history_list.columns
@@ -286,7 +288,7 @@ class Looper:
         return value_history
 
 
-class Optimizer():
+class Optimizer:
     """参数优化器类，在指定的历史区间上使用多种算法，在指定的参数空间中搜索最佳参数组合，使得特定的评价函数值"""
     '最大化，并对搜索到的最佳参数进行管理， Looper对象用于根据操作清单模拟交易并输出交易结果'
     # 类属性：
@@ -702,7 +704,7 @@ class Optimizer():
         return perf
 
 
-class ResultPool():
+class ResultPool:
     """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
 
 '最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序'
@@ -768,7 +770,7 @@ class ResultPool():
         self.__perfs = per2
 
 
-class Space():
+class Space:
     """定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中
 
     参数空间类用于生成并管理一个参数空间，从参数空间中根据一定的要求提取出一系列的参数点并组装成迭代器供优化器调用
@@ -943,7 +945,7 @@ class Space():
         pass
 
 
-class Axis():
+class Axis:
     """数轴对象，空间对象的一个组成部分，代表空间对象的一个维度"""
 
     def __init__(self, bounds_or_enum, typ=None):
@@ -1013,7 +1015,7 @@ class Axis():
         if self.__type == 'enum':
             return tuple(self.__enum_val)
         else:
-            return (self.__lbound, self.__ubound)
+            return self.__lbound, self.__ubound
 
     def extract(self, interval_or_qty=1, how='interval'):
         if how == 'interval':
@@ -1054,9 +1056,9 @@ class Axis():
 
     def __extract_bounding_random(self, qty):
         if self.__type == 'discr':
-            result = np.random.randint(self.__lbound, self.__ubound + 1, size=(qty))
+            result = np.random.randint(self.__lbound, self.__ubound + 1, size=qty)
         else:
-            result = self.__lbound + np.random.random(size=(qty)) * (self.__ubound - self.__lbound)
+            result = self.__lbound + np.random.random(size=qty) * (self.__ubound - self.__lbound)
         return result
 
     def __extract_enum_interval(self, interval):
@@ -1065,10 +1067,10 @@ class Axis():
 
     def __extract_enum_random(self, qty):
         count = self.count
-        return self.__enum_val[np.random.choice(count, size=(qty))]
+        return self.__enum_val[np.random.choice(count, size=qty)]
 
 
-class Strategy():
+class Strategy:
     """量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的择时类调用"""
     __mataclass__ = ABCMeta
     # Strategy主类共有的属性
@@ -1146,7 +1148,7 @@ class Strategy():
         pass
 
 
-def _ema(arr, span: int = None, alpha: float = None):
+def ema(arr, span: int = None, alpha: float = None):
     """基于numpy的高速指数移动平均值计算.
 
     input：
@@ -1169,14 +1171,15 @@ def _ema(arr, span: int = None, alpha: float = None):
     return offset + cumsums * scale_arr[::-1]
 
 
-def _ma(arr, window: int):
-    """基于numpy的高速移动平均值计算
+def ma(arr, window: int):
+    """Fast moving average calculation based on NumPy
+       基于numpy的高速移动平均值计算
 
     input：
-        :type arr: object np.ndarray: 输入数据，一维矩阵
-        window, int, optional, 1 < window, 时间滑动窗口
+        :param window: type: int, 1 < window, 时间滑动窗口
+        :param arr: type: object np.ndarray: 输入数据，一维矩阵
     return：
-        ndarray, 完成计算的移动平均序列
+        :return: ndarray, 完成计算的移动平均序列
     """
     arr_ = arr.cumsum()
     arr_r = np.roll(arr_, window)
@@ -1259,7 +1262,7 @@ class TimingCrossline(Timing):
         cat = np.zeros_like(hist_price)
         h_ = hist_price[drop]  # 仅针对非nan值计算，忽略股票停牌时期
         # 计算长短均线之间的距离
-        diff = _ma(h_, l) - _ma(h_, s)
+        diff = ma(h_, l) - ma(h_, s)
         # TODO: 可以改成np.digitize()来完成，效率更高 -- 测试结果表明np.digitize速度甚至稍慢于两个where
         cat[drop] = np.where(diff < -m, 1, np.where(diff >= m, -1, 0))
         # TODO: 处理hesitate参数 &&&未完成代码&&&
@@ -1307,8 +1310,8 @@ class TimingMACD(Timing):
         h_ = hist_price[drop]
 
         # 计算指数的指数移动平均价格
-        DIFF = _ema(h_, s) - _ema(h_, l)
-        DEA = _ema(DIFF, m)
+        DIFF = ema(h_, s) - ema(h_, l)
+        DEA = ema(DIFF, m)
         MACD = 2 * (DIFF - DEA)
 
         # 生成MACD多空判断：
@@ -1334,9 +1337,9 @@ class TimingDMA(Timing):
         cat = np.zeros_like(hist_price)
         h_ = hist_price[drop]
         # 计算指数的移动平均价格
-        DMA = _ma(h_, s) - _ma(h_, l)
+        DMA = ma(h_, s) - ma(h_, l)
         AMA = DMA.copy()
-        AMA[~np.isnan(DMA)] = _ma(DMA[~np.isnan(DMA)], d)
+        AMA[~np.isnan(DMA)] = ma(DMA[~np.isnan(DMA)], d)
         # print('qDMA generated DMA and AMA signal:', DMA.size, DMA, '\n', AMA.size, AMA)
         # 生成DMA多空判断：
         # 1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
@@ -1374,9 +1377,9 @@ class TimingTRIX(Timing):
         h_ = hist_price[drop]
 
         # 计算指数的指数移动平均价格
-        TR = _ema(_ema(_ema(h_, s), s), s)
+        TR = ema(ema(ema(h_, s), s), s)
         TRIX = (TR - np.roll(TR, 1)) / np.roll(TR, 1) * 100
-        MATRIX = _ma(TRIX, m)
+        MATRIX = ma(TRIX, m)
 
         # 生成TRIX多空判断：
         # 1， TRIX位于MATRIX上方时，长期多头状态, signal = -1
@@ -1758,28 +1761,43 @@ def _timing_blend_change(ser: np.ndarray):
 
 
 def _blend(n1, n2, op):
-    """# 混合操作符函数，使用加法和乘法处理与和或的问题,可以研究逻辑运算和加法运算哪一个更快，使用更快的一个"""
+    """混合操作符函数，使用加法和乘法处理与和或的问题,可以研究逻辑运算和加法运算哪一个更快，使用更快的一个
+
+    input:
+        :param n1: np.ndarray: 第一个输入矩阵
+        :param n2: np.ndarray: 第二个输入矩阵
+        :param op: np.ndarray: 运算符
+    return:
+        :return: np.ndarray
+
+    """
     if op == 'or':
-        # print 'blending two sel masks with method OR \n'
-        # print 'first sel mask to blend\n', n1
-        # print 'second sel mask to blendn', n2
-        # print 'result after blending\n', n1 + n2
-        return n1 + n2
+         return n1 + n2
     elif op == 'and':
-        # print 'blending two sel masks with method AND \n'
-        # print 'first sel mask to blend\n', n1
-        # print 'second sel mask to blend\n', n2
-        # print 'result after blending\n', n1 * n2
-        return n1 * n2
+         return n1 * n2
 
 
-def _unify(arr):
+def unify(arr):
+    """
+    unify each row of input array so that the sum of all elements in one row is 1, and each element remains
+    its original ratio to the sum
+    调整输入矩阵每一行的元素，使得所有元素等比例缩小（或放大）后的和为1
+
+    example:
+    unify([[3.0, 2.0, 5.0], [2.0, 3.0, 5.0]])
+    =
+    [[0.3, 0.2, 0.5], [0.2, 0.3, 0.5]]
+
+    :param arr: type: np.ndarray
+    :return: ndarray
+    """
+    assert isinstance(arr, np.ndarray), 'Input should be ndarray!'
     s = arr.sum(1)
     shape = (s.shape[0], 1)
     return arr / s.reshape(shape)
 
 
-class Operator():
+class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
 
     交易操作生成类包含若干个选股对象组件，若干个择时对象组件，以及若干个风险控制组件，所有这些组件对象都能
@@ -2154,7 +2172,7 @@ class Operator():
                 s.append(sel_masks[int(exp.pop())])
             else:
                 s.append(_blend(s.pop(), s.pop(), exp.pop()))
-        return _unify(s[0])
+        return unify(s[0])
 
     def __ricon_blend(self, ricon_mats):
         if self.__ricon_blender == 'add':
