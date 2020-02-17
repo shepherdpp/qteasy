@@ -898,18 +898,17 @@ class Space:
         interval_or_qty = self.__input_to_list(pars=interval_or_qty,
                                                dim=self.dim,
                                                padder=[1])
-        how = self.__input_to_list(pars=how, dim=self.dim, padder=['rand'])
         axis_ranges = []
         i = 0
         total = 1
         for axis in self.__axes:  # 分别从各个Axis中提取相应的坐标
-            axis_ranges.append(axis.extract(interval_or_qty[i], how[i]))
+            axis_ranges.append(axis.extract(interval_or_qty[i], how))
             total *= len(axis_ranges[i])
             i += 1
         if how == 'interval':
             return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
         elif how == 'rand':
-            return itertools.zip(*axis_ranges), total  # 使用迭代器工具将所有点组合打包为点集
+            return itertools.zip_longest(*axis_ranges), interval_or_qty  # 使用迭代器工具将所有点组合打包为点集
 
     def from_point(self, point, distance, ignore_enums=True):
         """在已知空间中以一个点为中心点生成一个字空间
