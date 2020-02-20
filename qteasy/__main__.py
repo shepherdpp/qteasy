@@ -12,7 +12,6 @@ if __name__ == '__main__':
     h = History()
     h.work_days()
     op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
-    worker = Qteasy(operator=op, history=h)
     op.info()
 
     d = pd.read_csv('000300_I_N.txt', index_col='date')
@@ -28,39 +27,37 @@ if __name__ == '__main__':
     shares = ['600037', '600547', '000726', '600111', '600600', '600549', '000001',
               '000002', '000005', '000004', '000006', '000007', '000008']
     # shares = ['600037', '000005']
-    print('Time of historical data extraction:')
+    print('Historical data has been extracted')
     # %time d = h.extract(shares, start='2005-01-15', end = '2019-10-15', interval = 'd')
-    opt = worker.optimizer
-    opt.shares = shares
-    opt.shares = ['000300-I']
+    cont = Context()
+    cont.shares = shares
+    cont.shares = ['000300-I']
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
 
-    if not d.empty:
-        timing_pars1 = (86, 198, 58)
-        timing_pars2 = {'600037': (177, 248, 244),
-                        '000005': (86, 198, 58)}
-        timing_pars3 = (72, 130, 133)
-        timing_pars4 = (131, 27)
-        op.set_blender('timing', 'pos-1')
-        op.set_parameter('t-0', pars=timing_pars1)
-        op.set_parameter('t-1', pars=timing_pars3)
-        # op.set_parameter('t-2', pars = timing_pars4)
-        # op.set_parameter('t-3', pars = timing_pars1)
-        op.set_parameter('r-0', pars=(8, -0.1312))
-        # op.info()
-        # print('\nTime of creating operation list:')
-        op_list = op.create(hist_extract=d)
-    else:
-        print('historical data is empty')
+
+    timing_pars1 = (86, 198, 58)
+    timing_pars2 = {'600037': (177, 248, 244),
+                    '000005': (86, 198, 58)}
+    timing_pars3 = (72, 130, 133)
+    timing_pars4 = (131, 27)
+    op.set_blender('timing', 'pos-1')
+    op.set_parameter('t-0', pars=timing_pars1)
+    op.set_parameter('t-1', pars=timing_pars3)
+    # op.set_parameter('t-2', pars = timing_pars4)
+    # op.set_parameter('t-3', pars = timing_pars1)
+    op.set_parameter('r-0', pars=(8, -0.1312))
+    # op.info()
+    # print('\nTime of creating operation list:')
+    op_list = op.create(hist_extract=d)
+
 
     # print(op_list.head())
-    lper = opt.looper
     ic = 1000
     print('\nTime of looping operational list without visual:')
-    lper.apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0)
-    looped_values = lper.apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0)
+    apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0)
+    looped_values = apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0)
     # print('\nTime of looping operational list with visual')
-    looped_values_2 = lper.apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0, visual=True, price_visual=True)
+    looped_values_2 = apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0, visual=True, price_visual=True)
     # print(looped_values.head())
     ret = looped_values.value[-1] / looped_values.value[0]
 

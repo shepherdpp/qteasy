@@ -3,26 +3,20 @@
 import pandas as pd
 import numpy as np
 import numba
-from datetime import datetime
+import datetime
 from abc import abstractmethod, ABCMeta
 import itertools
 from qteasy.history import History
 
+
 # TODO: 简化类的定义，删除不必要的类，将类的方法改成函数
 # TODO: 将文件内的类或函数分组，分别放到不同的文件中去，如Loop、Optimizer等
 
-class Qteasy:
-    """QT Easy量化交易系统基础类.
+class Log:
+    def __init__(self):
+        """
 
-    该类包含实盘交易模块、交易信号生成模块、以及参数库、宏观经济模块等四个模块
-    """
-
-    def __init__(self, operator=None, history=None):
-        self.__optimizer = Optimizer(self, operator=operator, history=history)
-
-    @property
-    def optimizer(self):
-        return self.__optimizer
+        """
 
 
 class Context:
@@ -49,17 +43,17 @@ class Context:
     OPTI_INCREMENTAL = 2
     OPTI_GA = 3
 
-    def __init__(self):
+    def __init__(self, mode=RUN_MODE_BACKLOOP, rate_fee=0.003, rate_slipery=0, rate_impact=0, moq=100):
         """初始化所有的环境变量和环境常量"""
 
         # 环境变量
         # ============
-        self.mode = RUN_MODE_BACKLOOP
+        self.mode = mode
         self.rate_fee = rate_fee  # 交易费用成本计算参数，固定交易费率
         self.rate_slipery = rate_slipery  # 交易滑点成本估算参数，对交易命令发出到实际交易完成之间价格变化导致的成本进行估算
         self.rate_impact = rate_impact  # 交易冲击成本估算参数，对交易本身对价格造成的影响带来的成本进行估算
         self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
-
+        today = datetime.datetime.today().date()
         self.shares = []  # 优化参数所针对的投资产品
         self.opt_period_start = today - datetime.timedelta(3650)  # 优化历史区间开始日
         self.opt_period_end = today - datetime.timedelta(365)  # 优化历史区间结束日
@@ -74,445 +68,279 @@ class Context:
 
         pass
 
+    def __str__(self):
+        out_str = []
+        out_str.append('qteasy running information:')
+        out_str.append('===========================')
+        return ''.join(out_str)
 
-class Looper:
-    """回测器类，获取历史数据以及历史交易信号数据，根据交易信号进行模拟交易并计算模拟交易历史记录，
 
-    包括每次交易前后的现金持有额、投资产品持有额、交易费用及交易成本额等
-    交易信号清单和资产价格清单是Looper类主要函数apply_loop()的主要输入参数，根据这两个输入参数
-    apply_loop()函数返回模拟交易记录
+def _rate(rate_fee:float, rate_slipery:float, rate_impact:float, amount:float) -> float:
+    """计算每次交易产生的交易成本，由交易费用、交易滑点和冲击成本组成。冲击成本与交易金额成正比
+
+    :param rate_fee:
+    :param rate_slipery:
+    :param rate_impact:
+    :param amount:
+    :return:
     """
+    return rate_fee + rate_slipery + rate_impact * amount
 
-    def __init__(self, superior, rate_fee=0.003, rate_slipery=0, rate_impact=0, moq=100):
-        """初始化回测器类,初始化回测器对象相关变量，主要包括计算交易费用的变量
+#TODO: 使用Numba加速_loop_step()函数
+def _loop_step(pre_cash, pre_amounts, op, prices, rate_fee, rate_slipery, rate_impact, moq):
+    """ 对单次交易进行处理，采用向量化计算以提升效率
 
-        输入
-            参数superior, object:上级模块，本模块在创建时必须作为上级模块的子模块创建，通过该参数可以访问上级模块
-            参数rate_fee, float：交易费率，用于计算交易费用
-            参数rate_slipery, float：滑点影响率，用于计算交易滑点成本
-            参数rate_impact, float：冲击成本率，用于计算冲击成本
-            参数MOQ, float：最小购买单位，表示购入金融产品时最低可购买的份额数量，
-        输出：=====
-            无
-        """
-        self.__superior = superior  # 上层对象
-        self.rate_fee = rate_fee  # 交易费用成本计算参数，固定交易费率
-        self.rate_slipery = rate_slipery  # 交易滑点成本估算参数，对交易命令发出到实际交易完成之间价格变化导致的成本进行估算
-        self.rate_impact = rate_impact  # 交易冲击成本估算参数，对交易本身对价格造成的影响带来的成本进行估算
-        self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
+    输入：=====
+        参数 pre_cash, ndarray：本次交易开始前账户现金余额
+        参数 pre_amounts, ndarray：list，交易开始前各个股票账户中的股份余额
+        参数 op, ndarray：本次交易的个股交易清单
+        参数 prices：List，本次交易发生时各个股票的价格
+        参数 rate_in：买入成本——待改进，应根据三个成本费率动态估算
+        参数 rate_out：卖出成本——待改进，应根据三个成本费率动态估算
 
-    @property
-    def superior(self):
-        """返回Looper类的上层对象"""
-        return self.__superior
+    输出：=====元组，包含四个元素
+        cash：交易后账户现金余额
+        amounts：交易后每个个股账户中的股份余额
+        fee：本次交易总费用
+        value：本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
+        :type prices: np.ndarray(float)
+    """
+    # 计算交易前现金及股票余额在当前价格下的资产总额
+    pre_value = pre_cash + (pre_amounts * prices).sum()
+    # 计算按照交易清单出售资产后的资产余额以及获得的现金
+    '''在这里出售的amount被使用np.rint()函数转化为int型，这里应该增加判断，如果MOQ不要求出售
+    的投资产品份额为整数，可以省去rint处理'''
+    if moq == 0:
+        a_sold = np.where(prices != 0,
+                          np.where(op < 0, pre_amounts * op, 0),
+                          0)
+    else:
+        a_sold = np.where(prices != 0,
+                          np.where(op < 0, np.rint(pre_amounts * op), 0),
+                          0)
+    rate_out = _rate(rate_fee, rate_slipery, rate_impact, a_sold * prices)
+    cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)
+    # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
+    cash = pre_cash + cash_gained.sum()
+    # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
+    pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
+    if pur_values.sum() > cash:
+        # 估算买入资产所需现金超过持有现金
+        pur_values = pur_values / pre_value * cash
+        # 按比例降低分配给每个拟买入资产的现金额度
+    # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
+    rate_in = _rate(rate_fee, rate_slipery, rate_impact, pur_values)
+    if moq == 0:  # MOQ为零时，可以购入的资产数量允许为小数
+        a_purchased = np.where(prices != 0,
+                               np.where(op > 0,
+                                        pur_values / (prices * (1 + rate_in)), 0), 0)
+    else:  # 否则，使用整除方式确保购入的资产数量为MOQ的整数倍，MOQ非整数时仍然成立
+        a_purchased = np.where(prices != 0,
+                               np.where(op > 0,
+                                        pur_values // (prices * moq * (1 + rate_in)) * moq,
+                                        0), 0)
+    # 由于MOQ的存在，需要根据实际购入的资产数量确定花费的现金资产
+    # 仅当a_purchased大于零时计算花费的现金额
+    cash_spent = np.where(a_purchased > 0,
+                          -1 * a_purchased * prices * (1 + rate_in), 0)
 
-    def info(self):
-        """打印Looper类的基本参数信息"""
-        print(self.rate_fee)
-        print(self.rate_slipery)
-        print(self.rate_impact)
-        print(self.moq)
+    # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
+    fee = np.where(op == 0, 0,
+                   np.where(op > 0, -1 * cash_spent * rate_in,
+                            cash_gained * rate_out)).sum()
+    # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
+    amounts = pre_amounts + a_purchased + a_sold
+    # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
+    cash += cash_spent.sum()
+    # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
+    value = (amounts * prices).sum() + cash
+    return cash, amounts, fee, value
 
-    def rate(self, amount):
-        return self.rate_fee + self.rate_slipery + self.rate_impact * amount
 
-    def __loop_step(self, pre_cash, pre_amounts, op, prices):
-        """ 对单次交易进行处理，采用向量化计算以提升效率
+def _get_complete_hist(values, h_list, with_price=False):
+    """完成历史交易回测后，填充完整的历史资产总价值清单
 
-        输入：=====
-            参数 pre_cash, ndarray：本次交易开始前账户现金余额
-            参数 pre_amounts, ndarray：list，交易开始前各个股票账户中的股份余额
-            参数 op, ndarray：本次交易的个股交易清单
-            参数 prices：List，本次交易发生时各个股票的价格
-            参数 rate_in：买入成本——待改进，应根据三个成本费率动态估算
-            参数 rate_out：卖出成本——待改进，应根据三个成本费率动态估算
+    输入：=====
+        参数 values：完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
+        参数 history_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
+        参数 with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
+    输出：=====
+        values，pandas.Series 或 pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
+    """
+    # 获取价格清单中的投资产品列表
+    shares = h_list.columns
+    # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
+    # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
+    values = values.reindex(h_list.index, method='ffill').fillna(0)
+    # 重新计算整个清单中的资产总价值，生成pandas.Series对象
+    values = (h_list * values[shares]).sum(axis=1) + values['cash']
+    if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
+        values = pd.DataFrame(values.values, index=h_list.index, columns=['values'])
+        values[shares] = h_list[shares]
+    return values
 
-        输出：=====元组，包含四个元素
-            cash：交易后账户现金余额
-            amounts：交易后每个个股账户中的股份余额
-            fee：本次交易总费用
-            value：本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
-            :type prices: np.ndarray(float)
-        """
-        moq = self.moq
-        # 计算交易前现金及股票余额在当前价格下的资产总额
-        pre_value = pre_cash + (pre_amounts * prices).sum()
-        # 计算按照交易清单出售资产后的资产余额以及获得的现金
-        '''在这里出售的amount被使用np.rint()函数转化为int型，这里应该增加判断，如果MOQ不要求出售
-        的投资产品份额为整数，可以省去rint处理'''
-        if moq == 0:
-            a_sold = np.where(prices != 0,
-                              np.where(op < 0, pre_amounts * op, 0),
-                              0)
+
+def apply_loop(op_list, history_list, visual=False, price_visual=False,
+               init_cash=100000, rate_fee=0.003, rate_slipery=0, rate_impact=0, moq=100):
+    """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
+        现金额及费用，输出的结果可选
+
+    input：=====
+        :type init_cash: float: 初始资金额
+        :type price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效
+        :type history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
+        :type visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
+                            为True时将数据填充到整个历史区间，并用图表输出
+        :type op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
+        :type rate_slipery: float
+        :type rate_fee: float
+        :type moq: float
+        :type rate_impact: float
+
+    output：=====
+        Value_history：包含交易结果及资产总额的历史清单
+
+    """
+    if op_list.empty:
+        return op_list
+    # 将交易清单和与之对应的价格清单转化为ndarray，确保内存存储方式为Fortune，
+    # 以实现高速逐行循环批量操作
+    # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
+    # 因此改回for-loop执行，知道找到更好的向量化执行方法
+    op = op_list.values
+    price = history_list.fillna(0).loc[op_list.index].values
+    op_count = op.shape[0]  # 获取行数
+    # 初始化计算结果列表
+    cash = init_cash  # 持有现金总额，初始化为初始现金总额
+    amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
+    cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
+    fees = []  # 交易费用，记录每个操作时点产生的交易费用
+    values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
+    amounts_matrix = []
+    # 只有当交易的资产数量大于1时，才需要向量化逐行循环，否则使用默认的ndarray循环
+    for i in range(op_count):
+        # it = np.nditer([op, price], flags = ['external_loop'], order = 'C')
+        if len(history_list.columns) > 1:
+            # ndarray的内存存储方式和external loop的循环顺序不一致时，会产生逐行循环的效果，实现向量化计算
+
+            cash, amounts, fee, value = _loop_step(pre_cash=cash,
+                                                   pre_amounts=amounts,
+                                                   op=op[i, :],
+                                                   prices=price[i, :],
+                                                   rate_fee=rate_fee, rate_slipery=rate_slipery,
+                                                   rate_impact=rate_impact, moq=moq)
         else:
-            a_sold = np.where(prices != 0,
-                              np.where(op < 0, np.rint(pre_amounts * op), 0),
-                              0)
-        rate_out = self.rate(a_sold * prices)
-        cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)
-        # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
-        cash = pre_cash + cash_gained.sum()
-        # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
-        pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
-        if pur_values.sum() > cash:
-            # 估算买入资产所需现金超过持有现金
-            pur_values = pur_values / pre_value * cash
-            # 按比例降低分配给每个拟买入资产的现金额度
-        # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-        rate_in = self.rate(pur_values)
-        if moq == 0:  # MOQ为零时，可以购入的资产数量允许为小数
-            a_purchased = np.where(prices != 0,
-                                   np.where(op > 0,
-                                            pur_values / (prices * (1 + rate_in)), 0), 0)
-        else:  # 否则，使用整除方式确保购入的资产数量为MOQ的整数倍，MOQ非整数时仍然成立
-            a_purchased = np.where(prices != 0,
-                                   np.where(op > 0,
-                                            pur_values // (prices * moq * (1 + rate_in)) * moq,
-                                            0), 0)
-        # 由于MOQ的存在，需要根据实际购入的资产数量确定花费的现金资产
-        # 仅当a_purchased大于零时计算花费的现金额
-        cash_spent = np.where(a_purchased > 0,
-                              -1 * a_purchased * prices * (1 + rate_in), 0)
-
-        # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
-        fee = np.where(op == 0, 0,
-                       np.where(op > 0, -1 * cash_spent * rate_in,
-                                cash_gained * rate_out)).sum()
-        # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
-        amounts = pre_amounts + a_purchased + a_sold
-        # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
-        cash += cash_spent.sum()
-        # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
-        value = (amounts * prices).sum() + cash
-        return cash, amounts, fee, value
-
-    def _get_complete_hist(self, values, h_list, with_price=False):
-        """完成历史交易回测后，填充完整的历史资产总价值清单
-
-        输入：=====
-            参数 values：完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
-            参数 history_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
-            参数 with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
-        输出：=====
-            values，pandas.Series 或 pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
-        """
-        # 获取价格清单中的投资产品列表
-        shares = h_list.columns
-        # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
-        # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
-        values = values.reindex(h_list.index, method='ffill').fillna(0)
-        # 重新计算整个清单中的资产总价值，生成pandas.Series对象
-        values = (h_list * values[shares]).sum(axis=1) + values['cash']
-        if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
-            values = pd.DataFrame(values.values, index=h_list.index, columns=['values'])
-            values[shares] = h_list[shares]
-        return values
-
-    def apply_loop(self, op_list, history_list, visual=False, price_visual=False,
-                   init_cash=100000, rate_fee=0.003, rate_slipery=0, rate_impact=0, moq=100):
-        """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
-            现金额及费用，输出的结果可选
-
-        input：=====
-            :type init_cash: float: 初始资金额
-            :type price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效
-            :type history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
-            :type visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
-                                为True时将数据填充到整个历史区间，并用图表输出
-            :type op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
-            :type rate_slipery: float
-            :type rate_fee: float
-            :type moq: float
-            :type rate_impact: float
-
-        output：=====
-            Value_history：包含交易结果及资产总额的历史清单
-
-        """
-        self.rate_fee = rate_fee
-        self.rate_slipery = rate_slipery
-        self.rate_impact = rate_impact
-        self.moq = moq
-        if op_list.empty:
-            return op_list
-        # 将交易清单和与之对应的价格清单转化为ndarray，确保内存存储方式为Fortune，
-        # 以实现高速逐行循环批量操作
-        # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
-        # 因此改回for-loop执行，知道找到更好的向量化执行方法
-        op = op_list.values
-        price = history_list.fillna(0).loc[op_list.index].values
-        op_count = op.shape[0]  # 获取行数
-        # 初始化计算结果列表
-        cash = init_cash  # 持有现金总额，初始化为初始现金总额
-        amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
-        cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
-        fees = []  # 交易费用，记录每个操作时点产生的交易费用
-        values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
-        amounts_matrix = []
-        # 只有当交易的资产数量大于1时，才需要向量化逐行循环，否则使用默认的ndarray循环
-        for i in range(op_count):
-            # it = np.nditer([op, price], flags = ['external_loop'], order = 'C')
-            if len(history_list.columns) > 1:
-                # ndarray的内存存储方式和external loop的循环顺序不一致时，会产生逐行循环的效果，实现向量化计算
-
-                cash, amounts, fee, value = self.__loop_step(pre_cash=cash,
-                                                             pre_amounts=amounts,
-                                                             op=op[i, :], prices=price[i, :])
-            else:
-                # it = np.nditer([op, price])
-                # 将每一行交易信号代码和每一行价格使用迭代器送入_loop_step()函数计算结果
-                cash, amounts, fee, value = self.__loop_step(pre_cash=cash,
-                                                             pre_amounts=amounts,
-                                                             op=op[i], prices=price[i])
-            # 保存计算结果
-            cashes.append(cash)
-            fees.append(fee)
-            values.append(value)
-            amounts_matrix.append(amounts)
-        # 将向量化计算结果转化回DataFrame格式
-        value_history = pd.DataFrame(amounts_matrix, index=op_list.index,
-                                     columns=op_list.columns)
-        # 填充标量计算结果
-        value_history['cash'] = cashes
-        value_history['fee'] = fees
-        value_history['value'] = values
-        if visual:  # Visual参数为True时填充完整历史记录并
-            complete_value = self._get_complete_hist(values=value_history,
-                                                     h_list=history_list,
-                                                     with_price=price_visual)
-            # 输出相关资产价格
-            if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
-                shares = history_list.columns
-                share_prices = []
-                complete_value.plot(grid=True, figsize=(15, 7), legend=True,
-                                    secondary_y=shares)
-            else:  # 否则，仅显示总资产的历史变化情况
-                complete_value.plot(grid=True, figsize=(15, 7), legend=True)
-        return value_history
+            # it = np.nditer([op, price])
+            # 将每一行交易信号代码和每一行价格使用迭代器送入_loop_step()函数计算结果
+            cash, amounts, fee, value = _loop_step(pre_cash=cash,
+                                                   pre_amounts=amounts,
+                                                   op=op[i], prices=price[i],
+                                                   rate_fee=rate_fee, rate_slipery=rate_slipery,
+                                                   rate_impact=rate_impact,
+                                                   moq=moq)
+        # 保存计算结果
+        cashes.append(cash)
+        fees.append(fee)
+        values.append(value)
+        amounts_matrix.append(amounts)
+    # 将向量化计算结果转化回DataFrame格式
+    value_history = pd.DataFrame(amounts_matrix, index=op_list.index,
+                                 columns=op_list.columns)
+    # 填充标量计算结果
+    value_history['cash'] = cashes
+    value_history['fee'] = fees
+    value_history['value'] = values
+    if visual:  # Visual参数为True时填充完整历史记录并
+        complete_value = _get_complete_hist(values=value_history,
+                                                 h_list=history_list,
+                                                 with_price=price_visual)
+        # 输出相关资产价格
+        if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
+            shares = history_list.columns
+            share_prices = []
+            complete_value.plot(grid=True, figsize=(15, 7), legend=True,
+                                secondary_y=shares)
+        else:  # 否则，仅显示总资产的历史变化情况
+            complete_value.plot(grid=True, figsize=(15, 7), legend=True)
+    return value_history
 
 
-class Optimizer:
-    """参数优化器类，在指定的历史区间上使用多种算法，在指定的参数空间中搜索最佳参数组合，使得特定的评价函数值"""
-    '最大化，并对搜索到的最佳参数进行管理， Looper对象用于根据操作清单模拟交易并输出交易结果'
-    # 类属性：
-    # optization period 优化区间：指优化器尝试进行参数优化基于的历史区间，优化器可以利用优化区间内的历史数据
-    # 优化参数，同时在测试区间对参数进行评价，以便对搜索到的参数进行独立验证
-    # 优化区间类型：1: 参数优化区间与测试区间相同；2:优化区间与测试区间不同；3:重叠设置一系列优化区间与测试区间
-    opt_period_type_dict = {1: 'simple', 2: 'standard', 3: 'convolutional'}
-    # 目标函数：评价一组参数的效用的函数，定义使得该函数值最大化的一组参数为最优
-    # 可以定义一系列不同的效用函数，1:投资终值；2:收益率；3:夏普率；4:Alpha比率。。。
-    target_func_type_dict = {1: 'single', 2: 'compound'}
-    target_func_dict = {1: 'FV', 2: 'RoI', 3: 'Sharp', 4: 'Alpha'}
-    # 最佳参数存储在一个数据库结构或专用文件夹结构中，文件夹的位置定义在strategy_folder属性中
-    strategy_folder = 'strategies/'
+def run(operator, context, how=0, output_count=50,
+        keep_largest_perf=True, hist=None, *args, **kwargs):
+    """开始优化，Optimizer类的主要动作调用入口函数
 
-    def __init__(self, superior: object, operator: object = None, history: object = None):
-        """Optimizer对象包含三个子对象，分别是Looper、Operator和History对象
+       根据所需要优化的参数空间类型不同，所选择的优化算法不同，调用不同的优化函数完成优化并返回输出结果
 
-        input：
-            :type superior: object: 上层对
-            :type history: object History: 用于生成和保存历史价格数据
-            :type operator: object Operator: 用于应用策略生成买卖操作清单
+    输入：
 
-        output：=====
-            无
-        """
-        import datetime
-        # 对象属性初始化：
-        self.__superior = superior  # 上层对象
-        self.__looper = Looper(self)  # 回测器对象
-        if operator is None:
-            self.__operator = Operator()  # 一个operator对象
-        else:
-            self.__operator = operator
-        if history is None:
-            self.__history = History()  # 一个history对象
-        else:
-            self.__history = history
-        today = datetime.datetime.today().date()
-        self.shares = []  # 优化参数所针对的投资产品
-        self.opt_period_start = today - datetime.timedelta(3650)  # 优化历史区间开始日
-        self.opt_period_end = today - datetime.timedelta(365)  # 优化历史区间结束日
-        self.opt_period_freq = 'd'  # 优化历史区间采样频率
-        self.opt_period_interval = '1Y'  # 历史区间重复间隔（仅用于优化区间类型为3时）
-        self.opt_period_cycles = 5  # 历史区间重复次数（仅用于优化区间类型为3时）
-        self.test_period_start = today - datetime.timedelta(365)  # 测试区间开始日
-        self.test_period_end = today  # 测试区间结束日（测试区间的采样频率与优化区间相同）
-        self.opt_period_type = 2  # 'standard'
-        self.t_func_type = 1  # 'single'
-        self.t_func = 'FV'  # 评价函数
-        self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
-        self.cycle_convolution_type = 'average'  # 当使用重叠区间优化参数时，各个区间评价函数值的组合方法
-        self.opti_method = 'standard'
+        参数 how:int，参数评价方法
+        参数 output_count: int，优化器输出的结果数量
+        参数 keep_largest_perf: bool，True表示寻找评价得分最高的参数，False表示寻找评价得分最低的参数
+        其他参数
+    输出：=====
+        暂无，需完善
+    """
+    # 确认所有的基本参数设置正确，否则打印错误信息，中止优化
 
-    @property
-    def superior(self):
-        return self.__superior
+    # 分析op对象，确定最大化的优化参数空间
 
-    @property
-    def looper(self):
-        return self.__looper
+    # 如果明确指定了参数空间：
+    # 将给定的参数空间与最大化优化参数空间比较，对不需要优化的参数进行空间纬度压缩
+    # 否则：
+    # 使用最大化优化参数空间进行优化
 
-    @property
-    def operator(self):
-        return self.__operator
+    # 判断所选择的优化算法是否适用于参数空间，如否，打印错误信息并中止优化
 
-    @property
-    def history(self):
-        return self.__history
+    # 根据基本参数设置基本变量，如历史数据、op对象、lpr对象等
+    shares = context.shares
+    if hist is None:
+        start = context.opt_period_start
+        end = context.opt_period_end
+        freq = context.opt_period_freq
+        hist = context.history.extract(shares, price_type='close',
+                                    start=start, end=end,
+                                    interval=freq)
+    else:  # TODO, operator start shall be improved!!
+        assert type(hist) is pd.DataFrame, 'historical price DataFrame shall be passed as parameter!'
+        start = hist.index[0]
+        end = hist.index[-1]
+        freq = 'd'
 
-    # 类方法:
-    def info(self):
-        """打印Optimizer类的关键属性及其子对象的关键属性"""
-        print('Optimizer class information:')
-        print('operator object information: /n', self.operator.info())
-        print('shares:', self.shares)
-        print('optimizing period starts', self.opt_period_start, 'ends', self.opt_period_end)
+    # 以下是调试用代码
+    print('shares involved in optimization:', shares)
+    print('Historical period of optimization starts:', start)
+    print('Historical period of optimization endd:', end)
+    print('Historical data frequency:', freq)
+    print('Starts optimization')
 
-    def start(self, how=0, output_count=50, keep_largest_perf=True, hist=None, *args, **kwargs):
-        """开始优化，Optimizer类的主要动作调用入口函数
+    # 根据所选择的优化算法进行优化并输出结果
+    # 优化方法可以做成一个简单工厂模式，此段代码应该重构并简化
+    if how == 0:  # 穷举法
 
-           根据所需要优化的参数空间类型不同，所选择的优化算法不同，调用不同的优化函数完成优化并返回输出结果
+        pars, perfs = _search_exhaustive(hist=hist, op=operator,
+                                               output_count=output_count, keep_largest_perf=keep_largest_perf,
+                                               *args, **kwargs)
+    elif how == 1:  # Montecarlo蒙特卡洛方法
 
-        输入：
-            参数 how, int，参数评价方法
-            参数 output_count，int，优化器输出的结果数量
-            参数 keep_largest_perf，bool，True表示寻找评价得分最高的参数，False表示寻找评价得分最低的参数
-            其他参数
-        输出：=====
-            暂无，需完善
-        """
-        # 确认所有的基本参数设置正确，否则打印错误信息，中止优化
+        pars, perfs = _search_MonteCarlo(hist=hist, op=op,
+                                               output_count=output_count, keep_largest_perf=keep_largest_perf,
+                                               *args, **kwargs)
+    elif how == 2:  # 递进步长法
 
-        # 分析op对象，确定最大化的优化参数空间
-
-        # 如果明确指定了参数空间：
-        # 将给定的参数空间与最大化优化参数空间比较，对不需要优化的参数进行空间纬度压缩
-        # 否则：
-        # 使用最大化优化参数空间进行优化
-
-        # 判断所选择的优化算法是否适用于参数空间，如否，打印错误信息并中止优化
-
-        # 根据基本参数设置基本变量，如历史数据、op对象、lpr对象等
-        shares = self.shares
-        if hist is None:
-            start = self.opt_period_start
-            end = self.opt_period_end
-            freq = self.opt_period_freq
-            hist = self.history.extract(shares, price_type='close',
-                                        start=start, end=end,
-                                        interval=freq)
-        else:  # TODO, operator start shall be improved!!
-            assert type(hist) is pd.DataFrame, 'historical price DataFrame shall be passed as parameter!'
-            start = hist.index[0]
-            end = hist.index[-1]
-            freq = 'd'
-        op = self.operator
-        lpr = self.looper
-        # 以下是调试用代码
-        print('shares involved in optimization:', shares)
-        print('Historical period of optimization starts:', start)
-        print('Historical period of optimization endd:', end)
-        print('Historical data frequency:', freq)
-        print('Starts optimization')
-
-        # 根据所选择的优化算法进行优化并输出结果
-        # 优化方法可以做成一个简单工厂模式，此段代码应该重构并简化
-        if how == 0:  # 穷举法
-
-            pars, perfs = self.__search_exhaustive(hist=hist, op=op, lpr=lpr,
-                                                   output_count=output_count, keep_largest_perf=keep_largest_perf,
-                                                   *args, **kwargs)
-        elif how == 1:  # Montecarlo蒙特卡洛方法
-
-            pars, perfs = self.__search_MonteCarlo(hist=hist, op=op, lpr=lpr,
-                                                   output_count=output_count, keep_largest_perf=keep_largest_perf,
-                                                   *args, **kwargs)
-        elif how == 2:  # 递进步长法
-
-            pars, perfs = self.__search_Incremental(hist=hist, op=op, lpr=lpr,
-                                                    output_count=output_count, keep_largest_perf=keep_largest_perf,
-                                                    *args, **kwargs)
-        elif how == 3:  # 遗传算法
-            pass
+        pars, perfs = _search_Incremental(hist=hist, op=op,
+                                                output_count=output_count, keep_largest_perf=keep_largest_perf,
+                                                *args, **kwargs)
+    elif how == 3:  # 遗传算法
         pass
+    pass
 
-    # creation of historical data
-    def __load_history(self):
-        """根据History子对象的属性，生成并调用History子对象的历史数据清单"""
-        self.__hist = self.history.extract()
-        pass
 
-    # creation of spaces
-    def __space_around_centre(self, space, centre, radius, ignore_enums=True):
-        """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间"""
-        '如果参数空间中包含枚举类型维度，可以予以忽略或其他操作'
-        return space.from_point(point=centre, distance=radius, ignore_enums=ignore_enums)
+def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
+    """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
-    def __search_exhaustive(self, hist, op, output_count, keep_largest_perf, step_size=1):
-        """ 最优参数搜索算法1: 穷举法或间隔搜索法
-
-            逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
-            “间隔”从空间中逐个取出所有的点（不管离散空间还是连续空间均适用）并逐一测试，
-            寻找使得评价函数的值最大的一组或多组参数
-
-        输入：
-            参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-            参数 op，object，交易信号生成器对象
-            参数 lpr，object，交易信号回测器对象
-            参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
-            参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-            参数 step_size，int或list，搜索参数，搜索步长，在参数空间中提取参数的间隔，如果是int型，则在空间的每一个轴上
-                取同样的步长，如果是list型，则取list中的数字分别作为每个轴的步长
-        输出：=====tuple对象，包含两个变量
-            pool.pars 作为结果输出的参数组
-            pool.perfs 输出的参数组的评价分数
-        """
-
-        pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
-        s_range, s_type = op.get_opt_space_par()
-        space = Space(s_range, s_type)  # 生成参数空间
-
-        # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
-        i = 0
-        it, total = space.extract(step_size)
-        # 调试代码
-        print('Result pool has been created, capacity of result pool: ', pool.capacity)
-        print('Searching Space has been created: ')
-        space.info()
-        print('Number of points to be checked: ', total)
-        print('Searching Starts...')
-
-        for par in it:
-            op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
-            # 调试代码
-            # print('Optimization, created par for op:', par)
-            # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
-            looped_val = lper.apply_loop(op_list=op.create(hist),
-                                         history_list=hist, init_cash=100000,
-                                         visual=False, price_visual=False)
-            # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
-            # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
-            perf = self.__eval(looped_val, method='fv')
-            # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
-            # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
-            # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
-            pool.in_pool(par, perf)
-            # 调试代码
-            i += 1.
-            if i % 10 == 0:
-                print('current result:', np.round(i / total * 100, 3), '%', end='\r')
-
-                pool.cut(keep_largest_perf)
-                print('Searching finished, best results:', pool.perfs)
-                print('best parameters:', pool.pars)
-                return pool.pars, pool.perfs
-
-    def __search_MonteCarlo(self, hist, op, lpr, output_count, keep_largest_perf, point_count=50):
-        """ 最优参数搜索算法2: 蒙特卡洛法
-
-        从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
-        随机抽取的参数点的数量为point_count, 输出结果的数量为output_count
+        逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
+        “间隔”从空间中逐个取出所有的点（不管离散空间还是连续空间均适用）并逐一测试，
+        寻找使得评价函数的值最大的一组或多组参数
 
     输入：
         参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
@@ -520,120 +348,58 @@ class Optimizer:
         参数 lpr，object，交易信号回测器对象
         参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
         参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-        参数 point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
-            取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
+        参数 step_size，int或list，搜索参数，搜索步长，在参数空间中提取参数的间隔，如果是int型，则在空间的每一个轴上
+            取同样的步长，如果是list型，则取list中的数字分别作为每个轴的步长
     输出：=====tuple对象，包含两个变量
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
     """
-        pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
-        s_range, s_type = op.get_opt_space_par()
-        space = Space(s_range, s_type)  # 生成参数空间
-        # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
-        i = 0
-        it, total = space.extract(point_count, how='rand')
-        # 调试代码
-        print('Result pool has been created, capacity of result pool: ', pool.capacity)
-        print('Searching Space has been created: ')
-        space.info()
-        print('Number of points to be checked:', total)
-        print('Searching Starts...')
 
-        for par in it:
-            op.set_opt_par(par)  # 设置timing参数
-            # 生成交易清单并进行模拟交易生成交易记录
-            looped_val = lper.apply_loop(op_list=op.create(hist),
-                                         history_list=hist, init_cash=100000,
-                                         visual=False, price_visual=False)
-            # 使用评价函数计算该组参数模拟交易的评价值
-            perf = self.__eval(looped_val, method='fv')
-            # 将参数和评价值传入pool对象并过滤掉最差的结果
-            pool.in_pool(par, perf)
-            # 调试代码
-            i += 1.0
+    pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
+    s_range, s_type = op.get_opt_space_par()
+    space = Space(s_range, s_type)  # 生成参数空间
+
+    # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
+    i = 0
+    it, total = space.extract(step_size)
+    # 调试代码
+    print('Result pool has been created, capacity of result pool: ', pool.capacity)
+    print('Searching Space has been created: ')
+    space.info()
+    print('Number of points to be checked: ', total)
+    print('Searching Starts...')
+
+    for par in it:
+        op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
+        # 调试代码
+        # print('Optimization, created par for op:', par)
+        # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
+        looped_val = apply_loop(op_list=op.create(hist),
+                                history_list=hist, init_cash=100000,
+                                visual=False, price_visual=False)
+        # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
+        # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
+        perf = _eval(looped_val, method='fv')
+        # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
+        # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
+        # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
+        pool.in_pool(par, perf)
+        # 调试代码
+        i += 1.
+        if i % 10 == 0:
             print('current result:', np.round(i / total * 100, 3), '%', end='\r')
+
             pool.cut(keep_largest_perf)
             print('Searching finished, best results:', pool.perfs)
             print('best parameters:', pool.pars)
             return pool.pars, pool.perfs
 
-    def __search_Incremental(self, hist, op, lpr, output_count, keep_largest_perf, init_step=16,
-                             inc_step=2, min_step=1):
-        """ 最优参数搜索算法3: 递进搜索法
 
-        该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
-        缩小步长并在可能出现最优参数的区域进行“精细搜索”，最终锁定可能的最优参数
-        与确定步长的搜索方法和蒙特卡洛方法相比，这种方法能够极大地提升搜索速度，缩短搜索时间，但是
-        可能无法找到全局最优参数。同时，这种方法需要参数的评价函数值大致连续
+def _search_MonteCarlo(hist, op, output_count, keep_largest_perf, point_count=50):
+    """ 最优参数搜索算法2: 蒙特卡洛法
 
-    输入：
-        参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        参数 op，object，交易信号生成器对象
-        参数 lpr，object，交易信号回测器对象
-        参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
-        参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-        参数 init_step，int，初始步长，默认值为16
-        参数 inc_step，float，递进系数，每次重新搜索时，新的步长缩小的倍数
-        参数 min_step，int，终止步长，当搜索步长最小达到min_step时停止搜索
-    输出：=====tuple对象，包含两个变量
-        pool.pars 作为结果输出的参数组
-        pool.perfs 输出的参数组的评价分数
-
-    """
-        pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
-        s_range, s_type = op.get_opt_space_par()
-        spaces = []  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
-        spaces.append(Space(s_range, s_type))  # 将整个空间作为第一个子空间对象存储起来
-        step_size = init_step  # 设定初始搜索步长
-        # 调试代码
-        print('Result pool has been created, capacity of result pool: ', pool.capacity)
-        print('Searching Space has been created: ', spaces)
-        print('Searching Starts...')
-
-        while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
-            i = 0
-            while len(spaces) > 0:
-                space = spaces.pop()
-                # 逐个弹出子空间列表中的子空间，用当前步长在其中搜索最佳参数，所有子空间的最佳参数全部进入pool并筛选最佳参数集合
-                # 调试代码
-                it, total = space.extract(step_size, how='interval')
-                for par in it:
-                    # 以下所有函数都是循环内函数，需要进行提速优化
-                    # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
-                    op.set_opt_par(par)  # 设置择时参数
-                    # 声称交易清淡病进行模拟交易生成交易记录
-                    looped_val = lper.apply_loop(op_list=op.create(hist),
-                                                 history_list=hist, init_cash=100000,
-                                                 visual=False, price_visual=False)
-                    # 使用评价函数计算参数模拟交易的评价值
-                    perf = self.__eval(looped_val, method='fv')
-                    pool.in_pool(par, perf)
-                    i += 1.
-                    print(
-                        'current result:', np.round(i / (total * output_count) * 100, 5), '%', end='\r')
-                    pool.cut(keep_largest_perf)
-                    print('Completed one round, creating new space set')
-                    # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
-                    for item in pool.pars:
-                        spaces.append(space.from_point(point=item, distance=step_size))
-                    # 刷新搜索步长
-                    step_size = step_size // inc_step
-                    print('new spaces created, start next round with new step size', step_size)
-                print('Searching finished, best results:', pool.perfs)
-                print('best parameters:', pool.pars)
-                return pool.pars, pool.perfs
-
-    def __search_ga(self, hist, op, lpr, output_count, keep_largest_perf):
-        """ 最优参数搜索算法4: 遗传算法
-    遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
-
-    遗传算法借鉴了生物的遗传迭代过程，首先在参数空间中随机选取一定数量的参数点，将这批参数点称为
-    “种群”。随后在这一种群的基础上进行迭代计算。在每一次迭代（称为一次繁殖）前，根据种群中每个个体
-    的评价函数值，确定每个个体生存或死亡的几率，规律是若个体的评价函数值越接近最优值，则其生存的几率
-    越大，繁殖后代的几率也越大，反之则越小。确定生死及繁殖的几率后，根据生死几率选择一定数量的个体
-    让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
-    同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
-    一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
+    从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
+    随机抽取的参数点的数量为point_count, 输出结果的数量为output_count
 
 输入：
     参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
@@ -641,70 +407,202 @@ class Optimizer:
     参数 lpr，object，交易信号回测器对象
     参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
     参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+    参数 point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
+        取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
+输出：=====tuple对象，包含两个变量
+    pool.pars 作为结果输出的参数组
+    pool.perfs 输出的参数组的评价分数
+"""
+    pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
+    s_range, s_type = op.get_opt_space_par()
+    space = Space(s_range, s_type)  # 生成参数空间
+    # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
+    i = 0
+    it, total = space.extract(point_count, how='rand')
+    # 调试代码
+    print('Result pool has been created, capacity of result pool: ', pool.capacity)
+    print('Searching Space has been created: ')
+    space.info()
+    print('Number of points to be checked:', total)
+    print('Searching Starts...')
+
+    for par in it:
+        op.set_opt_par(par)  # 设置timing参数
+        # 生成交易清单并进行模拟交易生成交易记录
+        looped_val = apply_loop(op_list=op.create(hist),
+                                history_list=hist, init_cash=100000,
+                                visual=False, price_visual=False)
+        # 使用评价函数计算该组参数模拟交易的评价值
+        perf = _eval(looped_val, method='fv')
+        # 将参数和评价值传入pool对象并过滤掉最差的结果
+        pool.in_pool(par, perf)
+        # 调试代码
+        i += 1.0
+        print('current result:', np.round(i / total * 100, 3), '%', end='\r')
+        pool.cut(keep_largest_perf)
+        print('Searching finished, best results:', pool.perfs)
+        print('best parameters:', pool.pars)
+        return pool.pars, pool.perfs
+
+
+def _search_Incremental(hist, op, output_count, keep_largest_perf, init_step=16,
+                        inc_step=2, min_step=1):
+    """ 最优参数搜索算法3: 递进搜索法
+
+    该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
+    缩小步长并在可能出现最优参数的区域进行“精细搜索”，最终锁定可能的最优参数
+    与确定步长的搜索方法和蒙特卡洛方法相比，这种方法能够极大地提升搜索速度，缩短搜索时间，但是
+    可能无法找到全局最优参数。同时，这种方法需要参数的评价函数值大致连续
+
+输入：
+    参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+    参数 op，object，交易信号生成器对象
+    参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
+    参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+    参数 init_step，int，初始步长，默认值为16
+    参数 inc_step，float，递进系数，每次重新搜索时，新的步长缩小的倍数
+    参数 min_step，int，终止步长，当搜索步长最小达到min_step时停止搜索
 输出：=====tuple对象，包含两个变量
     pool.pars 作为结果输出的参数组
     pool.perfs 输出的参数组的评价分数
 
-    """
-        pool = ResultPool()
-        return pool.pars, pool.perfs
-
-    # 评价方法:
-    def __eval(self, looped_val, method):
-        """评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。
-
-输入：
-    参数 looped_val，ndarray，回测器生成输出的交易模拟记录
-    参数 method，int，交易记录评价方法
-输出：=====
-    调用不同评价函数的返回值
 """
-        if method.upper() == 'FV':
-            return self.__eval_FV(looped_val)
-        elif method.upper() == 'ROI':
-            return self.__eval_roi(looped_val)
-        elif method.upper() == 'SHARP':
-            return self.__eval_sharp(looped_val)
-        elif method.upper() == 'ALPHA':
-            return self.__eval_alpha(looped_val)
+    pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
+    s_range, s_type = op.get_opt_space_par()
+    spaces = []  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
+    spaces.append(Space(s_range, s_type))  # 将整个空间作为第一个子空间对象存储起来
+    step_size = init_step  # 设定初始搜索步长
+    # 调试代码
+    print('Result pool has been created, capacity of result pool: ', pool.capacity)
+    print('Searching Space has been created: ', spaces)
+    print('Searching Starts...')
 
-    def __eval_FV(self, looped_val):
-        """评价函数 Future Value 终值评价
-
-'投资模拟期最后一个交易日的资产总值
-
-输入：
-    参数 looped_val，ndarray，回测器生成输出的交易模拟记录
-输出：=====
-    perf：float，应用该评价方法对回测模拟结果的评价分数
-
-"""
-        if not looped_val.empty:
+    while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
+        i = 0
+        while len(spaces) > 0:
+            space = spaces.pop()
+            # 逐个弹出子空间列表中的子空间，用当前步长在其中搜索最佳参数，所有子空间的最佳参数全部进入pool并筛选最佳参数集合
             # 调试代码
-            # print looped_val.head()
-            perf = looped_val['value'][-1]
-            return perf
-        else:
-            return -np.inf
+            it, total = space.extract(step_size, how='interval')
+            for par in it:
+                # 以下所有函数都是循环内函数，需要进行提速优化
+                # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
+                op.set_opt_par(par)  # 设置择时参数
+                # 声称交易清淡病进行模拟交易生成交易记录
+                looped_val = apply_loop(op_list=op.create(hist),
+                                        history_list=hist, init_cash=100000,
+                                        visual=False, price_visual=False)
+                # 使用评价函数计算参数模拟交易的评价值
+                perf = _eval(looped_val, method='fv')
+                pool.in_pool(par, perf)
+                i += 1.
+                print(
+                    'current result:', np.round(i / (total * output_count) * 100, 5), '%', end='\r')
+                pool.cut(keep_largest_perf)
+                print('Completed one round, creating new space set')
+                # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
+                for item in pool.pars:
+                    spaces.append(space.from_point(point=item, distance=step_size))
+                # 刷新搜索步长
+                step_size = step_size // inc_step
+                print('new spaces created, start next round with new step size', step_size)
+            print('Searching finished, best results:', pool.perfs)
+            print('best parameters:', pool.pars)
+            return pool.pars, pool.perfs
 
-    def __eval_roi(self, looped_val):
-        """评价函数 RoI 收益率'
+
+def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
+    """ 最优参数搜索算法4: 遗传算法
+遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
+
+遗传算法借鉴了生物的遗传迭代过程，首先在参数空间中随机选取一定数量的参数点，将这批参数点称为
+“种群”。随后在这一种群的基础上进行迭代计算。在每一次迭代（称为一次繁殖）前，根据种群中每个个体
+的评价函数值，确定每个个体生存或死亡的几率，规律是若个体的评价函数值越接近最优值，则其生存的几率
+越大，繁殖后代的几率也越大，反之则越小。确定生死及繁殖的几率后，根据生死几率选择一定数量的个体
+让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
+同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
+一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
+
+输入：
+参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+参数 op，object，交易信号生成器对象
+参数 lpr，object，交易信号回测器对象
+参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
+参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+输出：=====tuple对象，包含两个变量
+pool.pars 作为结果输出的参数组
+pool.perfs 输出的参数组的评价分数
+
+"""
+    pool = ResultPool()
+    return pool.pars, pool.perfs
+
+
+def _eval_alpha(looped_val):
+    return perf
+
+
+def _eval_sharp(looped_val):
+    return perf
+
+
+def _eval_roi(looped_val):
+    """评价函数 RoI 收益率'
 
 '投资模拟期间资产投资年化收益率
 
 输入：
-    参数 looped_val，ndarray，回测器生成输出的交易模拟记录
+参数 looped_val，ndarray，回测器生成输出的交易模拟记录
 输出：=====
-    perf：float，应用该评价方法对回测模拟结果的评价分数
+perf：float，应用该评价方法对回测模拟结果的评价分数
 
 """
-        return perf
+    return perf
 
-    def __eval_sharp(self, looped_val):
-        return perf
 
-    def __eval_alpha(self, looped_val):
+def _eval_FV(looped_val):
+    """评价函数 Future Value 终值评价
+
+'投资模拟期最后一个交易日的资产总值
+
+输入：
+参数 looped_val，ndarray，回测器生成输出的交易模拟记录
+输出：=====
+perf：float，应用该评价方法对回测模拟结果的评价分数
+
+"""
+    if not looped_val.empty:
+        # 调试代码
+        # print looped_val.head()
+        perf = looped_val['value'][-1]
         return perf
+    else:
+        return -np.inf
+
+
+def _eval(looped_val, method):
+    """评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。
+
+输入：
+参数 looped_val，ndarray，回测器生成输出的交易模拟记录
+参数 method，int，交易记录评价方法
+输出：=====
+调用不同评价函数的返回值
+"""
+    if method.upper() == 'FV':
+        return _eval_FV(looped_val)
+    elif method.upper() == 'ROI':
+        return _eval_roi(looped_val)
+    elif method.upper() == 'SHARP':
+        return _eval_sharp(looped_val)
+    elif method.upper() == 'ALPHA':
+        return _eval_alpha(looped_val)
+
+
+def _space_around_centre(space, centre, radius, ignore_enums=True):
+    """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间"""
+    '如果参数空间中包含枚举类型维度，可以予以忽略或其他操作'
+    return space.from_point(point=centre, distance=radius, ignore_enums=ignore_enums)
 
 
 class ResultPool:
@@ -1071,7 +969,51 @@ class Axis:
         count = self.count
         return self.__enum_val[np.random.choice(count, size=qty)]
 
+# TODO: 以下函数可以放到一个模块中，称为utilfuncs==================
+@numba.jit(nopython=True, target='cpu', parallel=True)
+def ema(arr, span: int = None, alpha: float = None):
+    """基于numpy的高速指数移动平均值计算.
 
+    input：
+        :param arr: 1-D ndarray, 输入数据，一维矩阵
+        :param span: int, optional, 1 < span, 跨度
+        :param alpha: float, optional, 0 < alpha < 1, 数据衰减系数
+    output：=====
+        :return: 1-D ndarray; 输入数据的指数平滑移动平均值
+    """
+    if alpha is None:
+        alpha = 2 / (span + 1.0)
+    alpha_rev = 1 - alpha
+    n = arr.shape[0]
+    pows = alpha_rev ** (np.arange(n + 1))
+    scale_arr = 1 / pows[:-1]
+    offset = arr[0] * pows[1:]
+    pw0 = alpha * alpha_rev ** (n - 1)
+    mult = arr * pw0 * scale_arr
+    cumsums = mult.cumsum()
+    return offset + cumsums * scale_arr[::-1]
+
+
+@numba.jit(nopython=True)
+def ma(arr, window: int):
+    """Fast moving average calculation based on NumPy
+       基于numpy的高速移动平均值计算
+
+    input：
+        :param window: type: int, 1 < window, 时间滑动窗口
+        :param arr: type: object np.ndarray: 输入数据，一维矩阵
+    return：
+        :return: ndarray, 完成计算的移动平均序列
+    """
+    arr_ = arr.cumsum()
+    arr_r = np.roll(arr_, window)
+    arr_r[:window - 1] = np.nan
+    arr_r[window - 1] = 0
+    return (arr_ - arr_r) / window
+
+# TODO: utilfuncs 结束
+
+#TODO： 以下类放入Strategy和Operator模块中
 class Strategy:
     """量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的择时类调用"""
     __mataclass__ = ABCMeta
@@ -1148,48 +1090,6 @@ class Strategy:
     def generate(self, hist_price):
         """策略类的基本抽象方法，接受输入参数并输出操作清单"""
         pass
-
-
-@numba.jit(nopython=True, target='cpu', parallel=True)
-def ema(arr, span: int = None, alpha: float = None):
-    """基于numpy的高速指数移动平均值计算.
-
-    input：
-        :param arr: 1-D ndarray, 输入数据，一维矩阵
-        :param span: int, optional, 1 < span, 跨度
-        :param alpha: float, optional, 0 < alpha < 1, 数据衰减系数
-    output：=====
-        :return: 1-D ndarray; 输入数据的指数平滑移动平均值
-    """
-    if alpha is None:
-        alpha = 2 / (span + 1.0)
-    alpha_rev = 1 - alpha
-    n = arr.shape[0]
-    pows = alpha_rev ** (np.arange(n + 1))
-    scale_arr = 1 / pows[:-1]
-    offset = arr[0] * pows[1:]
-    pw0 = alpha * alpha_rev ** (n - 1)
-    mult = arr * pw0 * scale_arr
-    cumsums = mult.cumsum()
-    return offset + cumsums * scale_arr[::-1]
-
-
-@numba.jit(nopython=True, target='cpu', parallel=True)
-def ma(arr, window: int):
-    """Fast moving average calculation based on NumPy
-       基于numpy的高速移动平均值计算
-
-    input：
-        :param window: type: int, 1 < window, 时间滑动窗口
-        :param arr: type: object np.ndarray: 输入数据，一维矩阵
-    return：
-        :return: ndarray, 完成计算的移动平均序列
-    """
-    arr_ = arr.cumsum()
-    arr_r = np.roll(arr_, window)
-    arr_r[:window - 1] = np.nan
-    arr_r[window - 1] = 0
-    return (arr_ - arr_r) / window
 
 
 class Timing(Strategy):
@@ -1776,9 +1676,9 @@ def _blend(n1, n2, op):
 
     """
     if op == 'or':
-         return n1 + n2
+        return n1 + n2
     elif op == 'and':
-         return n1 * n2
+        return n1 * n2
 
 
 def unify(arr):

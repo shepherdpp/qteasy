@@ -1,10 +1,5 @@
 # coding=utf-8
 
-import time
-import pandas as pd
-import tushare as ts
-import numpy as np
-
 from .core import *
 from .history import *
 
