@@ -6,6 +6,9 @@ import numpy as np
 from datetime import datetime
 import datetime as dt
 
+# TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
+# TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
+
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'
     '''使用tushare包来下载各种历史数据，将所有历史数据打包存储为历史数据仓库格式，在需要使用的时候

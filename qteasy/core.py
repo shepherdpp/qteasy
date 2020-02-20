@@ -2,11 +2,14 @@
 
 import pandas as pd
 import numpy as np
+import numba
 from datetime import datetime
 from abc import abstractmethod, ABCMeta
 import itertools
 from qteasy.history import History
 
+# TODO: 简化类的定义，删除不必要的类，将类的方法改成函数
+# TODO: 将文件内的类或函数分组，分别放到不同的文件中去，如Loop、Optimizer等
 
 class Qteasy:
     """QT Easy量化交易系统基础类.
@@ -1147,6 +1150,7 @@ class Strategy:
         pass
 
 
+@numba.jit(nopython=True, target='cpu', parallel=True)
 def ema(arr, span: int = None, alpha: float = None):
     """基于numpy的高速指数移动平均值计算.
 
@@ -1170,6 +1174,7 @@ def ema(arr, span: int = None, alpha: float = None):
     return offset + cumsums * scale_arr[::-1]
 
 
+@numba.jit(nopython=True, target='cpu', parallel=True)
 def ma(arr, window: int):
     """Fast moving average calculation based on NumPy
        基于numpy的高速移动平均值计算
