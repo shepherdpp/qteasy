@@ -31,6 +31,7 @@ if __name__ == '__main__':
     cont = Context()
     cont.shares = shares
     cont.shares = ['000300-I']
+    cont.history_data=d
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
     print('transaction rate object created, rate is', cont.rate)
 
@@ -47,21 +48,4 @@ if __name__ == '__main__':
     op.set_parameter('r-0', pars=(8, -0.1312))
     # op.info()
     # print('\nTime of creating operation list:')
-    op_list = op.create(hist_extract=d)
-
-
-    # print(op_list.head())
-    ic = 1000
-    print('\nTime of looping operational list without visual:')
-    apply_loop(op_list, d.fillna(0), init_cash=ic, rate=cont.rate, moq=0)
-    looped_values = apply_loop(op_list, d.fillna(0), init_cash=ic, rate=cont.rate, moq=0)
-    # print('\nTime of looping operational list with visual')
-    looped_values_2 = apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0, visual=True,
-                                 rate=cont.rate, price_visual=True)
-    # print(looped_values.head())
-    ret = looped_values.value[-1] / looped_values.value[0]
-
-    years = (looped_values.index[-1] - looped_values.index[0]).days / 365.
-    print('\nTotal investment years:', np.round(years, 1), np.round(ret * 100 - 100, 3), '%, final value:',
-          np.round(ret * ic, 2))
-    print('Average Yearly return rate: ', np.round((ret ** (1 / years) - 1) * 100, 3), '%')
+    run(op, cont, mode=1, history_data=cont.history_data)
