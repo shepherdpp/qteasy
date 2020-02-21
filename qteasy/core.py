@@ -17,7 +17,7 @@ class Log:
         """
 
         """
-
+        raise NotImplementedError
 
 class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及(伪)常量
@@ -58,9 +58,7 @@ class Context:
         # 环境变量
         # ============
         self.mode = mode
-        self.rate_fee = rate_fee  # 交易费用成本计算参数，固定交易费率
-        self.rate_slipery = rate_slipery  # 交易滑点成本估算参数，对交易命令发出到实际交易完成之间价格变化导致的成本进行估算
-        self.rate_impact = rate_impact  # 交易冲击成本估算参数，对交易本身对价格造成的影响带来的成本进行估算
+        self.rate = Rate(rate_fee, rate_slipery, rate_impact)
         self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
         self.init_cash=init_cash
         today = datetime.datetime.today().date()
@@ -91,35 +89,56 @@ class Context:
         return ''.join(out_str)
 
 
-def _rate(rate_fee:float, rate_slipery:float, rate_impact:float, amount:float) -> float:
-    """计算每次交易产生的交易成本，由交易费用、交易滑点和冲击成本组成。冲击成本与交易金额成正比
+class Rate:
 
-    :param rate_fee:
-    :param rate_slipery:
-    :param rate_impact:
-    :param amount:
-    :return:
-    """
-    return rate_fee + rate_slipery + rate_impact * amount
+    def __init__(self, fee:float=0.003, slipery:float=0, impact:float=0):
+        self.fee = fee
+        self.slipery = slipery
+        self.impact = impact
+
+    def __str__(self):
+        """设置Rate对象的打印形式"""
+        return f'<rate: fee:{self.fee}, slipery:{self.slipery}, impact:{self.impact}>'
+
+    def __repr__(self):
+        """设置Rate对象"""
+        return f'Rate({self.fee}, {self.slipery}, {self.impact})'
+
+    def __call__(self, amount:np.ndarray):
+        """直接调用对象，计算交易费率"""
+        return self.fee + self.slipery + self.impact * amount
+
+    def __getitem__(self, item:str)->float:
+        """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
+        assert isinstance(item, str), 'TypeError, item should be a string in [\'fee\', \'slipery\', \'impact\']'
+        if item == 'fee':
+            return self.fee
+        elif item == 'slipery':
+            return self.fee
+        elif item == 'impact':
+            return self.impact
+        else:
+            raise TypeError
+        raise NotImplementedError
+
 
 #TODO: 使用Numba加速_loop_step()函数
-def _loop_step(pre_cash, pre_amounts, op, prices, rate_fee, rate_slipery, rate_impact, moq):
+def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
-    输入：=====
-        参数 pre_cash, ndarray：本次交易开始前账户现金余额
-        参数 pre_amounts, ndarray：list，交易开始前各个股票账户中的股份余额
-        参数 op, ndarray：本次交易的个股交易清单
-        参数 prices：List，本次交易发生时各个股票的价格
-        参数 rate_in：买入成本——待改进，应根据三个成本费率动态估算
-        参数 rate_out：卖出成本——待改进，应根据三个成本费率动态估算
+    input：=====
+        param pre_cash, np.ndarray：本次交易开始前账户现金余额
+        param pre_amounts, np.ndarray：list，交易开始前各个股票账户中的股份余额
+        param op, np.ndarray：本次交易的个股交易清单
+        param prices：np.ndarray，本次交易发生时各个股票的价格
+        param rate：object Rate() 买入成本——待改进，应根据三个成本费率动态估算
+        param moq：float: 投资产品最小交易单位
 
-    输出：=====元组，包含四个元素
+    return：=====元组，包含四个元素
         cash：交易后账户现金余额
         amounts：交易后每个个股账户中的股份余额
         fee：本次交易总费用
         value：本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
-        :type prices: np.ndarray(float)
     """
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
@@ -134,7 +153,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate_fee, rate_slipery, rate_i
         a_sold = np.where(prices != 0,
                           np.where(op < 0, np.rint(pre_amounts * op), 0),
                           0)
-    rate_out = _rate(rate_fee, rate_slipery, rate_impact, a_sold * prices)
+    rate_out = rate(a_sold * prices)
     cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained.sum()
@@ -145,7 +164,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate_fee, rate_slipery, rate_i
         pur_values = pur_values / pre_value * cash
         # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-    rate_in = _rate(rate_fee, rate_slipery, rate_impact, pur_values)
+    rate_in = rate(pur_values)
     if moq == 0:  # MOQ为零时，可以购入的资产数量允许为小数
         a_purchased = np.where(prices != 0,
                                np.where(op > 0,
@@ -197,7 +216,7 @@ def _get_complete_hist(values, h_list, with_price=False):
 
 
 def apply_loop(op_list, history_list, visual=False, price_visual=False,
-               init_cash=100000, rate_fee=0.003, rate_slipery=0, rate_impact=0, moq=100):
+               init_cash=100000, rate=None, moq=100):
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
@@ -217,8 +236,8 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
         Value_history：包含交易结果及资产总额的历史清单
 
     """
-    if op_list.empty:
-        return op_list
+    assert not op_list.empty, 'InputError: The Operation list should not be Empty'
+    assert rate is not None, 'TyepError: rate should not be None type'
     # 将交易清单和与之对应的价格清单转化为ndarray，确保内存存储方式为Fortune，
     # 以实现高速逐行循环批量操作
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
@@ -243,16 +262,14 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
                                                    pre_amounts=amounts,
                                                    op=op[i, :],
                                                    prices=price[i, :],
-                                                   rate_fee=rate_fee, rate_slipery=rate_slipery,
-                                                   rate_impact=rate_impact, moq=moq)
+                                                   rate = rate, moq=moq)
         else:
             # it = np.nditer([op, price])
             # 将每一行交易信号代码和每一行价格使用迭代器送入_loop_step()函数计算结果
             cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                    pre_amounts=amounts,
                                                    op=op[i], prices=price[i],
-                                                   rate_fee=rate_fee, rate_slipery=rate_slipery,
-                                                   rate_impact=rate_impact,
+                                                   rate=rate,
                                                    moq=moq)
         # 保存计算结果
         cashes.append(cash)

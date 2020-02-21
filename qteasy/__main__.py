@@ -10,7 +10,6 @@ if __name__ == '__main__':
     assert np.allclose(res, target), 'there\'s something wrong with unfiy function'
 
     h = History()
-    h.work_days()
     op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
     op.info()
 
@@ -34,7 +33,7 @@ if __name__ == '__main__':
     cont.shares = ['000300-I']
     cont.history_data=d
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
-
+    print('transaction rate object created, rate is', cont.rate)
 
     timing_pars1 = (86, 198, 58)
     timing_pars2 = {'600037': (177, 248, 244),
