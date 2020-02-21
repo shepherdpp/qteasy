@@ -10,7 +10,6 @@ if __name__ == '__main__':
     assert np.allclose(res, target), 'there\'s something wrong with unfiy function'
 
     h = History()
-    h.work_days()
     op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
     op.info()
 
@@ -33,7 +32,7 @@ if __name__ == '__main__':
     cont.shares = shares
     cont.shares = ['000300-I']
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
-
+    print('transaction rate object created, rate is', cont.rate)
 
     timing_pars1 = (86, 198, 58)
     timing_pars2 = {'600037': (177, 248, 244),
@@ -54,10 +53,11 @@ if __name__ == '__main__':
     # print(op_list.head())
     ic = 1000
     print('\nTime of looping operational list without visual:')
-    apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0)
-    looped_values = apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0)
+    apply_loop(op_list, d.fillna(0), init_cash=ic, rate=cont.rate, moq=0)
+    looped_values = apply_loop(op_list, d.fillna(0), init_cash=ic, rate=cont.rate, moq=0)
     # print('\nTime of looping operational list with visual')
-    looped_values_2 = apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0, visual=True, price_visual=True)
+    looped_values_2 = apply_loop(op_list, d.fillna(0), init_cash=ic, moq=0, visual=True,
+                                 rate=cont.rate, price_visual=True)
     # print(looped_values.head())
     ret = looped_values.value[-1] / looped_values.value[0]
 
