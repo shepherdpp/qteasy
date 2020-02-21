@@ -43,7 +43,16 @@ class Context:
     OPTI_INCREMENTAL = 2
     OPTI_GA = 3
 
-    def __init__(self, mode=RUN_MODE_BACKLOOP, rate_fee=0.003, rate_slipery=0, rate_impact=0, moq=100):
+    def __init__(self,
+                 mode=RUN_MODE_BACKLOOP,
+                 rate_fee=0.003,
+                 rate_slipery=0,
+                 rate_impact=0,
+                 moq=100,
+                 init_cash=10000,
+                 visual=False,
+                 reference_visual=False,
+                 reference=[]):
         """初始化所有的环境变量和环境常量"""
 
         # 环境变量
@@ -53,6 +62,7 @@ class Context:
         self.rate_slipery = rate_slipery  # 交易滑点成本估算参数，对交易命令发出到实际交易完成之间价格变化导致的成本进行估算
         self.rate_impact = rate_impact  # 交易冲击成本估算参数，对交易本身对价格造成的影响带来的成本进行估算
         self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
+        self.init_cash=init_cash
         today = datetime.datetime.today().date()
         self.shares = []  # 优化参数所针对的投资产品
         self.opt_period_start = today - datetime.timedelta(3650)  # 优化历史区间开始日
@@ -65,6 +75,12 @@ class Context:
         self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
         self.cycle_convolution_type = 'average'  # 当使用重叠区间优化参数时，各个区间评价函数值的组合方法
         self.opti_method = 'standard'
+        self.output_count = 50
+        self.keep_largest_perf = True
+        self.history_data_types = ['close']
+        self.history_data = None
+        self.visual = visual
+        self.reference_visual = reference_visual
 
         pass
 
@@ -265,74 +281,93 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
     return value_history
 
 
-def run(operator, context, how=0, output_count=50,
-        keep_largest_perf=True, hist=None, *args, **kwargs):
-    """开始优化，Optimizer类的主要动作调用入口函数
+def run(operator, context, mode:int=None ,history_data:pd.DataFrame=None, *args, **kwargs):
+    """开始运行，qteasy模块的主要入口函数
 
-       根据所需要优化的参数空间类型不同，所选择的优化算法不同，调用不同的优化函数完成优化并返回输出结果
+        根据context中的设置和运行模式（mode）进行不同的操作：
+        context.mode == 0 or mode == 0:
+            进入实时信号生成模式：
+            根据context实时策略运行所需的历史数据，根据历史数据实时生成操作信号
+            策略参数不能为空
+        context.mode == 1 or mode == 1:
+            进入回测模式：
+            根据context规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
+            生成投资资金模型，模拟在回测区间内使用投资资金模型进行模拟交易的结果
+            输出对结果的评价（使用多维度的评价方法）
+            输出回测日志
+            投资资金模型不能为空，策略参数不能为空
+        context.mode == 2 or mode == 2:
+            进入优化模式：
+            根据context规定的优化区间和回测区间，使用History模块联机读取或本地读取覆盖整个区间的历史数据
+            生成待优化策略的参数空间，并生成投资资金模型
+            使用指定的优化方法在优化区间内查找投资资金模型的全局最优或局部最优参数组合集合
+            使用在优化区间内搜索到的全局最优策略参数在回测区间上进行多次回测并再次记录结果
+            输出最优参数集合在优化区间和回测区间上的评价结果
+            输出优化及回测日志
+            投资资金模型不能为空，策略参数可以为空
+    input：
 
-    输入：
-
-        参数 how:int，参数评价方法
-        参数 output_count: int，优化器输出的结果数量
-        参数 keep_largest_perf: bool，True表示寻找评价得分最高的参数，False表示寻找评价得分最低的参数
-        其他参数
-    输出：=====
-        暂无，需完善
+        param operator: Operator()，策略执行器对象
+        param context: Context()，策略执行环境的上下文对象
+        param mode: int, default to None，qteasy运行模式，如果给出则override context中的mode参数
+        param history_data: pd.DataFrame, default to None, 参与执行所需的历史数据，如果给出则overidecontext 中的hist参数
+        other params
+    return：=====
+        type: Log()，运行日志记录，txt 或 pd.DataFrame
     """
-    # 确认所有的基本参数设置正确，否则打印错误信息，中止优化
 
-    # 分析op对象，确定最大化的优化参数空间
-
-    # 如果明确指定了参数空间：
-    # 将给定的参数空间与最大化优化参数空间比较，对不需要优化的参数进行空间纬度压缩
-    # 否则：
-    # 使用最大化优化参数空间进行优化
-
-    # 判断所选择的优化算法是否适用于参数空间，如否，打印错误信息并中止优化
-
-    # 根据基本参数设置基本变量，如历史数据、op对象、lpr对象等
     shares = context.shares
-    if hist is None:
-        start = context.opt_period_start
-        end = context.opt_period_end
-        freq = context.opt_period_freq
+    if mode is None:
+        exe_mode = context.mode
+    else:
+        exe_mode = mode
+    # hist data can be overwritten by passing history_data: pd.DataFrame
+    if history_data is None:
         hist = context.history.extract(shares, price_type='close',
                                     start=start, end=end,
                                     interval=freq)
-    else:  # TODO, operator start shall be improved!!
-        assert type(hist) is pd.DataFrame, 'historical price DataFrame shall be passed as parameter!'
-        start = hist.index[0]
-        end = hist.index[-1]
-        freq = 'd'
+    else:
+        assert type(history_data) is pd.DataFrame, 'historical price DataFrame shall be passed as parameter!'
+        hist = history_data
 
-    # 以下是调试用代码
-    print('shares involved in optimization:', shares)
-    print('Historical period of optimization starts:', start)
-    print('Historical period of optimization endd:', end)
-    print('Historical data frequency:', freq)
-    print('Starts optimization')
+    # ========
+    if exe_mode == 0:
+        """进入实时信号生成模式："""
+        raise NotImplementedError
 
-    # 根据所选择的优化算法进行优化并输出结果
-    # 优化方法可以做成一个简单工厂模式，此段代码应该重构并简化
-    if how == 0:  # 穷举法
+    elif exe_mode == 1:
+        """进入回测模式："""
+        op_list = operator.create(hist_extract=hist)
+        looped_values = apply_loop(op_list, hist.fillna(0),
+                                   init_cash=context.init_cash,
+                                   moq=0, visual=True,
+                                   price_visual=True)
+        ret = looped_values.value[-1] / looped_values.value[0]
+        years = (looped_values.index[-1] - looped_values.index[0]).days / 365.
+        print('\nTotal investment years:', np.round(years, 1), np.round(ret * 100 - 100, 3), '%, final value:',
+              np.round(ret * context.init_cash, 2))
+        print('Average Yearly return rate: ', np.round((ret ** (1 / years) - 1) * 100, 3), '%')
 
-        pars, perfs = _search_exhaustive(hist=hist, op=operator,
-                                               output_count=output_count, keep_largest_perf=keep_largest_perf,
-                                               *args, **kwargs)
-    elif how == 1:  # Montecarlo蒙特卡洛方法
-
-        pars, perfs = _search_MonteCarlo(hist=hist, op=op,
-                                               output_count=output_count, keep_largest_perf=keep_largest_perf,
-                                               *args, **kwargs)
-    elif how == 2:  # 递进步长法
-
-        pars, perfs = _search_Incremental(hist=hist, op=op,
-                                                output_count=output_count, keep_largest_perf=keep_largest_perf,
-                                                *args, **kwargs)
-    elif how == 3:  # 遗传算法
-        pass
-    pass
+    elif exe_mode == 2:
+        """进入优化模式："""
+        if how == 0:
+            """穷举法"""
+            pars, perfs = _search_exhaustive(hist=hist, op=operator,
+                                             output_count=output_count, keep_largest_perf=keep_largest_perf,
+                                             *args, **kwargs)
+        elif how == 1:
+            """Montecarlo蒙特卡洛方法"""
+            pars, perfs = _search_MonteCarlo(hist=hist, op=op,
+                                             output_count=output_count, keep_largest_perf=keep_largest_perf,
+                                             *args, **kwargs)
+        elif how == 2:  #
+            """递进步长法"""
+            pars, perfs = _search_Incremental(hist=hist, op=op,
+                                              output_count=output_count, keep_largest_perf=keep_largest_perf,
+                                              *args, **kwargs)
+        elif how == 3:
+            """遗传算法"""
+            raise NotImplementedError
 
 
 def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
