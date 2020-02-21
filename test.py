@@ -22,6 +22,10 @@ class TestRates(unittest.TestCase):
         self.assertEqual(r['impact'], 0.001, 'item get wrong')
         self.assertEqual(r(1000), 1.002, 'fee calculation wrong')
 
+    def test_rate_print(self):
+        r = qt.Rate(0.1, 0.1, 0.1)
+        self.assertEqual(str(r), '<rate: fee:0.1, slipery:0.1, impact:0.1>', 'rate object printing wrong')
+
 
 class TestUnify(unittest.TestCase):
 
@@ -46,13 +50,8 @@ class TestSpace(unittest.TestCase):
         # first group of inputs, output Space with two discr axis from [0,10]
         pars_list = [[(0,10), (0,10)],
                      [[0,10], [0,10]]]
-            #,
-            #         [10, 10],
-            #         (10, 10)]
 
-        types_list = [None,
-                      'discr',
-                      'foobar',
+        types_list = ['discr',
                       ['discr', 'discr']]
 
         input_pars = itertools.product(pars_list, types_list)
@@ -61,8 +60,40 @@ class TestSpace(unittest.TestCase):
             s = qt.Space(*p)
             b = s.boes
             t = s.types
+            print(s, t)
             self.assertEqual(b, [(0,10), (0,10)], 'boes incorrect!')
             self.assertEqual(t, ['discr', 'discr'], 'types incorrect')
+
+        pars_list = [[(0,10), (0,10)],
+                     [[0,10], [0,10]]]
+
+        types_list = ['foobar',
+                      ['foo', 'bar']]
+
+        input_pars = itertools.product(pars_list, types_list)
+        for p in input_pars:
+            print(p)
+            s = qt.Space(*p)
+            b = s.boes
+            t = s.types
+            print(s, t)
+            self.assertEqual(b, [(0,10), (0,10)], 'boes incorrect!')
+            self.assertEqual(t, ['enum', 'enum'], 'types incorrect')
+
+        pars_list = [[(0,10), (0,10)],
+                     [[0,10], [0,10]]]
+
+        types_list = [['discr', 'foobar']]
+
+        input_pars = itertools.product(pars_list, types_list)
+        for p in input_pars:
+            print(p)
+            s = qt.Space(*p)
+            b = s.boes
+            t = s.types
+            print(s,t)
+            self.assertEqual(b, [(0,10), (0,10)], 'boes incorrect!')
+            self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
 
     def test_extract(self) -> object:
         """
