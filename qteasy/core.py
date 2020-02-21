@@ -44,19 +44,29 @@ class Context:
     OPTI_GA = 3
 
     def __init__(self,
-                 mode=RUN_MODE_BACKLOOP,
-                 rate_fee=0.003,
-                 rate_slipery=0,
-                 rate_impact=0,
-                 moq=100,
-                 init_cash=10000,
-                 visual=False,
-                 reference_visual=False,
-                 reference=[]):
-        """初始化所有的环境变量和环境常量"""
+                 mode:int =RUN_MODE_BACKLOOP,
+                 rate_fee:float =0.003,
+                 rate_slipery: float=0,
+                 rate_impact: float=0,
+                 moq: int=100,
+                 init_cash: float=10000,
+                 visual: bool=False,
+                 reference_visual: bool=False,
+                 reference: List=[]):
+        """初始化所有的环境变量和环境常量
 
-        # 环境变量
-        # ============
+        input:
+            :param mode:
+            :param rate_fee:
+            :param rate_slipery:
+            :param rate_impact:
+            :param moq:
+            :param init_cash:
+            :param visual:
+            :param reference_visual:
+            :param reference:
+        """
+
         self.mode = mode
         self.rate = Rate(rate_fee, rate_slipery, rate_impact)
         self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
@@ -80,7 +90,6 @@ class Context:
         self.visual = visual
         self.reference_visual = reference_visual
 
-        pass
 
     def __str__(self):
         out_str = []
@@ -119,7 +128,6 @@ class Rate:
             return self.impact
         else:
             raise TypeError
-        raise NotImplementedError
 
 
 #TODO: 使用Numba加速_loop_step()函数
