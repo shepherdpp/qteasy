@@ -1,4 +1,6 @@
-from core import *
+from qteasy.core import *
+from qteasy.history import History
+from qteasy.operator import *
 import pandas as pd
 
 if __name__ == '__main__':
