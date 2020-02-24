@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from utilfuncs import ma, ema
+from qteasy.utilfuncs import ma, ema
 from abc import abstractmethod, ABCMeta
 
 class Strategy:
@@ -706,9 +706,9 @@ class Operator:
     """
 
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
-    def __init__(self, selecting_types=['simple'],
-                 timing_types=['simple'],
-                 ricon_types=['none']):
+    def __init__(self, selecting_types=None,
+                 timing_types=None,
+                 ricon_types=None):
         # 根据输入的参数生成择时具体类:
         # 择时类的混合方式有：
         # pos-N：只有当大于等于N个策略看多时，输出为看多，否则为看空
@@ -720,6 +720,12 @@ class Operator:
         self.__Tp0 = False  # 是否允许T+0交易，True时允许T+0交易，否则不允许
         # 交易策略属性：
         # 对象的timings属性和timing_types属性都是列表，包含若干策略而不是一个策略
+        if selecting_types is None:
+            selecting_types = ['simple']
+        if timing_types is None:
+            timing_types = ['simple']
+        if ricon_types is None:
+            ricon_types = ['none']
         self.__timing_types = []
         self.__timing = []
         self.__timing_blender = 'pos-1'  # 默认的择时策略混合方式

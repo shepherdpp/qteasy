@@ -8,6 +8,7 @@ import datetime as dt
 
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
 # TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
+# TODO: 以tushare为基础定义历史数据公共函数库
 
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'
@@ -19,17 +20,21 @@ class History:
     # 不同类型的数据
     __intervals = {'d': 'daily', 'w': 'weekly', '30': '30min', '15': '15min'}
 
+    PRICE_TYPES = ['close',
+                   'open',
+                   'high',
+                   'low',
+                   'volume',
+                   'value']
+
     def __init__(self):
         # 可用的历史数据通过extract方法存储到extract属性中
         # 所有数据通过整理后存储在数据仓库中 warehouse
         # 在磁盘上可以同时保存多个不同的数据仓库，数据仓库必须打开后才能导出数据，同时只能打开一个数据仓库 
         # 每个数据仓库就是一张数据表，包含所有股票在一定历史时期内的一种特定的数据类型，如5分钟开盘价
         # 以上描述为第一个版本的数据组织方式，以后可以考虑采用数据库来组织数据
-        import pandas as pd
-        import numpy as np
-        import datetime as dt
-        from datetime import datetime
         # 对象属性：
+
         self.days_work = [1, 2, 3, 4, 5]  # 每周工作日
         self.__warehouse = pd.DataFrame()  # 打开的warehouse
         self.__open_wh_file = ''  #
@@ -39,6 +44,13 @@ class History:
         self.__warehouse_is_open = False
         self.__extract = pd.DataFrame()
         self.__extracted = False
+
+        # =========================
+        # set up tushare token and account
+        # =========================
+        token = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
+        self.ts_pro = ts.pro_api(token)
+
 
     # 以下为只读对象属性
     @property
@@ -72,7 +84,43 @@ class History:
     # 对象方法：
     def hist_list(self, shares=None, start=None, end=None, freq=None):
         # 提取一张新的数据表
-        pass
+        raise NotImplementedError
+
+    # ==================
+    # Historical Utility functions based on tushare
+    # ==================
+
+    def get_hist_rehab(self, share:str,
+                       start:str,
+                       end:str,
+                       price_type:str = 'close',
+                       asset_type:str = 'E',
+                       adj:str='None',
+                       freq:str='d',
+                       ma:list=None):
+        """ get historical prices with rehabilitation rights
+            获取指数或股票的复权历史价格
+
+        input:
+            :param share:
+            :param start:
+            :param end:
+            :param asset_type:
+            :param adj:
+            :param freq:
+            :param ma:
+        return:
+
+        """
+
+        assert isinstance(share, str), 'share code should be a string'
+        assert price_type in PRICE_TYPES, 'price types should be one of the predefined types'
+        res = ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq)
+        col_to_remove = list(col for col in res.columns if not col in price_type)
+        res.drop(columns=col_to_remove, inline=True)
+        assert isinstance(res, pd.DataFrame)
+        return res
+
 
     def info(self):
         # 打印当前数据仓库的关键信息
@@ -101,7 +149,7 @@ class History:
 
     def warehouse_new(self, code, price_type, hist_data):
         # 读取磁盘上现有的数据，并生成一个数据仓库
-        pass
+        raise NotImplementedError
 
     def warehouse_open(self, price_type='close', interval='d'):
         # 打开一个新的数据仓库，关闭并存储之前打开的那一个

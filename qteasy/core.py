@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import itertools
-from utilfuncs import *
+from qteasy.utilfuncs import *
 
 
 class Log:
@@ -229,10 +229,8 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
         :type visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
                             为True时将数据填充到整个历史区间，并用图表输出
         :type op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
-        :type rate_slipery: float
-        :type rate_fee: float
-        :type moq: float
-        :type rate_impact: float
+        :type rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
+        :type moq: float：每次交易的最小份额
 
     output：=====
         Value_history：包含交易结果及资产总额的历史清单

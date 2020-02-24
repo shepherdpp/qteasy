@@ -1,1 +1,5 @@
+$cat gitignore
 
+# ignore all the informational hidden folders
+/.git
+/.idea
