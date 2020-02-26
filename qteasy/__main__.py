@@ -12,7 +12,7 @@ if __name__ == '__main__':
     assert np.allclose(res, target), 'there\'s something wrong with unfiy function'
 
     h = History()
-    op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
     op.info()
 
     d = pd.read_csv('000300_I_N.txt', index_col='date')
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     timing_pars4 = (131, 27)
     op.set_blender('timing', 'pos-1')
     op.set_parameter('t-0', pars=timing_pars1)
-    op.set_parameter('t-1', pars=timing_pars3)
+    #op.set_parameter('t-1', pars=timing_pars3)
     # op.set_parameter('t-2', pars = timing_pars4)
     # op.set_parameter('t-3', pars = timing_pars1)
     op.set_parameter('r-0', pars=(8, -0.1312))
