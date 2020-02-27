@@ -88,40 +88,89 @@ class Timing(Strategy):
     __mataclass__ = ABCMeta
     # Strategy主类共有的属性
     _stg_type = 'timing'
+    data_freq = 'd'
+    window_length = 270
+    data_types = ['close']
+
+    def __init__(self):
+        super().__init__()
 
     ###################
     # 以下是本类型strategy对象的公共方法和抽象方法
 
     @abstractmethod
-    def _generate_one(self, hist_price, params):
+    def _generate_one(self, hist_pack, params):
         """抽象方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号"""
-        pass
+        raise NotImplementedError
 
-    def generate(self, hist_price):
+    def _generate_over(self, hist_slice:np.ndarray, pars:tuple):
+        """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开
+            对于滚动展开后的矩阵，使用map函数循环调用generate_one函数生成整个历史区间的
+            循环回测结果（结果为1维向量， 长度为hist_length - window_length + 1）
+
+        input:
+            :param hist_price:
+        :return:
+        """
+        # 定位数据中的所有nan值，由于所有数据针对同一股票，因此nan值位置一致
+        # 需要区别2D与1D数据，分别进行处理
+        if len(hist_slice.shape) == 2:
+            drop = ~np.isnan(hist_slice[:, 0])
+        else:
+            drop = ~np.isnan(hist_slice)
+        # 生成输出值一维向量
+        cat = np.zeros(len(hist_slice) - self.window_length + 1)
+        hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
+        loop_count = len(hist_nonan) - self.window_length + 1
+        if loop_count < 1:
+            return cat
+
+        # 开始进行历史数据的滚动真开
+        # print(loop_count, *hist_nonan[:self.window_length].shape)
+        hist_pack = np.zeros((loop_count, *hist_nonan[:self.window_length].shape))
+        for i in range(loop_count):
+            hist_pack[i] = hist_nonan[i:i + self.window_length]
+        # 滚动展开完成，形成一个新的3D或2D矩阵
+        # 开始将参数应用到策略实施函数generate中
+        # print(pars)
+        par_list = [pars] * loop_count
+        res = np.array(list(map(self._generate_one,
+                                hist_pack,
+                                par_list)))
+        # TODO: 实际的输出长度应该只有hist_length-window_length+1, 这里为了配合Select和Ricon
+        # 补充了长度到hist_length, 修改Selecting和Ricon后应该把这里改回正确长度
+        capping = np.zeros(self.window_length - 1)
+        cat[drop[self.window_length - 1:]] = res
+        cat = np.concatenate((capping, cat), 0)
+        return cat
+
+    def generate(self, hist_data):
         """基于_generate_one方法生成整个股票价格序列集合的多空状态矩阵.
 
         本方法基于np的ndarray计算
-        输入：   hist_extract：DataFrame，历史价格数据，需要被转化为ndarray
-        输出：=====
+        input：
+            param: hist_extract：DataFrame，历史价格数据，需要被转化为ndarray
+        return：=====
         """
-        assert isinstance(hist_price, np.ndarray), 'Type Error: input should be Ndarray'
+        assert type(hist_data) is np.ndarray, 'Type Error: input should be Ndarray'
+        assert len(hist_data) >= self.window_length, 'DataError: Not enough history data!'
         pars = self._pars
-
-        # assert pars.keys() = hist_extract.columns
-        if type(pars) is dict:
-            # 调用_generate_one方法计算单个个股的多空状态，并组合起来
-            # print('input Pars is dict type, different parameters shall be mapped within data')
-            par_list = list(pars.values())
-            # print('values of pars are listed:', par_list)
-            res = np.array(list(map(self._generate_one, hist_price.T, par_list))).T
+        if isinstance(pars, dict):
+            par_list = pars.values()
         else:
-            # 当参数不是字典状态时，直接使用pars作为参数
-            res = np.apply_along_axis(self._generate_one, 0, hist_price, pars)
-
+            par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
+        # 调用_generate_one方法计算单个个股的多空状态，并组合起来,3D与2D数据处理方式不同
+        if len(hist_data) == 3:
+            res = np.array(list(map(self._generate_over,
+                                    hist_data,
+                                    par_list)))
+        else:
+            res = np.array(list(map(self._generate_over,
+                                    hist_data.T,
+                                    par_list))).T
         # 将完成的数据组合成DataFrame
         # print('generate result of np timing generate', res)
         return res
-
 
 class TimingSimple(Timing):
     """简单择时策略，返回整个历史周期上的恒定多头状态"""
@@ -129,9 +178,9 @@ class TimingSimple(Timing):
     __stg_text = 'Simple Timing strategy, return constant long position on the whole history'
 
     def _generate_one(self, hist_price, params):
-        return hist_price.clip(1, 1)
+        return hist_price.clip(1, 1)[-1]
 
-
+# TODO 更新Crossline策略函数
 class TimingCrossline(Timing):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
@@ -170,7 +219,7 @@ class TimingCrossline(Timing):
         # 重新恢复nan值可以使用pd.Series也可以使用pd.reindex，可以测试哪一个速度更快，选择速度更快的一个
         return cat  # 返回时填充日期序列恢复无效值
 
-
+# TODO 更新MACD策略函数
 class TimingMACD(Timing):
     """MACD择时策略类，继承自Timing类，重写_generate方法'
 
@@ -185,6 +234,7 @@ class TimingMACD(Timing):
     _stg_name = 'MACD STRATEGY'
     _stg_text = 'MACD strategy, determin long/short position according to differences of exponential weighted moving average prices'
 
+    # TODO 吧_generate_one() 函数名称改为_realize()
     def _generate_one(self, hist_price, params):
         """生成单只个股的择时多空信号.
 
@@ -223,16 +273,18 @@ class TimingDMA(Timing):
     _par_bounds_or_enums = [(10, 250), (10, 250), (10, 250)]
     _stg_name = 'quick-DMA STRATEGY'
     _stg_text = 'np based DMA strategy, determin long/short position according to differences of moving average prices'
+    data_freq = 'd'
+    window_length = 270
+    data_types = ['close']
 
     def _generate_one(self, hist_price, params):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
         s, l, d = params
         # print 'Generating Quick DMA Long short Mask with parameters', params
-        drop = ~np.isnan(hist_price)
+
         cat = np.zeros_like(hist_price)
-        h_ = hist_price[drop]
         # 计算指数的移动平均价格
-        DMA = ma(h_, s) - ma(h_, l)
+        DMA = ma(hist_price, s) - ma(hist_price, l)
         AMA = DMA.copy()
         AMA[~np.isnan(DMA)] = ma(DMA[~np.isnan(DMA)], d)
         # print('qDMA generated DMA and AMA signal:', DMA.size, DMA, '\n', AMA.size, AMA)
@@ -240,11 +292,11 @@ class TimingDMA(Timing):
         # 1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
         # 2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
         # 3， DMA与股价发生背离时的交叉信号，可信度较高
-        cat[drop] = np.where(DMA > AMA, 1, 0)
+        cat = np.where(DMA > AMA, 1, 0)
         # print('qDMA generate category data with as type', cat.size, cat)
-        return cat
+        return cat[-1]
 
-
+# TODO 更新TRIX策略函数
 class TimingTRIX(Timing):
     """TRIX择时策略，继承自Timing类，重写__generate方法"""
     # 运用TRIX均线策略，在idx历史序列上生成交易信号

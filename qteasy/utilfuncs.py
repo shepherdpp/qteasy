@@ -19,7 +19,7 @@ def ema(arr, span: int = None):
 
     return EMA(arr, span)
 
-def ma(arr, window: int > 1):
+def ma(arr, window: int):
     """Simple Moving Average
        简单的移动平均值计算
 
