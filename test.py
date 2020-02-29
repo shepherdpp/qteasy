@@ -1,5 +1,6 @@
 import unittest
 import qteasy as qt
+import pandas as pd
 import numpy as np
 import itertools
 
@@ -103,6 +104,17 @@ class TestSpace(unittest.TestCase):
         pass
 
 
+    def test_operator(self) -> object:
+        """
+
+        :return:
+        """
+        d = pd.read_csv('000300_I_N.txt', index_col='date')
+        d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
+        d.drop(labels=['open', 'high', 'low', 'volume', 'amount'], axis=1, inplace=True)
+        d.columns = ['000300-I']
+        d = d[::-1]
+        d.head()
 
 if __name__ == '__main__':
     unittest.main()

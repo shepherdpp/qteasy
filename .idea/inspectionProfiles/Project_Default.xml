@@ -5,6 +5,7 @@
       <option name="ignoredIdentifiers">
         <list>
           <option value="float.cumsum" />
+          <option value="talib.*" />
         </list>
       </option>
     </inspection_tool>
