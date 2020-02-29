@@ -82,7 +82,7 @@ class Strategy:
         """策略类的基本抽象方法，接受输入参数并输出操作清单"""
         pass
 
-
+# TODO: 以后可以考虑把Timing改为Alpha Model， Selecting改为Portfolio Manager， Ricon改为Risk Control
 class Timing(Strategy):
     """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的择时类调用"""
     __mataclass__ = ABCMeta
@@ -119,20 +119,18 @@ class Timing(Strategy):
         else:
             drop = ~np.isnan(hist_slice)
         # 生成输出值一维向量
-        cat = np.zeros(len(hist_slice) - self.window_length + 1)
+        cat = np.zeros_like(hist_slice)
         hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
         if loop_count < 1:
             return cat
 
         # 开始进行历史数据的滚动真开
-        # print(loop_count, *hist_nonan[:self.window_length].shape)
         hist_pack = np.zeros((loop_count, *hist_nonan[:self.window_length].shape))
         for i in range(loop_count):
             hist_pack[i] = hist_nonan[i:i + self.window_length]
         # 滚动展开完成，形成一个新的3D或2D矩阵
         # 开始将参数应用到策略实施函数generate中
-        # print(pars)
         par_list = [pars] * loop_count
         res = np.array(list(map(self._generate_one,
                                 hist_pack,
@@ -140,8 +138,8 @@ class Timing(Strategy):
         # TODO: 实际的输出长度应该只有hist_length-window_length+1, 这里为了配合Select和Ricon
         # 补充了长度到hist_length, 修改Selecting和Ricon后应该把这里改回正确长度
         capping = np.zeros(self.window_length - 1)
-        cat[drop[self.window_length - 1:]] = res
-        cat = np.concatenate((capping, cat), 0)
+        res = np.concatenate((capping, res), 0)
+        cat[drop] = res
         return cat
 
     def generate(self, hist_data):
@@ -194,6 +192,9 @@ class TimingCrossline(Timing):
     _par_bounds_or_enums = [(10, 250), (10, 250), (10, 250), ('buy', 'sell')]
     _stg_name = 'CROSSLINE STRATEGY'
     _stg_text = 'Moving average crossline strategy, determin long/short position according to the cross point of long and short term moving average prices'
+    data_freq = 'd'
+    window_length = 270
+    data_types = ['close']
 
     def _generate_one(self, hist_price, params):
         """crossline策略使用四个参数：
@@ -233,6 +234,9 @@ class TimingMACD(Timing):
     _par_bounds_or_enums = [(10, 250), (10, 250), (10, 250)]
     _stg_name = 'MACD STRATEGY'
     _stg_text = 'MACD strategy, determin long/short position according to differences of exponential weighted moving average prices'
+    data_freq = 'd'
+    window_length = 270
+    data_types = ['close']
 
     # TODO 吧_generate_one() 函数名称改为_realize()
     def _generate_one(self, hist_price, params):
@@ -249,20 +253,15 @@ class TimingMACD(Timing):
         s, l, m = params
         # print 'Generating MACD Long short Mask with parameters', params
         # h_ = hist_price.dropna() # 仅针对非nan值计算，忽略股票停牌时期
-        cut = max(s, l) + m
-        drop = ~np.isnan(hist_price)
-        cat = np.zeros_like(hist_price)
-        h_ = hist_price[drop]
 
         # 计算指数的指数移动平均价格
-        DIFF = ema(h_, s) - ema(h_, l)
+        DIFF = ema(hist_price, s) - ema(hist_price, l)
         DEA = ema(DIFF, m)
         MACD = 2 * (DIFF - DEA)
 
         # 生成MACD多空判断：
         # 1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = DIFF - DEA
-        cat[drop] = np.where(MACD > 0, 1, 0)
-        cat[0:cut] = np.nan
+        cat = np.where(MACD > 0, 1, 0)
         return cat
 
 
@@ -282,7 +281,6 @@ class TimingDMA(Timing):
         s, l, d = params
         # print 'Generating Quick DMA Long short Mask with parameters', params
 
-        cat = np.zeros_like(hist_price)
         # 计算指数的移动平均价格
         DMA = ma(hist_price, s) - ma(hist_price, l)
         AMA = DMA.copy()
@@ -308,6 +306,9 @@ class TimingTRIX(Timing):
     _par_bounds_or_enums = [(10, 250), (10, 250)]
     _stg_name = 'TRIX STRATEGY'
     _stg_text = 'TRIX strategy, determin long/short position according to triple exponential weighted moving average prices'
+    data_freq = 'd'
+    window_length = 270
+    data_types = ['close']
 
     def _generate_one(self, hist_price, params):
         """# 参数:
@@ -317,11 +318,7 @@ class TimingTRIX(Timing):
 
         """
         s, m = params
-        cut = s + m
         # print 'Generating TRIX Long short Mask with parameters', params
-        drop = ~np.isnan(hist_price)
-        cat = np.zeros_like(hist_price)
-        h_ = hist_price[drop]
 
         # 计算指数的指数移动平均价格
         TR = ema(ema(ema(h_, s), s), s)
@@ -331,8 +328,7 @@ class TimingTRIX(Timing):
         # 生成TRIX多空判断：
         # 1， TRIX位于MATRIX上方时，长期多头状态, signal = -1
         # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 1
-        cat[drop] = np.where(TRIX > MATRIX, 1, 0)
-        cat[0: cut] = np.nan
+        cat = np.where(TRIX > MATRIX, 1, 0)
         return cat  # 返回时填充日期序列恢复nan值
 
 
