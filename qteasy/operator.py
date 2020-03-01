@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from qteasy.utilfuncs import ma, ema
+from qteasy.utilfuncs import sma, ema, trix, macd
 from abc import abstractmethod, ABCMeta
 
 class Strategy:
@@ -170,6 +170,7 @@ class Timing(Strategy):
         # print('generate result of np timing generate', res)
         return res
 
+
 class TimingSimple(Timing):
     """简单择时策略，返回整个历史周期上的恒定多头状态"""
     __stg_name = 'SIMPLE TIMING STRATEGY'
@@ -178,7 +179,7 @@ class TimingSimple(Timing):
     def _generate_one(self, hist_price, params):
         return hist_price.clip(1, 1)[-1]
 
-# TODO 更新Crossline策略函数
+
 class TimingCrossline(Timing):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
@@ -189,7 +190,7 @@ class TimingCrossline(Timing):
     # 重写策略参数相关信息
     _par_count = 4
     _par_types = ['discr', 'discr', 'conti', 'enum']
-    _par_bounds_or_enums = [(10, 250), (10, 250), (10, 250), ('buy', 'sell')]
+    _par_bounds_or_enums = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
     _stg_name = 'CROSSLINE STRATEGY'
     _stg_text = 'Moving average crossline strategy, determin long/short position according to the cross point of long and short term moving average prices'
     data_freq = 'd'
@@ -203,24 +204,20 @@ class TimingCrossline(Timing):
         # 计算均线前排除所有的无效值，无效值前后价格处理为连续价格，返回时使用pd.Series重新填充日期序列恢复
         # 去掉的无效值
         # print 'Generating Crossline Long short Mask with parameters', params
-        drop = ~np.isnan(hist_price)
-        cat = np.zeros_like(hist_price)
-        h_ = hist_price[drop]  # 仅针对非nan值计算，忽略股票停牌时期
-        # 计算长短均线之间的距离
-        diff = ma(h_, l) - ma(h_, s)
-        # TODO: 可以改成np.digitize()来完成，效率更高 -- 测试结果表明np.digitize速度甚至稍慢于两个where
-        cat[drop] = np.where(diff < -m, 1, np.where(diff >= m, -1, 0))
-        # TODO: 处理hesitate参数 &&&未完成代码&&&
-        if hesitate == 'buy':
-            pass
-        elif hesitate == 'sell':
-            pass
-        else:
-            pass
-        # 重新恢复nan值可以使用pd.Series也可以使用pd.reindex，可以测试哪一个速度更快，选择速度更快的一个
-        return cat  # 返回时填充日期序列恢复无效值
 
-# TODO 更新MACD策略函数
+        # 计算长短均线之间的距离
+        diff = sma(hist_price, l) - sma(hist_price, s)
+        # 根据观望模式在不同的点位产生Long/short标记
+        if hesitate == 'buy':
+            cat = np.where(diff < -m, 1, 0)
+        elif hesitate == 'sell':
+            cat = np.where(diff < m, 1, 0)
+        else: # hesitate == 'none'
+            cat = np.where(diff < 0, 1, 0)
+        # 重新恢复nan值可以使用pd.Series也可以使用pd.reindex，可以测试哪一个速度更快，选择速度更快的一个
+        return cat[-1]  # 返回时填充日期序列恢复无效值
+
+
 class TimingMACD(Timing):
     """MACD择时策略类，继承自Timing类，重写_generate方法'
 
@@ -258,11 +255,12 @@ class TimingMACD(Timing):
         DIFF = ema(hist_price, s) - ema(hist_price, l)
         DEA = ema(DIFF, m)
         MACD = 2 * (DIFF - DEA)
+        #DIFF, DEA, MACD = macd(hist_price, s, l, m)
 
         # 生成MACD多空判断：
         # 1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = DIFF - DEA
         cat = np.where(MACD > 0, 1, 0)
-        return cat
+        return cat[-1]
 
 
 class TimingDMA(Timing):
@@ -282,9 +280,9 @@ class TimingDMA(Timing):
         # print 'Generating Quick DMA Long short Mask with parameters', params
 
         # 计算指数的移动平均价格
-        DMA = ma(hist_price, s) - ma(hist_price, l)
+        DMA = sma(hist_price, s) - sma(hist_price, l)
         AMA = DMA.copy()
-        AMA[~np.isnan(DMA)] = ma(DMA[~np.isnan(DMA)], d)
+        AMA[~np.isnan(DMA)] = sma(DMA[~np.isnan(DMA)], d)
         # print('qDMA generated DMA and AMA signal:', DMA.size, DMA, '\n', AMA.size, AMA)
         # 生成DMA多空判断：
         # 1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
@@ -294,7 +292,7 @@ class TimingDMA(Timing):
         # print('qDMA generate category data with as type', cat.size, cat)
         return cat[-1]
 
-# TODO 更新TRIX策略函数
+
 class TimingTRIX(Timing):
     """TRIX择时策略，继承自Timing类，重写__generate方法"""
     # 运用TRIX均线策略，在idx历史序列上生成交易信号
@@ -321,15 +319,15 @@ class TimingTRIX(Timing):
         # print 'Generating TRIX Long short Mask with parameters', params
 
         # 计算指数的指数移动平均价格
-        TR = ema(ema(ema(h_, s), s), s)
-        TRIX = (TR - np.roll(TR, 1)) / np.roll(TR, 1) * 100
-        MATRIX = ma(TRIX, m)
+
+        TRIX = trix(hist_price, s)
+        MATRIX = sma(TRIX, m)
 
         # 生成TRIX多空判断：
         # 1， TRIX位于MATRIX上方时，长期多头状态, signal = -1
         # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 1
         cat = np.where(TRIX > MATRIX, 1, 0)
-        return cat  # 返回时填充日期序列恢复nan值
+        return cat[-1]  # 返回时填充日期序列恢复nan值
 
 
 class Selecting(Strategy):
@@ -908,7 +906,7 @@ class Operator:
             print('blender_type should be a string')
         pass
 
-    def set_opt_par(self, opt_par):
+    def _set_opt_par(self, opt_par):
         # 将输入的opt参数切片后传入stg的参数中
         s = 0
         k = 0

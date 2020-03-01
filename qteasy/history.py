@@ -7,8 +7,158 @@ from datetime import datetime
 import datetime as dt
 
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
+# TODO: 增加HistData类，一个以Ndarray为基础的三维历史数据数组
 # TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
 # TODO: 以tushare为基础定义历史数据公共函数库
+
+
+class HistoryPanel():
+    """The major data structure to be used for the qteasy quants system.
+
+    data structure and class containing multiple types of array-like data framework
+    axis 1: levels / shares
+    axis 2: rows / index / hdates
+    axis 3: columns / htypes
+    """
+
+    def __init__(self, values, levels=None, rows=None, columns=None):
+        """
+
+        :param values:
+        :param levels:
+        :param rows:
+        :param columns:
+        """
+        assert type(values) is np.ndarray, 'input value type should be numpy ndarray'
+        assert len(values.shape) <= 3, 'input array should be equal to or less than 3 diensions'
+
+        if len(values.shape) == 1:
+            values = values.reshape(1, 1, values.shape[0])
+        elif len(values.shape) == 2:
+            values = values.reshape(1, *values.shape)
+        self._l_count, self._r_count, self._c_count = values.shape
+        self._values = values
+
+        if levels is None:
+            levels = range(self._l_count)
+        assert len(levels) == self._l_count, 'length of level list does not fit the shape of input values!'
+        self._levels = dict(zip(levels, range(self._l_count)))
+
+        if rows is None:
+            rows = range(self._r_count)
+        assert len(rows) == self._r_count, 'length of row list does not fit the shape of input values'
+        self._rows = dict(zip(rows, range(self._r_count)))
+
+        if columns is None:
+            columns = range(self._c_count)
+        else:
+            columns = list(map(str, columns))
+            columns = list(map(str.lower, columns))
+        assert len(columns) == self._c_count, 'length of column list does not fit the shape of input values'
+        self._columns = dict(zip(columns, range(self._c_count)))
+
+    @property
+    def values(self):
+        return self._values
+
+    @property
+    def levels(self):
+        return self._levels
+
+    @property
+    def shares(self):
+        return self._levels
+
+    @property
+    def index(self):
+        return self._rows
+
+    @property
+    def rows(self):
+        return self._rows
+
+    @property
+    def hdates(self):
+        return self._rows
+
+    @property
+    def htypes(self):
+        return self._columns
+
+    @property
+    def columns(self):
+        return self._columns
+
+    @property
+    def shape(self):
+        return self._l_count, self._r_count, self._c_count
+
+    def __getitem__(self, keys=None):
+        """获取历史数据的一个切片，给定一个type、日期或股票代码
+
+            contains three slice objects: htypes, shares, and hdates,
+
+        input：
+            :param keys: list/tuple/slice历史数据的类型名，为空时给出所有类型的数据
+            参数row，str或pd.Timestamp，optional 历史数据的日期，为空时给出所有日期的数据
+            参数share，str，optional：股票代码，为空时给出所有股票的数据
+        输出：
+            self.value的一个切片
+        """
+
+        key_is_tuple = isinstance(keys, tuple)
+        key_is_list = isinstance(keys, list)
+        key_is_slice = isinstance(keys, slice)
+        key_is_string = isinstance(keys, str)
+        key_is_number = isinstance(keys, int)
+
+        # first make sure that htypes, shares, and hdates are either slice or list
+        if key_is_tuple:
+            if len(keys) == 2:
+                htype_slice, share_slice = keys
+                hdate_slice = slice(None, None, None)
+            elif len(keys) == 3:
+                htype_slice, share_slice, hdate_slice = keys
+        elif key_is_slice or key_is_list or key_is_string or key_is_number:  # keys is a slice or list
+            htype_slice = keys
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
+        else:
+            raise TypeError
+
+        # check and convert each of the slice segments to the right type: a slice or \
+        # a list of indices
+        htype_slice = _make_list_or_slice(htype_slice, self.htypes)
+        share_slice = _make_list_or_slice(share_slice, self.shares)
+        hdate_slice = _make_list_or_slice(hdate_slice, self.hdates)
+
+        print('shares is ', share_slice, '\nhtypes is ', htype_slice,
+              '\nhdates is ', hdate_slice)
+        return self.values[share_slice, hdate_slice, htype_slice]
+
+
+def _make_list_or_slice(item, d):
+    """
+
+    :param item: slice or int/str or list of int/string
+    :param d: a dictionary that contains strings as keys and integer as values
+    :return:
+        a list of slice that can be used to slice the Historical Data Object
+    """
+    if isinstance(item, slice):
+        return item  # slice object can be directly used
+    elif isinstance(item, int):  # number should be converted to a list containint itself
+        return [item]
+    elif isinstance(item, str):  # string should be converted to numbers
+        return [d[item]]
+    elif isinstance(item, list):
+        res = []
+        for i in item:  # convert all items into a number:
+            res.extend(make_list_or_slice(i, d))
+        return res
+    else:
+        return None
+
 
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'

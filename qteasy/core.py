@@ -426,7 +426,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
     print('Searching Starts...')
 
     for par in it:
-        op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
+        op._set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
         # 调试代码
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
@@ -483,7 +483,7 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
     print('Searching Starts...')
 
     for par in it:
-        op.set_opt_par(par)  # 设置timing参数
+        op._set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
         looped_val = apply_loop(op_list=op.create(hist),
                                 history_list=hist, init_cash=100000,
@@ -543,7 +543,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
             for par in it:
                 # 以下所有函数都是循环内函数，需要进行提速优化
                 # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
-                op.set_opt_par(par)  # 设置择时参数
+                op._set_opt_par(par)  # 设置择时参数
                 # 声称交易清淡病进行模拟交易生成交易记录
                 looped_val = apply_loop(op_list=op.create(hist),
                                         history_list=hist, init_cash=100000,
@@ -592,11 +592,14 @@ pool.perfs 输出的参数组的评价分数
 """
     raise NotImplementedError
 
+
 def _eval_alpha(looped_val):
     raise NotImplementedError
 
+
 def _eval_sharp(looped_val):
     raise NotImplementedError
+
 
 def _eval_roi(looped_val):
     """评价函数 RoI 收益率'
@@ -610,6 +613,7 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
 
 """
     return perf
+
 
 def _eval_FV(looped_val):
     """评价函数 Future Value 终值评价
@@ -630,6 +634,7 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
     else:
         return -np.inf
 
+
 def _eval(looped_val, method):
     """评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。
 
@@ -647,6 +652,7 @@ def _eval(looped_val, method):
         return _eval_sharp(looped_val)
     elif method.upper() == 'ALPHA':
         return _eval_alpha(looped_val)
+
 
 def _space_around_centre(space, centre, radius, ignore_enums=True):
     """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间"""
@@ -1017,6 +1023,3 @@ class Axis:
     def __extract_enum_random(self, qty):
         count = self.count
         return self.__enum_val[np.random.choice(count, size=qty)]
-
-
-# TODO： 以下类放入Strategy和Operator模块中

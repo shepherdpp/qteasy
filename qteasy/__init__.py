@@ -2,6 +2,7 @@
 
 from .core import *
 from .history import *
+from .operator import *
 
 print ('pandas version:', pd.__version__)
 print ('numpy version:', np.__version__)

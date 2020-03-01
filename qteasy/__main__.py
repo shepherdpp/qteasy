@@ -5,14 +5,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    l1 = np.array([[3, 2, 5], [5, 3, 2]])
-    res = unify(l1)
-    target = np.array([[0.3, 0.2, 0.5], [0.5, 0.3, 0.2]])
-    print('test result of unify:',l1, res)
-    assert np.allclose(res, target), 'there\'s something wrong with unfiy function'
-
-    h = History()
-    op = Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['MACD'], selecting_types=['simple'], ricon_types=['urgent'])
     op.info()
 
     d = pd.read_csv('000300_I_N.txt', index_col='date')
@@ -41,10 +34,10 @@ if __name__ == '__main__':
     timing_pars2 = {'600037': (177, 248, 244),
                     '000005': (86, 198, 58)}
     timing_pars3 = (72, 130, 133)
-    timing_pars4 = (131, 27)
+    timing_pars4 = (31, 17)
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars=timing_pars1)
-    #op.set_parameter('t-1', pars=timing_pars3)
+    op.set_parameter('t-0', pars = timing_pars3)
+    # op.set_parameter('t-1', pars = timing_pars3)
     # op.set_parameter('t-2', pars = timing_pars4)
     # op.set_parameter('t-3', pars = timing_pars1)
     op.set_parameter('r-0', pars=(8, -0.1312))
