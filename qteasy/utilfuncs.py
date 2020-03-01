@@ -4,10 +4,22 @@ from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOIN
     SMA, T3, TEMA, TRIMA, WMA, ADX, ADXR, APO, BOP, CCI, CMO, DX, MACD, MACDEXT, AROON, AROONOSC, \
     MACDFIX, MFI, MINUS_DI, MINUS_DM, MOM, PLUS_DI, PLUS_DM, PPO, ROC, ROCP, ROCR, ROCR100, RSI, STOCH, \
     STOCHF, STOCHRSI, TRIX, ULTOSC, WILLR, AD, ADOSC, OBV, ATR, NATR, TRANGE, AVGPRICE, MEDPRICE, TYPPRICE, \
-    WCLPRICE
+    WCLPRICE, HT_DCPERIOD, HT_DCPHASE, HT_PHASOR, HT_SINE, HT_TRENDMODE, CDL2CROWS, CDL3BLACKCROWS, \
+    CDL3INSIDE, CDL3LINESTRIKE, CDL3OUTSIDE, CDL3STARSINSOUTH, CDL3WHITESOLDIERS, CDLABANDONEDBABY, \
+    CDLADVANCEBLOCK, CDLBELTHOLD, CDLBREAKAWAY, CDLCLOSINGMARUBOZU, CDLCONCEALBABYSWALL, CDLCOUNTERATTACK, \
+    CDLDARKCLOUDCOVER, CDLDOJI, CDLDOJISTAR, CDLDRAGONFLYDOJI, CDLENGULFING, CDLEVENINGDOJISTAR, CDLEVENINGSTAR, \
+    CDLGAPSIDESIDEWHITE, CDLGRAVESTONEDOJI, CDLHAMMER, CDLHANGINGMAN, CDLHARAMI, CDLHARAMICROSS, CDLHIGHWAVE, \
+    CDLHIKKAKE, CDLHIKKAKEMOD, CDLHOMINGPIGEON, CDLIDENTICAL3CROWS, CDLINNECK, CDLINVERTEDHAMMER, CDLKICKING, \
+    CDLKICKINGBYLENGTH, CDLLADDERBOTTOM, CDLLONGLEGGEDDOJI, CDLLONGLINE, CDLMARUBOZU, CDLMATCHINGLOW, CDLMATHOLD, \
+    CDLMORNINGDOJISTAR, CDLMORNINGSTAR, CDLONNECK, CDLPIERCING, CDLRICKSHAWMAN, CDLRISEFALL3METHODS, \
+    CDLSEPARATINGLINES, CDLSHOOTINGSTAR, CDLSHORTLINE, CDLSPINNINGTOP, CDLSTALLEDPATTERN, CDLSTICKSANDWICH, \
+    CDLTAKURI, CDLTASUKIGAP, CDLTHRUSTING, CDLTRISTAR, CDLUNIQUE3RIVER, CDLUPSIDEGAP2CROWS, CDLXSIDEGAP3METHODS, \
+    BETA, CORREL, LINEARREG, LINEARREG_ANGLE, LINEARREG_INTERCEPT, LINEARREG_SLOPE, STDDEV, TSF, VAR, ACOS, ASIN, \
+    ATAN, CEIL, COS, COSH, EXP, FLOOR, LN, LOG10, SIN, SINH, SQRT, TAN, TANH, ADD, DIV, MAX, MAXINDEX, MIN, MININDEX, \
+    MINMAX, MINMAXINDEX, MULT, SUB, SUM
 
 
-# TODO: 以talib为基础创建一个金融函数库
+# 以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数
 # ========================
 # Overlap Studies Functions 滚动窗口叠加算例函数
 
@@ -625,7 +637,7 @@ def obv(close, volume):
 
 
 # ===========================
-# Volume Indicators
+# Volatility Indicators
 
 
 def atr(high, low, close, timeperiod=14):
@@ -664,7 +676,7 @@ def trange(high, low, close):
 
 
 # ===========================
-# Volatility Indicators
+# Price Transform Functions
 
 
 def avgprice(opn, high, low, close):
@@ -709,3 +721,1178 @@ def wclprice(high, low, close):
     :return:
     """
     return WCLPRICE(high, low, close)
+
+
+# =====================================
+# Cycle Indicators
+
+
+def ht_dcperiod(close):
+    """Hilbert Transform - Dominant Cycle Period
+
+    :param close:
+    :return:
+    """
+    return HT_DCPERIOD(close)
+
+
+def ht_dcphase(close):
+    """Hilbert Transform - Dominant Cycle Phase
+
+    :param close:
+    :return:
+    """
+    return HT_DCPHASE(close)
+
+
+def ht_phasor(close):
+    """Hilbert Transform - Phasor Components
+
+    :param close:
+    :return:
+    inphase,
+    quadrature
+    """
+    return HT_PHASOR(close)
+
+
+def ht_sine(close):
+    """Hilbert Transform - SineWave
+
+    :param close:
+    :return:
+    """
+    return HT_SINE(close)
+
+
+def ht_trendmode(close):
+    """Hilbert Transform - Trend vs Cycle Mode
+
+    :param close:
+    :return:
+    """
+    return HT_TRENDMODE(close)
+
+
+# =================================================
+# Pattern Recognition
+
+
+def cdl2crows(opn, high, low, close):
+    """Two Crows
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL2CROWS(opn, high, low, close)
+
+
+def cdl3blackcrows(opn, high, low, close):
+    """Three Black Crows
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL3BLACKCROWS(opn, high, low, close)
+
+
+def cdl3inside(opn, high, low, close):
+    """Three Inside Up/Down
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL3INSIDE(opn, high, low, close)
+
+
+def cdl3linestrike(opn, high, low, close):
+    """Three-Line Strike
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL3LINESTRIKE(opn, high, low, close)
+
+
+def cdl3outside(opn, high, low, close):
+    """Three Outside Up/Down
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL3OUTSIDE(opn, high, low, close)
+
+
+def cdl3starsinsouth(opn, high, low, close):
+    """Three Stars In The South
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL3STARSINSOUTH(opn, high, low, close)
+
+
+def cdl3whitesoldiers(opn, high, low, close):
+    """Three Advancing White Soldiers
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDL3WHITESOLDIERS(opn, high, low, close)
+
+
+def cdlabandonedbaby(opn, high, low, close):
+    """Abandoned Baby
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLABANDONEDBABY(opn, high, low, close)
+
+
+def cdladvanceblock(opn, high, low, close):
+    """Advance Block
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLADVANCEBLOCK(opn, high, low, close)
+
+
+def cdlbelthold(opn, high, low, close):
+    """Belt-hold
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLBELTHOLD(opn, high, low, close)
+
+
+def cdlbreakaway(opn, high, low, close):
+    """Breakaway
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLBREAKAWAY(opn, high, low, close)
+
+
+def cdlclosingmarubozu(opn, high, low, close):
+    """Closing Marubozu
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLCLOSINGMARUBOZU(opn, high, low, close)
+
+
+def cdlconcealbabyswall(opn, high, low, close):
+    """Concealing Baby Swallow
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLCONCEALBABYSWALL(opn, high, low, close)
+
+
+def cdlcounterattack(opn, high, low, close):
+    """Counterattack
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLCOUNTERATTACK(opn, high, low, close)
+
+
+def cdldarkcloudcover(opn, high, low, close):
+    """Dark Cloud Cover
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLDARKCLOUDCOVER(opn, high, low, close)
+
+
+def cdldoji(opn, high, low, close):
+    """Doji
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLDOJI(opn, high, low, close)
+
+
+def cdldojistar(opn, high, low, close):
+    """Doji Star
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLDOJISTAR(opn, high, low, close)
+
+
+def cdldragonflydoji(opn, high, low, close):
+    """Dragonfly Doji
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLDRAGONFLYDOJI(opn, high, low, close)
+
+
+def cdlengulfing(opn, high, low, close):
+    """Engulfing Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLENGULFING(opn, high, low, close)
+
+
+def cdleveningdojistar(opn, high, low, close):
+    """Evening Doji Star
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLEVENINGDOJISTAR(opn, high, low, close)
+
+
+def cdleveningstar(opn, high, low, close):
+    """Evening Star
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLEVENINGSTAR(opn, high, low, close)
+
+
+def cdlgapsidesidewhite(opn, high, low, close):
+    """Up/Down-gap side-by-side white lines
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLGAPSIDESIDEWHITE(opn, high, low, close)
+
+
+def cdlgravestonedoji(opn, high, low, close):
+    """Gravestone Doji
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLGRAVESTONEDOJI(opn, high, low, close)
+
+
+def cdlhammer(opn, high, low, close):
+    """Hammer
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHAMMER(opn, high, low, close)
+
+
+def cdlhangingman(opn, high, low, close):
+    """Hanging Man
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHANGINGMAN(opn, high, low, close)
+
+
+def cdlharami(opn, high, low, close):
+    """Harami Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHARAMI(opn, high, low, close)
+
+
+def cdlharamicross(opn, high, low, close):
+    """Harami Cross Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHARAMICROSS(opn, high, low, close)
+
+
+def cdlhighwave(opn, high, low, close):
+    """High-Wave Candle
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHIGHWAVE(opn, high, low, close)
+
+
+def cdlhikkake(opn, high, low, close):
+    """Hikkake Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHIKKAKE(opn, high, low, close)
+
+
+def cdlhikkakemod(opn, high, low, close):
+    """Modified Hikkake Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHIKKAKEMOD(opn, high, low, close)
+
+
+def cdlhomingpigeon(opn, high, low, close):
+    """Homing Pigeon
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLHOMINGPIGEON(opn, high, low, close)
+
+
+def cdlidentical3crows(opn, high, low, close):
+    """Identical Three Crows
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLIDENTICAL3CROWS(opn, high, low, close)
+
+
+def cdlinneck(opn, high, low, close):
+    """In-Neck Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLINNECK(opn, high, low, close)
+
+
+def cdlinvertedhammer(opn, high, low, close):
+    """Inverted Hammer
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLINVERTEDHAMMER(opn, high, low, close)
+
+
+def cdlkicking(opn, high, low, close):
+    """Kicking
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLKICKING(opn, high, low, close)
+
+
+def cdlkickingbylength(opn, high, low, close):
+    """Kicking - bull/bear determined by the longer marubozu
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLKICKINGBYLENGTH(opn, high, low, close)
+
+
+def cdlladderbottom(opn, high, low, close):
+    """Ladder Bottom
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLLADDERBOTTOM(opn, high, low, close)
+
+
+def cdllongleggeddoji(opn, high, low, close):
+    """Long Legged Doji
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLLONGLEGGEDDOJI(opn, high, low, close)
+
+
+def cdllongline(opn, high, low, close):
+    """Long Line Candle
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLLONGLINE(opn, high, low, close)
+
+
+def cdlmarubozu(opn, high, low, close):
+    """Marubozu
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLMARUBOZU(opn, high, low, close)
+
+
+def cdlmatchinglow(opn, high, low, close):
+    """Matching Low
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLMATCHINGLOW(opn, high, low, close)
+
+
+def cdlmathold(opn, high, low, close):
+    """Mat Hold
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLMATHOLD(opn, high, low, close)
+
+
+def cdlmorningdojistar(opn, high, low, close):
+    """Morning Doji Star
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLMORNINGDOJISTAR(opn, high, low, close)
+
+
+def cdlmorningstar(opn, high, low, close):
+    """Morning Star
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLMORNINGSTAR(opn, high, low, close)
+
+
+def cdlonneck(opn, high, low, close):
+    """On-Neck Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLONNECK(opn, high, low, close)
+
+
+def cdlpiercing(opn, high, low, close):
+    """Piercing Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLPIERCING(opn, high, low, close)
+
+
+def cdlrickshawman(opn, high, low, close):
+    """Rickshaw Man
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLRICKSHAWMAN(opn, high, low, close)
+
+
+def cdlrisefall3methods(opn, high, low, close):
+    """Rising/Falling Three Methods
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLRISEFALL3METHODS(opn, high, low, close)
+
+
+def cdlseparatinglines(opn, high, low, close):
+    """Separating Lines
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLSEPARATINGLINES(opn, high, low, close)
+
+
+def cdlshootingstar(opn, high, low, close):
+    """Shooting Star
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLSHOOTINGSTAR(opn, high, low, close)
+
+
+def cdlshortline(opn, high, low, close):
+    """Short Line Candle
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLSHORTLINE(opn, high, low, close)
+
+
+def cdlspinningtop(opn, high, low, close):
+    """Spinning Top
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLSPINNINGTOP(opn, high, low, close)
+
+
+def cdlstalledpattern(opn, high, low, close):
+    """Stalled Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLSTALLEDPATTERN(opn, high, low, close)
+
+
+def cdlsticksandwich(opn, high, low, close):
+    """Stick Sandwich
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLSTICKSANDWICH(opn, high, low, close)
+
+
+def cdltakuri(opn, high, low, close):
+    """Takuri (Dragonfly Doji with very long lower shadow)
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLTAKURI(opn, high, low, close)
+
+
+def cdltasukigap(opn, high, low, close):
+    """Tasuki Gap
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLTASUKIGAP(opn, high, low, close)
+
+
+def cdlthrusting(opn, high, low, close):
+    """Thrusting Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLTHRUSTING(opn, high, low, close)
+
+
+def cdltristar(opn, high, low, close):
+    """Tristar Pattern
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLTRISTAR(opn, high, low, close)
+
+
+def cdlunique3river(opn, high, low, close):
+    """Unique 3 River
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLUNIQUE3RIVER(opn, high, low, close)
+
+
+def cdlupsidegap2crows(opn, high, low, close):
+    """Upside Gap Two Crows
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLUPSIDEGAP2CROWS(opn, high, low, close)
+
+
+def cdlxsidegap3methods(opn, high, low, close):
+    """Upside/Downside Gap Three Methods
+
+    :param opn:
+    :param high:
+    :param low:
+    :param close:
+    :return:
+    """
+    return CDLXSIDEGAP3METHODS(opn, high, low, close)
+
+
+# ===========================
+# Statistic Functions
+
+
+def beta(high, low, timeperiod=5):
+    """Beta
+
+    :param high:
+    :param low:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return BETA(high, low, timeperiod)
+
+
+def correl(high, low, timeperiod=30):
+    """Pearson's Correlation Coefficient (r)
+
+    :param high:
+    :param low:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return CORREL(high, low, timeperiod)
+
+
+def linearreg(close, timeperiod=14):
+    """Linear Regression
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return LINEARREG(close, timeperiod)
+
+
+def linearreg_angle(close, timeperiod=14):
+    """Linear Regression Angle
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return LINEARREG_ANGLE(close, timeperiod)
+
+
+def linearreg_intercept(close, timeperiod=14):
+    """Linear Regression Intercept
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return LINEARREG_INTERCEPT(close, timeperiod)
+
+
+def linearreg_slope(close, timeperiod=14):
+    """Linear Regression Slope
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return LINEARREG_SLOPE(close, timeperiod)
+
+
+def stddev(close, timeperiod=5, nbdev=1):
+    """Standard Deviation
+
+    :param close:
+    :param timeperiod:
+    :param nbdev:
+    :return:
+        :real:
+    """
+    return STDDEV(close, timeperiod, nbdev)
+
+
+def tsf(close, timeperiod=14):
+    """Time Series Forecast
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return TSF(close, timeperiod)
+
+
+def var(close, timeperiod=5, nbdev=1):
+    """Variance
+
+    :param close:
+    :param timeperiod:
+    :param nbdev:
+    :return:
+        :real:
+    """
+    return VAR(close, timeperiod, nbdev)
+
+
+# ===========================
+# Math Operation Functions
+
+
+def acos(close):
+    """Vector Trigonometric ACos
+
+    :param close:
+    :return:
+        :real:
+    """
+    return ACOS(close)
+
+
+def asin(close):
+    """Vector Trigonometric ASin
+
+    :param close:
+    :return:
+        :real:
+    """
+    return ASIN(close)
+
+
+def atan(close):
+    """Vector Trigonometric ATan
+
+    :param close:
+    :return:
+        :real:
+    """
+    return ATAN(close)
+
+
+def ceil(close):
+    """Vector Ceil
+
+    :param close:
+    :return:
+        :real:
+    """
+    return CEIL(close)
+
+
+def cos(close):
+    """Vector Trigonometric Cos
+
+    :param close:
+    :return:
+        :real:
+    """
+    return COS(close)
+
+
+def cosh(close):
+    """Vector Trigonometric Cosh
+
+    :param close:
+    :return:
+        :real:
+    """
+    return COSH(close)
+
+
+def exp(close):
+    """Vector Arithmetic Exp
+
+    :param close:
+    :return:
+        :real:
+    """
+    return EXP(close)
+
+
+def floor(close):
+    """Vector Floor
+
+    :param close:
+    :return:
+        :real:
+    """
+    return FLOOR(close)
+
+
+def ln(close):
+    """Vector Log Natural
+
+    :param close:
+    :return:
+        :real:
+    """
+    return LN(close)
+
+
+def log10(close):
+    """Vector Log10
+
+    :param close:
+    :return:
+        :real:
+    """
+    return LOG10(close)
+
+
+def sin(close):
+    """Vector Trigonometric Sin
+
+    :param close:
+    :return:
+        :real:
+    """
+    return SIN(close)
+
+
+def sinh(close):
+    """Vector Trigonometric Sinh
+
+    :param close:
+    :return:
+        :real:
+    """
+    return SINH(close)
+
+
+def sqrt(close):
+    """Vector Square Root
+
+    :param close:
+    :return:
+        :real:
+    """
+    return SQRT(close)
+
+
+def tan(close):
+    """Vector Trigonometric Tan
+
+    :param close:
+    :return:
+        :real:
+    """
+    return TAN(close)
+
+
+def tanh(close):
+    """Vector Trigonometric Tanh
+
+    :param close:
+    :return:
+        :real:
+    """
+    return TANH(close)
+
+
+# ===========================
+# Math Operator Functions
+
+
+def add(high, low):
+    """Vector Arithmetic Add
+
+    :param high:
+    :param low:
+    :return:
+        :real:
+    """
+    return ADD(high, low)
+
+
+def div(high, low):
+    """Vector Arithmetic Div
+
+    :param high:
+    :param low:
+    :return:
+        :real:
+    """
+    return DIV(high, low)
+
+
+def max(close, timeperiod=30):
+    """Highest value over a specified period
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return MAX(close, timeperiod)
+
+
+def maxindex(close, timeperiod=30):
+    """Index of highest value over a specified period
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :integer:
+    """
+    return MAXINDEX(close, timeperiod)
+
+
+def min(close, timeperiod=30):
+    """Lowest value over a specified period
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return MIN(close, timeperiod)
+
+
+def minindex(close, timeperiod=30):
+    """Index of lowest value over a specified period
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :integer:
+    """
+    return MININDEX(close, timeperiod)
+
+
+def minmax(close, timeperiod=30):
+    """Lowest and highest values over a specified period
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :min:
+        :max:
+    """
+    return MINMAX(close, timeperiod)
+
+
+def minmaxindex(close, timeperiod=30):
+    """Indexes of lowest and highest values over a specified period
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :minidx:
+        :maxidx:
+    """
+    return MINMAXINDEX(close, timeperiod)
+
+
+def mult(high, low):
+    """Vector Arithmetic Mult
+
+    :param high:
+    :param low:
+    :return:
+        :real:
+    """
+    return MULT(high, low)
+
+
+def sub(high, low):
+    """Vector Arithmetic Substraction
+
+    :param high:
+    :param low:
+    :return:
+        :real:
+    """
+    return SUB(high, low)
+
+
+def sum(close, timeperiod=30):
+    """Summation
+
+    :param close:
+    :param timeperiod:
+    :return:
+        :real:
+    """
+    return SUM(close, timeperiod)
