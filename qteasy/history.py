@@ -30,7 +30,7 @@ class HistoryPanel():
         :param columns:
         """
         assert type(values) is np.ndarray, 'input value type should be numpy ndarray'
-        assert len(values.shape) <= 3, 'input array should be equal to or less than 3 diensions'
+        assert len(values.shape) <= 3, 'input array should be equal to or less than 3 dimensions'
 
         if len(values.shape) == 1:
             values = values.reshape(1, 1, values.shape[0])

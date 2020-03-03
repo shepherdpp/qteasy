@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from qteasy.utilfuncs import sma, ema, trix, macd
+from qteasy.utilfuncs import sma, ema, trix, macd, cdl2crows
 from abc import abstractmethod, ABCMeta
 
 class Strategy:
@@ -294,25 +294,29 @@ class TimingDMA(Timing):
 
 
 class TimingTRIX(Timing):
-    """TRIX择时策略，继承自Timing类，重写__generate方法"""
-    # 运用TRIX均线策略，在idx历史序列上生成交易信号
-    # 注意！！！
-    # 由于TRIX使用指数移动均线，由于此种均线的计算特性，在历史数据集的前sRange + mRange个工作日上生成的数据不可用
-    # 例如，sRange + mRange = 157时，前157个工作日内产生的买卖点不正确，应忽略
+    """TRIX择时策略，运用TRIX均线策略，利用历史序列上生成交易信号
+
+    数据类型：close 收盘价，单数据输入
+    数据分析频率：天
+    数据窗口长度：270天
+    参数数量：2个，参数类型：int整形，输入数据范围：[(10, 250), (10, 250)]
+    """
     _par_count = 2
     _par_types = ['discr', 'discr']
     _par_bounds_or_enums = [(10, 250), (10, 250)]
     _stg_name = 'TRIX STRATEGY'
-    _stg_text = 'TRIX strategy, determin long/short position according to triple exponential weighted moving average prices'
+    _stg_text = 'TRIX strategy, determine long/short position according to triple exponential weighted moving average prices'
     data_freq = 'd'
     window_length = 270
     data_types = ['close']
 
     def _generate_one(self, hist_price, params):
-        """# 参数:
-        # idx: 指定的参考指数历史数据
-        # sRange, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
-        # dRange, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
+        """参数:
+
+        input:
+        :param idx: 指定的参考指数历史数据
+        :param sRange, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
+        :param mRange, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
 
         """
         s, m = params
@@ -324,8 +328,45 @@ class TimingTRIX(Timing):
         MATRIX = sma(TRIX, m)
 
         # 生成TRIX多空判断：
-        # 1， TRIX位于MATRIX上方时，长期多头状态, signal = -1
-        # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 1
+        # 1， TRIX位于MATRIX上方时，长期多头状态, signal = 1
+        # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 0
+        cat = np.where(TRIX > MATRIX, 1, 0)
+        return cat[-1]  # 返回时填充日期序列恢复nan值
+
+
+class TimingCDL(Timing):
+    """CDL择时策略，在K线图中找到符合要求的2crow模式
+
+    数据类型：open, high, low, close 开盘，最高，最低，收盘价，多数据输入
+    数据分析频率：天
+    数据窗口长度：100天
+    参数数量：0个，参数类型：N/A，输入数据范围：N/A
+    """
+    _par_count = 0
+    _par_types = []
+    _par_bounds_or_enums = []
+    _stg_name = 'TRIX STRATEGY'
+    _stg_text = 'TRIX strategy, determine long/short position according to triple exponential weighted moving average prices'
+    data_freq = 'd'
+    window_length = 270
+    data_types = ['open', 'high', 'low', 'close']
+
+    def _generate_one(self, hist_price, params):
+        """参数:
+
+        input:
+        :param idx: 指定的参考指数历史数据
+        :param sRange, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
+        :param mRange, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
+
+        """
+        s, m = params
+        # print 'Generating TRIX Long short Mask with parameters', params
+
+        # 计算指数的指数移动平均价格
+
+        sig = cdl2crows(hist_price[0], hsit_price[1], hist_price[2], hist_price[3])
+
         cat = np.where(TRIX > MATRIX, 1, 0)
         return cat[-1]  # 返回时填充日期序列恢复nan值
 
@@ -881,8 +922,16 @@ class Operator:
         pass
 
     def set_parameter(self, stg_id, pars=None, opt_tag=None, par_boes=None):
-        """# 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
-        # stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数"""
+        """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
+           stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
+
+           :param stg_id:
+           :param pars:
+           :param opt_tag:
+           :param par_boes:
+           :return:
+
+        """
         if type(stg_id) == str:
             l = stg_id.split('-')
             stg = l[0]
@@ -895,7 +944,7 @@ class Operator:
                 strategy = self.ricon[num]
             else:
                 print('wrong input!')
-                return
+                return None
             if pars is not None:
                 strategy.set_pars(pars)
             if opt_tag is not None:

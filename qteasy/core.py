@@ -43,7 +43,6 @@ class Context:
                  mode: int = RUN_MODE_BACKLOOP,
                  rate_fee: float = 0.003,
                  rate_slipery: float = 0,
-                 rate_impact: float = 0,
                  moq: int = 100,
                  init_cash: float = 10000,
                  visual: bool = False,
@@ -64,7 +63,7 @@ class Context:
         """
 
         self.mode = mode
-        self.rate = Rate(rate_fee, rate_slipery, rate_impact)
+        self.rate = Rate(rate_fee, rate_slipery)
         self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
         self.init_cash = init_cash
         today = datetime.datetime.today().date()
@@ -94,32 +93,29 @@ class Context:
 
 
 class Rate:
-    def __init__(self, fee: float = 0.003, slipery: float = 0, impact: float = 0):
+    def __init__(self, fee: float = 0.003, slipege: float = 0):
         self.fee = fee
-        self.slipery = slipery
-        self.impact = impact
+        self.slipege = slipege
 
     def __str__(self):
         """设置Rate对象的打印形式"""
-        return f'<rate: fee:{self.fee}, slipery:{self.slipery}, impact:{self.impact}>'
+        return f'<rate: fee:{self.fee}, slipege:{self.slipege}>'
 
     def __repr__(self):
         """设置Rate对象"""
-        return f'Rate({self.fee}, {self.slipery}, {self.impact})'
+        return f'Rate({self.fee}, {self.slipege})'
 
     def __call__(self, amount: np.ndarray):
         """直接调用对象，计算交易费率"""
-        return self.fee + self.slipery + self.impact * amount
+        return self.fee + self.slipege * amount
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
-        assert isinstance(item, str), 'TypeError, item should be a string in [\'fee\', \'slipery\', \'impact\']'
+        assert isinstance(item, str), 'TypeError, item should be a string in [\'fee\', \'slipege\']'
         if item == 'fee':
             return self.fee
-        elif item == 'slipery':
+        elif item == 'slipege':
             return self.fee
-        elif item == 'impact':
-            return self.impact
         else:
             raise TypeError
 

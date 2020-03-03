@@ -7,19 +7,19 @@ import itertools
 
 class TestRates(unittest.TestCase):
     def test_rate_creation(self):
-        r = qt.Rate(0.001, 0.001, 0.001)
+        r = qt.Rate(0.001, 0.001)
         self.assertIsInstance(r, qt.Rate, 'Type should be Rate')
 
     def test_rate_operations(self):
-        r = qt.Rate(0.001, 0.001, 0.001)
+        r = qt.Rate(0.001, 0.001)
         self.assertEqual(r['fee'], 0.001, 'Item fee get is incorrect')
-        self.assertEqual(r['slipery'], 0.001, 'Item get wrong')
+        self.assertEqual(r['slipege'], 0.001, 'Item get wrong')
         self.assertEqual(r['impact'], 0.001, 'item get wrong')
         self.assertEqual(r(1000), 1.002, 'fee calculation wrong')
 
     def test_rate_print(self):
-        r = qt.Rate(0.1, 0.1, 0.1)
-        self.assertEqual(str(r), '<rate: fee:0.1, slipery:0.1, impact:0.1>', 'rate object printing wrong')
+        r = qt.Rate(0.1, 0.1)
+        self.assertEqual(str(r), '<rate: fee:0.1, slipege:0.1, impact:0.1>', 'rate object printing wrong')
 
 
 class TestUnify(unittest.TestCase):
