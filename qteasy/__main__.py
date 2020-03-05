@@ -1,18 +1,21 @@
 from qteasy.core import *
-from qteasy.history import History
+import qteasy.history as hs
 from qteasy.operator import *
 import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['MACD'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['CDL'], selecting_types=['simple'], ricon_types=['urgent'])
     op.info()
 
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
-    d.drop(labels=['open', 'high', 'low', 'volume', 'amount'], axis=1, inplace=True)
-    d.columns = ['000300-I']
+    d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
+    '''d.drop(labels=['open', 'high', 'low', 'volume', 'amount'], axis=1, inplace=True)
+    d.columns = ['000300-I']'''
     d = d[::-1]
+    h = hs.HistoryPanel(d.values, ['000300'], d.index, d.columns)
+    h.info()
     d.head()
 
     op.set_parameter('s-0', pars=('Y', 1))
@@ -26,7 +29,7 @@ if __name__ == '__main__':
     cont = Context()
     cont.shares = shares
     cont.shares = ['000300-I']
-    cont.history_data=d
+    cont.history_data=h
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
     print('transaction rate object created, rate is', cont.rate)
 

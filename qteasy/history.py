@@ -29,8 +29,9 @@ class HistoryPanel():
         :param rows:
         :param columns:
         """
-        assert type(values) is np.ndarray, 'input value type should be numpy ndarray'
-        assert len(values.shape) <= 3, 'input array should be equal to or less than 3 dimensions'
+        assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
+        assert len(values.shape) <= 3,\
+            f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
 
         if len(values.shape) == 1:
             values = values.reshape(1, 1, values.shape[0])
@@ -41,12 +42,14 @@ class HistoryPanel():
 
         if levels is None:
             levels = range(self._l_count)
-        assert len(levels) == self._l_count, 'length of level list does not fit the shape of input values!'
+        assert len(levels) == self._l_count,\
+            f'length of level list does not fit the shape of input values! lenth {len(levels)} != {self._l_count}'
         self._levels = dict(zip(levels, range(self._l_count)))
 
         if rows is None:
             rows = range(self._r_count)
-        assert len(rows) == self._r_count, 'length of row list does not fit the shape of input values'
+        assert len(rows) == self._r_count, \
+            f'length of row list does not fit the shape of input values! lenth {len(rows)} != {self._r_count}'
         self._rows = dict(zip(rows, range(self._r_count)))
 
         if columns is None:
@@ -54,7 +57,8 @@ class HistoryPanel():
         else:
             columns = list(map(str, columns))
             columns = list(map(str.lower, columns))
-        assert len(columns) == self._c_count, 'length of column list does not fit the shape of input values'
+        assert len(columns) == self._c_count, \
+            f'length of column list does not fit the shape of input values! lenth {len(columns)} != {self._c_count}'
         self._columns = dict(zip(columns, range(self._c_count)))
 
     @property
@@ -70,6 +74,10 @@ class HistoryPanel():
         return self._levels
 
     @property
+    def level_count(self):
+        return self._l_count
+
+    @property
     def index(self):
         return self._rows
 
@@ -82,12 +90,20 @@ class HistoryPanel():
         return self._rows
 
     @property
+    def row_count(self):
+        return self._r_count
+
+    @property
     def htypes(self):
         return self._columns
 
     @property
     def columns(self):
         return self._columns
+
+    @property
+    def column_count(self):
+        return self._c_count
 
     @property
     def shape(self):
@@ -135,6 +151,31 @@ class HistoryPanel():
         print('shares is ', share_slice, '\nhtypes is ', htype_slice,
               '\nhdates is ', hdate_slice)
         return self.values[share_slice, hdate_slice, htype_slice]
+
+    def info(self):
+        print(type(self))
+        print(f'Levels: {self.level_count}, htypes: {self.column_count}')
+        print(f'total {self.row_count} entries: ')
+
+
+def from_dataframe(df: pd.DataFrame = None):
+    """ 根据DataFrame中的数据创建历史数据板HistoryPanel对象
+
+    input:
+        :param df:
+    :return:
+    """
+    assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)}.'
+    return
+
+
+def from_dataframes(*dfs):
+    """ 根据多个DataFrame中的数据创建HistoryPanel对象
+
+    input
+    :param dfs: type list, containing multiple dataframes
+    :return:
+    """
 
 
 def _make_list_or_slice(item, d):

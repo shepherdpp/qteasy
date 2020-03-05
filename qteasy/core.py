@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 import itertools
 from qteasy.utilfuncs import *
+from .history import HistoryPanel
 
 
 class Log:
@@ -118,6 +119,12 @@ class Rate:
             return self.fee
         else:
             raise TypeError
+
+
+class Cash:
+    """ 现金计划类
+
+    """
 
 
 # TODO: 使用Numba加速_loop_step()函数
@@ -340,7 +347,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
                                        start=start, end=end,
                                        interval=freq)
     else:
-        assert type(history_data) is pd.DataFrame, 'historical price DataFrame shall be passed as parameter!'
+        assert isinstance(history_data, HistoryPanel), \
+            f'historical price should be HistoryPanel! got {type(history_data)}'
         hist = history_data
 
     # ========
@@ -350,7 +358,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
 
     elif exe_mode == 1:
         """进入回测模式："""
-        op_list = operator.create(hist_extract=hist)
+        op_list = operator.create(hist_data=hist)
         looped_values = apply_loop(op_list, hist.fillna(0),
                                    init_cash=context.init_cash,
                                    moq=0, visual=True, rate=context.rate,

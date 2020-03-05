@@ -2,8 +2,9 @@
 
 import pandas as pd
 import numpy as np
-from qteasy.utilfuncs import sma, ema, trix, macd, cdl2crows
+from qteasy.utilfuncs import sma, ema, trix, macd, cdldoji
 from abc import abstractmethod, ABCMeta
+from .history import HistoryPanel
 
 class Strategy:
     """量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的择时类调用"""
@@ -335,7 +336,7 @@ class TimingTRIX(Timing):
 
 
 class TimingCDL(Timing):
-    """CDL择时策略，在K线图中找到符合要求的2crow模式
+    """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
     数据类型：open, high, low, close 开盘，最高，最低，收盘价，多数据输入
     数据分析频率：天
@@ -345,30 +346,23 @@ class TimingCDL(Timing):
     _par_count = 0
     _par_types = []
     _par_bounds_or_enums = []
-    _stg_name = 'TRIX STRATEGY'
-    _stg_text = 'TRIX strategy, determine long/short position according to triple exponential weighted moving average prices'
+    _stg_name = 'CDL INDICATOR STRATEGY'
+    _stg_text = 'CDL Indicators, determine long/short position according to CDL Indicators'
     data_freq = 'd'
-    window_length = 270
+    window_length = 200
     data_types = ['open', 'high', 'low', 'close']
 
-    def _generate_one(self, hist_price, params):
+    def _generate_one(self, hist_price, params=None):
         """参数:
 
         input:
-        :param idx: 指定的参考指数历史数据
-        :param sRange, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
-        :param mRange, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
-
+            None
         """
-        s, m = params
-        # print 'Generating TRIX Long short Mask with parameters', params
+        # 计算历史数据上的CDL指标
+        h = hist_price.T
+        cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
 
-        # 计算指数的指数移动平均价格
-
-        sig = cdl2crows(hist_price[0], hsit_price[1], hist_price[2], hist_price[3])
-
-        cat = np.where(TRIX > MATRIX, 1, 0)
-        return cat[-1]  # 返回时填充日期序列恢复nan值
+        return float(cat[-1])
 
 
 class Selecting(Strategy):
@@ -829,6 +823,8 @@ class Operator:
                 self.__timing.append(TimingDMA())
             elif timing_type.lower() == 'trix':
                 self.__timing.append(TimingTRIX())
+            elif timing_type.lower() == 'cdl':
+                self.__timing.append(TimingCDL())
             else:  # 默认情况下使用simple策略
                 self.__timing.append(TimingSimple())
                 self.__timing_types.pop()
@@ -904,7 +900,7 @@ class Operator:
     # 这些属性参数的设置需要在OP模块设置一个统一的设置入口，同时，为了实现与Optimizer模块之间的接口
     # 还需要创建两个Opti接口函数，一个用来根据的值创建合适的Space初始化参数，另一个用于接受opt
     # 模块传递过来的参数，分配到合适的策略中去
-
+    #TODO: convert all parameter setting functions to private except one single entry-function set_parameter()
     def set_blender(self, blender_type, *args, **kwargs):
         # 统一的blender混合器属性设置入口
         if type(blender_type) == str:
@@ -1021,11 +1017,11 @@ class Operator:
             ric.info()
         print('#' * 25)
 
-    def create(self, hist_extract):
+    def create(self, hist_data:HistoryPanel):
         """# 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
         # 对信号进行合法性处理，最终生成合法交易信号
         # 输入：
-            # hist_extract：从数据仓库中导出的历史数据，包含多只股票在一定时期内特定频率的一组或多组数据
+            # hist_data：从数据仓库中导出的历史数据，包含多只股票在一定时期内特定频率的一组或多组数据
         # 输出：=====
             # lst：使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             # 模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
@@ -1033,10 +1029,12 @@ class Operator:
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数"""
         sel_masks = []
-        assert type(hist_extract) is pd.DataFrame, 'Type Error: the extracted historical data is a Pandas DataFrame'
-        shares = hist_extract.columns
-        date_list = hist_extract.index
-        h_v = hist_extract.values
+        assert isinstance(hist_data, HistoryPanel), \
+            f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
+        shares = hist_data.levels
+        data_types = hist_data.htypes
+        date_list = hist_data.index
+        h_v = hist_data.values
         for sel in self.__selecting:  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             sel_masks.append(sel.generate(h_v, date_list, shares))  # 生成的选股蒙板添加到选股蒙板队列中
@@ -1046,7 +1044,7 @@ class Operator:
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         selected_shares = sel_mask.any(0)
-        hist_selected = hist_extract * selected_shares
+        hist_selected = hist_data * selected_shares
         # print ('Time measurement: ls_mask creation')
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
         ls_masks = []
@@ -1088,6 +1086,7 @@ class Operator:
 
         ################################################################
 
+    # ================================
     # 下面是Operation模块的私有方法
 
     def __set_timing_blender(self, timing_blender):
@@ -1179,17 +1178,19 @@ class Operator:
 
     @property
     def _exp_to_blender(self):
-        """# 选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
-        # 系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
-        # 优先计算，如 '0 + (1 + 2) * 3'; 表达式中的数字0～3代表选股策略列表中的不同策略的索引号
-        # 上述表达式虽然便于人类理解，但是不利于快速计算，因此需要转化为前缀表达式，其优势是没有括号
-        # 按照顺序读取并直接计算，便于程序的运行。为了节省系统运行开销，在给出混合表达式的时候直接将它
-        # 转化为前缀表达式的形式并直接存储在blender列表中，在混合时直接调用并计算即可
-        # input： =====
+        """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
+
+        系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
+        优先计算，如 '0 + (1 + 2) * 3'; 表达式中的数字0～3代表选股策略列表中的不同策略的索引号
+        上述表达式虽然便于人类理解，但是不利于快速计算，因此需要转化为前缀表达式，其优势是没有括号
+        按照顺序读取并直接计算，便于程序的运行。为了节省系统运行开销，在给出混合表达式的时候直接将它
+        转化为前缀表达式的形式并直接存储在blender列表中，在混合时直接调用并计算即可
+        input： =====
             no input parameter
-        # return：===== s2: 前缀表达式
+        return：===== s2: 前缀表达式
             :rtype: list: 前缀表达式
         """
+        #TODO: extract expression with re module
         prio = {'or': 0,
                 'and': 1}
         # 定义两个队列作为操作堆栈
