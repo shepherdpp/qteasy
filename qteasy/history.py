@@ -6,6 +6,7 @@ import numpy as np
 from datetime import datetime
 import datetime as dt
 
+
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
 # TODO: 增加HistData类，一个以Ndarray为基础的三维历史数据数组
 # TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
@@ -26,11 +27,11 @@ class HistoryPanel():
 
         :param values:
         :param levels:
-        :param rows:
+        :param rows: datetime range or timestamp index of the data
         :param columns:
         """
         assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
-        assert len(values.shape) <= 3,\
+        assert len(values.shape) <= 3, \
             f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
 
         if len(values.shape) == 1:
@@ -42,7 +43,7 @@ class HistoryPanel():
 
         if levels is None:
             levels = range(self._l_count)
-        assert len(levels) == self._l_count,\
+        assert len(levels) == self._l_count, \
             f'length of level list does not fit the shape of input values! lenth {len(levels)} != {self._l_count}'
         self._levels = dict(zip(levels, range(self._l_count)))
 
@@ -152,10 +153,22 @@ class HistoryPanel():
               '\nhdates is ', hdate_slice)
         return self.values[share_slice, hdate_slice, htype_slice]
 
+    def __mul__(self, arg):
+        self._values = self._values * arg
+        return self
+
     def info(self):
         print(type(self))
         print(f'Levels: {self.level_count}, htypes: {self.column_count}')
         print(f'total {self.row_count} entries: ')
+
+    def fillna(self, with_val):
+        np._values = np.where(np.isnan(self._values), with_val, self._values)
+        return self
+
+    def to_dataframe(self, htype: str) -> pd.DataFrame:
+        v = self._values[:, :, self.htypes[htype]].T
+        return pd.DataFrame(v, index=list(self._rows.keys()), columns=list(self._levels.keys()))
 
 
 def from_dataframe(df: pd.DataFrame = None):
@@ -242,7 +255,6 @@ class History:
         token = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
         self.ts_pro = ts.pro_api(token)
 
-
     # 以下为只读对象属性
     @property
     def wh_path(self):  # 当前打开的仓库的路径和文件名
@@ -281,14 +293,14 @@ class History:
     # Historical Utility functions based on tushare
     # ==================
 
-    def get_hist_rehab(self, share:str,
-                       start:str,
-                       end:str,
-                       price_type:str = 'close',
-                       asset_type:str = 'E',
-                       adj:str='None',
-                       freq:str='d',
-                       ma:list=None):
+    def get_hist_rehab(self, share: str,
+                       start: str,
+                       end: str,
+                       price_type: str = 'close',
+                       asset_type: str = 'E',
+                       adj: str = 'None',
+                       freq: str = 'd',
+                       ma: list = None):
         """ get historical prices with rehabilitation rights
             获取指数或股票的复权历史价格
 
@@ -312,17 +324,16 @@ class History:
         assert isinstance(res, pd.DataFrame)
         return res
 
-
     def info(self):
         # 打印当前数据仓库的关键信息
         if self.__warehouse_is_open:
-            print ('warehouse is open: ')
-            print ('warehouse path: ', self.__open_wh_file)
-            print ('price type: ', self.__open_price_type, 'time freq:', self.__open_interval)
-            print ('warehouse info: ')
-            print (self.__warehouse.info())
+            print('warehouse is open: ')
+            print('warehouse path: ', self.__open_wh_file)
+            print('price type: ', self.__open_price_type, 'time freq:', self.__open_interval)
+            print('warehouse info: ')
+            print(self.__warehouse.info())
         else:
-            print ('No warehouse history')
+            print('No warehouse history')
 
     def read_warehouse(self, price_type='close', interval='d'):
         # 从磁盘上读取数据仓库
@@ -362,7 +373,7 @@ class History:
         # print code_set.issubset(set(basics.index))
         # if code_set.issubset(set(basics.index)) and len(code_set) > 0:
         if len(code_set) > 0:
-            print ('loading warehouses...')
+            print('loading warehouses...')
             wh_close, f1 = self.read_warehouse('close', interval)
             wh_open, f2 = self.read_warehouse('open', interval)
             wh_high, f3 = self.read_warehouse('high', interval)
@@ -372,7 +383,7 @@ class History:
                        'low': wh_low, 'volume': wh_vol}
             # update the shape of all wharehouses by merging new columns or new rows
             # and then update
-            print ('generating expanding dataframe...')
+            print('generating expanding dataframe...')
             last_day = wh_close.index[-1].date()
             codes_in_wh = set(wh_close.columns)
             new_code_set = code_set.difference(codes_in_wh)
@@ -386,14 +397,14 @@ class History:
             # in order to update the warehouse, the size of dataframe should be modified
             if len(expand_df.index) > 0 or len(expand_df.columns) > 0:
                 # if not expand_df.empty:
-                print ('df merged')
+                print('df merged')
                 for tp in ['close', 'open', 'high', 'low', 'volume']:
                     wh_dict[tp] = pd.merge(wh_dict[tp], expand_df, left_index=True,
                                            right_index=True, how='outer')
             # print 'warehouse merged: ', wh_dict['close'].index
             # read data and update all warehouses
             # print 'code_set:', code_set
-            print ('reading tushare data and updating warehouse...')
+            print('reading tushare data and updating warehouse...')
             count = 0
             for code in code_set:
                 count += 1
@@ -401,7 +412,7 @@ class History:
                     data = self.get_new_price(code, interval)
                     # print data
                     msg = 'reading data ' + str(code) + ', progress: ' + str(count) + ' of ' + str(len(code_set))
-                    print (msg, end = '\r')
+                    print(msg, end='\r')
                     for tp in ['close', 'open', 'high', 'low', 'volume']:
                         # in order to update the warehouse, the size of dataframe should be modified
                         df = pd.DataFrame(data[tp])
@@ -411,9 +422,9 @@ class History:
                         wh_dict[tp].update(df)
                         # print 'dataFrame updated: ', wh_dict[tp][code].tail()
                 except:
-                    print ('data cannot be read:', code, 'resume next,', count, 'of', len(code_set))
+                    print('data cannot be read:', code, 'resume next,', count, 'of', len(code_set))
                     # save all updated warehouses
-            print ('\n', 'data updated, saving warehouses...')
+            print('\n', 'data updated, saving warehouses...')
             for tp in ['close', 'open', 'high', 'low', 'volume']:
                 # in order to update the warehouse, the size of dataframe should be modified
                 fname = self.__warehouse_dir + '_share_' + self.__intervals[interval] + '_' + tp + '.csv'
@@ -435,7 +446,7 @@ class History:
             self.__open_wh_shares = set()
             self.__warehouse_is_open = False
         else:
-            print ('no warehouse opened')
+            print('no warehouse opened')
         return self.__warehouse_is_open
 
     def warehouse_extract(self, shares, start, end):
@@ -449,10 +460,10 @@ class History:
                 self.__extracted = True
                 self.__extract = data
             except:
-                print ('Data Not extracted: date format should be %Y-%m-%d!')
+                print('Data Not extracted: date format should be %Y-%m-%d!')
                 self.remove_extract()
         else:
-            print ('Data NOT extracted: one or more share(s) is not in the warehouse, check your input')
+            print('Data NOT extracted: one or more share(s) is not in the warehouse, check your input')
             self.remove_extract()
         return self.__extract
 

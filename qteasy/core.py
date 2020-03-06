@@ -1,4 +1,5 @@
 # coding=utf-8
+# core.py
 
 import pandas as pd
 import numpy as np
@@ -9,6 +10,10 @@ from .history import HistoryPanel
 
 
 class Log:
+    """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
+
+
+    """
     def __init__(self):
         """
 
@@ -19,6 +24,8 @@ class Log:
 class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及(伪)常量
 
+    所有系统执行相关的变量都存储在Context对象中，在调用core模块中的主要公有方法时，应该引用Context对象以提供所有的环境变量。
+
     包含的常量：
     ========
         RUN_MODE_LIVE = 0
@@ -27,7 +34,19 @@ class Context:
 
     包含的变量：
     ========
-        mode，运行模式
+        运行模式变量：
+            mode，运行模式，包括实盘模式、回测模式和优化模式三种方式
+        实盘模式相关变量：
+
+        回测费率变量：
+
+        回测历史区间变量：
+
+        优化模式变量：
+
+        优化区间变量：
+
+        优化目标函数变量：
     """
     # 环境常量
     # ============
@@ -65,11 +84,12 @@ class Context:
 
         self.mode = mode
         self.rate = Rate(rate_fee, rate_slipery)
-        self.moq = moq  # 交易最小批量，设置为0表示可以买卖分数股
-        self.init_cash = init_cash
+        self.moq = moq  # 最小交易批量，设置为0表示可以买卖分数股
+        self.init_cash = init_cash  # 回测初始现金金额
+        # TODO： 将整数形式的初始现金金额修改为投资现金对象CashPlan
         today = datetime.datetime.today().date()
         self.shares = []  # 优化参数所针对的投资产品
-        self.opt_period_start = today - datetime.timedelta(3650)  # 优化历史区间开始日
+        self.opt_period_start = today - datetime.timedelta(3650)  # 默认优化历史区间开始日是十年前
         self.opt_period_end = today - datetime.timedelta(365)  # 优化历史区间结束日
         self.opt_period_freq = 'd'  # 优化历史区间采样频率
         self.loop_period_start = today - datetime.timedelta(3650)  # 测试区间开始日
@@ -77,7 +97,6 @@ class Context:
         self.t_func_type = 1  # 'single'
         self.t_func = 'FV'  # 评价函数
         self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
-        self.cycle_convolution_type = 'average'  # 当使用重叠区间优化参数时，各个区间评价函数值的组合方法
         self.opti_method = Context.OPTI_EXHAUSTIVE
         self.output_count = 50
         self.keep_largest_perf = True
@@ -87,6 +106,7 @@ class Context:
         self.reference_visual = reference_visual
 
     def __str__(self):
+        """定义Context类的打印样式"""
         out_str = list()
         out_str.append('qteasy running information:')
         out_str.append('===========================')
@@ -94,36 +114,49 @@ class Context:
 
 
 class Rate:
-    def __init__(self, fee: float = 0.003, slipege: float = 0):
+    """ 交易费率类，用于在回测过程中对交易成本进行估算
+
+    交易成本的估算依赖三个参数：
+    1， fix：type：float，固定费率，在交易过程中产生的固定现金费用，与交易金额和交易量无关： 固定费用 = 固定费用
+    2， fee：type：float，交易费率，交易过程中的固定费率，交易费用 = 交易金额 * 交易费率
+    3， slipage：type：float，交易滑点，用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
+        滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
+    """
+    def __init__(self, fix:float = 0, fee: float = 0.003, slipage: float = 0):
+        self.fix = fix
         self.fee = fee
-        self.slipege = slipege
+        self.slipage = slipage
 
     def __str__(self):
         """设置Rate对象的打印形式"""
-        return f'<rate: fee:{self.fee}, slipege:{self.slipege}>'
+        return f'<fixed fee: {self.fix}, rate: fee:{self.fee}, slipage:{self.slipage}>'
 
     def __repr__(self):
         """设置Rate对象"""
-        return f'Rate({self.fee}, {self.slipege})'
+        return f'Rate({self.fix}, {self.fee}, {self.slipage})'
 
+    #TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
     def __call__(self, amount: np.ndarray):
         """直接调用对象，计算交易费率"""
-        return self.fee + self.slipege * amount
+        return self.fee + self.slipage * amount
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
-        assert isinstance(item, str), 'TypeError, item should be a string in [\'fee\', \'slipege\']'
-        if item == 'fee':
+        assert isinstance(item, str), 'TypeError, item should be a string in [\'fix\', \'fee\', \'slipage\']'
+        if item == 'fix':
+            return self.fix
+        elif item == 'fee':
             return self.fee
-        elif item == 'slipege':
+        elif item == 'slipage':
             return self.fee
         else:
             raise TypeError
 
 
 class Cash:
-    """ 现金计划类
+    """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
+    投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
 
@@ -139,7 +172,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
         param rate：object Rate() 买入成本——待改进，应根据三个成本费率动态估算
         param moq：float: 投资产品最小交易单位
 
-    return：=====元组，包含四个元素
+    return：===== tuple，包含四个元素
         cash：交易后账户现金余额
         amounts：交易后每个个股账户中的股份余额
         fee：本次交易总费用
@@ -148,8 +181,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
-    '''在这里出售的amount被使用np.rint()函数转化为int型，这里应该增加判断，如果MOQ不要求出售
-    的投资产品份额为整数，可以省去rint处理'''
+    # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
     if moq == 0:
         a_sold = np.where(prices != 0,
                           np.where(op < 0, pre_amounts * op, 0),
@@ -241,8 +273,7 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
     """
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
     assert rate is not None, 'TyepError: rate should not be None type'
-    # 将交易清单和与之对应的价格清单转化为ndarray，确保内存存储方式为Fortune，
-    # 以实现高速逐行循环批量操作
+
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，知道找到更好的向量化执行方法
     op = op_list.values
@@ -255,25 +286,12 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    # 只有当交易的资产数量大于1时，才需要向量化逐行循环，否则使用默认的ndarray循环
-    for i in range(op_count):
-        # it = np.nditer([op, price], flags = ['external_loop'], order = 'C')
-        if len(history_list.columns) > 1:
-            # ndarray的内存存储方式和external loop的循环顺序不一致时，会产生逐行循环的效果，实现向量化计算
-
-            cash, amounts, fee, value = _loop_step(pre_cash=cash,
-                                                   pre_amounts=amounts,
-                                                   op=op[i, :],
-                                                   prices=price[i, :],
-                                                   rate=rate, moq=moq)
-        else:
-            # it = np.nditer([op, price])
-            # 将每一行交易信号代码和每一行价格使用迭代器送入_loop_step()函数计算结果
-            cash, amounts, fee, value = _loop_step(pre_cash=cash,
-                                                   pre_amounts=amounts,
-                                                   op=op[i], prices=price[i],
-                                                   rate=rate,
-                                                   moq=moq)
+    for i in range(op_count): # 对每一行历史交易信号开始回测
+        cash, amounts, fee, value = _loop_step(pre_cash=cash,
+                                               pre_amounts=amounts,
+                                               op=op[i], prices=price[i],
+                                               rate=rate,
+                                               moq=moq)
         # 保存计算结果
         cashes.append(cash)
         fees.append(fee)
@@ -350,6 +368,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
         assert isinstance(history_data, HistoryPanel), \
             f'historical price should be HistoryPanel! got {type(history_data)}'
         hist = history_data
+        hist_close = history_data.to_dataframe('close')
 
     # ========
     if exe_mode == 0:
@@ -359,7 +378,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
     elif exe_mode == 1:
         """进入回测模式："""
         op_list = operator.create(hist_data=hist)
-        looped_values = apply_loop(op_list, hist.fillna(0),
+        looped_values = apply_loop(op_list, hist_close.fillna(0),
                                    init_cash=context.init_cash,
                                    moq=0, visual=True, rate=context.rate,
                                    price_visual=True)

@@ -115,12 +115,14 @@ class Timing(Strategy):
         """
         # 定位数据中的所有nan值，由于所有数据针对同一股票，因此nan值位置一致
         # 需要区别2D与1D数据，分别进行处理
+
+        #print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}')
         if len(hist_slice.shape) == 2:
             drop = ~np.isnan(hist_slice[:, 0])
         else:
             drop = ~np.isnan(hist_slice)
         # 生成输出值一维向量
-        cat = np.zeros_like(hist_slice)
+        cat = np.zeros_like(hist_slice).squeeze()
         hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
         if loop_count < 1:
@@ -151,24 +153,29 @@ class Timing(Strategy):
             param: hist_extract：DataFrame，历史价格数据，需要被转化为ndarray
         return：=====
         """
-        assert type(hist_data) is np.ndarray, 'Type Error: input should be Ndarray'
-        assert len(hist_data) >= self.window_length, 'DataError: Not enough history data!'
+        # print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
+        assert type(hist_data) is np.ndarray, f'Type Error: input should be ndarray, got {type(hist_data)}'
+        assert hist_data.shape[1] >= self.window_length, \
+            f'DataError: Not enough history data! expected hist data length {self.window_length},' \
+            f' got {hist_data.shape[1]}'
         pars = self._pars
         if isinstance(pars, dict):
             par_list = pars.values()
         else:
             par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
         # 调用_generate_one方法计算单个个股的多空状态，并组合起来,3D与2D数据处理方式不同
-        if len(hist_data) == 3:
+        if len(hist_data.shape) == 3:
+            # print(f'went through if fork hist_data - 3D')
             res = np.array(list(map(self._generate_over,
                                     hist_data,
-                                    par_list)))
+                                    par_list))).T
         else:
+            # print(f'went through if fork hist_data - 2D')
             res = np.array(list(map(self._generate_over,
                                     hist_data.T,
                                     par_list))).T
-        # 将完成的数据组合成DataFrame
-        # print('generate result of np timing generate', res)
+        # print(f'generate result of np timing generate, result shaped {res.shape}')
+
         return res
 
 
@@ -249,11 +256,10 @@ class TimingMACD(Timing):
         """
 
         s, l, m = params
-        # print 'Generating MACD Long short Mask with parameters', params
-        # h_ = hist_price.dropna() # 仅针对非nan值计算，忽略股票停牌时期
+        h = hist_price.T
 
         # 计算指数的指数移动平均价格
-        DIFF = ema(hist_price, s) - ema(hist_price, l)
+        DIFF = ema(h[0], s) - ema(h[0], l)
         DEA = ema(DIFF, m)
         MACD = 2 * (DIFF - DEA)
         #DIFF, DEA, MACD = macd(hist_price, s, l, m)
@@ -413,6 +419,7 @@ class Selecting(Strategy):
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq).values
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
+        print(f'in module selecting: function set_perids: comparing {dates[0]} and {bnds[0]}')
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # 最后一个分隔位等于历史区间的总长度
         seg_pos[-1] = len(dates) - 1
@@ -670,8 +677,11 @@ class RiconUrgent(Ricon):
                                        'pct)\nN as days, pct as percent drop '
         assert isinstance(hist_price, np.ndarray), 'Type Error: input historical data should be ndarray'
         day, drop = self._pars
-
-        diff = (hist_price - np.roll(hist_price, day)) / hist_price
+        h = hist_price[:,:,0].T
+        print(f'input array got in Ricon.generate() is shaped {hist_price.shape}')
+        print(f'and the hist_data is converted to shape {h.shape}')
+        diff = (h - np.roll(h, day)) / h
+        print(f'created array in ricon generate() is shaped {diff.shape}')
         return np.where(diff < drop, -1, 0)
 
 
@@ -1033,14 +1043,17 @@ class Operator:
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
         shares = hist_data.levels
         data_types = hist_data.htypes
-        date_list = hist_data.index
+        date_list = list(hist_data.index.keys())
+        print(f'date_list is {date_list}')
         h_v = hist_data.values
+        print(f'shape of h_v in operator.create() function: {h_v.shape}')
         for sel in self.__selecting:  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             sel_masks.append(sel.generate(h_v, date_list, shares))  # 生成的选股蒙板添加到选股蒙板队列中
         # print('SPEED test OP create, Time of sel_mask blending')
         # %time (self.__selecting_blend(sel_masks))
         sel_mask = self.__selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
+        print(f'Sel_mask has been created! shape is {sel_mask.shape}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         selected_shares = sel_mask.any(0)
@@ -1057,6 +1070,7 @@ class Operator:
         # print('SPEED test OP create, Time of ls_mask blending')
         # %time self.__timing_blend(ls_masks)
         ls_mask = self.__timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
+        print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print( '\n long/short mask: \n', ls_mask)
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
@@ -1067,6 +1081,7 @@ class Operator:
         # print('SPEED test OP create, Time of ricon_mask blending')
         # %time self.__ricon_blend(ricon_mats)
         ricon_mat = self.__ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
+        print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
         # print ('risk control matrix \n', ricon_mat[980:1000])
         # print (ricon_mat)
         # print ('sel_mask * ls_mask: ', (ls_mask * sel_mask))
@@ -1074,7 +1089,7 @@ class Operator:
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         op_mat = _legalize(_mask_to_signal(ls_mask * sel_mask) + ricon_mat)
-        # print('SPEED test OP create, Time of converting op matrix into DataFrame')
+        print(f'Finally op mask has been created, shaped {op_mat.shape}')
         # pd.DataFrame(op_mat, index = date_list, columns = shares)
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)]['2007-01-15': '2007-03-01'])
