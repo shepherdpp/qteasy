@@ -5,7 +5,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['MACD'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['Cross_line'], selecting_types=['simple'], ricon_types=['urgent'])
 
 
     d = pd.read_csv('000300_I_N.txt', index_col='date')
@@ -48,8 +48,9 @@ if __name__ == '__main__':
                     '000005': (86, 198, 58)}
     timing_pars3 = (72, 130, 133)
     timing_pars4 = (31, 17)
+    timing_pars5 = (62, 132, 10, 'buy')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars = timing_pars3)
+    op.set_parameter('t-0', pars = timing_pars5)
     # op.set_parameter('t-1', pars = timing_pars3)
     # op.set_parameter('t-2', pars = timing_pars4)
     # op.set_parameter('t-3', pars = timing_pars1)

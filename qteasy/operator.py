@@ -138,9 +138,9 @@ class Timing(Strategy):
         res = np.array(list(map(self._generate_one,
                                 hist_pack,
                                 par_list)))
-        # TODO: 实际的输出长度应该只有hist_length-window_length+1, 这里为了配合Select和Ricon
-        # 补充了长度到hist_length, 修改Selecting和Ricon后应该把这里改回正确长度
+
         capping = np.zeros(self.window_length - 1)
+        # print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
         res = np.concatenate((capping, res), 0)
         cat[drop] = res
         return cat
@@ -185,7 +185,9 @@ class TimingSimple(Timing):
     __stg_text = 'Simple Timing strategy, return constant long position on the whole history'
 
     def _generate_one(self, hist_price, params):
-        return hist_price.clip(1, 1)[-1]
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+
+        return 1
 
 
 class TimingCrossline(Timing):
@@ -209,12 +211,10 @@ class TimingCrossline(Timing):
         """crossline策略使用四个参数：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
         s, l, m, hesitate = params
-        # 计算均线前排除所有的无效值，无效值前后价格处理为连续价格，返回时使用pd.Series重新填充日期序列恢复
-        # 去掉的无效值
-        # print 'Generating Crossline Long short Mask with parameters', params
-
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_price.T
         # 计算长短均线之间的距离
-        diff = sma(hist_price, l) - sma(hist_price, s)
+        diff = sma(h[0], l) - sma(h[0], s)
         # 根据观望模式在不同的点位产生Long/short标记
         if hesitate == 'buy':
             cat = np.where(diff < -m, 1, 0)
@@ -222,8 +222,7 @@ class TimingCrossline(Timing):
             cat = np.where(diff < m, 1, 0)
         else: # hesitate == 'none'
             cat = np.where(diff < 0, 1, 0)
-        # 重新恢复nan值可以使用pd.Series也可以使用pd.reindex，可以测试哪一个速度更快，选择速度更快的一个
-        return cat[-1]  # 返回时填充日期序列恢复无效值
+        return cat[-1]
 
 
 class TimingMACD(Timing):
@@ -243,7 +242,6 @@ class TimingMACD(Timing):
     window_length = 270
     data_types = ['close']
 
-    # TODO 吧_generate_one() 函数名称改为_realize()
     def _generate_one(self, hist_price, params):
         """生成单只个股的择时多空信号.
 
@@ -256,6 +254,7 @@ class TimingMACD(Timing):
         """
 
         s, l, m = params
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = hist_price.T
 
         # 计算指数的指数移动平均价格
@@ -287,7 +286,9 @@ class TimingDMA(Timing):
         # print 'Generating Quick DMA Long short Mask with parameters', params
 
         # 计算指数的移动平均价格
-        DMA = sma(hist_price, s) - sma(hist_price, l)
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_price.T
+        DMA = sma(h[0], s) - sma(h[0], l)
         AMA = DMA.copy()
         AMA[~np.isnan(DMA)] = sma(DMA[~np.isnan(DMA)], d)
         # print('qDMA generated DMA and AMA signal:', DMA.size, DMA, '\n', AMA.size, AMA)
@@ -330,8 +331,9 @@ class TimingTRIX(Timing):
         # print 'Generating TRIX Long short Mask with parameters', params
 
         # 计算指数的指数移动平均价格
-
-        TRIX = trix(hist_price, s)
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_price.T
+        TRIX = trix(h[0], s)
         MATRIX = sma(TRIX, m)
 
         # 生成TRIX多空判断：
@@ -678,10 +680,10 @@ class RiconUrgent(Ricon):
         assert isinstance(hist_price, np.ndarray), 'Type Error: input historical data should be ndarray'
         day, drop = self._pars
         h = hist_price[:,:,0].T
-        print(f'input array got in Ricon.generate() is shaped {hist_price.shape}')
-        print(f'and the hist_data is converted to shape {h.shape}')
+        # print(f'input array got in Ricon.generate() is shaped {hist_price.shape}')
+        # print(f'and the hist_data is converted to shape {h.shape}')
         diff = (h - np.roll(h, day)) / h
-        print(f'created array in ricon generate() is shaped {diff.shape}')
+        # print(f'created array in ricon generate() is shaped {diff.shape}')
         return np.where(diff < drop, -1, 0)
 
 
@@ -1027,6 +1029,9 @@ class Operator:
             ric.info()
         print('#' * 25)
 
+    # TODO： 目前的三维数据处理方式是：将整个3D historyPanel传入策略，在策略的generate方法所调用的最底层（Timing的generate_one, \
+    # TODO：Selecting的select方法等）对历史数据框架进行切片操作，提取出正确的数据。这种方法只是临时应用，最终的应用方式应该是在最外层 \
+    # TODO：就将数据切片后传入，这样在策略最内层的自定义方法中不用关心数据的格式和切片问题，只需要定义好数据类型htypes参数就可以了
     def create(self, hist_data:HistoryPanel):
         """# 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
         # 对信号进行合法性处理，最终生成合法交易信号
@@ -1044,16 +1049,16 @@ class Operator:
         shares = hist_data.levels
         data_types = hist_data.htypes
         date_list = list(hist_data.index.keys())
-        print(f'date_list is {date_list}')
+        # print(f'date_list is {date_list}')
         h_v = hist_data.values
-        print(f'shape of h_v in operator.create() function: {h_v.shape}')
+        # print(f'shape of h_v in operator.create() function: {h_v.shape}')
         for sel in self.__selecting:  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             sel_masks.append(sel.generate(h_v, date_list, shares))  # 生成的选股蒙板添加到选股蒙板队列中
         # print('SPEED test OP create, Time of sel_mask blending')
         # %time (self.__selecting_blend(sel_masks))
         sel_mask = self.__selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
-        print(f'Sel_mask has been created! shape is {sel_mask.shape}')
+        # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         selected_shares = sel_mask.any(0)
@@ -1070,7 +1075,7 @@ class Operator:
         # print('SPEED test OP create, Time of ls_mask blending')
         # %time self.__timing_blend(ls_masks)
         ls_mask = self.__timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
-        print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
+        # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print( '\n long/short mask: \n', ls_mask)
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
@@ -1081,7 +1086,7 @@ class Operator:
         # print('SPEED test OP create, Time of ricon_mask blending')
         # %time self.__ricon_blend(ricon_mats)
         ricon_mat = self.__ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
-        print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
+        # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
         # print ('risk control matrix \n', ricon_mat[980:1000])
         # print (ricon_mat)
         # print ('sel_mask * ls_mask: ', (ls_mask * sel_mask))
@@ -1089,7 +1094,7 @@ class Operator:
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         op_mat = _legalize(_mask_to_signal(ls_mask * sel_mask) + ricon_mat)
-        print(f'Finally op mask has been created, shaped {op_mat.shape}')
+        # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         # pd.DataFrame(op_mat, index = date_list, columns = shares)
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)]['2007-01-15': '2007-03-01'])
