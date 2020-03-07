@@ -33,12 +33,12 @@ if __name__ == '__main__':
 
     shares = ['600037', '600547', '000726', '600111', '600600', '600549', '000001',
               '000002', '000005', '000004', '000006', '000007', '000008']
-    # shares = ['600037', '000005']
+    # share_pool = ['600037', '000005']
     print('Historical data has been extracted')
-    # %time d = h.extract(shares, start='2005-01-15', end = '2019-10-15', interval = 'd')
+    # %time d = h.extract(share_pool, start='2005-01-15', end = '2019-10-15', interval = 'd')
     cont = Context()
-    cont.shares = shares
-    cont.shares = h.shares
+    cont.share_pool = shares
+    cont.share_pool = h.shares
     cont.history_data = h
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
     print('transaction rate object created, rate is', cont.rate)

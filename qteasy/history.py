@@ -17,7 +17,7 @@ class HistoryPanel():
     """The major data structure to be used for the qteasy quants system.
 
     data structure and class containing multiple types of array-like data framework
-    axis 1: levels / shares
+    axis 1: levels / share_pool
     axis 2: rows / index / hdates
     axis 3: columns / htypes
     """
@@ -113,7 +113,7 @@ class HistoryPanel():
     def __getitem__(self, keys=None):
         """获取历史数据的一个切片，给定一个type、日期或股票代码
 
-            contains three slice objects: htypes, shares, and hdates,
+            contains three slice objects: htypes, share_pool, and hdates,
 
         input：
             :param keys: list/tuple/slice历史数据的类型名，为空时给出所有类型的数据
@@ -129,7 +129,7 @@ class HistoryPanel():
         key_is_string = isinstance(keys, str)
         key_is_number = isinstance(keys, int)
 
-        # first make sure that htypes, shares, and hdates are either slice or list
+        # first make sure that htypes, share_pool, and hdates are either slice or list
         if key_is_tuple:
             if len(keys) == 2:
                 htype_slice, share_slice = keys
@@ -149,7 +149,7 @@ class HistoryPanel():
         share_slice = _make_list_or_slice(share_slice, self.shares)
         hdate_slice = _make_list_or_slice(hdate_slice, self.hdates)
 
-        print('shares is ', share_slice, '\nhtypes is ', htype_slice,
+        print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
               '\nhdates is ', hdate_slice)
         return self.values[share_slice, hdate_slice, htype_slice]
 

@@ -14,6 +14,7 @@ class Log:
 
 
     """
+
     def __init__(self):
         """
 
@@ -88,12 +89,14 @@ class Context:
         self.init_cash = init_cash  # 回测初始现金金额
         # TODO： 将整数形式的初始现金金额修改为投资现金对象CashPlan
         today = datetime.datetime.today().date()
-        self.shares = []  # 优化参数所针对的投资产品
+        self.share_pool = []  # 优化参数所针对的投资产品
         self.opt_period_start = today - datetime.timedelta(3650)  # 默认优化历史区间开始日是十年前
         self.opt_period_end = today - datetime.timedelta(365)  # 优化历史区间结束日
         self.opt_period_freq = 'd'  # 优化历史区间采样频率
         self.loop_period_start = today - datetime.timedelta(3650)  # 测试区间开始日
         self.loop_period_end = today  # 测试区间结束日（测试区间的采样频率与优化区间相同）
+        self.loop_period_freq = 'd'
+        self.loop_hist_data_type = 'close'
         self.t_func_type = 1  # 'single'
         self.t_func = 'FV'  # 评价函数
         self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
@@ -122,7 +125,8 @@ class Rate:
     3， slipage：type：float，交易滑点，用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
     """
-    def __init__(self, fix:float = 0, fee: float = 0.003, slipage: float = 0):
+
+    def __init__(self, fix: float = 0, fee: float = 0.003, slipage: float = 0):
         self.fix = fix
         self.fee = fee
         self.slipage = slipage
@@ -135,7 +139,7 @@ class Rate:
         """设置Rate对象"""
         return f'Rate({self.fix}, {self.fee}, {self.slipage})'
 
-    #TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
+    # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
     def __call__(self, amount: np.ndarray):
         """直接调用对象，计算交易费率"""
         return self.fee + self.slipage * amount
@@ -159,6 +163,12 @@ class Cash:
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
+    def __init__(self):
+        """
+
+        """
+        raise NotImplementedError
+
 
 # TODO: 使用Numba加速_loop_step()函数
 def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
@@ -169,8 +179,8 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
         param pre_amounts, np.ndarray：list，交易开始前各个股票账户中的股份余额
         param op, np.ndarray：本次交易的个股交易清单
         param prices：np.ndarray，本次交易发生时各个股票的价格
-        param rate：object Rate() 买入成本——待改进，应根据三个成本费率动态估算
-        param moq：float: 投资产品最小交易单位
+        param rate：object Rate 交易成本率对象
+        param moq：float: 投资产品最小交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
     return：===== tuple，包含四个元素
         cash：交易后账户现金余额
@@ -252,14 +262,15 @@ def _get_complete_hist(values, h_list, with_price=False):
     return values
 
 
+# TODO：回测主入口函数需要增加现金计划、多种回测结果评价函数、回测过程log记录、回测结果可视化和回测结果参照标准
 def apply_loop(op_list, history_list, visual=False, price_visual=False,
                init_cash=100000, rate=None, moq=100):
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
     input：=====
-        :type init_cash: float: 初始资金额
-        :type price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效
+        :type init_cash: float: 初始资金额，未来将被替换为CashPlan对象
+        :type price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效，未来将增加reference数据
         :type history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
         :type visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
                             为True时将数据填充到整个历史区间，并用图表输出
@@ -286,7 +297,7 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    for i in range(op_count): # 对每一行历史交易信号开始回测
+    for i in range(op_count):  # 对每一行历史交易信号开始回测
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
                                                op=op[i], prices=price[i],
@@ -322,6 +333,7 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
 def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, *args, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
+        接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
         根据context中的设置和运行模式（mode）进行不同的操作：
         context.mode == 0 or mode == 0:
             进入实时信号生成模式：
@@ -332,7 +344,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
             根据context规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
             生成投资资金模型，模拟在回测区间内使用投资资金模型进行模拟交易的结果
             输出对结果的评价（使用多维度的评价方法）
-            输出回测日志
+            输出回测日志·
             投资资金模型不能为空，策略参数不能为空
         context.mode == 2 or mode == 2:
             进入优化模式：
@@ -354,31 +366,101 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
         type: Log()，运行日志记录，txt 或 pd.DataFrame
     """
 
-    shares = context.shares
+    # 从context 上下文对象中读取运行所需的参数：
+    # 股票清单或投资产品清单
+    shares = context.share_pool
+    # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     if mode is None:
         exe_mode = context.mode
     else:
         exe_mode = mode
-    # hist data can be overwritten by passing history_data: pd.DataFrame
+    # 如果没有显式给出 history_data 历史数据，则按照context上下文对象设定的回测、优化区间及频率参数建立历史数据，否则适用history_data 数据
+    # TODO： 直接给出history_data是一个没有明确定义的操作：history_data被用于回测？还是优化？如何确保符合op的要求？详见下方hist_data_req
+    # TODO： 对于策略生成、策略回测和策略优化有可能应用不同的历史数据，因此应该分别处理并生成不同的历史数据集，例如策略生成需要用到3D多类型数据 \
+    # 而回测则只需要收盘价即可，数据频率也可能不同
     if history_data is None:
-        hist = context.history.extract(shares, price_type='close',
-                                       start=start, end=end,
-                                       interval=freq)
+        # TODO：根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
+        # 用于交易信号生成的历史数据
+        hist_op = context.history.extract(shares, price_type='close',
+                                          start=start, end=end,
+                                          interval=freq)
+        hist_loop = None  # 用于数据回测的历史数据
+        hist_opti = None  # 用于策略优化的历史数据
     else:
+        # TODO: hist_data_req：这里的代码需要优化：直接传入的
         assert isinstance(history_data, HistoryPanel), \
             f'historical price should be HistoryPanel! got {type(history_data)}'
-        hist = history_data
-        hist_close = history_data.to_dataframe('close')
+        hist_op = history_data
+        hist_loop = history_data.to_dataframe('close')
 
     # ========
     if exe_mode == 0:
-        """进入实时信号生成模式："""
+        """进入实时信号生成模式：
+        
+            根据生成的执行器历史数据hist_op，应用operator对象中定义的投资策略生成当前的投资组合和各投资产品的头寸及仓位
+            连接交易执行模块登陆交易平台，获取当前账号的交易平台上的实际持仓组合和持仓仓位
+            将生成的投资组合和持有仓位与实际仓位比较，生成交易信号
+            交易信号为一个tuple，包含以下组分信息：
+             1，交易品种：str，需要交易的目标投资产品，可能为股票、基金、期货或其他，根据建立或设置的投资组合产品池确定
+             2，交易位置：int，分别为多头头寸：1，或空头仓位： -1 （空头头寸只有在期货或期权交易时才会涉及到）
+             3，交易方向：int，分别为开仓：1， 平仓：0 （股票和基金的交易只能开多头（买入）和平多头（卖出），基金可以开、平空头）
+             4，交易类型：int，分为市价单：0，限价单：0
+             5，交易价格：float，仅当交易类型为限价单时有效，市价单
+             6，交易量：float，当交易方向为开仓（买入）时，交易量代表计划现金投入量，当交易方向为平仓（卖出）时，交易量代表卖出的产品份额
+             
+             上述交易信号被传入交易执行模块，连接券商服务器执行交易命令，执行成功后返回1，否则返回0
+             若交易执行模块交易成功，返回实际成交的品种、位置、方向、价格及成交数量（交易量），另外还返回交易后的实际持仓数额，资金余额
+             交易费用等信息
+             
+             以上信息被记录到log对象中，并最终存储在磁盘上
+        """
         raise NotImplementedError
 
     elif exe_mode == 1:
-        """进入回测模式："""
-        op_list = operator.create(hist_data=hist)
-        looped_values = apply_loop(op_list, hist_close.fillna(0),
+        """进入回测模式：
+        
+            根据执行器历史数据hist_op，应用operator执行器对象中定义的投资策略生成一张投资产品头寸及仓位建议表。
+            这张表的每一行内的数据代表在这个历史时点上，投资策略建议对每一个投资产品应该持有的仓位。每一个历史时点的数据都是根据这个历史时点的
+            相对历史数据计算出来的。这张投资仓位建议表的历史区间受context上下文对象的"loop_period_start, loop_period_end, loop_period_freq"
+            等参数确定。
+            同时，这张投资仓位建议表是由operator执行器对象在hist_op策略生成历史数据上生成的。hist_op历史数据包含所有用于生成策略运行结果的信息
+            包括足够的数据密度、足够的前置历史区间以及足够的历史数据类型（如不同价格种类、不同财报指标种类等）
+            operator执行器对象接受输入的hist_op数据后，在数据集合上反复循环运行，从历史数据中逐一提取出一个个历史片段，根据这个片段生成一个投资组合
+            建议，然后把所有生成的投资组合建议组合起来形成完整的投资组合建议表。
+            
+            投资组合建议表生成后，系统在整个投资组合建议区间上比较前后两个历史时点上的建议持仓份额，当发生建议持仓份额变动时，根据投资产品的类型
+            生成投资交易信号，包括交易方向、交易产品和交易量。形成历史交易信号表。
+            
+            历史交易信号表生成后，系统在相应的历史区间中创建hist_loop回测历史数据表，回测历史数据表包含对回测操作来说必要的历史数据如股价等，然后
+            在hist_loop的历史数据区间上对每一个投资交易信号进行模拟交易，并且逐个生成每个交易品种的实际成交量、成交价格、交易费用（通过Rate类估算）
+            以及交易前后的持有资产数量和持有现金数量的变化，以及总资产的变化。形成一张交易结果清单。交易模拟过程中的现金投入过程通过CashPlan对象来
+            模拟。
+            
+            因为交易结果清单是根据有交易信号的历史交易日上计算的，因此并不完整。根据完整的历史数据，系统可以将数据补充完整并得到整个历史区间的
+            每日甚至更高频率的投资持仓及总资产变化表。完成这张表后，系统将在这张总资产变化表上执行完整的回测结果分析，分析的内容包括：
+                1，total_investment                      总投资
+                2，total_final_value                     投资期末总资产
+                3，loop_length                           投资模拟区间长度
+                4，total_earning                         总盈亏
+                5，total_transaction_cost                总交易成本
+                6，total_open                            总开仓次数
+                7，total_close                           总平仓次数
+                8，total_return_rate                     总收益率
+                9，annual_return_rate                    总年化收益率
+                10，reference_return                     基准产品总收益
+                11，reference_return_rate                基准产品总收益率
+                12，reference_annual_return_rate         基准产品年化收益率
+                13，max_retreat                          投资期最大回测率
+                14，Karma_rate                           卡玛比率
+                15，Sharp_rate                           夏普率
+                16，win_rage                             胜率
+                
+            上述所有评价结果和历史区间数据能够以可视化的方式输出到图表中。同时回测的结果数据和回测区间的每一次模拟交易记录也可以被记录到log对象中
+            保存在磁盘上供未来调用
+            
+        """
+        op_list = operator.create(hist_data=hist_op)
+        looped_values = apply_loop(op_list, hist_loop.fillna(0),
                                    init_cash=context.init_cash,
                                    moq=0, visual=True, rate=context.rate,
                                    price_visual=True)
@@ -389,28 +471,128 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
         print('Average Yearly return rate: ', np.round((ret ** (1 / years) - 1) * 100, 3), '%')
 
     elif exe_mode == 2:
-        """进入优化模式："""
+        """进入策略优化模式：
+        
+            优化模式的目的是寻找能让策略的运行效果最佳的参数或参数组合。
+            寻找能使策略的运行效果最佳的参数组合并不是一件容易的事，因为我们通常认为运行效果最佳的策略是能在"未来"实现最大收益的策略。但是，鉴于
+            实际上要去预测未来是不可能的，因此我们能采取的优化方法几乎都是以历史数据——也就是过去的经验——为基础的，并且期望通过过去的历史经验
+            达到某种程度上"预测未来"的效果。
+            
+            策略优化模式或策略优化器的工作方法就基于这个思想，如果某个或某组参数使得某个策略的在过去足够长或者足够有代表性的历史区间内表现良好，
+            那么很有可能它也能在有限的未来不大会表现太差。因此策略优化模式的着眼点完全在于历史数据——所有的操作都是通过解读历史数据，或者策略在历史数据
+            上的表现来评判一个策略的优劣的，至于如何找到对策略的未来表现有更大联系的历史数据或表现形式，则是策略设计者的责任。策略优化器仅仅
+            确保找出的参数组合在过去有很好的表现，而对于未来无能为力。
+            
+            优化器的工作基础在于历史数据。它的工作方法从根本上来讲，是通过检验不同的参数在同一组历史区间上的表现来评判参数的优劣的。优化器的
+            工作方法可以大体上分为以下两类：
+            
+                1，无监督方法类：这一类方法不需要事先知道"最优"或先验信息，从未知开始搜寻最佳参数。这类方法需要大量生成不同的参数组合，并且
+                在同一个历史区间上反复回测，通过比较回测的结果而找到最优或较优的参数。这一类优化方法的假设是，如果这一组参数在过去取得了良好的
+                投资结果，那么很可能在未来也不会太差。
+                这一类方法包括：
+                    1，Exhaustive_searching                  穷举法：
+                    2，Montecarlo_searching                  蒙特卡洛法
+                    3，Incremental_steped_searching          步进搜索法
+                    4，Genetic_Algorithm                     遗传算法
+                
+                2，有监督方法类：这一类方法依赖于历史数据上的（有用的）先验信息：比如过去一个区间上的已知交易信号、或者价格变化信息。然后通过
+                优化方法寻找历史数据和有用的先验信息之间的联系（目标联系）。这一类优化方法的假设是，如果这些通过历史数据直接获取先验信息的联系在未来仍然
+                有效，那么我们就可能在未来同样根据这些联系，利用已知的数据推断出对我们有用的信息。
+                这一类方法包括：
+                    1，ANN_based_methods                     基于人工神经网络的有监督方法
+                    2，SVM                                   支持向量机类方法
+                    3，KNN                                   基于KNN的方法
+                    
+            为了实现上面的方法，优化器需要两组历史数据，分别对应两个不同的历史区间，一个是优化区间，另一个是回测区间。在优化的第一阶段，优化器
+            在优化区间上生成交易信号，或建立目标联系，并且在优化区间上找到一个或若干个表现最优的参数组合或目标联系，接下来，在优化的第二阶段，
+            优化器在回测区间上对寻找到的最优参数组合或目标联系进行测试，在回测区间生成对所有中选参数的“独立”表现评价。通常，可以选择优化区间较
+            长且较早，而回测区间较晚而较短，这样可以模拟根据过去的信息建立的策略在未来的表现。
+            
+            优化器的优化过程首先开始于一个明确定义的参数"空间"。参数空间在系统中定义为一个Space对象。如果把策略的参数用向量表示，空间就是所有可能
+            的参数组合形成的向量空间。对于无监督类方法来说，参数空间容纳的向量就是交易信号本身或参数本身。而对于有监督算法，参数空间是将历史数据
+            映射到先验数据的一个特定映射函数的参数空间，例如，在ANN方法中，参数空间就是神经网络所有神经元连接权值的可能取值空间。优化器的工作本质
+            就是在这个参数空间中寻找全局最优解或局部最优解。因此理论上所有的数值优化方法都可以用于优化器。
+            
+            优化器的另一个重要方面是目标函数。根据目标函数，我们可以对优化参数空间中的每一个点计算出一个目标函数值，并根据这个函数值的大小来评判
+            参数的优劣。因此，目标函数的输出应该是一个实数。对于无监督方法，目标函数与参数策略的回测结果息息相关，最直接的目标函数就是投资终值，
+            当初始投资额相同的时候，我们可以简单地认为终值越高，则参数的表现越好。但目标函数可不仅仅是终值一项，年化收益率或收益率、夏普率等等
+            常见的评价指标都可以用来做目标函数，甚至目标函数可以用复合指标，如综合考虑收益率、交易成本、最大回撤等指标的一个复合指标，只要目标函数
+            的输出是一个实数，就能被用作目标函数。而对于有监督方法，目标函数表征的是从历史数据到先验信息的映射能力，通常用实际输出与先验信息之间
+            的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。
+        """
+        raise NotImplementedError
         how = context.opti_method
         if how == 0:
-            """穷举法"""
-            pars, perfs = _search_exhaustive(hist=hist, op=operator,
-                                             output_count = context.output_count,
-                                             keep_largest_perf=context. keep_largest_perf,
+            """ Exhausetive Search 穷举法
+            
+                穷举法是最简单和直接的参数优化方法，在已经定义好的参数空间中，按照一定的间隔均匀地从向量空间中取出一系列的点，逐个在优化空间
+                中生成交易信号并进行回测，把所有的参数组合都测试完毕后，根据目标函数的值选择排名靠前的参数组合即可。
+                
+                穷举法能确保找到参数空间中的全剧最优参数，不过必须逐一测试所有可能的参数点，因此计算量相当大。同时，穷举法只适用于非连续的参数
+                空间，对于连续空间，仍然可以使用穷举法，但无法真正"穷尽"所有的参数组合
+                
+                关于穷举法的具体参数和输出，参见self._search_exhaustive()函数的docstring
+            """
+            pars, perfs = _search_exhaustive(hist=hist_op, op=operator,
+                                             output_count=context.output_count,
+                                             keep_largest_perf=context.keep_largest_perf,
                                              *args, **kwargs)
         elif how == 1:
-            """Montecarlo蒙特卡洛方法"""
-            pars, perfs = _search_montecarlo(hist=hist, op=op,
+            """ Montecarlo蒙特卡洛方法
+            
+                蒙特卡洛法与穷举法类似，也需要检查并测试参数空间中的大量参数组合。不过在蒙特卡洛法中，参数组合是从参数空间中随机选出的，而且在
+                参数空间中均匀分布。与穷举法相比，蒙特卡洛方法更适合于连续参数空间。
+                
+                关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
+            """
+            pars, perfs = _search_montecarlo(hist=hist_op, op=op,
                                              output_count=context.output_count,
                                              keep_largest_perf=context.keep_largest_perf,
                                              *args, **kwargs)
         elif how == 2:  #
-            """递进步长法"""
-            pars, perfs = _search_incremental(hist=hist, op=op,
+            """ Incremental Stepped Search 递进步长法
+            
+                递进步长法本质上与穷举法是一样的。不过规避了穷举法的计算量过大的缺点，大大降低了计算量，同时在对最优结果的搜索能力上并未作出太大
+                牺牲。递进步长法的基本思想是对参数空间进行多轮递进式的搜索，第一次搜索时使用一个相对较大的搜索步长，由于搜索的步长较大（通常为8或
+                16，或者更大）因此第一次搜索的计算量只有标准穷举法的1/16^3或更少。第一次搜索完毕后，选出结果最优的参数点，通常为50个到1000个之
+                间，在这些参数点的"附件"进行第二轮搜索，此时搜索的步长只有第一次的1/2或1/3。虽然搜索步长减小，但是搜索的空间更小，因此计算量也
+                不大。第二轮搜索完成后，继续减小搜索步长，同样对上一轮搜索中找到的最佳参数附近搜索。这样循环直到完成整个空间的搜索。
+                
+                使用这种技术，在一个250*250X250的空间中，能够把搜索量从15,000,000降低到28,000左右,缩减到原来的1/500。如果目标函数在参数空间
+                中大体上是连续的情况下，使用ISS方法可以以五百分之一的计算量得到近似穷举法的搜索效果。
+                
+                关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
+            """
+            pars, perfs = _search_incremental(hist=hist_op, op=op,
                                               output_count=context.output_count,
                                               keep_largest_perf=context.keep_largest_perf,
                                               *args, **kwargs)
         elif how == 3:
-            """遗传算法"""
+            """ GA method遗传算法
+            
+                遗传算法适用于"超大"参数空间的参数寻优。对于有二到三个参数的策略来说，使用蒙特卡洛或穷举法是可以承受的选择，如果参数数量增加到4到
+                5个，递进步长法可以帮助降低计算量，然而如果参数有数百个，而且每一个都有无限取值范围的时候，任何一种基于穷举的方法都没有应用的
+                意义了。如果目标函数在参数空间中是连续且可微的，可以使用基于梯度的方法，但如果目标函数不可微分，GA方法提供了一个在可以承受的时间
+                内找到全局最优或局部最优的方法。
+                
+                GA方法受生物进化论的启发，通过模拟生物在自然选择下的基因进化过程，在复杂的超大参数空间中搜索全局最优或局部最优参数。GA的基本做法
+                是模拟一个足够大的"生物"种群在自然环境中的演化，这些生物的"基因"是参数空间中的一个点，在演化过程中，种群中的每一个个体会发生
+                变异、也会通过杂交来改变或保留自己的"基因"，并把变异或杂交后的基因传递到下一代。在每一代的种群中，优化器会计算每一个个体的目标函数
+                并根据目标函数的大小确定每一个个体的生存几率和生殖几率。由于表现较差的基因生存和生殖几率较低，因此经过数万乃至数十万带的迭代后，
+                种群中的优秀基因会保留并演化出更加优秀的基因，最终可能演化出全局最优或至少局部最优的基因。
+                
+                关于遗传算法的详细参数和输出，参见self._search_ga()函数的docstring
+            """
+            raise NotImplementedError
+        elif how == 4:
+            """ ANN 人工神经网络
+            
+            """
+            raise NotImplementedError
+        elif how == 5:
+            """ SVM 支持向量机方法
+            
+            """
             raise NotImplementedError
 
 

@@ -101,7 +101,7 @@ class TestOperator(unittest.TestCase):
 
     def create_test_data(self):
         # build up test data: a 4-type, 3-share, 21-day matrix of prices that contains nan values in some days
-        # for some shares
+        # for some share_pool
 
         # for share1:
         share1_close = [7.74, 7.83, 7.79, 7.93, 7.84, 7.83, 7.77, 7.84, 7.86, 7.92, 7.84,

@@ -454,7 +454,7 @@ class Selecting(Strategy):
         # %time self._seg_periods(dates, freq)
         assert isinstance(hist_price, np.ndarray), 'Type Error: input historical data should be ndarray'
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
-        # shares = hist_price.columns
+        # share_pool = hist_price.columns
         # 一个空的list对象用于存储生成的选股蒙版
         sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
         seg_start = 0
@@ -522,7 +522,7 @@ class SelectingRanking(Selecting):
         self.__drop_threshold: 弃置阈值，当分值低于（或高于）该阈值时将股票从组合中剔除'''
     """
     _stg_name = 'RANKING SELECTING'
-    _stg_text = 'Selecting shares according to the so called ranking table, distribute weights in multiple ways'
+    _stg_text = 'Selecting share_pool according to the so called ranking table, distribute weights in multiple ways'
     _par_count = 3  # 比普通selecting多一个ranking_table参数，opt类型为enum（自然）
     _par_types = ['enum', 'conti', 'enum']
     _par_bounds_or_enums = [('M', 'Q', 'S', 'Y'), (0, 1), ()]  # 四种分组单元分别为 'month', 'quarter', 'semi', 'year'
@@ -564,7 +564,7 @@ class SelectingRanking(Selecting):
     def _select(self, shares, date, par):
         """# 根据事先定义的排序表根据不同的方法选择一定数量的股票
     # 输入：
-        # shares：列表，包含了所有备选投资产品的代码
+        # share_pool：列表，包含了所有备选投资产品的代码
         # date：选股日期，选股操作发生的日期
         # par：选股参数，选股百分比或选股数量
     # 输出：=====
@@ -1096,7 +1096,7 @@ class Operator:
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         op_mat = _legalize(_mask_to_signal(ls_mask * sel_mask) + ricon_mat)
         print(f'Finally op mask has been created, shaped {op_mat.shape}')
-        # pd.DataFrame(op_mat, index = date_list, columns = shares)
+        # pd.DataFrame(op_mat, index = date_list, columns = share_pool)
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)]['2007-01-15': '2007-03-01'])
         # return lst[lst.any(1)]
