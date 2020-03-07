@@ -5,7 +5,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['Cross_line'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['CDL'], selecting_types=['simple'], ricon_types=['urgent'])
 
 
     d = pd.read_csv('000300_I_N.txt', index_col='date')
@@ -38,8 +38,8 @@ if __name__ == '__main__':
     # %time d = h.extract(shares, start='2005-01-15', end = '2019-10-15', interval = 'd')
     cont = Context()
     cont.shares = shares
-    cont.shares = h2.columns
-    cont.history_data = h2
+    cont.shares = h.shares
+    cont.history_data = h
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
     print('transaction rate object created, rate is', cont.rate)
 
