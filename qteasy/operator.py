@@ -7,57 +7,106 @@ from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
 
 class Strategy:
-    """量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的择时类调用"""
+    """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
+
+        类属性定义了策略类型、策略名称、策略关键属性的数量、类型和取值范围等
+    """
     __mataclass__ = ABCMeta
-    # Strategy主类共有的属性
-    _stg_type = 'strategy type'
-    _stg_name = 'strategy name'
-    _stg_text = 'intro text of strategy'
-    _par_count = 0
-    _par_types = []
-    _par_bounds_or_enums = []
+
+    def __init__(self,
+                 pars:tuple=None,
+                 opt_tag:int=0,
+                 stg_type:str = 'strategy type',
+                 stg_name:str = 'strategy name',
+                 stg_text:str = 'intro text of strategy',
+                 par_count:int = 0,
+                 par_types = None,
+                 par_bounds_or_enums = None,
+                 data_freq: str = 'd',
+                 sample_freq: str = 'd',
+                 window_length: int = 270,
+                 data_types: str = None):
+        """ 初始化策略，赋予策略参数和策略的优化类型，优化类型为0代表不参加优化，为1代表参加优化
+
+        input:
+            :param pars: tuple, 策略参数
+            :param opt_tag: int, 0: 参加优化，1: 不参加优化
+        """
+        self._pars = pars
+        self._opt_tag = opt_tag
+        self._stg_type = stg_type
+        self._stg_name = stg_name
+        self._stg_text = stg_text
+        self._par_count = par_count
+        if par_types is None:
+            self._par_types = []
+        else:
+            self._par_types = par_types
+        if par_bounds_or_enums is None:
+            self._par_bounds_or_enums = []
+        else:
+            self._par_bounds_or_enums = par_bounds_or_enums
+        self._data_freq = data_freq
+        self._sample_freq = sample_freq
+        self._window_length = window_length
+        self._data_types = data_types
+
 
     @property
     def stg_type(self):
+        """策略类型"""
         return self._stg_type
 
     @property
     def stg_name(self):
+        """策略名称"""
         return self._stg_name
 
     @property
     def stg_text(self):
+        """策略说明文本"""
         return self._stg_text
 
     @property
     def par_count(self):
+        """策略的参数数量"""
         return self._par_count
 
     @property
     def par_types(self):
+        """策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum'"""
         return self._par_types
 
     @property
     def par_boes(self):
+        """策略的参数取值范围，用来定义参数空间用于参数优化"""
         return self._par_bounds_or_enums
 
     @property
     def opt_tag(self):
+        """策略的优化类型"""
         return self._opt_tag
 
     @property
     def pars(self):
+        """策略参数，元组"""
         return self._pars
 
-    # 以下是所有Strategy对象的共有方法
-    def __init__(self, pars=None, opt_tag=0):
-        # 对象属性：
-        self._pars = pars
-        self._opt_tag = opt_tag
+    def __str__(self):
+        """打印所有相关信息和主要属性"""
+        str1 = f'{type(self)}'
+        str2 = f'\nStrategy type: {self.stg_type}'
+        str3 = f'\nInformation of the strategy: {self.stg_name}, {self.stg_text}'
+        str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_boes}'
+        if self._pars is not None:
+            str5 = f'\nParameter Loaded; {type(self._pars)}, {self._pars}\n'
+        else:
+            str5 = f'\nParameter NOT loaded!\n'
+        return ''.join([str1, str2, str3, str4, str5])
 
     def info(self):
-        # 打印所有相关信息和主要属性
-        print('Type of Strategy:', self.stg_type)
+        """打印所有相关信息和主要属性"""
+        print(type(self), f'Strategy type: {self.stg_type}')
         print('Information of the strategy:\n', self.stg_name, self.stg_text)
         print('Optimization Tag and opti ranges:', self.opt_tag, self.par_boes)
         if self._pars is not None:
@@ -66,57 +115,140 @@ class Strategy:
             print('Parameter NOT loaded!')
         pass
 
-    def set_pars(self, pars):
-        self._pars = pars
-        return pars
+    def set_pars(self, pars:tuple)->int:
+        """设置策略参数，在设置之前对参数的个数进行检查
 
-    def set_opt_tag(self, opt_tag):
+        input:
+            :param: type pars: tuple，需要设置的参数
+        return:
+            int: 1: 设置成功，0: 设置失败
+        """
+        if len(pars) == self.par_count:
+            self._pars = pars
+            return 1
+        else:
+            # TODO 调试代码，需删除
+            print(f'Setting Error: parameter setting error in set_pars() method of {self}\n expected par count:',
+                  f'{self.par_count}, got {len(pars)}')
+            return 0
+
+    def set_opt_tag(self, opt_tag:int)->int:
+        """ 设置策略的优化类型
+
+        input"
+            :param opt_tag: int，0：不参加优化，1：参加优化
+        :return:
+        """
         self._opt_tag = opt_tag
         return opt_tag
 
     def set_par_boes(self, par_boes):
+        """ 设置策略参数的取值范围
+
+        input:
+            :param par_boes: 策略的参数取值范围
+        :return:
+        """
         self._par_bounds_or_enums = par_boes
         return par_boes
 
     @abstractmethod
-    def generate(self, hist_price):
-        """策略类的基本抽象方法，接受输入参数并输出操作清单"""
-        pass
+    def generate(self, hist_data):
+        """策略类的基本抽象方法，接受输入历史数据并根据参数生成策略输出"""
+        raise NotImplementedError
 
 # TODO: 以后可以考虑把Timing改为Alpha Model， Selecting改为Portfolio Manager， Ricon改为Risk Control
+# ===============================
+# TODO: 一种更好的实现Strategy参数的方法：取消strategy类的类属性，改为用__init__()方法初始化的对象属性，所有属性值通过初始化方法初始化
+# TODO: 初始化方法参数给出默认值。这样在自定义每种策略的具体实现类的时候，就不需要通过类属性定义诸如par_count,data_freq等参数了，只需要
+# TODO: 定义好_realize()方法即可，而其他的具体参数均可以在实例化策略对象的时候通过初始化参数给出即可
+# ===============================
+# TODO: 关于Selecting策略的改进：
+# TODO: Selecting策略的选股周期和选股数量/比例两个参数作为Selecting类的固有参数放入__init__()方法中，并赋予默认值，同时将ranking table
+# TODO: 所涉及到的一系列特殊属性转化为Selecting类的固有属性，同样放入初始化方法中。这样对于所有的selecting继承类，在realize的时候只需要
+# TODO: 一个参数hist_data即可，share或dates参数都不再需要，都可以根据其他的固有属性动态生成。
+# ===============================
+# TODO: 关于Strategy策略的进一步改进：
+# TODO: 所有策略中可以设置一个pre_process()预处理方法，把需要放到循环外的计算开销全部放入这个预处理方法中，在循坏外调用，以提升（优化）
+# TODO: 的效率
+# ===============================
 class Timing(Strategy):
-    """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的择时类调用"""
+    """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略"""
     __mataclass__ = ABCMeta
     # Strategy主类共有的属性
     _stg_type = 'timing'
-    data_freq = 'd'
-    window_length = 270
-    data_types = ['close']
+    _data_freq = 'd'
+    _window_length = 270
+    _data_types = ['close']
 
-    def __init__(self):
-        super().__init__()
-
-    ###################
-    # 以下是本类型strategy对象的公共方法和抽象方法
+    def __init__(self,
+                 pars:tuple = None,
+                 opt_tag:int = 0,
+                 stg_name:str = 'NONE',
+                 stg_text:str = 'intro text of timing strategy',
+                 par_count:int = 0,
+                 par_types:list = None,
+                 par_bounds_or_enums:list = None,
+                 data_freq:str = 'd',
+                 sample_freq:str = 'd',
+                 window_length:int = 270,
+                 data_types:list = None):
+        super().__init__(pars = pars,
+                         opt_tag = opt_tag,
+                         stg_type='TIMING',
+                         stg_name=stg_name,
+                         stg_text=stg_text,
+                         par_count=par_count,
+                         par_types=par_types,
+                         par_bounds_or_enums=par_bounds_or_enums,
+                         data_freq=data_freq,
+                         sample_freq=sample_freq,
+                         window_length=window_length,
+                         data_types=data_types)
 
     @abstractmethod
-    def _generate_one(self, hist_pack, params):
-        """抽象方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号"""
+    def _realize(self, hist_pack, params):
+        """ 策略的具体实现方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号
+
+            在择时类策略中，_realize方法接受一个历史数据片段hist_pack，其中包含的数据类型为self.data_types参数定义。
+            hist_pack是一个numpy ndarray对象，包含M行N列数据，其中 M = self._window_length, N = len(self._data_types)
+            这些数据代表投资产品在一个window_length长的历史区间内的历史价格数据，数据的频率为self.data_freq所指定。
+
+            同时，params是一个元组，包含了应用于这一个投资产品的策略参数（由于同一个策略允许对不同的投资产品应用不同的策略参数，
+            这里的策略参数已经被自动分配好了）。投资策略参数的个数为self.par_count所指定，每个投资参数的类型也为self.par_types
+            所指定。
+
+            在策略的实现方法中，需要做的仅仅是定义一种方法，根据hist_pack中给出的历史数据，作出关于这个投资产品在历史数据结束后紧
+            接着的那个时刻的头寸位置（空头头寸还是多头头寸）。在择时策略的实现方法中，不需要考虑其他任何方面的问题，如交易品种、
+            费率、比例等等，也不需要考虑历史数据中的缺陷如停牌等，只需要返回一个代表头寸位置的整数即可：
+            返回1代表多头头寸，返回-1代表空头头寸，仅此而已
+
+            qteasy系统会自行把适用于这个历史片段的策略，原样地推广到整个历史数据区间，同时推广到整个投资组合。并且根据投资组合管理
+            策略（选股策略Selecting）中定义的选股方法确定每种投资产品的仓位比例。最终生成交易清单。
+        input:
+
+        return:
+
+        """
         raise NotImplementedError
 
     def _generate_over(self, hist_slice:np.ndarray, pars:tuple):
         """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开
             对于滚动展开后的矩阵，使用map函数循环调用generate_one函数生成整个历史区间的
-            循环回测结果（结果为1维向量， 长度为hist_length - window_length + 1）
+            循环回测结果（结果为1维向量， 长度为hist_length - _window_length + 1）
 
         input:
-            :param hist_price:
+            :param hist_slice: 历史数据切片，一只个股的所有类型历史数据，shape为(rows, columns)
+                rows： 历史数据行数，每行包含个股在每一个时间点上的历史数据
+                columns： 历史数据列数，每列一类数据如close收盘价、open开盘价等
         :return:
+            np.ndarray: 根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
         # 定位数据中的所有nan值，由于所有数据针对同一股票，因此nan值位置一致
         # 需要区别2D与1D数据，分别进行处理
 
         print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}')
+        # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用generate_one()函数
         if len(hist_slice.shape) == 2:
             drop = ~np.isnan(hist_slice[:, 0])
         else:
@@ -124,52 +256,57 @@ class Timing(Strategy):
         # 生成输出值一维向量
         cat = np.zeros(hist_slice.shape[0])
         hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
-        loop_count = len(hist_nonan) - self.window_length + 1
-        if loop_count < 1:
+        loop_count = len(hist_nonan) - self._window_length + 1
+        if loop_count < 1: # 在开始应用generate_one()
             return cat
 
-        # 开始进行历史数据的滚动真开
-        hist_pack = np.zeros((loop_count, *hist_nonan[:self.window_length].shape))
+        # 开始进行历史数据的滚动展开
+        hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
         for i in range(loop_count):
-            hist_pack[i] = hist_nonan[i:i + self.window_length]
+            hist_pack[i] = hist_nonan[i:i + self._window_length]
         # 滚动展开完成，形成一个新的3D或2D矩阵
         # 开始将参数应用到策略实施函数generate中
         par_list = [pars] * loop_count
-        res = np.array(list(map(self._generate_one,
+        res = np.array(list(map(self._realize,
                                 hist_pack,
                                 par_list)))
-
-        capping = np.zeros(self.window_length - 1)
+        # 生成的结果缺少最前面window_length那一段，因此需要补齐
+        capping = np.zeros(self._window_length - 1)
         print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
         res = np.concatenate((capping, res), 0)
+        # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[drop] = res
         return cat
 
     def generate(self, hist_data):
-        """基于_generate_one方法生成整个股票价格序列集合的多空状态矩阵.
+        """ 生成整个股票价格序列集合的多空状态历史矩阵
 
-        本方法基于np的ndarray计算
+            本方法基于np的ndarray计算，是择时策略的打包方法。
+            择时策略的具体实现方法写在self._realize()方法中，定义一种具体的方法，根据一个固定长度的历史数据片段来确定一只股票
+            或其他投资产品在历史数据片段的结束时的头寸位置。而generate函数则接收一个包含N只股票的更长的历史数据，把多只股票的
+            历史数据进行切片，分别应用不同的（或相同的）策略参数，并调用generate_over()函数，反复地在更长历史数据区间里滚动地
+            计算股票的多空位置，形成整个历史区间上的多空信号矩阵。
         input：
-            param: hist_extract：DataFrame，历史价格数据，需要被转化为ndarray
+            param: hist_extract：np.nadarray，历史价格数据，是一个3D数据组
         return：=====
         """
         print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
         assert type(hist_data) is np.ndarray, f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert hist_data.shape[1] >= self.window_length, \
-            f'DataError: Not enough history data! expected hist data length {self.window_length},' \
+        assert hist_data.shape[1] >= self._window_length, \
+            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
             f' got {hist_data.shape[1]}'
         pars = self._pars
         if isinstance(pars, dict):
-            par_list = pars.values()
+            par_list = pars.values() # 允许使用dict来为不同的股票定义不同的策略参数
         else:
             par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
         # 调用_generate_one方法计算单个个股的多空状态，并组合起来,3D与2D数据处理方式不同
-        if len(hist_data.shape) == 3:
+        if len(hist_data.shape) == 3: # 数据为3D的情形
             # print(f'went through if fork hist_data - 3D')
             res = np.array(list(map(self._generate_over,
                                     hist_data,
                                     par_list))).T
-        else:
+        else: # TODO： 数据为2D的情形是不需要的，仅在初期调试时使用，未来将删除
             # print(f'went through if fork hist_data - 2D')
             res = np.array(list(map(self._generate_over,
                                     hist_data.T,
@@ -181,10 +318,13 @@ class Timing(Strategy):
 
 class TimingSimple(Timing):
     """简单择时策略，返回整个历史周期上的恒定多头状态"""
-    __stg_name = 'SIMPLE TIMING STRATEGY'
-    __stg_text = 'Simple Timing strategy, return constant long position on the whole history'
 
-    def _generate_one(self, hist_price, params):
+    def __init__(self,
+                 stg_name = 'SIMPLE',
+                 stg_text = 'Simple Timing strategy, return constant long position on the whole history'):
+        super().__init__(stg_name=stg_name, stg_text=stg_text)
+
+    def _realize(self, hist_price, params):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
         return 1
@@ -197,17 +337,22 @@ class TimingCrossline(Timing):
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型
 
     """
-    # 重写策略参数相关信息
-    _par_count = 4
-    _par_types = ['discr', 'discr', 'conti', 'enum']
-    _par_bounds_or_enums = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
-    _stg_name = 'CROSSLINE STRATEGY'
-    _stg_text = 'Moving average crossline strategy, determin long/short position according to the cross point of long and short term moving average prices'
-    data_freq = 'd'
-    window_length = 270
-    data_types = ['close']
 
-    def _generate_one(self, hist_price, params):
+    def __init__(self,
+                 data_freq = 'd',
+                 window_length = 270,
+                 data_types = 'close'):
+        super().__init__(par_count=4,
+                         par_types=['discr', 'discr', 'conti', 'enum'],
+                         par_bounds_or_enums = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
+                         stg_name='CROSSLINE STRATEGY',
+                         stg_text='Moving average crossline strategy, determin long/short position according to the ' \
+                                  'cross point of long and short term moving average prices ',
+                         data_freq=data_freq,
+                         window_length=window_length,
+                         data_types=data_types.split(','))
+
+    def _realize(self, hist_price, params):
         """crossline策略使用四个参数：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
         s, l, m, hesitate = params
@@ -233,16 +378,22 @@ class TimingMACD(Timing):
     由于MACD使用指数移动均线，由于此种均线的计算特性，在历史数据集的前max(sRange, lRange, mRange)
     个工作日上生成的数据不可用
     例如，max(sRange, lRange, mRange) = max(72,120,133) = 133个工作日内产生的买卖点不正确"""
-    _par_count = 3
-    _par_types = ['discr', 'discr', 'discr']
-    _par_bounds_or_enums = [(10, 250), (10, 250), (10, 250)]
-    _stg_name = 'MACD STRATEGY'
-    _stg_text = 'MACD strategy, determin long/short position according to differences of exponential weighted moving average prices'
-    data_freq = 'd'
-    window_length = 270
-    data_types = ['close']
 
-    def _generate_one(self, hist_price, params):
+    def __init__(self,
+                 data_freq = 'd',
+                 window_length = 270,
+                 data_types = 'close'):
+        super().__init__(par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums = [(10, 250), (10, 250), (10, 250)],
+                         stg_name='MACD STRATEGY',
+                         stg_text='MACD strategy, determin long/short position according to differences of '
+                                  'exponential weighted moving average prices',
+                         data_freq=data_freq,
+                         window_length=window_length,
+                         data_types=data_types.split(','))
+
+    def _realize(self, hist_price, params):
         """生成单只个股的择时多空信号.
 
         输入:
@@ -271,16 +422,22 @@ class TimingMACD(Timing):
 
 class TimingDMA(Timing):
     """DMA择时策略，继承自Timing类，重写_generate方法"""
-    _par_count = 3
-    _par_types = ['discr', 'discr', 'discr']
-    _par_bounds_or_enums = [(10, 250), (10, 250), (10, 250)]
-    _stg_name = 'quick-DMA STRATEGY'
-    _stg_text = 'np based DMA strategy, determin long/short position according to differences of moving average prices'
-    data_freq = 'd'
-    window_length = 270
-    data_types = ['close']
 
-    def _generate_one(self, hist_price, params):
+    def __init__(self,
+                 data_freq = 'd',
+                 window_length = 270,
+                 data_types = 'close'):
+        super().__init__(par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums = [(10, 250), (10, 250), (10, 250)],
+                         stg_name='DMA STRATEGY',
+                         stg_text='DMA strategy, determin long/short position according to differences of moving '
+                                  'average prices',
+                         data_freq=data_freq,
+                         window_length=window_length,
+                         data_types=data_types.split(','))
+
+    def _realize(self, hist_price, params):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
         s, l, d = params
         # print 'Generating Quick DMA Long short Mask with parameters', params
@@ -309,16 +466,22 @@ class TimingTRIX(Timing):
     数据窗口长度：270天
     参数数量：2个，参数类型：int整形，输入数据范围：[(10, 250), (10, 250)]
     """
-    _par_count = 2
-    _par_types = ['discr', 'discr']
-    _par_bounds_or_enums = [(10, 250), (10, 250)]
-    _stg_name = 'TRIX STRATEGY'
-    _stg_text = 'TRIX strategy, determine long/short position according to triple exponential weighted moving average prices'
-    data_freq = 'd'
-    window_length = 270
-    data_types = ['close']
 
-    def _generate_one(self, hist_price, params):
+    def __init__(self,
+                 data_freq = 'd',
+                 window_length = 270,
+                 data_types = 'close'):
+        super().__init__(par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums = [(10, 250), (10, 250)],
+                         stg_name='TRIX STRATEGY',
+                         stg_text='TRIX strategy, determine long/short position according to triple exponential '
+                                  'weighted moving average prices',
+                         data_freq=data_freq,
+                         window_length=window_length,
+                         data_types=data_types.split(','))
+
+    def _realize(self, hist_price, params):
         """参数:
 
         input:
@@ -351,16 +514,21 @@ class TimingCDL(Timing):
     数据窗口长度：100天
     参数数量：0个，参数类型：N/A，输入数据范围：N/A
     """
-    _par_count = 0
-    _par_types = []
-    _par_bounds_or_enums = []
-    _stg_name = 'CDL INDICATOR STRATEGY'
-    _stg_text = 'CDL Indicators, determine long/short position according to CDL Indicators'
-    data_freq = 'd'
-    window_length = 200
-    data_types = ['open', 'high', 'low', 'close']
 
-    def _generate_one(self, hist_price, params=None):
+    def __init__(self,
+                 data_freq = 'd',
+                 window_length = 200,
+                 data_types = 'open,high,low,close'):
+        super().__init__(par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums = [],
+                         stg_name='CDL INDICATOR STRATEGY',
+                         stg_text='CDL Indicators, determine long/short position according to CDL Indicators',
+                         data_freq=data_freq,
+                         window_length=window_length,
+                         data_types=data_types.split(','))
+
+    def _realize(self, hist_price, params=None):
         """参数:
 
         input:
@@ -376,14 +544,38 @@ class TimingCDL(Timing):
 class Selecting(Strategy):
     """选股策略类的抽象基类，所有选股策略类都继承该类"""
     __metaclass__ = ABCMeta
-    # Strategy主类共有的属性
-    _stg_type = 'selecting'
 
-    #######################
-    # Selecting 类的自有方法和抽象方法
+    def __init__(self,
+                 pars:tuple = None,
+                 opt_tag:int = 0,
+                 stg_name:str = 'NONE',
+                 stg_text:str = 'intro text of selecting strategy',
+                 par_count:int = 2,
+                 data_freq:str = 'y',
+                 sample_freq:str = 'y',
+                 window_length:int = 270,
+                 data_types:str = 'close',
+                 largest_win:int = 1,
+                 distribution:str = 'even',
+                 drop_threshold:float = None):
+        super().__init__(pars = pars,
+                         opt_tag = opt_tag,
+                         stg_type='SELECTING',
+                         stg_name=stg_name,
+                         stg_text=stg_text,
+                         par_count=par_count,
+                         par_types=['enum', 'conti'],
+                         par_bounds_or_enums=[['d', 'm', 'q', 'y'], (0, 1)],
+                         data_freq=data_freq,
+                         sample_freq=sample_freq,
+                         window_length=window_length,
+                         data_types=data_types)
+        self.largest_win = largest_win
+        self.distribution = distribution
+        self.drop_threshold = drop_threshold
 
     @abstractmethod
-    def _select(self, shares, date, pct):
+    def _realize(self, shares, date, pct):
         # Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
         # 返回值：代表一个周期内股票选择权重的ndarray，1Darray
         pass
@@ -430,17 +622,17 @@ class Selecting(Strategy):
         seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
         return seg_pos, seg_lens, len(seg_pos) - 1
 
-    def generate(self, hist_price, dates, shares):
+    def generate(self, hist_data, dates, shares):
         """
         生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
         建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
         输入：
-        hist_price：历史数据, DataFrame
+        hist_data：历史数据, DataFrame
         输出：=====sel_mask：选股蒙版，是一个与输入历史数据尺寸相同的ndarray，dtype为浮点数，取值范围在0～1之间
          矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         获取参数
 
-        :param hist_price: type: np.ndarray, 历史数据
+        :param hist_data: type: np.ndarray, 历史数据
         :param dates:
         :param shares:
         :return:
@@ -449,19 +641,19 @@ class Selecting(Strategy):
         freq = self._pars[0]
         poq = self._pars[1]
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
-        # dates = hist_price.index.values
+        # dates = hist_data.index.values
         # print('SPEED TEST Selection module, Time of segmenting history')
         # %time self._seg_periods(dates, freq)
-        assert isinstance(hist_price, np.ndarray), 'Type Error: input historical data should be ndarray'
+        assert isinstance(hist_data, np.ndarray), 'Type Error: input historical data should be ndarray'
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
-        # share_pool = hist_price.columns
+        # share_pool = hist_data.columns
         # 一个空的list对象用于存储生成的选股蒙版
         sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
         seg_start = 0
 
         for sp, sl in zip(seg_pos, seg_lens):  # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
             # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._select(shares, dates[sp], poq)
+            share_sel = self._realize(shares, dates[sp], poq)
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
@@ -476,7 +668,7 @@ class SelectingTrend(Selecting):
     _stg_name = 'TREND SELECTING'
     _stg_text = 'Selecting share according to detected trends'
 
-    def _select(self, shares, date, pct):
+    def _realize(self, shares, date, pct):
         # 所有股票全部被选中，权值（投资比例）平均分配
         return [1. / len(shares)] * len(shares)
 
@@ -488,7 +680,7 @@ class SelectingSimple(Selecting):
     _stg_name = 'SIMPLE SELECTING'
     _stg_text = 'Selecting all share and distribute weights evenly'
 
-    def _select(self, shares, date, pct):
+    def _realize(self, shares, date, pct):
         # 所有股票全部被选中，投资比例平均分配
         return [1. / len(shares)] * len(shares)
 
@@ -498,7 +690,7 @@ class SelectingRandom(Selecting):
     _stg_name = 'RANDOM SELECTING'
     _stg_text = 'Selecting share Randomly and distribute weights evenly'
 
-    def _select(self, shares, date, par):
+    def _realize(self, shares, date, par):
         if par < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
             chosen = np.random.choice([1, 0], size=len(shares), p=[par, 1 - par])
@@ -561,7 +753,7 @@ class SelectingRanking(Selecting):
                   'Ranking Table None', self.__largest_win, self.__distribution, self.__drop_threshold,
                   sep=',')
 
-    def _select(self, shares, date, par):
+    def _realize(self, shares, date, par):
         """# 根据事先定义的排序表根据不同的方法选择一定数量的股票
     # 输入：
         # share_pool：列表，包含了所有备选投资产品的代码
@@ -642,8 +834,33 @@ class Ricon(Strategy):
     __metaclass__ = ABCMeta
     _stg_type = 'RiCon'
 
+    def __init__(self,
+                 pars:tuple = None,
+                 opt_tag:int = 0,
+                 stg_name:str = 'NONE',
+                 stg_text:str = 'intro text of selecting strategy',
+                 par_count:int = 2,
+                 par_types: list = None,
+                 par_bounds_or_enums: list = None,
+                 data_freq: str = 'd',
+                 sample_freq: str = 'd',
+                 window_length: int = 270,
+                 data_types: list = None):
+        super().__init__(pars = pars,
+                         opt_tag = opt_tag,
+                         stg_type='RICON',
+                         stg_name=stg_name,
+                         stg_text=stg_text,
+                         par_count=par_count,
+                         par_types=par_types,
+                         par_bounds_or_enums=par_bounds_or_enums,
+                         data_freq=data_freq,
+                         sample_freq=sample_freq,
+                         window_length=window_length,
+                         data_types=data_types)
+
     @abstractmethod
-    def generate(self, hist_price):
+    def generate(self, hist_data):
         pass
 
 
@@ -652,8 +869,8 @@ class RiconNone(Ricon):
     _stg_name = 'NONE'
     _stg_text = 'Do not take any risk control activity'
 
-    def generate(self, hist_price):
-        return np.zeros_like(hist_price)
+    def generate(self, hist_data):
+        return np.zeros_like(hist_data)
 
 
 class RiconUrgent(Ricon):
@@ -665,22 +882,22 @@ class RiconUrgent(Ricon):
     _stg_name = 'URGENT'
     _stg_text = 'Generate selling signal when N-day drop rate reaches target'
 
-    def generate(self, hist_price):
+    def generate(self, hist_data):
         """
         # 根据N日内下跌百分比确定的卖出信号，让N日内下跌百分比达到pct时产生卖出信号
 
         input =====
-            :type hist_price: tuple like (N, pct): type N: int, Type pct: float
+            :type hist_data: tuple like (N, pct): type N: int, Type pct: float
                 输入参数对，当股价在N天内下跌百分比达到pct时，产生卖出信号
         return ====
             :rtype: object np.ndarray: 包含紧急卖出信号的ndarray
         """
         assert self._pars is not None, 'Parameter of Risk Control-Urgent should be a pair of numbers like (N, ' \
                                        'pct)\nN as days, pct as percent drop '
-        assert isinstance(hist_price, np.ndarray), 'Type Error: input historical data should be ndarray'
+        assert isinstance(hist_data, np.ndarray), 'Type Error: input historical data should be ndarray'
         day, drop = self._pars
-        h = hist_price[:,:,0].T
-        print(f'input array got in Ricon.generate() is shaped {hist_price.shape}')
+        h = hist_data[:, :, 0].T
+        print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
         print(f'and the hist_data is converted to shape {h.shape}')
         diff = (h - np.roll(h, day)) / h
         print(f'created array in ricon generate() is shaped {diff.shape}')
@@ -912,7 +1129,7 @@ class Operator:
     # 这些属性参数的设置需要在OP模块设置一个统一的设置入口，同时，为了实现与Optimizer模块之间的接口
     # 还需要创建两个Opti接口函数，一个用来根据的值创建合适的Space初始化参数，另一个用于接受opt
     # 模块传递过来的参数，分配到合适的策略中去
-    #TODO: convert all parameter setting functions to private except one single entry-function set_parameter()
+    # TODO: convert all parameter setting functions to private except one single entry-function set_parameter()
     def set_blender(self, blender_type, *args, **kwargs):
         # 统一的blender混合器属性设置入口
         if type(blender_type) == str:
@@ -940,27 +1157,30 @@ class Operator:
            :return:
 
         """
-        if type(stg_id) == str:
+        if isinstance(stg_id, str):
             l = stg_id.split('-')
-            stg = l[0]
-            num = int(l[1])
-            if stg.lower() == 's':
-                strategy = self.selecting[num]
-            elif stg.lower() == 't':
-                strategy = self.timing[num]
-            elif stg.lower() == 'r':
-                strategy = self.ricon[num]
+            if l[0].lower() == 's':
+                strategy = self.selecting[int(l[1])]
+            elif l[0].lower() == 't':
+                strategy = self.timing[int(l[1])]
+            elif l[0].lower() == 'r':
+                strategy = self.ricon[int(l[1])]
             else:
                 print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
                 return None
             if pars is not None:
-                strategy.set_pars(pars)
+                if strategy.set_pars(pars):
+                    print(f'{strategy} parameter has been set to {pars}')
+                else:
+                    print(f'parameter setting error')
             if opt_tag is not None:
                 strategy.set_opt_tag(opt_tag)
+                print(f'{strategy} optimizaiton tag has been set to {opt_tag}')
             if par_boes is not None:
                 strategy.set_par_boes(par_boes)
+                print(f'{strategy} parameter space range or enum has been set to {par_boes}')
         else:
-            print('blender_type should be a string')
+            print('stg_id should be a string like \'t-0\', got {stg_id}')
         pass
 
     def set_opt_par(self, opt_par):

@@ -28,7 +28,7 @@ class Log:
         :param args:
         :return:
         """
-        self.
+
         raise NotImplementedError
 
 
