@@ -19,6 +19,16 @@ class Log:
         """
 
         """
+        self.record = None
+        raise NotImplementedError
+
+    def write_record(self, *args):
+        """
+
+        :param args:
+        :return:
+        """
+        self.
         raise NotImplementedError
 
 
@@ -68,19 +78,18 @@ class Context:
                  init_cash: float = 10000,
                  visual: bool = False,
                  reference_visual: bool = False,
-                 reference: list = list()):
+                 reference_data: list = None):
         """初始化所有的环境变量和环境常量
 
         input:
             :param mode:
             :param rate_fee:
             :param rate_slipery:
-            :param rate_impact:
             :param moq:
             :param init_cash:
             :param visual:
             :param reference_visual:
-            :param reference:
+            :param reference_data:
         """
 
         self.mode = mode
@@ -107,6 +116,7 @@ class Context:
         self.history_data = None
         self.visual = visual
         self.reference_visual = reference_visual
+        self.reference_data = reference_data
 
     def __str__(self):
         """定义Context类的打印样式"""
@@ -242,11 +252,11 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
 def _get_complete_hist(values, h_list, with_price=False):
     """完成历史交易回测后，填充完整的历史资产总价值清单
 
-    输入：=====
-        参数 values：完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
-        参数 history_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
-        参数 with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
-    输出：=====
+    input:=====
+        :param values：完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
+        :param h_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
+        :param with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
+    return: =====
         values，pandas.Series 或 pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
     """
     # 获取价格清单中的投资产品列表
@@ -322,7 +332,6 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
         # 输出相关资产价格
         if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
             shares = history_list.columns
-            share_prices = list()
             complete_value.plot(grid=True, figsize=(15, 7), legend=True,
                                 secondary_y=shares)
         else:  # 否则，仅显示总资产的历史变化情况
@@ -330,7 +339,7 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
     return value_history
 
 
-def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, *args, **kwargs):
+def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     """开始运行，qteasy模块的主要入口函数
 
         接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
@@ -594,6 +603,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None, 
             
             """
             raise NotImplementedError
+        optimization_log = Log()
+        optimization_log.write_record(pars, perfs)
 
 
 def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
@@ -603,15 +614,14 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
         “间隔”从空间中逐个取出所有的点（不管离散空间还是连续空间均适用）并逐一测试，
         寻找使得评价函数的值最大的一组或多组参数
 
-    输入：
-        参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        参数 op，object，交易信号生成器对象
-        参数 lpr，object，交易信号回测器对象
-        参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
-        参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-        参数 step_size，int或list，搜索参数，搜索步长，在参数空间中提取参数的间隔，如果是int型，则在空间的每一个轴上
+    input:
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param op，object，交易信号生成器对象
+        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
+        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param step_size，int或list，搜索参数，搜索步长，在参数空间中提取参数的间隔，如果是int型，则在空间的每一个轴上
             取同样的步长，如果是list型，则取list中的数字分别作为每个轴的步长
-    输出：=====tuple对象，包含两个变量
+    return: =====tuple对象，包含两个变量
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
     """
@@ -631,7 +641,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
     print('Searching Starts...')
 
     for par in it:
-        op._set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
+        op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
         # 调试代码
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
@@ -659,20 +669,19 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
 def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
-    从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
-    随机抽取的参数点的数量为point_count, 输出结果的数量为output_count
+        从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
+        随机抽取的参数点的数量为point_count, 输出结果的数量为output_count
 
-输入：
-    参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-    参数 op，object，交易信号生成器对象
-    参数 lpr，object，交易信号回测器对象
-    参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
-    参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-    参数 point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
-        取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
-输出：=====tuple对象，包含两个变量
-    pool.pars 作为结果输出的参数组
-    pool.perfs 输出的参数组的评价分数
+    input:
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param op，object，交易信号生成器对象
+        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
+        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
+            取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
+    return: =====tuple对象，包含两个变量
+        pool.pars 作为结果输出的参数组
+        pool.perfs 输出的参数组的评价分数
 """
     pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par()
@@ -688,7 +697,7 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
     print('Searching Starts...')
 
     for par in it:
-        op._set_opt_par(par)  # 设置timing参数
+        op.set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
         looped_val = apply_loop(op_list=op.create(hist),
                                 history_list=hist, init_cash=100000,
@@ -710,22 +719,22 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                         inc_step=2, min_step=1):
     """ 最优参数搜索算法3: 递进搜索法
 
-    该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
-    缩小步长并在可能出现最优参数的区域进行“精细搜索”，最终锁定可能的最优参数
-    与确定步长的搜索方法和蒙特卡洛方法相比，这种方法能够极大地提升搜索速度，缩短搜索时间，但是
-    可能无法找到全局最优参数。同时，这种方法需要参数的评价函数值大致连续
+        该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
+        缩小步长并在可能出现最优参数的区域进行“精细搜索”，最终锁定可能的最优参数
+        与确定步长的搜索方法和蒙特卡洛方法相比，这种方法能够极大地提升搜索速度，缩短搜索时间，但是
+        可能无法找到全局最优参数。同时，这种方法需要参数的评价函数值大致连续
 
-输入：
-    参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-    参数 op，object，交易信号生成器对象
-    参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
-    参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-    参数 init_step，int，初始步长，默认值为16
-    参数 inc_step，float，递进系数，每次重新搜索时，新的步长缩小的倍数
-    参数 min_step，int，终止步长，当搜索步长最小达到min_step时停止搜索
-输出：=====tuple对象，包含两个变量
-    pool.pars 作为结果输出的参数组
-    pool.perfs 输出的参数组的评价分数
+    input:
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param op，object，交易信号生成器对象
+        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
+        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param init_step，int，初始步长，默认值为16
+        :param inc_step，float，递进系数，每次重新搜索时，新的步长缩小的倍数
+        :param min_step，int，终止步长，当搜索步长最小达到min_step时停止搜索
+    return: =====tuple对象，包含两个变量
+        pool.pars 作为结果输出的参数组
+        pool.perfs 输出的参数组的评价分数
 
 """
     pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
@@ -748,7 +757,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
             for par in it:
                 # 以下所有函数都是循环内函数，需要进行提速优化
                 # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
-                op._set_opt_par(par)  # 设置择时参数
+                op.set_opt_par(par)  # 设置择时参数``
                 # 声称交易清淡病进行模拟交易生成交易记录
                 looped_val = apply_loop(op_list=op.create(hist),
                                         history_list=hist, init_cash=100000,
@@ -774,60 +783,62 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
 
 def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
     """ 最优参数搜索算法4: 遗传算法
-遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
+    遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
 
-遗传算法借鉴了生物的遗传迭代过程，首先在参数空间中随机选取一定数量的参数点，将这批参数点称为
-“种群”。随后在这一种群的基础上进行迭代计算。在每一次迭代（称为一次繁殖）前，根据种群中每个个体
-的评价函数值，确定每个个体生存或死亡的几率，规律是若个体的评价函数值越接近最优值，则其生存的几率
-越大，繁殖后代的几率也越大，反之则越小。确定生死及繁殖的几率后，根据生死几率选择一定数量的个体
-让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
-同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
-一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
+    遗传算法借鉴了生物的遗传迭代过程，首先在参数空间中随机选取一定数量的参数点，将这批参数点称为
+    “种群”。随后在这一种群的基础上进行迭代计算。在每一次迭代（称为一次繁殖）前，根据种群中每个个体
+    的评价函数值，确定每个个体生存或死亡的几率，规律是若个体的评价函数值越接近最优值，则其生存的几率
+    越大，繁殖后代的几率也越大，反之则越小。确定生死及繁殖的几率后，根据生死几率选择一定数量的个体
+    让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
+    同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
+    一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
 
-输入：
-参数 hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-参数 op，object，交易信号生成器对象
-参数 lpr，object，交易信号回测器对象
-参数 output_count，int，输出数量，优化器寻找的最佳参数的数量
-参数 keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
-输出：=====tuple对象，包含两个变量
-pool.pars 作为结果输出的参数组
-pool.perfs 输出的参数组的评价分数
+    input：
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param op，object，交易信号生成器对象
+        :param lpr，object，交易信号回测器对象
+        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
+        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+    return: =====tuple对象，包含两个变量
+        pool.pars 作为结果输出的参数组
+        pool.perfs 输出的参数组的评价分数
 
 """
     raise NotImplementedError
 
 
 def _eval_alpha(looped_val):
+    """ 回测结果评价函数：alpha率"""
     raise NotImplementedError
 
 
 def _eval_sharp(looped_val):
+    """ 回测结果评价函数：夏普率"""
     raise NotImplementedError
 
 
 def _eval_roi(looped_val):
-    """评价函数 RoI 收益率'
+    """评价函数 总收益率及年化收益率'
 
 '投资模拟期间资产投资年化收益率
 
-输入：
-参数 looped_val，ndarray，回测器生成输出的交易模拟记录
-输出：=====
+input:
+:param looped_val，ndarray，回测器生成输出的交易模拟记录
+return: =====
 perf：float，应用该评价方法对回测模拟结果的评价分数
 
 """
-    return perf
+    raise NotImplementedError
 
 
-def _eval_FV(looped_val):
+def _eval_fv(looped_val):
     """评价函数 Future Value 终值评价
 
 '投资模拟期最后一个交易日的资产总值
 
-输入：
-参数 looped_val，ndarray，回测器生成输出的交易模拟记录
-输出：=====
+input:
+:param looped_val，ndarray，回测器生成输出的交易模拟记录
+return: =====
 perf：float，应用该评价方法对回测模拟结果的评价分数
 
 """
@@ -839,18 +850,18 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
     else:
         return -np.inf
 
-
+# TODO：eval()函数没必要写那么多个，可以根据需要统一到一个评价函数中
 def _eval(looped_val, method):
     """评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。
 
-输入：
-参数 looped_val，ndarray，回测器生成输出的交易模拟记录
-参数 method，int，交易记录评价方法
-输出：=====
-调用不同评价函数的返回值
+    input:
+    :param looped_val，ndarray，回测器生成输出的交易模拟记录
+    :param method，int，交易记录评价方法
+    return: =====
+    调用不同评价函数的返回值
 """
     if method.upper() == 'FV':
-        return _eval_FV(looped_val)
+        return _eval_fv(looped_val)
     elif method.upper() == 'ROI':
         return _eval_roi(looped_val)
     elif method.upper() == 'SHARP':
@@ -868,12 +879,12 @@ def _space_around_centre(space, centre, radius, ignore_enums=True):
 class ResultPool:
     """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
 
-'最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序'
-'第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序'
-'新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序'
-'新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右'
-'即使在结果池很小，总数据量很大的情况下，循环排序的速度也慢于单次排序修剪"""
-
+    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序'
+    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序'
+    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序'
+    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右'
+    即使在结果池很小，总数据量很大的情况下，循环排序的速度也慢于单次排序修剪
+    """
     # result pool operation:
     def __init__(self, capacity):
         """result pool stores all intermediate or final result of searching, the points"""
@@ -896,25 +907,24 @@ class ResultPool:
     def in_pool(self, item, perf):
         """将新的结果压入池中
 
-输入：
-    参数 item，object，需要放入结果池的参数对象
-    参数 perf，float，放入结果池的参数评价分数
-输出：=====
-    无
-"""
+        input:
+            :param item，object，需要放入结果池的参数对象
+            :param perf，float，放入结果池的参数评价分数
+        return: =====
+            无
+        """
         self.__pool.append(item)  # 新元素入池
         self.__perfs.append(perf)  # 新元素评价分记录
 
     def cut(self, keep_largest=True):
         """将pool内的结果排序并剪切到capacity要求的大小
 
-直接对self对象进行操作，排序并删除不需要的结果
-
-输入：
-    参数 keep_largest， bool，True保留评价分数最高的结果，False保留评价分数最低的结果
-输出：=====
-    无
-"""
+        直接对self对象进行操作，排序并删除不需要的结果
+        input:
+            :param keep_largest， bool，True保留评价分数最高的结果，False保留评价分数最低的结果
+        return: =====
+            无
+        """
         poo = self.__pool  # 所有池中元素
         per = self.__perfs  # 所有池中元素的评价分
         cap = self.__capacity
@@ -931,6 +941,27 @@ class ResultPool:
         self.__perfs = per2
 
 
+def _input_to_list(pars, dim, pader):
+    """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
+
+    input:
+        :param pars，需要转化为list对象的输出对象
+        :param dim，需要生成的目标list的元素数量
+        :param pader，当元素数量不足的时候用来补充的元素
+    return: =====
+        pars, list 转化好的元素清单
+    """
+    if (type(pars) == str) or (type(pars) == int):  # 处理字符串类型的输入
+        # print 'type of types', type(pars)
+        pars = [pars] * dim
+    else:
+        pars = list(pars)  # 正常处理，输入转化为列表类型
+    par_dim = len(pars)
+    # 当给出的两个输入参数长度不一致时，用padder补齐type输入，或者忽略多余的部分
+    if par_dim < dim: pars.extend([pader] * (dim - par_dim))
+    return pars
+
+
 class Space:
     """定义一个参数空间，一个参数空间包含一个或多个Axis对象，存储在axes列表中
 
@@ -943,11 +974,11 @@ class Space:
     列表中的值
     """
 
-    def __init__(self, pars, types=[]):
+    def __init__(self, pars, par_types:list = None):
         """参数空间对象初始化，根据输入的参数生成一个空间
 
-        输入：
-            参数 pars，int、float或list,需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照
+        input:
+            :param pars，int、float或list,需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照
                 types中的类型字符串创建不同的轴，如果没有给出types，系统根据不同的输入类型动态生成的空间类型分别如下：
                     pars为float，自动生成上下界为(0, pars)的浮点型数值轴，
                     pars为int，自动生成上下界为(0, pars)的整形数值轴
@@ -955,51 +986,56 @@ class Space:
                         list元素只有两个且元素类型为int或float：生成上下界为(pars[0], pars[1])的浮点型数值
                         轴或整形数值轴
                         list元素不是两个，或list元素类型不是int或float：生成枚举轴，轴的元素包含par中的元素
-            参数 types，list，默认为空，生成的空间每个轴的类型，如果给出types，应该包含每个轴的类型字符串：
+            :param par_types，list，默认为空，生成的空间每个轴的类型，如果给出types，应该包含每个轴的类型字符串：
                 'discr': 生成整数型轴
                 'conti': 生成浮点数值轴
                 'enum': 生成枚举轴
-        输出：=====
+        return: =====
             无
         """
-        self.__axes = []
+        self._axes = []
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
         pars = list(pars)
         par_dim = len(pars)
-        types = self.__input_to_list(types, par_dim, [None])
+        if par_types is None:
+            par_types = []
+        par_types = _input_to_list(par_types, par_dim, [None])
+
         # 调试代码：
         # print('par dim:', par_dim)
-        # print('pars and types:', pars, types)
+        # print('pars and par_types:', pars, par_types)
         # 逐一生成Axis对象并放入axes列表中
         for i in range(par_dim):
-            # print('appending', i+1, '-th par', pars[i],'in type:', types[i])
-            self.__axes.append(Axis(pars[i], types[i]))
+            # print('appending', i+1, '-th par', pars[i],'in type:', par_types[i])
+            self._axes.append(Axis(pars[i], par_types[i]))
 
     @property
     def dim(self):  # 空间的维度
-        return len(self.__axes)
+        return len(self._axes)
 
     @property
-    def types(self):  # List of types of axis of the space
+    def types(self):
+        """List of types of axis of the space"""
         types = []
         if self.dim > 0:
             for i in range(self.dim):
-                types.append(self.__axes[i].axis_type)
+                types.append(self._axes[i].axis_type)
         return types
 
     @property
-    def boes(self):  # List of bounds of axis of the space
+    def boes(self):
+        """List of bounds of axis of the space"""
         boes = []
         if self.dim > 0:
             for i in range(self.dim):
-                boes.append(self.__axes[i].axis_boe)
+                boes.append(self._axes[i].axis_boe)
         return boes
 
     @property
     def shape(self):
-        # 输出空间的维度大小，输出形式为元组，每个元素代表对应维度的元素个数
+        """输出空间的维度大小，输出形式为元组，每个元素代表对应维度的元素个数"""
         s = []
-        for axis in self.__axes:
+        for axis in self._axes:
             s.append(axis.count)
         return tuple(s)
 
@@ -1007,35 +1043,14 @@ class Space:
     def size(self):
         """输出空间的尺度，输出每个维度的跨度之乘积"""
         s = []
-        for axis in self.__axes:
+        for axis in self._axes:
             s.append(axis.size)
         return np.product(s)
-
-    # Methods:
-    def __input_to_list(self, pars, dim, padder):
-        """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
-
-        输入：
-            参数 pars，需要转化为list对象的输出对象
-            参数 dim，需要生成的目标list的元素数量
-            参数 padder，当元素数量不足的时候用来补充的元素
-        输出：=====
-            pars, list 转化好的元素清单
-        """
-        if (type(pars) == str) or (type(pars) == int):  # 处理字符串类型的输入
-            # print 'type of types', type(pars)
-            pars = [pars] * dim
-        else:
-            pars = list(pars)  # 正常处理，输入转化为列表类型
-        par_dim = len(pars)
-        # 当给出的两个输入参数长度不一致时，用padder补齐type输入，或者忽略多余的部分
-        if par_dim < dim: pars.extend(padder * (dim - par_dim))
-        return pars
 
     def info(self):
         """打印空间的各项信息"""
         if self.dim > 0:
-            print('Space is not empty!')
+            print(type(self))
             print('dimension:', self.dim)
             print('types:', self.types)
             print('the bounds or enums of space', self.boes)
@@ -1044,26 +1059,26 @@ class Space:
         else:
             print('Space is empty!')
 
-    def extract(self, interval_or_qty=1, how='interval'):
+    def extract(self, interval_or_qty:int=1, how:str='interval'):
         """从空间中提取出一系列的点，并且把所有的点以迭代器对象的形式返回供迭代
 
-        输入
-            参数 interval_or_qty，int。从空间中每个轴上需要提取数据的步长或坐标数量
-            参数 how, str, 有两个合法参数：
+        input:
+            :param interval_or_qty: int。从空间中每个轴上需要提取数据的步长或坐标数量
+            :param how, str, 有两个合法参数：
                 'interval',以间隔步长的方式提取坐标，这时候interval_or_qty代表步长
                 'rand', 以随机方式提取坐标，这时候interval_or_qty代表提取数量
-        输出，tuple，包含两个数据
+        return: tuple，包含两个数据
             iter，迭代器数据，打包好的所有需要被提取的点的集合
             total，int，迭代器输出的点的数量
         """
-        interval_or_qty = self.__input_to_list(pars=interval_or_qty,
-                                               dim=self.dim,
-                                               padder=[1])
+        interval_or_qty_list = _input_to_list(pars=interval_or_qty,
+                                              dim=self.dim,
+                                              pader=[1])
         axis_ranges = []
         i = 0
         total = 1
-        for axis in self.__axes:  # 分别从各个Axis中提取相应的坐标
-            axis_ranges.append(axis.extract(interval_or_qty[i], how))
+        for axis in self._axes:  # 分别从各个Axis中提取相应的坐标
+            axis_ranges.append(axis.extract(interval_or_qty_list[i], how))
             total *= len(axis_ranges[i])
             i += 1
         if how == 'interval':
@@ -1074,15 +1089,15 @@ class Space:
     def from_point(self, point, distance, ignore_enums=True):
         """在已知空间中以一个点为中心点生成一个字空间
 
-        输入：
-            参数 point，object，已知参数空间中的一个参数点
-            参数 distance， int或float，需要生成的新的子空间的数轴半径
-            参数 ignore_enums，bool，True忽略enum型轴，生成的子空间包含枚举型轴的全部元素，False生成的子空间
+        input:
+            :param point，object，已知参数空间中的一个参数点
+            :param distance， int或float，需要生成的新的子空间的数轴半径
+            :param ignore_enums，bool，True忽略enum型轴，生成的子空间包含枚举型轴的全部元素，False生成的子空间
                 包含enum轴的部分元素
-        输出：=====
+        return: =====
 
         """
-        if ignore_enums == True: pass
+        if ignore_enums: pass
         assert self.dim > 0, 'original space should not be empty!'
         pars = []
         for i in range(self.dim):
@@ -1096,24 +1111,17 @@ class Space:
                 pars.append(self.boes[i])
         return Space(pars, self.types)
 
-    def expand(self, bounds_or_enum, typ=None):
-        # expand one more dimension of the space
-        pass
-
-    def squeez(self):
-        # reduce one dimension of the space
-        pass
-
 
 class Axis:
-    """数轴对象，空间对象的一个组成部分，代表空间对象的一个维度"""
+    """数轴对象，空间对象的一个组成部分，代表空间对象的一个维度
 
+
+    """
     def __init__(self, bounds_or_enum, typ=None):
-        import numpy as np
-        self.__type = None  # 数轴类型
-        self.__lbound = None  # 空间在数轴上的下界
-        self.__ubound = None  # 空间在数轴上的上届
-        self.__enum_val = None  # 当数轴类型为“枚举”型时，储存改数轴上所有可用值
+        self._axis_type = None  # 数轴类型
+        self._lbound = None  # 离散型或连续型数轴下界
+        self._ubound = None  # 离散型或连续型数轴上界
+        self._enum_val = None  # 当数轴类型为“枚举”型时，储存改数轴上所有可用值
         # 将输入的上下界或枚举转化为列表，当输入类型为一个元素时，生成一个空列表并添加该元素
         boe = list(bounds_or_enum)
         length = len(boe)  # 列表元素个数
@@ -1136,95 +1144,172 @@ class Axis:
         # print('in Axis, after infering typ, the typ is:', typ)
         # 开始根据typ的值生成具体的Axis
         if typ == 'enum':  # 创建一个枚举数轴
-            return self.__new_enumerate_axis(boe)
+            self._new_enumerate_axis(boe)
         elif typ == 'discr':  # 创建一个离散型数轴
             if length == 1:
-                self.__new_discrete_axis(0, boe[0])
+                self._new_discrete_axis(0, boe[0])
             else:
-                self.__new_discrete_axis(boe[0], boe[1])
+                self._new_discrete_axis(boe[0], boe[1])
         else:  # 创建一个连续型数轴
             if length == 1:
-                self.__new_continuous_axis(0, boe[0])
+                self._new_continuous_axis(0, boe[0])
             else:
-                self.__new_continuous_axis(boe[0], boe[1])
+                self._new_continuous_axis(boe[0], boe[1])
 
     @property
-    def count(self):  # 输出数轴中元素的个数，若数轴为连续型，输出为inf
-        self_type = self.__type
+    def count(self):
+        """输出数轴中元素的个数，若数轴为连续型，输出为inf"""
+        self_type = self._axis_type
         if self_type == 'conti':
             return np.inf
         elif self_type == 'discr':
-            return self.__ubound - self.__lbound
+            return self._ubound - self._lbound
         else:
-            return len(self.__enum_val)
+            return len(self._enum_val)
 
     @property
-    def size(self):  # 输出数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界
-        self_type = self.__type
+    def size(self):
+        """输出数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界"""
+        self_type = self._axis_type
         if self_type == 'conti':
-            return self.__ubound - self.__lbound
+            return self._ubound - self._lbound
         else:
             return self.count
 
     @property
     def axis_type(self):
-        return self.__type
+        """返回数轴的类型"""
+        return self._axis_type
 
     @property
     def axis_boe(self):
-        if self.__type == 'enum':
-            return tuple(self.__enum_val)
+        """返回数轴的上下界或枚举"""
+        if self._axis_type == 'enum':
+            return tuple(self._enum_val)
         else:
-            return self.__lbound, self.__ubound
+            return self._lbound, self._ubound
 
     def extract(self, interval_or_qty=1, how='interval'):
+        """从数轴中抽取数据，并返回一个iterator迭代器对象
+
+        input:
+            :param interval_or_qty: int 需要从数轴中抽取的数据总数或抽取间隔，当how=='interval'时，代表抽取间隔，否则代表总数
+            :param how: str 抽取方法，'interval' 或 'rand'， 默认'interval'
+        return:
+            一个迭代器对象，包含所有抽取的数值
+        """
         if how == 'interval':
             if self.axis_type == 'enum':
-                return self.__extract_enum_interval(interval_or_qty)
+                return self._extract_enum_interval(interval_or_qty)
             else:
-                return self.__extract_bounding_interval(interval_or_qty)
+                return self._extract_bounding_interval(interval_or_qty)
         else:
             if self.axis_type == 'enum':
-                return self.__extract_enum_random(interval_or_qty)
+                return self._extract_enum_random(interval_or_qty)
             else:
-                return self.__extract_bounding_random(interval_or_qty)
+                return self._extract_bounding_random(interval_or_qty)
 
-    def __set_bounds(self, lbound, ubound):
-        self.__lbound = lbound
-        self.__ubound = ubound
+    def _set_bounds(self, lbound, ubound):
+        """设置数轴的上下界, 只适用于离散型或连续型数轴
+
+        input:
+            :param lbound int/float 数轴下界
+            :param ubound int/float 数轴上界
+        return:
+            None
+        """
+        self._lbound = lbound
+        self._ubound = ubound
         self.__enum = None
 
-    def __set_enum_val(self, enum):
-        self.__lbound = None
-        self.__ubound = None
-        self.__enum_val = np.array(enum, subok=True)
+    def _set_enum_val(self, enum):
+        """设置数轴的枚举值，适用于枚举型数轴
 
-    def __new_discrete_axis(self, lbound, ubound):
-        self.__type = 'discr'
-        self.__set_bounds(int(lbound), int(ubound))
+        input:
+            :param enum: 数轴枚举值
+        :return:
+            None
+        """
+        self._lbound = None
+        self._ubound = None
+        self._enum_val = np.array(enum, subok=True)
 
-    def __new_continuous_axis(self, lbound, ubound):
-        self.__type = 'conti'
-        self.__set_bounds(float(lbound), float(ubound))
+    def _new_discrete_axis(self, lbound, ubound):
+        """ 创建一个新的离散型数轴
 
-    def __new_enumerate_axis(self, enum):
-        self.__type = 'enum'
-        self.__set_enum_val(enum)
+        input:
+            :param lbound: 数轴下界
+            :param ubound: 数轴上界
+        :return:
+            None
+        """
+        self._axis_type = 'discr'
+        self._set_bounds(int(lbound), int(ubound))
 
-    def __extract_bounding_interval(self, interval):
-        return np.arange(self.__lbound, self.__ubound, interval)
+    def _new_continuous_axis(self, lbound, ubound):
+        """ 创建一个新的连续型数轴
 
-    def __extract_bounding_random(self, qty):
-        if self.__type == 'discr':
-            result = np.random.randint(self.__lbound, self.__ubound + 1, size=qty)
+        input:
+            :param lbound: 数轴下界
+            :param ubound: 数轴上界
+        :return:
+            None
+        """
+        self._axis_type = 'conti'
+        self._set_bounds(float(lbound), float(ubound))
+
+    def _new_enumerate_axis(self, enum):
+        """ 创建一个新的枚举型数轴
+
+        input:
+            :param enum: 数轴的枚举值
+        :return:
+        """
+        self._axis_type = 'enum'
+        self._set_enum_val(enum)
+
+    def _extract_bounding_interval(self, interval):
+        """ 按照间隔方式从离散或连续型数轴中提取值
+
+        input:
+            :param interval: 提取间隔
+        :return:
+            np.array 从数轴中提取出的值对象
+        """
+        return np.arange(self._lbound, self._ubound, interval)
+
+    def _extract_bounding_random(self, qty:int):
+        """ 按照随机方式从离散或连续型数轴中提取值
+
+        input:
+            :param qty: 提取的数据总量
+        :return:
+            np.array 从数轴中提取出的值对象
+        """
+        if self._axis_type == 'discr':
+            result = np.random.randint(self._lbound, self._ubound + 1, size=qty)
         else:
-            result = self.__lbound + np.random.random(size=qty) * (self.__ubound - self.__lbound)
+            result = self._lbound + np.random.random(size=qty) * (self._ubound - self._lbound)
         return result
 
-    def __extract_enum_interval(self, interval):
-        count = self.count
-        return self.__enum_val[np.arange(0, count, interval)]
+    def _extract_enum_interval(self, interval):
+        """ 按照间隔方式从枚举型数轴中提取值
 
-    def __extract_enum_random(self, qty):
+        input:
+            :param interval: 提取间隔
+        :return:
+            list 从数轴中提取出的值对象
+        """
         count = self.count
-        return self.__enum_val[np.random.choice(count, size=qty)]
+        return self._enum_val[np.arange(0, count, interval)]
+
+    def _extract_enum_random(self, qty:int):
+        """ 按照随机方式从枚举型数轴中提取值
+
+        input:
+            :param qty: 提取间隔
+        :return:
+            list 从数轴中提取出的值对象
+        """
+        count = self.count
+        return self._enum_val[np.random.choice(count, size=qty)]

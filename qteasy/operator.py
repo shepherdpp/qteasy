@@ -951,7 +951,7 @@ class Operator:
             elif stg.lower() == 'r':
                 strategy = self.ricon[num]
             else:
-                print('wrong input!')
+                print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
                 return None
             if pars is not None:
                 strategy.set_pars(pars)
@@ -963,7 +963,7 @@ class Operator:
             print('blender_type should be a string')
         pass
 
-    def _set_opt_par(self, opt_par):
+    def set_opt_par(self, opt_par):
         # 将输入的opt参数切片后传入stg的参数中
         s = 0
         k = 0

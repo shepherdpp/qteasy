@@ -141,7 +141,9 @@ class HistoryPanel():
             share_slice = slice(None, None, None)
             hdate_slice = slice(None, None, None)
         else:
-            raise TypeError
+            htype_slice = slice(None, None, None)
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
 
         # check and convert each of the slice segments to the right type: a slice or \
         # a list of indices
