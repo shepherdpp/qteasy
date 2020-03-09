@@ -5,7 +5,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
@@ -29,6 +29,7 @@ if __name__ == '__main__':
     h2.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=('Y', 1))
+    op.set_parameter('s-1', pars=('Q', 0.5))
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
 
@@ -40,8 +41,8 @@ if __name__ == '__main__':
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context()
     cont.share_pool = shares
-    cont.share_pool = h.shares
-    cont.history_data = h
+    cont.share_pool = h2.shares
+    cont.history_data = h2
     # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars = timing_pars1)
+    op.set_parameter('t-0', pars = timing_pars3)
     # op.set_parameter('t-1', pars = timing_pars3)
     # op.set_parameter('t-2', pars = timing_pars4)
     # op.set_parameter('t-3', pars = timing_pars1)

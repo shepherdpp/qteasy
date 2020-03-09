@@ -93,7 +93,7 @@ class Context:
         """
 
         self.mode = mode
-        self.rate = Rate(rate_fee, rate_slipery)
+        self.rate = Rate(0, rate_fee, rate_slipery)
         self.moq = moq  # 最小交易批量，设置为0表示可以买卖分数股
         self.init_cash = init_cash  # 回测初始现金金额
         # TODO： 将整数形式的初始现金金额修改为投资现金对象CashPlan
