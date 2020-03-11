@@ -572,7 +572,8 @@ class TimingCDL(Timing):
 
         return float(cat[-1])
 
-
+# TODO: 修改Selecting策略的结构，以支持更加统一的编码风格：generate()方法仅接受历史数据，realize()方法定义选股实现算法，通过静态属性
+# TODO: 设置数据类型、数据频率和采样频率，策略参数仅仅跟选股实现算法有关
 class Selecting(Strategy):
     """选股策略类的抽象基类，所有选股策略类都继承该类"""
     __metaclass__ = ABCMeta
