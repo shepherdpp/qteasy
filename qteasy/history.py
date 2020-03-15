@@ -308,11 +308,13 @@ class History:
                        asset_type: str = 'E',
                        adj: str = 'None',
                        freq: str = 'd',
-                       ma: list = None):
+                       ma: list = None)-> pd.DataFrame:
         """ get historical prices with rehabilitation rights
             获取指数或股票的复权历史价格
 
         input:
+            :param price_type:
+            :return:
             :param share:
             :param start:
             :param end:
@@ -321,12 +323,12 @@ class History:
             :param freq:
             :param ma:
         return:
-
+            pd.DataFrame:
         """
 
-        assert isinstance(share, str), 'share code should be a string'
+        assert isinstance(share, str), f'share code should be a string, got {type(share)}'
         assert price_type in PRICE_TYPES, 'price types should be one of the predefined types'
-        res = ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq)
+        res = ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq, ma=ma)
         col_to_remove = list(col for col in res.columns if not col in price_type)
         res.drop(columns=col_to_remove, inline=True)
         assert isinstance(res, pd.DataFrame)
