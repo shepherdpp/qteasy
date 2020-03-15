@@ -1,4 +1,5 @@
 # coding=utf-8
+# history.py
 
 import pandas as pd
 import tushare as ts
@@ -128,14 +129,18 @@ class HistoryPanel():
         key_is_slice = isinstance(keys, slice)
         key_is_string = isinstance(keys, str)
         key_is_number = isinstance(keys, int)
+        print(f'in HistoryPanel object getitem method, result of key type check:\n tuple: {key_is_tuple}, ',
+              f'list: {key_is_list}, slice: {key_is_slice}, string: {key_is_slice}, number: {key_is_number}')
 
         # first make sure that htypes, share_pool, and hdates are either slice or list
         if key_is_tuple:
             if len(keys) == 2:
                 htype_slice, share_slice = keys
                 hdate_slice = slice(None, None, None)
+                print(f'got 2-len keys: {keys}')
             elif len(keys) == 3:
                 htype_slice, share_slice, hdate_slice = keys
+                print(f'got 3-len keys: {keys}')
         elif key_is_slice or key_is_list or key_is_string or key_is_number:  # keys is a slice or list
             htype_slice = keys
             share_slice = slice(None, None, None)
@@ -144,14 +149,15 @@ class HistoryPanel():
             htype_slice = slice(None, None, None)
             share_slice = slice(None, None, None)
             hdate_slice = slice(None, None, None)
-
+        print('in HistoryPanel object get item method before conversion:\n share_pool is ', share_slice, '\nhtypes is ', htype_slice,
+              '\nhdates is ', hdate_slice)
         # check and convert each of the slice segments to the right type: a slice or \
         # a list of indices
         htype_slice = _make_list_or_slice(htype_slice, self.htypes)
         share_slice = _make_list_or_slice(share_slice, self.shares)
         hdate_slice = _make_list_or_slice(hdate_slice, self.hdates)
 
-        print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
+        print('in HistoryPanel object get item method:\n share_pool is ', share_slice, '\nhtypes is ', htype_slice,
               '\nhdates is ', hdate_slice)
         return self.values[share_slice, hdate_slice, htype_slice]
 

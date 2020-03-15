@@ -1,3 +1,6 @@
+# coding = utf-8
+# __main__.py
+
 from qteasy.core import *
 import qteasy.history as hs
 from qteasy.operator import *
@@ -5,7 +8,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
+    op = Operator(timing_types=['simple'], selecting_types=['finance'], ricon_types=['urgent'])
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
@@ -18,18 +21,22 @@ if __name__ == '__main__':
     v3D[2] = d.values - 20 # 填入模拟数据
     h = hs.HistoryPanel(v3D, ['000300', '000301', '000302'], d.index.values, ['open', 'high', 'low', 'close'])
     print('INFORMATION OF CREATED HISTORY PANEL: h \n============================')
-    h.info() # 模拟3维数据，一支个股，四种类型
-    v3D=np.zeros((4, len(d.index), 1)) # 创建一个空的三维矩阵，包含三层，行数和列数与d.values相同
+    h.info() # 模拟3维数据，三支个股，四种类型
+
+
+    v3D=np.zeros((4, len(d.index), 1)) # 创建一个空的三维矩阵，包含四层，行数与d.values相同，共一列
     v3D[0, :, 0] = d.values.T[0]
     v3D[1, :, 0] = d.values.T[1] # 填入模拟数据
     v3D[2, :, 0] = d.values.T[2] # 填入模拟数据
     v3D[3, :, 0] = d.values.T[3] # 填入模拟数据
     h2 = hs.HistoryPanel(v3D, ['000300', '000301', '000302', '000303'], d.index.values, ['close'])
     print('INFORMATION OF CREATED HISTORY PANEL: h2\n==========================')
-    h2.info()
+    h2.info() # 模拟三维数据，四只个股，一种数据类型
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
-    op.set_parameter('s-0', pars=('Y', 1))
-    op.set_parameter('s-1', pars=('Q', 0.5))
+    sel_param = ('y', 1)
+    sel_param2 = (True, 'proportion', 0, 0.75)
+    op.set_parameter('s-0', pars=sel_param2, data_types=['close'])
+    #op.set_parameter('s-1', pars=('Q', 0.5))
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
 
