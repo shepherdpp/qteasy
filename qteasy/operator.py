@@ -8,6 +8,7 @@ from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
 
 
+# TODO: 不需要在每个策略的属性中规定data_freq，因为所有的策略必须共享同一组HistoryPanel的不同切片，不同策略只是sample_freq不同
 class Strategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
@@ -202,6 +203,21 @@ class Strategy:
         self._par_bounds_or_enums = par_boes
         return par_boes
 
+    def set_hist_pars(self, sample_freq=None, window_length=None, data_types=None):
+        """ 设置策略的历史数据回测相关属性
+
+        :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
+        :param window_length: int，表示回测时需要用到的历史数据深度
+        :param data_types: str，表示需要用到的历史数据类型
+        :return: None
+        """
+        if sample_freq is not None:
+            self._sample_freq = sample_freq
+        if window_length is not None:
+            self._window_length = window_length
+        if data_types is not None:
+            self._data_types = data_types
+
     @abstractmethod
     def generate(self, hist_data):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
@@ -237,7 +253,7 @@ class Timing(Strategy):
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: str = None):
+                 data_types: str = ''):
         super().__init__(pars=pars,
                          stg_type='TIMING',
                          stg_name=stg_name,
@@ -366,7 +382,14 @@ class Timing(Strategy):
 
 
 class TimingSimple(Timing):
-    """简单择时策略，返回整个历史周期上的恒定多头状态"""
+    """简单择时策略，返回整个历史周期上的恒定多头状态
+
+    数据类型：N/A
+    数据分析频率：N/A
+    数据窗口长度：N/A
+    策略使用0个参数，
+    参数输入数据范围：N/A
+    """
 
     def __init__(self):
         super().__init__(stg_name='SIMPLE',
@@ -381,8 +404,15 @@ class TimingSimple(Timing):
 class TimingCrossline(Timing):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
-        crossline策略使用四个参数：
-        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型
+    数据类型：close 收盘价，单数据输入
+    数据分析频率：天
+    数据窗口长度：270
+    策略使用4个参数，
+        s: int, 短均线计算日期；
+        l: int, 长均线计算日期；
+        m: int, 均线边界宽度；
+        hesitate: str, 均线跨越类型
+    参数输入数据范围：[(10, 250), (10, 250), (10, 250), ('buy', 'sell', 'none')]
 
     """
 
@@ -416,15 +446,19 @@ class TimingCrossline(Timing):
 
 
 class TimingMACD(Timing):
-    """MACD择时策略类，继承自Timing类，重写_generate方法'
+    """MACD择时策略类，运用MACD均线策略，在hist_price Series对象上生成交易信号
 
-    运用MACD均线策略，在hist_price Series对象上生成交易信号
-    注意！！！
-    由于MACD使用指数移动均线，由于此种均线的计算特性，在历史数据集的前max(sRange, lRange, mRange)
-    个工作日上生成的数据不可用
-    例如，max(sRange, lRange, mRange) = max(72,120,133) = 133个工作日内产生的买卖点不正确"""
+    数据类型：close 收盘价，单数据输入
+    数据分析频率：天
+    数据窗口长度：270
+    策略使用3个参数，
+        s: int,
+        l: int,
+        d: int,
+    参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
+    """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars: tuple = None):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
@@ -462,7 +496,17 @@ class TimingMACD(Timing):
 
 
 class TimingDMA(Timing):
-    """DMA择时策略，继承自Timing类，重写_generate方法"""
+    """DMA择时策略
+
+    数据类型：close 收盘价，单数据输入
+    数据分析频率：天
+    数据窗口长度：270
+    策略使用3个参数，
+        s: int,
+        l: int,
+        d: int,
+    参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
+    """
 
     def __init__(self, pars=None):
         super().__init__(pars=pars,
@@ -501,7 +545,10 @@ class TimingTRIX(Timing):
     数据类型：close 收盘价，单数据输入
     数据分析频率：天
     数据窗口长度：270天
-    参数数量：2个，参数类型：int整形，输入数据范围：[(10, 250), (10, 250)]
+    策略使用2个参数，
+        s: int,
+        m: int
+    参数输入数据范围：[(10, 250), (10, 250)]
     """
 
     def __init__(self, pars=None):
@@ -584,21 +631,18 @@ class Selecting(Strategy):
                  opt_tag: int = 0,
                  stg_name: str = 'NONE',
                  stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 2,
+                 par_count: int = 1,
                  par_types: list = None,
                  par_bounds_or_enums: list = None,
                  data_freq: str = 'y',
                  sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
                  window_length: int = 270,
-                 data_types: str = 'close',
-                 largest_win: int = 1,
-                 distribution: str = 'even',
-                 drop_threshold: float = None):
+                 data_types: str = 'close'):
         if par_types is None:
-            par_types = ['enum', 'conti']
+            par_types = ['conti']
         if par_bounds_or_enums is None:
-            par_bounds_or_enums = [['d', 'm', 'q', 'y'], (0, 1)]
+            par_bounds_or_enums = [(0, 1)]
         super().__init__(pars=pars,
                          opt_tag=opt_tag,
                          stg_type='SELECTING',
@@ -611,19 +655,15 @@ class Selecting(Strategy):
                          sample_freq=sample_freq,
                          window_length=window_length,
                          data_types=data_types)
-        self.poq = proportion_or_quantity
-        self.largest_win = largest_win
-        self.distribution = distribution
-        self.drop_threshold = drop_threshold
+        self._poq = proportion_or_quantity
 
     @abstractmethod
-    def _realize(self, hist_segment, pct):
+    def _realize(self, hist_segment):
         """" Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
             :param hist_segment: type: ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史数据片段
-            :param pct: type: float，整数或百分比，整数表示选中的股票数量，或分数表示百分比
-        :return：
+        :return
             ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
         """
         pass
@@ -649,7 +689,7 @@ class Selecting(Strategy):
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq).values
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
-        print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
+        # print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
         # 用searchsorted函数把输入的日期与历史数据日期匹配起来
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # 最后一个分隔位等于历史区间的总长度
@@ -680,9 +720,9 @@ class Selecting(Strategy):
         assert isinstance(hist_data, HistoryPanel), \
             f'InputError: Expect HistoryPanel object as hist_data, got {type(hist_data)}'
         freq = self.sample_freq
-        poq = self.poq
         dates = hist_data.hdates
         shares = hist_data.shares
+        h_v= hist_data.values
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
@@ -694,7 +734,7 @@ class Selecting(Strategy):
         # TODO: 可以使用map函数生成分段
         for sp, sl in zip(seg_pos, seg_lens):
             # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(hist_data[:,:,sp:sp+sl], poq)
+            share_sel = self._realize(h_v[:, sp:sp + sl, :])
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
@@ -711,7 +751,7 @@ class SelectingTrend(Selecting):
                          stg_name='TREND SELECTING',
                          stg_text='Selecting share according to detected trends')
 
-    def _realize(self, hist_segment, pct):
+    def _realize(self, hist_segment):
         # 所有股票全部被选中，权值（投资比例）平均分配
         print(f'in selecting realize method, hist_segment received, shaped: {hist_segment.shape}')
         share_count = hist_segment.shape[0]
@@ -726,7 +766,7 @@ class SelectingSimple(Selecting):
                          stg_name='SIMPLE SELECTING',
                          stg_text='Selecting all share and distribute weights evenly')
 
-    def _realize(self, hist_segment, pct):
+    def _realize(self, hist_segment):
         # 所有股票全部被选中，投资比例平均分配
         share_count = hist_segment.shape[0]
         return [1. / share_count] * share_count
@@ -740,7 +780,8 @@ class SelectingRandom(Selecting):
                          stg_name='RANDOM SELECTING',
                          stg_text='Selecting share Randomly and distribute weights evenly')
 
-    def _realize(self, hist_segment, pct):
+    def _realize(self, hist_segment):
+        pct = self.pars
         share_count = hist_segment.shape[0]
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
@@ -752,130 +793,87 @@ class SelectingRandom(Selecting):
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
 
-# TODO: 去掉参数中的ranking table，转而使用history_data作为ranking table，使用策略属性控制ranking table的操作方式
-class SelectingRanking(Selecting):
-    """
-    普遍适用的选股策略：根据事先定义的排序表（Ranking table）来选择股票，根据不同的参数可以自定义多种不同的选股方式
-    相关选股参数保存为对象属性，在Further_initialization过程中初始化, 包括：
-        self.__ranking_table: 排序表，策略核心。在一张表中列出所有股票在不同历史时期的评分值，根据评分值的排序确定投资组合中的股票
-        self.__largest_win: 布尔变量，为True时优先选择分值最高的股票，否则优先选择分值最低的股票
-        self.__distribution: str变量，指定如何确定中选股票在投资组合中的比例：
-            'even': 均匀分配，所有中选股票比例相同
-            'linear': 线性分配，中选股票在组合中的占比呈等差数列，排名最高者比最低者比例高约200%
-            'proportion': 比例分配，中选股票在组合中的占比与其分值成正比
-        self.__drop_threshold: 弃置阈值，当分值低于（或高于）该阈值时将股票从组合中剔除'''
+class SelectingFinance(Selecting):
+    """ 根据所有股票的上期财报或过去多期财报中的某个指标选股，按照指标数值分配选股权重
+
+        数据类型：由data_types指定的财报指标财报数据，单数据输入，默认数据为EPS
+        数据分析频率：季度
+        数据窗口长度：90
+        策略使用2个参数:
+            :param largest_win: boolean 为真时选出EPS最高的股票，否则选出EPS最低的股票
+            :param distribution: str 确定如何分配选中股票的权重,
+            :param drop_threshold: 确定丢弃值，丢弃当期EPS低于该值的股票
+        参数输入数据范围：[('even', 'linear', 'proportion'), (0, 100)]
     """
 
     def __init__(self, pars=None):
         super().__init__(pars=pars,
-                         stg_name='RANKING SELECTING',
-                         stg_text='Selecting share_pool according to the so called ranking table, distribute weights '
-                                  'in multiple ways')
+                         par_count=4,
+                         par_types=['enum', 'enum', 'discr', 'conti'],
+                         par_bounds_or_enums=[(True, False), ('even', 'linear', 'proportion'), (0, 100), (0, 1)],
+                         stg_name='FINANCE SELECTING',
+                         stg_text='Selecting share_pool according to financial report EPS indicator',
+                         data_freq='d',
+                         sample_freq='y',
+                         window_length=90,
+                         data_types='eps')
 
     # TODO: 因为Strategy主类代码重构，ranking table的代码结构也应该相应修改，待修改
-    # 重写参数设置方法，把增加的策略参数包含在内
-    def set_param(self, freq=None, pct_or_qty=None, ranking_table=None, largest_win=True, distribution='even',
-                  drop_threshold=None):
-        if freq is None:
-            self.__freq = 'Q'
-        else:
-            self.__freq = freq
-        if pct_or_qty is None:
-            self.__pct_or_qty = 0.5
-        else:
-            self.__pct_or_qty = pct_or_qty
-        self.__ranking_table = ranking_table
-        self.__largest_win = largest_win
-        self.__distribution = distribution
-        self.__drop_threshold = drop_threshold
-        pass
+    # TODO：实际上hist_segment就起到了ranking table 的作用，因此不再需要ranking_table()方法，所有排序都在_realize()方法中实现
+    def _realize(self, hist_segment):
+        """ 根据hist_segment中的EPS数据选择一定数量的股票
 
-    # 重写信息打印方法，增加新增的策略参数
-    def info(self):
-        # 打印所有相关信息和主要属性
-        super().info()
-        if self.__ranking_table is not None:
-            print('Other key parameters: \n', 'ranking table, largest win, distribution, drop threshold \n',
-                  type(self.__ranking_table), self.__largest_win, self.__distribution, self.__drop_threshold,
-                  sep=',')
-        else:
-            print('Other key parameters: \n', 'ranking table, largest win, distribution, drop threshold \n',
-                  'Ranking Table None', self.__largest_win, self.__distribution, self.__drop_threshold,
-                  sep=',')
-
-    def _realize(self, shares, date, par):
-        """# 根据事先定义的排序表根据不同的方法选择一定数量的股票
-    # 输入：
-        # share_pool：列表，包含了所有备选投资产品的代码
-        # date：选股日期，选股操作发生的日期
-        # par：选股参数，选股百分比或选股数量
-    # 输出：=====
-        # chosen：浮点型向量，元素数量与shares中的相同，每个元素代表对应的投资产品在投资组合中占的比例"""
-        share_count = len(shares)
-        if par < 1:
-            # par 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
-            par = int(len(shares) * par)
-        else:  # par 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
-            par = int(par)
-        if not self.__ranking_table is None:  # 排序表不能为空，否则无法进行
-            # 排序表的列名为每一列数据的可用日期，也就是说该列数据只在该日期以后可用，获取可用日期
-            r_table_dates = self.__ranking_table.columns
-            # 根据选股日期选择最为接近的数据可用日期，用于确定使用哪一列数据执行选股操作
-            i = r_table_dates.searchsorted(date)
-            indices = self.__ranking_table[r_table_dates[i]]  # 定位到i列数据
-            # 排序表的行索引为所有投资产品的代码，提取出shares列表中股票的分值，并压缩维度到1维
-            indices = indices.loc[shares].values.squeeze()
-            nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
-            if self.__largest_win:
-                # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
-                pos = max(share_count - par - nan_count, 0)
-            else:  # 选择分数最低的部分个股
-                pos = par
-            # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
-            if self.__distribution == 'even':
-                # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
-                arg_found = indices.argpartition(pos)[pos:]
-            else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
-                arg_found = indices.argsort()[pos:]
-            # nan值数据的序号存储在arg_nan中
-            arg_nan = np.where(np.isnan(indices))[0]
-            # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
-            args = np.setdiff1d(arg_found, arg_nan, assume_unique=True)
-            # 构造输出向量，初始值为全0
-            chosen = np.zeros_like(indices)
-            # 根据投资组合比例分配方式，确定被选中产品的占比
-            # Linear：根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，其余居中者的比例按序呈等差数列
-            if self.__distribution == 'linear':
-                dist = np.arange(1, 3, 2. / len(args))  # 生成一个线性序列，最大值为最小值的约三倍
-                chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
-            # proportion：比例分配，占比与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
-            elif self.__distribution == 'proportion':
-                dist = indices[args]
-                d = dist.max() - dist.min()
-                if self.__largest_win:
-                    dist = dist - dist.min() + d / 10.
-                else:
-                    dist = dist.max() - dist + d / 10.
-                chosen[args] = dist / dist.sum()
-            # even：均匀分配，所有中选股票在组合中占比相同
-            else:  # self.__distribution == 'even'
-                chosen[args] = 1. / len(args)
-            return chosen
-        else:
-            # 排序表不存在，返回包含所有股票平均分配比例的投资组合
-            return [1. / len(shares)] * len(shares)
-        pass
-
-    def ranking_table(self, r_table=None):
-        # 给ranking_table属性赋值，或者打印当前ranking_table的信息
-        if r_table is None:  # 打印当前ranking_table的信息
-            if self.__ranking_table is None:
-                print('ranking table does not exist!')
-                print('ranking table must be created before ranking based selection')
+        """
+        largest_win, distribution, drop_threshold, pct = self.pars
+        share_count = hist_segment.shape[0]
+        if pct < 1:
+            # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
+            pct = int(share_count * pct)
+        else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
+            pct = int(pct)
+        # 历史数据片段必须是ndarray对象，否则无法进行
+        assert isinstance(hist_segment, np.ndarray), \
+            f'TypeError: expect np.ndarray as history segment, got {type(hist_segment)} instead'
+        # 将历史数据片段中的eps求均值，忽略Nan值,
+        indices = hist_segment.mean(axis=1).squeeze()
+        print(f'in Selecting realize method got ranking vector like:\n {np.round(indices, 3)}')
+        nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
+        if largest_win:
+            # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
+            pos = max(share_count - pct - nan_count, 0)
+        else:  # 选择分数最低的部分个股
+            pos = pct
+        # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
+        if distribution == 'even':
+            # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
+            arg_found = indices.argpartition(pos)[pos:]
+        else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
+            arg_found = indices.argsort()[pos:]
+        # nan值数据的序号存储在arg_nan中
+        arg_nan = np.where(np.isnan(indices))[0]
+        # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
+        args = np.setdiff1d(arg_found, arg_nan, assume_unique=True)
+        # 构造输出向量，初始值为全0
+        chosen = np.zeros_like(indices)
+        # 根据投资组合比例分配方式，确定被选中产品的占比
+        # Linear：根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，其余居中者的比例按序呈等差数列
+        if distribution == 'linear':
+            dist = np.arange(1, 3, 2. / len(args))  # 生成一个线性序列，最大值为最小值的约三倍
+            chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
+        # proportion：比例分配，占比与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
+        elif distribution == 'proportion':
+            dist = indices[args]
+            d = dist.max() - dist.min()
+            if largest_win:
+                dist = dist - dist.min() + d / 10.
             else:
-                print('ranking table information', self.__ranking_table.info())
-        else:  # 将传入的数据赋值给对象的ranking_table属性
-            self.__ranking_table = r_table
+                dist = dist.max() - dist + d / 10.
+            chosen[args] = dist / dist.sum()
+        # even：均匀分配，所有中选股票在组合中占比相同
+        else:  # self.__distribution == 'even'
+            chosen[args] = 1. / len(args)
+        print(f'in Selecting realize method got share selecting vector like:\n {np.round(chosen,3)}')
+        return chosen
 
 
 class Ricon(Strategy):
@@ -1099,9 +1097,9 @@ class Operator:
     """
 
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
-    def __init__(self, selecting_types: list = None,
-                 timing_types: list = None,
-                 ricon_types: list = None):
+    def __init__(self, selecting_types=None,
+                 timing_types=None,
+                 ricon_types=None):
         """根据输入的参数生成选股、择时和风控具体类:
 
         input:
@@ -1165,8 +1163,8 @@ class Operator:
                 self._selecting.append(SelectingTrend())
             elif selecting_type.lower() == 'random':
                 self._selecting.append(SelectingRandom())
-            elif selecting_type.lower() == 'ranking':
-                self._selecting.append(SelectingRanking())
+            elif selecting_type.lower() == 'finance':
+                self._selecting.append(SelectingFinance())
             else:
                 self._selecting.append(SelectingSimple())
                 self._selecting_type.pop()
@@ -1209,6 +1207,21 @@ class Operator:
         stg.extend(self.ricon)
         return stg
 
+    @property
+    def get_opt_space_par(self):
+        ranges = []
+        types = []
+        for stg in self.strategies:
+            if stg.opt_tag == 0:
+                pass  # 策略优化方案关闭
+            elif stg.opt_tag == 1:
+                ranges.extend(stg.par_boes)
+                types.extend(stg.par_types)
+            elif stg.opt_tag == 2:
+                ranges.append(stg.par_boes)
+                types.extend(['enum'])
+        return ranges, types
+
     # Operation对象有两类属性需要设置：blender混合器属性、Parameters策略参数或属性
     # 这些属性参数的设置需要在OP模块设置一个统一的设置入口，同时，为了实现与Optimizer模块之间的接口
     # 还需要创建两个Opti接口函数，一个用来根据的值创建合适的Space初始化参数，另一个用于接受opt
@@ -1230,7 +1243,13 @@ class Operator:
             print('blender_type should be a string')
         pass
 
-    def set_parameter(self, stg_id, pars=None, opt_tag=None, par_boes=None):
+    def set_parameter(self, stg_id,
+                      pars=None,
+                      opt_tag=None,
+                      par_boes=None,
+                      sample_freq=None,
+                      window_length=None,
+                      data_types=None):
         """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
 
@@ -1263,10 +1282,20 @@ class Operator:
             if par_boes is not None:
                 strategy.set_par_boes(par_boes)
                 print(f'{strategy} parameter space range or enum has been set to {par_boes}')
+            has_sf = sample_freq is not None
+            has_wl = window_length is not None
+            has_dt = data_types is not None
+            if has_sf or has_wl or has_dt:
+                strategy.set_hist_pars(sample_freq=sample_freq,
+                                       window_length=window_length,
+                                       data_types=data_types)
+                print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
+                      f'window length: {window_length} \ndata types: {data_types}')
         else:
             print('stg_id should be a string like \'t-0\', got {stg_id}')
         pass
 
+    '''
     # TODO: 所有的参数设置接口 统一到set_parameter函数中，取消set_opt_par函数
     def set_opt_par(self, opt_par):
         # 将输入的opt参数切片后传入stg的参数中
@@ -1283,21 +1312,7 @@ class Operator:
                 k += 1
                 stg.set_pars(opt_par[s:k])
                 s = k
-
-    def get_opt_space_par(self):
-        ranges = []
-        types = []
-        for stg in self.strategies:
-            if stg.opt_tag == 0:
-                pass  # 策略优化方案关闭
-            elif stg.opt_tag == 1:
-                ranges.extend(stg.par_boes)
-                types.extend(stg.par_types)
-            elif stg.opt_tag == 2:
-                ranges.append(stg.par_boes)
-                types.extend(['enum'])
-        return ranges, types
-        pass
+    '''
 
     # =================================================
     # 下面是Operation模块的公有方法：

@@ -632,7 +632,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
     """
 
     pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
-    s_range, s_type = op.get_opt_space_par()
+    s_range, s_type = op.get_opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
 
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
@@ -689,7 +689,7 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
         pool.perfs 输出的参数组的评价分数
 """
     pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
-    s_range, s_type = op.get_opt_space_par()
+    s_range, s_type = op.get_opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
@@ -743,7 +743,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
 
 """
     pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
-    s_range, s_type = op.get_opt_space_par()
+    s_range, s_type = op.get_opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     spaces.append(Space(s_range, s_type))  # 将整个空间作为第一个子空间对象存储起来
     step_size = init_step  # 设定初始搜索步长
