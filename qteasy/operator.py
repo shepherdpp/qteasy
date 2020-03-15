@@ -1,4 +1,5 @@
 # coding=utf-8
+# operator.py
 
 import pandas as pd
 import numpy as np
@@ -588,6 +589,7 @@ class Selecting(Strategy):
                  par_bounds_or_enums: list = None,
                  data_freq: str = 'y',
                  sample_freq: str = 'y',
+                 proportion_or_quantity: float = 0.5,
                  window_length: int = 270,
                  data_types: str = 'close',
                  largest_win: int = 1,
@@ -609,14 +611,18 @@ class Selecting(Strategy):
                          sample_freq=sample_freq,
                          window_length=window_length,
                          data_types=data_types)
+        self.poq = proportion_or_quantity
         self.largest_win = largest_win
         self.distribution = distribution
         self.drop_threshold = drop_threshold
 
     @abstractmethod
-    def _realize(self, shares, date, pct):
+    def _realize(self, hist_segment, pct):
         """" Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
+        input:
+            :param hist_segment: type: ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史数据片段
+            :param pct: type: float，整数或百分比，整数表示选中的股票数量，或分数表示百分比
         :return：
             ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
         """
@@ -637,6 +643,9 @@ class Selecting(Strategy):
             len(seg_lens): 分段的数量
             生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
         """
+        assert isinstance(dates, dict), \
+            f'TypeError, type dict expected in method seg_periods, got {type(dates)} instead! '
+        dates = list(dates.keys())
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq).values
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
@@ -652,15 +661,13 @@ class Selecting(Strategy):
 
     # TODO：需要重新定义Selecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
     # TODO: 使函数的定义符合继承类的抽象方法定义规则
-    def generate(self, hist_data, dates, shares):
+    def generate(self, hist_data):
         """
         生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
         建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
 
         input:
-            :param hist_data: type: np.ndarray, 历史数据
-            :param dates: 需要进行选股操作的日期序列，未来可以去掉这个参数，因为选股操作日期序列可以通过self.sample_freq确定
-            :param shares: list 股票列表，在未来可以去掉，因为股票列表在计算中并不需要，
+            :param hist_data: type: HistoryPanel, 历史数据
         :return:=====
             sel_mask：选股蒙版，是一个与输入历史数据尺寸相同的ndarray，dtype为浮点数，取值范围在0～1之间
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
@@ -670,12 +677,14 @@ class Selecting(Strategy):
         assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
         assert len(self.pars) == self.par_count, \
             f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
-        freq = self._pars[0]
-        poq = self._pars[1]
+        assert isinstance(hist_data, HistoryPanel), \
+            f'InputError: Expect HistoryPanel object as hist_data, got {type(hist_data)}'
+        freq = self.sample_freq
+        poq = self.poq
+        dates = hist_data.hdates
+        shares = hist_data.shares
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
-        assert isinstance(hist_data, np.ndarray), \
-            f'Type Error: input historical data should be ndarray, got {type(hist_data)}'
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
         # 一个空的ndarray对象用于存储生成的选股蒙版
         sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
@@ -685,7 +694,7 @@ class Selecting(Strategy):
         # TODO: 可以使用map函数生成分段
         for sp, sl in zip(seg_pos, seg_lens):
             # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(shares, dates[sp], poq)
+            share_sel = self._realize(hist_data[:,:,sp:sp+sl], poq)
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
@@ -702,9 +711,11 @@ class SelectingTrend(Selecting):
                          stg_name='TREND SELECTING',
                          stg_text='Selecting share according to detected trends')
 
-    def _realize(self, shares, date, pct):
+    def _realize(self, hist_segment, pct):
         # 所有股票全部被选中，权值（投资比例）平均分配
-        return [1. / len(shares)] * len(shares)
+        print(f'in selecting realize method, hist_segment received, shaped: {hist_segment.shape}')
+        share_count = hist_segment.shape[0]
+        return [1. / share_count] * share_count
 
 
 class SelectingSimple(Selecting):
@@ -715,9 +726,10 @@ class SelectingSimple(Selecting):
                          stg_name='SIMPLE SELECTING',
                          stg_text='Selecting all share and distribute weights evenly')
 
-    def _realize(self, shares, date, pct):
+    def _realize(self, hist_segment, pct):
         # 所有股票全部被选中，投资比例平均分配
-        return [1. / len(shares)] * len(shares)
+        share_count = hist_segment.shape[0]
+        return [1. / share_count] * share_count
 
 
 class SelectingRandom(Selecting):
@@ -728,13 +740,14 @@ class SelectingRandom(Selecting):
                          stg_name='RANDOM SELECTING',
                          stg_text='Selecting share Randomly and distribute weights evenly')
 
-    def _realize(self, shares, date, par):
-        if par < 1:
+    def _realize(self, hist_segment, pct):
+        share_count = hist_segment.shape[0]
+        if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
-            chosen = np.random.choice([1, 0], size=len(shares), p=[par, 1 - par])
-        else:  # par >= 1 给定参数大于1，抽取给定数量的股票
-            choose_at = np.random.choice(len(shares), size=(int(par)), replace=False)
-            chosen = np.zeros(len(shares))
+            chosen = np.random.choice([1, 0], size=share_count, p=[pct, 1 - pct])
+        else:  # pct >= 1 给定参数大于1，抽取给定数量的股票
+            choose_at = np.random.choice(share_count, size=(int(pct)), replace=False)
+            chosen = np.zeros(share_count)
             chosen[choose_at] = 1
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
@@ -1347,7 +1360,7 @@ class Operator:
         # print(f'shape of h_v in operator.create() function: {h_v.shape}')
         for sel in self._selecting:  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
-            sel_masks.append(sel.generate(h_v, date_list, shares))  # 生成的选股蒙板添加到选股蒙板队列中
+            sel_masks.append(sel.generate(hist_data))  # 生成的选股蒙板添加到选股蒙板队列中
         # print('SPEED test OP create, Time of sel_mask blending')
         # %time (self.__selecting_blend(sel_masks))
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板

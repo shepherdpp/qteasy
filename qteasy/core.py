@@ -167,15 +167,19 @@ class Rate:
             raise TypeError
 
 
+# TODO：在Cash类中增加现金投资的无风险利率，在apply_loop的时候，可以选择是否考虑现金的无风险利率，如果考虑时，现金按照无风险利率增长
 class Cash:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
-    def __init__(self):
+    def __init__(self, data: pd.DataFrame, interest_rate: float = 0.03):
         """
 
+        input:
+        :param data:
+        :param interest_rate:
         """
         raise NotImplementedError
 
@@ -273,6 +277,7 @@ def _get_complete_hist(values, h_list, with_price=False):
 
 
 # TODO：回测主入口函数需要增加现金计划、多种回测结果评价函数、回测过程log记录、回测结果可视化和回测结果参照标准
+# TODO：增加一个参数，允许用户选择是否考虑现金的无风险利率增长
 def apply_loop(op_list, history_list, visual=False, price_visual=False,
                init_cash=100000, rate=None, moq=100):
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
@@ -366,10 +371,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             投资资金模型不能为空，策略参数可以为空
     input：
 
-        param operator: Operator()，策略执行器对象
-        param context: Context()，策略执行环境的上下文对象
-        param mode: int, default to None，qteasy运行模式，如果给出则override context中的mode参数
-        param history_data: pd.DataFrame, default to None, 参与执行所需的历史数据，如果给出则overidecontext 中的hist参数
+        :param operator: Operator()，策略执行器对象
+        :param context: Context()，策略执行环境的上下文对象
+        :param mode: int, default to None，qteasy运行模式，如果给出则override context中的mode参数
+        :param history_data: pd.DataFrame, default to None, 参与执行所需的历史数据，如果给出则overidecontext 中的hist参数
         other params
     return：=====
         type: Log()，运行日志记录，txt 或 pd.DataFrame

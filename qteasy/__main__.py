@@ -1,3 +1,6 @@
+# coding = utf-8
+# __main__.py
+
 from qteasy.core import *
 import qteasy.history as hs
 from qteasy.operator import *
@@ -5,7 +8,7 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
+    op = Operator(timing_types=['DMA'], selecting_types=['rand'], ricon_types=['urgent'])
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
@@ -29,7 +32,7 @@ if __name__ == '__main__':
     h2.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=('Y', 1))
-    op.set_parameter('s-1', pars=('Q', 0.5))
+    #op.set_parameter('s-1', pars=('Q', 0.5))
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
 
