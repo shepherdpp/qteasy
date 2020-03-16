@@ -215,6 +215,42 @@ def _make_list_or_slice(item, d):
     else:
         return None
 
+# ==================
+# Historical Utility functions based on tushare
+# ==================
+
+def get_hist_rehab(self, share: str,
+                   start: str,
+                   end: str,
+                   price_type: str = 'close',
+                   asset_type: str = 'E',
+                   adj: str = 'None',
+                   freq: str = 'd',
+                   ma: list = None)-> pd.DataFrame:
+    """ get historical prices with rehabilitation rights
+        获取指数或股票的复权历史价格
+
+    input:
+        :param share:
+        :param start:
+        :param end:
+        :param asset_type:
+        :param adj:
+        :param freq:
+        :param ma:
+    return:
+
+    """
+
+    assert isinstance(share, str), 'share code should be a string'
+    assert price_type in PRICE_TYPES, 'price types should be one of the predefined types'
+    res = ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq, ma=ma)
+    col_to_remove = list(col for col in res.columns if not col in price_type)
+    res.drop(columns=col_to_remove, inline=True)
+    assert isinstance(res, pd.DataFrame)
+    return res
+
+def 
 
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'
@@ -290,41 +326,6 @@ class History:
     def hist_list(self, shares=None, start=None, end=None, freq=None):
         # 提取一张新的数据表
         raise NotImplementedError
-
-    # ==================
-    # Historical Utility functions based on tushare
-    # ==================
-
-    def get_hist_rehab(self, share: str,
-                       start: str,
-                       end: str,
-                       price_type: str = 'close',
-                       asset_type: str = 'E',
-                       adj: str = 'None',
-                       freq: str = 'd',
-                       ma: list = None):
-        """ get historical prices with rehabilitation rights
-            获取指数或股票的复权历史价格
-
-        input:
-            :param share:
-            :param start:
-            :param end:
-            :param asset_type:
-            :param adj:
-            :param freq:
-            :param ma:
-        return:
-
-        """
-
-        assert isinstance(share, str), 'share code should be a string'
-        assert price_type in PRICE_TYPES, 'price types should be one of the predefined types'
-        res = ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq)
-        col_to_remove = list(col for col in res.columns if not col in price_type)
-        res.drop(columns=col_to_remove, inline=True)
-        assert isinstance(res, pd.DataFrame)
-        return res
 
     def info(self):
         # 打印当前数据仓库的关键信息
