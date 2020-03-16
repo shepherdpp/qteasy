@@ -7,6 +7,8 @@ from datetime import datetime
 import datetime as dt
 
 
+TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
+ts.set_token(TUSHARE_TOKEN)
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
 # TODO: 增加HistData类，一个以Ndarray为基础的三维历史数据数组
 # TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
@@ -219,7 +221,74 @@ def _make_list_or_slice(item, d):
 # Historical Utility functions based on tushare
 # ==================
 
-def get_hist_rehab(self, share: str,
+# Basic Market Data
+# ==================
+
+def stock_basic(is_hs: str = None,
+                list_status: str = None,
+                exchange: str = None,
+                fields: str = None):
+    """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
+
+    :param is_hs: optinal, 是否沪深港通标的，N否 H沪股通 S深股通
+    :param list_status: optional, 上市状态： L上市 D退市 P暂停上市
+    :param exchange: optional, 交易所 SSE上交所 SZSE深交所 HKEX港交所(未上线)
+    :param fields: 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
+    :return: pd.DataFrame:
+        column      type    description
+        ts_code,    str,    TS代码
+        symbol,     str,    股票代码
+        name,       str,    股票名称
+        area,       str,    所在地域
+        industry,   str,    所属行业
+        fullname,   str,    股票全称
+        ennamem     str,    英文全称
+        market,     str,    市场类型 （主板/中小板/创业板/科创板）
+        exchange,   str,    交易所代码
+        curr_type,  str,    交易货币
+        list_status,str,    上市状态： L上市 D退市 P暂停上市
+        list_date,  str,    上市日期
+        delist_date,str,    退市日期
+        is_hs,      str,    是否沪深港通标的，N否 H沪股通 S深股通
+    """
+    if is_hs is None: is_hs = ''
+    if list_status is None: list_status = 'L'
+    if exchange is None: exchange = ''
+    if fields is None: fields = 'ts_code,symbol,name,area,industry,list_date'
+    pro = ts.pro_api()
+    return pro.stock_basic(exchange=exchange,
+                           list_status=list_status,
+                           is_hs=is_hs,
+                           fields=fields)
+
+def trade_calendar(exchange: str = 'SSE',
+                   start_date: str = None,
+                   end_date: str = None,
+                   is_open: str = None):
+    """ 获取各大交易所交易日历数据,默认提取的是上交所
+
+    :param exchange: 交易所 SSE上交所,SZSE深交所,CFFEX 中金所,SHFE 上期所,CZCE 郑商所,DCE 大商所,INE 上能源,IB 银行间,XHKG 港交所
+    :param start_date: 开始日期
+    :param end_date: 结束日期
+    :param is_open: 是否交易 '0'休市 '1'交易
+    :return: pd.DataFrame
+        column          type    description
+        exchange,       str,    交易所 SSE上交所 SZSE深交所
+        cal_date,       str,    日历日期
+        is_open,        str,    是否交易 0休市 1交易
+        pretrade_date,  str,    默认不显示，  上一个交易日
+    """
+    pro = ts.pro_api()
+    return pro.trade_cal(exchange=exchange,
+                         start_date=start_date,
+                         end_date=end_date,
+                         is_open=is_open)
+
+
+# Bar price data
+# ==================
+
+def get_hist_rehab(share: str,
                    start: str,
                    end: str,
                    price_type: str = 'close',
@@ -249,8 +318,6 @@ def get_hist_rehab(self, share: str,
     res.drop(columns=col_to_remove, inline=True)
     assert isinstance(res, pd.DataFrame)
     return res
-
-def 
 
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'
