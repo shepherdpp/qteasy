@@ -6,9 +6,10 @@ import numpy as np
 from datetime import datetime
 import datetime as dt
 
-
 TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
+
+
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
 # TODO: 增加HistData类，一个以Ndarray为基础的三维历史数据数组
 # TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
@@ -217,6 +218,7 @@ def _make_list_or_slice(item, d):
     else:
         return None
 
+
 # ==================
 # Historical Utility functions based on tushare
 # ==================
@@ -261,6 +263,7 @@ def stock_basic(is_hs: str = None,
                            is_hs=is_hs,
                            fields=fields)
 
+
 def trade_calendar(exchange: str = 'SSE',
                    start_date: str = None,
                    end_date: str = None,
@@ -284,6 +287,7 @@ def trade_calendar(exchange: str = 'SSE',
                          end_date=end_date,
                          is_open=is_open)
 
+
 def name_change(ts_code: str = None,
                 start_date: str = None,
                 end_date: str = None,
@@ -302,60 +306,183 @@ def name_change(ts_code: str = None,
         ann_date	        str	    Y	        公告日期
         change_reason	    str	    Y	        变更原因
     example:
-    pro = ts.pro_api()
-
-    df = pro.namechange(ts_code='600848.SH',
-                        fields='ts_code,name,start_date,end_date,change_reason')
-
+        pro = ts.pro_api()
+        df = pro.namechange(ts_code='600848.SH',
+                            fields='ts_code,name,start_date,end_date,change_reason')
     :output:
-            ts_code     name      start_date   end_date      change_reason
-    0       600848.SH   上海临港   20151118      None           改名
-    1       600848.SH   自仪股份   20070514     20151117         撤销ST
-    2       600848.SH   ST自仪     20061026    20070513         完成股改
-    3       600848.SH   SST自仪   20061009     20061025        未股改加S
-    4       600848.SH   ST自仪     20010508    20061008         ST
-    5       600848.SH   自仪股份  19940324      20010507         其他
+                ts_code     name      start_date   end_date      change_reason
+        0       600848.SH   上海临港   20151118      None           改名
+        1       600848.SH   自仪股份   20070514     20151117         撤销ST
+        2       600848.SH   ST自仪     20061026    20070513         完成股改
+        3       600848.SH   SST自仪   20061009     20061025        未股改加S
+        4       600848.SH   ST自仪     20010508    20061008         ST
+        5       600848.SH   自仪股份  19940324      20010507         其他
     """
-    if fields = None: fields = 'ts_code,name,start_date,end_date,change_reason'
+    if fields is None: fields = 'ts_code,name,start_date,end_date,change_reason'
     pro = ts.pro_api()
     return pro.namechange(ts_code=ts_code,
                           start_date=start_date,
                           end_date=end_date,
                           fields=fields)
 
+
+def new_share(start_date: str = None,
+              end_date: str = None) -> pd.DataFrame:
+    """
+
+    :param start_date: str, 上网发行开始日期
+    :param end_date: str, 上网发行结束日期
+    :return: pd.DataFrame
+        column              type    default     description
+        ts_code		        str	    Y	        TS股票代码
+        sub_code	        str	    Y	        申购代码
+        name		        str	    Y	        名称
+        ipo_date	        str	    Y	        上网发行日期
+        issue_date	        str	    Y	        上市日期
+        amount		        float	Y	        发行总量（万股）
+        market_amount	    float	Y	        上网发行总量（万股）
+        price		        float	Y	        发行价格
+        pe		            float	Y	        市盈率
+        limit_amount	    float	Y	        个人申购上限（万股）
+        funds		        float	Y	        募集资金（亿元）
+        ballot		        float	Y	        中签率
+    example:
+        pro = ts.pro_api()
+        df = pro.new_share(start_date='20180901', end_date='20181018')
+    output:
+            ts_code     ub_code  name  ipo_date    issue_date   amount  market_amount  \
+        0   002939.SZ   002939  长城证券  20181017       None  31034.0        27931.0
+        1   002940.SZ   002940   昂利康  20181011   20181023   2250.0         2025.0
+        2   601162.SH   780162  天风证券  20181009   20181019  51800.0        46620.0
+        3   300694.SZ   300694  蠡湖股份  20180927   20181015   5383.0         4845.0
+        4   300760.SZ   300760  迈瑞医疗  20180927   20181016  12160.0        10944.0
+        5   300749.SZ   300749  顶固集创  20180913   20180925   2850.0         2565.0
+        6   002937.SZ   002937  兴瑞科技  20180912   20180926   4600.0         4140.0
+        7   601577.SH   780577  长沙银行  20180912   20180926  34216.0        30794.0
+        8   603583.SH   732583  捷昌驱动  20180911   20180921   3020.0         2718.0
+        9   002936.SZ   002936  郑州银行  20180907   20180919  60000.0        54000.0
+        10  300748.SZ   300748  金力永磁  20180906   20180921   4160.0         3744.0
+        11  603810.SH   732810  丰山集团  20180906   20180917   2000.0         2000.0
+        12  002938.SZ   002938  鹏鼎控股  20180905   20180918  23114.0        20803.0
+
+            price     pe  limit_amount   funds  ballot
+        0    6.31  22.98          9.30  19.582    0.16
+        1   23.07  22.99          0.90   5.191    0.03
+        2    1.79  22.86         15.50   0.000    0.25
+        3    9.89  22.98          2.15   5.324    0.04
+        4   48.80  22.99          3.60  59.341    0.08
+        5   12.22  22.99          1.10   3.483    0.03
+        6    9.94  22.99          1.80   4.572    0.04
+        7    7.99   6.97         10.20  27.338    0.17
+        8   29.17  22.99          1.20   8.809    0.03
+        9    4.59   6.50         18.00  27.540    0.25
+        10   5.39  22.98          1.20   2.242    0.05
+        11  25.43  20.39          2.00   5.086    0.02
+        12  16.07  22.99          6.90  37.145    0.12
+    """
+    pro = ts.pro_api()
+    return pro.new_share(start_date=start_date, end_date=end_date)
+
+
+def stock_company(ts_code: str = None,
+                  exchange: str = None,
+                  fields: str = None) -> pd.DataFrame:
+    """
+
+    :param ts_code: str, 股票代码
+    :param exchange: str, 交易所代码 ，SSE上交所 SZSE深交所
+    :param fields: str, 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
+    :return: pd.DataFrame
+        column              type    default     description
+        ts_code		        str	    Y	        股票代码
+        exchange	        str	    Y	        交易所代码 ，SSE上交所 SZSE深交所
+        chairman	        str	    Y	        法人代表
+        manager		        str	    Y	        总经理
+        secretary	        str	    Y	        董秘
+        reg_capital	        float	Y	        注册资本
+        setup_date	        str	    Y	        注册日期
+        province	        str	    Y	        所在省份
+        city		        str	    Y	        所在城市
+        introduction	    str	    N	        公司介绍
+        website		        str	    Y	        公司主页
+        email		        str	    Y	        电子邮件
+        office		        str	    N	        办公室
+        employees	        int	    Y	        员工人数
+        main_business	    str	    N	        主要业务及产品
+        business_scope	    str	    N	        经营范围
+    example:
+        pro = ts.pro_api()
+        df = pro.stock_company(exchange='SZSE',
+                               fields='ts_code,chairman,manager,secretary,reg_capital,setup_date,province')
+    output:
+               ts_code     chairman manager     secretary   reg_capital setup_date province  \
+        0     000001.SZ      谢永林     胡跃飞        周强  1.717041e+06   19871222       广东
+        1     000002.SZ       郁亮     祝九胜        朱旭  1.103915e+06   19840530       广东
+        2     000003.SZ      马钟鸿     马钟鸿        安汪  3.334336e+04   19880208       广东
+        3     000004.SZ      李林琳     李林琳       徐文苏  8.397668e+03   19860505       广东
+        4     000005.SZ       丁芃     郑列列       罗晓春  1.058537e+05   19870730       广东
+        5     000006.SZ      赵宏伟     朱新宏        杜汛  1.349995e+05   19850525       广东
+        6     000007.SZ      智德宇     智德宇       陈伟彬  3.464480e+04   19830311       广东
+        7     000008.SZ      王志全      钟岩       王志刚  2.818330e+05   19891011       北京
+        8     000009.SZ      陈政立     陈政立       郭山清  2.149345e+05   19830706       广东
+        9     000010.SZ       曾嵘     李德友       金小刚  8.198547e+04   19881231       广东
+        10    000011.SZ      刘声向     王航军       范维平  5.959791e+04   19830117       广东
+    """
+    if fields is None: fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
+    pro = ts.pro_api()
+    return pro.stock_comapany(ts_code=ts_code, exchange=exchange, fields=fields)
+
 # Bar price data
 # ==================
 
-def get_hist_rehab(share: str,
+def get_bar(share: str,
                    start: str,
                    end: str,
-                   price_type: str = 'close',
                    asset_type: str = 'E',
                    adj: str = 'None',
-                   freq: str = 'd',
-                   ma: list = None)-> pd.DataFrame:
+                   freq: str = 'D',
+                   ma: list = None) -> pd.DataFrame:
     """ get historical prices with rehabilitation rights
         获取指数或股票的复权历史价格
 
     input:
-        :param share:
-        :param start:
-        :param end:
-        :param asset_type:
-        :param adj:
-        :param freq:
-        :param ma:
-    return:
-
+        :param share: str, 证券代码
+        :param start: str, 开始日期 (格式：YYYYMMDD)
+        :param end: str, 结束日期 (格式：YYYYMMDD)
+        :param asset_type: str, 资产类别：E股票 I沪深指数 C数字货币 F期货 FD基金 O期权，默认E
+        :param adj: str, 复权类型(只针对股票)：None未复权 qfq前复权 hfq后复权 , 默认None
+        :param freq: str, 数据频度 ：1MIN表示1分钟（1/5/15/30/60分钟） D日线 ，默认D
+        :param ma: str, 均线，支持任意周期的均价和均量，输入任意合理int数值
+    return: pd.DataFrame
+        column          type    description
+        ts_code         str     证券代码
+        trade_date      str     交易日期，格式YYYYMMDD
+        open            float   开盘价
+        high            float   最高价
+        low             float   最低价
+        close           float   收盘价
+        pre_close       float   前一收盘价
+        change          float   收盘价涨跌
+        pct_chg         float   收盘价涨跌百分比
+        vol             float   交易量
+        amount          float   交易额
+    example:
+        获取日k线数据，前复权：
+        ts.pro_bar(ts_code='000001.SZ', adj='qfq', start_date='20180101', end_date='20181011')
+        获取周K线数据，后复权：
+        ts.pro_bar(ts_code='000001.SZ', freq='W', adj='hfq', start_date='20180101', end_date='20181011')
+    output:
+    前复权日K线数据
+       ts_code trade_date     open     high      low    close  pre_close  change  pct_chg         vol       amount
+    0    000001.SZ   20181011  10.0500  10.1600   9.7000   9.8600    10.4500 -0.5900  -5.6459  1995143.83  1994186.611
+    1    000001.SZ   20181010  10.5400  10.6600  10.3800  10.4500    10.5600 -0.1100  -1.0417   995200.08  1045666.180
+    2    000001.SZ   20181009  10.4600  10.7000  10.3900  10.5600    10.4500  0.1100   1.0526  1064084.26  1117946.550
+    3    000001.SZ   20181008  10.7000  10.7900  10.4500  10.4500    11.0500 -0.6000  -5.4299  1686358.52  1793455.283
+    4    000001.SZ   20180928  10.7800  11.2700  10.7800  11.0500    10.7400  0.3100   2.8864  2110242.67  2331358.288
     """
+    assert isinstance(share, str), 'TypeError: share code should be a string'
+    return ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq, ma=ma)
 
-    assert isinstance(share, str), 'share code should be a string'
-    assert price_type in PRICE_TYPES, 'price types should be one of the predefined types'
-    res = ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq, ma=ma)
-    col_to_remove = list(col for col in res.columns if not col in price_type)
-    res.drop(columns=col_to_remove, inline=True)
-    assert isinstance(res, pd.DataFrame)
-    return res
 
 # Finance Data
 # ================
@@ -367,7 +494,7 @@ def income(ts_code: str,
            period: str = None,
            report_type: str = None,
            comp_type: str = None,
-           fields: str = None)-> pd.DataFrame:
+           fields: str = None) -> pd.DataFrame:
     """ 获取上市公司财务利润表数据
 
     :param ts_code: 股票代码
@@ -472,6 +599,7 @@ def income(ts_code: str,
                       report_type=report_type,
                       comp_type=comp_type,
                       fields=fields)
+
 
 class History:
     '历史数据管理类，使用一个“历史数据仓库 Historical Warehouse”来管理所有的历史数据'
