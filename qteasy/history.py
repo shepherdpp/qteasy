@@ -431,6 +431,7 @@ def stock_company(ts_code: str = None,
     pro = ts.pro_api()
     return pro.stock_comapany(ts_code=ts_code, exchange=exchange, fields=fields)
 
+
 # Bar price data
 # ==================
 
@@ -608,7 +609,7 @@ def balance(ts_code: str,
             report_type: str = None,
             comp_type: str = None,
             fields: str = None) -> pd.DataFrame:
-    """
+    """ 获取上市公司财务数据资产负债表
 
     :param ts_code: 股票代码
     :param rpt_date: optional 公告日期
@@ -798,7 +799,7 @@ def cashflow(ts_code: str,
              report_type: str = None,
              comp_type: str = None,
              fields: str = None) -> pd.DataFrame:
-    """
+    """ 获取上市公司财务数据现金流量表
 
     :param ts_code:                     股票代码
     :param rpt_date: optional           公告日期
@@ -938,7 +939,7 @@ def indicators(ts_code: str,
                end: str = None,
                period: str = None,
                fields: str = None) -> pd.DataFrame:
-    """
+    """ 获取上市公司财务数据——财务指标
 
     :param ts_code: str, TS股票代码,e.g. 600001.SH/000001.SZ
     :param rpt_date: str, 公告日期
@@ -1134,6 +1135,380 @@ def indicators(ts_code: str,
                               period=period,
                               fields=fields)
 
+
+# Market Data
+# =================
+
+def top_list(trade_date: str = None,
+             ts_code: str = None,
+             fields: str = None) -> pd.DataFrame:
+    """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000
+
+    :param trade_date: str, 交易日期
+    :param ts_code: str, 股票代码
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return: pd.DataFrame
+        column                      type    default description
+        trade_date	                str	    Y	    交易日期
+        ts_code		                str	    Y	    TS代码
+        name		                str	    Y	    名称
+        close		                float	Y	    收盘价
+        pct_change	                float	Y	    涨跌幅
+        turnover_rate	            float	Y	    换手率
+        amount		                float	Y	    总成交额
+        l_sell		                float	Y	    龙虎榜卖出额
+        l_buy		                float	Y	    龙虎榜买入额
+        l_amount	                float	Y	    龙虎榜成交额
+        net_amount	                float	Y	    龙虎榜净买入额
+        net_rate	                float	Y	    龙虎榜净买额占比
+        amount_rate	                float	Y	    龙虎榜成交额占比
+        float_values	            float	Y	    当日流通市值
+        reason		                str	    Y	    上榜理由
+    example:
+        top_list(trade_date='20180928', fields='trade_date,ts_code,name,close')
+    output:
+           trade_date    ts_code  name   close
+        0    20180928  000007.SZ   全新好   7.830
+        1    20180928  000017.SZ  深中华A   4.660
+        2    20180928  000505.SZ  京粮控股   5.750
+        3    20180928  000566.SZ  海南海药   6.120
+        4    20180928  000593.SZ  大通燃气   7.990
+        ...
+    """
+    if fields is None: fields = 'trade_date,ts_code,name,close,l_sell,l_buy,l_amount,net_amount,net_rate,amount_rate'
+    pro = ts.pro_api()
+    return pro.top_list(trade_date=trade_date,
+                        ts_code=ts_code,
+                        fields=fields)
+
+
+# Index Data
+# ==================
+
+def index_basic(trade_date: str = None,
+                ts_code: str = None,
+                start: str = None,
+                end: str = None,
+                fields: str = None) -> pd.DataFrame:
+    """ 大盘指数每日指标, 目前只提供上证综指，深证成指，上证50，中证500，中小板指，创业板指的每日指标数据
+
+    :param trade_date: str, 交易日期 （格式：YYYYMMDD，比如20181018，下同）
+    :param ts_code: str, TS代码
+    :param start: str, 开始日期
+    :param end: str, 结束日期
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return:
+        column          type    default description
+        ts_code		    str	    Y	    TS代码
+        trade_date	    str	    Y	    交易日期
+        total_mv	    float	Y	    当日总市值（元）
+        float_mv	    float	Y	    当日流通市值（元）
+        total_share     float	Y	    当日总股本（股）
+        float_share	    float	Y	    当日流通股本（股）
+        free_share	    float	Y	    当日自由流通股本（股）
+        turnover_rate	float	Y	    换手率
+        turnover_rate_f	float	Y	    换手率(基于自由流通股本)
+        pe		        float	Y	    市盈率
+        pe_ttm		    float	Y	    市盈率TTM
+        pb		        float	Y	    市净率
+    example:
+        index_basic(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
+    output:
+            ts_code  trade_date  turnover_rate     pe
+        0  000001.SH   20181018           0.38  11.92
+        1  000300.SH   20181018           0.27  11.17
+        2  000905.SH   20181018           0.82  18.03
+        3  399001.SZ   20181018           0.88  17.48
+        4  399005.SZ   20181018           0.85  21.43
+        5  399006.SZ   20181018           1.50  29.56
+        6  399016.SZ   20181018           1.06  18.86
+        7  399300.SZ   20181018           0.27  11.17
+    """
+    pro = ts.pro_api()
+    return pro.index_dailybasic(trade_date=trade_date,
+                                ts_code=ts_code,
+                                start_date=start,
+                                end_date=end,
+                                fields=fields)
+
+
+def composite(index_code: str = None,
+              trade_date: str = None,
+              start: str = None,
+              end: str = None) -> pd.DataFrame:
+    """ 获取各类指数成分和权重，月度数据 ，如需日度指数成分和权重，请联系 waditu@163.com
+
+    :param index_code: str, 指数代码 (二选一)
+    :param trade_date: str, 交易日期 （二选一）
+    :param start: str, 开始日期
+    :param end: str, 结束日期
+    :return: pd.DataFrame
+        column      type    description
+        index_code	str	    指数代码
+        con_code	str	    成分代码
+        trade_date	str	    交易日期
+        weight	 	float	权重
+    example:
+        composite(index_code='399300.SZ', start_date='20180901', end_date='20180930')
+    output:
+            index_code   con_code trade_date  weight
+        0    399300.SZ  000001.SZ   20180903  0.8656
+        1    399300.SZ  000002.SZ   20180903  1.1330
+        2    399300.SZ  000060.SZ   20180903  0.1125
+        3    399300.SZ  000063.SZ   20180903  0.4273
+        4    399300.SZ  000069.SZ   20180903  0.2010
+        5    399300.SZ  000157.SZ   20180903  0.1699
+        6    399300.SZ  000402.SZ   20180903  0.0816
+    """
+    pro = ts.pro_api()
+    return pro..index_weight(index_code=index_code,
+                             trade_date=trade_date,
+                             start_date=start,
+                             end_date=end)
+
+
+# Funds Data
+# ==============
+
+
+def fund_net_value(ts_code: str = None,
+                   date: str = None,
+                   market: str = None,
+                   fields: str = None)->pd.DataFrame:
+    """ 获取公募基金净值数据
+
+    :param ts_code: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
+    :param trade_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
+    :param market: str, 交易市场类型: E场内 O场外
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return: pd.DataFrame
+        column          type  default   description
+        ts_code		    str	    Y	    TS代码
+        ann_date	    str	    Y      	公告日期
+        end_date	    str	    Y	    截止日期
+        unit_nav	    float	Y	    单位净值
+        accum_nav	    float	Y	    累计净值
+        accum_div	    float	Y   	累计分红
+        net_asset	    float	Y   	资产净值
+        total_netasset	float	Y   	合计资产净值
+        adj_nav		    float	Y   	复权单位净值
+    example:
+        fund_neg_value(ts_code='165509.SZ', fields='ts_code, adj_nav')
+    output:
+        ts_code   adj_nav
+        0     165509.SZ  1.827306
+        1     165509.SZ  1.811019
+        2     165509.SZ  1.815905
+        3     165509.SZ  1.801248
+        4     165509.SZ  1.835449
+        ...         ...       ...
+    """
+    pro = ts.pro_api()
+    return pro.fund_nav(ts_code=ts_code,
+                        end_date=date,
+                        market=market,
+                        fields=fields)
+
+
+# Futures & Options Data
+# ===============
+
+
+def future_basic(exchange: str = None,
+                 future_type: str = None,
+                 fields: str = None)->pd.DataFrame:
+    """ 获取期货合约列表数据
+
+    :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
+    :param future_type: str, 合约类型 (1 普通合约 2主力与连续合约 默认取全部)
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return:
+        column          type    default description
+        ts_code		    str	    Y	    合约代码
+        symbol		    str	    Y	    交易标识
+        exchange	    str	    Y	    交易市场
+        name		    str	    Y	    中文简称
+        fut_code	    str	    Y	    合约产品代码
+        multiplier	    float	Y	    合约乘数
+        trade_unit	    str	    Y	    交易计量单位
+        per_unit	    float	Y	    交易单位(每手)
+        quote_unit	    str	    Y	    报价单位
+        quote_unit_desc	str	    Y	    最小报价单位说明
+        d_mode_desc	    str	    Y	    交割方式说明
+        list_date	    str	    Y	    上市日期
+        delist_date	    str	    Y	    最后交易日期
+        d_month		    str	    Y	    交割月份
+        last_ddate	    str	    Y	    最后交割日
+        trade_time_desc	str	    N	    交易时间说明
+    example:
+        future_basic(exchange='DCE', fut_type='1', fields='ts_code,symbol,name,list_date,delist_date')
+    output:
+                ts_code  symbol      name   list_date    delist_date
+        0      P0805.DCE   P0805   棕榈油0805  20071029    20080516
+        1      P0806.DCE   P0806   棕榈油0806  20071029    20080616
+        2      P0807.DCE   P0807   棕榈油0807  20071029    20080714
+        3      P0808.DCE   P0808   棕榈油0808  20071029    20080814
+        4      P0811.DCE   P0811   棕榈油0811  20071115    20081114
+        5      P0812.DCE   P0812   棕榈油0812  20071217    20081212
+        ...
+    """
+    pro = ts.pro_api()
+    return pro.fut_basic(exchange=exchange,
+                         fut_type=future_type,
+                         fields=fields)
+
+def options_basic(exchange: str = None,
+                  option_type: str = None,
+                  fields: str = None)->pd.DataFrame:
+    """ 获取期权合约信息
+
+    :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
+    :param option_type: str, 期权类型 (??)
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return pd.DataFrame
+        column          type    default description
+        ts_code		    str	    Y   	TS代码
+        exchange	    str 	Y   	交易市场
+        name		    str 	Y   	合约名称
+        per_unit	    str 	Y   	合约单位
+        opt_code    	str 	Y   	标准合约代码
+        opt_type    	str 	Y   	合约类型
+        call_put    	str 	Y   	期权类型
+        exercise_type	str 	Y   	行权方式
+        exercise_price	float	Y   	行权价格
+        s_month	    	str	    Y   	结算月
+        maturity_date	str 	Y   	到期日
+        list_price  	float	Y   	挂牌基准价
+        list_date   	str 	Y   	开始交易日期
+        delist_date 	str 	Y   	最后交易日期
+        last_edate  	str 	Y   	最后行权日期
+        last_ddate  	str 	Y   	最后交割日期
+        quote_unit  	str 	Y   	报价单位
+        min_price_chg	str 	Y   	最小价格波幅
+    example:
+        options_basic(exchange='DCE', fields='ts_code,name,exercise_type,list_date,delist_date')
+    output:
+                    ts_code                  name             exercise_type list_date delist_date
+        0    M1707-C-2400.DCE  豆粕期权1707认购2400            美式  20170605    20170607
+        1    M1707-P-2400.DCE  豆粕期权1707认沽2400            美式  20170605    20170607
+        2    M1803-P-2550.DCE  豆粕期权1803认沽2550            美式  20170407    20180207
+        3    M1707-C-2500.DCE  豆粕期权1707认购2500            美式  20170410    20170607
+        4    M1707-P-2500.DCE  豆粕期权1707认沽2500            美式  20170410    20170607
+        5    M1803-C-2550.DCE  豆粕期权1803认购2550            美式  20170407    20180207
+    """
+    pro = ts.pro_api()
+    return pro.opt_basic(exchange=exchange,
+                         call_put=option_type,
+                         fields=fields)
+
+
+def future_daily(trade_date: str = None,
+                 ts_code: str = None,
+                 exchange: str = None,
+                 start: str = None,
+                 end: str = None,
+                 fields: str = None)->pd.DataFrame:
+    """ 期货日线行情数据
+
+    :param trade_date: str, 交易日期
+    :param ts_code: str, 合约代码
+    :param exchange: str, 交易所代码
+    :param start: str, 开始日期
+    :param end: str, 结束日期
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return: pd.DataFrame
+        column      type    default description
+        ts_code		str	    Y	    TS合约代码
+        trade_date	str	    Y	    交易日期
+        pre_close	float	Y	    昨收盘价
+        pre_settle	float	Y   	昨结算价
+        open		loat	Y	    开盘价
+        high		float	Y   	最高价
+        low		    float	Y	    最低价
+        close		float	Y	    收盘价
+        settle		float	Y	    结算价
+        change1		float	Y   	涨跌1 收盘价-昨结算价
+        change2		float	Y   	涨跌2 结算价-昨结算价
+        vol		    float	Y   	成交量(手)
+        amount		float	Y   	成交金额(万元)
+        oi		    float	Y   	持仓量(手)
+        oi_chg		float	Y   	持仓量变化
+        delv_settle	float	N   	交割结算价
+    example:
+        future_daily(ts_code='CU1811.SHF', start_date='20180101', end_date='20181113')
+    output:
+                ts_code trade_date  pre_close  pre_settle     open   ...  change2      vol     amount       oi  oi_chg
+        0    CU1811.SHF   20181113    48900.0     49030.0  48910.0   ...   -200.0  17270.0  421721.70  16110.0 -6830.0
+        1    CU1811.SHF   20181112    49270.0     49340.0  49130.0   ...   -310.0  27710.0  679447.85  22940.0 -7160.0
+        2    CU1811.SHF   20181109    49440.0     49500.0  49340.0   ...   -160.0  22530.0  555910.15  30100.0 -4700.0
+        3    CU1811.SHF   20181108    49470.0     49460.0  49600.0   ...     40.0  22290.0  551708.00  34800.0 -3530.0
+        4    CU1811.SHF   20181107    49670.0     49630.0  49640.0   ...   -170.0  26850.0  664040.10  38330.0 -4560.0
+        ..          ...        ...        ...         ...      ...   ...      ...      ...        ...      ...     ...
+    """
+    pro = ts.pro_api()
+    return pro.fut_daily(trade_date=trade_date,
+                         ts_code=ts_code,
+                         exchange=exchange,
+                         start_date=start,
+                         end_date=end,
+                         fields=fields)
+
+
+def options_daily(trade_date: str = None,
+                  ts_code: str = None,
+                  exchange: str = None,
+                  start: str = None,
+                  end: str = None,
+                  fields: str = None)->pd.DataFrame:
+    """ 获取期权日线行情
+
+    :param trade_date: str, 交易日期
+    :param ts_code: str, 合约代码
+    :param exchange: str, 交易所代码
+    :param start: str, 开始日期
+    :param end: str, 结束日期
+    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :return: pd.DataFrame
+        column      type    default description
+        ts_code		str	    Y   	TS代码
+        trade_date	str	    Y   	交易日期
+        exchange	str	    Y   	交易市场
+        pre_settle	float	Y   	昨结算价
+        pre_close	float	Y   	前收盘价
+        open		float	Y   	开盘价
+        high		float	Y   	最高价
+        low		    float	Y   	最低价
+        close		float	Y   	收盘价
+        settle		float	Y   	结算价
+        vol		    float	Y   	成交量(手)
+        amount		float	Y   	成交金额(万元)
+        oi		    float	Y   	持仓量(手)
+    example:
+        options_daily(trade_date='20181212')
+    output:
+                  ts_code      trade_date exchange  pre_settle  pre_close     open  \
+        0         10001313.SH   20181212      SSE      0.0311     0.0312    0.0355
+        1         10001314.SH   20181212      SSE      0.0156     0.0157    0.0170
+        2         10001315.SH   20181212      SSE      0.0073     0.0073    0.0076
+        3         10001316.SH   20181212      SSE      0.0028     0.0028    0.0029
+        4         10001317.SH   20181212      SSE      0.0015     0.0015    0.0015
+        5         10001318.SH   20181212      SSE      0.0009     0.0009    0.0009
+
+                 high       low     close    settle     vol       amount       oi
+        0      0.0368    0.0293    0.0309    0.0307  3.8354  12614354.72  98882.0
+        1      0.0190    0.0142    0.0150    0.0150  1.4472   2349332.88  79980.0
+        2      0.0085    0.0060    0.0062    0.0062  1.0092    693117.76  72370.0
+        3      0.0042    0.0024    0.0027    0.0027  0.5434    161072.24  55117.0
+        4      0.0018    0.0012    0.0013    0.0013  0.4240     57989.19  61746.0
+        5      0.0012    0.0008    0.0008    0.0008  0.2067     20700.88  37674.0
+    """
+    pro = ts.pro_api()
+    return pro.opt_daily(trade_date=trade_date,
+                         ts_code=ts_code,
+                         exchange=exchange,
+                         start_date=start,
+                         end_date=end,
+                         fields=fields)
 
 # TODO: 将History类改为MySQL数据库模块，管理本地历史数据
 class History:
