@@ -7,23 +7,24 @@ import itertools
 
 class TestRates(unittest.TestCase):
     def test_rate_creation(self):
+        print('testing rates objects\n')
         r = qt.Rate(0.001, 0.001)
         self.assertIsInstance(r, qt.Rate, 'Type should be Rate')
 
     def test_rate_operations(self):
-        r = qt.Rate(0.001, 0.001)
+        r = qt.Rate(fee=0.001, slipage=0.001)
         self.assertEqual(r['fee'], 0.001, 'Item fee get is incorrect')
         self.assertEqual(r['slipage'], 0.001, 'Item get wrong')
-        self.assertEqual(r['impact'], 0.001, 'item get wrong')
-        self.assertEqual(r(1000), 1.002, 'fee calculation wrong')
+        self.assertEqual(r(1000), 1.001, 'fee calculation wrong')
 
     def test_rate_print(self):
         r = qt.Rate(0.1, 0.1)
-        self.assertEqual(str(r), '<rate: fee:0.1, slipage:0.1, impact:0.1>', 'rate object printing wrong')
+        self.assertEqual(str(r), '<fixed fee: 0.1, rate fee:0.1, slipage:0>', 'rate object printing wrong')
 
 
 class TestUnify(unittest.TestCase):
     def test_unify(self):
+        print('Testing Unify functions\n')
         l1 = np.array([[3, 2, 5], [5, 3, 2]])
         res = qt.unify(l1)
         target = np.array([[0.3, 0.2, 0.5], [0.5, 0.3, 0.2]])
@@ -42,6 +43,7 @@ class TestSpace(unittest.TestCase):
             test if creation of space object is fine
         """
         # first group of inputs, output Space with two discr axis from [0,10]
+        print('testing space objects\n')
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
 
@@ -89,7 +91,7 @@ class TestSpace(unittest.TestCase):
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
 
-    def test_extract(self) -> object:
+    def test_extract(self):
         """
 
         :return:
@@ -98,7 +100,6 @@ class TestSpace(unittest.TestCase):
 
 
 class TestOperator(unittest.TestCase):
-
     def create_test_data(self):
         # build up test data: a 4-type, 3-share, 21-day matrix of prices that contains nan values in some days
         # for some share_pool
@@ -118,23 +119,23 @@ class TestOperator(unittest.TestCase):
                         np.nan, np.nan, np.nan, np.nan, np.nan, 7.58, 7.97, 7.47, 7.75, 7.51]
         share2_open = [7.04, 6.94, 7.11, 7.14, 7.1, 7.11, 7.11, 7.11, 7.29, np.nan, np.nan,
                        np.nan, np.nan, np.nan, np.nan, np.nan, 7.8, 7.43, 7.9, 7.43, 7.7]
-        share2_high = [7.06, 7.13, 7.15, 7.15, 7.14, 7.21, 7.27, 7.33, 7.39,  np.nan,  np.nan,
-                       np.nan,  np.nan,  np.nan,  np.nan,  np.nan, 7.8 , 8.11, 7.93, 7.8 , 7.74]
-        share2_low = [6.94, 6.94, 7.06, 7.05, 7.03, 7.06, 7.07, 7.1, 7.26,  np.nan,  np.nan,
-                      np.nan,  np.nan,  np.nan,  np.nan,  np.nan, 7.37, 7.43, 7.33, 7.38, 7.44]
+        share2_high = [7.06, 7.13, 7.15, 7.15, 7.14, 7.21, 7.27, 7.33, 7.39, np.nan, np.nan,
+                       np.nan, np.nan, np.nan, np.nan, np.nan, 7.8, 8.11, 7.93, 7.8, 7.74]
+        share2_low = [6.94, 6.94, 7.06, 7.05, 7.03, 7.06, 7.07, 7.1, 7.26, np.nan, np.nan,
+                      np.nan, np.nan, np.nan, np.nan, np.nan, 7.37, 7.43, 7.33, 7.38, 7.44]
 
         # for share3:
-        share3_close = [13.89, 14.13, 14.27, np.nan , np.nan, 14.53, 14.25, 14.56, 14.61,
+        share3_close = [13.89, 14.13, 14.27, np.nan, np.nan, 14.53, 14.25, 14.56, 14.61,
                         14.61, 14.01, 13.85, 13.93, 14.00, 13.98, 13.85, 13.85, 13.99,
                         13.64, 13.82, 13.71]
         share3_open = [13.92, 13.85, 14.14, np.nan, np.nan, 14.38, 14.39, 14.26, 14.69,
-                       14.68, 14.12, 13.99, 13.85, 14.02, 14.  , 13.95, 13.85, 13.86,
+                       14.68, 14.12, 13.99, 13.85, 14.02, 14., 13.95, 13.85, 13.86,
                        13.99, 13.63, 13.82]
-        share3_high = [14.02, 14.16, 14.47, np.nan, np.nan, 14.8 , 14.51, 14.58, 14.73,
+        share3_high = [14.02, 14.16, 14.47, np.nan, np.nan, 14.8, 14.51, 14.58, 14.73,
                        14.77, 14.22, 13.99, 13.96, 14.04, 14.06, 14.08, 13.95, 14.01,
                        14.13, 13.84, 13.83]
-        share3_low = [13.8 , 13.8 , 14.11, np.nan, np.nan, 14.15, 14.24, 14.14, 14.48,
-                      14.5 , 13.94, 13.79, 13.8 , 13.91, 13.95, 13.83, 13.76, 13.8 ,
+        share3_low = [13.8, 13.8, 14.11, np.nan, np.nan, 14.15, 14.24, 14.14, 14.48,
+                      14.5, 13.94, 13.79, 13.8, 13.91, 13.95, 13.83, 13.76, 13.8,
                       13.46, 13.58, 13.68]
 
         date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
@@ -172,7 +173,7 @@ class TestOperator(unittest.TestCase):
         self.test_data_2D[1, :] = share2_close
         self.test_data_2D[2, :] = share3_close
 
-    def test_operator_generate(self) -> object:
+    def test_operator_generate(self):
         """
 
         :return:
@@ -185,7 +186,45 @@ class TestOperator(unittest.TestCase):
 
         :return:
         """
+        print('testing operator objects')
+        self.op = qt.Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
         self.op.set_parameter('s-1', ('Y', 0.5))
+        self.assertEqual(self.op.selecting[1].pars, ('Y', 0.5))
+
+
+class TestHistoryPanel(unittest.TestCase):
+    def create_history_panel(self):
+        """ test the creation of a HistoryPanel object by passing all data explicitly
+
+        """
+        print('start testing HistoryPanel object\n')
+        data = np.random.randint(10, size=(5, 10, 4))
+        index = pd.date_range(start='20200101', freq='d', periods=10)
+        shares = '000100,000101,000102,000103,000104'
+        dtypes = 'close,open,high,low'
+        hp = qt.HistoryPanel(values=data, levels=shares, columns=dtypes, rows=index)
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertEqual(hp.shape[0], 5)
+        self.assertEqual(hp.shape[1], 10)
+        self.assertEqual(hp.shape[2], 4)
+        self.assertEqual(hp.level_count, 5)
+        self.assertEqual(hp.row_count, 11)
+        self.assertEqual(hp.column_count, 4)
+        self.assertEqual(list(hp.levels.keys), shares.split())
+        self.assertEqual(list(hp.columns.keys), dtypes.split())
+
+    def create_from_df(self):
+        data = np.random.randint(10, size=(10, 5))
+        index = pd.date_range(start='20200101', freq='d', periods=10)
+        shares = '000100,000101,000102,000103,000104'
+        dtypes = 'close'
+        df = pd.DataFrame(data)
+        hp = qt.from_dataframe(df=df, shares=shares, dtypes=dtypes)
+        self.assertIsInstance(hp, qt.HistoryPanel)
+
+    def assemble_from_df(self):
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

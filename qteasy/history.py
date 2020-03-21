@@ -43,9 +43,16 @@ class HistoryPanel():
             values = values.reshape(1, *values.shape)
         self._l_count, self._r_count, self._c_count = values.shape
         self._values = values
-
+        print(f'in __init__() of HistoryPanel: got value with shape: {values.shape}')
         if levels is None:
             levels = range(self._l_count)
+        elif isinstance(levels, str):
+            print('in __init__() of HistoryPanel: type of levels', type(levels), levels)
+            levels = levels.split(',')
+        else:
+            print('in __init__() of HistoryPanel: type of levels', type(levels), levels)
+            pass
+        print(f'in __init__() of HistoryPanel: columns: {type(columns)}:{columns}, levels: {type(levels)}:{levels}')
         assert len(levels) == self._l_count, \
             f'length of level list does not fit the shape of input values! lenth {len(levels)} != {self._l_count}'
         self._levels = dict(zip(levels, range(self._l_count)))
@@ -58,12 +65,17 @@ class HistoryPanel():
 
         if columns is None:
             columns = range(self._c_count)
+        elif isinstance(columns, str):
+            print('in __init__() of HistoryPanel: type of columns', type(columns), columns)
+            columns = columns.split(',')
         else:
-            columns = list(map(str, columns))
-            columns = list(map(str.lower, columns))
+            print('in __init__() of HistoryPanel: type of columns', type(columns), columns)
+            pass
+        print(f'in __init__() of HistoryPanel: columns: {type(columns)}:{columns}, levels: {type(levels)}:{levels}')
         assert len(columns) == self._c_count, \
             f'length of column list does not fit the shape of input values! lenth {len(columns)} != {self._c_count}'
         self._columns = dict(zip(columns, range(self._c_count)))
+
 
     @property
     def values(self):
@@ -113,15 +125,24 @@ class HistoryPanel():
     def shape(self):
         return self._l_count, self._r_count, self._c_count
 
-    def __getitem__(self, keys=None):
-        """获取历史数据的一个切片，给定一个type、日期或股票代码
 
-            contains three slice objects: htypes, share_pool, and hdates,
+    def __getitem__(self, keys=None):
+        """获取历史数据的一个切片，给定一个type、日期或股票代码, 输出相应的数据
+
+        允许的输入包括切片形式的各种输入，包括string、数字列表或切片器对象slice()，返回切片后的ndarray对象
+        允许的输入示例，第一个切片代表type切片，第二个是shares，第三个是rows：
+        item_key                    output
+        [[0,1,2],:,:]:              输出第0、1、2个htype对应的所有股票全部历史数据
+        [['close', 'high']]         输出close、high两个类型的所有历史数据
+        [0:1]                       输出0、1两个htype的所有历史数据
+        ['close,high']              输出close、high两个类型的所有历史数据
+        [:,[0,1,3]]                 输出0、1、3三个股票的全部历史数据
+        [:,['000100', '000120']]    输出000100、000120两只股票的所有历史数据
+        [:,0:2]                     输出0、1、2三个股票的历史数据
+        [:,'000100,000120']         输出000100、000120两只股票的所有历史数据
 
         input：
             :param keys: list/tuple/slice历史数据的类型名，为空时给出所有类型的数据
-            参数row，str或pd.Timestamp，optional 历史数据的日期，为空时给出所有日期的数据
-            参数share，str，optional：股票代码，为空时给出所有股票的数据
         输出：
             self.value的一个切片
         """
@@ -158,9 +179,8 @@ class HistoryPanel():
               '\nhdates is ', hdate_slice)
         return self.values[share_slice, hdate_slice, htype_slice]
 
-    def __mul__(self, arg):
-        self._values = self._values * arg
-        return self
+    def __str__(self):
+        raise NotImplementedError
 
     def info(self):
         print(type(self))
@@ -176,18 +196,69 @@ class HistoryPanel():
         return pd.DataFrame(v, index=list(self._rows.keys()), columns=list(self._levels.keys()))
 
 
-def from_dataframe(df: pd.DataFrame = None):
+def from_dataframe(df: pd.DataFrame,
+                   index=None,
+                   dtypes=None,
+                   shares=None,
+                   column_type: str = 'share')-> HistoryPanel:
     """ 根据DataFrame中的数据创建历史数据板HistoryPanel对象
 
-    input:
-        :param df:
+    :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame
+    :param index:
+    :param dtypes: str,
+    :param shares: str,
+    :param column_type:
     :return:
+        HistoryPanel对象
     """
-    assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)}.'
-    return
+    from collections import Iterable
+    assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
+    if index is None:
+        index = df.index
+    assert isinstance(index, Iterable), f'TypeError, index should be iterable, got {type(index)} instead.'
+    index_count = len(index)
+    assert index_count == len(df.index), \
+        f'InputError, can not match {index_count} indices with {len(df.index)} rows of DataFrame'
+    if column_type.lower() == 'share':
+        if shares is None:
+            shares = df.columns
+        elif isinstance(shares, str):
+            shares = shares.split(',')
+            print(shares)
+            assert len(shares) == len(df.columns), \
+                f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
+        else:
+            assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
+            assert len(shares) == len(df.columns),\
+                f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
+        assert dtypes is not None, f'InputError, dtypes should be given when they can not inferred'
+        assert isinstance(dtypes, str),\
+            f'TypeError, data type of dtype should be a string, got {type(dtypes)} instead.'
+        share_count = len(shares)
+        history_panel_value = np.zeros(shape=(share_count, len(index), 1))
+        for i in range(share_count):
+            history_panel_value[i,:,0] = df.values[:,i]
+    else:
+        if dtypes is None:
+            dtypes = df.columns
+        elif isinstance(dtypes, str):
+            dtypes = dtypes.split(',')
+            assert len(dtypes) == len(df.columns), \
+                f'InputError, can not match {len(dtypes)} shares with {len(df.columns)} columns of DataFrame'
+        else:
+            assert isinstance(dtypes, Iterable), f'TypeError: levels should be iterable, got {type(dtypes)} instead.'
+            assert len(dtypes) == len(df.columns),\
+                f'InputError, can not match {len(dtypes)} shares with {len(df.columns)} columns of DataFrame'
+        assert shares is not None, f'InputError, shares should be given when they can not inferred'
+        assert isinstance(shares, str),\
+            f'TypeError, data type of share should be a string, got {type(shares)} instead.'
+        history_panel_value = df.values.reshape(1, len(index), len(dtypes))
+
+    print(f'parameters created: ')
+    return HistoryPanel(values=history_panel_value, levels=shares, rows=index, columns=dtypes)
 
 
-def from_dataframes(*dfs):
+def assemble_from_dataframes(*dfs):
     """ 根据多个DataFrame中的数据创建HistoryPanel对象
 
     input
@@ -196,11 +267,11 @@ def from_dataframes(*dfs):
     """
 
 
-def _make_list_or_slice(item, d):
+def _make_list_or_slice(item, str_int_pair):
     """
 
     :param item: slice or int/str or list of int/string
-    :param d: a dictionary that contains strings as keys and integer as values
+    :param str_int_pair: a dictionary that contains strings as keys and integer as values
     :return:
         a list of slice that can be used to slice the Historical Data Object
     """
@@ -209,11 +280,11 @@ def _make_list_or_slice(item, d):
     elif isinstance(item, int):  # number should be converted to a list containint itself
         return [item]
     elif isinstance(item, str):  # string should be converted to numbers
-        return [d[item]]
+        return [str_int_pair[item]]
     elif isinstance(item, list):
         res = []
         for i in item:  # convert all items into a number:
-            res.extend(make_list_or_slice(i, d))
+            res.extend(_make_list_or_slice(i, str_int_pair))
         return res
     else:
         return None
@@ -1261,7 +1332,7 @@ def composite(index_code: str = None,
         6    399300.SZ  000402.SZ   20180903  0.0816
     """
     pro = ts.pro_api()
-    return pro..index_weight(index_code=index_code,
+    return pro.index_weight(index_code=index_code,
                              trade_date=trade_date,
                              start_date=start,
                              end_date=end)
