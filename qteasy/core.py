@@ -400,7 +400,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         assert isinstance(history_data, HistoryPanel), \
             f'historical price should be HistoryPanel! got {type(history_data)}'
         hist_op = history_data
-        hist_loop = history_data.to_dataframe('close')
+        hist_loop = history_data.to_dataframe(htype='close')
 
     # ========
     if exe_mode == 0:

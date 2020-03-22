@@ -43,17 +43,17 @@ class HistoryPanel():
             values = values.reshape(1, *values.shape)
         self._l_count, self._r_count, self._c_count = values.shape
         self._values = values
-        print(f'in __init__() of HistoryPanel: got value with shape: {values.shape}')
+
         if levels is None:
             levels = range(self._l_count)
         elif isinstance(levels, str):
             levels = levels.replace(' ', '')
-            print('in __init__() of HistoryPanel: type of levels', type(levels), levels)
+
             levels = levels.split(',')
         else:
-            print('in __init__() of HistoryPanel: type of levels', type(levels), levels)
+
             pass
-        print(f'in __init__() of HistoryPanel: columns: {type(columns)}:{columns}, levels: {type(levels)}:{levels}')
+
         assert len(levels) == self._l_count, \
             f'length of level list does not fit the shape of input values! lenth {len(levels)} != {self._l_count}'
         self._levels = dict(zip(levels, range(self._l_count)))
@@ -73,7 +73,6 @@ class HistoryPanel():
         else:
             print('in __init__() of HistoryPanel: type of columns', type(columns), columns)
             pass
-        print(f'in __init__() of HistoryPanel: columns: {type(columns)}:{columns}, levels: {type(levels)}:{levels}')
         assert len(columns) == self._c_count, \
             f'length of column list does not fit the shape of input values! lenth {len(columns)} != {self._c_count}'
         self._columns = dict(zip(columns, range(self._c_count)))
@@ -91,13 +90,13 @@ class HistoryPanel():
     def shares(self):
         return list(self._levels.keys())
 
+    @shares.setter
+    def shares(self, shares):
+        self._levels = self.labels_to_dict(shares, self.shares)
+
     @property
     def level_count(self):
         return self._l_count
-
-    @property
-    def index(self):
-        return list(self._rows.keys())
 
     @property
     def rows(self):
@@ -107,6 +106,10 @@ class HistoryPanel():
     def hdates(self):
         return list(self._rows.keys())
 
+    @hdates.setter
+    def hdates(self, hdates):
+        self._rows = self.labels_to_dict(hdates, self.hdates)
+
     @property
     def row_count(self):
         return self._r_count
@@ -114,6 +117,10 @@ class HistoryPanel():
     @property
     def htypes(self):
         return list(self._columns.keys())
+
+    @htypes.setter
+    def htypes(self, htypes):
+        self._columns = self.labels_to_dict(htypes, self.htypes)
 
     @property
     def columns(self):
@@ -127,6 +134,16 @@ class HistoryPanel():
     def shape(self):
         return self._l_count, self._r_count, self._c_count
 
+    @staticmethod
+    def labels_to_dict(input_labels, target_list):
+        if isinstance(input_labels, str):
+            input_labels = input_labels.replace(' ', '')
+            input_labels = input_labels.split(',')
+        unique_count = len(set(input_labels))
+        assert len(input_labels) == unique_count, \
+            f'InputError, label duplicated, count of {target_list.__name__} is {len(target_list)},' \
+            f' got {unique_count} unique labels only.'
+        return dict(zip(input_labels, range(len(target_list))))
 
     def __getitem__(self, keys=None):
         """获取历史数据的一个切片，给定一个type、日期或股票代码, 输出相应的数据
@@ -188,27 +205,42 @@ class HistoryPanel():
         return self.values[share_slice][:,hdate_slice][:,:,htype_slice]
 
     def __str__(self):
-        raise NotImplementedError
+        res = []
+        if self.row_count <= 10:
+            display_shares = self.shares
+        else:
+            display_shares = self.shares[0:7]
+        for share in display_shares:
+            res.append(f'\nshare {self.levels[share]}, label: {share}\n')
+            df = self.to_dataframe(share=share)
+            res.append(df.__str__())
+            res.append('\n')
+        if self.row_count > 10:
+            res.append('\n ...  \n')
+            for share in self.shares[-3:-1]:
+                res.append(f'\nshare {self.levels[share]}, label: {share}\n')
+                df = self.to_dataframe(share=share)
+                res.append(df.__str__())
+                res.append('\n')
+        return ''.join(res)
+
+    def __repr__(self):
+        return self.__str__()
 
     def info(self):
         import sys
         print(f'\n{type(self)}')
         print(f'History Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
         print(f'Historical Data Types (total {self.column_count} data types):')
-        if self.column_count <= 6:
+        if self.column_count <= 10:
             print(f'{self.htypes}')
         else:
             print(f'{self.htypes[0:3]} ... {self.htypes[-3:-1]}')
         print(f'Shares (total {self.level_count} shares):')
-        if self.level_count <= 10:
-            temp_list = self.shares
-        else:
-            temp_list = self.shares[0:10]
-        for share in temp_list:
-            sum_nnan = np.sum(~np.isnan(self[:,share,:]), 1)
-            print(f'{share}:     {sum_nnan} non-null float64')
-        if self.level_count > 10:
-            print(f'...    ...\nOnly first 10 shares are displayed')
+        sum_nnan = np.sum(~np.isnan(self.values), 1)
+        df = pd.DataFrame(sum_nnan, index=self.shares, columns=self.htypes)
+        print('non-null values for each share and data type:')
+        print(df)
         print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
 
@@ -220,7 +252,12 @@ class HistoryPanel():
         :param hdates:
         :return: HistoryPanel
         """
-        raise NotImplementedError
+        if shares is not None:
+            self.shares = shares
+        if htypes is not None:
+            self.htypes = htypes
+        if hdates is not None:
+            self.hdates = hdates
 
     def fillna(self, with_val):
         """ 使用with_value来填充HistoryPanel中的所有nan值
@@ -232,9 +269,13 @@ class HistoryPanel():
         return self
 
     #TODO 这个方法应该可以指定输出某个个股的所有类型数据，或者输出所有个股的某个类型数据
-    def to_dataframe(self, htype: str) -> pd.DataFrame:
-        v = self._values[:, :, self.columns[htype]].T
-        return pd.DataFrame(v, index=list(self._rows.keys()), columns=list(self._levels.keys()))
+    def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
+        if htype is not None:
+            v = self[htype].T.squeeze()
+            return pd.DataFrame(v, index=self.hdates, columns=self.shares)
+        if share is not None:
+            v = self[:,share].squeeze()
+            return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
 
     @staticmethod
     def _list_or_slice(unknown_input, str_int_dict):
@@ -272,7 +313,7 @@ class HistoryPanel():
                 start_end_strings = string_input.split(':')
                 start = str_int_dict[start_end_strings[0]]
                 end = str_int_dict[start_end_strings[1]]
-                if start < end:
+                if start > end:
                     start, end = end, start
                 return np.arange(start, end + 1)
             else:
@@ -354,8 +395,6 @@ def from_dataframe(df: pd.DataFrame,
         assert isinstance(shares, str),\
             f'TypeError, data type of share should be a string, got {type(shares)} instead.'
         history_panel_value = df.values.reshape(1, len(index), len(dtypes))
-
-    print(f'parameters created: ')
     return HistoryPanel(values=history_panel_value, levels=shares, rows=index, columns=dtypes)
 
 
