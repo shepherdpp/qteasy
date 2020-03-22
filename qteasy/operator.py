@@ -1339,9 +1339,9 @@ class Operator:
         sel_masks = []
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        shares = hist_data.levels
+        shares = hist_data.shares
         data_types = hist_data.htypes
-        date_list = list(hist_data.index.keys())
+        date_list = hist_data.hdates
         # print(f'date_list is {date_list}')
         h_v = hist_data.values
         # print(f'shape of h_v in operator.create() function: {h_v.shape}')

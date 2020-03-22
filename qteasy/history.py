@@ -47,6 +47,7 @@ class HistoryPanel():
         if levels is None:
             levels = range(self._l_count)
         elif isinstance(levels, str):
+            levels = levels.replace(' ', '')
             print('in __init__() of HistoryPanel: type of levels', type(levels), levels)
             levels = levels.split(',')
         else:
@@ -66,6 +67,7 @@ class HistoryPanel():
         if columns is None:
             columns = range(self._c_count)
         elif isinstance(columns, str):
+            columns = columns.replace(' ', '')
             print('in __init__() of HistoryPanel: type of columns', type(columns), columns)
             columns = columns.split(',')
         else:
@@ -87,7 +89,7 @@ class HistoryPanel():
 
     @property
     def shares(self):
-        return self._levels
+        return list(self._levels.keys())
 
     @property
     def level_count(self):
@@ -95,7 +97,7 @@ class HistoryPanel():
 
     @property
     def index(self):
-        return self._rows
+        return list(self._rows.keys())
 
     @property
     def rows(self):
@@ -103,7 +105,7 @@ class HistoryPanel():
 
     @property
     def hdates(self):
-        return self._rows
+        return list(self._rows.keys())
 
     @property
     def row_count(self):
@@ -111,7 +113,7 @@ class HistoryPanel():
 
     @property
     def htypes(self):
-        return self._columns
+        return list(self._columns.keys())
 
     @property
     def columns(self):
@@ -132,10 +134,12 @@ class HistoryPanel():
         允许的输入包括切片形式的各种输入，包括string、数字列表或切片器对象slice()，返回切片后的ndarray对象
         允许的输入示例，第一个切片代表type切片，第二个是shares，第三个是rows：
         item_key                    output
+        [1:3, :,:]                  输出1～3之间所有htype的历史数据
         [[0,1,2],:,:]:              输出第0、1、2个htype对应的所有股票全部历史数据
         [['close', 'high']]         输出close、high两个类型的所有历史数据
         [0:1]                       输出0、1两个htype的所有历史数据
         ['close,high']              输出close、high两个类型的所有历史数据
+        ['close:high']              输出close、high之间所有类型的历史数据（包含close和high）
         [:,[0,1,3]]                 输出0、1、3三个股票的全部历史数据
         [:,['000100', '000120']]    输出000100、000120两只股票的所有历史数据
         [:,0:2]                     输出0、1、2三个股票的历史数据
@@ -146,7 +150,7 @@ class HistoryPanel():
         输出：
             self.value的一个切片
         """
-
+        key_is_None = keys is None
         key_is_tuple = isinstance(keys, tuple)
         key_is_list = isinstance(keys, list)
         key_is_slice = isinstance(keys, slice)
@@ -164,6 +168,10 @@ class HistoryPanel():
             htype_slice = keys
             share_slice = slice(None, None, None)
             hdate_slice = slice(None, None, None)
+        elif key_is_None:
+            htype_slice = slice(None, None, None)
+            share_slice = slice(None, None, None)
+            hdate_slice = slice(None, None, None)
         else:
             htype_slice = slice(None, None, None)
             share_slice = slice(None, None, None)
@@ -171,29 +179,122 @@ class HistoryPanel():
 
         # check and convert each of the slice segments to the right type: a slice or \
         # a list of indices
-        htype_slice = _make_list_or_slice(htype_slice, self.htypes)
-        share_slice = _make_list_or_slice(share_slice, self.shares)
-        hdate_slice = _make_list_or_slice(hdate_slice, self.hdates)
+        htype_slice = self._list_or_slice(htype_slice, self.columns)
+        share_slice = self._list_or_slice(share_slice, self.levels)
+        hdate_slice = self._list_or_slice(hdate_slice, self.rows)
 
-        print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
-              '\nhdates is ', hdate_slice)
-        return self.values[share_slice, hdate_slice, htype_slice]
+        #print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
+        #      '\nhdates is ', hdate_slice)
+        return self.values[share_slice][:,hdate_slice][:,:,htype_slice]
 
     def __str__(self):
         raise NotImplementedError
 
     def info(self):
-        print(type(self))
-        print(f'Levels: {self.level_count}, htypes: {self.column_count}')
-        print(f'total {self.row_count} entries: ')
+        import sys
+        print(f'\n{type(self)}')
+        print(f'History Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
+        print(f'Historical Data Types (total {self.column_count} data types):')
+        if self.column_count <= 6:
+            print(f'{self.htypes}')
+        else:
+            print(f'{self.htypes[0:3]} ... {self.htypes[-3:-1]}')
+        print(f'Shares (total {self.level_count} shares):')
+        if self.level_count <= 10:
+            temp_list = self.shares
+        else:
+            temp_list = self.shares[0:10]
+        for share in temp_list:
+            sum_nnan = np.sum(~np.isnan(self[:,share,:]), 1)
+            print(f'{share}:     {sum_nnan} non-null float64')
+        if self.level_count > 10:
+            print(f'...    ...\nOnly first 10 shares are displayed')
+        print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
+
+
+    def re_label(self, shares: str = None, htypes: str = None, hdates = None):
+        """ 给HistoryPanel对象的层、行、列标签重新赋值
+
+        :param shares: List or Str
+        :param htypes:
+        :param hdates:
+        :return: HistoryPanel
+        """
+        raise NotImplementedError
 
     def fillna(self, with_val):
+        """ 使用with_value来填充HistoryPanel中的所有nan值
+
+        :param with_val:
+        :return:
+        """
         np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
+    #TODO 这个方法应该可以指定输出某个个股的所有类型数据，或者输出所有个股的某个类型数据
     def to_dataframe(self, htype: str) -> pd.DataFrame:
-        v = self._values[:, :, self.htypes[htype]].T
+        v = self._values[:, :, self.columns[htype]].T
         return pd.DataFrame(v, index=list(self._rows.keys()), columns=list(self._levels.keys()))
+
+    @staticmethod
+    def _list_or_slice(unknown_input, str_int_dict):
+        """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
+
+        1，当输入item为slice时，直接返回slice
+        2 输入数据为string, 根据string的分隔符类型确定选择的切片：
+            2.1, 当字符串不包含分隔符时，直接输出对应的单片数据, 如'close'输出为[0]
+            2.2, 当字符串以逗号分隔时，输出每个字段对应的切片，如'close,open', 输出[0, 2]
+            2.3, 当字符串以冒号分割时，输出第一个字段起第二个字段止的切片，如'close:open',输出[0:2] -> [0,1,2]
+        3 输入数据为列表时，检查列表元素的类型（不支持混合数据类型的列表如['close', 1, True]）：
+            3.1 如果列表元素为string，输出每个字段名对应的列表编号，如['close','open'] 输出为 [0,2]
+            3.2 如果列表元素为int时，输出对应的列表编号，如[0,1,3] 输出[0,1,3]
+            3.3 如果列表元素为boolean时，输出True对应的切片编号，如[True, True, False, False] 输出为[0,1]
+        4 输入数据为int型时，输出相应的切片，如输入0的输出为[0]
+
+        :param unknown_input: slice or int/str or list of int/string
+        :param str_int_dict: a dictionary that contains strings as keys and integer as values
+        :return:
+            a list of slice/list that can be used to slice the Historical Data Object
+        """
+        if isinstance(unknown_input, slice):
+            return unknown_input  # slice object can be directly used
+        elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
+            return np.array([unknown_input])
+        elif isinstance(unknown_input, str):  # string should be converted to numbers
+            string_input = unknown_input.replace(' ', '')
+            if string_input.find(',') > 0:
+                string_list = string_input.split(',')
+                res = []
+                for string in string_list:
+                    res.append(str_int_dict[string])
+                return np.array(res)
+            elif string_input.find(':') > 0:
+                start_end_strings = string_input.split(':')
+                start = str_int_dict[start_end_strings[0]]
+                end = str_int_dict[start_end_strings[1]]
+                if start < end:
+                    start, end = end, start
+                return np.arange(start, end + 1)
+            else:
+                return [str_int_dict[string_input]]
+        elif isinstance(unknown_input, list):
+            is_list_of_str = isinstance(unknown_input[0], str)
+            is_list_of_int = isinstance(unknown_input[0], int)
+            is_list_of_bool = isinstance(unknown_input[0], bool)
+            if is_list_of_bool:
+                return np.array(str_int_dict.values())[unknown_input]
+            else:
+                res = []
+                for list_item in unknown_input:  # convert all items into a number:
+                    if is_list_of_str:
+                        res.append(str_int_dict[list_item])
+                    elif is_list_of_int:
+                        res.append(list_item)
+                    else:
+                        return None
+                return np.array(res)
+        else:
+            return None
 
 
 def from_dataframe(df: pd.DataFrame,
@@ -265,29 +366,6 @@ def assemble_from_dataframes(*dfs):
     :param dfs: type list, containing multiple dataframes
     :return:
     """
-
-
-def _make_list_or_slice(item, str_int_pair):
-    """
-
-    :param item: slice or int/str or list of int/string
-    :param str_int_pair: a dictionary that contains strings as keys and integer as values
-    :return:
-        a list of slice that can be used to slice the Historical Data Object
-    """
-    if isinstance(item, slice):
-        return item  # slice object can be directly used
-    elif isinstance(item, int):  # number should be converted to a list containint itself
-        return [item]
-    elif isinstance(item, str):  # string should be converted to numbers
-        return [str_int_pair[item]]
-    elif isinstance(item, list):
-        res = []
-        for i in item:  # convert all items into a number:
-            res.extend(_make_list_or_slice(i, str_int_pair))
-        return res
-    else:
-        return None
 
 
 # ==================
