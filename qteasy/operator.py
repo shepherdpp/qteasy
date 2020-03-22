@@ -684,9 +684,8 @@ class Selecting(Strategy):
             len(seg_lens): 分段的数量
             生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
         """
-        assert isinstance(dates, dict), \
-            f'TypeError, type dict expected in method seg_periods, got {type(dates)} instead! '
-        dates = list(dates.keys())
+        assert isinstance(dates, list), \
+            f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq).values
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
@@ -1368,9 +1367,9 @@ class Operator:
         sel_masks = []
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        shares = hist_data.levels
+        shares = hist_data.shares
         data_types = hist_data.htypes
-        date_list = list(hist_data.index.keys())
+        date_list = hist_data.hdates
         # print(f'date_list is {date_list}')
         h_v = hist_data.values
         # print(f'shape of h_v in operator.create() function: {h_v.shape}')

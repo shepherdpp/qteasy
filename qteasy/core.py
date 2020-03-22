@@ -143,7 +143,7 @@ class Rate:
 
     def __str__(self):
         """设置Rate对象的打印形式"""
-        return f'<fixed fee: {self.fix}, rate: fee:{self.fee}, slipage:{self.slipage}>'
+        return f'<fixed fee: {self.fix}, rate fee:{self.fee}, slipage:{self.slipage}>'
 
     def __repr__(self):
         """设置Rate对象"""
@@ -405,7 +405,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         assert isinstance(history_data, HistoryPanel), \
             f'historical price should be HistoryPanel! got {type(history_data)}'
         hist_op = history_data
-        hist_loop = history_data.to_dataframe('close')
+        hist_loop = history_data.to_dataframe(htype='close')
 
     # ========
     if exe_mode == 0:
