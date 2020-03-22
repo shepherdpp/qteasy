@@ -28,8 +28,8 @@ if __name__ == '__main__':
     print('INFORMATION OF CREATED HISTORY PANEL: h2\n==========================')
     h2.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
-    op.set_parameter('s-0', pars=('Y', 1))
-    op.set_parameter('s-1', pars=('Q', 0.5))
+    op.set_parameter('s-0', pars=(0.5,))
+    op.set_parameter('s-1', pars=(0.5,))
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
 
