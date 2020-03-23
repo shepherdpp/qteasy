@@ -17,16 +17,50 @@ ts.set_token(TUSHARE_TOKEN)
 
 
 class HistoryPanel():
-    """The major data structure to be used for the qteasy quants system.
+    """qteasy 量化投资系统使用的主要历史数据的数据类型.
 
-    data structure and class containing multiple types of array-like data framework
-    axis 1: levels / share_pool
-    axis 2: rows / index / hdates
-    axis 3: columns / htypes
+    HistoryPanel数据结构的核心部分是一个基于numpy的三维ndarray矩阵，这个矩阵由M层N行L列，三个维度的轴标签分别为：
+        axis 1: 层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
+        axis 2: 行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
+        axis 3: 列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
+
+    使用HistoryPanel类，用户可以：
+        1, 方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个
+           numpy ndarray。
+            为了对正确的数轴进行切片，通过方括号传入的切片器或列表对象必须按照[htype slicer, shares slicer, dates slicer]的顺序
+            传入，第一个切片器对数据类型进行切片，第二个对股票品种，第三个对日期切片。切片的方法非常灵活：
+            * 可以通过直接输入数轴的标签来选择某个单独的数据类型/股票品种，如：
+                HistoryPanel['close']: 选择所有股票品种的全部历史收盘价
+                HistoryPanel[,'000300.SH']: 选择000300股票品种的所有历史数据
+            * 可以以逗号分隔的数轴标签字符串形式指定某几个股票品种或数据类型，如：
+                HistoryPanel['close, open, high']: 选择所有股票品种的全部历史收盘、开盘及最高价
+            * 可以通过冒号:分隔的数轴标签字符串选择从第一个标签到最后一个标签之间的所有品种或数据类型，如：
+                HistoryPanel['000300.SH:000500.SH']: 选择从000300开始到000500之间的所有股票品种全部历史数据
+            * 可以通过int列表或str列表指定某几个品种或类型的数据，如：
+                HistoryPanel[[0, 1, 2, 4]] 或 HistoryPanel[['close', 'open', 'high', 'low']]
+                选择第0、1、2、4种数据类型或'close', 'open', 'high', 'low'等标签代表的数据类型
+            * 也可以通过常见的slicer对象来选择， 如：
+                HistoryPanel[0:5:2] 选择0、2、4等三种数据类型的全部数据
+            * 上面的所有切片方式可以单独使用，也可以混合使用，甚至几个list混合使用也不会造成问题，如：
+                要选择000300， 000500， 000700等三只股票的close到high之间所有类型的2010年全年的历史数据，可以用下列方式实现：
+                HistoryPanel['close:high', ['000300', '000500', '000700'], '20100101:20101231']
+        2, 动态地修改每一个数轴上的标签内容，容易地调取标签和元素位置的对应关系（一个字典）
+            HistoryPanel.shares 输出一个列表，包含按顺序排列的所有层标签，即所有股票品种代码或名称
+            HistoryPanel.hdates 输出一个列表，包含按顺序排列的所有行标签，即所有数据的日期及时间
+            HistoryPanel.htypes 输出一个列表，包含按顺序排列的所有列标签，即所数据类型
+            HistoryPanel.levels 输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1）
+            HistoryPanel.columns 输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1）
+            HistoryPanel.rows 输出一个字典，包含所有日期行标签及其对应的行号，从0开始知道N-1）
+        3, 方便地打印HistoryPanel的相关信息
+        4, 方便地打印及格式化输出HistoryPanel的内容
+        5, 方便地与pandas DataFrame对象互相转化
+            HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
+            HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
+        6, 方便地由多个pandas DataFrame对象组合而成
     """
 
     def __init__(self, values, levels=None, rows=None, columns=None):
-        """
+        """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 
         :param values:
         :param levels:
@@ -43,39 +77,27 @@ class HistoryPanel():
             values = values.reshape(1, *values.shape)
         self._l_count, self._r_count, self._c_count = values.shape
         self._values = values
+        self._levels = None
+        self._columns = None
+        self._rows = None
 
         if levels is None:
             levels = range(self._l_count)
-        elif isinstance(levels, str):
-            levels = levels.replace(' ', '')
-
-            levels = levels.split(',')
+            self._levels = dict(zip(levels, levels))
         else:
-
-            pass
-
-        assert len(levels) == self._l_count, \
-            f'length of level list does not fit the shape of input values! lenth {len(levels)} != {self._l_count}'
-        self._levels = dict(zip(levels, range(self._l_count)))
+            self._levels = self.labels_to_dict(levels, range(self._l_count))
 
         if rows is None:
             rows = range(self._r_count)
-        assert len(rows) == self._r_count, \
-            f'length of row list does not fit the shape of input values! lenth {len(rows)} != {self._r_count}'
-        self._rows = dict(zip(rows, range(self._r_count)))
+            self._rows = dict(zip(rows, rows))
+        else:
+            self._rows = self.labels_to_dict(rows, range(self._r_count))
 
         if columns is None:
             columns = range(self._c_count)
-        elif isinstance(columns, str):
-            columns = columns.replace(' ', '')
-            print('in __init__() of HistoryPanel: type of columns', type(columns), columns)
-            columns = columns.split(',')
+            self._columns = dict(zip(columns, columns))
         else:
-            print('in __init__() of HistoryPanel: type of columns', type(columns), columns)
-            pass
-        assert len(columns) == self._c_count, \
-            f'length of column list does not fit the shape of input values! lenth {len(columns)} != {self._c_count}'
-        self._columns = dict(zip(columns, range(self._c_count)))
+            self._columns = self.labels_to_dict(columns, range(self._c_count))
 
 
     @property
@@ -200,9 +222,9 @@ class HistoryPanel():
         share_slice = self._list_or_slice(share_slice, self.levels)
         hdate_slice = self._list_or_slice(hdate_slice, self.rows)
 
-        #print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
+        # print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
         #      '\nhdates is ', hdate_slice)
-        return self.values[share_slice][:,hdate_slice][:,:,htype_slice]
+        return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
 
     def __str__(self):
         res = []
@@ -222,6 +244,7 @@ class HistoryPanel():
                 df = self.to_dataframe(share=share)
                 res.append(df.__str__())
                 res.append('\n')
+            res.append('Only first 7 and last 3 shares are displayed\n')
         return ''.join(res)
 
     def __repr__(self):
@@ -243,8 +266,7 @@ class HistoryPanel():
         print(df)
         print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
-
-    def re_label(self, shares: str = None, htypes: str = None, hdates = None):
+    def re_label(self, shares: str = None, htypes: str = None, hdates=None):
         """ 给HistoryPanel对象的层、行、列标签重新赋值
 
         :param shares: List or Str
@@ -268,13 +290,12 @@ class HistoryPanel():
         np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
-    #TODO 这个方法应该可以指定输出某个个股的所有类型数据，或者输出所有个股的某个类型数据
     def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
         if htype is not None:
             v = self[htype].T.squeeze()
             return pd.DataFrame(v, index=self.hdates, columns=self.shares)
         if share is not None:
-            v = self[:,share].squeeze()
+            v = self[:, share].squeeze()
             return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
 
     @staticmethod
@@ -342,7 +363,7 @@ def from_dataframe(df: pd.DataFrame,
                    index=None,
                    dtypes=None,
                    shares=None,
-                   column_type: str = 'share')-> HistoryPanel:
+                   column_type: str = 'share') -> HistoryPanel:
     """ 根据DataFrame中的数据创建历史数据板HistoryPanel对象
 
     :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame
@@ -371,15 +392,15 @@ def from_dataframe(df: pd.DataFrame,
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         else:
             assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
-            assert len(shares) == len(df.columns),\
+            assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         assert dtypes is not None, f'InputError, dtypes should be given when they can not inferred'
-        assert isinstance(dtypes, str),\
+        assert isinstance(dtypes, str), \
             f'TypeError, data type of dtype should be a string, got {type(dtypes)} instead.'
         share_count = len(shares)
         history_panel_value = np.zeros(shape=(share_count, len(index), 1))
         for i in range(share_count):
-            history_panel_value[i,:,0] = df.values[:,i]
+            history_panel_value[i, :, 0] = df.values[:, i]
     else:
         if dtypes is None:
             dtypes = df.columns
@@ -389,22 +410,23 @@ def from_dataframe(df: pd.DataFrame,
                 f'InputError, can not match {len(dtypes)} shares with {len(df.columns)} columns of DataFrame'
         else:
             assert isinstance(dtypes, Iterable), f'TypeError: levels should be iterable, got {type(dtypes)} instead.'
-            assert len(dtypes) == len(df.columns),\
+            assert len(dtypes) == len(df.columns), \
                 f'InputError, can not match {len(dtypes)} shares with {len(df.columns)} columns of DataFrame'
         assert shares is not None, f'InputError, shares should be given when they can not inferred'
-        assert isinstance(shares, str),\
+        assert isinstance(shares, str), \
             f'TypeError, data type of share should be a string, got {type(shares)} instead.'
         history_panel_value = df.values.reshape(1, len(index), len(dtypes))
     return HistoryPanel(values=history_panel_value, levels=shares, rows=index, columns=dtypes)
 
 
+# TODO 这个方法需要实现
 def assemble_from_dataframes(*dfs):
     """ 根据多个DataFrame中的数据创建HistoryPanel对象
 
-    input
     :param dfs: type list, containing multiple dataframes
     :return:
     """
+    raise NotImplementedError
 
 
 # ==================
@@ -1450,9 +1472,9 @@ def composite(index_code: str = None,
     """
     pro = ts.pro_api()
     return pro.index_weight(index_code=index_code,
-                             trade_date=trade_date,
-                             start_date=start,
-                             end_date=end)
+                            trade_date=trade_date,
+                            start_date=start,
+                            end_date=end)
 
 
 # Funds Data
@@ -1462,7 +1484,7 @@ def composite(index_code: str = None,
 def fund_net_value(ts_code: str = None,
                    date: str = None,
                    market: str = None,
-                   fields: str = None)->pd.DataFrame:
+                   fields: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
     :param ts_code: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
@@ -1504,7 +1526,7 @@ def fund_net_value(ts_code: str = None,
 
 def future_basic(exchange: str = None,
                  future_type: str = None,
-                 fields: str = None)->pd.DataFrame:
+                 fields: str = None) -> pd.DataFrame:
     """ 获取期货合约列表数据
 
     :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
@@ -1545,9 +1567,10 @@ def future_basic(exchange: str = None,
                          fut_type=future_type,
                          fields=fields)
 
+
 def options_basic(exchange: str = None,
                   option_type: str = None,
-                  fields: str = None)->pd.DataFrame:
+                  fields: str = None) -> pd.DataFrame:
     """ 获取期权合约信息
 
     :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
@@ -1595,7 +1618,7 @@ def future_daily(trade_date: str = None,
                  exchange: str = None,
                  start: str = None,
                  end: str = None,
-                 fields: str = None)->pd.DataFrame:
+                 fields: str = None) -> pd.DataFrame:
     """ 期货日线行情数据
 
     :param trade_date: str, 交易日期
@@ -1647,7 +1670,7 @@ def options_daily(trade_date: str = None,
                   exchange: str = None,
                   start: str = None,
                   end: str = None,
-                  fields: str = None)->pd.DataFrame:
+                  fields: str = None) -> pd.DataFrame:
     """ 获取期权日线行情
 
     :param trade_date: str, 交易日期
@@ -1697,6 +1720,7 @@ def options_daily(trade_date: str = None,
                          start_date=start,
                          end_date=end,
                          fields=fields)
+
 
 # TODO: 将History类改为MySQL数据库模块，管理本地历史数据
 class History:
