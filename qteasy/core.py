@@ -473,7 +473,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             保存在磁盘上供未来调用
             
         """
-        op_list = operator.create(hist_data=hist_op)
+        operator.prepare_data(hist_data=hist_op)
+        op_list = operator.create_signal(hist_data=hist_op)
         looped_values = apply_loop(op_list, hist_loop.fillna(0),
                                    init_cash=context.init_cash,
                                    moq=0, visual=True, rate=context.rate,
@@ -650,7 +651,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
         # 调试代码
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
-        looped_val = apply_loop(op_list=op.create(hist),
+        looped_val = apply_loop(op_list=op.create_signal(hist),
                                 history_list=hist, init_cash=100000,
                                 visual=False, price_visual=False)
         # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
@@ -704,7 +705,7 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
     for par in it:
         op.set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
-        looped_val = apply_loop(op_list=op.create(hist),
+        looped_val = apply_loop(op_list=op.create_signal(hist),
                                 history_list=hist, init_cash=100000,
                                 visual=False, price_visual=False)
         # 使用评价函数计算该组参数模拟交易的评价值
@@ -764,7 +765,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                 # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
                 op.set_opt_par(par)  # 设置择时参数``
                 # 声称交易清淡病进行模拟交易生成交易记录
-                looped_val = apply_loop(op_list=op.create(hist),
+                looped_val = apply_loop(op_list=op.create_signal(hist),
                                         history_list=hist, init_cash=100000,
                                         visual=False, price_visual=False)
                 # 使用评价函数计算参数模拟交易的评价值
@@ -856,7 +857,7 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
         return -np.inf
 
 # TODO：eval()函数没必要写那么多个，可以根据需要统一到一个评价函数中
-def _eval(looped_val, method):
+def _eval(looped_val, method: str = None):
     """评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。
 
     input:

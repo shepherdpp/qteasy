@@ -8,7 +8,6 @@ from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
 
 
-# TODO: 不需要在每个策略的属性中规定data_freq，因为所有的策略必须共享同一组HistoryPanel的不同切片，不同策略只是sample_freq不同
 class Strategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
@@ -306,7 +305,7 @@ class Timing(Strategy):
         :return:
             np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
-        print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}')
+        # print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}')
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用generate_one()函数
         if len(hist_slice.shape) == 2:
             drop = ~np.isnan(hist_slice[:, 0])
@@ -331,7 +330,7 @@ class Timing(Strategy):
                                 par_list)))
         # 生成的结果缺少最前面window_length那一段，因此需要补齐
         capping = np.zeros(self._window_length - 1)
-        print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
+        # print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[drop] = res
@@ -350,7 +349,7 @@ class Timing(Strategy):
         return：=====
             L/S mask: ndarray, 所有股票在整个历史区间内的所有多空信号矩阵，包含M行N列，每行是一个时间点上的多空信号，每列一只股票
         """
-        print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
+        # print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
         assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
         assert len(hist_data.shape) == 3, \
@@ -376,7 +375,7 @@ class Timing(Strategy):
             res = np.array(list(map(self._generate_over,
                                     hist_data.T,
                                     par_list))).T
-        print(f'generate result of np timing generate, result shaped {res.shape}')
+        # print(f'generate result of np timing generate, result shaped {res.shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
 
@@ -900,7 +899,7 @@ class Ricon(Strategy):
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: str = ''):
+                 data_types: str = 'close'):
         super().__init__(pars=pars,
                          opt_tag=opt_tag,
                          stg_type='RICON',
@@ -960,10 +959,10 @@ class RiconUrgent(Ricon):
             f'Type Error: input historical data should be ndarray, got {type(hist_data)}'
         day, drop = self._pars
         h = hist_data[:, :, 0].T
-        print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
-        print(f'and the hist_data is converted to shape {h.shape}')
+        # print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
+        # print(f'and the hist_data is converted to shape {h.shape}')
         diff = (h - np.roll(h, day)) / h
-        print(f'created array in ricon generate() is shaped {diff.shape}')
+        # print(f'created array in ricon generate() is shaped {diff.shape}')
         return np.where(diff < drop, -1, 0)
 
 
@@ -1002,7 +1001,6 @@ def _mask_to_signal(lst):
     # 补齐因为计算差额导致的第一行数据为NaN值的问题
     op[0] = lst[0]
     return op
-
 
 # TODO：legalize函数将不再需要，理由有2，其一，风控策略能够从策略层面对交易信号进行控制，事实上与legalize函数作用相同，功能可以合并，
 # TODO：其二，通过设置sample_freq参数，交易信号的生成已经自动符合T+1规则了
@@ -1121,6 +1119,7 @@ class Operator:
             ricon_types = ['none']
         self._timing_types = []
         self._timing = []
+        self._timing_history_data = []
         self._timing_blender = 'pos-1'  # 默认的择时策略混合方式
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
@@ -1143,6 +1142,7 @@ class Operator:
         # 都是列表，包含若干相互独立的选股策略（至少一个）
         self._selecting_type = []
         self._selecting = []
+        self._selecting_history_data = []
         # 选股策略的混合方式使用以下字符串描述。简单来说，每个选股策略都独立地生成一个选股蒙版，每个蒙版与其他的
         # 蒙版的混合方式要么是OR（+）要么是AND（*），最终混合的结果取决于这些蒙版的混合方法和混合顺序而多个蒙版
         # 的混合方式就可以用一个类似于四则运算表达式的方式来描述，例如“（ 0 + 1 ） * （ 2 + 3 * 4 ）”
@@ -1176,6 +1176,7 @@ class Operator:
         # 根据输入参数生成不同的风险控制策略对象
         self._ricon_type = []
         self._ricon = []
+        self._ricon_history_data = []
         self._ricon_blender = 'add'
         for ricon_type in ricon_types:
             self._ricon_type.append(ricon_type)
@@ -1186,6 +1187,7 @@ class Operator:
             else:
                 self._ricon.append(RiconNone())
                 self._ricon_type.append('none')
+
 
     @property
     def timing(self):
@@ -1349,10 +1351,25 @@ class Operator:
             ric.info()
         print('=' * 25)
 
+    def prepare_data(self, hist_data: HistoryPanel, start_date=None, end_date=None):
+        """ 在create_signal之前准备好相关数据如历史数据，检查历史数据是否符合所有策略的要求
+
+        :return:
+        """
+        assert isinstance(hist_data, HistoryPanel), \
+            f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
+        for stg in self.selecting:
+            self._selecting_history_data.append(hist_data[stg.data_types])
+        for stg in self.timing:
+            self._timing_history_data.append(hist_data[stg.data_types])
+        for stg in self.ricon:
+            self._ricon_history_data.append(hist_data[stg.data_types])
+
+
     # TODO： 目前的三维数据处理方式是：将整个3D historyPanel传入策略，在策略的generate方法所调用的最底层（Timing的generate_one, \
     # TODO：Selecting的select方法等）对历史数据框架进行切片操作，提取出正确的数据。这种方法只是临时应用，最终的应用方式应该是在最外层 \
     # TODO：就将数据切片后传入，这样在策略最内层的自定义方法中不用关心数据的格式和切片问题，只需要定义好数据类型htypes参数就可以了
-    def create(self, hist_data: HistoryPanel):
+    def create_signal(self, hist_data: HistoryPanel):
         """ 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
 
         对信号进行合法性处理，最终生成合法交易信号
@@ -1365,14 +1382,16 @@ class Operator:
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
         sel_masks = []
+
+        shares = hist_data.shares
+        date_list = hist_data.hdates
+        h_v = hist_data.values
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        shares = hist_data.shares
-        data_types = hist_data.htypes
-        date_list = hist_data.hdates
-        # print(f'date_list is {date_list}')
-        h_v = hist_data.values
-        # print(f'shape of h_v in operator.create() function: {h_v.shape}')
+        assert len(self._timing_history_data) > 0, \
+            f'ObjectSetupError: history data should be set before signal creation!'
+        assert len(self._ricon_history_data) > 0, \
+            f'ObjectSetupError: history data should be set before signal creation!'
         for sel in self._selecting:  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             sel_masks.append(sel.generate(hist_data))  # 生成的选股蒙板添加到选股蒙板队列中
@@ -1382,16 +1401,15 @@ class Operator:
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
-        selected_shares = sel_mask.any(0)
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
         # hist_selected = hist_data * selected_shares
         # print ('Time measurement: ls_mask creation')
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
         ls_masks = []
-        for tmg in self._timing:  # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
+        for tmg, dt in zip(self._timing, self._timing_history_data):  # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
             # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
             # print('SPEED test OP create, Time of ls_mask creation')
-            ls_masks.append(tmg.generate(h_v))
+            ls_masks.append(tmg.generate(dt))
             # print(tmg.generate(h_v))
             # print('ls mask created: ', tmg.generate(hist_selected).iloc[980:1000])
         # print('SPEED test OP create, Time of ls_mask blending')
@@ -1402,9 +1420,9 @@ class Operator:
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         ricon_mats = []
-        for ricon in self._ricon:  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
+        for ricon, dt in zip(self._ricon, self._timing_history_data):  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
             # print('SPEED test OP create, Time of ricon_mask creation')
-            ricon_mats.append(ricon.generate(h_v))  # 所有风控矩阵添加到风控矩阵队列
+            ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
         # print('SPEED test OP create, Time of ricon_mask blending')
         # %time self.__ricon_blend(ricon_mats)
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略

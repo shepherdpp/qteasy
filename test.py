@@ -100,6 +100,42 @@ class TestSpace(unittest.TestCase):
 
 
 class TestOperator(unittest.TestCase):
+    def setUp(self):
+        print('start testing HistoryPanel object\n')
+        self.data = np.random.randint(10, size=(5, 10, 4))
+        self.index = pd.date_range(start='20200101', freq='d', periods=10)
+        self.shares = '000100,000101,000102,000103,000104'
+        self.dtypes = 'close,open,high,low'
+        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.dtypes, rows=self.index)
+
+    def create_history_panel(self):
+        """ test the creation of a HistoryPanel object by passing all data explicitly
+
+        """
+        self.assertIsInstance(self.hp, qt.HistoryPanel)
+        self.assertEqual(self.hp.shape[0], 5)
+        self.assertEqual(self.hp.shape[1], 10)
+        self.assertEqual(self.hp.shape[2], 4)
+        self.assertEqual(self.hp.level_count, 5)
+        self.assertEqual(self.hp.row_count, 11)
+        self.assertEqual(self.hp.column_count, 4)
+        self.assertEqual(list(self.hp.levels.keys), self.shares.split())
+        self.assertEqual(list(self.hp.columns.keys), self.dtypes.split())
+
+    def test_history_panel_slicing(self):
+
+        self.assertTrue(np.allclose(self.hp['close'], self.data[:,:,0:1]))
+        self.assertTrue(np.allclose(self.hp['close,open'], self.data[:, :, 0:2]))
+        self.assertTrue(np.allclose(self.hp[['close','open']], self.data[:, :, 0:2]))
+        self.assertTrue(np.allclose(self.hp['close:high'], self.data[:, :, 0:3]))
+        self.assertTrue(np.allclose(self.hp['close,high'], self.data[:, :, [0,2]]))
+        self.assertTrue(np.allclose(self.hp[:,'000100'], self.data[0:1,:,]))
+        self.assertTrue(np.allclose(self.hp[:,'000100,000101'], self.data[0:2, :]))
+        self.assertTrue(np.allclose(self.hp[:,['000100','000101']], self.data[0:2, :]))
+        self.assertTrue(np.allclose(self.hp[:,'000100:000102'], self.data[0:3, :]))
+        self.assertTrue(np.allclose(self.hp[:,'000100,000102'], self.data[[0,2], :]))
+        self.assertTrue(np.allclose(self.hp['close,open','000100,000102'], self.data[[0,2], :, 0:2]))
+
     def create_test_data(self):
         # build up test data: a 4-type, 3-share, 21-day matrix of prices that contains nan values in some days
         # for some share_pool
@@ -188,43 +224,21 @@ class TestOperator(unittest.TestCase):
         """
         print('testing operator objects')
         self.op = qt.Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
-        self.op.set_parameter('s-1', ('Y', 0.5))
-        self.assertEqual(self.op.selecting[1].pars, ('Y', 0.5))
+        self.op.set_parameter('s-1', (0.5,))
+        self.assertEqual(self.op.selecting[1].pars, (0.5,))
 
 
-class TestHistoryPanel(unittest.TestCase):
-    def create_history_panel(self):
-        """ test the creation of a HistoryPanel object by passing all data explicitly
-
-        """
-        print('start testing HistoryPanel object\n')
-        data = np.random.randint(10, size=(5, 10, 4))
-        index = pd.date_range(start='20200101', freq='d', periods=10)
-        shares = '000100,000101,000102,000103,000104'
-        dtypes = 'close,open,high,low'
-        hp = qt.HistoryPanel(values=data, levels=shares, columns=dtypes, rows=index)
-        self.assertIsInstance(hp, qt.HistoryPanel)
-        self.assertEqual(hp.shape[0], 5)
-        self.assertEqual(hp.shape[1], 10)
-        self.assertEqual(hp.shape[2], 4)
-        self.assertEqual(hp.level_count, 5)
-        self.assertEqual(hp.row_count, 11)
-        self.assertEqual(hp.column_count, 4)
-        self.assertEqual(list(hp.levels.keys), shares.split())
-        self.assertEqual(list(hp.columns.keys), dtypes.split())
-
-    def create_from_df(self):
-        data = np.random.randint(10, size=(10, 5))
-        index = pd.date_range(start='20200101', freq='d', periods=10)
-        shares = '000100,000101,000102,000103,000104'
-        dtypes = 'close'
-        df = pd.DataFrame(data)
-        hp = qt.from_dataframe(df=df, shares=shares, dtypes=dtypes)
-        self.assertIsInstance(hp, qt.HistoryPanel)
-
-    def assemble_from_df(self):
-        pass
-
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(TestHP())
+    suite.addTest(TestOperator())
+    suite.addTest(TestRates())
+    suite.addTest(TestSpace())
+    suite.addTest(TestUnify())
+    return suite
 
 if __name__ == '__main__':
-    unittest.main()
+    runner = unittest.TextTestRunner()
+    runner.run(suite())
+
+
