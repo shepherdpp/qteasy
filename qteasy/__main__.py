@@ -111,5 +111,5 @@ if __name__ == '__main__':
     print(f'data is:\n{data}')
     hp.htypes = 'open,high,low,close'
     hp.info()
-    hp.shares = ['000300', '600227', '600222', '000123', '000432']
+    hp.shares = ['000300', '600227', '600222', '000123', '000129']
     hp.info()

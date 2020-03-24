@@ -6,6 +6,8 @@
         <list>
           <option value="float.cumsum" />
           <option value="talib.*" />
+          <option value="int.*" />
+          <option value="int.__getitem__" />
         </list>
       </option>
     </inspection_tool>

@@ -168,20 +168,125 @@ class Rate:
 
 
 # TODO：在Cash类中增加现金投资的无风险利率，在apply_loop的时候，可以选择是否考虑现金的无风险利率，如果考虑时，现金按照无风险利率增长
-class Cash:
+class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
-    def __init__(self, data: pd.DataFrame, interest_rate: float = 0.03):
+    def __init__(self, dates, amounts, interest_rate: float = None):
         """
 
-        input:
-        :param data:
-        :param interest_rate:
+        :param dates:
+        :param amounts:
+        :param interest_rate: float
+        """
+        self.amounts = amounts
+        self.dates = dates
+        self.interest_rate = interest_rate
+
+    @property
+    def first_day(self):
+        """ 返回投资第一天的
+
+        :return:
+        """
+        return self.data[0]
+
+    @property
+    def last_day(self):
+        """
+
+        :return:
         """
         raise NotImplementedError
+
+    @property
+    def period(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    @property
+    def total(self):
+        """
+
+        :return:
+        """
+        return np.sum(self.amounts)
+
+    @property
+    def ir(self):
+        """
+
+        :return:
+        """
+        return self.interest_rate
+
+    @property
+    def closing_value(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    @property
+    def opening_value(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    @property
+    def plan(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def __add__(self, other):
+        """
+
+        :param other:
+        :return:
+        """
+        raise NotImplementedError
+
+    def __mul__(self, other):
+        """
+
+        :param other:
+        :return:
+        """
+        raise NotImplementedError
+
+    def __repr__(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def __str__(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def __getitem__(self, item):
+        """
+
+        :param item:
+        :return:
+        """
+        raise NotImplementedError
+
 
 
 # TODO: 使用Numba加速_loop_step()函数

@@ -106,8 +106,11 @@ class HistoryPanel():
             input_labels = input_labels.split(',')
         unique_count = len(set(input_labels))
         assert len(input_labels) == unique_count, \
-            f'InputError, label duplicated, count of {target_list.__name__} is {len(target_list)},' \
+            f'InputError, label duplicated, count of target list is {len(target_list)},' \
             f' got {unique_count} unique labels only.'
+        assert unique_count == len(target_list), \
+            f'InputError, length of input labels does not equal to that of target list, expect ' \
+            f'{len(target_list)}, got {unique_count} unique labels instead.'
         return dict(zip(input_labels, range(len(target_list))))
 
     @staticmethod
@@ -183,8 +186,8 @@ class HistoryPanel():
         return list(self._levels.keys())
 
     @shares.setter
-    def shares(self, shares):
-        self._levels = self.labels_to_dict(shares, self.shares)
+    def shares(self, input_shares):
+        self._levels = self.labels_to_dict(input_shares, self.shares)
 
     @property
     def level_count(self):
@@ -199,8 +202,8 @@ class HistoryPanel():
         return list(self._rows.keys())
 
     @hdates.setter
-    def hdates(self, hdates):
-        self._rows = self.labels_to_dict(hdates, self.hdates)
+    def hdates(self, input_hdates):
+        self._rows = self.labels_to_dict(input_hdates, self.hdates)
 
     @property
     def row_count(self):
@@ -211,8 +214,8 @@ class HistoryPanel():
         return list(self._columns.keys())
 
     @htypes.setter
-    def htypes(self, htypes):
-        self._columns = self.labels_to_dict(htypes, self.htypes)
+    def htypes(self, input_htypes):
+        self._columns = self.labels_to_dict(input_htypes, self.htypes)
 
     @property
     def columns(self):
