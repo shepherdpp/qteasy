@@ -363,7 +363,6 @@ class Timing(Strategy):
             par_list = pars.values()  # 允许使用dict来为不同的股票定义不同的策略参数
         else:
             par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
-        # TODO: 所有的输入历史数据都应该是三维的，包括只有一个个股或只有一个数据类型时，也是3D数据，测试完毕后删除2D数据的处理
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
         if len(hist_data.shape) == 3:  # 数据为3D的情形
             # print(f'went through if fork hist_data - 3D')

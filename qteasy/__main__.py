@@ -114,9 +114,9 @@ if __name__ == '__main__':
     hp.shares = ['000300', '600227', '600222', '000123', '000129']
     hp.info()
 
-    cp = CashPlan(['2010-01-01', '2010-03-01'], [10000, 10000], 0.035)
+    cp = CashPlan(['2015-01-01', '2010-03-01'], [10000, 10000], 0.15)
     cp.info()
     cp = CashPlan(['20100501'], 10000)
     cp.info()
-    cp = CashPlan(pd.date_range(start='2019-01-01', freq='M', periods=12), [i * 1000 + 10000 for i in range(12)], 0.035)
+    cp = CashPlan(pd.date_range(start='2019-01-01', freq='Y', periods=12), [i * 1000 + 10000 for i in range(12)], 0.035)
     cp.info()

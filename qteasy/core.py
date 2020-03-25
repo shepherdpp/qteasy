@@ -204,7 +204,7 @@ class CashPlan:
             f'InputError: number of amounts should be equal to that of dates, can\'t match {len(amounts)} amounts in' \
             f' to {len(dates)} days.'
 
-        self._cash_plan = dict(zip(dates, amounts))
+        self._cash_plan = pd.DataFrame(amounts, index=dates, columns=['amount']).sort_index()
         assert isinstance(interest_rate, float), \
             f'TypeError, interest rate should be a float number, got {type(interest_rate)}'
         assert 0. <= interest_rate <= 1., \
@@ -233,7 +233,7 @@ class CashPlan:
 
         :return: pd.Timedelta
         """
-        return self.last_day - self.first_day
+        return (self.last_day - self.first_day).days
 
     @property
     def investment_count(self):
@@ -241,7 +241,7 @@ class CashPlan:
 
         :return:
         """
-        return len(self.plan)
+        return len(self.dates)
 
     @property
     def dates(self):
@@ -249,7 +249,7 @@ class CashPlan:
 
         :return:
         """
-        return list(self.plan.keys())
+        return list(self.plan.index)
 
     @property
     def amounts(self):
@@ -257,7 +257,7 @@ class CashPlan:
 
         :return:
         """
-        return list(self.plan.values())
+        return list(self.plan.amount)
 
     @property
     def total(self):
@@ -265,7 +265,7 @@ class CashPlan:
 
         :return:
         """
-        return np.sum(list(self.plan.values()))
+        return self.plan.amount.sum()
 
     @property
     def ir(self):
@@ -284,7 +284,10 @@ class CashPlan:
         if self.ir == 0:
             return self.total
         else:
-            return self.total
+            df = self.plan.copy()
+            df['days'] = (df.index[-1] - df.index).days
+            df['fv'] = df.amount * (1 + self.ir / 360 * df.days)
+            return df.fv.sum()
 
     @property
     def opening_value(self):
@@ -295,7 +298,10 @@ class CashPlan:
         if self.ir == 0:
             return self.total
         else:
-            return self.total
+            df = self.plan.copy()
+            df['days'] = (df.index - df.index[0]).days
+            df['pv'] = df.amount / (1 + self.ir / 360 * df.days)
+            return df.pv.sum()
 
     @property
     def plan(self):
@@ -304,6 +310,13 @@ class CashPlan:
         :return:
         """
         return self._cash_plan
+
+    def to_dict(self):
+        """
+
+        :return:
+        """
+        return dict(self.plan.amount)
 
     def info(self):
         """ 打印投资计划的所有信息
@@ -314,15 +327,14 @@ class CashPlan:
         print(f'\n{type(self)}')
         if self.investment_count > 1:
             print('Investment contains multiple entries')
-            print(f'Investment Period from {self.first_day.date()} to {self.last_day.date()}, lasting {self.period}')
+            print(f'Investment Period from {self.first_day.date()} to {self.last_day.date()}, '
+                  f'lasting {self.period} days')
             print(f'Total investment count: {self.investment_count} entries, total invested amount: ¥{self.total:,.2f}')
             print(f'Interest rate: {self.ir:.2%}, equivalent final value: ¥{self.closing_value:,.2f}:')
         else:
             print(f'Investment is one-off amount of ¥{self.total:,.2f} on {self.first_day.date()}')
             print(f'Interest rate: {self.ir:.2%}, equivalent final value: ¥{self.closing_value:,.2f}:')
-        df = pd.DataFrame(zip(self.dates, self.amounts), columns = ['date', 'amount'])
-        df.style.format({'amount':'{,.2f}'})
-        print(df)
+        print(self.plan)
         print(f'memory usage: {sys.getsizeof(self.plan)} bytes\n')
 
     def __add__(self, other):
@@ -363,6 +375,16 @@ class CashPlan:
         """
         return self.plan[item]
 
+def distribute_investment(amount, start, end, periods, freq):
+    """ 将投资额拆分成一系列定投金额，并生成一个CashPlan对象
+
+    :param amount:
+    :param start:
+    :param end:
+    :param periods:
+    :param freq:
+    :return:
+    """
 
 # TODO: 使用Numba加速_loop_step()函数
 def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
@@ -924,10 +946,6 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     spaces.append(Space(s_range, s_type))  # 将整个空间作为第一个子空间对象存储起来
     step_size = init_step  # 设定初始搜索步长
-    # 调试代码
-    print('Result pool has been created, capacity of result pool: ', pool.capacity)
-    print('Searching Space has been created: ', spaces)
-    print('Searching Starts...')
 
     while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
         i = 0
