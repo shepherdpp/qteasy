@@ -168,22 +168,48 @@ class Rate:
 
 
 # TODO：在Cash类中增加现金投资的无风险利率，在apply_loop的时候，可以选择是否考虑现金的无风险利率，如果考虑时，现金按照无风险利率增长
+# TODO: 在qteasy中所使用的所有时间日期格式统一使用np.datetime64格式
 class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
-    def __init__(self, dates, amounts, interest_rate: float = None):
+    def __init__(self, dates, amounts, interest_rate: float = 0.0):
         """
 
         :param dates:
         :param amounts:
         :param interest_rate: float
         """
-        self.amounts = amounts
-        self.dates = dates
-        self.interest_rate = interest_rate
+        from collections import Iterable
+        if isinstance(amounts, int) or isinstance(amounts, float):
+            amounts = [amounts]
+        assert isinstance(amounts, list), f'TypeError: amounts should be Iterable, got {type(amounts)} instead'
+        for amount in amounts:
+            assert isinstance(amount, float) or isinstance(amount, int), \
+                f'TypeError: amount should be number format, got {type(amount)} instead'
+            assert amount > 0, f'InputError: Investment amount should be larger than 0'
+        assert isinstance(dates, Iterable)
+
+        if isinstance(dates, str):
+            dates = dates.replace(' ', '')
+            dates = dates.split(',')
+        try:
+            dates = list(map(pd.to_datetime, dates))
+        except:
+            raise KeyError
+
+        assert len(amounts) == len(dates), \
+            f'InputError: number of amounts should be equal to that of dates, can\'t match {len(amounts)} amounts in' \
+            f' to {len(dates)} days.'
+
+        self._cash_plan = dict(zip(dates, amounts))
+        assert isinstance(interest_rate, float), \
+            f'TypeError, interest rate should be a float number, got {type(interest_rate)}'
+        assert 0. <= interest_rate <= 1., \
+            f'InputError, interest rate should be between 0 and 100%, got {interest_rate:.2%}'
+        self._ir = interest_rate
 
     @property
     def first_day(self):
@@ -191,7 +217,7 @@ class CashPlan:
 
         :return:
         """
-        return self.data[0]
+        return self.dates[0]
 
     @property
     def last_day(self):
@@ -199,15 +225,39 @@ class CashPlan:
 
         :return:
         """
-        raise NotImplementedError
+        return self.dates[-1]
 
     @property
     def period(self):
         """
 
+        :return: pd.Timedelta
+        """
+        return self.last_day - self.first_day
+
+    @property
+    def investment_count(self):
+        """
+
         :return:
         """
-        raise NotImplementedError
+        return len(self.plan)
+
+    @property
+    def dates(self):
+        """
+
+        :return:
+        """
+        return list(self.plan.keys())
+
+    @property
+    def amounts(self):
+        """
+
+        :return:
+        """
+        return list(self.plan.values())
 
     @property
     def total(self):
@@ -215,39 +265,65 @@ class CashPlan:
 
         :return:
         """
-        return np.sum(self.amounts)
+        return np.sum(list(self.plan.values()))
 
     @property
     def ir(self):
-        """
+        """ 无风险利率，年化利率
 
-        :return:
+        :return: float
         """
-        return self.interest_rate
+        return self._ir
 
     @property
     def closing_value(self):
-        """
+        """ 计算所有投资额按照无风险利率到最后一个投资额的终值
 
         :return:
         """
-        raise NotImplementedError
+        if self.ir == 0:
+            return self.total
+        else:
+            return self.total
 
     @property
     def opening_value(self):
-        """
+        """ 计算所有投资额按照无风险利率在第一个投资日的现值
 
         :return:
         """
-        raise NotImplementedError
+        if self.ir == 0:
+            return self.total
+        else:
+            return self.total
 
     @property
     def plan(self):
-        """
+        """ 返回整个投资区间的投资计划，形式为字典
 
         :return:
         """
-        raise NotImplementedError
+        return self._cash_plan
+
+    def info(self):
+        """ 打印投资计划的所有信息
+
+        :return:
+        """
+        import sys
+        print(f'\n{type(self)}')
+        if self.investment_count > 1:
+            print('Investment contains multiple entries')
+            print(f'Investment Period from {self.first_day.date()} to {self.last_day.date()}, lasting {self.period}')
+            print(f'Total investment count: {self.investment_count} entries, total invested amount: ¥{self.total:,.2f}')
+            print(f'Interest rate: {self.ir:.2%}, equivalent final value: ¥{self.closing_value:,.2f}:')
+        else:
+            print(f'Investment is one-off amount of ¥{self.total:,.2f} on {self.first_day.date()}')
+            print(f'Interest rate: {self.ir:.2%}, equivalent final value: ¥{self.closing_value:,.2f}:')
+        df = pd.DataFrame(zip(self.dates, self.amounts), columns = ['date', 'amount'])
+        df.style.format({'amount':'{,.2f}'})
+        print(df)
+        print(f'memory usage: {sys.getsizeof(self.plan)} bytes\n')
 
     def __add__(self, other):
         """
@@ -285,8 +361,7 @@ class CashPlan:
         :param item:
         :return:
         """
-        raise NotImplementedError
-
+        return self.plan[item]
 
 
 # TODO: 使用Numba加速_loop_step()函数
@@ -640,7 +715,6 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             的输出是一个实数，就能被用作目标函数。而对于有监督方法，目标函数表征的是从历史数据到先验信息的映射能力，通常用实际输出与先验信息之间
             的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。
         """
-        raise NotImplementedError
         how = context.opti_method
         if how == 0:
             """ Exhausetive Search 穷举法
@@ -655,8 +729,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             """
             pars, perfs = _search_exhaustive(hist=hist_op, op=operator,
                                              output_count=context.output_count,
-                                             keep_largest_perf=context.keep_largest_perf,
-                                             *args, **kwargs)
+                                             keep_largest_perf=context.keep_largest_perf)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -665,10 +738,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                 
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
             """
-            pars, perfs = _search_montecarlo(hist=hist_op, op=op,
+            pars, perfs = _search_montecarlo(hist=hist_op, op=operator,
                                              output_count=context.output_count,
-                                             keep_largest_perf=context.keep_largest_perf,
-                                             *args, **kwargs)
+                                             keep_largest_perf=context.keep_largest_perf)
         elif how == 2:  #
             """ Incremental Stepped Search 递进步长法
             
@@ -683,10 +755,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                 
                 关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
             """
-            pars, perfs = _search_incremental(hist=hist_op, op=op,
+            pars, perfs = _search_incremental(hist=hist_op, op=operator,
                                               output_count=context.output_count,
-                                              keep_largest_perf=context.keep_largest_perf,
-                                              *args, **kwargs)
+                                              keep_largest_perf=context.keep_largest_perf)
         elif how == 3:
             """ GA method遗传算法
             

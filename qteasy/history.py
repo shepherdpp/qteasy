@@ -377,18 +377,18 @@ class HistoryPanel():
         raise NotImplementedError
 
 #TODO implement this method
-def from_csv():
+def csv_to_hp():
     raise NotImplementedError
 
 #TODO implement this method
-def from_hdf():
+def hdf_to_hp():
     raise NotImplementedError
 
-def from_dataframe(df: pd.DataFrame,
-                   index=None,
-                   dtypes=None,
-                   shares=None,
-                   column_type: str = 'share') -> HistoryPanel:
+def dataframe_to_hp(df: pd.DataFrame,
+                    index=None,
+                    dtypes=None,
+                    shares=None,
+                    column_type: str = 'share') -> HistoryPanel:
     """ 根据DataFrame中的数据创建历史数据板HistoryPanel对象
 
     :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame
@@ -445,7 +445,7 @@ def from_dataframe(df: pd.DataFrame,
 
 
 #TODO implement this method
-def assemble_from_dataframes(*dfs):
+def dataframes_to_hp(*dfs):
     """ 根据多个DataFrame中的数据创建HistoryPanel对象
 
     :param dfs: type list, containing multiple dataframes
