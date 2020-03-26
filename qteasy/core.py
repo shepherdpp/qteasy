@@ -286,7 +286,7 @@ class CashPlan:
         else:
             df = self.plan.copy()
             df['days'] = (df.index[-1] - df.index).days
-            df['fv'] = df.amount * (1 + self.ir / 360 * df.days)
+            df['fv'] = df.amount * (1 + self.ir) ** (df.days / 365.)
             return df.fv.sum()
 
     @property
@@ -300,7 +300,7 @@ class CashPlan:
         else:
             df = self.plan.copy()
             df['days'] = (df.index - df.index[0]).days
-            df['pv'] = df.amount / (1 + self.ir / 360 * df.days)
+            df['pv'] = df.amount / (1 + self.ir) ** (df.days / 365.)
             return df.pv.sum()
 
     @property
