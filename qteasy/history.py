@@ -59,6 +59,7 @@ class HistoryPanel():
         6, 方便地由多个pandas DataFrame对象组合而成
     """
 
+    # TODO 应该把rows的格式转化为pandas.Timestamp()对象
     def __init__(self, values, levels=None, rows=None, columns=None):
         """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 

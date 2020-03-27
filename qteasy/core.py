@@ -75,7 +75,9 @@ class Context:
                  rate_fee: float = 0.003,
                  rate_slipery: float = 0,
                  moq: int = 100,
-                 init_cash: float = 10000,
+                 investment_amounts: list = None,
+                 investment_dates: list = None,
+                 base_interest_rate: float = 0.035,
                  visual: bool = False,
                  reference_visual: bool = False,
                  reference_data: list = None):
@@ -95,7 +97,11 @@ class Context:
         self.mode = mode
         self.rate = Rate(0, rate_fee, rate_slipery)
         self.moq = moq  # 最小交易批量，设置为0表示可以买卖分数股
-        self.init_cash = init_cash  # 回测初始现金金额
+        assert investment_dates is not None, \
+            f'InputError, investment dates should be given, got {type(investment_dates)}'
+        self.cash_plan = CashPlan(dates=investment_dates,
+                                  amounts=investment_amounts,
+                                  interest_rate=base_interest_rate)  # 回测初始现金金额
         # TODO： 将整数形式的初始现金金额修改为投资现金对象CashPlan
         today = datetime.datetime.today().date()
         self.share_pool = []  # 优化参数所针对的投资产品
@@ -376,7 +382,7 @@ class CashPlan:
 
         :return:
         """
-        raise NotImplementedError
+        return f'type(self)'
 
     def __getitem__(self, item):
         """
@@ -592,7 +598,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     return：=====
         type: Log()，运行日志记录，txt 或 pd.DataFrame
     """
-
+    import time
     # 从context 上下文对象中读取运行所需的参数：
     # 股票清单或投资产品清单
     shares = context.share_pool
@@ -686,16 +692,23 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             保存在磁盘上供未来调用
             
         """
-        operator.prepare_data(hist_data=hist_op)
+        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)
+        st = time.clock()
         op_list = operator.create_signal(hist_data=hist_op)
+        et = time.clock()
+        print(f'time elapsed for operator.create_signal: {et-st:.3f}')
+        st = time.clock()
         looped_values = apply_loop(op_list, hist_loop.fillna(0),
-                                   init_cash=context.init_cash,
+                                   init_cash=context.cash_plan.amounts[0],
                                    moq=0, visual=True, rate=context.rate,
                                    price_visual=True)
+        et = time.clock()
+        print(f'time elapsed for operation back looping: {et-st:.3f}')
         ret = looped_values.value[-1] / looped_values.value[0]
         years = (looped_values.index[-1] - looped_values.index[0]).days / 365.
-        print('\nTotal investment years:', np.round(years, 1), np.round(ret * 100 - 100, 3), '%, final value:',
-              np.round(ret * context.init_cash, 2))
+        print(f'\ninvestment starts on {looped_values.index[0]}')
+        print('Total investment years:', np.round(years, 1), np.round(ret * 100 - 100, 3), '%, final value:',
+              np.round(ret * context.cash_plan.amounts[0], 2))
         print('Average Yearly return rate: ', np.round((ret ** (1 / years) - 1) * 100, 3), '%')
 
     elif exe_mode == 2:

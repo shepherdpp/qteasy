@@ -135,6 +135,61 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp[:,'000100:000102'], self.data[0:3, :]))
         self.assertTrue(np.allclose(self.hp[:,'000100,000102'], self.data[[0,2], :]))
         self.assertTrue(np.allclose(self.hp['close,open','000100,000102'], self.data[[0,2], :, 0:2]))
+        print('start testing HistoryPanel')
+        data = np.random.randint(10, size=(10, 5))
+        index = pd.date_range(start='20200101', freq='d', periods=10)
+        shares = '000100,000101,000102,000103,000104'
+        dtypes = 'close'
+        df = pd.DataFrame(data)
+        print('=========================\nTesting HistoryPanel creation from DataFrame')
+        hp = hs.dataframe_to_hp(df=df, shares=shares, dtypes=dtypes)
+        hp.info()
+        hp = hs.dataframe_to_hp(df=df, shares='000100', dtypes='close, open, high, low, middle', column_type='dtypes')
+        hp.info()
+
+        print('=========================\nTesting HistoryPanel creation from initialization')
+        data = np.random.randint(10, size=(5, 10, 4)).astype('float')
+        index = pd.date_range(start='20200101', freq='d', periods=10)
+        shares = '000100,000101,000102,000103,000104'
+        dtypes = 'close, open, high,low'
+        data[0, [5, 6, 9], [0, 1, 3]] = np.nan
+        data[1:4, [4, 7, 6, 2], [1, 1, 3, 0]] = np.nan
+        data[4:5, [2, 9, 1, 2], [0, 3, 2, 1]] = np.nan
+        hp = hs.HistoryPanel(data, levels=shares, columns=dtypes, rows=index)
+        hp.info()
+        print('==========================\n输出close类型的所有历史数据\n', hp['close', :, :])
+        print(f'==========================\n输出close和open类型的所有历史数据\n{hp[[0,1], :, :]}')
+        print(f'==========================\n输出第一只股票的所有类型历史数据\n: {hp[:,[0], :]}')
+        print('==========================\n输出第0、1、2个htype对应的所有股票全部历史数据\n', hp[[0, 1, 2], :, :])
+        print('==========================\n输出close、high两个类型的所有历史数据\n', hp[['close', 'high']])
+        print('==========================\n输出0、1两个htype的所有历史数据\n', hp[[0, 1]])
+        print('==========================\n输出close、high两个类型的所有历史数据\n', hp['close,high'])
+        print('==========================\n输出close起到high止的三个类型的所有历史数据\n', hp['close:high'])
+        print('==========================\n输出0、1、3三个股票的全部历史数据\n', hp[:, [0, 1, 3]])
+        print('==========================\n输出000100、000102两只股票的所有历史数据\n', hp[:, ['000100', '000102']])
+        print('==========================\n输出0、1、2三个股票的历史数据\n', hp[:, 0: 3])
+        print('==========================\n输出000100、000102两只股票的所有历史数据\n', hp[:, '000100, 000102'])
+        print('==========================\n输出所有股票的0-7日历史数据\n', hp[:, :, 0:8])
+        print('==========================\n输出000100股票的0-7日历史数据\n', hp[:, '000100', 0:8])
+        print('==========================\nstart testing multy axis slicing of HistoryPanel object')
+        print('==========================\n输出000100、000120两只股票的close、open两组历史数据\n',
+              hp['close,open', ['000100', '000102']])
+        print('==========================\n输出000100、000120两只股票的close到open三组历史数据\n',
+              hp['close,open', '000100, 000102'])
+        print(f'historyPanel: hp:\n{hp}')
+        print(f'data is:\n{data}')
+        hp.htypes = 'open,high,low,close'
+        hp.info()
+        hp.shares = ['000300', '600227', '600222', '000123', '000129']
+        hp.info()
+
+        cp = CashPlan(['2012-01-01', '2010-01-01'], [10000, 20000], 0.1)
+        cp.info()
+        cp = CashPlan(['20100501'], 10000)
+        cp.info()
+        cp = CashPlan(pd.date_range(start='2019-01-01', freq='Y', periods=12), [i * 1000 + 10000 for i in range(12)],
+                      0.035)
+        cp.info()
 
     def create_test_data(self):
         # build up test data: a 4-type, 3-share, 21-day matrix of prices that contains nan values in some days
@@ -226,6 +281,7 @@ class TestOperator(unittest.TestCase):
         self.op = qt.Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
         self.op.set_parameter('s-1', (0.5,))
         self.assertEqual(self.op.selecting[1].pars, (0.5,))
+
 
 
 def suite():

@@ -226,7 +226,7 @@ class Strategy:
             self._data_types = data_types
 
     @abstractmethod
-    def generate(self, hist_data):
+    def generate(self, hist_data: np.ndarray, shares: list, dates: list):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
         raise NotImplementedError
 
@@ -322,7 +322,7 @@ class Timing(Strategy):
         # 生成输出值一维向量
         cat = np.zeros(hist_slice.shape[0])
         hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
-        loop_count = len(hist_nonan) - self._window_length + 1
+        loop_count = len(hist_nonan) - self.window_length + 1
         if loop_count < 1:  # 在开始应用generate_one()
             return cat
 
@@ -342,9 +342,9 @@ class Timing(Strategy):
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[drop] = res
-        return cat
+        return cat[self.window_length:]
 
-    def generate(self, hist_data):
+    def generate(self, hist_data: np.ndarray, shares=None, dates=None):
         """ 生成整个股票价格序列集合的多空状态历史矩阵
 
             本方法基于np的ndarray计算，是择时策略的打包方法。
@@ -686,7 +686,7 @@ class Selecting(Strategy):
         """
         assert isinstance(dates, list), \
             f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
-        bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq).values
+        bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq)
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
         # print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
@@ -701,13 +701,15 @@ class Selecting(Strategy):
 
     # TODO：需要重新定义Selecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
     # TODO: 使函数的定义符合继承类的抽象方法定义规则
-    def generate(self, hist_data):
+    def generate(self, hist_data: np.ndarray, shares, dates):
         """
         生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
         建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
 
         input:
             :param hist_data: type: HistoryPanel, 历史数据
+            :param shares: type:
+            :param dates
         :return:=====
             sel_mask：选股蒙版，是一个与输入历史数据尺寸相同的ndarray，dtype为浮点数，取值范围在0～1之间
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
@@ -717,12 +719,9 @@ class Selecting(Strategy):
         assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
         assert len(self.pars) == self.par_count, \
             f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
-        assert isinstance(hist_data, HistoryPanel), \
-            f'InputError: Expect HistoryPanel object as hist_data, got {type(hist_data)}'
+        assert isinstance(hist_data, np.ndarray), \
+            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
         freq = self.sample_freq
-        dates = hist_data.hdates
-        shares = hist_data.shares
-        h_v= hist_data.values
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
@@ -734,7 +733,7 @@ class Selecting(Strategy):
         # TODO: 可以使用map函数生成分段
         for sp, sl in zip(seg_pos, seg_lens):
             # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(h_v[:, sp:sp + sl, :])
+            share_sel = self._realize(hist_data[:, sp:sp + sl, :])
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
@@ -915,8 +914,11 @@ class Ricon(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def generate(self, hist_data):
-        pass
+    def _realize(self, hist_data, shares, dates):
+        raise NotImplementedError
+
+    def generate(self, hist_data, shares=None, dates=None):
+        return self._realize(hist_data, shares, dates)
 
 
 class RiconNone(Ricon):
@@ -927,7 +929,7 @@ class RiconNone(Ricon):
                          stg_name='NONE',
                          stg_text='Do not take any risk control activity')
 
-    def generate(self, hist_data):
+    def _realize(self, hist_data, shares=None, dates=None):
         return np.zeros_like(hist_data)
 
 
@@ -944,7 +946,7 @@ class RiconUrgent(Ricon):
                          stg_name='URGENT',
                          stg_text='Generate selling signal when N-day drop rate reaches target')
 
-    def generate(self, hist_data):
+    def _realize(self, hist_data, shares, dates):
         """
         # 根据N日内下跌百分比确定的卖出信号，让N日内下跌百分比达到pct时产生卖出信号
 
@@ -1364,7 +1366,9 @@ class Operator:
             ric.info()
         print('=' * 25)
 
-    def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan = None):
+    # TODO 临时性使用cashplan作为参数之一，理想中应该只用一个"start_date"即可，这个Start_date可以在core.run()中具体指定，因为
+    # TODO 在不同的运行模式下，start_date可能来源是不同的：
+    def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan):
         """ 在create_signal之前准备好相关数据如历史数据，检查历史数据是否符合所有策略的要求
 
         :return:
@@ -1382,14 +1386,21 @@ class Operator:
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         for stg in self.selecting:
-            stg_start_pos = first_cash_pos - stg.window_length
-            self._selecting_history_data.append(hist_data[stg.data_types, :, stg_start_pos:])
+            self._selecting_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
+            #print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+            #      f'{len(hist_data.hdates) - first_cash_pos}'
+            #      f' rows for selecting strategies')
         for stg in self.timing:
-            stg_start_pos = first_cash_pos - stg.window_length
-            self._timing_history_data.append(hist_data[stg.data_types, :, stg_start_pos])
+            start_pos = first_cash_pos - stg.window_length
+            self._timing_history_data.append(hist_data[stg.data_types, :, start_pos:])
+            #print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+            #      f'{len(hist_data.hdates) - first_cash_pos}'
+            #      f' rows for timing strategies')
         for stg in self.ricon:
-            stg_start_pos = first_cash_pos - stg.window_length
-            self._ricon_history_data.append(hist_data[stg.data_types, :, stg_start_pos])
+            self._ricon_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
+            # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+            #      f'{len(hist_data.hdates) - first_cash_pos}'
+            #      f' rows for ricon strategies')
 
     # TODO： 目前的三维数据处理方式是：将整个3D historyPanel传入策略，在策略的generate方法所调用的最底层（Timing的generate_one, \
     # TODO：Selecting的select方法等）对历史数据框架进行切片操作，提取出正确的数据。这种方法只是临时应用，最终的应用方式应该是在最外层 \
@@ -1407,19 +1418,18 @@ class Operator:
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
         sel_masks = []
-
         shares = hist_data.shares
         date_list = hist_data.hdates
-        h_v = hist_data.values
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
         assert len(self._timing_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
-        for sel in self._selecting:  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
-            sel_masks.append(sel.generate(hist_data))  # 生成的选股蒙板添加到选股蒙板队列中
+            history_length = dt.shape[1]
+            sel_masks.append(sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         # print('SPEED test OP create, Time of sel_mask blending')
         # %time (self.__selecting_blend(sel_masks))
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
@@ -1445,7 +1455,7 @@ class Operator:
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         ricon_mats = []
-        for ricon, dt in zip(self._ricon, self._timing_history_data):  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
+        for ricon, dt in zip(self._ricon, self._ricon_history_data):  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
             # print('SPEED test OP create, Time of ricon_mask creation')
             ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
         # print('SPEED test OP create, Time of ricon_mask blending')
@@ -1461,6 +1471,9 @@ class Operator:
         op_mat = _legalize(_mask_to_signal(ls_mask * sel_mask) + ricon_mat)
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         # pd.DataFrame(op_mat, index = date_list, columns = share_pool)
+        # print(f'operation matrix shape is {op_mat.shape}')
+        date_list = hist_data.hdates[-op_mat.shape[0]:]
+        # print(f'length of date_list: {len(date_list)}')
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)]['2007-01-15': '2007-03-01'])
         # return lst[lst.any(1)]

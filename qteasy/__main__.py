@@ -16,7 +16,7 @@ if __name__ == '__main__':
     v3D[0] = d.values
     v3D[1] = d.values + 20 # 填入模拟数据
     v3D[2] = d.values - 20 # 填入模拟数据
-    h = hs.HistoryPanel(v3D, ['000300', '000301', '000302'], d.index.values, ['open', 'high', 'low', 'close'])
+    h = hs.HistoryPanel(v3D, ['000300', '000301', '000302'], d.index, ['open', 'high', 'low', 'close'])
     print('INFORMATION OF CREATED HISTORY PANEL: h \n============================')
     h.info() # 模拟3维数据，一支个股，四种类型
     v3D=np.zeros((4, len(d.index), 1)) # 创建一个空的三维矩阵，包含三层，行数和列数与d.values相同
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     v3D[1, :, 0] = d.values.T[1] # 填入模拟数据
     v3D[2, :, 0] = d.values.T[2] # 填入模拟数据
     v3D[3, :, 0] = d.values.T[3] # 填入模拟数据
-    h2 = hs.HistoryPanel(v3D, ['000300', '000301', '000302', '000303'], d.index.values, ['close'])
+    h2 = hs.HistoryPanel(v3D, ['000300', '000301', '000302', '000303'], d.index, ['close'])
     print('INFORMATION OF CREATED HISTORY PANEL: h2\n==========================')
     h2.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
@@ -39,7 +39,8 @@ if __name__ == '__main__':
     # print('Historical data has been extracted')
     # %time d = h.extract(share_pool, start='2005-01-15', end = '2019-10-15', interval = 'd')
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context()
+    cont = Context(investment_amounts=10000,
+                   investment_dates='2006-05-01')
     cont.share_pool = shares
     cont.share_pool = h2.shares
     cont.history_data = h2
@@ -54,7 +55,7 @@ if __name__ == '__main__':
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars = timing_pars3)
+    op.set_parameter('t-0', pars = timing_pars1)
     # op.set_parameter('t-1', pars = timing_pars3)
     # op.set_parameter('t-2', pars = timing_pars4)
     # op.set_parameter('t-3', pars = timing_pars1)
@@ -66,57 +67,5 @@ if __name__ == '__main__':
     print(f'\n START QT RUNNING\n===========================\n')
     run(op, cont, mode=1, history_data=cont.history_data)
 
-    print('start testing HistoryPanel')
-    data = np.random.randint(10, size=(10, 5))
-    index = pd.date_range(start='20200101', freq='d', periods=10)
-    shares = '000100,000101,000102,000103,000104'
-    dtypes = 'close'
-    df = pd.DataFrame(data)
-    print('=========================\nTesting HistoryPanel creation from DataFrame')
-    hp = hs.dataframe_to_hp(df=df, shares=shares, dtypes=dtypes)
-    hp.info()
-    hp = hs.dataframe_to_hp(df=df, shares='000100', dtypes='close, open, high, low, middle', column_type='dtypes')
-    hp.info()
 
-    print('=========================\nTesting HistoryPanel creation from initialization')
-    data = np.random.randint(10, size=(5, 10, 4)).astype('float')
-    index = pd.date_range(start='20200101', freq='d', periods=10)
-    shares = '000100,000101,000102,000103,000104'
-    dtypes = 'close, open, high,low'
-    data[0,[5,6,9], [0,1,3]] = np.nan
-    data[1:4, [4,7,6,2], [1,1,3,0]] = np.nan
-    data[4:5, [2, 9, 1, 2], [0, 3, 2, 1]] = np.nan
-    hp = hs.HistoryPanel(data, levels=shares, columns=dtypes, rows=index)
-    hp.info()
-    print('==========================\n输出close类型的所有历史数据\n',hp['close', :, :])
-    print(f'==========================\n输出close和open类型的所有历史数据\n{hp[[0,1], :, :]}')
-    print(f'==========================\n输出第一只股票的所有类型历史数据\n: {hp[:,[0], :]}')
-    print('==========================\n输出第0、1、2个htype对应的所有股票全部历史数据\n', hp[[0, 1, 2],:,:])
-    print('==========================\n输出close、high两个类型的所有历史数据\n', hp[['close', 'high']])
-    print('==========================\n输出0、1两个htype的所有历史数据\n', hp[[0,1]])
-    print('==========================\n输出close、high两个类型的所有历史数据\n', hp['close,high'])
-    print('==========================\n输出close起到high止的三个类型的所有历史数据\n', hp['close:high'])
-    print('==========================\n输出0、1、3三个股票的全部历史数据\n', hp[:, [0, 1, 3]] )
-    print('==========================\n输出000100、000102两只股票的所有历史数据\n', hp[:, ['000100', '000102']])
-    print('==========================\n输出0、1、2三个股票的历史数据\n', hp[:, 0: 3])
-    print('==========================\n输出000100、000102两只股票的所有历史数据\n', hp[:, '000100, 000102'])
-    print('==========================\n输出所有股票的0-7日历史数据\n', hp[:, :, 0:8])
-    print('==========================\n输出000100股票的0-7日历史数据\n', hp[:, '000100', 0:8])
-    print('==========================\nstart testing multy axis slicing of HistoryPanel object')
-    print('==========================\n输出000100、000120两只股票的close、open两组历史数据\n',
-          hp['close,open', ['000100', '000102']])
-    print('==========================\n输出000100、000120两只股票的close到open三组历史数据\n',
-          hp['close,open', '000100, 000102'])
-    print(f'historyPanel: hp:\n{hp}')
-    print(f'data is:\n{data}')
-    hp.htypes = 'open,high,low,close'
-    hp.info()
-    hp.shares = ['000300', '600227', '600222', '000123', '000129']
-    hp.info()
 
-    cp = CashPlan(['2012-01-01', '2010-01-01'], [10000, 20000], 0.1)
-    cp.info()
-    cp = CashPlan(['20100501'], 10000)
-    cp.info()
-    cp = CashPlan(pd.date_range(start='2019-01-01', freq='Y', periods=12), [i * 1000 + 10000 for i in range(12)], 0.035)
-    cp.info()
