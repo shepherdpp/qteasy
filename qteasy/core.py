@@ -213,57 +213,57 @@ class CashPlan:
 
     @property
     def first_day(self):
-        """ 返回投资第一天的
+        """ 返回投资第一天的日期
 
-        :return:
+        :return: pd.Timestamp
         """
         return self.dates[0]
 
     @property
     def last_day(self):
-        """
+        """ 返回投资期最后一天的日期
 
-        :return:
+        :return: pd.Timestamp
         """
         return self.dates[-1]
 
     @property
     def period(self):
-        """
+        """ 返回第一次投资到最后一次投资之间的时长，单位为天
 
-        :return: pd.Timedelta
+        :return: int
         """
         return (self.last_day - self.first_day).days
 
     @property
     def investment_count(self):
-        """
+        """ 返回在整个投资计划期间的投资次数
 
-        :return:
+        :return: int
         """
         return len(self.dates)
 
     @property
     def dates(self):
-        """
+        """ 返回整个投资计划期间的所有投资日期，按从先到后排列
 
-        :return:
+        :return: list[pandas.Timestamp]
         """
         return list(self.plan.index)
 
     @property
     def amounts(self):
-        """
+        """ 返回整个投资计划期间的所有投资额列表，按从先到后排列
 
-        :return:
+        :return: list[float]
         """
         return list(self.plan.amount)
 
     @property
     def total(self):
-        """
+        """ 返回整个投资计划期间的投资额总和，不考虑利率
 
-        :return:
+        :return: float
         """
         return self.plan.amount.sum()
 
@@ -275,11 +275,22 @@ class CashPlan:
         """
         return self._ir
 
+    @ir.setter
+    def ir(self, ir: float):
+        """ 设置无风险利率
+
+        :param ir: float, 无风险利率
+        :return:
+        """
+        assert isinstance(ir, float)
+        assert 0. < ir < 1.
+        self._ir = ir
+
     @property
     def closing_value(self):
         """ 计算所有投资额按照无风险利率到最后一个投资额的终值
 
-        :return:
+        :return: float
         """
         if self.ir == 0:
             return self.total
@@ -293,7 +304,7 @@ class CashPlan:
     def opening_value(self):
         """ 计算所有投资额按照无风险利率在第一个投资日的现值
 
-        :return:
+        :return: float
         """
         if self.ir == 0:
             return self.total
@@ -305,23 +316,23 @@ class CashPlan:
 
     @property
     def plan(self):
-        """ 返回整个投资区间的投资计划，形式为字典
+        """ 返回整个投资区间的投资计划，形式为DataFrame
 
-        :return:
+        :return: pandas.DataFrame
         """
         return self._cash_plan
 
     def to_dict(self):
-        """
+        """ 返回整个投资区间的投资计划，形式为字典
 
-        :return:
+        :return: dict
         """
         return dict(self.plan.amount)
 
     def info(self):
         """ 打印投资计划的所有信息
 
-        :return:
+        :return: None
         """
         import sys
         print(f'\n{type(self)}')

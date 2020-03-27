@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 from qteasy.utilfuncs import sma, ema, trix, macd, cdldoji
+from qteasy import CashPlan
 from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
 
@@ -154,6 +155,13 @@ class Strategy:
         else:
             str5 = f'\nParameter NOT loaded!\n'
         return ''.join([str1, str2, str3, str4, str5])
+
+    def __repr__(self):
+        """
+
+        :return:
+        """
+        raise NotImplementedError
 
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""
@@ -364,16 +372,10 @@ class Timing(Strategy):
         else:
             par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
-        if len(hist_data.shape) == 3:  # 数据为3D的情形
-            # print(f'went through if fork hist_data - 3D')
-            res = np.array(list(map(self._generate_over,
-                                    hist_data,
-                                    par_list))).T
-        else:  # TODO： 数据为2D的情形是不需要的，仅在初期调试时使用，未来将删除
-            # print(f'went through if fork hist_data - 2D')
-            res = np.array(list(map(self._generate_over,
-                                    hist_data.T,
-                                    par_list))).T
+        res = np.array(list(map(self._generate_over,
+                                hist_data,
+                                par_list))).T
+
         # print(f'generate result of np timing generate, result shaped {res.shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
@@ -1223,6 +1225,18 @@ class Operator:
                 types.extend(['enum'])
         return ranges, types
 
+    @property
+    def max_window_length(self):
+        """ find out max window length in all strategies
+
+        :return:
+        """
+        max_wl = 0
+        for stg in self.strategies:
+            if stg.window_length > max_wl:
+                max_wl = stg.window_length
+        return max_wl
+
     # Operation对象有两类属性需要设置：blender混合器属性、Parameters策略参数或属性
     # 这些属性参数的设置需要在OP模块设置一个统一的设置入口，同时，为了实现与Optimizer模块之间的接口
     # 还需要创建两个Opti接口函数，一个用来根据的值创建合适的Space初始化参数，另一个用于接受opt
@@ -1350,20 +1364,32 @@ class Operator:
             ric.info()
         print('=' * 25)
 
-    def prepare_data(self, hist_data: HistoryPanel, start_date=None, end_date=None):
+    def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan = None):
         """ 在create_signal之前准备好相关数据如历史数据，检查历史数据是否符合所有策略的要求
 
         :return:
         """
-        assert isinstance(hist_data, HistoryPanel), \
-            f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
+        assert isinstance(hist_data, HistoryPanel),\
+            f'TypeError: historical data should be HistoryPanel, got {type(hist_data)}'
+        assert isinstance(cash_plan, CashPlan),\
+            f'TypeError: cash plan should be CashPlan object, got {type(cash_plan)}'
+        first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
+        last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
+        assert first_cash_pos >= self.max_window_length, \
+            f'InputError, Not enough history data records on first cash date, expect {self.max_window_length},' \
+            f' got {first_cash_pos} records only'
+        assert last_cash_pos < len(hist_data.hdates), \
+            f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
+            f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         for stg in self.selecting:
-            self._selecting_history_data.append(hist_data[stg.data_types])
+            stg_start_pos = first_cash_pos - stg.window_length
+            self._selecting_history_data.append(hist_data[stg.data_types, :, stg_start_pos:])
         for stg in self.timing:
-            self._timing_history_data.append(hist_data[stg.data_types])
+            stg_start_pos = first_cash_pos - stg.window_length
+            self._timing_history_data.append(hist_data[stg.data_types, :, stg_start_pos])
         for stg in self.ricon:
-            self._ricon_history_data.append(hist_data[stg.data_types])
-
+            stg_start_pos = first_cash_pos - stg.window_length
+            self._ricon_history_data.append(hist_data[stg.data_types, :, stg_start_pos])
 
     # TODO： 目前的三维数据处理方式是：将整个3D historyPanel传入策略，在策略的generate方法所调用的最底层（Timing的generate_one, \
     # TODO：Selecting的select方法等）对历史数据框架进行切片操作，提取出正确的数据。这种方法只是临时应用，最终的应用方式应该是在最外层 \
