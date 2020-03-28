@@ -386,15 +386,15 @@ def hdf_to_hp():
     raise NotImplementedError
 
 def dataframe_to_hp(df: pd.DataFrame,
-                    index=None,
-                    dtypes=None,
+                    hdates=None,
+                    htypes=None,
                     shares=None,
                     column_type: str = 'share') -> HistoryPanel:
     """ 根据DataFrame中的数据创建历史数据板HistoryPanel对象
 
     :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame
-    :param index:
-    :param dtypes: str,
+    :param hdates:
+    :param htypes: str,
     :param shares: str,
     :param column_type:
     :return:
@@ -402,12 +402,12 @@ def dataframe_to_hp(df: pd.DataFrame,
     """
     from collections import Iterable
     assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
-    if index is None:
-        index = df.index
-    assert isinstance(index, Iterable), f'TypeError, index should be iterable, got {type(index)} instead.'
-    index_count = len(index)
+    if hdates is None:
+        hdates = df.index
+    assert isinstance(hdates, Iterable), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
+    index_count = len(hdates)
     assert index_count == len(df.index), \
-        f'InputError, can not match {index_count} indices with {len(df.index)} rows of DataFrame'
+        f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
     if column_type.lower() == 'share':
         if shares is None:
             shares = df.columns
@@ -420,29 +420,29 @@ def dataframe_to_hp(df: pd.DataFrame,
             assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
-        assert dtypes is not None, f'InputError, dtypes should be given when they can not inferred'
-        assert isinstance(dtypes, str), \
-            f'TypeError, data type of dtype should be a string, got {type(dtypes)} instead.'
+        assert htypes is not None, f'InputError, htypes should be given when they can not inferred'
+        assert isinstance(htypes, str), \
+            f'TypeError, data type of dtype should be a string, got {type(htypes)} instead.'
         share_count = len(shares)
-        history_panel_value = np.zeros(shape=(share_count, len(index), 1))
+        history_panel_value = np.zeros(shape=(share_count, len(hdates), 1))
         for i in range(share_count):
             history_panel_value[i, :, 0] = df.values[:, i]
     else:
-        if dtypes is None:
-            dtypes = df.columns
-        elif isinstance(dtypes, str):
-            dtypes = dtypes.split(',')
-            assert len(dtypes) == len(df.columns), \
-                f'InputError, can not match {len(dtypes)} shares with {len(df.columns)} columns of DataFrame'
+        if htypes is None:
+            htypes = df.columns
+        elif isinstance(htypes, str):
+            htypes = htypes.split(',')
+            assert len(htypes) == len(df.columns), \
+                f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         else:
-            assert isinstance(dtypes, Iterable), f'TypeError: levels should be iterable, got {type(dtypes)} instead.'
-            assert len(dtypes) == len(df.columns), \
-                f'InputError, can not match {len(dtypes)} shares with {len(df.columns)} columns of DataFrame'
+            assert isinstance(htypes, Iterable), f'TypeError: levels should be iterable, got {type(htypes)} instead.'
+            assert len(htypes) == len(df.columns), \
+                f'InputError, can not match {len(htypes)} shares with {len(df.columns)} columns of DataFrame'
         assert shares is not None, f'InputError, shares should be given when they can not inferred'
         assert isinstance(shares, str), \
             f'TypeError, data type of share should be a string, got {type(shares)} instead.'
-        history_panel_value = df.values.reshape(1, len(index), len(dtypes))
-    return HistoryPanel(values=history_panel_value, levels=shares, rows=index, columns=dtypes)
+        history_panel_value = df.values.reshape(1, len(hdates), len(htypes))
+    return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
 #TODO implement this method

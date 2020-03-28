@@ -542,7 +542,7 @@ def apply_loop(op_list: pd.DataFrame,
     op_count = op.shape[0]  # 获取行数
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
-    print(f'investment date position calculated: {investment_date_pos}')
+    # print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
     cash = 0  # 持有现金总额，初始化为初始现金总额
     amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
@@ -553,7 +553,7 @@ def apply_loop(op_list: pd.DataFrame,
     for i in range(op_count):  # 对每一行历史交易信号开始回测
         if i in investment_date_pos:
             cash += invest_dict[i]
-            print(f'In loop process, on loop position {i} cash increased from {cash - invest_dict[i]} to {cash}')
+            # print(f'In loop process, on loop position {i} cash increased from {cash - invest_dict[i]} to {cash}')
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
                                                op=op[i], prices=price[i],
@@ -626,9 +626,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     shares = context.share_pool
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     if mode is None:
-        exe_mode = context.mode
+        run_mode = context.mode
     else:
-        exe_mode = mode
+        run_mode = mode
     # 如果没有显式给出 history_data 历史数据，则按照context上下文对象设定的回测、优化区间及频率参数建立历史数据，否则适用history_data 数据
     # TODO： 直接给出history_data是一个没有明确定义的操作：history_data被用于回测？还是优化？如何确保符合op的要求？详见下方hist_data_req
     # TODO： 对于策略生成、策略回测和策略优化有可能应用不同的历史数据，因此应该分别处理并生成不同的历史数据集，例如策略生成需要用到3D多类型数据 \
@@ -649,7 +649,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         hist_loop = history_data.to_dataframe(htype='close')
 
     # ========
-    if exe_mode == 0:
+    if run_mode == 0:
         """进入实时信号生成模式：
         
             根据生成的执行器历史数据hist_op，应用operator对象中定义的投资策略生成当前的投资组合和各投资产品的头寸及仓位
@@ -671,7 +671,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         """
         raise NotImplementedError
 
-    elif exe_mode == 1:
+    elif run_mode == 1:
         """进入回测模式：
         
             根据执行器历史数据hist_op，应用operator执行器对象中定义的投资策略生成一张投资产品头寸及仓位建议表。
@@ -724,26 +724,26 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                    hist_loop.fillna(0),
                                    cash_plan=context.cash_plan,
                                    moq=0,
-                                   visual=False,
-                                   cost_rate=context.rate,
-                                   price_visual=False)
-        et = time.clock()
-        print(f'time elapsed for operation back looping: {et-st:.5f}')
-        looped_values = apply_loop(op_list,
-                                   hist_loop.fillna(0),
-                                   cash_plan=context.cash_plan,
-                                   moq=0,
                                    visual=True,
                                    cost_rate=context.rate,
                                    price_visual=True)
-        ret = looped_values.value[-1] / looped_values.value[0]
-        years = (looped_values.index[-1] - looped_values.index[0]).days / 365.
-        print(f'\ninvestment starts on {looped_values.index[0]}')
-        print('Total investment years:', np.round(years, 1), np.round(ret * 100 - 100, 3), '%, final value:',
-              np.round(ret * context.cash_plan.amounts[0], 2))
-        print('Average Yearly return rate: ', np.round((ret ** (1 / years) - 1) * 100, 3), '%')
+        et = time.clock()
+        print(f'time elapsed for operation back looping: {et-st:.5f}')
+        years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
+                                                                     looped_value=looped_values,
+                                                                     cash_plan=context.cash_plan)
+        final_value = _eval_fv(looped_val=looped_values)
+        ret = final_value / total_invest
+        max_drawdown, low_date = _eval_max_drawdown(looped_values)
+        print(f'\ninvestment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}'
+              f'\nTotal looped periods: {years} years.')
+        print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
+        print(f'total investment amount: ¥{total_invest:11,.2f}\n'
+              f'final value:             ¥{final_value:11,.2f}')
+        print(f'Total return: {ret * 100:.3f}% \nAverage Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
+        print(f'Max drawdown in loop period: {max_drawdown * 100:.3f}% on {low_date}')
 
-    elif exe_mode == 2:
+    elif run_mode == 2:
         """进入策略优化模式：
         
             优化模式的目的是寻找能让策略的运行效果最佳的参数或参数组合。
@@ -1062,30 +1062,80 @@ def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
 """
     raise NotImplementedError
 
+def _eval_benchmark(looped_value, reference_value):
+    """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
+
+    :param looped_value:
+    :param reference_value:
+    :return:
+    """
+    raise NotImplementedError
 
 def _eval_alpha(looped_val):
-    """ 回测结果评价函数：alpha率"""
+    """ 回测结果评价函数：alpha率
+
+    阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - beta × (参考标准年化收益 - 无风险收益)，
+    这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
+    :param looped_val:
+    :return:
+    """
     raise NotImplementedError
 
+def _eval_beta(looped_value):
+    """ 贝塔。具体计算方法为 策略每日收益与参考标准每日收益的协方差 / 参考标准每日收益的方差 。
+
+    :param looped_value:
+    :return:
+    """
+    raise NotImplementedError
 
 def _eval_sharp(looped_val):
-    """ 回测结果评价函数：夏普率"""
+    """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
+
+    具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
+
+    :param looped_val:
+    :return:
+    """
     raise NotImplementedError
 
+def _eval_volatility(looped_value):
+    """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差 。
 
-def _eval_roi(looped_val):
-    """评价函数 总收益率及年化收益率'
-
-'投资模拟期间资产投资年化收益率
-
-input:
-:param looped_val，ndarray，回测器生成输出的交易模拟记录
-return: =====
-perf：float，应用该评价方法对回测模拟结果的评价分数
-
-"""
+    :param looped_value:
+    :return:
+    """
     raise NotImplementedError
 
+def _eval_info_ratio(looped_value):
+    """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
+
+    :param looped_value:
+    :return:
+    """
+    raise NotImplementedError
+
+def _eval_max_drawdown(looped_value):
+    """ 最大回撤。描述策略可能出现的最糟糕的情况。具体计算方法为 max(1 - 策略当日价值 / 当日之前虚拟账户最高价值)
+
+    :param looped_value:
+    :return:
+    """
+    assert isinstance(looped_value, pd.DataFrame), f''
+    if not looped_value.empty:
+        max_val = 0
+        max_drawdown = 0
+        max_drawdown_date = 0
+        for date, value in looped_value.value.iteritems():
+            if value > max_val:
+                max_val = value
+            drawdown = 1 - value / max_val
+            if drawdown > max_drawdown:
+                max_drawdown = drawdown
+                max_drawdown_date = date
+        return max_drawdown, max_drawdown_date
+    else:
+        return -np.inf
 
 def _eval_fv(looped_val):
     """评价函数 Future Value 终值评价
@@ -1105,6 +1155,44 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
         return perf
     else:
         return -np.inf
+
+def _eval_operation(op_list, looped_value, cash_plan):
+    """ 评价函数，统计操作过程中的基本信息:
+
+    对回测过程进行统计，输出以下内容：
+    1，总交易次数：买入操作次数、卖出操作次数
+    2，总投资额
+    3，总交易费用
+    4，回测时间长度
+
+    :param looped_value:
+    :param cash_plan:
+    :return:
+    """
+    total_year = np.round((looped_value.index[-1] - looped_value.index[0]).days / 365., 1)
+    sell_counts = []
+    buy_counts = []
+    for share, ser in op_list.iteritems():
+        sell_count = 0
+        buy_count = 0
+        current_pos = -1
+        for i, value in ser.iteritems():
+            if np.sign(value) != current_pos:
+                current_pos = np.sign(value)
+                if current_pos == 1:
+                    buy_count += 1
+                else:
+                    sell_count += 1
+        sell_counts.append(sell_count)
+        buy_counts.append(buy_count)
+    op_counts = pd.DataFrame(sell_counts, index=op_list.columns, columns=['sell'])
+    op_counts['buy'] = buy_counts
+    op_counts['total'] = op_counts.buy + op_counts.sell
+    total_op_fee = looped_value.fee.sum()
+    total_investment = cash_plan.total
+
+    return total_year, op_counts, total_investment, total_op_fee
+
 
 # TODO：eval()函数没必要写那么多个，可以根据需要统一到一个评价函数中
 def _eval(looped_val, method: str = None):

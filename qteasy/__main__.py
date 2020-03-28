@@ -5,46 +5,26 @@ import pandas as pd
 
 if __name__ == '__main__':
 
-    op = Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
+    op = Operator(timing_types=['DMA','MACD'], selecting_types=['simple'], ricon_types=['urgent'])
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
     '''d.drop(labels=['open', 'high', 'low', 'volume', 'amount'], axis=1, inplace=True)
     d.columns = ['000300-I']'''
     d = d[::-1]
-    v3D=np.zeros((3, *d.values.shape)) # 创建一个空的三维矩阵，包含三层，行数和列数与d.values相同
-    v3D[0] = d.values
-    v3D[1] = d.values + 20 # 填入模拟数据
-    v3D[2] = d.values - 20 # 填入模拟数据
-    h = hs.HistoryPanel(v3D, ['000300', '000301', '000302'], d.index, ['open', 'high', 'low', 'close'])
-    print('INFORMATION OF CREATED HISTORY PANEL: h \n============================')
-    h.info() # 模拟3维数据，一支个股，四种类型
-    v3D=np.zeros((4, len(d.index), 1)) # 创建一个空的三维矩阵，包含三层，行数和列数与d.values相同
-    v3D[0, :, 0] = d.values.T[0]
-    v3D[1, :, 0] = d.values.T[1] # 填入模拟数据
-    v3D[2, :, 0] = d.values.T[2] # 填入模拟数据
-    v3D[3, :, 0] = d.values.T[3] # 填入模拟数据
-    h2 = hs.HistoryPanel(v3D, ['000300', '000301', '000302', '000303'], d.index, ['close'])
-    print('INFORMATION OF CREATED HISTORY PANEL: h2\n==========================')
-    h2.info()
+    hp = hs.dataframe_to_hp(d,column_type='htype', shares='000300')
+    print('INFORMATION OF CREATED HISTORY PANEL: \n==========================')
+    hp.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(0.5,))
-    op.set_parameter('s-1', pars=(0.5,))
+    op.set_parameter('s-0', pars=(0.5,))
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
-
-    shares = ['600037', '600547', '000726', '600111', '600600', '600549', '000001',
-              '000002', '000005', '000004', '000006', '000007', '000008']
-    # share_pool = ['600037', '000005']
-    # print('Historical data has been extracted')
-    # %time d = h.extract(share_pool, start='2005-01-15', end = '2019-10-15', interval = 'd')
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context(investment_amounts=[100000,200000],
-                   investment_dates=['2006-05-01', '2007-05-01'])
-    cont.share_pool = shares
-    cont.share_pool = h2.shares
-    cont.history_data = h2
-    # print ('Optimization Period:', opt.opt_period_start, opt.opt_period_end,opt.opt_period_freq)
+    cont = Context(investment_amounts=[2000],
+                   investment_dates=['2004-05-01'])
+    cont.share_pool = hp.shares
+    cont.history_data = hp
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
     timing_pars1 = (86, 198, 58)
@@ -56,7 +36,7 @@ if __name__ == '__main__':
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
     op.set_parameter('t-0', pars = timing_pars1)
-    # op.set_parameter('t-1', pars = timing_pars3)
+    op.set_parameter('t-1', pars = timing_pars3)
     # op.set_parameter('t-2', pars = timing_pars4)
     # op.set_parameter('t-3', pars = timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
