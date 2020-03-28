@@ -1417,6 +1417,7 @@ class Operator:
         """
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
+        import time
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
@@ -1426,12 +1427,15 @@ class Operator:
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
+        st = time.clock()
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             history_length = dt.shape[1]
             sel_masks.append(sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         # print('SPEED test OP create, Time of sel_mask blending')
         # %time (self.__selecting_blend(sel_masks))
+        et = time.clock()
+        print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
@@ -1440,6 +1444,7 @@ class Operator:
         # hist_selected = hist_data * selected_shares
         # print ('Time measurement: ls_mask creation')
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
+        st = time.clock()
         ls_masks = []
         for tmg, dt in zip(self._timing, self._timing_history_data):  # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
             # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
@@ -1447,6 +1452,8 @@ class Operator:
             ls_masks.append(tmg.generate(dt))
             # print(tmg.generate(h_v))
             # print('ls mask created: ', tmg.generate(hist_selected).iloc[980:1000])
+        et = time.clock()
+        print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
         # print('SPEED test OP create, Time of ls_mask blending')
         # %time self.__timing_blend(ls_masks)
         ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
@@ -1454,10 +1461,13 @@ class Operator:
         # print( '\n long/short mask: \n', ls_mask)
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
+        st = time.clock()
         ricon_mats = []
         for ricon, dt in zip(self._ricon, self._ricon_history_data):  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
             # print('SPEED test OP create, Time of ricon_mask creation')
             ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
+        et = time.clock()
+        print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
         # print('SPEED test OP create, Time of ricon_mask blending')
         # %time self.__ricon_blend(ricon_mats)
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略

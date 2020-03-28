@@ -39,8 +39,8 @@ if __name__ == '__main__':
     # print('Historical data has been extracted')
     # %time d = h.extract(share_pool, start='2005-01-15', end = '2019-10-15', interval = 'd')
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context(investment_amounts=10000,
-                   investment_dates='2006-05-01')
+    cont = Context(investment_amounts=[100000,200000],
+                   investment_dates=['2006-05-01', '2007-05-01'])
     cont.share_pool = shares
     cont.share_pool = h2.shares
     cont.history_data = h2

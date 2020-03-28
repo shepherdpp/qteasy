@@ -328,12 +328,19 @@ class CashPlan:
         """
         return self._cash_plan
 
-    def to_dict(self):
-        """ 返回整个投资区间的投资计划，形式为字典
+    def to_dict(self, keys: list = None):
+        """ 返回整个投资区间的投资计划，形式为字典。默认key为日期，如果明确给出keys，则使用参数keys
 
         :return: dict
         """
-        return dict(self.plan.amount)
+        if keys is None:
+            return dict(self.plan.amount)
+        else:
+            # assert isinstance(keys, list), f'TypeError, keys should be list, got {type(keys)} instead.'
+            assert len(keys) == len(self.amounts), \
+                f'InputError, count of elements in keys should be same as that of investment amounts, expect ' \
+                f'{len(self.amounts)}, got {len(keys)}'
+            return dict(zip(keys, self.amounts))
 
     def info(self):
         """ 打印投资计划的所有信息
@@ -497,19 +504,24 @@ def _get_complete_hist(values, h_list, with_price=False):
 
 # TODO：回测主入口函数需要增加现金计划、多种回测结果评价函数、回测过程log记录、回测结果可视化和回测结果参照标准
 # TODO：增加一个参数，允许用户选择是否考虑现金的无风险利率增长
-def apply_loop(op_list, history_list, visual=False, price_visual=False,
-               init_cash=100000, rate=None, moq=100):
+def apply_loop(op_list: pd.DataFrame,
+               history_list: pd.DataFrame,
+               visual: bool = False,
+               price_visual: bool = False,
+               cash_plan: CashPlan = None,
+               cost_rate: Rate = None,
+               moq: float = 100.):
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
     input：=====
-        :type init_cash: float: 初始资金额，未来将被替换为CashPlan对象
+        :type cash_plan: float: 初始资金额，未来将被替换为CashPlan对象
         :type price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效，未来将增加reference数据
         :type history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
         :type visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
                             为True时将数据填充到整个历史区间，并用图表输出
         :type op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
-        :type rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
+        :type cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
         :type moq: float：每次交易的最小份额
 
     output：=====
@@ -517,25 +529,35 @@ def apply_loop(op_list, history_list, visual=False, price_visual=False,
 
     """
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
-    assert rate is not None, 'TyepError: rate should not be None type'
+    assert cost_rate is not None, 'TyepError: cost_rate should not be None type'
 
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，知道找到更好的向量化执行方法
+
     op = op_list.values
     price = history_list.fillna(0).loc[op_list.index].values
+    looped_dates = list(op_list.index)
+    if cash_plan is None:
+        cash_plan = CashPlan(dates=looped_dates[0], amounts=100000, interest_rate=0)
     op_count = op.shape[0]  # 获取行数
+    investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
+    invest_dict = cash_plan.to_dict(investment_date_pos)
+    print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
-    cash = init_cash  # 持有现金总额，初始化为初始现金总额
+    cash = 0  # 持有现金总额，初始化为初始现金总额
     amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
     cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
     for i in range(op_count):  # 对每一行历史交易信号开始回测
+        if i in investment_date_pos:
+            cash += invest_dict[i]
+            print(f'In loop process, on loop position {i} cash increased from {cash - invest_dict[i]} to {cash}')
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
                                                op=op[i], prices=price[i],
-                                               rate=rate,
+                                               rate=cost_rate,
                                                moq=moq)
         # 保存计算结果
         cashes.append(cash)
@@ -696,14 +718,24 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         st = time.clock()
         op_list = operator.create_signal(hist_data=hist_op)
         et = time.clock()
-        print(f'time elapsed for operator.create_signal: {et-st:.3f}')
+        print(f'time elapsed for operator.create_signal: {et-st:.5f}')
         st = time.clock()
-        looped_values = apply_loop(op_list, hist_loop.fillna(0),
-                                   init_cash=context.cash_plan.amounts[0],
-                                   moq=0, visual=True, rate=context.rate,
-                                   price_visual=True)
+        looped_values = apply_loop(op_list,
+                                   hist_loop.fillna(0),
+                                   cash_plan=context.cash_plan,
+                                   moq=0,
+                                   visual=False,
+                                   cost_rate=context.rate,
+                                   price_visual=False)
         et = time.clock()
-        print(f'time elapsed for operation back looping: {et-st:.3f}')
+        print(f'time elapsed for operation back looping: {et-st:.5f}')
+        looped_values = apply_loop(op_list,
+                                   hist_loop.fillna(0),
+                                   cash_plan=context.cash_plan,
+                                   moq=0,
+                                   visual=True,
+                                   cost_rate=context.rate,
+                                   price_visual=True)
         ret = looped_values.value[-1] / looped_values.value[0]
         years = (looped_values.index[-1] - looped_values.index[0]).days / 365.
         print(f'\ninvestment starts on {looped_values.index[0]}')
