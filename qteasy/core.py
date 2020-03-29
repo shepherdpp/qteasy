@@ -735,6 +735,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         final_value = _eval_fv(looped_val=looped_values)
         ret = final_value / total_invest
         max_drawdown, low_date = _eval_max_drawdown(looped_values)
+        volatility = _eval_volatility(looped_values, hist_loop)
         print(f'\ninvestment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}'
               f'\nTotal looped periods: {years} years.')
         print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
@@ -742,6 +743,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
               f'final value:             ¥{final_value:11,.2f}')
         print(f'Total return: {ret * 100:.3f}% \nAverage Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
         print(f'Max drawdown in loop period: {max_drawdown * 100:.3f}% on {low_date}')
+        print(f'250 day volatility is {volatility:.3f}')
 
     elif run_mode == 2:
         """进入策略优化模式：
@@ -1099,13 +1101,21 @@ def _eval_sharp(looped_val):
     """
     raise NotImplementedError
 
-def _eval_volatility(looped_value):
+def _eval_volatility(looped_value, hist_list):
     """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差 。
 
     :param looped_value:
     :return:
     """
-    raise NotImplementedError
+    assert isinstance(looped_value, pd.DataFrame), \
+        f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
+    if not looped_value.empty:
+        looped_value = _get_complete_hist(looped_value, hist_list)
+        ret = np.log(looped_value / looped_value.shift(1))
+        volatility = ret.rolling(250).std() * np.sqrt(250)
+        return volatility[-1]
+    else:
+        return -np.inf
 
 def _eval_info_ratio(looped_value):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
@@ -1121,7 +1131,8 @@ def _eval_max_drawdown(looped_value):
     :param looped_value:
     :return:
     """
-    assert isinstance(looped_value, pd.DataFrame), f''
+    assert isinstance(looped_value, pd.DataFrame), \
+        f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if not looped_value.empty:
         max_val = 0
         max_drawdown = 0
