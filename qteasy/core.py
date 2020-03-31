@@ -77,10 +77,10 @@ class Context:
                  moq: int = 100,
                  investment_amounts: list = None,
                  investment_dates: list = None,
-                 base_interest_rate: float = 0.035,
+                 riskfree_interest_rate: float = 0.035,
                  visual: bool = False,
                  reference_visual: bool = False,
-                 reference_data: list = None):
+                 reference_data: str = None):
         """初始化所有的环境变量和环境常量
 
         input:
@@ -101,7 +101,7 @@ class Context:
             f'InputError, investment dates should be given, got {type(investment_dates)}'
         self.cash_plan = CashPlan(dates=investment_dates,
                                   amounts=investment_amounts,
-                                  interest_rate=base_interest_rate)  # 回测初始现金金额
+                                  interest_rate=riskfree_interest_rate)  # 回测初始现金金额
         # TODO： 将整数形式的初始现金金额修改为投资现金对象CashPlan
         today = datetime.datetime.today().date()
         self.share_pool = []  # 优化参数所针对的投资产品
@@ -399,6 +399,7 @@ class CashPlan:
         """
         return self.plan[item]
 
+
 def distribute_investment(amount, start, end, periods, freq):
     """ 将投资额拆分成一系列定投金额，并生成一个CashPlan对象
 
@@ -409,6 +410,7 @@ def distribute_investment(amount, start, end, periods, freq):
     :param freq:
     :return:
     """
+
 
 # TODO: 使用Numba加速_loop_step()函数
 def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
@@ -624,6 +626,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     # 从context 上下文对象中读取运行所需的参数：
     # 股票清单或投资产品清单
     shares = context.share_pool
+    reference_data = context.reference_data
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     if mode is None:
         run_mode = context.mode
@@ -641,12 +644,15 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                           interval=freq)
         hist_loop = None  # 用于数据回测的历史数据
         hist_opti = None  # 用于策略优化的历史数据
+        hist_reference = None
     else:
-        # TODO: hist_data_req：这里的代码需要优化：直接传入的
+        # TODO: hist_data_req：这里的代码需要优化：正常工作中，历史数据不需要手工传入，应该可以根据需要策略的参数和context配置自动 \
+        # TODO: 下载或者从数据库自动读取
         assert isinstance(history_data, HistoryPanel), \
             f'historical price should be HistoryPanel! got {type(history_data)}'
         hist_op = history_data
         hist_loop = history_data.to_dataframe(htype='close')
+        hist_reference = history_data.to_dataframe(htype='close')
 
     # ========
     if run_mode == 0:
@@ -736,14 +742,27 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         ret = final_value / total_invest
         max_drawdown, low_date = _eval_max_drawdown(looped_values)
         volatility = _eval_volatility(looped_values, hist_loop)
+        ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
+        beta = _eval_beta(looped_values, hist_loop, hist_reference, reference_data)
+        sharp = _eval_sharp(looped_values, hist_loop, total_invest, 0.035)
+        alpha = _eval_alpha(looped_values, total_invest, hist_loop, hist_reference, reference_data)
+        print(f'==================================== \n'
+              f'           LOOPING RESULT\n'
+              f'====================================')
         print(f'\ninvestment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}'
               f'\nTotal looped periods: {years} years.')
         print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
         print(f'total investment amount: ¥{total_invest:11,.2f}\n'
               f'final value:             ¥{final_value:11,.2f}')
         print(f'Total return: {ret * 100:.3f}% \nAverage Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
-        print(f'Max drawdown in loop period: {max_drawdown * 100:.3f}% on {low_date}')
-        print(f'250 day volatility is {volatility:.3f}')
+        print(f'Total reference return: {ref_rtn * 100:.3f}% \n'
+              f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
+        print(f'strategy performance indicators: \n'
+              f'alpha:               {alpha:.3f}\n'
+              f'Beta:                {beta:.3f}\n'
+              f'Sharp rate:          {sharp:.3f}\n'
+              f'250 day volatility:  {volatility:.3f}\n'
+              f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
 
     elif run_mode == 2:
         """进入策略优化模式：
@@ -1064,34 +1083,65 @@ def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
 """
     raise NotImplementedError
 
-def _eval_benchmark(looped_value, reference_value):
+
+def _eval_benchmark(looped_value, reference_value, reference_data):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
 
     :param looped_value:
     :param reference_value:
     :return:
     """
-    raise NotImplementedError
+    first_day = looped_value.index[0]
+    last_day = looped_value.index[-1]
+    total_year = (last_day - first_day).days / 365
+    rtn_data = reference_value[reference_data]
+    rtn = (rtn_data[last_day] / rtn_data[first_day])
+    return rtn, rtn ** (1 / total_year) - 1.
 
-def _eval_alpha(looped_val):
+
+def _eval_alpha(looped_val, total_invest, hist_list, reference_value, reference_data):
     """ 回测结果评价函数：alpha率
 
     阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - beta × (参考标准年化收益 - 无风险收益)，
     这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
     :param looped_val:
+    :param total_invest:
+    :param reference_value:
+    :param reference_data:
     :return:
     """
-    raise NotImplementedError
+    first_day = looped_val.index[0]
+    last_day = looped_val.index[-1]
+    total_year = (last_day - first_day).days / 365
+    final_value = _eval_fv(looped_val)
+    strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
+    reference_return, reference_yearly_return = _eval_benchmark(looped_val, reference_value, reference_data)
+    beta = _eval_beta(looped_val, hist_list, reference_value, reference_data)
+    return (strategy_return - 0.035) - beta * (reference_yearly_return - 0.035)
 
-def _eval_beta(looped_value):
+
+def _eval_beta(looped_value, hist_list, reference_value, reference_data):
     """ 贝塔。具体计算方法为 策略每日收益与参考标准每日收益的协方差 / 参考标准每日收益的方差 。
 
+    :param reference_value:
     :param looped_value:
     :return:
     """
-    raise NotImplementedError
+    assert isinstance(reference_value, pd.DataFrame)
+    first_day = looped_value.index[0]
+    last_day = looped_value.index[-1]
+    looped_value = _get_complete_hist(looped_value, hist_list).loc[first_day:last_day]
+    ret = looped_value / looped_value.shift(1)
+    ret_dev = ret.std()
+    ref = reference_value[reference_data]
+    ref_ret = ref / ref.shift(1)
+    looped_value = pd.DataFrame(looped_value)
+    looped_value['ref'] = ref_ret
+    looped_value['ret'] = ret
+    return looped_value.ref.cov(looped_value.ret) / ret_dev
 
-def _eval_sharp(looped_val):
+
+def _eval_sharp(looped_val, hist_list, total_invest, riskfree_interest_rate):
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
@@ -1099,12 +1149,20 @@ def _eval_sharp(looped_val):
     :param looped_val:
     :return:
     """
-    raise NotImplementedError
+    first_day = looped_val.index[0]
+    last_day = looped_val.index[-1]
+    total_year = (last_day - first_day).days / 365
+    final_value = _eval_fv(looped_val)
+    strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
+    volatility = _eval_volatility(looped_val, hist_list)
+    return (strategy_return - riskfree_interest_rate) / volatility
+
 
 def _eval_volatility(looped_value, hist_list):
     """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差 。
 
     :param looped_value:
+    :parma hist_list:
     :return:
     """
     assert isinstance(looped_value, pd.DataFrame), \
@@ -1117,6 +1175,7 @@ def _eval_volatility(looped_value, hist_list):
     else:
         return -np.inf
 
+
 def _eval_info_ratio(looped_value):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
 
@@ -1124,6 +1183,7 @@ def _eval_info_ratio(looped_value):
     :return:
     """
     raise NotImplementedError
+
 
 def _eval_max_drawdown(looped_value):
     """ 最大回撤。描述策略可能出现的最糟糕的情况。具体计算方法为 max(1 - 策略当日价值 / 当日之前虚拟账户最高价值)
@@ -1148,6 +1208,7 @@ def _eval_max_drawdown(looped_value):
     else:
         return -np.inf
 
+
 def _eval_fv(looped_val):
     """评价函数 Future Value 终值评价
 
@@ -1166,6 +1227,7 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
         return perf
     else:
         return -np.inf
+
 
 def _eval_operation(op_list, looped_value, cash_plan):
     """ 评价函数，统计操作过程中的基本信息:
@@ -1240,6 +1302,7 @@ class ResultPool:
     新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右'
     即使在结果池很小，总数据量很大的情况下，循环排序的速度也慢于单次排序修剪
     """
+
     # result pool operation:
     def __init__(self, capacity):
         """result pool stores all intermediate or final result of searching, the points"""
@@ -1329,7 +1392,7 @@ class Space:
     列表中的值
     """
 
-    def __init__(self, pars, par_types:list = None):
+    def __init__(self, pars, par_types: list = None):
         """参数空间对象初始化，根据输入的参数生成一个空间
 
         input:
@@ -1414,7 +1477,7 @@ class Space:
         else:
             print('Space is empty!')
 
-    def extract(self, interval_or_qty:int=1, how:str='interval'):
+    def extract(self, interval_or_qty: int = 1, how: str = 'interval'):
         """从空间中提取出一系列的点，并且把所有的点以迭代器对象的形式返回供迭代
 
         input:
@@ -1472,6 +1535,7 @@ class Axis:
 
 
     """
+
     def __init__(self, bounds_or_enum, typ=None):
         self._axis_type = None  # 数轴类型
         self._lbound = None  # 离散型或连续型数轴下界
@@ -1633,7 +1697,7 @@ class Axis:
         """
         return np.arange(self._lbound, self._ubound, interval)
 
-    def _extract_bounding_random(self, qty:int):
+    def _extract_bounding_random(self, qty: int):
         """ 按照随机方式从离散或连续型数轴中提取值
 
         input:
@@ -1658,7 +1722,7 @@ class Axis:
         count = self.count
         return self._enum_val[np.arange(0, count, interval)]
 
-    def _extract_enum_random(self, qty:int):
+    def _extract_enum_random(self, qty: int):
         """ 按照随机方式从枚举型数轴中提取值
 
         input:

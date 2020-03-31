@@ -22,7 +22,8 @@ if __name__ == '__main__':
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[2000],
-                   investment_dates=['2004-05-01'])
+                   investment_dates=['2004-05-01'],
+                   reference_data='000300')
     cont.share_pool = hp.shares
     cont.history_data = hp
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
