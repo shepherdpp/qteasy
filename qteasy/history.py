@@ -291,23 +291,23 @@ class HistoryPanel():
 
     def __str__(self):
         res = []
-        if self.row_count <= 10:
+        if self.level_count <= 10:
             display_shares = self.shares
         else:
-            display_shares = self.shares[0:7]
+            display_shares = self.shares[0:3]
         for share in display_shares:
             res.append(f'\nshare {self.levels[share]}, label: {share}\n')
             df = self.to_dataframe(share=share)
             res.append(df.__str__())
             res.append('\n')
-        if self.row_count > 10:
+        if self.level_count > 10:
             res.append('\n ...  \n')
-            for share in self.shares[-3:-1]:
+            for share in self.shares[-2:]:
                 res.append(f'\nshare {self.levels[share]}, label: {share}\n')
                 df = self.to_dataframe(share=share)
                 res.append(df.__str__())
                 res.append('\n')
-            res.append('Only first 7 and last 3 shares are displayed\n')
+            res.append('Only first 3 and last 3 shares are displayed\n')
         return ''.join(res)
 
     def __repr__(self):
@@ -445,11 +445,23 @@ def dataframe_to_hp(df: pd.DataFrame,
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
-#TODO implement this method
 def stack_dataframes(dfs: list, stack_along:str = 'shares', shares = None, htypes = None):
-    """ 根据多个DataFrame中的数据创建HistoryPanel对象
+    """ 将多个dataframe组合成一个HistoryPanel
+
+    组合的方式有两种，根据stack_along参数的值来确定采用哪一种组合方式：
+    stack_along == 'shares'，
+    表示把数据框按照股票方式组合，假定每个数据框代表一个share的数据，每一列代表一个htype。组合后的HP对象
+    层数与数据框的数量相同，而列数等于所有数据框的列的并集，行标签也为所有数据框的行标签的并集
+    在这种模式下，shares参数必须给出，且shares的数量必须与数据框的数量相同
+    stack_along == 'htypes'，
+    表示把数据框按照股票方式组合，假定每个数据框代表一个htype的数据，每一列代表一个share。组合后的HP对象
+    列数与数据框的数量相同，而层数等于所有数据框的列的并集，行标签也为所有数据框的行标签的并集
+    在这种模式下，htypes参数必须给出，且htypes的数量必须与数据框的数量相同
 
     :param dfs: type list, containing multiple dataframes
+    :param stack_along: type str, 'shares' 或 'htypes'
+    :param shares:
+    :param htypes:
     :return:
     """
     assert isinstance(dfs, list), f'TypeError, dfs should be a list of pandas DataFrames, got {type(dfs)} instead.'
