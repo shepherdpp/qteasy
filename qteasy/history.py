@@ -396,7 +396,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     :param hdates:
     :param htypes: str,
     :param shares: str,
-    :param column_type:
+    :param column_type: str: 可以为'share' or 'htype'
     :return:
         HistoryPanel对象
     """
@@ -446,14 +446,60 @@ def dataframe_to_hp(df: pd.DataFrame,
 
 
 #TODO implement this method
-def dataframes_to_hp(*dfs):
+def stack_dataframes(dfs: list, stack_along:str = 'shares', shares = None, htypes = None):
     """ 根据多个DataFrame中的数据创建HistoryPanel对象
 
     :param dfs: type list, containing multiple dataframes
     :return:
     """
-    raise NotImplementedError
-
+    assert isinstance(dfs, list), f'TypeError, dfs should be a list of pandas DataFrames, got {type(dfs)} instead.'
+    assert stack_along in ['shares', 'htypes'], \
+        f'InputError, valid input for stack_along can only be \'shaers\' or \'htypes\''
+    combined_index = []
+    combined_shares = []
+    combined_htypes = []
+    if stack_along == 'shares':
+        assert shares is not None
+        assert isinstance(shares, list)
+        assert len(shares) == len(dfs)
+        combined_shares.extend(shares)
+    else:
+        assert htypes is not None
+        assert isinstance(htypes, list)
+        assert len(htypes) == len(dfs)
+        combined_htypes.extend(htypes)
+    for df in dfs:
+        assert isinstance(df, pd.DataFrame), \
+            f'InputError, dfs should be a list of pandas DataFrame, got {type(df)} instead.'
+        combined_index.extend(pd.to_datetime(df.index.values))
+        if stack_along == 'shares':
+            combined_htypes.extend(df.columns)
+        else:
+            combined_shares.extend(df.columns)
+    if stack_along == 'shares':
+        combined_htypes = list(set(combined_htypes))
+    else:
+        combined_shares = list(set(combined_shares))
+    combined_index = list(set(combined_index))
+    htype_count = len(combined_htypes)
+    share_count = len(combined_shares)
+    index_count = len(combined_index)
+    combined_htypes_dict = dict(zip(combined_htypes, range(htype_count)))
+    combined_shares_dict = dict(zip(combined_shares, range(share_count)))
+    combined_index.sort()
+    res_values = np.zeros(shape=(share_count, index_count, htype_count))
+    res_values.fill(np.nan)
+    for df_id in range(len(dfs)):
+        extended_df = dfs[df_id].reindex(combined_index)
+        for col_name, series in extended_df.iteritems():
+            if stack_along == 'shares':
+                res_values[df_id, :, combined_htypes_dict[col_name]] = series.values
+            else:
+                res_values[combined_shares_dict[col_name], :, df_id] = series.values
+    return HistoryPanel(res_values,
+                        levels=combined_shares,
+                        rows=combined_index,
+                        columns=combined_htypes)
 
 # ==================
 # Historical Utility functions based on tushare
