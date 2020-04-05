@@ -131,6 +131,7 @@ class Context:
         out_str.append('===========================')
         return ''.join(out_str)
 
+
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
 # TODO: 5，与交易量相关的二阶费率
 class Rate:
@@ -401,6 +402,7 @@ class CashPlan:
         return self.plan[item]
 
 
+# TODO: 实现多种方式的定投计划，可定制周期、频率、总金额、单次金额等简单功能，同时还应支持递增累进式定投、按照公式定投等高级功能
 def distribute_investment(amount, start, end, periods, freq):
     """ 将投资额拆分成一系列定投金额，并生成一个CashPlan对象
 
@@ -513,7 +515,7 @@ def _get_complete_hist(looped_value, h_list, with_price=False):
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
         share_price_column_names = []
         for name in shares:
-            share_price_column_names.append(name+'_p')
+            share_price_column_names.append(name + '_p')
         looped_value[share_price_column_names] = looped_history[shares]
     return looped_value
 
@@ -671,6 +673,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         hist_reference = history_data.to_dataframe(htype='close')
         # print('history data is not None')
     # ========
+    # TODO: 紧迫任务：完成实时信号生成模式。根据输入的策略类型和参数自动读取并组装正确的历史数据
+    # TODO: 利用历史数据生成交易信号，并且根据交易信号和当前持仓位置生成交易订单（输出交易订单的易读形式），并且将标准化格式的交易订单
+    # TODO: 传递至实盘交易模块。
     if run_mode == 0:
         """进入实时信号生成模式：
         
@@ -691,7 +696,6 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
              
              以上信息被记录到log对象中，并最终存储在磁盘上
         """
-        raise NotImplementedError
 
     elif run_mode == 1:
         """进入回测模式：

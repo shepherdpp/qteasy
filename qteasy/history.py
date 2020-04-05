@@ -9,11 +9,74 @@ import datetime as dt
 TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
 
+PRICE_TYPE_DATA = ['close',
+                   'open',
+                   'high',
+                   'low',
+                   'volume',
+                   'value']
+FINANCIAL_REPORT_TYPE_DATA = ['basic_eps',
+                              'diluted_eps',
+                              'total_revenue',
+                              'revenue',
+                              'int_income',
+                              'prem_earned',
+                              'comm_income',
+                              'n_commis_income',
+                              'n_oth_income',
+                              'n_oth_b_income',
+                              'prem_income',
+                              'out_prem',
+                              'une_prem_reser',
+                              'reins_income',
+                              'n_sec_tb_income',
+                              'n_sec_uw_income',
+                              'n_asset_mg_income',
+                              'oth_b_income',
+                              'fv_value_chg_gain',
+                              'invest_income',
+                              'ass_invest_income',
+                              'forex_gain',
+                              'total_cogs',
+                              'oper_cost',
+                              'int_exp',
+                              'comm_exp',
+                              'biz_tax_surchg',
+                              'sell_exp',
+                              'admin_exp',
+                              'fin_exp',
+                              'assets_impair_loss',
+                              'prem_refund',
+                              'compens_payout',
+                              'reser_insur_liab',
+                              'div_payt',
+                              'reins_exp',
+                              'oper_exp',
+                              'compens_payout_refu',
+                              'insur_reser_refu',
+                              'reins_cost_refund',
+                              'other_bus_cost',
+                              'operate_profit',
+                              'non_oper_income',
+                              'non_oper_exp',
+                              'nca_disploss',
+                              'total_profit',
+                              'income_tax',
+                              'n_income',
+                              'n_income_attr_p',
+                              'minority_gain',
+                              'oth_compr_income',
+                              't_compr_income',
+                              'compr_inc_attr_p',
+                              'compr_inc_attr_m_s',
+                              'ebit',
+                              'ebitda',
+                              'insurance_exp',
+                              'undist_profit',
+                              'distable_profit']
+COMPOSIT_TYPE_DATA = []
 
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
-# TODO: 增加HistData类，一个以Ndarray为基础的三维历史数据数组
-# TODO: 需要详细定义这个函数的函数包的清单，以便其他模块调用
-# TODO: 以tushare为基础定义历史数据公共函数库
 
 
 class HistoryPanel():
@@ -353,7 +416,7 @@ class HistoryPanel():
         np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
-    #TODO implement this method
+    # TODO implement this method
     def as_type(self, dtype):
         raise NotImplementedError
 
@@ -377,13 +440,16 @@ class HistoryPanel():
     def to_db(self):
         raise NotImplementedError
 
-#TODO implement this method
+
+# TODO implement this method
 def csv_to_hp():
     raise NotImplementedError
 
-#TODO implement this method
+
+# TODO implement this method
 def hdf_to_hp():
     raise NotImplementedError
+
 
 def dataframe_to_hp(df: pd.DataFrame,
                     hdates=None,
@@ -445,7 +511,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
-def stack_dataframes(dfs: list, stack_along:str = 'shares', shares = None, htypes = None):
+def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes=None):
     """ 将多个dataframe组合成一个HistoryPanel
 
     组合的方式有两种，根据stack_along参数的值来确定采用哪一种组合方式：
@@ -512,6 +578,65 @@ def stack_dataframes(dfs: list, stack_along:str = 'shares', shares = None, htype
                         levels=combined_shares,
                         rows=combined_index,
                         columns=combined_htypes)
+
+
+# ==================
+# High level functions that creates HistoryPanel that fits the requirement of trade strategies
+# ==================
+
+def get_history_panel(start, end, freq, shares, htypes, chanel):
+    """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
+        需要的HistoryPanel数据对象
+
+    :param start:
+    :param end:
+    :param shares:
+    :param htypes:
+    :param chanel:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def get_price_type_raw_data(start, end, freq, shares, htypes, chanel):
+    """ 在线获取普通类型历史数据
+
+    :param start:
+    :param end:
+    :param freq:
+    :param shares:
+    :param htypes:
+    :param chanel:
+    :return:
+    """
+    raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
+    df_per_share = []
+    for share in shares:
+        df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+
+def get_financial_report_type_raw_data(start, end, shares, htypes, chanel):
+    """ 在线获取财报类历史数据
+
+    :param start:
+    :param end:
+    :param shares:
+    :param htypes:
+    :param chanel:
+    :return:
+    """
+    raise NotImplementedError
+
+def get_composite_type_raw_data(start, end, shares, htypes, chanel):
+    """
+
+    :param start:
+    :param end:
+    :param shares:
+    :param htypes:
+    :param chanel:
+    :return:
+    """
+    raise NotImplementedError
 
 # ==================
 # Historical Utility functions based on tushare
@@ -762,12 +887,12 @@ def get_bar(share: str,
     amount          float   交易额
     example:
     获取日k线数据，前复权：
-    get_bar(ts_code='000001.SZ', adj='qfq', start_date='20180101', end_date='20181011')
+    get_bar(share='000001.SZ', adj='qfq', start_date='20180101', end_date='20181011')
     获取周K线数据，后复权：
-    get_bar(ts_code='000001.SZ', freq='W', adj='hfq', start_date='20180101', end_date='20181011')
+    get_bar(share='000001.SZ', freq='W', adj='hfq', start_date='20180101', end_date='20181011')
     output:
     前复权日K线数据
-    ts_code trade_date     open     high      low    close  pre_close  change  pct_chg         vol       amount
+           ts_code trade_date     open     high      low    close  pre_close  change  pct_chg         vol       amount
     0    000001.SZ   20181011  10.0500  10.1600   9.7000   9.8600    10.4500 -0.5900  -5.6459  1995143.83  1994186.611
     1    000001.SZ   20181010  10.5400  10.6600  10.3800  10.4500    10.5600 -0.1100  -1.0417   995200.08  1045666.180
     2    000001.SZ   20181009  10.4600  10.7000  10.3900  10.5600    10.4500  0.1100   1.0526  1064084.26  1117946.550
