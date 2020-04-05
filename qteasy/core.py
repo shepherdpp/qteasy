@@ -131,7 +131,8 @@ class Context:
         out_str.append('===========================')
         return ''.join(out_str)
 
-
+# TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
+# TODO: 5，与交易量相关的二阶费率
 class Rate:
     """ 交易费率类，用于在回测过程中对交易成本进行估算
 
@@ -481,7 +482,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
     return cash, amounts, fee, value
 
 
-def _get_complete_hist(values, h_list, with_price=False):
+def _get_complete_hist(looped_value, h_list, with_price=False):
     """完成历史交易回测后，填充完整的历史资产总价值清单
 
     input:=====
@@ -489,19 +490,32 @@ def _get_complete_hist(values, h_list, with_price=False):
         :param h_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
         :param with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
     return: =====
-        values，pandas.Series 或 pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
+        values，pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
     """
     # 获取价格清单中的投资产品列表
+    # print(f'looped values raw data info: {looped_value.info()}')
     shares = h_list.columns
+    start_date = looped_value.index[0]
+    looped_history = h_list.loc[start_date:]
+    # print(f'looped history info: \n{looped_history.info()}')
     # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
     # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
-    values = values.reindex(h_list.index, method='ffill').fillna(0)
+    purchased_shares = looped_value[shares].reindex(looped_history.index, method='ffill').fillna(0)
+    cashes = looped_value['cash'].reindex(looped_history.index, method='ffill').fillna(0)
+    fees = looped_value['fee'].reindex(looped_history.index).fillna(0)
+    looped_value = looped_value.reindex(looped_history.index)
+    looped_value[shares] = purchased_shares
+    looped_value.fee = fees
+    looped_value.cash = cashes
+    # print(f'extended looped value according to looped history: \n{looped_value.info()}')
     # 重新计算整个清单中的资产总价值，生成pandas.Series对象
-    values = (h_list * values[shares]).sum(axis=1) + values['cash']
+    looped_value['value'] = (looped_history * looped_value[shares]).sum(axis=1) + looped_value['cash']
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
-        values = pd.DataFrame(values.values, index=h_list.index, columns=['values'])
-        values[shares] = h_list[shares]
-    return values
+        share_price_column_names = []
+        for name in shares:
+            share_price_column_names.append(name+'_p')
+        looped_value[share_price_column_names] = looped_history[shares]
+    return looped_value
 
 
 # TODO：回测主入口函数需要增加现金计划、多种回测结果评价函数、回测过程log记录、回测结果可视化和回测结果参照标准
@@ -574,7 +588,7 @@ def apply_loop(op_list: pd.DataFrame,
     value_history['fee'] = fees
     value_history['value'] = values
     if visual:  # Visual参数为True时填充完整历史记录并
-        complete_value = _get_complete_hist(values=value_history,
+        complete_value = _get_complete_hist(looped_value=value_history,
                                             h_list=history_list,
                                             with_price=price_visual)
         # 输出相关资产价格
@@ -584,6 +598,7 @@ def apply_loop(op_list: pd.DataFrame,
                                 secondary_y=shares)
         else:  # 否则，仅显示总资产的历史变化情况
             complete_value.plot(grid=True, figsize=(15, 7), legend=True)
+        return complete_value
     return value_history
 
 
@@ -645,6 +660,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         hist_loop = None  # 用于数据回测的历史数据
         hist_opti = None  # 用于策略优化的历史数据
         hist_reference = None
+        # print('history data is None')
     else:
         # TODO: hist_data_req：这里的代码需要优化：正常工作中，历史数据不需要手工传入，应该可以根据需要策略的参数和context配置自动 \
         # TODO: 下载或者从数据库自动读取
@@ -653,7 +669,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         hist_op = history_data
         hist_loop = history_data.to_dataframe(htype='close')
         hist_reference = history_data.to_dataframe(htype='close')
-
+        # print('history data is not None')
     # ========
     if run_mode == 0:
         """进入实时信号生成模式：
@@ -735,6 +751,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                    price_visual=True)
         et = time.clock()
         print(f'time elapsed for operation back looping: {et-st:.5f}')
+        # print('looped values result is: \n', looped_values)
         years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
                                                                      looped_value=looped_values,
                                                                      cash_plan=context.cash_plan)
@@ -1130,12 +1147,10 @@ def _eval_beta(looped_value, hist_list, reference_value, reference_data):
     assert isinstance(reference_value, pd.DataFrame)
     first_day = looped_value.index[0]
     last_day = looped_value.index[-1]
-    looped_value = _get_complete_hist(looped_value, hist_list).loc[first_day:last_day]
-    ret = looped_value / looped_value.shift(1)
+    ret = looped_value['value'] / looped_value['value'].shift(1)
     ret_dev = ret.std()
     ref = reference_value[reference_data]
     ref_ret = ref / ref.shift(1)
-    looped_value = pd.DataFrame(looped_value)
     looped_value['ref'] = ref_ret
     looped_value['ret'] = ret
     return looped_value.ref.cov(looped_value.ret) / ret_dev
@@ -1168,8 +1183,7 @@ def _eval_volatility(looped_value, hist_list):
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if not looped_value.empty:
-        looped_value = _get_complete_hist(looped_value, hist_list)
-        ret = np.log(looped_value / looped_value.shift(1))
+        ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
         volatility = ret.rolling(250).std() * np.sqrt(250)
         return volatility[-1]
     else:

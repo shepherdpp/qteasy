@@ -260,7 +260,7 @@ class Timing(Strategy):
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: str = ''):
+                 data_types: str = 'close'):
         super().__init__(pars=pars,
                          stg_type='TIMING',
                          stg_name=stg_name,
@@ -924,13 +924,13 @@ class Ricon(Strategy):
 class RiconNone(Ricon):
     """无风险控制策略，不对任何风险进行控制"""
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          stg_name='NONE',
                          stg_text='Do not take any risk control activity')
 
     def _realize(self, hist_data, shares=None, dates=None):
-        return np.zeros_like(hist_data)
+        return np.zeros_like(hist_data[:,:,0].T)
 
 
 class RiconUrgent(Ricon):
@@ -965,7 +965,9 @@ class RiconUrgent(Ricon):
         # print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
         # print(f'and the hist_data is converted to shape {h.shape}')
         diff = (h - np.roll(h, day)) / h
+        diff[:day] = h[:day]
         # print(f'created array in ricon generate() is shaped {diff.shape}')
+        # print(f'created array in ricon generate() is {np.where(diff < drop)}')
         return np.where(diff < drop, -1, 0)
 
 
@@ -1002,6 +1004,7 @@ def _mask_to_signal(lst):
     # 为 (0.7 - 0.35) / 0.35 = 0.5即卖出50%的持仓数额，从70%仓位减仓到35%
     op = np.where(op < 0, (op / np.roll(lst, 1)), op)
     # 补齐因为计算差额导致的第一行数据为NaN值的问题
+    # print(f'creating operation signals, first signal is {lst[0]}')
     op[0] = lst[0]
     return op
 
@@ -1402,9 +1405,9 @@ class Operator:
             #      f'{len(hist_data.hdates) - first_cash_pos}'
             #      f' rows for ricon strategies')
 
-    # TODO： 目前的三维数据处理方式是：将整个3D historyPanel传入策略，在策略的generate方法所调用的最底层（Timing的generate_one, \
-    # TODO：Selecting的select方法等）对历史数据框架进行切片操作，提取出正确的数据。这种方法只是临时应用，最终的应用方式应该是在最外层 \
-    # TODO：就将数据切片后传入，这样在策略最内层的自定义方法中不用关心数据的格式和切片问题，只需要定义好数据类型htypes参数就可以了
+    # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
+    # TODO: 1，Buy-开多仓，2，sell-平多仓，3，sel_short-开空仓，4，buy_to_cover-平空仓
+    # TODO: 应该创建标准的交易订单模式，并且通过一个函数把交易信号转化为交易订单，以供回测或实盘交易使用
     def create_signal(self, hist_data: HistoryPanel):
         """ 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
 
@@ -1432,8 +1435,6 @@ class Operator:
             # print('SPEED test OP create, Time of sel_mask creation')
             history_length = dt.shape[1]
             sel_masks.append(sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
-        # print('SPEED test OP create, Time of sel_mask blending')
-        # %time (self.__selecting_blend(sel_masks))
         et = time.clock()
         print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
@@ -1442,7 +1443,6 @@ class Operator:
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
         # hist_selected = hist_data * selected_shares
-        # print ('Time measurement: ls_mask creation')
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
         st = time.clock()
         ls_masks = []
@@ -1454,8 +1454,6 @@ class Operator:
             # print('ls mask created: ', tmg.generate(hist_selected).iloc[980:1000])
         et = time.clock()
         print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
-        # print('SPEED test OP create, Time of ls_mask blending')
-        # %time self.__timing_blend(ls_masks)
         ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print( '\n long/short mask: \n', ls_mask)
@@ -1468,8 +1466,6 @@ class Operator:
             ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
         et = time.clock()
         print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
-        # print('SPEED test OP create, Time of ricon_mask blending')
-        # %time self.__ricon_blend(ricon_mats)
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
         # print ('risk control matrix \n', ricon_mat[980:1000])
@@ -1480,16 +1476,16 @@ class Operator:
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         op_mat = _legalize(_mask_to_signal(ls_mask * sel_mask) + ricon_mat)
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
-        # pd.DataFrame(op_mat, index = date_list, columns = share_pool)
-        # print(f'operation matrix shape is {op_mat.shape}')
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # print(f'length of date_list: {len(date_list)}')
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
-        # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)]['2007-01-15': '2007-03-01'])
-        # return lst[lst.any(1)]
+        # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)])
         # 消除完全相同的行和数字全为0的行
         lst_out = lst[lst.any(1)]
+        # print('operation matrix: ', '\n', lst_out)
         keep = (lst_out - lst_out.shift(1)).any(1)
+        keep.iloc[0] = True
+        # print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
         return lst_out[keep]
 
         ################################################################
