@@ -1436,7 +1436,7 @@ class Operator:
             history_length = dt.shape[1]
             sel_masks.append(sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         et = time.clock()
-        print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
+        # print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
@@ -1453,7 +1453,7 @@ class Operator:
             # print(tmg.generate(h_v))
             # print('ls mask created: ', tmg.generate(hist_selected).iloc[980:1000])
         et = time.clock()
-        print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
+        # print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
         ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print( '\n long/short mask: \n', ls_mask)
@@ -1465,7 +1465,7 @@ class Operator:
             # print('SPEED test OP create, Time of ricon_mask creation')
             ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
         et = time.clock()
-        print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
+        # print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
         # print ('risk control matrix \n', ricon_mat[980:1000])

@@ -744,7 +744,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         st = time.clock()
         op_list = operator.create_signal(hist_data=hist_op)
         et = time.clock()
-        print(f'time elapsed for operator.create_signal: {et-st:.5f}')
+        run_time_prepare_data = (et - st) * 1000
         st = time.clock()
         looped_values = apply_loop(op_list,
                                    hist_loop.fillna(0),
@@ -754,7 +754,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                    cost_rate=context.rate,
                                    price_visual=True)
         et = time.clock()
-        print(f'time elapsed for operation back looping: {et-st:.5f}')
+        run_time_loop_full = (et - st) * 1000
         # print('looped values result is: \n', looped_values)
         years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
                                                                      looped_value=looped_values,
@@ -770,8 +770,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         print(f'==================================== \n'
               f'           LOOPING RESULT\n'
               f'====================================')
-        print(f'\ninvestment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}'
-              f'\nTotal looped periods: {years} years.')
+        print(f'\ntime consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n'
+              f'time consumption for operation back looping: {run_time_loop_full:.3f} ms\n')
+        print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
+              f'Total looped periods: {years} years.')
         print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
         print(f'total investment amount: ¥{total_invest:11,.2f}\n'
               f'final value:             ¥{final_value:11,.2f}')
@@ -1058,8 +1060,10 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                 op.set_opt_par(par)  # 设置择时参数``
                 # 声称交易清淡病进行模拟交易生成交易记录
                 looped_val = apply_loop(op_list=op.create_signal(hist),
-                                        history_list=hist, init_cash=100000,
-                                        visual=False, price_visual=False)
+                                        history_list=hist,
+                                        init_cash=100000,
+                                        visual=False,
+                                        price_visual=False)
                 # 使用评价函数计算参数模拟交易的评价值
                 perf = _eval(looped_val, method='fv')
                 pool.in_pool(par, perf)
