@@ -74,7 +74,7 @@ class Context:
                  mode: int = RUN_MODE_BACKLOOP,
                  rate_fee: float = 0.003,
                  rate_slipery: float = 0,
-                 moq: int = 100,
+                 moq: float = 0.,
                  investment_amounts: list = None,
                  investment_dates: list = None,
                  riskfree_interest_rate: float = 0.035,
@@ -176,7 +176,7 @@ class Rate:
 
 
 # TODO：在Cash类中增加现金投资的无风险利率，在apply_loop的时候，可以选择是否考虑现金的无风险利率，如果考虑时，现金按照无风险利率增长
-# TODO: 在qteasy中所使用的所有时间日期格式统一使用np.datetime64格式
+# TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
 class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
@@ -403,7 +403,11 @@ class CashPlan:
 
 
 # TODO: 实现多种方式的定投计划，可定制周期、频率、总金额、单次金额等简单功能，同时还应支持递增累进式定投、按照公式定投等高级功能
-def distribute_investment(amount, start, end, periods, freq):
+def distribute_investment(amount: float,
+                          start: str,
+                          end: str,
+                          periods: int,
+                          freq: str) -> CashPlan:
     """ 将投资额拆分成一系列定投金额，并生成一个CashPlan对象
 
     :param amount:
@@ -416,7 +420,7 @@ def distribute_investment(amount, start, end, periods, freq):
 
 
 # TODO: 使用Numba加速_loop_step()函数
-def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
+def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
     input：=====
@@ -484,7 +488,9 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq):
     return cash, amounts, fee, value
 
 
-def _get_complete_hist(looped_value, h_list, with_price=False):
+def _get_complete_hist(looped_value: pd.DataFrame,
+                       h_list: pd.DataFrame,
+                       with_price: bool = False) -> pd.DataFrame:
     """完成历史交易回测后，填充完整的历史资产总价值清单
 
     input:=====
@@ -520,15 +526,17 @@ def _get_complete_hist(looped_value, h_list, with_price=False):
     return looped_value
 
 
-# TODO：回测主入口函数需要增加现金计划、多种回测结果评价函数、回测过程log记录、回测结果可视化和回测结果参照标准
-# TODO：增加一个参数，允许用户选择是否考虑现金的无风险利率增长
+# TODO: 回测主入口函数需要增加回测结果可视化和回测结果参照标准
+# TODO: 增加一个参数，允许用户选择是否考虑现金的无风险利率增长
+# TODO: 在回测功能中增加实际交易信息记录，因为当MOQ存在时，实际的交易次数、信息和operator模块生成的交易信号不同
+# TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                visual: bool = False,
                price_visual: bool = False,
                cash_plan: CashPlan = None,
                cost_rate: Rate = None,
-               moq: float = 100.):
+               moq: float = 100.) -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
@@ -543,7 +551,7 @@ def apply_loop(op_list: pd.DataFrame,
         :type moq: float：每次交易的最小份额
 
     output：=====
-        Value_history：包含交易结果及资产总额的历史清单
+        Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单
 
     """
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
@@ -749,7 +757,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         looped_values = apply_loop(op_list,
                                    hist_loop.fillna(0),
                                    cash_plan=context.cash_plan,
-                                   moq=0,
+                                   moq=context.moq,
                                    visual=True,
                                    cost_rate=context.rate,
                                    price_visual=True)

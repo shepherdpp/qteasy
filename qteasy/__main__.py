@@ -5,13 +5,13 @@ import pandas as pd
 
 if __name__ == '__main__':
     # TODO: bug: rand类型的选股模型在timing策略为simple的时候似乎不起作用，需要检查
-    op = Operator(timing_types=['simple'], selecting_types=['rand'], ricon_types=['none'])
+    op = Operator(timing_types=['DMA'], selecting_types=['rand'], ricon_types=['none'])
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
     d = d[::-1]
-    # hp = hs.dataframe_to_hp(d,column_type='htype', shares='000300')
-    hp = hs.stack_dataframes([d, d, d], stack_along='shares', shares=['000100', '000200', '000300'])
+    hp = hs.dataframe_to_hp(d,column_type='htype', shares='000300')
+    # hp = hs.stack_dataframes([d, d, d], stack_along='shares', shares=['000100', '000200', '000300'])
     print('INFORMATION OF CREATED HISTORY PANEL: \n==========================')
     hp.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
@@ -19,9 +19,10 @@ if __name__ == '__main__':
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context(investment_amounts=[2000],
+    cont = Context(investment_amounts=[20000],
                    investment_dates=['2014-07-01'],
-                   reference_data='000300')
+                   reference_data='000300',
+                   moq=0)
     cont.share_pool = hp.shares
     cont.history_data = hp
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
