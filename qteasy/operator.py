@@ -161,7 +161,7 @@ class Strategy:
 
         :return:
         """
-        raise NotImplementedError
+        return self.__str__()
 
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""

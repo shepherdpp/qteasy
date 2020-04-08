@@ -149,93 +149,19 @@ class HistoryPanel():
             levels = range(self._l_count)
             self._levels = dict(zip(levels, levels))
         else:
-            self._levels = self.labels_to_dict(levels, range(self._l_count))
+            self._levels = labels_to_dict(levels, range(self._l_count))
 
         if rows is None:
             rows = range(self._r_count)
             self._rows = dict(zip(rows, rows))
         else:
-            self._rows = self.labels_to_dict(rows, range(self._r_count))
+            self._rows = labels_to_dict(rows, range(self._r_count))
 
         if columns is None:
             columns = range(self._c_count)
             self._columns = dict(zip(columns, columns))
         else:
-            self._columns = self.labels_to_dict(columns, range(self._c_count))
-
-    @staticmethod
-    def labels_to_dict(input_labels, target_list):
-        if isinstance(input_labels, str):
-            input_labels = input_labels.replace(' ', '')
-            input_labels = input_labels.split(',')
-        unique_count = len(set(input_labels))
-        assert len(input_labels) == unique_count, \
-            f'InputError, label duplicated, count of target list is {len(target_list)},' \
-            f' got {unique_count} unique labels only.'
-        assert unique_count == len(target_list), \
-            f'InputError, length of input labels does not equal to that of target list, expect ' \
-            f'{len(target_list)}, got {unique_count} unique labels instead.'
-        return dict(zip(input_labels, range(len(target_list))))
-
-    @staticmethod
-    def _list_or_slice(unknown_input, str_int_dict):
-        """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
-
-        1，当输入item为slice时，直接返回slice
-        2 输入数据为string, 根据string的分隔符类型确定选择的切片：
-            2.1, 当字符串不包含分隔符时，直接输出对应的单片数据, 如'close'输出为[0]
-            2.2, 当字符串以逗号分隔时，输出每个字段对应的切片，如'close,open', 输出[0, 2]
-            2.3, 当字符串以冒号分割时，输出第一个字段起第二个字段止的切片，如'close:open',输出[0:2] -> [0,1,2]
-        3 输入数据为列表时，检查列表元素的类型（不支持混合数据类型的列表如['close', 1, True]）：
-            3.1 如果列表元素为string，输出每个字段名对应的列表编号，如['close','open'] 输出为 [0,2]
-            3.2 如果列表元素为int时，输出对应的列表编号，如[0,1,3] 输出[0,1,3]
-            3.3 如果列表元素为boolean时，输出True对应的切片编号，如[True, True, False, False] 输出为[0,1]
-        4 输入数据为int型时，输出相应的切片，如输入0的输出为[0]
-
-        :param unknown_input: slice or int/str or list of int/string
-        :param str_int_dict: a dictionary that contains strings as keys and integer as values
-        :return:
-            a list of slice/list that can be used to slice the Historical Data Object
-        """
-        if isinstance(unknown_input, slice):
-            return unknown_input  # slice object can be directly used
-        elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
-            return np.array([unknown_input])
-        elif isinstance(unknown_input, str):  # string should be converted to numbers
-            string_input = unknown_input.replace(' ', '')
-            if string_input.find(',') > 0:
-                string_list = string_input.split(',')
-                res = []
-                for string in string_list:
-                    res.append(str_int_dict[string])
-                return np.array(res)
-            elif string_input.find(':') > 0:
-                start_end_strings = string_input.split(':')
-                start = str_int_dict[start_end_strings[0]]
-                end = str_int_dict[start_end_strings[1]]
-                if start > end:
-                    start, end = end, start
-                return np.arange(start, end + 1)
-            else:
-                return [str_int_dict[string_input]]
-        elif isinstance(unknown_input, list):
-            is_list_of_str = isinstance(unknown_input[0], str)
-            is_list_of_int = isinstance(unknown_input[0], int)
-            is_list_of_bool = isinstance(unknown_input[0], bool)
-            if is_list_of_bool:
-                return np.array(str_int_dict.values())[unknown_input]
-            else:
-                res = []
-                for list_item in unknown_input:  # convert all items into a number:
-                    if is_list_of_str:
-                        res.append(str_int_dict[list_item])
-                    elif is_list_of_int:
-                        res.append(list_item)
-                    else:
-                        return None
-                return np.array(res)
-        else:
-            return None
+            self._columns = labels_to_dict(columns, range(self._c_count))
 
     @property
     def values(self):
@@ -251,7 +177,7 @@ class HistoryPanel():
 
     @shares.setter
     def shares(self, input_shares):
-        self._levels = self.labels_to_dict(input_shares, self.shares)
+        self._levels = labels_to_dict(input_shares, self.shares)
 
     @property
     def level_count(self):
@@ -267,7 +193,7 @@ class HistoryPanel():
 
     @hdates.setter
     def hdates(self, input_hdates):
-        self._rows = self.labels_to_dict(input_hdates, self.hdates)
+        self._rows = labels_to_dict(input_hdates, self.hdates)
 
     @property
     def row_count(self):
@@ -279,7 +205,7 @@ class HistoryPanel():
 
     @htypes.setter
     def htypes(self, input_htypes):
-        self._columns = self.labels_to_dict(input_htypes, self.htypes)
+        self._columns = labels_to_dict(input_htypes, self.htypes)
 
     @property
     def columns(self):
@@ -344,9 +270,9 @@ class HistoryPanel():
 
         # check and convert each of the slice segments to the right type: a slice or \
         # a list of indices
-        htype_slice = self._list_or_slice(htype_slice, self.columns)
-        share_slice = self._list_or_slice(share_slice, self.levels)
-        hdate_slice = self._list_or_slice(hdate_slice, self.rows)
+        htype_slice = _list_or_slice(htype_slice, self.columns)
+        share_slice = _list_or_slice(share_slice, self.levels)
+        hdate_slice = _list_or_slice(hdate_slice, self.rows)
 
         # print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
         #      '\nhdates is ', hdate_slice)
@@ -439,6 +365,85 @@ class HistoryPanel():
     # TODO implement this method
     def to_db(self):
         raise NotImplementedError
+
+
+def _list_or_slice(unknown_input, str_int_dict):
+    """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
+
+    1，当输入item为slice时，直接返回slice
+    2 输入数据为string, 根据string的分隔符类型确定选择的切片：
+        2.1, 当字符串不包含分隔符时，直接输出对应的单片数据, 如'close'输出为[0]
+        2.2, 当字符串以逗号分隔时，输出每个字段对应的切片，如'close,open', 输出[0, 2]
+        2.3, 当字符串以冒号分割时，输出第一个字段起第二个字段止的切片，如'close:open',输出[0:2] -> [0,1,2]
+    3 输入数据为列表时，检查列表元素的类型（不支持混合数据类型的列表如['close', 1, True]）：
+        3.1 如果列表元素为string，输出每个字段名对应的列表编号，如['close','open'] 输出为 [0,2]
+        3.2 如果列表元素为int时，输出对应的列表编号，如[0,1,3] 输出[0,1,3]
+        3.3 如果列表元素为boolean时，输出True对应的切片编号，如[True, True, False, False] 输出为[0,1]
+    4 输入数据为int型时，输出相应的切片，如输入0的输出为[0]
+
+    :param unknown_input: slice or int/str or list of int/string
+    :param str_int_dict: a dictionary that contains strings as keys and integer as values
+    :return:
+        a list of slice/list that can be used to slice the Historical Data Object
+    """
+    if isinstance(unknown_input, slice):
+        return unknown_input  # slice object can be directly used
+    elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
+        return np.array([unknown_input])
+    elif isinstance(unknown_input, str):  # string should be converted to numbers
+        string_input = unknown_input
+        if string_input.find(',') > 0:
+            string_list = str_to_list(input_string=string_input, sep_char=',')
+            res = []
+            for string in string_list:
+                res.append(str_int_dict[string])
+            return np.array(res)
+        elif string_input.find(':') > 0:
+            start_end_strings = str_to_list(input_string=string_input, sep_char=':')
+            start = str_int_dict[start_end_strings[0]]
+            end = str_int_dict[start_end_strings[1]]
+            if start > end:
+                start, end = end, start
+            return np.arange(start, end + 1)
+        else:
+            return [str_int_dict[string_input]]
+    elif isinstance(unknown_input, list):
+        is_list_of_str = isinstance(unknown_input[0], str)
+        is_list_of_int = isinstance(unknown_input[0], int)
+        is_list_of_bool = isinstance(unknown_input[0], bool)
+        if is_list_of_bool:
+            return np.array(str_int_dict.values())[unknown_input]
+        else:
+            res = []
+            for list_item in unknown_input:  # convert all items into a number:
+                if is_list_of_str:
+                    res.append(str_int_dict[list_item])
+                elif is_list_of_int:
+                    res.append(list_item)
+                else:
+                    return None
+            return np.array(res)
+    else:
+        return None
+
+
+def labels_to_dict(input_labels, target_list):
+    if isinstance(input_labels, str):
+        input_labels = str_to_list(input_string=input_labels)
+    unique_count = len(set(input_labels))
+    assert len(input_labels) == unique_count, \
+        f'InputError, label duplicated, count of target list is {len(target_list)},' \
+        f' got {unique_count} unique labels only.'
+    assert unique_count == len(target_list), \
+        f'InputError, length of input labels does not equal to that of target list, expect ' \
+        f'{len(target_list)}, got {unique_count} unique labels instead.'
+    return dict(zip(input_labels, range(len(target_list))))
+
+
+def str_to_list(input_string, sep_char: str = ','):
+    assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
+    res = input_string.replace(' ', '').split(sep_char)
+    return res
 
 
 # TODO implement this method
@@ -588,6 +593,9 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
+        首先利用不同的get_X_type_raw_data()函数获取不同类型的原始数据，再把原始数据整理成为date_by_row及htype_by_column的不同的
+        dataframe，再使用stack_dataframe()函数把所有的dataframe组合成HistoryPanel格式
+
     :param start:
     :param end:
     :param shares:
@@ -599,7 +607,7 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
 
 
 def get_price_type_raw_data(start, end, freq, shares, htypes, chanel):
-    """ 在线获取普通类型历史数据
+    """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
     :param end:
@@ -609,10 +617,21 @@ def get_price_type_raw_data(start, end, freq, shares, htypes, chanel):
     :param chanel:
     :return:
     """
+    all_available_htypes = 'open, high, low, close, pre_close, change, pct_chg, vol, amount'
+    if htypes is None:
+        htypes = all_available_htypes
+    assert isinstance(htypes, str), f'InputError, input h-type should be string, got {type(htypes)}'
+    htypes = str_to_list(input_string=htypes, sep_char=',')
+
     raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
     df_per_share = []
+    shares = str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+    columns_to_remove = list(set(all_available_htypes.split(',')) - set(htypes))
+    for df in df_per_share:
+        df.index = pd.to_datetime(df.trade_date)
+        df.drop(columns=columns_to_remove, inplace=True)
 
 def get_financial_report_type_raw_data(start, end, shares, htypes, chanel):
     """ 在线获取财报类历史数据
@@ -900,7 +919,13 @@ def get_bar(share: str,
     4    000001.SZ   20180928  10.7800  11.2700  10.7800  11.0500    10.7400  0.3100   2.8864  2110242.67  2331358.288
     """
     assert isinstance(share, str), 'TypeError: share code should be a string'
-    return ts.pro_bar(ts_code=share, start_date=start, end_date=end, asset=asset_type, adj=adj, freq=freq, ma=ma)
+    return ts.pro_bar(ts_code=share,
+                      start_date=start,
+                      end_date=end,
+                      asset=asset_type,
+                      adj=adj,
+                      freq=freq,
+                      ma=ma)
 
 
 # Finance Data
