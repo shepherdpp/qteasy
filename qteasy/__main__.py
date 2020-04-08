@@ -46,6 +46,13 @@ if __name__ == '__main__':
     op.info()
     print(f'\n START QT RUNNING\n===========================\n')
     run(op, cont, mode=1, history_data=cont.history_data)
-
+    print(f'test get history panel directly')
+    hp = hs.get_history_panel(start='2019-12-01',
+                              end='2020-02-01',
+                              freq='d',
+                              shares='000001.SZ, 000002.SZ, 000005.SZ',
+                              htypes='open, high, low, close',
+                              chanel='online')
+    hp.info()
 
 

@@ -13,8 +13,11 @@ PRICE_TYPE_DATA = ['close',
                    'open',
                    'high',
                    'low',
-                   'volume',
-                   'value']
+                   'pre_close',
+                   'change',
+                   'pct_chg',
+                   'vol',
+                   'amount']
 FINANCIAL_REPORT_TYPE_DATA = ['basic_eps',
                               'diluted_eps',
                               'total_revenue',
@@ -572,6 +575,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     combined_index.sort()
     res_values = np.zeros(shape=(share_count, index_count, htype_count))
     res_values.fill(np.nan)
+    print(f'In stack dataframe function, combined index is:\n{combined_index}\nlength: {len(combined_index)}')
     for df_id in range(len(dfs)):
         extended_df = dfs[df_id].reindex(combined_index)
         for col_name, series in extended_df.iteritems():
@@ -603,10 +607,49 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     :param chanel:
     :return:
     """
-    raise NotImplementedError
+    assert isinstance(htypes, str), f'InputError, htypes should be a string, got {type(htypes)}'
+    htypes = str_to_list(input_string=htypes, sep_char=',')
+    assert isinstance(shares, str), f'InputError, share should be a string, got {type(shares)}'
+    price_type_data = []
+    financial_type_data = []
+    composite_type_data = []
+    dataframes_to_stack = []
+    for htype in htypes:
+        if htype in PRICE_TYPE_DATA:
+            price_type_data.append(htype)
+        elif htype in FINANCIAL_REPORT_TYPE_DATA:
+            financial_type_data.append(htype)
+        elif htype in COMPOSIT_TYPE_DATA:
+            composite_type_data.append(htype)
+        else:
+            raise TypeError
+    dataframes_to_stack.extend(get_price_type_raw_data(start=start,
+                                                       end=end,
+                                                       freq=freq,
+                                                       shares=shares,
+                                                       htypes=price_type_data,
+                                                       chanel=chanel))
+    '''
+    dataframes_to_stack.extend(get_financial_report_type_raw_data(start=start,
+                                                                  end=end,
+                                                                  shares=shares,
+                                                                  htypes=price_type_data,
+                                                                  chanel=chanel))
+    dataframes_to_stack.extend(get_composite_type_raw_data(start=start,
+                                                           end=end,
+                                                           shares=shares,
+                                                           htypes=price_type_data,
+                                                           chanel=chanel))
+    '''
+    print(f'{len(dataframes_to_stack)} dataframes to stack, info of each:')
+    for df in dataframes_to_stack:
+        df.info()
+    print(f'shares of these dataframes: {str_to_list(shares)}')
+    return stack_dataframes(dfs=dataframes_to_stack,
+                            stack_along='shares',
+                            shares=str_to_list(shares))
 
-
-def get_price_type_raw_data(start, end, freq, shares, htypes, chanel):
+def get_price_type_raw_data(start, end, freq, shares, htypes, chanel:str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
@@ -614,24 +657,33 @@ def get_price_type_raw_data(start, end, freq, shares, htypes, chanel):
     :param freq:
     :param shares:
     :param htypes:
-    :param chanel:
+    :param chanel: str: {'online', 'local'}
+                    chanel == 'online' 从网络获取历史数据
+                    chanel == 'local'  从本地数据库获取历史数据
     :return:
     """
     all_available_htypes = 'open, high, low, close, pre_close, change, pct_chg, vol, amount'
     if htypes is None:
         htypes = all_available_htypes
-    assert isinstance(htypes, str), f'InputError, input h-type should be string, got {type(htypes)}'
-    htypes = str_to_list(input_string=htypes, sep_char=',')
-
+    if isinstance(htypes, str):
+        htypes = str_to_list(input_string=htypes, sep_char=',')
     raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
+    raw_df.drop_duplicates(inplace=True)
+    raw_df = raw_df.reindex(range(len(raw_df)))
+    raw_df.info()
+    print(raw_df)
     df_per_share = []
     shares = str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
-    columns_to_remove = list(set(all_available_htypes.split(',')) - set(htypes))
+    columns_to_remove = list(set(str_to_list(all_available_htypes)) - set(htypes))
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date)
         df.drop(columns=columns_to_remove, inplace=True)
+        df.drop(columns=['ts_code', 'trade_date'], inplace=True)
+        df.info()
+        print(df)
+    return df_per_share
 
 def get_financial_report_type_raw_data(start, end, shares, htypes, chanel):
     """ 在线获取财报类历史数据
