@@ -652,28 +652,31 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
             composite_type_data.append(htype)
         else:
             raise TypeError
+    print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
+          f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
     dataframes_to_stack.extend(get_price_type_raw_data(start=start,
                                                        end=end,
                                                        freq=freq,
                                                        shares=shares,
                                                        htypes=price_type_data,
                                                        chanel=chanel))
-    '''
+    print(f'In get history panel() function, financial type data are \n{financial_type_data}, \nshares are\n {shares}')
     dataframes_to_stack.extend(get_financial_report_type_raw_data(start=start,
                                                                   end=end,
                                                                   shares=shares,
-                                                                  htypes=price_type_data,
+                                                                  htypes=financial_type_data,
                                                                   chanel=chanel))
+    '''
     dataframes_to_stack.extend(get_composite_type_raw_data(start=start,
                                                            end=end,
                                                            shares=shares,
                                                            htypes=price_type_data,
                                                            chanel=chanel))
     '''
-    print(f'{len(dataframes_to_stack)} dataframes to stack, info of each:')
-    for df in dataframes_to_stack:
-        df.info()
-    print(f'shares of these dataframes: {_str_to_list(shares)}')
+    # print(f'{len(dataframes_to_stack)} dataframes to stack, info of each:')
+    # for df in dataframes_to_stack:
+        # df.info()
+    # print(f'shares of these dataframes: {_str_to_list(shares)}')
     return stack_dataframes(dfs=dataframes_to_stack,
                             stack_along='shares',
                             shares=_str_to_list(shares))
@@ -691,30 +694,25 @@ def get_price_type_raw_data(start, end, freq, shares, htypes, chanel:str = 'onli
                     chanel == 'local'  从本地数据库获取历史数据
     :return:
     """
-    all_available_htypes = 'open, high, low, close, pre_close, change, pct_chg, vol, amount'
     if htypes is None:
-        htypes = all_available_htypes
+        htypes = PRICE_TYPE_DATA
     if isinstance(htypes, str):
         htypes = _str_to_list(input_string=htypes, sep_char=',')
     raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
     raw_df.drop_duplicates(inplace=True)
     raw_df = raw_df.reindex(range(len(raw_df)))
-    raw_df.info()
-    print(raw_df)
     df_per_share = []
     shares = _str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
-    columns_to_remove = list(set(_str_to_list(all_available_htypes)) - set(htypes))
+    columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date)
         df.drop(columns=columns_to_remove, inplace=True)
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
-        df.info()
-        print(df)
     return df_per_share
 
-def get_financial_report_type_raw_data(start, end, shares, htypes, chanel):
+def get_financial_report_type_raw_data(start, end, shares, htypes, chanel:str = 'online'):
     """ 在线获取财报类历史数据
 
     :param start:
@@ -724,7 +722,23 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel):
     :param chanel:
     :return:
     """
-    raise NotImplementedError
+    if isinstance(htypes, str):
+        htypes = _str_to_list(input_string=htypes, sep_char=',')
+    report_fields = ['ts_code', 'f_ann_date']
+    report_fields.extend(htypes)
+    print('htypes',htypes, "\nreport fields: ", report_fields)
+    raw_df = income(start=start, end=end, ts_code=shares, fields=report_fields)
+    df_per_share = []
+    shares = _str_to_list(input_string=shares, sep_char=',')
+    for share in shares:
+        df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+    for df in df_per_share:
+        df.index = pd.to_datetime(df.f_ann_date)
+        df.index.name = 'date'
+        df.drop(columns=['f_ann_date'], inplace=True)
+        df.info()
+        print(df)
+    return df_per_share
 
 def get_composite_type_raw_data(start, end, shares, htypes, chanel):
     """

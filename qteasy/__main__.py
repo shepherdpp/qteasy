@@ -51,7 +51,7 @@ if __name__ == '__main__':
                               end='2020-02-01',
                               freq='d',
                               shares='000001.SZ, 000002.SZ, 000005.SZ',
-                              htypes='open, high, low, close',
+                              htypes='open, high, low, close, basic_eps',
                               chanel='online')
     hp.info()
 
