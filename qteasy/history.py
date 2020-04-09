@@ -152,19 +152,19 @@ class HistoryPanel():
             levels = range(self._l_count)
             self._levels = dict(zip(levels, levels))
         else:
-            self._levels = labels_to_dict(levels, range(self._l_count))
+            self._levels = _labels_to_dict(levels, range(self._l_count))
 
         if rows is None:
             rows = range(self._r_count)
             self._rows = dict(zip(rows, rows))
         else:
-            self._rows = labels_to_dict(rows, range(self._r_count))
+            self._rows = _labels_to_dict(rows, range(self._r_count))
 
         if columns is None:
             columns = range(self._c_count)
             self._columns = dict(zip(columns, columns))
         else:
-            self._columns = labels_to_dict(columns, range(self._c_count))
+            self._columns = _labels_to_dict(columns, range(self._c_count))
 
     @property
     def values(self):
@@ -180,7 +180,7 @@ class HistoryPanel():
 
     @shares.setter
     def shares(self, input_shares):
-        self._levels = labels_to_dict(input_shares, self.shares)
+        self._levels = _labels_to_dict(input_shares, self.shares)
 
     @property
     def level_count(self):
@@ -196,7 +196,7 @@ class HistoryPanel():
 
     @hdates.setter
     def hdates(self, input_hdates):
-        self._rows = labels_to_dict(input_hdates, self.hdates)
+        self._rows = _labels_to_dict(input_hdates, self.hdates)
 
     @property
     def row_count(self):
@@ -208,7 +208,7 @@ class HistoryPanel():
 
     @htypes.setter
     def htypes(self, input_htypes):
-        self._columns = labels_to_dict(input_htypes, self.htypes)
+        self._columns = _labels_to_dict(input_htypes, self.htypes)
 
     @property
     def columns(self):
@@ -306,6 +306,10 @@ class HistoryPanel():
         return self.__str__()
 
     def info(self):
+        """ 打印本HistoryPanel对象的信息
+
+        :return:
+        """
         import sys
         print(f'\n{type(self)}')
         print(f'History Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
@@ -347,6 +351,11 @@ class HistoryPanel():
 
     # TODO implement this method
     def as_type(self, dtype):
+        """ Convert the data type of current HistoryPanel to another
+
+        :param dtype:
+        :return:
+        """
         raise NotImplementedError
 
     def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
@@ -359,14 +368,26 @@ class HistoryPanel():
 
     # TODO implement this method
     def to_csv(self):
+        """ save a HistoryPanel object to csv file
+
+        :return:
+        """
         raise NotImplementedError
 
     # TODO implement this method
     def to_hdf(self):
+        """ save a HistoryPanel object to hdf file
+
+        :return:
+        """
         raise NotImplementedError
 
     # TODO implement this method
     def to_db(self):
+        """ save HistoryPanel to a database or to update the database with current HistoryPanel
+
+        :return:
+        """
         raise NotImplementedError
 
 
@@ -396,13 +417,13 @@ def _list_or_slice(unknown_input, str_int_dict):
     elif isinstance(unknown_input, str):  # string should be converted to numbers
         string_input = unknown_input
         if string_input.find(',') > 0:
-            string_list = str_to_list(input_string=string_input, sep_char=',')
+            string_list = _str_to_list(input_string=string_input, sep_char=',')
             res = []
             for string in string_list:
                 res.append(str_int_dict[string])
             return np.array(res)
         elif string_input.find(':') > 0:
-            start_end_strings = str_to_list(input_string=string_input, sep_char=':')
+            start_end_strings = _str_to_list(input_string=string_input, sep_char=':')
             start = str_int_dict[start_end_strings[0]]
             end = str_int_dict[start_end_strings[1]]
             if start > end:
@@ -430,9 +451,9 @@ def _list_or_slice(unknown_input, str_int_dict):
         return None
 
 
-def labels_to_dict(input_labels, target_list):
+def _labels_to_dict(input_labels, target_list):
     if isinstance(input_labels, str):
-        input_labels = str_to_list(input_string=input_labels)
+        input_labels = _str_to_list(input_string=input_labels)
     unique_count = len(set(input_labels))
     assert len(input_labels) == unique_count, \
         f'InputError, label duplicated, count of target list is {len(target_list)},' \
@@ -443,7 +464,7 @@ def labels_to_dict(input_labels, target_list):
     return dict(zip(input_labels, range(len(target_list))))
 
 
-def str_to_list(input_string, sep_char: str = ','):
+def _str_to_list(input_string, sep_char: str = ','):
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     res = input_string.replace(' ', '').split(sep_char)
     return res
@@ -451,11 +472,19 @@ def str_to_list(input_string, sep_char: str = ','):
 
 # TODO implement this method
 def csv_to_hp():
+    """ read a csv file and convert its data to a HistoryPanel
+
+    :return:
+    """
     raise NotImplementedError
 
 
 # TODO implement this method
 def hdf_to_hp():
+    """ read a hdf file and convert its data to a HistoryPanel
+
+    :return:
+    """
     raise NotImplementedError
 
 
@@ -608,7 +637,7 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     :return:
     """
     assert isinstance(htypes, str), f'InputError, htypes should be a string, got {type(htypes)}'
-    htypes = str_to_list(input_string=htypes, sep_char=',')
+    htypes = _str_to_list(input_string=htypes, sep_char=',')
     assert isinstance(shares, str), f'InputError, share should be a string, got {type(shares)}'
     price_type_data = []
     financial_type_data = []
@@ -644,10 +673,10 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     print(f'{len(dataframes_to_stack)} dataframes to stack, info of each:')
     for df in dataframes_to_stack:
         df.info()
-    print(f'shares of these dataframes: {str_to_list(shares)}')
+    print(f'shares of these dataframes: {_str_to_list(shares)}')
     return stack_dataframes(dfs=dataframes_to_stack,
                             stack_along='shares',
-                            shares=str_to_list(shares))
+                            shares=_str_to_list(shares))
 
 def get_price_type_raw_data(start, end, freq, shares, htypes, chanel:str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
@@ -666,17 +695,17 @@ def get_price_type_raw_data(start, end, freq, shares, htypes, chanel:str = 'onli
     if htypes is None:
         htypes = all_available_htypes
     if isinstance(htypes, str):
-        htypes = str_to_list(input_string=htypes, sep_char=',')
+        htypes = _str_to_list(input_string=htypes, sep_char=',')
     raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
     raw_df.drop_duplicates(inplace=True)
     raw_df = raw_df.reindex(range(len(raw_df)))
     raw_df.info()
     print(raw_df)
     df_per_share = []
-    shares = str_to_list(input_string=shares, sep_char=',')
+    shares = _str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
-    columns_to_remove = list(set(str_to_list(all_available_htypes)) - set(htypes))
+    columns_to_remove = list(set(_str_to_list(all_available_htypes)) - set(htypes))
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date)
         df.drop(columns=columns_to_remove, inplace=True)
