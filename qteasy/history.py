@@ -349,6 +349,15 @@ class HistoryPanel():
         np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
+    def join(self, *others):
+        """ Join other history panels on to this one, and return a history panel that contains data in all history
+            panels
+
+        :param other:
+        :return:
+        """
+        raise NotImplementedError
+
     # TODO implement this method
     def as_type(self, dtype):
         """ Convert the data type of current HistoryPanel to another
@@ -487,6 +496,14 @@ def hdf_to_hp():
     """
     raise NotImplementedError
 
+# TODO: implement this function first!
+def hp_join(*historypanels):
+    """ join *historypanels into one history panel if they are not None
+
+    :param historypanels:
+    :return:
+    """
+    raise NotImplementedError
 
 def dataframe_to_hp(df: pd.DataFrame,
                     hdates=None,
@@ -604,7 +621,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     combined_index.sort()
     res_values = np.zeros(shape=(share_count, index_count, htype_count))
     res_values.fill(np.nan)
-    print(f'In stack dataframe function, combined index is:\n{combined_index}\nlength: {len(combined_index)}')
+    # print(f'In stack dataframe function, combined index is:\n{combined_index}\nlength: {len(combined_index)}')
     for df_id in range(len(dfs)):
         extended_df = dfs[df_id].reindex(combined_index)
         for col_name, series in extended_df.iteritems():
@@ -652,36 +669,61 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
             composite_type_data.append(htype)
         else:
             raise TypeError
-    print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
-          f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
-    dataframes_to_stack.extend(get_price_type_raw_data(start=start,
-                                                       end=end,
-                                                       freq=freq,
-                                                       shares=shares,
-                                                       htypes=price_type_data,
-                                                       chanel=chanel))
-    print(f'In get history panel() function, financial type data are \n{financial_type_data}, \nshares are\n {shares}')
-    dataframes_to_stack.extend(get_financial_report_type_raw_data(start=start,
-                                                                  end=end,
-                                                                  shares=shares,
-                                                                  htypes=financial_type_data,
-                                                                  chanel=chanel))
-    '''
-    dataframes_to_stack.extend(get_composite_type_raw_data(start=start,
+
+    if len(price_type_data) > 0:
+        print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
+              f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
+        dataframes_to_stack.extend(get_price_type_raw_data(start=start,
                                                            end=end,
+                                                           freq=freq,
                                                            shares=shares,
                                                            htypes=price_type_data,
                                                            chanel=chanel))
-    '''
-    # print(f'{len(dataframes_to_stack)} dataframes to stack, info of each:')
-    # for df in dataframes_to_stack:
-        # df.info()
-    # print(f'shares of these dataframes: {_str_to_list(shares)}')
-    return stack_dataframes(dfs=dataframes_to_stack,
-                            stack_along='shares',
-                            shares=_str_to_list(shares))
+        price_type_hp = stack_dataframes(dfs=dataframes_to_stack,
+                                         stack_along='shares',
+                                         shares=_str_to_list(shares))
+    else:
+        price_type_hp = None
+    if len(financial_type_data) > 0:
+        print(f'In get history panel() function, financial type data are \n{financial_type_data}, \n'
+              f'shares are\n {shares}')
+        dataframes_to_stack = get_financial_report_type_raw_data(start=start,
+                                                                 end=end,
+                                                                 shares=shares,
+                                                                 htypes=financial_type_data,
+                                                                 chanel=chanel)
+        financial_type_hp = stack_dataframes(dfs=dataframes_to_stack,
+                                             stack_along='shares',
+                                             shares=_str_to_list(shares))
+    else:
+        financial_type_hp = None
+    if len(composite_type_data) > 0:
+        dataframes_to_stack = get_composite_type_raw_data(start=start,
+                                                          end=end,
+                                                          shares=shares,
+                                                          htypes=composite_type_data,
+                                                          chanel=chanel)
+        composite_type_hp = stack_dataframes(dfs=dataframes_to_stack,
+                                             stack_along='shares',
+                                             shares=_str_to_list(shares))
+    else:
+        composite_type_hp = None
+    # ============= 调试代码 :=============
+    print(f'in function get_history_panel(), history panels are generated, they are:\n')
+    if price_type_hp is not None:
+        print(f'price type history panel: \n{price_type_hp.info()}')
+    if financial_type_hp is not None:
+        print(f'financial type history panel: \n{financial_type_hp.info()}')
+    if composite_type_hp is not None:
+        print(f'composite type history panel:\n{composite_type_hp.info()}')
+    return hp_join(price_type_hp, financial_type_hp, composite_type_hp)
 
-def get_price_type_raw_data(start, end, freq, shares, htypes, chanel:str = 'online'):
+def get_price_type_raw_data(start: str,
+                            end: str,
+                            freq: str,
+                            shares: str,
+                            htypes: str,
+                            chanel:str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
@@ -699,8 +741,10 @@ def get_price_type_raw_data(start, end, freq, shares, htypes, chanel:str = 'onli
     if isinstance(htypes, str):
         htypes = _str_to_list(input_string=htypes, sep_char=',')
     raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
-    raw_df.drop_duplicates(inplace=True)
-    raw_df = raw_df.reindex(range(len(raw_df)))
+    # print('raw df before rearange\n', raw_df)
+    raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
+    raw_df.index = range(len(raw_df))
+    # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
     shares = _str_to_list(input_string=shares, sep_char=',')
     for share in shares:
@@ -726,18 +770,22 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel:str = 
         htypes = _str_to_list(input_string=htypes, sep_char=',')
     report_fields = ['ts_code', 'f_ann_date']
     report_fields.extend(htypes)
-    print('htypes',htypes, "\nreport fields: ", report_fields)
+    # print('htypes',htypes, "\nreport fields: ", report_fields)
     raw_df = income(start=start, end=end, ts_code=shares, fields=report_fields)
+    # print('raw df before rearange\n', raw_df)
+    raw_df.drop_duplicates(subset=['ts_code', 'f_ann_date'], inplace=True)
+    raw_df.index = range(len(raw_df))
+    # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
     shares = _str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     for df in df_per_share:
+        # print('\nsingle df of share before removal\n', df)
         df.index = pd.to_datetime(df.f_ann_date)
         df.index.name = 'date'
-        df.drop(columns=['f_ann_date'], inplace=True)
-        df.info()
-        print(df)
+        df.drop(columns=['ts_code', 'f_ann_date'], inplace=True)
+        # print('\nsingle df of share after removal\n', df)
     return df_per_share
 
 def get_composite_type_raw_data(start, end, shares, htypes, chanel):
@@ -1036,6 +1084,7 @@ def income(ts_code: str,
            fields: str = None) -> pd.DataFrame:
     """ 获取上市公司财务利润表数据
 
+    :rtype: pd.DataFrame
     :param ts_code: 股票代码
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
