@@ -349,14 +349,95 @@ class HistoryPanel():
         np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
-    def join(self, *others):
-        """ Join other history panels on to this one, and return a history panel that contains data in all history
-            panels
+    # TODO implement this method
+    def join(self,
+             other,
+             same_shares:bool = False,
+             same_htypes:bool = False,
+             same_hdates:bool = False,
+             fill_value:float = np.nan):
+        """ Join one historypanel object with another one
 
-        :param other:
+        :param same_shares:
+        :param same_htypes:
+        :param same_hdates:
+        :param fill_value:
+        :param other: type: HistoryPanel
         :return:
         """
-        raise NotImplementedError
+        assert isinstance(other, HistoryPanel), \
+            f'TypeError, HistoryPanel can only be joined with other HistoryPanel.'
+        other_shares = other.shares
+        other_htypes = other.htypes
+        other_hdates = other.hdates
+        this_shares = self.shares
+        this_htypes = self.htypes
+        this_hdates = self.hdates
+        if not same_shares:
+            combined_shares = list(set(this_shares).union(set(other_shares)))
+            combined_shares.sort()
+        else:
+            assert this_shares == other_shares, f'Assertion Error, shares of two HistoryPanels are different!'
+            combined_shares = self.shares
+        if not same_htypes:
+            combined_htypes = list(set(this_htypes).union(set(other_htypes)))
+            combined_htypes.sort()
+        else:
+            assert this_htypes == other_htypes, f'Assertion Error, htypes of two HistoryPanels are different!'
+            combined_htypes = self.htypes
+        if not same_hdates:
+            combined_hdates = list(set(this_hdates).union(set(other_hdates)))
+            combined_hdates.sort()
+        else:
+            assert this_hdates == other_hdates, f'Assertion Error, hdates of two HistoryPanels are different!'
+            combined_hdates = self.hdates
+        combined_values = np.empty(shape=(len(combined_shares),
+                                          len(combined_hdates),
+                                          len(combined_htypes)))
+        combined_values.fill(fill_value)
+        if same_shares:
+            if same_htypes:
+                for hdate in combined_hdates:
+                    combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
+                    this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
+                    other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
+                    if hdate in this_hdates:
+                        combined_values[:, combined_hdate_id[hdate], :] = self.values[:, this_hdate_id[hdate], :]
+                    else:
+                        combined_values[:, combined_hdate_id[hdate], :] = other.values[:, other_hdate_id[hdate], :]
+
+            elif same_hdates:
+                for htype in combined_htypes:
+                    combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
+                    this_htype_id = _labels_to_dict(this_htypes, this_htypes)
+                    other_htype_id = _labels_to_dict(other_htypes, other_htypes)
+                    if htype in this_htypes:
+                        combined_values[:, :, combined_htype_id[htype]] = self.values[:, :, this_htype_id[htype]]
+                    else:
+                        combined_values[:, :, combined_htype_id[htype]] = other.values[:, :, other_htype_id[htype]]
+            else:
+                for hdate in combined_hdates:
+                    for htype in combined_htypes:
+                        combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
+                        this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
+                        other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
+                        combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
+                        this_htype_id = _labels_to_dict(this_htypes, this_htypes)
+                        other_htype_id = _labels_to_dict(other_htypes, other_htypes)
+                        if htype in this_htypes and hdate in this_hdates:
+                            combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
+                                self.values[:, this_hdate_id[hdate], this_htype_id[htype]]
+                        elif htype in other_htypes and hdate in other_hdates:
+                            combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
+                                other.values[:, other_hdate_id[hdate], other_htype_id[htype]]
+        elif same_htypes:
+            raise NotImplementedError
+        else:
+            raise NotImplementedError
+        return HistoryPanel(values=combined_values,
+                            levels=combined_shares,
+                            rows=combined_hdates,
+                            columns=combined_htypes)
 
     # TODO implement this method
     def as_type(self, dtype):
@@ -461,6 +542,26 @@ def _list_or_slice(unknown_input, str_int_dict):
 
 
 def _labels_to_dict(input_labels, target_list):
+    """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
+
+    根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
+    这个函数生成的字典可以生成一个适合快速访问的label与target_list中的元素映射，使得可以快速地通过label访问列表中的元素
+    例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
+    现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
+    使用labels_to_dict函数生成一个字典ID如下：
+    ID:  {'first' : 0
+         'second': 1
+         'third' : 2}
+    通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
+    target_list[ID['first']] == target_list[0] == 100
+
+    本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
+    :param input_labels: 输入标签，可以接受两种形式的输入：
+                                    字符串形式: 如:     'first,second,third'
+                                    列表形式，如:      ['first', 'second', 'third']
+    :param target_list: 需要
+    :return:
+    """
     if isinstance(input_labels, str):
         input_labels = _str_to_list(input_string=input_labels)
     unique_count = len(set(input_labels))
@@ -474,6 +575,7 @@ def _labels_to_dict(input_labels, target_list):
 
 
 def _str_to_list(input_string, sep_char: str = ','):
+    """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义"""
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     res = input_string.replace(' ', '').split(sep_char)
     return res
@@ -709,6 +811,7 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     else:
         composite_type_hp = None
     # ============= 调试代码 :=============
+    '''
     print(f'in function get_history_panel(), history panels are generated, they are:\n')
     if price_type_hp is not None:
         print(f'price type history panel: \n{price_type_hp.info()}')
@@ -716,7 +819,8 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
         print(f'financial type history panel: \n{financial_type_hp.info()}')
     if composite_type_hp is not None:
         print(f'composite type history panel:\n{composite_type_hp.info()}')
-    return hp_join(price_type_hp, financial_type_hp, composite_type_hp)
+    '''
+    return price_type_hp.join(financial_type_hp, same_shares=True)
 
 def get_price_type_raw_data(start: str,
                             end: str,
