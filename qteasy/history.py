@@ -126,7 +126,7 @@ class HistoryPanel():
     """
 
     # TODO 应该把rows的格式转化为pandas.Timestamp()对象
-    def __init__(self, values, levels=None, rows=None, columns=None):
+    def __init__(self, values:np.ndarray = None, levels=None, rows=None, columns=None):
         """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 
         :param values:
@@ -134,37 +134,46 @@ class HistoryPanel():
         :param rows: datetime range or timestamp index of the data
         :param columns:
         """
-        assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
-        assert len(values.shape) <= 3, \
-            f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
-
-        if len(values.shape) == 1:
-            values = values.reshape(1, 1, values.shape[0])
-        elif len(values.shape) == 2:
-            values = values.reshape(1, *values.shape)
-        self._l_count, self._r_count, self._c_count = values.shape
-        self._values = values
         self._levels = None
         self._columns = None
         self._rows = None
-
-        if levels is None:
-            levels = range(self._l_count)
-            self._levels = dict(zip(levels, levels))
+        if values is None:
+            self._l_count, self._r_count, self._c_count = (0, 0, 0)
+            self._values = None
+            self._is_empty = True
         else:
-            self._levels = _labels_to_dict(levels, range(self._l_count))
+            assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
+            assert len(values.shape) <= 3, \
+                f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
 
-        if rows is None:
-            rows = range(self._r_count)
-            self._rows = dict(zip(rows, rows))
-        else:
-            self._rows = _labels_to_dict(rows, range(self._r_count))
+            if len(values.shape) == 1:
+                values = values.reshape(1, 1, values.shape[0])
+            elif len(values.shape) == 2:
+                values = values.reshape(1, *values.shape)
+            self._l_count, self._r_count, self._c_count = values.shape
+            self._values = values
+            self._is_empty = False
+            if levels is None:
+                levels = range(self._l_count)
+                self._levels = dict(zip(levels, levels))
+            else:
+                self._levels = _labels_to_dict(levels, range(self._l_count))
 
-        if columns is None:
-            columns = range(self._c_count)
-            self._columns = dict(zip(columns, columns))
-        else:
-            self._columns = _labels_to_dict(columns, range(self._c_count))
+            if rows is None:
+                rows = range(self._r_count)
+                self._rows = dict(zip(rows, rows))
+            else:
+                self._rows = _labels_to_dict(rows, range(self._r_count))
+
+            if columns is None:
+                columns = range(self._c_count)
+                self._columns = dict(zip(columns, columns))
+            else:
+                self._columns = _labels_to_dict(columns, range(self._c_count))
+
+    @property
+    def is_empty(self):
+        return self._is_empty
 
     @property
     def values(self):
@@ -176,11 +185,15 @@ class HistoryPanel():
 
     @property
     def shares(self):
-        return list(self._levels.keys())
+        if self.is_empty:
+            return 0
+        else:
+            return list(self._levels.keys())
 
     @shares.setter
     def shares(self, input_shares):
-        self._levels = _labels_to_dict(input_shares, self.shares)
+        if not self.is_empty:
+            self._levels = _labels_to_dict(input_shares, self.shares)
 
     @property
     def level_count(self):
@@ -192,11 +205,15 @@ class HistoryPanel():
 
     @property
     def hdates(self):
-        return list(self._rows.keys())
+        if self.is_empty:
+            return 0
+        else:
+            return list(self._rows.keys())
 
     @hdates.setter
     def hdates(self, input_hdates):
-        self._rows = _labels_to_dict(input_hdates, self.hdates)
+        if not self.is_empty:
+            self._rows = _labels_to_dict(input_hdates, self.hdates)
 
     @property
     def row_count(self):
@@ -204,11 +221,15 @@ class HistoryPanel():
 
     @property
     def htypes(self):
-        return list(self._columns.keys())
+        if self.is_empty:
+            return 0
+        else:
+            return list(self._columns.keys())
 
     @htypes.setter
     def htypes(self, input_htypes):
-        self._columns = _labels_to_dict(input_htypes, self.htypes)
+        if not self.is_empty:
+            self._columns = _labels_to_dict(input_htypes, self.htypes)
 
     @property
     def columns(self):
@@ -244,62 +265,68 @@ class HistoryPanel():
         输出：
             self.value的一个切片
         """
-        key_is_None = keys is None
-        key_is_tuple = isinstance(keys, tuple)
-        key_is_list = isinstance(keys, list)
-        key_is_slice = isinstance(keys, slice)
-        key_is_string = isinstance(keys, str)
-        key_is_number = isinstance(keys, int)
-
-        # first make sure that htypes, share_pool, and hdates are either slice or list
-        if key_is_tuple:
-            if len(keys) == 2:
-                htype_slice, share_slice = keys
-                hdate_slice = slice(None, None, None)
-            elif len(keys) == 3:
-                htype_slice, share_slice, hdate_slice = keys
-        elif key_is_slice or key_is_list or key_is_string or key_is_number:  # keys is a slice or list
-            htype_slice = keys
-            share_slice = slice(None, None, None)
-            hdate_slice = slice(None, None, None)
-        elif key_is_None:
-            htype_slice = slice(None, None, None)
-            share_slice = slice(None, None, None)
-            hdate_slice = slice(None, None, None)
+        if self.is_empty:
+            return None
         else:
-            htype_slice = slice(None, None, None)
-            share_slice = slice(None, None, None)
-            hdate_slice = slice(None, None, None)
+            key_is_None = keys is None
+            key_is_tuple = isinstance(keys, tuple)
+            key_is_list = isinstance(keys, list)
+            key_is_slice = isinstance(keys, slice)
+            key_is_string = isinstance(keys, str)
+            key_is_number = isinstance(keys, int)
 
-        # check and convert each of the slice segments to the right type: a slice or \
-        # a list of indices
-        htype_slice = _list_or_slice(htype_slice, self.columns)
-        share_slice = _list_or_slice(share_slice, self.levels)
-        hdate_slice = _list_or_slice(hdate_slice, self.rows)
+            # first make sure that htypes, share_pool, and hdates are either slice or list
+            if key_is_tuple:
+                if len(keys) == 2:
+                    htype_slice, share_slice = keys
+                    hdate_slice = slice(None, None, None)
+                elif len(keys) == 3:
+                    htype_slice, share_slice, hdate_slice = keys
+            elif key_is_slice or key_is_list or key_is_string or key_is_number:  # keys is a slice or list
+                htype_slice = keys
+                share_slice = slice(None, None, None)
+                hdate_slice = slice(None, None, None)
+            elif key_is_None:
+                htype_slice = slice(None, None, None)
+                share_slice = slice(None, None, None)
+                hdate_slice = slice(None, None, None)
+            else:
+                htype_slice = slice(None, None, None)
+                share_slice = slice(None, None, None)
+                hdate_slice = slice(None, None, None)
 
-        # print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
-        #      '\nhdates is ', hdate_slice)
-        return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
+            # check and convert each of the slice segments to the right type: a slice or \
+            # a list of indices
+            htype_slice = _list_or_slice(htype_slice, self.columns)
+            share_slice = _list_or_slice(share_slice, self.levels)
+            hdate_slice = _list_or_slice(hdate_slice, self.rows)
+
+            # print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
+            #      '\nhdates is ', hdate_slice)
+            return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
 
     def __str__(self):
         res = []
-        if self.level_count <= 10:
-            display_shares = self.shares
+        if self.is_empty:
+            res.append(f'{type(self)} \nEmpty History Panel at {hex(id(self))}')
         else:
-            display_shares = self.shares[0:3]
-        for share in display_shares:
-            res.append(f'\nshare {self.levels[share]}, label: {share}\n')
-            df = self.to_dataframe(share=share)
-            res.append(df.__str__())
-            res.append('\n')
-        if self.level_count > 10:
-            res.append('\n ...  \n')
-            for share in self.shares[-2:]:
+            if self.level_count <= 10:
+                display_shares = self.shares
+            else:
+                display_shares = self.shares[0:3]
+            for share in display_shares:
                 res.append(f'\nshare {self.levels[share]}, label: {share}\n')
                 df = self.to_dataframe(share=share)
                 res.append(df.__str__())
                 res.append('\n')
-            res.append('Only first 3 and last 3 shares are displayed\n')
+            if self.level_count > 10:
+                res.append('\n ...  \n')
+                for share in self.shares[-2:]:
+                    res.append(f'\nshare {self.levels[share]}, label: {share}\n')
+                    df = self.to_dataframe(share=share)
+                    res.append(df.__str__())
+                    res.append('\n')
+                res.append('Only first 3 and last 3 shares are displayed\n')
         return ''.join(res)
 
     def __repr__(self):
@@ -312,18 +339,22 @@ class HistoryPanel():
         """
         import sys
         print(f'\n{type(self)}')
-        print(f'History Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
-        print(f'Historical Data Types (total {self.column_count} data types):')
-        if self.column_count <= 10:
-            print(f'{self.htypes}')
+        if self.is_empty:
+            print(f'Empty History Panel at {hex(id(self))}')
         else:
-            print(f'{self.htypes[0:3]} ... {self.htypes[-3:-1]}')
-        print(f'Shares (total {self.level_count} shares):')
-        sum_nnan = np.sum(~np.isnan(self.values), 1)
-        df = pd.DataFrame(sum_nnan, index=self.shares, columns=self.htypes)
-        print('non-null values for each share and data type:')
-        print(df)
-        print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
+            print(f'History Panel at {hex(id(self))}')
+            print(f'Datetime Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
+            print(f'Historical Data Types (total {self.column_count} data types):')
+            if self.column_count <= 10:
+                print(f'{self.htypes}')
+            else:
+                print(f'{self.htypes[0:3]} ... {self.htypes[-3:-1]}')
+            print(f'Shares (total {self.level_count} shares):')
+            sum_nnan = np.sum(~np.isnan(self.values), 1)
+            df = pd.DataFrame(sum_nnan, index=self.shares, columns=self.htypes)
+            print('non-null values for each share and data type:')
+            print(df)
+            print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
         """ 给HistoryPanel对象的层、行、列标签重新赋值
@@ -333,12 +364,13 @@ class HistoryPanel():
         :param hdates:
         :return: HistoryPanel
         """
-        if shares is not None:
-            self.shares = shares
-        if htypes is not None:
-            self.htypes = htypes
-        if hdates is not None:
-            self.hdates = hdates
+        if not self.is_empty:
+            if shares is not None:
+                self.shares = shares
+            if htypes is not None:
+                self.htypes = htypes
+            if hdates is not None:
+                self.hdates = hdates
 
     def fillna(self, with_val):
         """ 使用with_value来填充HistoryPanel中的所有nan值
@@ -346,8 +378,10 @@ class HistoryPanel():
         :param with_val:
         :return:
         """
-        np._values = np.where(np.isnan(self._values), with_val, self._values)
+        if not self.is_empty:
+            np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
+
 
     # TODO implement this method
     def join(self,
@@ -367,77 +401,82 @@ class HistoryPanel():
         """
         assert isinstance(other, HistoryPanel), \
             f'TypeError, HistoryPanel can only be joined with other HistoryPanel.'
-        other_shares = other.shares
-        other_htypes = other.htypes
-        other_hdates = other.hdates
-        this_shares = self.shares
-        this_htypes = self.htypes
-        this_hdates = self.hdates
-        if not same_shares:
-            combined_shares = list(set(this_shares).union(set(other_shares)))
-            combined_shares.sort()
+        if self.is_empty:
+            return other
+        elif other.is_empty:
+            return self
         else:
-            assert this_shares == other_shares, f'Assertion Error, shares of two HistoryPanels are different!'
-            combined_shares = self.shares
-        if not same_htypes:
-            combined_htypes = list(set(this_htypes).union(set(other_htypes)))
-            combined_htypes.sort()
-        else:
-            assert this_htypes == other_htypes, f'Assertion Error, htypes of two HistoryPanels are different!'
-            combined_htypes = self.htypes
-        if not same_hdates:
-            combined_hdates = list(set(this_hdates).union(set(other_hdates)))
-            combined_hdates.sort()
-        else:
-            assert this_hdates == other_hdates, f'Assertion Error, hdates of two HistoryPanels are different!'
-            combined_hdates = self.hdates
-        combined_values = np.empty(shape=(len(combined_shares),
-                                          len(combined_hdates),
-                                          len(combined_htypes)))
-        combined_values.fill(fill_value)
-        if same_shares:
-            if same_htypes:
-                for hdate in combined_hdates:
-                    combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
-                    this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
-                    other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
-                    if hdate in this_hdates:
-                        combined_values[:, combined_hdate_id[hdate], :] = self.values[:, this_hdate_id[hdate], :]
-                    else:
-                        combined_values[:, combined_hdate_id[hdate], :] = other.values[:, other_hdate_id[hdate], :]
-
-            elif same_hdates:
-                for htype in combined_htypes:
-                    combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
-                    this_htype_id = _labels_to_dict(this_htypes, this_htypes)
-                    other_htype_id = _labels_to_dict(other_htypes, other_htypes)
-                    if htype in this_htypes:
-                        combined_values[:, :, combined_htype_id[htype]] = self.values[:, :, this_htype_id[htype]]
-                    else:
-                        combined_values[:, :, combined_htype_id[htype]] = other.values[:, :, other_htype_id[htype]]
+            other_shares = other.shares
+            other_htypes = other.htypes
+            other_hdates = other.hdates
+            this_shares = self.shares
+            this_htypes = self.htypes
+            this_hdates = self.hdates
+            if not same_shares:
+                combined_shares = list(set(this_shares).union(set(other_shares)))
+                combined_shares.sort()
             else:
-                for hdate in combined_hdates:
-                    for htype in combined_htypes:
+                assert this_shares == other_shares, f'Assertion Error, shares of two HistoryPanels are different!'
+                combined_shares = self.shares
+            if not same_htypes:
+                combined_htypes = list(set(this_htypes).union(set(other_htypes)))
+                combined_htypes.sort()
+            else:
+                assert this_htypes == other_htypes, f'Assertion Error, htypes of two HistoryPanels are different!'
+                combined_htypes = self.htypes
+            if not same_hdates:
+                combined_hdates = list(set(this_hdates).union(set(other_hdates)))
+                combined_hdates.sort()
+            else:
+                assert this_hdates == other_hdates, f'Assertion Error, hdates of two HistoryPanels are different!'
+                combined_hdates = self.hdates
+            combined_values = np.empty(shape=(len(combined_shares),
+                                              len(combined_hdates),
+                                              len(combined_htypes)))
+            combined_values.fill(fill_value)
+            if same_shares:
+                if same_htypes:
+                    for hdate in combined_hdates:
                         combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
                         this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
                         other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
+                        if hdate in this_hdates:
+                            combined_values[:, combined_hdate_id[hdate], :] = self.values[:, this_hdate_id[hdate], :]
+                        else:
+                            combined_values[:, combined_hdate_id[hdate], :] = other.values[:, other_hdate_id[hdate], :]
+
+                elif same_hdates:
+                    for htype in combined_htypes:
                         combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
                         this_htype_id = _labels_to_dict(this_htypes, this_htypes)
                         other_htype_id = _labels_to_dict(other_htypes, other_htypes)
-                        if htype in this_htypes and hdate in this_hdates:
-                            combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
-                                self.values[:, this_hdate_id[hdate], this_htype_id[htype]]
-                        elif htype in other_htypes and hdate in other_hdates:
-                            combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
-                                other.values[:, other_hdate_id[hdate], other_htype_id[htype]]
-        elif same_htypes:
-            raise NotImplementedError
-        else:
-            raise NotImplementedError
-        return HistoryPanel(values=combined_values,
-                            levels=combined_shares,
-                            rows=combined_hdates,
-                            columns=combined_htypes)
+                        if htype in this_htypes:
+                            combined_values[:, :, combined_htype_id[htype]] = self.values[:, :, this_htype_id[htype]]
+                        else:
+                            combined_values[:, :, combined_htype_id[htype]] = other.values[:, :, other_htype_id[htype]]
+                else:
+                    for hdate in combined_hdates:
+                        for htype in combined_htypes:
+                            combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
+                            this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
+                            other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
+                            combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
+                            this_htype_id = _labels_to_dict(this_htypes, this_htypes)
+                            other_htype_id = _labels_to_dict(other_htypes, other_htypes)
+                            if htype in this_htypes and hdate in this_hdates:
+                                combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
+                                    self.values[:, this_hdate_id[hdate], this_htype_id[htype]]
+                            elif htype in other_htypes and hdate in other_hdates:
+                                combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
+                                    other.values[:, other_hdate_id[hdate], other_htype_id[htype]]
+            elif same_htypes:
+                raise NotImplementedError
+            else:
+                raise NotImplementedError
+            return HistoryPanel(values=combined_values,
+                                levels=combined_shares,
+                                rows=combined_hdates,
+                                columns=combined_htypes)
 
     # TODO implement this method
     def as_type(self, dtype):
@@ -449,12 +488,15 @@ class HistoryPanel():
         raise NotImplementedError
 
     def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
-        if htype is not None:
-            v = self[htype].T.squeeze()
-            return pd.DataFrame(v, index=self.hdates, columns=self.shares)
-        if share is not None:
-            v = self[:, share].squeeze()
-            return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
+        if self.is_empty:
+            return pd.DataFrame()
+        else:
+            if htype is not None:
+                v = self[htype].T.squeeze()
+                return pd.DataFrame(v, index=self.hdates, columns=self.shares)
+            if share is not None:
+                v = self[:, share].squeeze()
+                return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
 
     # TODO implement this method
     def to_csv(self):
@@ -770,46 +812,49 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
         elif htype in COMPOSIT_TYPE_DATA:
             composite_type_data.append(htype)
         else:
-            raise TypeError
-
+            raise TypeError(f'{htype} is an unknown data type!')
+    result_hp=HistoryPanel()
     if len(price_type_data) > 0:
-        print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
-              f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
+        print('Getting price type historical data...')
+        # print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
+        #       f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
         dataframes_to_stack.extend(get_price_type_raw_data(start=start,
                                                            end=end,
                                                            freq=freq,
                                                            shares=shares,
                                                            htypes=price_type_data,
                                                            chanel=chanel))
-        price_type_hp = stack_dataframes(dfs=dataframes_to_stack,
-                                         stack_along='shares',
-                                         shares=_str_to_list(shares))
-    else:
-        price_type_hp = None
+        result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
+                                                          stack_along='shares',
+                                                          shares=_str_to_list(shares)),
+                                   same_shares=True)
+
     if len(financial_type_data) > 0:
-        print(f'In get history panel() function, financial type data are \n{financial_type_data}, \n'
-              f'shares are\n {shares}')
+        print('Getting financial report...')
+        # print(f'In get history panel() function, financial type data are \n{financial_type_data}, \n'
+        #       f'shares are\n {shares}')
         dataframes_to_stack = get_financial_report_type_raw_data(start=start,
                                                                  end=end,
                                                                  shares=shares,
                                                                  htypes=financial_type_data,
                                                                  chanel=chanel)
-        financial_type_hp = stack_dataframes(dfs=dataframes_to_stack,
-                                             stack_along='shares',
-                                             shares=_str_to_list(shares))
-    else:
-        financial_type_hp = None
+        result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
+                                                          stack_along='shares',
+                                                          shares=_str_to_list(shares)),
+                                   same_shares=True)
+
     if len(composite_type_data) > 0:
+        print('Getting composite historical data...')
         dataframes_to_stack = get_composite_type_raw_data(start=start,
                                                           end=end,
                                                           shares=shares,
                                                           htypes=composite_type_data,
                                                           chanel=chanel)
-        composite_type_hp = stack_dataframes(dfs=dataframes_to_stack,
-                                             stack_along='shares',
-                                             shares=_str_to_list(shares))
-    else:
-        composite_type_hp = None
+        result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
+                                                          stack_along='shares',
+                                                          shares=_str_to_list(shares)),
+                                   same_shares=True)
+
     # ============= 调试代码 :=============
     '''
     print(f'in function get_history_panel(), history panels are generated, they are:\n')
@@ -820,7 +865,7 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     if composite_type_hp is not None:
         print(f'composite type history panel:\n{composite_type_hp.info()}')
     '''
-    return price_type_hp.join(financial_type_hp, same_shares=True)
+    return result_hp
 
 def get_price_type_raw_data(start: str,
                             end: str,
