@@ -19,8 +19,8 @@ if __name__ == '__main__':
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context(investment_amounts=[20000],
-                   investment_dates=['2014-07-01'],
+    cont = Context(investment_amounts=[10000, 10000],
+                   investment_dates=['2004-07-01', '2007-07-01'],
                    reference_data='000300',
                    moq=0)
     cont.share_pool = hp.shares
@@ -47,11 +47,11 @@ if __name__ == '__main__':
     print(f'\n START QT RUNNING\n===========================\n')
     run(op, cont, mode=1, history_data=cont.history_data)
     print(f'test get history panel directly')
-    hp = hs.get_history_panel(start='2019-12-01',
-                              end='2020-02-01',
+    hp = hs.get_history_panel(start='2019-06-01',
+                              end='2020-01-23',
                               freq='d',
                               shares='000001.SZ, 000002.SZ, 000005.SZ',
-                              htypes='open, high, low, close, basic_eps, total_revenue,revenue',
+                              htypes='open, high, low, close, basic_eps, eps',
                               chanel='online')
     hp.info()
 

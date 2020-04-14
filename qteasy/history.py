@@ -18,66 +18,234 @@ PRICE_TYPE_DATA = ['close',
                    'pct_chg',
                    'vol',
                    'amount']
-FINANCIAL_REPORT_TYPE_DATA = ['basic_eps',
-                              'diluted_eps',
-                              'total_revenue',
-                              'revenue',
-                              'int_income',
-                              'prem_earned',
-                              'comm_income',
-                              'n_commis_income',
-                              'n_oth_income',
-                              'n_oth_b_income',
-                              'prem_income',
-                              'out_prem',
-                              'une_prem_reser',
-                              'reins_income',
-                              'n_sec_tb_income',
-                              'n_sec_uw_income',
-                              'n_asset_mg_income',
-                              'oth_b_income',
-                              'fv_value_chg_gain',
-                              'invest_income',
-                              'ass_invest_income',
-                              'forex_gain',
-                              'total_cogs',
-                              'oper_cost',
-                              'int_exp',
-                              'comm_exp',
-                              'biz_tax_surchg',
-                              'sell_exp',
-                              'admin_exp',
-                              'fin_exp',
-                              'assets_impair_loss',
-                              'prem_refund',
-                              'compens_payout',
-                              'reser_insur_liab',
-                              'div_payt',
-                              'reins_exp',
-                              'oper_exp',
-                              'compens_payout_refu',
-                              'insur_reser_refu',
-                              'reins_cost_refund',
-                              'other_bus_cost',
-                              'operate_profit',
-                              'non_oper_income',
-                              'non_oper_exp',
-                              'nca_disploss',
-                              'total_profit',
-                              'income_tax',
-                              'n_income',
-                              'n_income_attr_p',
-                              'minority_gain',
-                              'oth_compr_income',
-                              't_compr_income',
-                              'compr_inc_attr_p',
-                              'compr_inc_attr_m_s',
-                              'ebit',
-                              'ebitda',
-                              'insurance_exp',
-                              'undist_profit',
-                              'distable_profit']
+INCOME_TYPE_DATA = ['basic_eps',
+                    'diluted_eps',
+                    'total_revenue',
+                    'revenue',
+                    'int_income',
+                    'prem_earned',
+                    'comm_income',
+                    'n_commis_income',
+                    'n_oth_income',
+                    'n_oth_b_income',
+                    'prem_income',
+                    'out_prem',
+                    'une_prem_reser',
+                    'reins_income',
+                    'n_sec_tb_income',
+                    'n_sec_uw_income',
+                    'n_asset_mg_income',
+                    'oth_b_income',
+                    'fv_value_chg_gain',
+                    'invest_income',
+                    'ass_invest_income',
+                    'forex_gain',
+                    'total_cogs',
+                    'oper_cost',
+                    'int_exp',
+                    'comm_exp',
+                    'biz_tax_surchg',
+                    'sell_exp',
+                    'admin_exp',
+                    'fin_exp',
+                    'assets_impair_loss',
+                    'prem_refund',
+                    'compens_payout',
+                    'reser_insur_liab',
+                    'div_payt',
+                    'reins_exp',
+                    'oper_exp',
+                    'compens_payout_refu',
+                    'insur_reser_refu',
+                    'reins_cost_refund',
+                    'other_bus_cost',
+                    'operate_profit',
+                    'non_oper_income',
+                    'non_oper_exp',
+                    'nca_disploss',
+                    'total_profit',
+                    'income_tax',
+                    'n_income',
+                    'n_income_attr_p',
+                    'minority_gain',
+                    'oth_compr_income',
+                    't_compr_income',
+                    'compr_inc_attr_p',
+                    'compr_inc_attr_m_s',
+                    'ebit',
+                    'ebitda',
+                    'insurance_exp',
+                    'undist_profit',
+                    'distable_profit']
+INDICATOR_TYPE_DATA = ['eps',
+                    'dt_eps',
+                    'total_revenue_ps',
+                    'revenue_ps',
+                    'capital_rese_ps',
+                    'surplus_rese_ps',
+                    'undist_profit_ps',
+                    'extra_item',
+                    'profit_dedt',
+                    'gross_margin',
+                    'current_ratio',
+                    'quick_ratio',
+                    'cash_ratio',
+                    'invturn_days',
+                    'arturn_days',
+                    'inv_turn',
+                    'ar_turn',
+                    'ca_turn',
+                    'fa_turn',
+                    'assets_turn',
+                    'op_income',
+                    'valuechange_income',
+                    'interst_income',
+                    'daa',
+                    'ebit',
+                    'ebitda',
+                    'fcff',
+                    'fcfe',
+                    'current_exint',
+                    'noncurrent_exint',
+                    'interestdebt',
+                    'netdebt',
+                    'tangible_asset',
+                    'working_capital',
+                    'networking_capital',
+                    'invest_capital',
+                    'retained_earnings',
+                    'diluted2_eps',
+                    'bps',
+                    'ocfps',
+                    'retainedps',
+                    'cfps',
+                    'ebit_ps',
+                    'fcff_ps',
+                    'fcfe_ps',
+                    'netprofit_margin',
+                    'grossprofit_margin',
+                    'cogs_of_sales',
+                    'expense_of_sales',
+                    'profit_to_gr',
+                    'saleexp_to_gr',
+                    'adminexp_of_gr',
+                    'finaexp_of_gr',
+                    'impai_ttm',
+                    'gc_of_gr',
+                    'op_of_gr',
+                    'ebit_of_gr',
+                    'roe',
+                    'roe_waa',
+                    'roe_dt',
+                    'roa',
+                    'npta',
+                    'roic',
+                    'roe_yearly',
+                    'roa2_yearly',
+                    'roe_avg',
+                    'opincome_of_ebt',
+                    'investincome_of_ebt',
+                    'n_op_profit_of_ebt',
+                    'tax_to_ebt',
+                    'dtprofit_to_profit',
+                    'salescash_to_or',
+                    'ocf_to_or',
+                    'ocf_to_opincome',
+                    'capitalized_to_da',
+                    'debt_to_assets',
+                    'assets_to_eqt',
+                    'dp_assets_to_eqt',
+                    'ca_to_assets',
+                    'nca_to_assets',
+                    'tbassets_to_totalassets',
+                    'int_to_talcap',
+                    'eqt_to_talcapital',
+                    'currentdebt_to_debt',
+                    'longdeb_to_debt',
+                    'ocf_to_shortdebt',
+                    'debt_to_eqt',
+                    'eqt_to_debt',
+                    'eqt_to_interestdebt',
+                    'tangibleasset_to_debt',
+                    'tangasset_to_intdebt',
+                    'tangibleasset_to_netdebt',
+                    'ocf_to_debt',
+                    'ocf_to_interestdebt',
+                    'ocf_to_netdebt',
+                    'ebit_to_interest',
+                    'longdebt_to_workingcapital',
+                    'ebitda_to_debt',
+                    'turn_days',
+                    'roa_yearly',
+                    'roa_dp',
+                    'fixed_assets',
+                    'profit_prefin_exp',
+                    'non_op_profit',
+                    'op_to_ebt',
+                    'nop_to_ebt',
+                    'ocf_to_profit',
+                    'cash_to_liqdebt',
+                    'cash_to_liqdebt_withinterest',
+                    'op_to_liqdebt',
+                    'op_to_debt',
+                    'roic_yearly',
+                    'total_fa_trun',
+                    'profit_to_op',
+                    'q_opincome',
+                    'q_investincome',
+                    'q_dtprofit',
+                    'q_eps',
+                    'q_netprofit_margin',
+                    'q_gsprofit_margin',
+                    'q_exp_to_sales',
+                    'q_profit_to_gr',
+                    'q_saleexp_to_gr',
+                    'q_adminexp_to_gr',
+                    'q_finaexp_to_gr',
+                    'q_impair_to_gr_ttm',
+                    'q_gc_to_gr',
+                    'q_op_to_gr',
+                    'q_roe',
+                    'q_dt_roe',
+                    'q_npta',
+                    'q_opincome_to_ebt',
+                    'q_investincome_to_ebt',
+                    'q_dtprofit_to_profit',
+                    'q_salescash_to_or',
+                    'q_ocf_to_sales',
+                    'q_ocf_to_or',
+                    'basic_eps_yoy',
+                    'dt_eps_yoy',
+                    'cfps_yoy',
+                    'op_yoy',
+                    'ebt_yoy',
+                    'netprofit_yoy',
+                    'dt_netprofit_yoy',
+                    'ocf_yoy',
+                    'roe_yoy',
+                    'bps_yoy',
+                    'assets_yoy',
+                    'eqt_yoy',
+                    'tr_yoy',
+                    'or_yoy',
+                    'q_gr_yoy',
+                    'q_gr_qoq',
+                    'q_sales_yoy',
+                    'q_sales_qoq',
+                    'q_op_yoy',
+                    'q_op_qoq',
+                    'q_profit_yoy',
+                    'q_profit_qoq',
+                    'q_netprofit_yoy',
+                    'q_netprofit_qoq',
+                    'equity_yoy',
+                    'rd_exp',
+                    'update_flag']
+FINANCE_TYPE_DATA = []
+FINANCE_TYPE_DATA.extend(INCOME_TYPE_DATA)
+FINANCE_TYPE_DATA.extend(INDICATOR_TYPE_DATA)
 COMPOSIT_TYPE_DATA = []
+
 
 # TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
 
@@ -126,7 +294,7 @@ class HistoryPanel():
     """
 
     # TODO 应该把rows的格式转化为pandas.Timestamp()对象
-    def __init__(self, values:np.ndarray = None, levels=None, rows=None, columns=None):
+    def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
         """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 
         :param values:
@@ -382,14 +550,13 @@ class HistoryPanel():
             np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
-
     # TODO implement this method
     def join(self,
              other,
-             same_shares:bool = False,
-             same_htypes:bool = False,
-             same_hdates:bool = False,
-             fill_value:float = np.nan):
+             same_shares: bool = False,
+             same_htypes: bool = False,
+             same_hdates: bool = False,
+             fill_value: float = np.nan):
         """ Join one historypanel object with another one
 
         :param same_shares:
@@ -478,14 +645,18 @@ class HistoryPanel():
                                 rows=combined_hdates,
                                 columns=combined_htypes)
 
-    # TODO implement this method
     def as_type(self, dtype):
         """ Convert the data type of current HistoryPanel to another
 
         :param dtype:
         :return:
         """
-        raise NotImplementedError
+        ALL_DTYPES = ['float', 'int']
+        if not self.is_empty:
+            assert isinstance(dtype, str), f'InputError, dtype should be a string, got {type(dtype)}'
+            assert dtype in ALL_DTYPES, f'dtype {dtype} is not recognized!'
+            self.values.astype(dtype)
+        return self
 
     def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
         if self.is_empty:
@@ -640,14 +811,23 @@ def hdf_to_hp():
     """
     raise NotImplementedError
 
+
 # TODO: implement this function first!
 def hp_join(*historypanels):
     """ join *historypanels into one history panel if they are not None
 
-    :param historypanels:
+    :param same_shares:
+    :param same_htypes:
+    :param same_hdates:
+    :param *historypanels: tuple,
     :return:
     """
-    raise NotImplementedError
+    res_hp = HistoryPanel()
+    for hp in historypanels:
+        if isinstance(hp, HistoryPanel):
+            res_hp.join(other=hp)
+    return res_hp
+
 
 def dataframe_to_hp(df: pd.DataFrame,
                     hdates=None,
@@ -801,23 +981,22 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     htypes = _str_to_list(input_string=htypes, sep_char=',')
     assert isinstance(shares, str), f'InputError, share should be a string, got {type(shares)}'
     price_type_data = []
-    financial_type_data = []
+    income_type_data = []
+    indicator_type_data = []
     composite_type_data = []
+    price_type_data.extend([t for t in htypes if t in PRICE_TYPE_DATA])
+    income_type_data.extend([t for t in htypes if t in INCOME_TYPE_DATA])
+    indicator_type_data.extend([t for t in htypes if t in INDICATOR_TYPE_DATA])
+    finance_report_types = [income_type_data,
+                            indicator_type_data]
+    composite_type_data.extend([t for t in htypes if t in COMPOSIT_TYPE_DATA])
     dataframes_to_stack = []
-    for htype in htypes:
-        if htype in PRICE_TYPE_DATA:
-            price_type_data.append(htype)
-        elif htype in FINANCIAL_REPORT_TYPE_DATA:
-            financial_type_data.append(htype)
-        elif htype in COMPOSIT_TYPE_DATA:
-            composite_type_data.append(htype)
-        else:
-            raise TypeError(f'{htype} is an unknown data type!')
-    result_hp=HistoryPanel()
+
+    result_hp = HistoryPanel()
     if len(price_type_data) > 0:
         print('Getting price type historical data...')
-        # print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
-        #       f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
+        print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
+              f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
         dataframes_to_stack.extend(get_price_type_raw_data(start=start,
                                                            end=end,
                                                            freq=freq,
@@ -829,14 +1008,14 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
                                                           shares=_str_to_list(shares)),
                                    same_shares=True)
 
-    if len(financial_type_data) > 0:
+    for report_type in [t for t in finance_report_types if len(t) > 0]:
         print('Getting financial report...')
-        # print(f'In get history panel() function, financial type data are \n{financial_type_data}, \n'
-        #       f'shares are\n {shares}')
+        print(f'In get history panel() function, financial type data are \n{report_type}, \n'
+              f'shares are\n {shares}')
         dataframes_to_stack = get_financial_report_type_raw_data(start=start,
                                                                  end=end,
                                                                  shares=shares,
-                                                                 htypes=financial_type_data,
+                                                                 htypes=report_type,
                                                                  chanel=chanel)
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
@@ -867,12 +1046,13 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     '''
     return result_hp
 
+
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
                             shares: str,
                             htypes: str,
-                            chanel:str = 'online'):
+                            chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
@@ -905,9 +1085,12 @@ def get_price_type_raw_data(start: str,
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
 
-def get_financial_report_type_raw_data(start, end, shares, htypes, chanel:str = 'online'):
+
+def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str = 'online'):
     """ 在线获取财报类历史数据
 
+    :param report_type:
+    :return:
     :param start:
     :param end:
     :param shares:
@@ -917,12 +1100,16 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel:str = 
     """
     if isinstance(htypes, str):
         htypes = _str_to_list(input_string=htypes, sep_char=',')
-    report_fields = ['ts_code', 'f_ann_date']
+    report_fields = ['ts_code', 'ann_date']
     report_fields.extend(htypes)
     # print('htypes',htypes, "\nreport fields: ", report_fields)
-    raw_df = income(start=start, end=end, ts_code=shares, fields=report_fields)
+    if htypes[0] in INCOME_TYPE_DATA:
+        raw_df = income(start=start, end=end, ts_code=shares, fields=report_fields)
+    else: # htypes[0] in INDICATOR_TYPE_DATA:
+        raw_df = indicators(start=start, end=end, ts_code=shares, fields=report_fields)
+
     # print('raw df before rearange\n', raw_df)
-    raw_df.drop_duplicates(subset=['ts_code', 'f_ann_date'], inplace=True)
+    raw_df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
     raw_df.index = range(len(raw_df))
     # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
@@ -931,11 +1118,12 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel:str = 
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     for df in df_per_share:
         # print('\nsingle df of share before removal\n', df)
-        df.index = pd.to_datetime(df.f_ann_date)
+        df.index = pd.to_datetime(df.ann_date)
         df.index.name = 'date'
-        df.drop(columns=['ts_code', 'f_ann_date'], inplace=True)
+        df.drop(columns=['ts_code', 'ann_date'], inplace=True)
         # print('\nsingle df of share after removal\n', df)
     return df_per_share
+
 
 def get_composite_type_raw_data(start, end, shares, htypes, chanel):
     """
@@ -948,6 +1136,7 @@ def get_composite_type_raw_data(start, end, shares, htypes, chanel):
     :return:
     """
     raise NotImplementedError
+
 
 # ==================
 # Historical Utility functions based on tushare
@@ -983,10 +1172,14 @@ def stock_basic(is_hs: str = None,
         delist_date,str,    退市日期
         is_hs,      str,    是否沪深港通标的，N否 H沪股通 S深股通
     """
-    if is_hs is None: is_hs = ''
-    if list_status is None: list_status = 'L'
-    if exchange is None: exchange = ''
-    if fields is None: fields = 'ts_code,symbol,name,area,industry,list_date'
+    if is_hs is None:
+        is_hs = ''
+    if list_status is None:
+        list_status = 'L'
+    if exchange is None:
+        exchange = ''
+    if fields is None:
+        fields = 'ts_code,symbol,name,area,industry,list_date'
     pro = ts.pro_api()
     return pro.stock_basic(exchange=exchange,
                            list_status=list_status,
@@ -1048,7 +1241,8 @@ def name_change(ts_code: str = None,
         4       600848.SH   ST自仪     20010508    20061008         ST
         5       600848.SH   自仪股份  19940324      20010507         其他
     """
-    if fields is None: fields = 'ts_code,name,start,end,change_reason'
+    if fields is None:
+        fields = 'ts_code,name,start,end,change_reason'
     pro = ts.pro_api()
     return pro.namechange(ts_code=ts_code,
                           start_date=start,
@@ -1157,7 +1351,8 @@ def stock_company(ts_code: str = None,
         9     000010.SZ       曾嵘     李德友       金小刚  8.198547e+04   19881231       广东
         10    000011.SZ      刘声向     王航军       范维平  5.959791e+04   19830117       广东
     """
-    if fields is None: fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
+    if fields is None:
+        fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
     pro = ts.pro_api()
     return pro.stock_comapany(ts_code=ts_code, exchange=exchange, fields=fields)
 
@@ -1222,6 +1417,17 @@ def get_bar(share: str,
 
 # Finance Data
 # ================
+
+def _regulate_date_format(date_str: str) -> str:
+    """ tushare的财务报表函数只支持YYYYMMDD格式的日期，因此需要把YYYY-MM-DD及YYYY/MM/DD格式的日期转化为YYYYMMDD格式
+
+    :param date_str:
+    :return:
+    """
+    assert isinstance(date_str, str), f'TypeError, Expect string type, got {type(date_str)}'
+    date_str = date_str.replace('-', '')
+    date_str = date_str.replace('/', '')
+    return date_str
 
 def income(ts_code: str,
            rpt_date: str = None,
@@ -1326,8 +1532,11 @@ def income(ts_code: str,
                end='20180730',
                fields='ts_code,ann_date,f_ann_date,end,report_type,comp_type,basic_eps,diluted_eps')
     """
-    if fields is None: fields = 'ts_code,rpt_date,f_ann_date,end,report_type,comp_type,basic_eps,diluted_eps'
+    if fields is None:
+        fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
     pro = ts.pro_api()
+    start = _regulate_date_format(start)
+    end = _regulate_date_format(end)
     return pro.income(ts_code=ts_code,
                       ann_date=rpt_date,
                       start_date=start,
@@ -1516,8 +1725,11 @@ def balance(ts_code: str,
                  end_date='20180730',
                  fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese')
     """
-    if fields is None: fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
+    if fields is None:
+        fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
     pro = ts.pro_api()
+    start = _regulate_date_format(start)
+    end = _regulate_date_format(end)
     return pro.balancesheet(ts_code=ts_code,
                             ann_date=rpt_date,
                             start_date=start,
@@ -1658,8 +1870,11 @@ def cashflow(ts_code: str,
                  end_date='20180730',
                  fields = 'fa_fnc_leases, end_bal_cash, beg_bal_cash')
     """
-    if fields is None: fields = 'ts_code,rpt_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
+    if fields is None:
+        fields = 'ts_code,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
     pro = ts.pro_api()
+    start = _regulate_date_format(start)
+    end = _regulate_date_format(end)
     return pro.cashflow(ts_code=ts_code,
                         ann_date=rpt_date,
                         start_date=start,
@@ -1863,7 +2078,8 @@ def indicators(ts_code: str,
         3   600000.SH  20190326  1.850    1.85            5.8443      5.8443
         4   600000.SH  20181031  1.440    1.44            4.3305      4.3305
     """
-    if fields is None: fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
+    if fields is None:
+        fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
     pro = ts.pro_api()
     return pro.fina_indicator(ts_code=ts_code,
                               ann_date=rpt_date,
@@ -1912,7 +2128,8 @@ def top_list(trade_date: str = None,
         4    20180928  000593.SZ  大通燃气   7.990
         ...
     """
-    if fields is None: fields = 'trade_date,ts_code,name,close,l_sell,l_buy,l_amount,net_amount,net_rate,amount_rate'
+    if fields is None:
+        fields = 'trade_date,ts_code,name,close,l_sell,l_buy,l_amount,net_amount,net_rate,amount_rate'
     pro = ts.pro_api()
     return pro.top_list(trade_date=trade_date,
                         ts_code=ts_code,
@@ -2381,7 +2598,7 @@ class History:
             wh_low, f4 = self.read_warehouse('low', interval)
             wh_vol, f5 = self.read_warehouse('volume', interval)
             wh_dict = {'close': wh_close, 'open': wh_open, 'high': wh_high,
-                       'low': wh_low, 'volume': wh_vol}
+                       'low'  : wh_low, 'volume': wh_vol}
             # update the shape of all wharehouses by merging new columns or new rows
             # and then update
             print('generating expanding dataframe...')
