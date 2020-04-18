@@ -4,7 +4,7 @@ from qteasy.operator import *
 import pandas as pd
 
 if __name__ == '__main__':
-    op = Operator(timing_types=['simple'], selecting_types=['random'], ricon_types=['none'])
+    op = Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
     d = pd.read_csv('000300_I_N.txt', index_col='date')
     d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
@@ -19,11 +19,11 @@ if __name__ == '__main__':
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01],
-                   investment_dates=['2004-07-01', '2007-07-01', '2009-07-01'],
+                   investment_dates=['2004-04-01', '2007-07-01', '2009-07-01'],
                    reference_data='000300',
                    moq=0)
     cont.share_pool = hp.shares
-    cont.history_data = hp
+    print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
     timing_pars1 = (96, 144, 50)
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     # print('\nTime of creating operation list:')
     op.info()
     print(f'\n START QT RUNNING\n===========================\n')
-    run(op, cont, mode=1, history_data=cont.history_data)
+    run(op, cont, mode=1, history_data=hp)
     print(f'test get history panel directly')
     hp = hs.get_history_panel(start='2019-04-01',
                               end='2019-05-23',

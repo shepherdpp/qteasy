@@ -313,7 +313,8 @@ class Timing(Strategy):
         :return:
             np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
-        # print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}')
+        # print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}, parameter: {pars}')
+        # print(f'first 20 rows of hist_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用generate_one()函数
         if len(hist_slice.shape) == 2:
             drop = ~np.isnan(hist_slice[:, 0])
@@ -342,6 +343,7 @@ class Timing(Strategy):
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[drop] = res
+        # print(f'created long/short mask for current hist_slice is: \n{cat[self.window_length:][:100]}')
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
@@ -361,7 +363,7 @@ class Timing(Strategy):
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
         assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
         assert len(hist_data.shape) == 3, \
-            f'DataError: historical data should be 3 dimentional, got {len(hist_data.shape)} dimensional data'
+            f'DataError: historical data should be 3 dimensional, got {len(hist_data.shape)} dimensional data'
         assert hist_data.shape[1] >= self._window_length, \
             f'DataError: Not enough history data! expected hist data length {self._window_length},' \
             f' got {hist_data.shape[1]}'
@@ -619,6 +621,7 @@ class TimingCDL(Timing):
         cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
 
         return float(cat[-1])
+
 
 # TODO: 修改Selecting策略的结构，以支持更加统一的编码风格：generate()方法仅接受历史数据，realize()方法定义选股实现算法，通过静态属性
 # TODO: 设置数据类型、数据频率和采样频率，策略参数仅仅跟选股实现算法有关
@@ -930,7 +933,7 @@ class RiconNone(Ricon):
                          stg_text='Do not take any risk control activity')
 
     def _realize(self, hist_data, shares=None, dates=None):
-        return np.zeros_like(hist_data[:,:,0].T)
+        return np.zeros_like(hist_data[:, :, 0].T)
 
 
 class RiconUrgent(Ricon):
@@ -999,14 +1002,15 @@ def _mask_to_signal(lst):
 
     # 比较本期交易时间点和上期之间的持仓比率差额，差额大于0者可以直接作为补仓买入信号，如上期为0.35，
     # 本期0.7，买入信号为0.35，即使用总资金的35%买入该股，加仓到70%
-    op = (lst - np.roll(lst, 1))
+    op = (lst - np.roll(lst, shift=1, axis=0))
     # 差额小于0者需要计算差额与上期持仓数之比，作为卖出信号的强度，如上期为0.7，本期为0.35，差额为-0.35，则卖出信号强度
     # 为 (0.7 - 0.35) / 0.35 = 0.5即卖出50%的持仓数额，从70%仓位减仓到35%
-    op = np.where(op < 0, (op / np.roll(lst, 1)), op)
+    op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=0)), op)
     # 补齐因为计算差额导致的第一行数据为NaN值的问题
     # print(f'creating operation signals, first signal is {lst[0]}')
     op[0] = lst[0]
     return op
+
 
 # TODO：legalize函数将不再需要，理由有2，其一，风控策略能够从策略层面对交易信号进行控制，事实上与legalize函数作用相同，功能可以合并，
 # TODO：其二，通过设置sample_freq参数，交易信号的生成已经自动符合T+1规则了
@@ -1193,7 +1197,6 @@ class Operator:
             else:
                 raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
 
-
     @property
     def timing(self):
         return self._timing
@@ -1314,25 +1317,6 @@ class Operator:
             print('stg_id should be a string like \'t-0\', got {stg_id}')
         pass
 
-    '''
-    # TODO: 所有的参数设置接口 统一到set_parameter函数中，取消set_opt_par函数
-    def set_opt_par(self, opt_par):
-        # 将输入的opt参数切片后传入stg的参数中
-        s = 0
-        k = 0
-        for stg in self.strategies:
-            if stg.opt_tag == 0:
-                pass
-            elif stg.opt_tag == 1:
-                k += stg.par_count
-                stg.set_pars(opt_par[s:k])
-                s = k
-            elif stg.opt_tag == 2:
-                k += 1
-                stg.set_pars(opt_par[s:k])
-                s = k
-    '''
-
     # =================================================
     # 下面是Operation模块的公有方法：
     def info(self):
@@ -1375,9 +1359,9 @@ class Operator:
 
         :return:
         """
-        assert isinstance(hist_data, HistoryPanel),\
+        assert isinstance(hist_data, HistoryPanel), \
             f'TypeError: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert isinstance(cash_plan, CashPlan),\
+        assert isinstance(cash_plan, CashPlan), \
             f'TypeError: cash plan should be CashPlan object, got {type(cash_plan)}'
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
@@ -1389,13 +1373,13 @@ class Operator:
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         for stg in self.selecting:
             self._selecting_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
-            #print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+            # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
             #      f'{len(hist_data.hdates) - first_cash_pos}'
             #      f' rows for selecting strategies')
         for stg in self.timing:
             start_pos = first_cash_pos - stg.window_length
             self._timing_history_data.append(hist_data[stg.data_types, :, start_pos:])
-            #print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+            # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
             #      f'{len(hist_data.hdates) - first_cash_pos}'
             #      f' rows for timing strategies')
         for stg in self.ricon:
@@ -1433,11 +1417,13 @@ class Operator:
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             history_length = dt.shape[1]
-            sel_masks.append(sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
+            sel_masks.append(
+                sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         et = time.clock()
         # print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
+        # print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
@@ -1455,7 +1441,7 @@ class Operator:
         # print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
         ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
-        # print( '\n long/short mask: \n', ls_mask)
+        # print('\n long/short mask: \n', ls_mask[:100])
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         st = time.clock()
@@ -1467,9 +1453,9 @@ class Operator:
         # print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
-        # print ('risk control matrix \n', ricon_mat[980:1000])
+        # print('risk control matrix \n', ricon_mat[:100])
         # print (ricon_mat)
-        # print ('sel_mask * ls_mask: ', (ls_mask * sel_mask))
+        # print('sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并对交易信号进行合法化
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
@@ -1478,7 +1464,7 @@ class Operator:
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # print(f'length of date_list: {len(date_list)}')
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
-        # print ('operation matrix: ', '\n', lst.loc[lst.any(axis = 1)])
+        # print('operation matrix: \n', lst.loc[lst.any(axis=1)])
         # 消除完全相同的行和数字全为0的行
         lst_out = lst[lst.any(1)]
         # print('operation matrix: ', '\n', lst_out)
@@ -1603,7 +1589,7 @@ class Operator:
             :rtype: list: 前缀表达式
         """
         # TODO: extract expression with re module
-        prio = {'or': 0,
+        prio = {'or' : 0,
                 'and': 1}
         # 定义两个队列作为操作堆栈
         s1 = []  # 运算符栈

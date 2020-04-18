@@ -6,7 +6,7 @@ import numpy as np
 import datetime
 import itertools
 from qteasy.utilfuncs import *
-from .history import HistoryPanel
+from .history import HistoryPanel, get_history_panel
 
 
 class Log:
@@ -88,12 +88,12 @@ class Context:
             :param rate_fee:
             :param rate_slipery:
             :param moq:
-            :param init_cash:
             :param visual:
             :param reference_visual:
             :param reference_data:
         """
-
+        self._mode = 0
+        self._mode_text = ''
         self.mode = mode
         self.rate = Rate(0, rate_fee, rate_slipery)
         self.moq = moq  # 最小交易批量，设置为0表示可以买卖分数股
@@ -104,11 +104,11 @@ class Context:
                                   interest_rate=riskfree_interest_rate)  # 回测初始现金金额
         today = datetime.datetime.today().date()
         self.share_pool = []  # 优化参数所针对的投资产品
-        self.opt_period_start = today - datetime.timedelta(3650)  # 默认优化历史区间开始日是十年前
-        self.opt_period_end = today - datetime.timedelta(365)  # 优化历史区间结束日
+        self.opt_period_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')  # 默认优化历史区间开始日是十年前
+        self.opt_period_end = (today - datetime.timedelta(365)).strftime('%Y%m%d')  # 优化历史区间结束日
         self.opt_period_freq = 'd'  # 优化历史区间采样频率
-        self.loop_period_start = today - datetime.timedelta(3650)  # 回测区间开始日
-        self.loop_period_end = today  # 回测区间结束日（回测区间的采样频率与优化区间相同）
+        self.loop_period_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')  # 回测区间开始日
+        self.loop_period_end = today.strftime('%Y%m%d')  # 回测区间结束日（回测区间的采样频率与优化区间相同）
         self.loop_period_freq = 'd'
         self.loop_hist_data_type = 'close'
         self.t_func_type = 1  # 'single'
@@ -126,11 +126,34 @@ class Context:
     def __str__(self):
         """定义Context类的打印样式"""
         out_str = list()
+        out_str.append(f'{type(self)} at {hex(id(self))}')
         out_str.append('qteasy running information:')
         out_str.append('===========================')
+        out_str.append(f'execution mode:          {self.mode} - {self.mode_text}\n'
+                       f'')
         return ''.join(out_str)
 
+    @property
+    def mode(self):
+        return self._mode
 
+    @mode.setter
+    def mode(self, value):
+        assert isinstance(value, int), \
+            f'InputError, value of mode should be an integer between 0 and 2, got {type(value)} instead'
+        assert 0 <= value <=2, \
+            f'InputError, value of mode should be an integer between 0 and 2, got {value} instead'
+        self._mode = value
+        if self._mode == 0:
+            self._mode_text = 'Real-time running mode'
+        elif self._mode == 1:
+            self._mode_text = 'Back-looping mode'
+        elif self._mode == 2:
+            self._mode_text = 'Optimization mode'
+
+    @property
+    def mode_text(self):
+        return self._mode_text
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
 # TODO: 5，与交易量相关的二阶费率
 class Rate:
@@ -663,12 +686,16 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     if history_data is None:
         # TODO：根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
         # 用于交易信号生成的历史数据
-        hist_op = context.history.extract(shares, price_type='close',
-                                          start=start, end=end,
-                                          interval=freq)
-        hist_loop = None  # 用于数据回测的历史数据
+        print(f'preparing historical data')
+        hist_op = get_history_panel(start=context.loop_period_start,
+                                    end=context.loop_period_end,
+                                    shares=context.share_pool,
+                                    htypes=context.history_data_types,
+                                    freq=context.loop_period_freq,
+                                    chanel='online')
+        hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
         hist_opti = None  # 用于策略优化的历史数据
-        hist_reference = None
+        hist_reference = hist_op.to_dataframe(htype='close')
         # print('history data is None')
     else:
         # TODO: hist_data_req：这里的代码需要优化：正常工作中，历史数据不需要手工传入，应该可以根据需要策略的参数和context配置自动 \
@@ -750,6 +777,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)
         st = time.clock()
         op_list = operator.create_signal(hist_data=hist_op)
+        # print(f'created operation list is: \n{op_list}')
         et = time.clock()
         run_time_prepare_data = (et - st) * 1000
         st = time.clock()
