@@ -780,7 +780,7 @@ class SelectingRandom(Selecting):
                          stg_text='Selecting share Randomly and distribute weights evenly')
 
     def _realize(self, hist_segment):
-        pct = self.pars
+        pct = self.pars[0]
         share_count = hist_segment.shape[0]
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
@@ -1140,10 +1140,10 @@ class Operator:
                 self._timing.append(TimingTRIX())
             elif timing_type.lower() == 'cdl':
                 self._timing.append(TimingCDL())
-            else:  # 默认情况下使用simple策略
-                self._timing.append(TimingSimple())
-                self._timing_types.pop()
-                self._timing_types.append('simple')
+            elif timing_type.lower() == 'simple':
+                self._timing.append((TimingSimple()))
+            else:
+                raise TypeError(f'The timing strategy type \'{timing_type}\' can not be recognized!')
         # 根据输入参数创建不同的具体选股策略对象。selecting_types及selectings属性与择时策略对象属性相似
         # 都是列表，包含若干相互独立的选股策略（至少一个）
         self._selecting_type = []
@@ -1171,10 +1171,10 @@ class Operator:
                 self._selecting.append(SelectingRandom())
             elif selecting_type.lower() == 'finance':
                 self._selecting.append(SelectingFinance())
-            else:
+            elif selecting_type.lower() == 'simple':
                 self._selecting.append(SelectingSimple())
-                self._selecting_type.pop()
-                self._selecting_type.append('simple')
+            else:
+                raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
         self._selecting_blender_string = ''.join(str_list)
         # create selecting blender by selecting blender string
         self._selecting_blender = self._exp_to_blender
@@ -1191,8 +1191,7 @@ class Operator:
             elif ricon_type.lower() == 'urgent':
                 self._ricon.append(RiconUrgent())
             else:
-                self._ricon.append(RiconNone())
-                self._ricon_type.append('none')
+                raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
 
 
     @property

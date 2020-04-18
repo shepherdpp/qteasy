@@ -102,14 +102,13 @@ class Context:
         self.cash_plan = CashPlan(dates=investment_dates,
                                   amounts=investment_amounts,
                                   interest_rate=riskfree_interest_rate)  # 回测初始现金金额
-        # TODO： 将整数形式的初始现金金额修改为投资现金对象CashPlan
         today = datetime.datetime.today().date()
         self.share_pool = []  # 优化参数所针对的投资产品
         self.opt_period_start = today - datetime.timedelta(3650)  # 默认优化历史区间开始日是十年前
         self.opt_period_end = today - datetime.timedelta(365)  # 优化历史区间结束日
         self.opt_period_freq = 'd'  # 优化历史区间采样频率
-        self.loop_period_start = today - datetime.timedelta(3650)  # 测试区间开始日
-        self.loop_period_end = today  # 测试区间结束日（测试区间的采样频率与优化区间相同）
+        self.loop_period_start = today - datetime.timedelta(3650)  # 回测区间开始日
+        self.loop_period_end = today  # 回测区间结束日（回测区间的采样频率与优化区间相同）
         self.loop_period_freq = 'd'
         self.loop_hist_data_type = 'close'
         self.t_func_type = 1  # 'single'

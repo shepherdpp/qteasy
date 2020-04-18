@@ -142,9 +142,9 @@ class TestOperator(unittest.TestCase):
         dtypes = 'close'
         df = pd.DataFrame(data)
         print('=========================\nTesting HistoryPanel creation from DataFrame')
-        hp = hs.dataframe_to_hp(df=df, shares=shares, dtypes=dtypes)
+        hp = qt.dataframe_to_hp(df=df, shares=shares, htypes=dtypes)
         hp.info()
-        hp = hs.dataframe_to_hp(df=df, shares='000100', dtypes='close, open, high, low, middle', column_type='dtypes')
+        hp = qt.dataframe_to_hp(df=df, shares='000100', htypes='close, open, high, low, middle', column_type='dtypes')
         hp.info()
 
         print('=========================\nTesting HistoryPanel creation from initialization')
@@ -155,7 +155,7 @@ class TestOperator(unittest.TestCase):
         data[0, [5, 6, 9], [0, 1, 3]] = np.nan
         data[1:4, [4, 7, 6, 2], [1, 1, 3, 0]] = np.nan
         data[4:5, [2, 9, 1, 2], [0, 3, 2, 1]] = np.nan
-        hp = hs.HistoryPanel(data, levels=shares, columns=dtypes, rows=index)
+        hp = qt.HistoryPanel(data, levels=shares, columns=dtypes, rows=index)
         hp.info()
         print('==========================\n输出close类型的所有历史数据\n', hp['close', :, :])
         print(f'==========================\n输出close和open类型的所有历史数据\n{hp[[0,1], :, :]}')
@@ -183,11 +183,11 @@ class TestOperator(unittest.TestCase):
         hp.shares = ['000300', '600227', '600222', '000123', '000129']
         hp.info()
 
-        cp = CashPlan(['2012-01-01', '2010-01-01'], [10000, 20000], 0.1)
+        cp = qt.CashPlan(['2012-01-01', '2010-01-01'], [10000, 20000], 0.1)
         cp.info()
-        cp = CashPlan(['20100501'], 10000)
+        cp = qt.CashPlan(['20100501'], 10000)
         cp.info()
-        cp = CashPlan(pd.date_range(start='2019-01-01', freq='Y', periods=12), [i * 1000 + 10000 for i in range(12)],
+        cp = qt.CashPlan(pd.date_range(start='2019-01-01', freq='Y', periods=12), [i * 1000 + 10000 for i in range(12)],
                       0.035)
         cp.info()
 
