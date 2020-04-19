@@ -122,6 +122,7 @@ class Context:
         self.visual = visual
         self.reference_visual = reference_visual
         self.reference_data = reference_data
+        self._asset_type = 'E'
 
     def __str__(self):
         """定义Context类的打印样式"""
@@ -154,6 +155,15 @@ class Context:
     @property
     def mode_text(self):
         return self._mode_text
+
+    @property
+    def asset_type(self):
+        return self._asset_type
+
+    @asset_type.setter
+    def asset_type(self, asset):
+        assert asset in ['E', 'I', 'F', 'FD'], f'ValueError: the asset type \'{asset}\' is not recognized or supported'
+        self._asset_type = asset
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
 # TODO: 5，与交易量相关的二阶费率
 class Rate:
@@ -692,6 +702,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                     shares=context.share_pool,
                                     htypes=context.history_data_types,
                                     freq=context.loop_period_freq,
+                                    asset_type=context.asset_type,
                                     chanel='online')
         hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
         hist_opti = None  # 用于策略优化的历史数据
