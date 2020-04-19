@@ -1181,7 +1181,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
 
-def get_history_panel(start, end, freq, shares, htypes, chanel):
+def get_history_panel(start, end, freq, shares, htypes, asset_type, chanel):
     """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -1195,9 +1195,8 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
     :param chanel:
     :return:
     """
-    assert isinstance(htypes, str), f'InputError, htypes should be a string, got {type(htypes)}'
-    htypes = _str_to_list(input_string=htypes, sep_char=',')
-    assert isinstance(shares, str), f'InputError, share should be a string, got {type(shares)}'
+    if isinstance(htypes, str):
+        htypes = _str_to_list(input_string=htypes, sep_char=',')
     price_type_data = []
     income_type_data = []
     balance_type_data = []
@@ -1226,6 +1225,7 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
                                                            freq=freq,
                                                            shares=shares,
                                                            htypes=price_type_data,
+                                                           asset_type=asset_type,
                                                            chanel=chanel))
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
@@ -1274,8 +1274,9 @@ def get_history_panel(start, end, freq, shares, htypes, chanel):
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
-                            shares: str,
-                            htypes: str,
+                            shares: [str, list],
+                            htypes: [str, list],
+                            asset_type: str = 'E',
                             chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
@@ -1283,6 +1284,7 @@ def get_price_type_raw_data(start: str,
     :param end:
     :param freq:
     :param shares:
+    :param asset_type: type:string: one of {'E':股票, 'I':指数, 'F':期货, 'FD':基金}
     :param htypes:
     :param chanel: str: {'online', 'local'}
                     chanel == 'online' 从网络获取历史数据
@@ -1293,7 +1295,7 @@ def get_price_type_raw_data(start: str,
         htypes = PRICE_TYPE_DATA
     if isinstance(htypes, str):
         htypes = _str_to_list(input_string=htypes, sep_char=',')
-    raw_df = get_bar(share=shares, start=start, end=end, freq=freq)
+    raw_df = get_bar(shares=shares, start=start, asset_type=asset_type, end=end, freq=freq)
     # print('raw df before rearange\n', raw_df)
     raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
     raw_df.index = range(len(raw_df))
@@ -1328,13 +1330,13 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
     report_fields.extend(htypes)
     # print('htypes',htypes, "\nreport fields: ", report_fields)
     if htypes[0] in INCOME_TYPE_DATA:
-        raw_df = income(start=start, end=end, ts_code=shares, fields=report_fields)
+        raw_df = income(start=start, end=end, shares=shares, fields=report_fields)
     elif htypes[0] in INDICATOR_TYPE_DATA:
-        raw_df = indicators(start=start, end=end, ts_code=shares, fields=report_fields)
+        raw_df = indicators(start=start, end=end, shares=shares, fields=report_fields)
     elif htypes[0] in BALANCE_TYPE_DATA:
-        raw_df = balance(start=start, end=end, ts_code=shares, fields=report_fields)
+        raw_df = balance(start=start, end=end, shares=shares, fields=report_fields)
     elif htypes[0] in CASHFLOW_TYPE_DATA:
-        raw_df = cashflow(start=start, end=end, ts_code=shares, fields=report_fields)
+        raw_df = cashflow(start=start, end=end, shares=shares, fields=report_fields)
     else:
         pass
     # print('raw df before rearange\n', raw_df)
@@ -1589,18 +1591,17 @@ def stock_company(ts_code: str = None,
 # Bar price data
 # ==================
 
-def get_bar(share: str,
+def get_bar(shares: str,
             start: str,
             end: str,
             asset_type: str = 'E',
             adj: str = 'None',
             freq: str = 'D',
             ma: list = None) -> pd.DataFrame:
-    """ get historical prices with rehabilitation rights
-    获取指数或股票的复权历史价格
+    """ 获取指数或股票的复权历史价格
 
     input:
-    :param share: str, 证券代码
+    :param shares: str, 证券代码
     :param start: str, 开始日期 (格式：YYYYMMDD)
     :param end: str, 结束日期 (格式：YYYYMMDD)
     :param asset_type: str, 资产类别：E股票 I沪深指数 C数字货币 F期货 FD基金 O期权，默认E
@@ -1634,14 +1635,32 @@ def get_bar(share: str,
     3    000001.SZ   20181008  10.7000  10.7900  10.4500  10.4500    11.0500 -0.6000  -5.4299  1686358.52  1793455.283
     4    000001.SZ   20180928  10.7800  11.2700  10.7800  11.0500    10.7400  0.3100   2.8864  2110242.67  2331358.288
     """
-    assert isinstance(share, str), 'TypeError: share code should be a string'
-    return ts.pro_bar(ts_code=share,
+    if isinstance(shares, list):
+        shares = _list_to_str_format(shares)
+    return ts.pro_bar(ts_code=shares,
                       start_date=start,
                       end_date=end,
                       asset=asset_type,
                       adj=adj,
                       freq=freq,
                       ma=ma)
+
+
+def get_index(index: str,
+              start: str,
+              end: str,
+              freq: str = 'D',
+              ma: list = None) -> pd.DataFrame:
+    """ 获取指数的历史价格数据的快捷通道，实际上调用get_bar实现
+
+    :param index:
+    :param start:
+    :param end:
+    :param freq:
+    :param ma:
+    :return:
+    """
+    return get_bar(shares=index, start=start, end=end, asset_type='I', adj='None', freq=freq, ma=ma)
 
 
 # Finance Data
@@ -1653,24 +1672,44 @@ def _regulate_date_format(date_str: str) -> str:
     :param date_str:
     :return:
     """
-    assert isinstance(date_str, str), f'TypeError, Expect string type, got {type(date_str)}'
-    date_str = date_str.replace('-', '')
-    date_str = date_str.replace('/', '')
+    if isinstance(date_str, str):
+        date_str = date_str.replace('-', '')
+        date_str = date_str.replace('/', '')
+    elif isinstance(date_str, (pd.Timestamp, datetime.datetime)):
+        date_str = date_str.strftime('%Y%m%d')
+    else:
+        raise TypeError(f'Input is {type(date_str)}, it\'s not a time or not in correct time format')
     return date_str
 
 
-def income(ts_code: str,
+def _list_to_str_format(str_list: list) -> str:
+    """ tushare的财务报表函数只支持逗号分隔值的字符串形式作为ts_code或fields等字段的输入，如果输入是list[str]类型，则需要转换
+
+    :param str_list: type: list[str]
+    :return: string
+    """
+    assert isinstance(str_list, list), f'TypeError: expect list[str] type, got {type(str_list)} instead'
+    res = []
+    for string in str_list:
+        assert isinstance(string, str), f'TypeError: expect list[str], got at least one item {type(string)}'
+        res.append(string.replace(' ', ''))
+        res.append(',')
+    res.pop()
+    return ''.join(res)
+
+
+def income(shares: [str, list],
            rpt_date: str = None,
            start: str = None,
            end: str = None,
            period: str = None,
            report_type: str = None,
            comp_type: str = None,
-           fields: str = None) -> pd.DataFrame:
+           fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务利润表数据
 
     :rtype: pd.DataFrame
-    :param ts_code: 股票代码
+    :param shares: 股票代码
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
     :param end: optional 公告结束日期
@@ -1763,11 +1802,15 @@ def income(ts_code: str,
                fields='ts_code,ann_date,f_ann_date,end,report_type,comp_type,basic_eps,diluted_eps')
     """
     if fields is None:
-        fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
+        fields = 'shares,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
+    if isinstance(shares, list):
+        shares = _list_to_str_format(shares)
+    if isinstance(fields, list):
+        fields = _list_to_str_format(fields)
     pro = ts.pro_api()
     start = _regulate_date_format(start)
     end = _regulate_date_format(end)
-    return pro.income(ts_code=ts_code,
+    return pro.income(ts_code=shares,
                       ann_date=rpt_date,
                       start_date=start,
                       end_date=end,
@@ -1777,17 +1820,17 @@ def income(ts_code: str,
                       fields=fields)
 
 
-def balance(ts_code: str,
+def balance(shares: [str, list],
             rpt_date: str = None,
             start: str = None,
             end: str = None,
             period: str = None,
             report_type: str = None,
             comp_type: str = None,
-            fields: str = None) -> pd.DataFrame:
+            fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据资产负债表
 
-    :param ts_code: 股票代码
+    :param shares: 股票代码
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
     :param end: optional 公告结束日期
@@ -1956,11 +1999,15 @@ def balance(ts_code: str,
                  fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese')
     """
     if fields is None:
-        fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
+        fields = 'shares,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
+    if isinstance(shares, list):
+        shares = _list_to_str_format(shares)
+    if isinstance(fields, list):
+        fields = _list_to_str_format(fields)
     pro = ts.pro_api()
     start = _regulate_date_format(start)
     end = _regulate_date_format(end)
-    return pro.balancesheet(ts_code=ts_code,
+    return pro.balancesheet(ts_code=shares,
                             ann_date=rpt_date,
                             start_date=start,
                             end_date=end,
@@ -1970,17 +2017,17 @@ def balance(ts_code: str,
                             fields=fields)
 
 
-def cashflow(ts_code: str,
+def cashflow(shares: [str, list],
              rpt_date: str = None,
              start: str = None,
              end: str = None,
              period: str = None,
              report_type: str = None,
              comp_type: str = None,
-             fields: str = None) -> pd.DataFrame:
+             fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据现金流量表
 
-    :param ts_code:                     股票代码
+    :param shares:                     股票代码
     :param rpt_date: optional           公告日期
     :param start: optional         公告开始日期
     :param end: optional           公告结束日期
@@ -2101,11 +2148,15 @@ def cashflow(ts_code: str,
                  fields = 'fa_fnc_leases, end_bal_cash, beg_bal_cash')
     """
     if fields is None:
-        fields = 'ts_code,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
+        fields = 'shares,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
+    if isinstance(shares, list):
+        shares = _list_to_str_format(shares)
+    if isinstance(fields, list):
+        fields = _list_to_str_format(fields)
     pro = ts.pro_api()
     start = _regulate_date_format(start)
     end = _regulate_date_format(end)
-    return pro.cashflow(ts_code=ts_code,
+    return pro.cashflow(ts_code=shares,
                         ann_date=rpt_date,
                         start_date=start,
                         end_date=end,
@@ -2115,15 +2166,15 @@ def cashflow(ts_code: str,
                         fields=fields)
 
 
-def indicators(ts_code: str,
+def indicators(shares: [str, list],
                rpt_date: str = None,
                start: str = None,
                end: str = None,
                period: str = None,
-               fields: str = None) -> pd.DataFrame:
+               fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据——财务指标
 
-    :param ts_code: str, TS股票代码,e.g. 600001.SH/000001.SZ
+    :param shares: str, TS股票代码,e.g. 600001.SH/000001.SZ
     :param rpt_date: str, 公告日期
     :param start: str, 报告期开始日期
     :param end: str, 报告期结束日期
@@ -2309,9 +2360,13 @@ def indicators(ts_code: str,
         4   600000.SH  20181031  1.440    1.44            4.3305      4.3305
     """
     if fields is None:
-        fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
+        fields = 'shares,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
+    if isinstance(shares, list):
+        shares = _list_to_str_format(shares)
+    if isinstance(fields, list):
+        fields = _list_to_str_format(fields)
     pro = ts.pro_api()
-    return pro.fina_indicator(ts_code=ts_code,
+    return pro.fina_indicator(ts_code=shares,
                               ann_date=rpt_date,
                               start_date=start,
                               end_date=end,

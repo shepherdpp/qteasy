@@ -22,7 +22,7 @@ if __name__ == '__main__':
                    investment_dates=['2004-04-01', '2007-07-01', '2009-07-01'],
                    reference_data='000300',
                    moq=0)
-    cont.share_pool = hp.shares
+    cont.share_pool = ['000300']
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
@@ -47,7 +47,7 @@ if __name__ == '__main__':
     # print('\nTime of creating operation list:')
     op.info()
     print(f'\n START QT RUNNING\n===========================\n')
-    run(op, cont, mode=1, history_data=hp)
+    run(op, cont, mode=1)
     print(f'test get history panel directly')
     hp = hs.get_history_panel(start='2019-04-01',
                               end='2019-05-23',
