@@ -14,7 +14,7 @@ if __name__ == '__main__':
     print('INFORMATION OF CREATED HISTORY PANEL: \n==========================')
     hp.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
-    op.set_parameter('s-0', pars=(2, ), sample_freq='y')
+    op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
@@ -27,17 +27,20 @@ if __name__ == '__main__':
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
     timing_pars1 = (96, 144, 50)
-    timing_pars2 = {'600037': (177, 248, 244),
-                    '000005': (86, 198, 58)}
+    timing_pars2 = {'000100': (77, 118, 144),
+                    '000200': (75, 128, 138),
+                    '000300': (73, 120, 143)}
+    # timing_pars2 = {'000100': (77, 148, 144),
+    #                 '000200': (86, 198, 58)}
     timing_pars3 = (73, 120, 143)
     timing_pars4 = (37, 44)
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars = timing_pars3)
-    # op.set_parameter('t-1', pars = timing_pars3)
-    # op.set_parameter('t-2', pars = timing_pars4)
-    # op.set_parameter('t-3', pars = timing_pars1)
+    op.set_parameter('t-0', pars=timing_pars2)
+    # op.set_parameter('t-1', pars=timing_pars3)
+    # op.set_parameter('t-2', pars=timing_pars4)
+    # op.set_parameter('t-3', pars=timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
     op.set_parameter('r-0', pars=(8, -0.1312))
     # op.info()

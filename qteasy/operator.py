@@ -182,12 +182,12 @@ class Strategy:
         return:
             int: 1: 设置成功，0: 设置失败
         """
-        if len(pars) == self.par_count:
+        if len(pars) == self.par_count or isinstance(pars, dict):
             self._pars = pars
             return 1
         else:
-            '''print(f'Setting Error: parameter setting error in set_pars() method of {self}\n expected par count:',
-      f'{self.par_count}, got {len(pars)}')'''
+            raise ValueError(f'parameter setting error in set_pars() method of {self}\n expected par count: '
+                             f'{self.par_count}, got {len(pars)}')
             return 0
 
     def set_opt_tag(self, opt_tag: int) -> int:
@@ -369,11 +369,15 @@ class Timing(Strategy):
             f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
+        # print(f'in Timing.generate() pars is a {type(pars)}, value is {pars}')
         if isinstance(pars, dict):
             par_list = pars.values()  # 允许使用dict来为不同的股票定义不同的策略参数
         else:
             par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
+        # print(len(par_list), len(hist_data))
+        assert len(par_list) == len(hist_data), \
+            f'InputError: can not map {len(par_list)} parameters to {len(hist_data)} shares!'
         res = np.array(list(map(self._generate_over,
                                 hist_data,
                                 par_list))).T
