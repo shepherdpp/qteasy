@@ -529,12 +529,12 @@ class HistoryPanel():
             self._is_empty = True
         else:
             assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
-            assert len(values.shape) <= 3, \
+            assert values.ndim <= 3, \
                 f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
 
-            if len(values.shape) == 1:
+            if values.ndim == 1:
                 values = values.reshape(1, 1, values.shape[0])
-            elif len(values.shape) == 2:
+            elif values.ndim == 2:
                 values = values.reshape(1, *values.shape)
             self._l_count, self._r_count, self._c_count = values.shape
             self._values = values
@@ -951,6 +951,8 @@ def _list_or_slice(unknown_input, str_int_dict):
                 start, end = end, start
             return np.arange(start, end + 1)
         else:
+            # debug
+            # print(str_int_dict)
             return [str_int_dict[string_input]]
     elif isinstance(unknown_input, list):
         is_list_of_str = isinstance(unknown_input[0], str)
@@ -1181,13 +1183,14 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
 
-def get_history_panel(start, end, freq, shares, htypes, asset_type, chanel):
+def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', chanel: str = 'online'):
     """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
         首先利用不同的get_X_type_raw_data()函数获取不同类型的原始数据，再把原始数据整理成为date_by_row及htype_by_column的不同的
         dataframe，再使用stack_dataframe()函数把所有的dataframe组合成HistoryPanel格式
 
+    :param asset_type: str
     :param start:
     :param end:
     :param shares:
@@ -1243,9 +1246,11 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type, chanel):
                                                                  shares=shares,
                                                                  htypes=report_type,
                                                                  chanel=chanel)
+        if isinstance(shares, str):
+            shares = _str_to_list(shares)
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
-                                                          shares=_str_to_list(shares)),
+                                                          shares=shares),
                                    same_shares=True)
 
     if len(composite_type_data) > 0:
@@ -1347,7 +1352,8 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
     raw_df.index = range(len(raw_df))
     # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
-    shares = _str_to_list(input_string=shares, sep_char=',')
+    if isinstance(shares, str):
+        shares = _str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     for df in df_per_share:

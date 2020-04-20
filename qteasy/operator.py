@@ -1367,8 +1367,12 @@ class Operator:
             f'TypeError: historical data should be HistoryPanel, got {type(hist_data)}'
         assert isinstance(cash_plan, CashPlan), \
             f'TypeError: cash plan should be CashPlan object, got {type(cash_plan)}'
+        assert not hist_data.is_empty, \
+            f'ValueError: history data can not be empty!'
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
+        # debug
+        # print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date, expect {self.max_window_length},' \
             f' got {first_cash_pos} records only'

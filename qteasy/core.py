@@ -142,7 +142,7 @@ class Context:
     def mode(self, value):
         assert isinstance(value, int), \
             f'InputError, value of mode should be an integer between 0 and 2, got {type(value)} instead'
-        assert 0 <= value <=2, \
+        assert 0 <= value <= 2, \
             f'InputError, value of mode should be an integer between 0 and 2, got {value} instead'
         self._mode = value
         if self._mode == 0:
@@ -164,6 +164,8 @@ class Context:
     def asset_type(self, asset):
         assert asset in ['E', 'I', 'F', 'FD'], f'ValueError: the asset type \'{asset}\' is not recognized or supported'
         self._asset_type = asset
+
+
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
 # TODO: 5，与交易量相关的二阶费率
 class Rate:
@@ -697,8 +699,11 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         # TODO：根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
         # 用于交易信号生成的历史数据
         op_start = (pd.to_datetime(context.loop_period_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
-        print(f'preparing historical data, expected start day: {context.loop_period_start}, '
-              f'operation generation dependency start date: {op_start}')
+        # debug
+        # print(f'preparing historical data, \nexpected start day: {context.loop_period_start}, '
+        #       f'\noperation generation dependency start date: {op_start}\n'
+        #       f'end date: {context.loop_period_end}\nshares: {context.share_pool}\n'
+        #       f'htypes: {context.history_data_types}')
         hist_op = get_history_panel(start=op_start,
                                     end=context.loop_period_end,
                                     shares=context.share_pool,
@@ -708,8 +713,13 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                     chanel='online')
         hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
         hist_opti = None  # 用于策略优化的历史数据
-        hist_reference = hist_op.to_dataframe(htype='close')
-        # print('history data is None')
+        hist_reference = (get_history_panel(start=context.loop_period_start,
+                                            end=context.loop_period_end,
+                                            shares=context.reference_data,
+                                            htypes='close',
+                                            freq=context.loop_period_freq,
+                                            asset_type='I',
+                                            chanel='online')).to_dataframe(htype='close')
     else:
         # TODO: hist_data_req：这里的代码需要优化：正常工作中，历史数据不需要手工传入，应该可以根据需要策略的参数和context配置自动 \
         # TODO: 下载或者从数据库自动读取
@@ -985,7 +995,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
     i = 0
     it, total = space.extract(step_size)
-    # 调试代码
+    # debug
     print('Result pool has been created, capacity of result pool: ', pool.capacity)
     print('Searching Space has been created: ')
     space.info()
@@ -994,7 +1004,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
 
     for par in it:
         op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
-        # 调试代码
+        # debug
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
         looped_val = apply_loop(op_list=op.create_signal(hist),
@@ -1007,7 +1017,7 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
         # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
         # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
         pool.in_pool(par, perf)
-        # 调试代码
+        # debug
         i += 1.
         if i % 10 == 0:
             print('current result:', np.round(i / total * 100, 3), '%', end='\r')
@@ -1041,7 +1051,7 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
     it, total = space.extract(point_count, how='rand')
-    # 调试代码
+    # debug
     print('Result pool has been created, capacity of result pool: ', pool.capacity)
     print('Searching Space has been created: ')
     space.info()
@@ -1058,7 +1068,7 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
         perf = _eval(looped_val, method='fv')
         # 将参数和评价值传入pool对象并过滤掉最差的结果
         pool.in_pool(par, perf)
-        # 调试代码
+        # debug
         i += 1.0
         print('current result:', np.round(i / total * 100, 3), '%', end='\r')
         pool.cut(keep_largest_perf)
@@ -1100,7 +1110,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
         while len(spaces) > 0:
             space = spaces.pop()
             # 逐个弹出子空间列表中的子空间，用当前步长在其中搜索最佳参数，所有子空间的最佳参数全部进入pool并筛选最佳参数集合
-            # 调试代码
+            # debug
             it, total = space.extract(step_size, how='interval')
             for par in it:
                 # 以下所有函数都是循环内函数，需要进行提速优化
@@ -1117,7 +1127,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                 pool.in_pool(par, perf)
                 i += 1.
                 print(
-                    'current result:', np.round(i / (total * output_count) * 100, 5), '%', end='\r')
+                        'current result:', np.round(i / (total * output_count) * 100, 5), '%', end='\r')
                 pool.cut(keep_largest_perf)
                 print('Completed one round, creating new space set')
                 # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
@@ -1291,8 +1301,6 @@ perf：float，应用该评价方法对回测模拟结果的评价分数
 
 """
     if not looped_val.empty:
-        # 调试代码
-        # print looped_val.head()
         perf = looped_val['value'][-1]
         return perf
     else:
@@ -1446,7 +1454,8 @@ def _input_to_list(pars, dim, pader):
         pars = list(pars)  # 正常处理，输入转化为列表类型
     par_dim = len(pars)
     # 当给出的两个输入参数长度不一致时，用padder补齐type输入，或者忽略多余的部分
-    if par_dim < dim: pars.extend([pader] * (dim - par_dim))
+    if par_dim < dim:
+        pars.extend([pader] * (dim - par_dim))
     return pars
 
 
@@ -1489,7 +1498,7 @@ class Space:
             par_types = []
         par_types = _input_to_list(par_types, par_dim, [None])
 
-        # 调试代码：
+        # debug：
         # print('par dim:', par_dim)
         # print('pars and par_types:', pars, par_types)
         # 逐一生成Axis对象并放入axes列表中
@@ -1585,7 +1594,8 @@ class Space:
         return: =====
 
         """
-        if ignore_enums: pass
+        if ignore_enums:
+            pass
         assert self.dim > 0, 'original space should not be empty!'
         pars = []
         for i in range(self.dim):
@@ -1614,7 +1624,7 @@ class Axis:
         # 将输入的上下界或枚举转化为列表，当输入类型为一个元素时，生成一个空列表并添加该元素
         boe = list(bounds_or_enum)
         length = len(boe)  # 列表元素个数
-        # 调试代码
+        # debug
         # print('in Axis: boe recieved, and its length:', boe, length, 'type of boe:', typ)
         if typ is None:
             # 当typ为空时，需要根据输入数据的类型猜测typ
@@ -1629,7 +1639,7 @@ class Axis:
                 typ = 'enum'
         elif typ != 'enum' and typ != 'discr' and typ != 'conti':
             typ = 'enum'  # 当发现typ为异常字符串时，修改typ为enum类型
-        # 调试代码
+        # debug
         # print('in Axis, after infering typ, the typ is:', typ)
         # 开始根据typ的值生成具体的Axis
         if typ == 'enum':  # 创建一个枚举数轴

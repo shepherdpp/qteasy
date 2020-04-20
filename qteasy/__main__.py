@@ -20,9 +20,9 @@ if __name__ == '__main__':
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01],
                    investment_dates=['2014-04-01', '2017-07-01', '2019-07-01'],
-                   reference_data='000300',
+                   reference_data='000300.SH',
                    moq=0)
-    cont.share_pool = ['000300']
+    cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars=timing_pars2)
+    op.set_parameter('t-0', pars=timing_pars3)
     # op.set_parameter('t-1', pars=timing_pars3)
     # op.set_parameter('t-2', pars=timing_pars4)
     # op.set_parameter('t-3', pars=timing_pars1)
