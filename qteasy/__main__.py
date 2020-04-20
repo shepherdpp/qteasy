@@ -19,10 +19,11 @@ if __name__ == '__main__':
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01],
-                   investment_dates=['2004-04-01', '2007-07-01', '2009-07-01'],
+                   investment_dates=['2014-04-01', '2017-07-01', '2019-07-01'],
                    reference_data='000300',
                    moq=0)
     cont.share_pool = ['000300']
+    cont.asset_type = 'I'
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 

@@ -696,8 +696,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     if history_data is None:
         # TODO：根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
         # 用于交易信号生成的历史数据
-        print(f'preparing historical data')
-        hist_op = get_history_panel(start=context.loop_period_start,
+        op_start = (pd.to_datetime(context.loop_period_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
+        print(f'preparing historical data, expected start day: {context.loop_period_start}, '
+              f'operation generation dependency start date: {op_start}')
+        hist_op = get_history_panel(start=op_start,
                                     end=context.loop_period_end,
                                     shares=context.share_pool,
                                     htypes=context.history_data_types,

@@ -1227,9 +1227,11 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type, chanel):
                                                            htypes=price_type_data,
                                                            asset_type=asset_type,
                                                            chanel=chanel))
+        if isinstance(shares, str):
+            shares = _str_to_list(shares)
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
-                                                          shares=_str_to_list(shares)),
+                                                          shares=shares),
                                    same_shares=True)
 
     for report_type in [t for t in finance_report_types if len(t) > 0]:
@@ -1301,7 +1303,8 @@ def get_price_type_raw_data(start: str,
     raw_df.index = range(len(raw_df))
     # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
-    shares = _str_to_list(input_string=shares, sep_char=',')
+    if isinstance(shares, str):
+        shares = _str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
