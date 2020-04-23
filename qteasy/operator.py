@@ -1359,8 +1359,18 @@ class Operator:
     # TODO 临时性使用cashplan作为参数之一，理想中应该只用一个"start_date"即可，这个Start_date可以在core.run()中具体指定，因为
     # TODO 在不同的运行模式下，start_date可能来源是不同的：
     def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan):
-        """ 在create_signal之前准备好相关数据如历史数据，检查历史数据是否符合所有策略的要求
+        """ 在create_signal之前准备好相关数据如历史数据，检查历史数据是否符合所有策略的要求：
 
+        检查hist_data历史数据的类型正确；
+        检查cash_plan投资计划的类型正确；
+        检查hist_data是否为空（要求不为空）；
+        在hist_data中找到cash_plan投资计划中投资时间点的具体位置
+        检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
+        检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
+        从hist_data中根据各个量化策略的参数选取正确的切片放入各个策略数据仓库中
+
+        :param hist_data: 历史数据
+        :param cash_plan:
         :return:
         """
         assert isinstance(hist_data, HistoryPanel), \

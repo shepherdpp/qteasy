@@ -19,7 +19,7 @@ if __name__ == '__main__':
     op.set_parameter('t-0', opt_tag=1)
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01],
-                   investment_dates=['2014-04-01', '2017-07-01', '2019-07-01'],
+                   investment_dates=['2013-04-01', '2017-07-01', '2019-07-01'],
                    reference_data='000300.SH',
                    moq=0)
     cont.share_pool = '000300.SH'
@@ -50,10 +50,10 @@ if __name__ == '__main__':
     print(f'\n START QT RUNNING\n===========================\n')
     run(op, cont, mode=1)
     print(f'test get history panel directly')
-    hp = hs.get_history_panel(start='2019-04-01',
-                              end='2019-05-23',
+    hp = hs.get_history_panel(start='2017-01-01',
+                              end='2019-08-23',
                               freq='d',
-                              shares='000001.SZ, 000002.SZ, 000005.SZ',
+                              shares='000001.SZ, 000002.SZ, 000005.SZ, 000006.SZ',
                               htypes='open, high, low, close, basic_eps, eps, net_profit, total_share',
                               chanel='online')
     hp.info()
