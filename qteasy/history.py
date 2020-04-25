@@ -3088,7 +3088,7 @@ class History:
 
     def __make_share_set(self, shares):
         # 创建包含列表中所有股票元素的集合（去掉重复的股票）
-        if type(shares) == str:
+        if isinstance(shares, str):
             share_set = set()
             share_set.add(shares)
         else:

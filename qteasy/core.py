@@ -829,7 +829,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
         beta = _eval_beta(looped_values, hist_reference, reference_data)
         sharp = _eval_sharp(looped_values, total_invest, 0.035)
-        alpha = _eval_alpha(looped_values, total_invest, hist_loop, hist_reference, reference_data)
+        alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
         print(f'==================================== \n'
               f'           LOOPING RESULT\n'
               f'====================================')
@@ -1013,11 +1013,12 @@ def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
         looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=hist, init_cash=100000,
-                                visual=False, price_visual=False)
+                                history_list=hist,
+                                visual=False,
+                                price_visual=False)
         # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
         # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
-        perf = _eval(looped_val, method='fv')
+        perf = _eval_fv(looped_val)
         # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
         # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
         # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
@@ -1067,10 +1068,11 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
         op.set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
         looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=hist, init_cash=100000,
-                                visual=False, price_visual=False)
+                                history_list=hist,
+                                visual=False,
+                                price_visual=False)
         # 使用评价函数计算该组参数模拟交易的评价值
-        perf = _eval(looped_val, method='fv')
+        perf = _eval_fv(looped_val)
         # 将参数和评价值传入pool对象并过滤掉最差的结果
         pool.in_pool(par, perf)
         # debug
@@ -1124,11 +1126,10 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                 # 声称交易清淡病进行模拟交易生成交易记录
                 looped_val = apply_loop(op_list=op.create_signal(hist),
                                         history_list=hist,
-                                        init_cash=100000,
                                         visual=False,
                                         price_visual=False)
                 # 使用评价函数计算参数模拟交易的评价值
-                perf = _eval(looped_val, method='fv')
+                perf = _eval_fv(looped_val)
                 pool.in_pool(par, perf)
                 i += 1.
                 print(
@@ -1187,10 +1188,10 @@ def _eval_benchmark(looped_value, reference_value, reference_data):
     return rtn, rtn ** (1 / total_year) - 1.
 
 
-def _eval_alpha(looped_val, total_invest, hist_list, reference_value, reference_data):
+def _eval_alpha(looped_val, total_invest, reference_value, reference_data):
     """ 回测结果评价函数：alpha率
 
-    阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - beta × (参考标准年化收益 - 无风险收益)，
+    阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
     这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
     :param looped_val:
     :param total_invest:
@@ -1204,8 +1205,8 @@ def _eval_alpha(looped_val, total_invest, hist_list, reference_value, reference_
     final_value = _eval_fv(looped_val)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
     reference_return, reference_yearly_return = _eval_benchmark(looped_val, reference_value, reference_data)
-    beta = _eval_beta(looped_val, reference_value, reference_data)
-    return (strategy_return - 0.035) - beta * (reference_yearly_return - 0.035)
+    b = _eval_beta(looped_val, reference_value, reference_data)
+    return (strategy_return - 0.035) - b * (reference_yearly_return - 0.035)
 
 
 def _eval_beta(looped_value, reference_value, reference_data):
@@ -1420,17 +1421,17 @@ class ResultPool:
         self.__perfs = per2
 
 
-def _input_to_list(pars, dim, pader):
+def _input_to_list(pars: [str, int, list], dim: int, padder):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
     input:
         :param pars，需要转化为list对象的输出对象
         :param dim，需要生成的目标list的元素数量
-        :param pader，当元素数量不足的时候用来补充的元素
+        :param padder，当元素数量不足的时候用来补充的元素
     return: =====
         pars, list 转化好的元素清单
     """
-    if (type(pars) == str) or (type(pars) == int):  # 处理字符串类型的输入
+    if isinstance(pars, str) or isinstance(pars, int):  # 处理字符串类型的输入
         # print 'type of types', type(pars)
         pars = [pars] * dim
     else:
@@ -1438,7 +1439,7 @@ def _input_to_list(pars, dim, pader):
     par_dim = len(pars)
     # 当给出的两个输入参数长度不一致时，用padder补齐type输入，或者忽略多余的部分
     if par_dim < dim:
-        pars.extend([pader] * (dim - par_dim))
+        pars.extend([padder] * (dim - par_dim))
     return pars
 
 
@@ -1553,7 +1554,7 @@ class Space:
         """
         interval_or_qty_list = _input_to_list(pars=interval_or_qty,
                                               dim=self.dim,
-                                              pader=[1])
+                                              padder=[1])
         axis_ranges = []
         i = 0
         total = 1
@@ -1612,9 +1613,9 @@ class Axis:
         if typ is None:
             # 当typ为空时，需要根据输入数据的类型猜测typ
             if length <= 2:  # list长度小于等于2，根据数据类型取上下界，int产生离散，float产生连续
-                if type(boe[0]) == int:
+                if isinstance(boe[0], int):
                     typ = 'discr'
-                elif type(boe[0]) == float:
+                elif isinstance(boe[0], float):
                     typ = 'conti'
                 else:  # 输入数据类型不是数字时，处理为枚举类型
                     typ = 'enum'

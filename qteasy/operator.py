@@ -1255,7 +1255,7 @@ class Operator:
     # TODO: convert all parameter setting functions to private except one single entry-function set_parameter()
     def set_blender(self, blender_type, *args, **kwargs):
         # 统一的blender混合器属性设置入口
-        if type(blender_type) == str:
+        if isinstance(blender_type, str):
             if blender_type.lower() == 'selecting':
                 self._set_selecting_blender(*args, **kwargs)
             elif blender_type.lower() == 'timing':
@@ -1533,7 +1533,7 @@ class Operator:
             :rtype: object: 一个混合后的多空蒙板
         """
         blndr = self._timing_blender  # 从对象的属性中读取择时混合参数
-        assert type(blndr) is str, 'Parmameter Type Error: the timing blender should be a text string!'
+        assert isinstance(blndr, str), 'Parmameter Type Error: the timing blender should be a text string!'
         # print 'timing blender is:', blndr
         l_m = 0
         for msk in ls_masks:  # 计算所有多空模版的和
