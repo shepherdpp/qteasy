@@ -753,6 +753,11 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
              
              以上信息被记录到log对象中，并最终存储在磁盘上
         """
+        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)
+        st = time.clock()
+        op_list = operator.create_signal(hist_data=hist_op)
+        et = time.clock()
+        run_time_prepare_data = (et - st) * 1000
 
     elif run_mode == 1:
         """进入回测模式：
@@ -820,10 +825,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         final_value = _eval_fv(looped_val=looped_values)
         ret = final_value / total_invest
         max_drawdown, low_date = _eval_max_drawdown(looped_values)
-        volatility = _eval_volatility(looped_values, hist_loop)
+        volatility = _eval_volatility(looped_values)
         ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
-        beta = _eval_beta(looped_values, hist_loop, hist_reference, reference_data)
-        sharp = _eval_sharp(looped_values, hist_loop, total_invest, 0.035)
+        beta = _eval_beta(looped_values, hist_reference, reference_data)
+        sharp = _eval_sharp(looped_values, total_invest, 0.035)
         alpha = _eval_alpha(looped_values, total_invest, hist_loop, hist_reference, reference_data)
         print(f'==================================== \n'
               f'           LOOPING RESULT\n'
@@ -1199,11 +1204,11 @@ def _eval_alpha(looped_val, total_invest, hist_list, reference_value, reference_
     final_value = _eval_fv(looped_val)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
     reference_return, reference_yearly_return = _eval_benchmark(looped_val, reference_value, reference_data)
-    beta = _eval_beta(looped_val, hist_list, reference_value, reference_data)
+    beta = _eval_beta(looped_val, reference_value, reference_data)
     return (strategy_return - 0.035) - beta * (reference_yearly_return - 0.035)
 
 
-def _eval_beta(looped_value, hist_list, reference_value, reference_data):
+def _eval_beta(looped_value, reference_value, reference_data):
     """ 贝塔。具体计算方法为 策略每日收益与参考标准每日收益的协方差 / 参考标准每日收益的方差 。
 
     :param reference_value:
@@ -1211,8 +1216,6 @@ def _eval_beta(looped_value, hist_list, reference_value, reference_data):
     :return:
     """
     assert isinstance(reference_value, pd.DataFrame)
-    first_day = looped_value.index[0]
-    last_day = looped_value.index[-1]
     ret = looped_value['value'] / looped_value['value'].shift(1)
     ret_dev = ret.std()
     ref = reference_value[reference_data]
@@ -1222,7 +1225,7 @@ def _eval_beta(looped_value, hist_list, reference_value, reference_data):
     return looped_value.ref.cov(looped_value.ret) / ret_dev
 
 
-def _eval_sharp(looped_val, hist_list, total_invest, riskfree_interest_rate):
+def _eval_sharp(looped_val, total_invest, riskfree_interest_rate):
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
@@ -1235,11 +1238,11 @@ def _eval_sharp(looped_val, hist_list, total_invest, riskfree_interest_rate):
     total_year = (last_day - first_day).days / 365
     final_value = _eval_fv(looped_val)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    volatility = _eval_volatility(looped_val, hist_list)
+    volatility = _eval_volatility(looped_val)
     return (strategy_return - riskfree_interest_rate) / volatility
 
 
-def _eval_volatility(looped_value, hist_list):
+def _eval_volatility(looped_value):
     """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差 。
 
     :param looped_value:
@@ -1343,26 +1346,6 @@ def _eval_operation(op_list, looped_value, cash_plan):
     total_investment = cash_plan.total
 
     return total_year, op_counts, total_investment, total_op_fee
-
-
-# TODO：eval()函数没必要写那么多个，可以根据需要统一到一个评价函数中
-def _eval(looped_val, method: str = None):
-    """评价函数，对回测器生成的交易模拟记录进行评价，包含不同的评价方法。
-
-    input:
-    :param looped_val，ndarray，回测器生成输出的交易模拟记录
-    :param method，int，交易记录评价方法
-    return: =====
-    调用不同评价函数的返回值
-"""
-    if method.upper() == 'FV':
-        return _eval_fv(looped_val)
-    elif method.upper() == 'ROI':
-        return _eval_roi(looped_val)
-    elif method.upper() == 'SHARP':
-        return _eval_sharp(looped_val)
-    elif method.upper() == 'ALPHA':
-        return _eval_alpha(looped_val)
 
 
 def _space_around_centre(space, centre, radius, ignore_enums=True):
