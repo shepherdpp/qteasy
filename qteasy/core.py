@@ -12,7 +12,7 @@ from .history import HistoryPanel, get_history_panel
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
 
-
+    记录各个主要过程中的详细信息，并写入内存
     """
 
     def __init__(self):
@@ -84,13 +84,13 @@ class Context:
         """初始化所有的环境变量和环境常量
 
         input:
-            :param mode:
-            :param rate_fee:
-            :param rate_slipery:
-            :param moq:
-            :param visual:
-            :param reference_visual:
-            :param reference_data:
+            :param mode: 操作模式：{0: 实盘操作模式, 1: 历史数据回测模式, 2: 历史数据优化模式}
+            :param rate_fee: 交易费用
+            :param rate_slipery: 交易滑点成本
+            :param moq: 最小交易单位
+            :param visual: 是否输出可视化结果
+            :param reference_visual: 是否可视化显示参考信息
+            :param reference_data: 参考历史数据
         """
         self._mode = 0
         self._mode_text = ''
@@ -114,15 +114,15 @@ class Context:
         self.t_func_type = 1  # 'single'
         self.t_func = 'FV'  # 评价函数
         self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
-        self.opti_method = Context.OPTI_EXHAUSTIVE
-        self.output_count = 50
-        self.keep_largest_perf = True
-        self.history_data_types = ['close']
-        self.history_data = None
-        self.visual = visual
-        self.reference_visual = reference_visual
-        self.reference_data = reference_data
-        self._asset_type = 'E'
+        self.opti_method = Context.OPTI_EXHAUSTIVE   # 策略优化模式或优化方法
+        self.output_count = 50    # 输出的优化策略个数
+        self.keep_largest_perf = True   # 是否保留最大的结果为最优
+        self.history_data_types = ['close']   # 历史数据类型
+        self.history_data = None   # 历史数据
+        self.visual = visual   # 是否可视化显示历史回测结果
+        self.reference_visual = reference_visual   # 是否可视化显示参考数据
+        self.reference_data = reference_data   # 参考数据
+        self._asset_type = 'E'  # 资产类型
 
     def __str__(self):
         """定义Context类的打印样式"""
@@ -228,11 +228,11 @@ class CashPlan:
         if isinstance(amounts, int) or isinstance(amounts, float):
             amounts = [amounts]
         assert isinstance(amounts, list), f'TypeError: amounts should be Iterable, got {type(amounts)} instead'
-        for amount in amounts:
+        for amount in amounts:  # 检查是否每一个amount的数据类型
             assert isinstance(amount, float) or isinstance(amount, int), \
                 f'TypeError: amount should be number format, got {type(amount)} instead'
             assert amount > 0, f'InputError: Investment amount should be larger than 0'
-        assert isinstance(dates, Iterable)
+        assert isinstance(dates, Iterable), f"Expect Iterable input dates, got {type(dates)} instead!"
 
         if isinstance(dates, str):
             dates = dates.replace(' ', '')
@@ -240,7 +240,7 @@ class CashPlan:
         try:
             dates = list(map(pd.to_datetime, dates))
         except:
-            raise KeyError
+            raise KeyError(f'some of the input strings can not be converted to date time format!')
 
         assert len(amounts) == len(dates), \
             f'InputError: number of amounts should be equal to that of dates, can\'t match {len(amounts)} amounts in' \
@@ -475,16 +475,16 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq) -> tuple:
     pre_value = pre_cash + (pre_amounts * prices).sum()
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
-    if moq == 0:
+    if moq == 0: # 当moq为0时，可以出售任意份额的投资产品
         a_sold = np.where(prices != 0,
                           np.where(op < 0, pre_amounts * op, 0),
                           0)
-    else:
+    else:  # 否则，可以购买的投资产品份数只能是MOQ的整数倍，MOQ本身可以是浮点数
         a_sold = np.where(prices != 0,
                           np.where(op < 0, np.rint(pre_amounts * op), 0),
                           0)
-    rate_out = rate(a_sold * prices)
-    cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)
+    rate_out = rate(a_sold * prices)  # 计算出售持有资产的手续费和成本率
+    cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0) # 根据出售持有资产的份额数量计算获取的现金
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained.sum()
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
@@ -536,9 +536,9 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     """
     # 获取价格清单中的投资产品列表
     # print(f'looped values raw data info: {looped_value.info()}')
-    shares = h_list.columns
-    start_date = looped_value.index[0]
-    looped_history = h_list.loc[start_date:]
+    shares = h_list.columns  # 获取资产清单
+    start_date = looped_value.index[0]  # 开始日期
+    looped_history = h_list.loc[start_date:]  # 回测历史数据区间 = [开始日期:]
     # print(f'looped history info: \n{looped_history.info()}')
     # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
     # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
