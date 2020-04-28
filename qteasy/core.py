@@ -217,7 +217,7 @@ class CashPlan:
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
-    def __init__(self, dates, amounts, interest_rate: float = 0.0):
+    def __init__(self, dates: [list, str], amounts: [list, str], interest_rate: float = 0.0):
         """
 
         :param dates:
@@ -453,7 +453,6 @@ def distribute_investment(amount: float,
     """
 
 
-# TODO: 使用Numba加速_loop_step()函数
 def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
@@ -589,7 +588,7 @@ def apply_loop(op_list: pd.DataFrame,
 
     """
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
-    assert cost_rate is not None, 'TyepError: cost_rate should not be None type'
+    assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
 
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，知道找到更好的向量化执行方法
@@ -612,8 +611,10 @@ def apply_loop(op_list: pd.DataFrame,
     amounts_matrix = []
     for i in range(op_count):  # 对每一行历史交易信号开始回测
         if i in investment_date_pos:
+            # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
             cash += invest_dict[i]
             # print(f'In loop process, on loop position {i} cash increased from {cash - invest_dict[i]} to {cash}')
+        # 调用loop_step()函数，计算下一期剩余资金、资产组合的持有份额、交易成本和下期资产总额
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
                                                op=op[i], prices=price[i],
