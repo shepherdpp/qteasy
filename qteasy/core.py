@@ -114,14 +114,14 @@ class Context:
         self.t_func_type = 1  # 'single'
         self.t_func = 'FV'  # 评价函数
         self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
-        self.opti_method = Context.OPTI_EXHAUSTIVE   # 策略优化模式或优化方法
-        self.output_count = 50    # 输出的优化策略个数
-        self.keep_largest_perf = True   # 是否保留最大的结果为最优
-        self.history_data_types = ['close']   # 历史数据类型
-        self.history_data = None   # 历史数据
-        self.visual = visual   # 是否可视化显示历史回测结果
-        self.reference_visual = reference_visual   # 是否可视化显示参考数据
-        self.reference_data = reference_data   # 参考数据
+        self.opti_method = Context.OPTI_EXHAUSTIVE  # 策略优化模式或优化方法
+        self.output_count = 50  # 输出的优化策略个数
+        self.keep_largest_perf = True  # 是否保留最大的结果为最优
+        self.history_data_types = ['close']  # 历史数据类型
+        self.history_data = None  # 历史数据
+        self.visual = visual  # 是否可视化显示历史回测结果
+        self.reference_visual = reference_visual  # 是否可视化显示参考数据
+        self.reference_data = reference_data  # 参考数据
         self._asset_type = 'E'  # 资产类型
 
     def __str__(self):
@@ -474,7 +474,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq) -> tuple:
     pre_value = pre_cash + (pre_amounts * prices).sum()
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
-    if moq == 0: # 当moq为0时，可以出售任意份额的投资产品
+    if moq == 0:  # 当moq为0时，可以出售任意份额的投资产品
         a_sold = np.where(prices != 0,
                           np.where(op < 0, pre_amounts * op, 0),
                           0)
@@ -483,7 +483,7 @@ def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq) -> tuple:
                           np.where(op < 0, np.rint(pre_amounts * op), 0),
                           0)
     rate_out = rate(a_sold * prices)  # 计算出售持有资产的手续费和成本率
-    cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0) # 根据出售持有资产的份额数量计算获取的现金
+    cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained.sum()
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
@@ -692,13 +692,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         run_mode = context.mode
     else:
         run_mode = mode
-    # 如果没有显式给出 history_data 历史数据，则按照context上下文对象设定的回测、优化区间及频率参数建立历史数据，否则适用history_data 数据
-    # TODO： 直接给出history_data是一个没有明确定义的操作：history_data被用于回测？还是优化？如何确保符合op的要求？详见下方hist_data_req
-    # TODO： 对于策略生成、策略回测和策略优化有可能应用不同的历史数据，因此应该分别处理并生成不同的历史数据集，例如策略生成需要用到3D多类型数据 \
-    # 而回测则只需要收盘价即可，数据频率也可能不同
+    # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     if history_data is None:
-        # TODO：根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
         # 用于交易信号生成的历史数据
+        # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
         op_start = (pd.to_datetime(context.loop_period_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
         # debug
         # print(f'preparing historical data, \nexpected start day: {context.loop_period_start}, '
@@ -713,7 +710,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                     asset_type=context.asset_type,
                                     chanel='online')
         hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
+        # TODO: 应该根据需要生成用于优化的历史数据
         hist_opti = None  # 用于策略优化的历史数据
+        # 生成参考历史数据，作为参考用于回测结果的评价
         hist_reference = (get_history_panel(start=context.loop_period_start,
                                             end=context.loop_period_end,
                                             shares=context.reference_data,
@@ -722,18 +721,20 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                             asset_type='I',
                                             chanel='online')).to_dataframe(htype='close')
     else:
-        # TODO: hist_data_req：这里的代码需要优化：正常工作中，历史数据不需要手工传入，应该可以根据需要策略的参数和context配置自动 \
-        # TODO: 下载或者从数据库自动读取
+        # 当显式给出历史数据的时候，以一种最基本的方法处理历史数据的用途（为历史数据分配用途）。
+        # TODO: 由于存在不同的历史数据，因此显式给出的历史数据需要指明明确的用途，直接针对不同用途给出历史数据或判断历史数据。
         assert isinstance(history_data, HistoryPanel), \
             f'historical price should be HistoryPanel! got {type(history_data)}'
+        # 历史数据用途：交易信号生成
         hist_op = history_data
+        # 历史数据用途：回测
         hist_loop = history_data.to_dataframe(htype='close')
+        # 历史数据用途：参考评价
         hist_reference = history_data.to_dataframe(htype='close')
         # print('history data is not None')
-    # ========
-    # TODO: 紧迫任务：完成实时信号生成模式。根据输入的策略类型和参数自动读取并组装正确的历史数据
-    # TODO: 利用历史数据生成交易信号，并且根据交易信号和当前持仓位置生成交易订单（输出交易订单的易读形式），并且将标准化格式的交易订单
-    # TODO: 传递至实盘交易模块。
+    # ===============
+    # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
+    # ===============
     if run_mode == 0:
         """进入实时信号生成模式：
         
@@ -754,9 +755,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
              
              以上信息被记录到log对象中，并最终存储在磁盘上
         """
-        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)
-        st = time.clock()
-        op_list = operator.create_signal(hist_data=hist_op)
+        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
+        st = time.clock()  # 记录交易信号生成耗时
+        op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.clock()
         run_time_prepare_data = (et - st) * 1000
         if context:
@@ -816,13 +817,13 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             保存在磁盘上供未来调用
             
         """
-        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)
-        st = time.clock()
-        op_list = operator.create_signal(hist_data=hist_op)
+        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
+        st = time.clock()  # 记录交易信号生成耗时
+        op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         # print(f'created operation list is: \n{op_list}')
         et = time.clock()
         run_time_prepare_data = (et - st) * 1000
-        st = time.clock()
+        st = time.clock()  # 记录交易信号回测耗时
         looped_values = apply_loop(op_list,
                                    hist_loop.fillna(0),
                                    cash_plan=context.cash_plan,
@@ -833,17 +834,28 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         et = time.clock()
         run_time_loop_full = (et - st) * 1000
         # print('looped values result is: \n', looped_values)
+        # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
         years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
                                                                      looped_value=looped_values,
                                                                      cash_plan=context.cash_plan)
+        # 评价回测结果——计算回测终值
         final_value = _eval_fv(looped_val=looped_values)
+        # 评价回测结果——计算总投资收益率
         ret = final_value / total_invest
+        # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
         max_drawdown, low_date = _eval_max_drawdown(looped_values)
+        # 评价回测结果——计算投资期间的波动率系数
         volatility = _eval_volatility(looped_values)
+        # 评价回测结果——计算参考数据收益率以及平均年化收益率
         ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
+        # 评价回测结果——计算投资期间的beta贝塔系数
         beta = _eval_beta(looped_values, hist_reference, reference_data)
+        # 评价回测结果——计算投资期间的夏普率
         sharp = _eval_sharp(looped_values, total_invest, 0.035)
+        # 评价回测结果——计算投资期间的alpha阿尔法系数
         alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+        # 格式化输出回测结果
+        # TODO: 将回测的更详细结果及回测的每一次操作详情登记到log文件中（可选内容）
         print(f'==================================== \n'
               f'           LOOPING RESULT\n'
               f'====================================')
