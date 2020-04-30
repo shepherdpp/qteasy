@@ -1000,7 +1000,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         optimization_log.write_record(pars, perfs)
 
 
-def _search_exhaustive(hist, op, output_count, keep_largest_perf, step_size=1):
+def _search_exhaustive(hist, op, output_count: int, keep_largest_perf: bool, step_size: int = 1):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1356,10 +1356,13 @@ def _eval_operation(op_list, looped_value, cash_plan):
     total_year = np.round((looped_value.index[-1] - looped_value.index[0]).days / 365., 1)
     sell_counts = []
     buy_counts = []
+    # 循环统计op_list交易清单中每个个股
     for share, ser in op_list.iteritems():
+        # 初始化计数变量
         sell_count = 0
         buy_count = 0
         current_pos = -1
+        # 循环统计个股交易清单中的每条交易信号
         for i, value in ser.iteritems():
             if np.sign(value) != current_pos:
                 current_pos = np.sign(value)
@@ -1369,12 +1372,13 @@ def _eval_operation(op_list, looped_value, cash_plan):
                     sell_count += 1
         sell_counts.append(sell_count)
         buy_counts.append(buy_count)
+    # 所有统计数字组装成一个DataFrame对象
     op_counts = pd.DataFrame(sell_counts, index=op_list.columns, columns=['sell'])
     op_counts['buy'] = buy_counts
     op_counts['total'] = op_counts.buy + op_counts.sell
     total_op_fee = looped_value.fee.sum()
     total_investment = cash_plan.total
-
+    # 返回所有输出变量
     return total_year, op_counts, total_investment, total_op_fee
 
 
