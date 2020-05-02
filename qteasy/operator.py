@@ -157,7 +157,7 @@ class Strategy:
         return ''.join([str1, str2, str3, str4, str5])
 
     def __repr__(self):
-        """
+        """ 打印对象的相关信息
 
         :return:
         """
@@ -171,6 +171,7 @@ class Strategy:
             print('Parameter Loaded：', type(self._pars), self._pars)
         else:
             print('Parameter NOT loaded!')
+        # 在verbose == True时打印更多的额外信息
         if verbose:
             print('Information of the strategy:\n', self.stg_name, self.stg_text)
 
