@@ -561,7 +561,6 @@ def _get_complete_hist(looped_value: pd.DataFrame,
 
 # TODO: 回测主入口函数需要增加回测结果可视化和回测结果参照标准
 # TODO: 增加一个参数，允许用户选择是否考虑现金的无风险利率增长
-# TODO: 在回测功能中增加实际交易信息记录，因为当MOQ存在时，实际的交易次数、信息和operator模块生成的交易信号不同
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
@@ -645,6 +644,13 @@ def apply_loop(op_list: pd.DataFrame,
             complete_value.plot(grid=True, figsize=(15, 7), legend=True)
         return complete_value
     return value_history
+
+
+def get_current_holdings() -> tuple:
+    """ 获取当前持有的产品在手数量
+
+    :return: tuple:
+    """
 
 
 def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
@@ -770,8 +776,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
               f'        OPERATION SIGNALS\n'
               f'====================================')
         print(f'\ntime consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n')
-        print(f'Operation signals are generated on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
-              f'Total looped periods: {years} years.')
+        # print(f'Operation signals are generated on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
+        #       f'Total looped periods: {years} years.')
         print(op_list[0])
 
     elif run_mode == 1:
@@ -859,7 +865,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         print(f'==================================== \n'
               f'           LOOPING RESULT\n'
               f'====================================')
-        print(f'\ntime consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n'
+        print(f'\nqteasy running mode: 1 - History back looping\n'
+              f'time consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n'
               f'time consumption for operation back looping: {run_time_loop_full:.3f} ms\n')
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {years} years.')

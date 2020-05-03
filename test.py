@@ -52,11 +52,11 @@ class TestSpace(unittest.TestCase):
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            print(p)
+            # print(p)
             s = qt.Space(*p)
             b = s.boes
             t = s.types
-            print(s, t)
+            # print(s, t)
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['discr', 'discr'], 'types incorrect')
 
@@ -68,11 +68,11 @@ class TestSpace(unittest.TestCase):
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            print(p)
+            # print(p)
             s = qt.Space(*p)
             b = s.boes
             t = s.types
-            print(s, t)
+            # print(s, t)
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['enum', 'enum'], 'types incorrect')
 
@@ -83,11 +83,11 @@ class TestSpace(unittest.TestCase):
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            print(p)
+            # print(p)
             s = qt.Space(*p)
             b = s.boes
             t = s.types
-            print(s, t)
+            # print(s, t)
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
 
@@ -157,20 +157,34 @@ class TestOperator(unittest.TestCase):
         data[4:5, [2, 9, 1, 2], [0, 3, 2, 1]] = np.nan
         hp = qt.HistoryPanel(data, levels=shares, columns=dtypes, rows=index)
         hp.info()
-        print('==========================\n输出close类型的所有历史数据\n', hp['close', :, :])
-        print(f'==========================\n输出close和open类型的所有历史数据\n{hp[[0,1], :, :]}')
-        print(f'==========================\n输出第一只股票的所有类型历史数据\n: {hp[:,[0], :]}')
-        print('==========================\n输出第0、1、2个htype对应的所有股票全部历史数据\n', hp[[0, 1, 2], :, :])
-        print('==========================\n输出close、high两个类型的所有历史数据\n', hp[['close', 'high']])
-        print('==========================\n输出0、1两个htype的所有历史数据\n', hp[[0, 1]])
-        print('==========================\n输出close、high两个类型的所有历史数据\n', hp['close,high'])
-        print('==========================\n输出close起到high止的三个类型的所有历史数据\n', hp['close:high'])
-        print('==========================\n输出0、1、3三个股票的全部历史数据\n', hp[:, [0, 1, 3]])
-        print('==========================\n输出000100、000102两只股票的所有历史数据\n', hp[:, ['000100', '000102']])
+        print('==========================\n输出close类型的所有历史数据\n')
+        self.assertTrue(np.allclose(hp['close', :, :], data[:, :, 0:1], equal_nan=True))
+        print(f'==========================\n输出close和open类型的所有历史数据\n')
+        self.assertTrue(np.allclose(hp[[0,1], :, :], data[:, :, 0:2], equal_nan=True))
+        print(f'==========================\n输出第一只股票的所有类型历史数据\n')
+        self.assertTrue(np.allclose(hp[:, [0], :], data[0:1, :, :], equal_nan=True))
+        print('==========================\n输出第0、1、2个htype对应的所有股票全部历史数据\n')
+        self.assertTrue(np.allclose(hp[[0, 1, 2]], data[:, :, 0:3], equal_nan=True))
+        print('==========================\n输出close、high两个类型的所有历史数据\n')
+        self.assertTrue(np.allclose(hp[['close', 'high']], data[:, :, [0, 2]], equal_nan=True))
+        print('==========================\n输出0、1两个htype的所有历史数据\n')
+        self.assertTrue(np.allclose(hp[[0, 1]], data[:, :, 0:2], equal_nan=True))
+        print('==========================\n输出close、high两个类型的所有历史数据\n')
+        self.assertTrue(np.allclose(hp['close,high'], data[:, :, [0, 2]], equal_nan=True))
+        print('==========================\n输出close起到high止的三个类型的所有历史数据\n')
+        self.assertTrue(np.allclose(hp['close:high'], data[:, :, 0:3], equal_nan=True))
+        print('==========================\n输出0、1、3三个股票的全部历史数据\n')
+        self.assertTrue(np.allclose(hp[:, [0, 1, 3]], data[[0, 1, 3], :, :], equal_nan=True))
+        print('==========================\n输出000100、000102两只股票的所有历史数据\n')
+        self.assertTrue(np.allclose(hp[:, ['000100', '000102']], data[[0, 2], :, :], equal_nan=True))
         print('==========================\n输出0、1、2三个股票的历史数据\n', hp[:, 0: 3])
-        print('==========================\n输出000100、000102两只股票的所有历史数据\n', hp[:, '000100, 000102'])
-        print('==========================\n输出所有股票的0-7日历史数据\n', hp[:, :, 0:8])
-        print('==========================\n输出000100股票的0-7日历史数据\n', hp[:, '000100', 0:8])
+        self.assertTrue(np.allclose(hp[:, 0: 3], data[0:3, :, :], equal_nan=True))
+        print('==========================\n输出000100、000102两只股票的所有历史数据\n')
+        self.assertTrue(np.allclose(hp[:, '000100, 000102'], data[[0, 2], :, :], equal_nan=True))
+        print('==========================\n输出所有股票的0-7日历史数据\n')
+        self.assertTrue(np.allclose(hp[:, :, 0:8], data[:, 0:8, :], equal_nan=True))
+        print('==========================\n输出000100股票的0-7日历史数据\n')
+        self.assertTrue(np.allclose(hp[:, '000100', 0:8], data[0, 0:8, :], equal_nan=True))
         print('==========================\nstart testing multy axis slicing of HistoryPanel object')
         print('==========================\n输出000100、000120两只股票的close、open两组历史数据\n',
               hp['close,open', ['000100', '000102']])
@@ -278,7 +292,7 @@ class TestOperator(unittest.TestCase):
         :return:
         """
         print('testing operator objects')
-        self.op = qt.Operator(timing_types=['DMA'], selecting_types=['simple', 'rand'], ricon_types=['urgent'])
+        self.op = qt.Operator(timing_types=['DMA'], selecting_types=['simple', 'random'], ricon_types=['urgent'])
         self.op.set_parameter('s-1', (0.5,))
         self.assertEqual(self.op.selecting[1].pars, (0.5,))
 
@@ -286,7 +300,7 @@ class TestOperator(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    suite.addTest(TestHP())
+    # suite.addTest(TestHP())
     suite.addTest(TestOperator())
     suite.addTest(TestRates())
     suite.addTest(TestSpace())
