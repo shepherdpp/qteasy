@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/core.py" afterPath="$PROJECT_DIR$/qteasy/core.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test.py" afterPath="$PROJECT_DIR$/test.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/__main__.py" afterPath="$PROJECT_DIR$/qteasy/__main__.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/history.py" afterPath="$PROJECT_DIR$/qteasy/history.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/operator.py" afterPath="$PROJECT_DIR$/qteasy/operator.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -15,8 +17,8 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/qteasy$core.coverage" NAME="core Coverage Results" MODIFIED="1583053289048" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/qteasy" />
-    <SUITE FILE_PATH="coverage/qteasy$__main__.coverage" NAME="__main__ Coverage Results" MODIFIED="1588499291807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/qteasy" />
-    <SUITE FILE_PATH="coverage/qteasy$Nosetests_in_test_py.coverage" NAME="Nosetests in test.py Coverage Results" MODIFIED="1588502950658" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/qteasy$__main__.coverage" NAME="__main__ Coverage Results" MODIFIED="1588650963757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/qteasy" />
+    <SUITE FILE_PATH="coverage/qteasy$Nosetests_in_test_py.coverage" NAME="Nosetests in test.py Coverage Results" MODIFIED="1588554862618" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$test.coverage" NAME="test Coverage Results" MODIFIED="1581857376943" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
@@ -38,8 +40,8 @@
       <file leaf-file-name="core.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/core.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-32">
-              <caret line="649" column="21" lean-forward="false" selection-start-line="649" selection-start-column="21" selection-end-line="649" selection-end-column="21" />
+            <state relative-caret-position="202">
+              <caret line="782" column="23" lean-forward="false" selection-start-line="782" selection-start-column="23" selection-end-line="782" selection-end-column="23" />
               <folding>
                 <element signature="n#!!doc" expanded="false" />
                 <element signature="e#26#45#0" expanded="true" />
@@ -259,236 +261,236 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="operator.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="operator.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/qteasy/operator.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="172">
-              <caret line="1185" column="0" lean-forward="false" selection-start-line="1185" selection-start-column="0" selection-end-line="1185" selection-end-column="0" />
+            <state relative-caret-position="-294">
+              <caret line="108" column="29" lean-forward="true" selection-start-line="108" selection-start-column="29" selection-end-line="108" selection-end-column="29" />
               <folding>
                 <element signature="n#!!doc" expanded="false" />
-                <element signature="e#946#3716#0" expanded="false" />
-                <element signature="e#946#3077#1" expanded="false" />
-                <element signature="e#3852#3892#0" expanded="false" />
-                <element signature="e#3940#3982#0" expanded="false" />
-                <element signature="e#4031#4075#0" expanded="false" />
-                <element signature="e#4124#4218#0" expanded="false" />
-                <element signature="e#4266#4337#0" expanded="false" />
-                <element signature="e#4384#4426#0" expanded="false" />
-                <element signature="e#4470#4509#0" expanded="false" />
-                <element signature="e#4558#4606#0" expanded="false" />
-                <element signature="e#4657#4705#0" expanded="false" />
-                <element signature="e#4758#4812#0" expanded="false" />
-                <element signature="e#4862#4911#0" expanded="false" />
-                <element signature="e#6650#6755#1" expanded="false" />
-                <element signature="e#6858#6957#1" expanded="false" />
-                <element signature="e#7120#7576#0" expanded="false" />
-                <element signature="e#7120#7333#1" expanded="false" />
-                <element signature="e#7751#7836#0" expanded="false" />
-                <element signature="e#9190#9705#0" expanded="false" />
-                <element signature="e#9778#10916#0" expanded="false" />
-                <element signature="e#9778#10882#1" expanded="false" />
-                <element signature="e#10993#13105#0" expanded="false" />
-                <element signature="e#10993#11500#1" expanded="false" />
-                <element signature="e#11509#11618#0" expanded="false" />
-                <element signature="e#12403#12425#0" expanded="false" />
-                <element signature="e#13187#15236#0" expanded="false" />
-                <element signature="e#13187#13710#1" expanded="false" />
-                <element signature="e#13719#13802#0" expanded="false" />
-                <element signature="e#14202#14332#0" expanded="false" />
-                <element signature="e#14367#14404#0" expanded="false" />
-                <element signature="e#14681#14754#0" expanded="false" />
-                <element signature="e#15097#15173#0" expanded="false" />
-                <element signature="e#15271#15700#0" expanded="false" />
-                <element signature="e#15271#15380#1" expanded="false" />
-                <element signature="e#15414#15561#0" expanded="false" />
-                <element signature="e#15615#15700#0" expanded="false" />
-                <element signature="e#15738#17302#0" expanded="false" />
-                <element signature="e#15738#16024#1" expanded="false" />
-                <element signature="e#16078#16681#0" expanded="false" />
-                <element signature="e#16456#16635#0" expanded="false" />
-                <element signature="e#16735#17302#0" expanded="false" />
-                <element signature="e#17335#18840#0" expanded="false" />
-                <element signature="e#17335#17557#1" expanded="false" />
-                <element signature="e#17611#18105#0" expanded="false" />
-                <element signature="e#17906#18059#0" expanded="false" />
-                <element signature="e#18159#18840#0" expanded="false" />
-                <element signature="e#18159#18392#1" expanded="false" />
-                <element signature="e#18655#18700#0" expanded="false" />
-                <element signature="e#18872#20391#0" expanded="false" />
-                <element signature="e#18872#19053#1" expanded="false" />
-                <element signature="e#19098#19569#0" expanded="false" />
-                <element signature="e#19392#19523#0" expanded="false" />
-                <element signature="e#19623#20391#0" expanded="false" />
-                <element signature="e#19684#19754#0" expanded="false" />
-                <element signature="e#20012#20093#0" expanded="false" />
-                <element signature="e#20424#21964#0" expanded="false" />
-                <element signature="e#20424#20604#1" expanded="false" />
-                <element signature="e#20649#21242#0" expanded="false" />
-                <element signature="e#20924#21070#0" expanded="false" />
-                <element signature="e#21296#21964#0" expanded="false" />
-                <element signature="e#21296#21478#1" expanded="false" />
-                <element signature="e#21509#21574#0" expanded="false" />
-                <element signature="e#21769#21782#0" expanded="false" />
-                <element signature="e#21996#22882#0" expanded="false" />
-                <element signature="e#21996#22149#1" expanded="false" />
-                <element signature="e#22194#22625#0" expanded="false" />
-                <element signature="e#22684#22879#0" expanded="false" />
-                <element signature="e#22684#22735#1" expanded="false" />
-                <element signature="e#22882#22966#0" expanded="false" />
-                <element signature="e#23039#28129#0" expanded="false" />
-                <element signature="e#23726#24476#0" expanded="false" />
-                <element signature="e#24544#24817#0" expanded="false" />
-                <element signature="e#24544#24804#1" expanded="false" />
-                <element signature="e#24823#24892#0" expanded="false" />
-                <element signature="e#25017#26180#0" expanded="false" />
-                <element signature="e#25017#25415#1" expanded="false" />
-                <element signature="e#25722#25810#0" expanded="false" />
-                <element signature="e#25980#26054#0" expanded="false" />
-                <element signature="e#26186#26257#0" expanded="false" />
-                <element signature="e#26361#28129#0" expanded="false" />
-                <element signature="e#26361#26770#1" expanded="false" />
-                <element signature="e#27345#27398#0" expanded="false" />
-                <element signature="e#27698#27727#0" expanded="false" />
-                <element signature="e#27816#28076#0" expanded="false" />
-                <element signature="e#28169#28660#0" expanded="false" />
-                <element signature="e#28235#28397#0" expanded="false" />
-                <element signature="e#28445#28660#0" expanded="false" />
-                <element signature="e#28701#29113#0" expanded="false" />
-                <element signature="e#28785#28953#0" expanded="false" />
-                <element signature="e#29001#29113#0" expanded="false" />
-                <element signature="e#29154#29967#0" expanded="false" />
-                <element signature="e#29275#29448#0" expanded="false" />
-                <element signature="e#29496#29967#0" expanded="false" />
-                <element signature="e#29591#29695#0" expanded="false" />
-                <element signature="e#29752#29902#0" expanded="false" />
-                <element signature="e#30009#33685#0" expanded="false" />
-                <element signature="e#30009#30403#1" expanded="false" />
-                <element signature="e#30448#31023#0" expanded="false" />
-                <element signature="e#31029#31083#0" expanded="false" />
-                <element signature="e#31224#33685#0" expanded="false" />
-                <element signature="e#31224#31271#1" expanded="false" />
-                <element signature="e#31415#31509#0" expanded="false" />
-                <element signature="e#32084#32188#0" expanded="false" />
-                <element signature="e#32329#32430#0" expanded="false" />
-                <element signature="e#32804#32829#0" expanded="false" />
-                <element signature="e#32943#33064#0" expanded="false" />
-                <element signature="e#33184#33437#0" expanded="false" />
-                <element signature="e#33715#35428#0" expanded="false" />
-                <element signature="e#33715#34111#1" expanded="false" />
-                <element signature="e#34651#35207#0" expanded="false" />
-                <element signature="e#35287#35312#0" expanded="false" />
-                <element signature="e#35382#35428#0" expanded="false" />
-                <element signature="e#35459#35784#0" expanded="false" />
-                <element signature="e#35528#35672#0" expanded="false" />
-                <element signature="e#35742#35784#0" expanded="false" />
-                <element signature="e#35943#36273#0" expanded="false" />
-                <element signature="e#36333#37447#0" expanded="false" />
-                <element signature="e#36333#36622#1" expanded="false" />
-                <element signature="e#36662#36815#0" expanded="false" />
-                <element signature="e#37030#37105#0" expanded="false" />
-                <element signature="e#37254#37322#0" expanded="false" />
-                <element signature="e#37450#37457#0" expanded="false" />
-                <element signature="e#38246#38298#0" expanded="false" />
-                <element signature="e#38394#38459#0" expanded="false" />
-                <element signature="e#38590#38616#0" expanded="false" />
-                <element signature="e#38721#38799#0" expanded="false" />
-                <element signature="e#38872#39105#0" expanded="false" />
-                <element signature="e#38872#39042#1" expanded="false" />
-                <element signature="e#39155#39623#0" expanded="false" />
-                <element signature="e#39155#39305#1" expanded="false" />
-                <element signature="e#39489#39608#0" expanded="false" />
-                <element signature="e#39654#39941#0" expanded="false" />
-                <element signature="e#39654#39854#1" expanded="false" />
-                <element signature="e#39964#40348#0" expanded="false" />
-                <element signature="e#39964#40171#1" expanded="false" />
-                <element signature="e#40371#41008#1" expanded="false" />
-                <element signature="e#41173#41456#1" expanded="false" />
-                <element signature="e#41465#41472#0" expanded="false" />
-                <element signature="e#41561#41570#0" expanded="false" />
-                <element signature="e#42046#42885#0" expanded="false" />
-                <element signature="e#42885#42946#0" expanded="false" />
-                <element signature="e#43095#43148#0" expanded="false" />
-                <element signature="e#44735#45082#0" expanded="false" />
-                <element signature="e#45128#45147#0" expanded="false" />
-                <element signature="e#45196#45218#0" expanded="false" />
-                <element signature="e#45263#45281#0" expanded="false" />
-                <element signature="e#45331#45456#0" expanded="false" />
-                <element signature="e#45513#45915#0" expanded="false" />
-                <element signature="e#45592#45886#0" expanded="false" />
-                <element signature="e#45697#45768#0" expanded="false" />
-                <element signature="e#45820#45886#0" expanded="false" />
-                <element signature="e#45972#46213#0" expanded="false" />
-                <element signature="e#45972#46050#1" expanded="false" />
-                <element signature="e#46118#46191#0" expanded="false" />
-                <element signature="e#46219#46272#0" expanded="false" />
-                <element signature="e#46670#47063#0" expanded="false" />
-                <element signature="e#47021#47063#0" expanded="false" />
-                <element signature="e#47417#49385#0" expanded="false" />
-                <element signature="e#47417#47642#1" expanded="false" />
-                <element signature="e#47691#49284#0" expanded="false" />
-                <element signature="e#48011#48143#0" expanded="false" />
-                <element signature="e#48193#48370#0" expanded="false" />
-                <element signature="e#48423#48532#0" expanded="false" />
-                <element signature="e#48586#48711#0" expanded="false" />
-                <element signature="e#48907#49284#0" expanded="false" />
-                <element signature="e#49391#49442#0" expanded="false" />
-                <element signature="e#49498#50738#0" expanded="false" />
-                <element signature="e#49498#49687#1" expanded="false" />
-                <element signature="e#49827#49840#0" expanded="false" />
-                <element signature="e#50744#50828#0" expanded="false" />
-                <element signature="e#52070#52221#0" expanded="false" />
-                <element signature="e#52290#52473#0" expanded="false" />
-                <element signature="e#52521#52813#0" expanded="false" />
-                <element signature="e#52616#52696#0" expanded="false" />
-                <element signature="e#52858#53198#0" expanded="false" />
-                <element signature="e#53004#53084#0" expanded="false" />
-                <element signature="e#53242#53526#0" expanded="false" />
-                <element signature="e#53333#53413#0" expanded="false" />
-                <element signature="e#53532#53587#0" expanded="false" />
-                <element signature="e#53777#54072#1" expanded="false" />
-                <element signature="e#54081#54121#0" expanded="false" />
-                <element signature="e#54837#55081#0" expanded="false" />
-                <element signature="e#55281#55345#0" expanded="false" />
-                <element signature="e#55868#56138#0" expanded="false" />
-                <element signature="e#55868#55898#0" expanded="false" />
-                <element signature="e#56027#56053#0" expanded="false" />
-                <element signature="e#56330#56400#0" expanded="false" />
-                <element signature="e#56715#56844#0" expanded="false" />
-                <element signature="e#57039#57113#0" expanded="false" />
-                <element signature="e#57852#57909#0" expanded="false" />
-                <element signature="e#58301#58335#0" expanded="false" />
-                <element signature="e#58422#58832#0" expanded="false" />
-                <element signature="e#58422#58786#1" expanded="false" />
-                <element signature="e#58910#59349#0" expanded="false" />
-                <element signature="e#58910#59017#1" expanded="false" />
-                <element signature="e#59107#59202#0" expanded="false" />
-                <element signature="e#59229#59349#0" expanded="false" />
-                <element signature="e#59408#59443#0" expanded="false" />
-                <element signature="e#59492#59683#1" expanded="false" />
-                <element signature="e#60037#60602#0" expanded="false" />
-                <element signature="e#60037#60058#0" expanded="false" />
-                <element signature="e#60657#61535#0" expanded="false" />
-                <element signature="e#60800#61045#0" expanded="false" />
-                <element signature="e#60800#60858#0" expanded="false" />
-                <element signature="e#61100#61463#0" expanded="false" />
-                <element signature="e#61100#61157#0" expanded="false" />
-                <element signature="e#61601#62097#0" expanded="false" />
-                <element signature="e#61601#61743#1" expanded="false" />
-                <element signature="e#61917#62070#0" expanded="false" />
-                <element signature="e#62147#62344#0" expanded="false" />
-                <element signature="e#62192#62344#0" expanded="false" />
-                <element signature="e#62399#64247#0" expanded="false" />
-                <element signature="e#62399#62856#1" expanded="false" />
-                <element signature="e#62922#62958#0" expanded="false" />
-                <element signature="e#63037#63089#0" expanded="false" />
-                <element signature="e#63345#64139#0" expanded="false" />
-                <element signature="e#63376#63401#0" expanded="false" />
-                <element signature="e#63470#63516#0" expanded="false" />
-                <element signature="e#63561#63609#0" expanded="false" />
-                <element signature="e#63653#63786#0" expanded="false" />
-                <element signature="e#63838#64139#0" expanded="false" />
-                <element signature="e#63944#63991#0" expanded="false" />
-                <element signature="e#64034#64139#0" expanded="false" />
+                <element signature="e#30#49#0" expanded="true" />
+                <element signature="e#994#3125#1" expanded="false" />
+                <element signature="e#4626#4666#0" expanded="false" />
+                <element signature="e#4714#4756#0" expanded="false" />
+                <element signature="e#4805#4849#0" expanded="false" />
+                <element signature="e#4898#4992#0" expanded="false" />
+                <element signature="e#5040#5111#0" expanded="false" />
+                <element signature="e#5158#5200#0" expanded="false" />
+                <element signature="e#5244#5283#0" expanded="false" />
+                <element signature="e#5332#5380#0" expanded="false" />
+                <element signature="e#5431#5479#0" expanded="false" />
+                <element signature="e#5532#5586#0" expanded="false" />
+                <element signature="e#5636#5685#0" expanded="false" />
+                <element signature="e#7424#7529#1" expanded="false" />
+                <element signature="e#7632#7731#1" expanded="false" />
+                <element signature="e#7894#8350#0" expanded="false" />
+                <element signature="e#7894#8107#1" expanded="false" />
+                <element signature="e#8525#8610#0" expanded="false" />
+                <element signature="e#9964#10479#0" expanded="false" />
+                <element signature="e#10552#11690#0" expanded="false" />
+                <element signature="e#10552#11656#1" expanded="false" />
+                <element signature="e#11767#13879#0" expanded="false" />
+                <element signature="e#11767#12274#1" expanded="false" />
+                <element signature="e#12283#12392#0" expanded="false" />
+                <element signature="e#13177#13199#0" expanded="false" />
+                <element signature="e#13961#16010#0" expanded="false" />
+                <element signature="e#13961#14484#1" expanded="false" />
+                <element signature="e#14493#14576#0" expanded="false" />
+                <element signature="e#14976#15106#0" expanded="false" />
+                <element signature="e#15141#15178#0" expanded="false" />
+                <element signature="e#15455#15528#0" expanded="false" />
+                <element signature="e#15871#15947#0" expanded="false" />
+                <element signature="e#16045#16474#0" expanded="false" />
+                <element signature="e#16045#16154#1" expanded="false" />
+                <element signature="e#16188#16335#0" expanded="false" />
+                <element signature="e#16389#16474#0" expanded="false" />
+                <element signature="e#16512#18076#0" expanded="false" />
+                <element signature="e#16512#16798#1" expanded="false" />
+                <element signature="e#16852#17455#0" expanded="false" />
+                <element signature="e#17230#17409#0" expanded="false" />
+                <element signature="e#17509#18076#0" expanded="false" />
+                <element signature="e#18109#19614#0" expanded="false" />
+                <element signature="e#18109#18331#1" expanded="false" />
+                <element signature="e#18385#18879#0" expanded="false" />
+                <element signature="e#18680#18833#0" expanded="false" />
+                <element signature="e#18933#19614#0" expanded="false" />
+                <element signature="e#18933#19166#1" expanded="false" />
+                <element signature="e#19429#19474#0" expanded="false" />
+                <element signature="e#19646#21165#0" expanded="false" />
+                <element signature="e#19646#19827#1" expanded="false" />
+                <element signature="e#19872#20343#0" expanded="false" />
+                <element signature="e#20166#20297#0" expanded="false" />
+                <element signature="e#20397#21165#0" expanded="false" />
+                <element signature="e#20458#20528#0" expanded="false" />
+                <element signature="e#20786#20867#0" expanded="false" />
+                <element signature="e#21198#22738#0" expanded="false" />
+                <element signature="e#21198#21378#1" expanded="false" />
+                <element signature="e#21423#22016#0" expanded="false" />
+                <element signature="e#21698#21844#0" expanded="false" />
+                <element signature="e#22070#22738#0" expanded="false" />
+                <element signature="e#22070#22252#1" expanded="false" />
+                <element signature="e#22283#22348#0" expanded="false" />
+                <element signature="e#22543#22556#0" expanded="false" />
+                <element signature="e#22770#23656#0" expanded="false" />
+                <element signature="e#22770#22923#1" expanded="false" />
+                <element signature="e#22968#23399#0" expanded="false" />
+                <element signature="e#23458#23653#0" expanded="false" />
+                <element signature="e#23458#23509#1" expanded="false" />
+                <element signature="e#23656#23740#0" expanded="false" />
+                <element signature="e#23813#28903#0" expanded="false" />
+                <element signature="e#24500#25250#0" expanded="false" />
+                <element signature="e#25318#25591#0" expanded="false" />
+                <element signature="e#25318#25578#1" expanded="false" />
+                <element signature="e#25597#25666#0" expanded="false" />
+                <element signature="e#25791#26954#0" expanded="false" />
+                <element signature="e#25791#26189#1" expanded="false" />
+                <element signature="e#26496#26584#0" expanded="false" />
+                <element signature="e#26754#26828#0" expanded="false" />
+                <element signature="e#26960#27031#0" expanded="false" />
+                <element signature="e#27135#28903#0" expanded="false" />
+                <element signature="e#27135#27544#1" expanded="false" />
+                <element signature="e#28119#28172#0" expanded="false" />
+                <element signature="e#28472#28501#0" expanded="false" />
+                <element signature="e#28590#28850#0" expanded="false" />
+                <element signature="e#28943#29434#0" expanded="false" />
+                <element signature="e#29009#29171#0" expanded="false" />
+                <element signature="e#29219#29434#0" expanded="false" />
+                <element signature="e#29475#29887#0" expanded="false" />
+                <element signature="e#29559#29727#0" expanded="false" />
+                <element signature="e#29775#29887#0" expanded="false" />
+                <element signature="e#29928#30741#0" expanded="false" />
+                <element signature="e#30049#30222#0" expanded="false" />
+                <element signature="e#30270#30741#0" expanded="false" />
+                <element signature="e#30365#30469#0" expanded="false" />
+                <element signature="e#30526#30676#0" expanded="false" />
+                <element signature="e#30783#34459#0" expanded="false" />
+                <element signature="e#30783#31177#1" expanded="false" />
+                <element signature="e#31222#31797#0" expanded="false" />
+                <element signature="e#31803#31857#0" expanded="false" />
+                <element signature="e#31998#34459#0" expanded="false" />
+                <element signature="e#31998#32045#1" expanded="false" />
+                <element signature="e#32189#32283#0" expanded="false" />
+                <element signature="e#32858#32962#0" expanded="false" />
+                <element signature="e#33103#33204#0" expanded="false" />
+                <element signature="e#33578#33603#0" expanded="false" />
+                <element signature="e#33717#33838#0" expanded="false" />
+                <element signature="e#33958#34211#0" expanded="false" />
+                <element signature="e#34489#36202#0" expanded="false" />
+                <element signature="e#34489#34885#1" expanded="false" />
+                <element signature="e#35425#35981#0" expanded="false" />
+                <element signature="e#36061#36086#0" expanded="false" />
+                <element signature="e#36156#36202#0" expanded="false" />
+                <element signature="e#36233#36558#0" expanded="false" />
+                <element signature="e#36302#36446#0" expanded="false" />
+                <element signature="e#36516#36558#0" expanded="false" />
+                <element signature="e#36717#37047#0" expanded="false" />
+                <element signature="e#37107#38221#0" expanded="false" />
+                <element signature="e#37107#37396#1" expanded="false" />
+                <element signature="e#37436#37589#0" expanded="false" />
+                <element signature="e#37804#37879#0" expanded="false" />
+                <element signature="e#38028#38096#0" expanded="false" />
+                <element signature="e#38224#38231#0" expanded="false" />
+                <element signature="e#39020#39072#0" expanded="false" />
+                <element signature="e#39168#39233#0" expanded="false" />
+                <element signature="e#39364#39390#0" expanded="false" />
+                <element signature="e#39495#39573#0" expanded="false" />
+                <element signature="e#39646#39879#0" expanded="false" />
+                <element signature="e#39646#39816#1" expanded="false" />
+                <element signature="e#39929#40397#0" expanded="false" />
+                <element signature="e#39929#40079#1" expanded="false" />
+                <element signature="e#40263#40382#0" expanded="false" />
+                <element signature="e#40428#40715#0" expanded="false" />
+                <element signature="e#40428#40628#1" expanded="false" />
+                <element signature="e#40738#41122#0" expanded="false" />
+                <element signature="e#40738#40945#1" expanded="false" />
+                <element signature="e#41145#41782#1" expanded="false" />
+                <element signature="e#41947#42230#1" expanded="false" />
+                <element signature="e#42239#42246#0" expanded="false" />
+                <element signature="e#42335#42344#0" expanded="false" />
+                <element signature="e#42820#43659#0" expanded="false" />
+                <element signature="e#43659#43720#0" expanded="false" />
+                <element signature="e#43869#43922#0" expanded="false" />
+                <element signature="e#45509#45856#0" expanded="false" />
+                <element signature="e#45902#45921#0" expanded="false" />
+                <element signature="e#45970#45992#0" expanded="false" />
+                <element signature="e#46037#46055#0" expanded="false" />
+                <element signature="e#46105#46230#0" expanded="false" />
+                <element signature="e#46287#46689#0" expanded="false" />
+                <element signature="e#46366#46660#0" expanded="false" />
+                <element signature="e#46471#46542#0" expanded="false" />
+                <element signature="e#46594#46660#0" expanded="false" />
+                <element signature="e#46746#46987#0" expanded="false" />
+                <element signature="e#46746#46824#1" expanded="false" />
+                <element signature="e#46892#46965#0" expanded="false" />
+                <element signature="e#46993#47046#0" expanded="false" />
+                <element signature="e#47444#47837#0" expanded="false" />
+                <element signature="e#47795#47837#0" expanded="false" />
+                <element signature="e#48191#50159#0" expanded="false" />
+                <element signature="e#48191#48416#1" expanded="false" />
+                <element signature="e#48465#50058#0" expanded="false" />
+                <element signature="e#48785#48917#0" expanded="false" />
+                <element signature="e#48967#49144#0" expanded="false" />
+                <element signature="e#49197#49306#0" expanded="false" />
+                <element signature="e#49360#49485#0" expanded="false" />
+                <element signature="e#49681#50058#0" expanded="false" />
+                <element signature="e#50165#50216#0" expanded="false" />
+                <element signature="e#50272#51512#0" expanded="false" />
+                <element signature="e#50272#50461#1" expanded="false" />
+                <element signature="e#50601#50614#0" expanded="false" />
+                <element signature="e#51518#51602#0" expanded="false" />
+                <element signature="e#52844#52995#0" expanded="false" />
+                <element signature="e#53064#53247#0" expanded="false" />
+                <element signature="e#53295#53587#0" expanded="false" />
+                <element signature="e#53390#53470#0" expanded="false" />
+                <element signature="e#53632#53972#0" expanded="false" />
+                <element signature="e#53778#53858#0" expanded="false" />
+                <element signature="e#54016#54300#0" expanded="false" />
+                <element signature="e#54107#54187#0" expanded="false" />
+                <element signature="e#54306#54361#0" expanded="false" />
+                <element signature="e#54551#54846#1" expanded="false" />
+                <element signature="e#54855#54895#0" expanded="false" />
+                <element signature="e#55611#55855#0" expanded="false" />
+                <element signature="e#56055#56119#0" expanded="false" />
+                <element signature="e#56642#56912#0" expanded="false" />
+                <element signature="e#56642#56672#0" expanded="false" />
+                <element signature="e#56801#56827#0" expanded="false" />
+                <element signature="e#57104#57174#0" expanded="false" />
+                <element signature="e#57489#57618#0" expanded="false" />
+                <element signature="e#57813#57887#0" expanded="false" />
+                <element signature="e#58626#58683#0" expanded="false" />
+                <element signature="e#59075#59109#0" expanded="false" />
+                <element signature="e#59196#59606#0" expanded="false" />
+                <element signature="e#59196#59560#1" expanded="false" />
+                <element signature="e#59684#60123#0" expanded="false" />
+                <element signature="e#59684#59791#1" expanded="false" />
+                <element signature="e#59881#59976#0" expanded="false" />
+                <element signature="e#60003#60123#0" expanded="false" />
+                <element signature="e#60182#60217#0" expanded="false" />
+                <element signature="e#60266#60457#1" expanded="false" />
+                <element signature="e#60811#61376#0" expanded="false" />
+                <element signature="e#60811#60832#0" expanded="false" />
+                <element signature="e#61431#62309#0" expanded="false" />
+                <element signature="e#61574#61819#0" expanded="false" />
+                <element signature="e#61574#61632#0" expanded="false" />
+                <element signature="e#61874#62237#0" expanded="false" />
+                <element signature="e#61874#61931#0" expanded="false" />
+                <element signature="e#62375#62871#0" expanded="false" />
+                <element signature="e#62375#62517#1" expanded="false" />
+                <element signature="e#62691#62844#0" expanded="false" />
+                <element signature="e#62921#63118#0" expanded="false" />
+                <element signature="e#62966#63118#0" expanded="false" />
+                <element signature="e#63173#65021#0" expanded="false" />
+                <element signature="e#63173#63630#1" expanded="false" />
+                <element signature="e#63696#63732#0" expanded="false" />
+                <element signature="e#63811#63863#0" expanded="false" />
+                <element signature="e#64119#64913#0" expanded="false" />
+                <element signature="e#64150#64175#0" expanded="false" />
+                <element signature="e#64244#64290#0" expanded="false" />
+                <element signature="e#64335#64383#0" expanded="false" />
+                <element signature="e#64427#64560#0" expanded="false" />
+                <element signature="e#64612#64913#0" expanded="false" />
+                <element signature="e#64718#64765#0" expanded="false" />
+                <element signature="e#64808#64913#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -498,7 +500,7 @@
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="2560">
-              <caret line="180" column="82" lean-forward="true" selection-start-line="180" selection-start-column="82" selection-end-line="180" selection-end-column="82" />
+              <caret line="180" column="82" lean-forward="false" selection-start-line="180" selection-start-column="82" selection-end-line="180" selection-end-column="82" />
               <folding>
                 <element signature="e#134#757#0" expanded="false" />
                 <element signature="e#172#303#0" expanded="false" />
@@ -541,8 +543,8 @@
       <file leaf-file-name="history.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/history.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="200">
-              <caret line="294" column="43" lean-forward="false" selection-start-line="294" selection-start-column="43" selection-end-line="294" selection-end-column="43" />
+            <state relative-caret-position="549">
+              <caret line="1009" column="4" lean-forward="true" selection-start-line="1009" selection-start-column="4" selection-end-line="1009" selection-end-column="15" />
               <folding>
                 <element signature="e#251#486#0" expanded="false" />
                 <element signature="e#506#2624#0" expanded="false" />
@@ -622,147 +624,146 @@
                 <element signature="e#35931#36082#0" expanded="false" />
                 <element signature="e#35931#36048#1" expanded="false" />
                 <element signature="e#36138#37007#1" expanded="false" />
-                <element signature="e#37425#37634#0" expanded="false" />
-                <element signature="e#38149#38785#0" expanded="false" />
-                <element signature="e#38440#38785#0" expanded="false" />
-                <element signature="e#38545#38752#0" expanded="false" />
-                <element signature="e#38870#40300#0" expanded="false" />
-                <element signature="e#38870#39696#1" expanded="false" />
-                <element signature="e#39896#40025#0" expanded="false" />
-                <element signature="e#40081#40240#0" expanded="false" />
-                <element signature="e#40639#40749#0" expanded="false" />
-                <element signature="e#40639#40719#1" expanded="false" />
-                <element signature="e#40802#40912#0" expanded="false" />
-                <element signature="e#40802#40882#1" expanded="false" />
-                <element signature="e#40987#41332#0" expanded="false" />
-                <element signature="e#40987#41182#1" expanded="false" />
-                <element signature="e#41248#41314#0" expanded="false" />
-                <element signature="e#41541#44387#0" expanded="false" />
-                <element signature="e#41541#41802#1" expanded="false" />
-                <element signature="e#42323#43375#0" expanded="false" />
-                <element signature="e#42424#42639#0" expanded="false" />
-                <element signature="e#42666#42934#0" expanded="false" />
-                <element signature="e#43394#44291#0" expanded="false" />
-                <element signature="e#43495#43684#0" expanded="false" />
-                <element signature="e#43711#43979#0" expanded="false" />
-                <element signature="e#44482#47397#0" expanded="false" />
-                <element signature="e#44482#45104#1" expanded="false" />
-                <element signature="e#45473#45616#0" expanded="false" />
-                <element signature="e#45635#45778#0" expanded="false" />
-                <element signature="e#45806#46144#0" expanded="false" />
-                <element signature="e#46886#47219#0" expanded="false" />
-                <element signature="e#47004#47219#0" expanded="false" />
-                <element signature="e#47400#47420#0" expanded="false" />
-                <element signature="e#48726#48888#0" expanded="false" />
-                <element signature="e#49125#49233#0" expanded="false" />
-                <element signature="e#50358#50445#0" expanded="false" />
-                <element signature="e#51299#52018#0" expanded="false" />
-                <element signature="e#52064#52496#1" expanded="false" />
-                <element signature="e#54016#54178#0" expanded="false" />
-                <element signature="e#54301#54466#1" expanded="false" />
-                <element signature="e#55695#55948#0" expanded="false" />
-                <element signature="e#56048#56194#0" expanded="false" />
-                <element signature="e#56048#56164#1" expanded="false" />
-                <element signature="e#56197#56217#0" expanded="false" />
-                <element signature="e#56485#57752#0" expanded="false" />
-                <element signature="e#56485#57321#1" expanded="false" />
-                <element signature="e#57916#58574#0" expanded="false" />
-                <element signature="e#57916#58383#1" expanded="false" />
-                <element signature="e#58723#60130#0" expanded="false" />
-                <element signature="e#58723#59860#1" expanded="false" />
-                <element signature="e#60218#63077#0" expanded="false" />
-                <element signature="e#60218#62997#1" expanded="false" />
-                <element signature="e#63218#65640#0" expanded="false" />
-                <element signature="e#63218#65427#1" expanded="false" />
-                <element signature="e#65643#65659#0" expanded="false" />
-                <element signature="e#68427#68441#0" expanded="false" />
-                <element signature="e#68515#68637#1" expanded="false" />
-                <element signature="e#69852#74347#1" expanded="false" />
-                <element signature="e#75340#82516#1" expanded="false" />
-                <element signature="e#83552#89395#1" expanded="false" />
-                <element signature="e#90333#99418#1" expanded="false" />
-                <element signature="e#99974#99987#0" expanded="false" />
-                <element signature="e#100134#101839#0" expanded="false" />
-                <element signature="e#100134#101563#1" expanded="false" />
-                <element signature="e#101842#101854#0" expanded="false" />
-                <element signature="e#102079#103782#0" expanded="false" />
-                <element signature="e#102079#103512#1" expanded="false" />
-                <element signature="e#105066#105078#0" expanded="false" />
-                <element signature="e#105274#106444#0" expanded="false" />
-                <element signature="e#105274#106263#1" expanded="false" />
-                <element signature="e#106447#106471#0" expanded="false" />
-                <element signature="e#106631#108339#0" expanded="false" />
-                <element signature="e#106631#108185#1" expanded="false" />
-                <element signature="e#108484#110293#0" expanded="false" />
-                <element signature="e#108484#110139#1" expanded="false" />
-                <element signature="e#110542#112621#0" expanded="false" />
-                <element signature="e#110542#112342#1" expanded="false" />
-                <element signature="e#112876#115114#0" expanded="false" />
-                <element signature="e#112876#114835#1" expanded="false" />
-                <element signature="e#115233#115347#1" expanded="false" />
-                <element signature="e#115352#115358#0" expanded="false" />
-                <element signature="e#115553#115699#0" expanded="false" />
-                <element signature="e#115733#116580#0" expanded="false" />
-                <element signature="e#115733#115766#0" expanded="false" />
-                <element signature="e#116359#116386#0" expanded="false" />
-                <element signature="e#116661#116687#0" expanded="false" />
-                <element signature="e#116756#116787#0" expanded="false" />
-                <element signature="e#116855#116884#0" expanded="false" />
-                <element signature="e#116946#116973#0" expanded="false" />
-                <element signature="e#117040#117068#0" expanded="false" />
-                <element signature="e#117132#117155#0" expanded="false" />
-                <element signature="e#117220#117241#0" expanded="false" />
-                <element signature="e#117334#117379#0" expanded="false" />
-                <element signature="e#117409#117792#0" expanded="false" />
-                <element signature="e#117474#117736#0" expanded="false" />
-                <element signature="e#117866#118356#0" expanded="false" />
-                <element signature="e#117866#117878#0" expanded="false" />
-                <element signature="e#118424#118480#0" expanded="false" />
-                <element signature="e#118554#119011#0" expanded="false" />
-                <element signature="e#118678#119011#0" expanded="false" />
-                <element signature="e#119070#122788#0" expanded="false" />
-                <element signature="e#119070#119101#0" expanded="false" />
-                <element signature="e#119266#119316#0" expanded="false" />
-                <element signature="e#119485#122788#0" expanded="false" />
-                <element signature="e#119859#119970#0" expanded="false" />
-                <element signature="e#119983#120055#0" expanded="false" />
-                <element signature="e#120599#120630#0" expanded="false" />
-                <element signature="e#120850#121151#0" expanded="false" />
-                <element signature="e#121001#121138#0" expanded="false" />
-                <element signature="e#121151#121203#0" expanded="false" />
-                <element signature="e#121436#122395#0" expanded="false" />
-                <element signature="e#121488#122221#0" expanded="false" />
-                <element signature="e#121816#122221#0" expanded="false" />
-                <element signature="e#122013#122030#0" expanded="false" />
-                <element signature="e#122266#122395#0" expanded="false" />
-                <element signature="e#122540#122764#0" expanded="false" />
-                <element signature="e#122828#122906#0" expanded="false" />
-                <element signature="e#122947#123339#0" expanded="false" />
-                <element signature="e#123009#123244#0" expanded="false" />
-                <element signature="e#123402#124084#0" expanded="false" />
-                <element signature="e#123534#123902#0" expanded="false" />
-                <element signature="e#123555#123767#0" expanded="false" />
-                <element signature="e#123804#123902#0" expanded="false" />
-                <element signature="e#123929#124054#0" expanded="false" />
-                <element signature="e#124134#124801#0" expanded="false" />
-                <element signature="e#124210#124801#0" expanded="false" />
-                <element signature="e#124263#124735#0" expanded="false" />
-                <element signature="e#124507#124580#0" expanded="false" />
-                <element signature="e#124623#124700#0" expanded="false" />
-                <element signature="e#124860#126072#0" expanded="false" />
-                <element signature="e#124860#124889#0" expanded="false" />
-                <element signature="e#125949#125968#0" expanded="false" />
-                <element signature="e#126169#126375#0" expanded="false" />
-                <element signature="e#126415#126500#0" expanded="false" />
-                <element signature="e#126567#126917#0" expanded="false" />
-                <element signature="e#126567#126598#0" expanded="false" />
-                <element signature="e#126770#126895#0" expanded="false" />
-                <element signature="e#126985#127004#0" expanded="false" />
-                <element signature="e#127621#128077#0" expanded="false" />
-                <element signature="e#127692#128051#0" expanded="false" />
-                <element signature="e#128210#128457#0" expanded="false" />
-                <element signature="e#128507#128841#0" expanded="false" />
-                <element signature="e#128718#128765#0" expanded="false" />
+                <element signature="e#38147#38783#0" expanded="false" />
+                <element signature="e#38438#38783#0" expanded="false" />
+                <element signature="e#38543#38750#0" expanded="false" />
+                <element signature="e#38868#40297#0" expanded="false" />
+                <element signature="e#38868#39694#1" expanded="false" />
+                <element signature="e#39893#40022#0" expanded="false" />
+                <element signature="e#40078#40237#0" expanded="false" />
+                <element signature="e#40635#40745#0" expanded="false" />
+                <element signature="e#40635#40715#1" expanded="false" />
+                <element signature="e#40798#40908#0" expanded="false" />
+                <element signature="e#40798#40878#1" expanded="false" />
+                <element signature="e#40983#41328#0" expanded="false" />
+                <element signature="e#40983#41178#1" expanded="false" />
+                <element signature="e#41244#41310#0" expanded="false" />
+                <element signature="e#41537#44383#0" expanded="false" />
+                <element signature="e#41537#41798#1" expanded="false" />
+                <element signature="e#42319#43371#0" expanded="false" />
+                <element signature="e#42420#42635#0" expanded="false" />
+                <element signature="e#42662#42930#0" expanded="false" />
+                <element signature="e#43390#44287#0" expanded="false" />
+                <element signature="e#43491#43680#0" expanded="false" />
+                <element signature="e#43707#43975#0" expanded="false" />
+                <element signature="e#44478#47393#0" expanded="false" />
+                <element signature="e#44478#45100#1" expanded="false" />
+                <element signature="e#45469#45612#0" expanded="false" />
+                <element signature="e#45631#45774#0" expanded="false" />
+                <element signature="e#45802#46140#0" expanded="false" />
+                <element signature="e#46882#47215#0" expanded="false" />
+                <element signature="e#47000#47215#0" expanded="false" />
+                <element signature="e#47396#47416#0" expanded="false" />
+                <element signature="e#48721#48883#0" expanded="false" />
+                <element signature="e#49120#49228#0" expanded="false" />
+                <element signature="e#50352#50439#0" expanded="false" />
+                <element signature="e#51292#52010#0" expanded="false" />
+                <element signature="e#52056#52488#1" expanded="false" />
+                <element signature="e#54006#54168#0" expanded="false" />
+                <element signature="e#54291#54456#1" expanded="false" />
+                <element signature="e#55683#55936#0" expanded="false" />
+                <element signature="e#56036#56182#0" expanded="false" />
+                <element signature="e#56036#56152#1" expanded="false" />
+                <element signature="e#56185#56205#0" expanded="false" />
+                <element signature="e#56473#57740#0" expanded="false" />
+                <element signature="e#56473#57309#1" expanded="false" />
+                <element signature="e#57904#58562#0" expanded="false" />
+                <element signature="e#57904#58371#1" expanded="false" />
+                <element signature="e#58711#60118#0" expanded="false" />
+                <element signature="e#58711#59848#1" expanded="false" />
+                <element signature="e#60206#63065#0" expanded="false" />
+                <element signature="e#60206#62985#1" expanded="false" />
+                <element signature="e#63206#65628#0" expanded="false" />
+                <element signature="e#63206#65415#1" expanded="false" />
+                <element signature="e#65631#65647#0" expanded="false" />
+                <element signature="e#68415#68429#0" expanded="false" />
+                <element signature="e#68503#68625#1" expanded="false" />
+                <element signature="e#69840#74335#1" expanded="false" />
+                <element signature="e#75328#82504#1" expanded="false" />
+                <element signature="e#83540#89383#1" expanded="false" />
+                <element signature="e#90321#99406#1" expanded="false" />
+                <element signature="e#99962#99975#0" expanded="false" />
+                <element signature="e#100122#101827#0" expanded="false" />
+                <element signature="e#100122#101551#1" expanded="false" />
+                <element signature="e#101830#101842#0" expanded="false" />
+                <element signature="e#102067#103770#0" expanded="false" />
+                <element signature="e#102067#103500#1" expanded="false" />
+                <element signature="e#105054#105066#0" expanded="false" />
+                <element signature="e#105262#106432#0" expanded="false" />
+                <element signature="e#105262#106251#1" expanded="false" />
+                <element signature="e#106435#106459#0" expanded="false" />
+                <element signature="e#106619#108327#0" expanded="false" />
+                <element signature="e#106619#108173#1" expanded="false" />
+                <element signature="e#108472#110281#0" expanded="false" />
+                <element signature="e#108472#110127#1" expanded="false" />
+                <element signature="e#110530#112609#0" expanded="false" />
+                <element signature="e#110530#112330#1" expanded="false" />
+                <element signature="e#112864#115102#0" expanded="false" />
+                <element signature="e#112864#114823#1" expanded="false" />
+                <element signature="e#115221#115335#1" expanded="false" />
+                <element signature="e#115340#115346#0" expanded="false" />
+                <element signature="e#115541#115687#0" expanded="false" />
+                <element signature="e#115721#116568#0" expanded="false" />
+                <element signature="e#115721#115754#0" expanded="false" />
+                <element signature="e#116347#116374#0" expanded="false" />
+                <element signature="e#116649#116675#0" expanded="false" />
+                <element signature="e#116744#116775#0" expanded="false" />
+                <element signature="e#116843#116872#0" expanded="false" />
+                <element signature="e#116934#116961#0" expanded="false" />
+                <element signature="e#117028#117056#0" expanded="false" />
+                <element signature="e#117120#117143#0" expanded="false" />
+                <element signature="e#117208#117229#0" expanded="false" />
+                <element signature="e#117322#117367#0" expanded="false" />
+                <element signature="e#117397#117780#0" expanded="false" />
+                <element signature="e#117462#117724#0" expanded="false" />
+                <element signature="e#117854#118344#0" expanded="false" />
+                <element signature="e#117854#117866#0" expanded="false" />
+                <element signature="e#118412#118468#0" expanded="false" />
+                <element signature="e#118542#118999#0" expanded="false" />
+                <element signature="e#118666#118999#0" expanded="false" />
+                <element signature="e#119058#122776#0" expanded="false" />
+                <element signature="e#119058#119089#0" expanded="false" />
+                <element signature="e#119254#119304#0" expanded="false" />
+                <element signature="e#119473#122776#0" expanded="false" />
+                <element signature="e#119847#119958#0" expanded="false" />
+                <element signature="e#119971#120043#0" expanded="false" />
+                <element signature="e#120587#120618#0" expanded="false" />
+                <element signature="e#120838#121139#0" expanded="false" />
+                <element signature="e#120989#121126#0" expanded="false" />
+                <element signature="e#121139#121191#0" expanded="false" />
+                <element signature="e#121424#122383#0" expanded="false" />
+                <element signature="e#121476#122209#0" expanded="false" />
+                <element signature="e#121804#122209#0" expanded="false" />
+                <element signature="e#122001#122018#0" expanded="false" />
+                <element signature="e#122254#122383#0" expanded="false" />
+                <element signature="e#122528#122752#0" expanded="false" />
+                <element signature="e#122816#122894#0" expanded="false" />
+                <element signature="e#122935#123327#0" expanded="false" />
+                <element signature="e#122997#123232#0" expanded="false" />
+                <element signature="e#123390#124072#0" expanded="false" />
+                <element signature="e#123522#123890#0" expanded="false" />
+                <element signature="e#123543#123755#0" expanded="false" />
+                <element signature="e#123792#123890#0" expanded="false" />
+                <element signature="e#123917#124042#0" expanded="false" />
+                <element signature="e#124122#124789#0" expanded="false" />
+                <element signature="e#124198#124789#0" expanded="false" />
+                <element signature="e#124251#124723#0" expanded="false" />
+                <element signature="e#124495#124568#0" expanded="false" />
+                <element signature="e#124611#124688#0" expanded="false" />
+                <element signature="e#124848#126060#0" expanded="false" />
+                <element signature="e#124848#124877#0" expanded="false" />
+                <element signature="e#125937#125956#0" expanded="false" />
+                <element signature="e#126157#126363#0" expanded="false" />
+                <element signature="e#126403#126488#0" expanded="false" />
+                <element signature="e#126555#126905#0" expanded="false" />
+                <element signature="e#126555#126586#0" expanded="false" />
+                <element signature="e#126758#126883#0" expanded="false" />
+                <element signature="e#126973#126992#0" expanded="false" />
+                <element signature="e#127609#128065#0" expanded="false" />
+                <element signature="e#127680#128039#0" expanded="false" />
+                <element signature="e#128198#128445#0" expanded="false" />
+                <element signature="e#128495#128829#0" expanded="false" />
+                <element signature="e#128706#128753#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -780,11 +781,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="__main__.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="__main__.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/__main__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="416">
-              <caret line="59" column="15" lean-forward="true" selection-start-line="59" selection-start-column="15" selection-end-line="59" selection-end-column="15" />
+            <state relative-caret-position="180">
+              <caret line="35" column="11" lean-forward="false" selection-start-line="35" selection-start-column="4" selection-end-line="35" selection-end-column="33" />
               <folding>
                 <element signature="e#0#25#0" expanded="true" />
                 <element signature="e#2196#2207#0" expanded="false" />
@@ -929,11 +930,11 @@
         <option value="$PROJECT_DIR$/qteasy/app/__init__.py" />
         <option value="$PROJECT_DIR$/qteasy/__init__.py" />
         <option value="$PROJECT_DIR$/qteasy/utilfuncs.py" />
-        <option value="$PROJECT_DIR$/qteasy/history.py" />
-        <option value="$PROJECT_DIR$/qteasy/operator.py" />
         <option value="$PROJECT_DIR$/qteasy/core.py" />
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/qteasy/__main__.py" />
+        <option value="$PROJECT_DIR$/qteasy/history.py" />
+        <option value="$PROJECT_DIR$/qteasy/operator.py" />
       </list>
     </option>
   </component>
@@ -943,7 +944,7 @@
     <detection-done>true</detection-done>
     <sorting>DEFINITION_ORDER</sorting>
   </component>
-  <component name="ProjectFrameBounds" extendedState="6" fullScreen="true">
+  <component name="ProjectFrameBounds" fullScreen="true">
     <option name="width" value="1440" />
     <option name="height" value="900" />
   </component>
@@ -1028,7 +1029,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python tests.Nosetests in test.py">
+  <component name="RunManager" selected="Python.__main__">
     <configuration name="Nosetests in test.py" type="tests" factoryName="Nosetests" temporary="true" nameIsGenerated="true">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -1248,8 +1249,8 @@
     </list>
     <recent_temporary>
       <list size="4">
-        <item index="0" class="java.lang.String" itemvalue="Python tests.Nosetests in test.py" />
-        <item index="1" class="java.lang.String" itemvalue="Python.__main__" />
+        <item index="0" class="java.lang.String" itemvalue="Python.__main__" />
+        <item index="1" class="java.lang.String" itemvalue="Python tests.Nosetests in test.py" />
         <item index="2" class="java.lang.String" itemvalue="Python.core" />
         <item index="3" class="java.lang.String" itemvalue="Python.test" />
       </list>
@@ -1360,9 +1361,6 @@
     <servers />
   </component>
   <component name="TestHistory">
-    <history-entry file="Nosetests_in_test_py - 2020.05.03 at 18h 24m 00s.xml">
-      <configuration name="Nosetests in test.py" configurationId="tests" />
-    </history-entry>
     <history-entry file="Nosetests_in_test_py - 2020.05.03 at 18h 28m 27s.xml">
       <configuration name="Nosetests in test.py" configurationId="tests" />
     </history-entry>
@@ -1390,6 +1388,9 @@
     <history-entry file="Nosetests_in_test_py - 2020.05.03 at 18h 49m 12s.xml">
       <configuration name="Nosetests in test.py" configurationId="tests" />
     </history-entry>
+    <history-entry file="Nosetests_in_test_py - 2020.05.04 at 09h 14m 28s.xml">
+      <configuration name="Nosetests in test.py" configurationId="tests" />
+    </history-entry>
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -1408,7 +1409,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.37243047" sideWeight="0.5028612" order="6" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.31922612" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.31922612" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.49713877" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.2732475" sideWeight="0.4917647" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297568" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -1923,238 +1924,63 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/history.py">
+    <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="200">
-          <caret line="294" column="43" lean-forward="false" selection-start-line="294" selection-start-column="43" selection-end-line="294" selection-end-column="43" />
+        <state relative-caret-position="2560">
+          <caret line="180" column="82" lean-forward="false" selection-start-line="180" selection-start-column="82" selection-end-line="180" selection-end-column="82" />
           <folding>
-            <element signature="e#251#486#0" expanded="false" />
-            <element signature="e#506#2624#0" expanded="false" />
-            <element signature="e#2645#7667#0" expanded="false" />
-            <element signature="e#7689#11295#0" expanded="false" />
-            <element signature="e#11318#17659#0" expanded="false" />
-            <element signature="e#17990#20358#1" expanded="false" />
-            <element signature="e#20502#20701#1" expanded="false" />
-            <element signature="e#21591#21677#0" expanded="false" />
-            <element signature="e#21819#21897#0" expanded="false" />
-            <element signature="e#22038#22128#0" expanded="false" />
-            <element signature="e#22273#22294#0" expanded="false" />
-            <element signature="e#22340#22359#0" expanded="false" />
-            <element signature="e#22405#22424#0" expanded="false" />
-            <element signature="e#22470#22567#0" expanded="false" />
-            <element signature="e#22632#22723#0" expanded="false" />
-            <element signature="e#22774#22794#0" expanded="false" />
-            <element signature="e#22838#22855#0" expanded="false" />
-            <element signature="e#22901#22996#0" expanded="false" />
-            <element signature="e#23061#23150#0" expanded="false" />
-            <element signature="e#23199#23219#0" expanded="false" />
-            <element signature="e#23265#23363#0" expanded="false" />
-            <element signature="e#23428#23520#0" expanded="false" />
-            <element signature="e#23567#23587#0" expanded="false" />
-            <element signature="e#23639#23659#0" expanded="false" />
-            <element signature="e#23704#23754#0" expanded="false" />
-            <element signature="e#25232#25462#0" expanded="false" />
-            <element signature="e#25271#25360#0" expanded="false" />
-            <element signature="e#25586#25712#0" expanded="false" />
-            <element signature="e#25759#25904#0" expanded="false" />
-            <element signature="e#25939#26084#0" expanded="false" />
-            <element signature="e#26098#26176#0" expanded="false" />
-            <element signature="e#26422#26489#0" expanded="false" />
-            <element signature="e#26649#27626#0" expanded="false" />
-            <element signature="e#26791#27598#0" expanded="false" />
-            <element signature="e#26988#27175#0" expanded="false" />
-            <element signature="e#27230#27598#0" expanded="false" />
-            <element signature="e#27322#27521#0" expanded="false" />
-            <element signature="e#27660#27681#0" expanded="false" />
-            <element signature="e#27711#27765#1" expanded="false" />
-            <element signature="e#28777#29178#0" expanded="false" />
-            <element signature="e#28777#28932#1" expanded="false" />
-            <element signature="e#28975#29178#0" expanded="false" />
-            <element signature="e#29220#29446#0" expanded="false" />
-            <element signature="e#29220#29314#1" expanded="false" />
-            <element signature="e#29690#34597#0" expanded="false" />
-            <element signature="e#29690#29921#1" expanded="false" />
-            <element signature="e#30185#34597#0" expanded="false" />
-            <element signature="e#30455#30559#0" expanded="false" />
-            <element signature="e#30594#30738#0" expanded="false" />
-            <element signature="e#30787#30891#0" expanded="false" />
-            <element signature="e#30926#31070#0" expanded="false" />
-            <element signature="e#31119#31223#0" expanded="false" />
-            <element signature="e#31258#31402#0" expanded="false" />
-            <element signature="e#31449#31605#0" expanded="false" />
-            <element signature="e#31697#34242#0" expanded="false" />
-            <element signature="e#31733#32340#0" expanded="false" />
-            <element signature="e#31787#32340#0" expanded="false" />
-            <element signature="e#32396#33003#0" expanded="false" />
-            <element signature="e#32450#33003#0" expanded="false" />
-            <element signature="e#33046#34242#0" expanded="false" />
-            <element signature="e#33100#34242#0" expanded="false" />
-            <element signature="e#33158#34242#0" expanded="false" />
-            <element signature="e#33786#33955#0" expanded="false" />
-            <element signature="e#34070#34242#0" expanded="false" />
-            <element signature="e#34637#35053#0" expanded="false" />
-            <element signature="e#34637#34749#1" expanded="false" />
-            <element signature="e#34830#35033#0" expanded="false" />
-            <element signature="e#35145#35531#0" expanded="false" />
-            <element signature="e#35223#35531#0" expanded="false" />
-            <element signature="e#35261#35367#0" expanded="false" />
-            <element signature="e#35418#35525#0" expanded="false" />
-            <element signature="e#35590#35696#0" expanded="false" />
-            <element signature="e#35590#35662#1" expanded="false" />
-            <element signature="e#35761#35867#0" expanded="false" />
-            <element signature="e#35761#35833#1" expanded="false" />
-            <element signature="e#35931#36082#0" expanded="false" />
-            <element signature="e#35931#36048#1" expanded="false" />
-            <element signature="e#36138#37007#1" expanded="false" />
-            <element signature="e#37425#37634#0" expanded="false" />
-            <element signature="e#38149#38785#0" expanded="false" />
-            <element signature="e#38440#38785#0" expanded="false" />
-            <element signature="e#38545#38752#0" expanded="false" />
-            <element signature="e#38870#40300#0" expanded="false" />
-            <element signature="e#38870#39696#1" expanded="false" />
-            <element signature="e#39896#40025#0" expanded="false" />
-            <element signature="e#40081#40240#0" expanded="false" />
-            <element signature="e#40639#40749#0" expanded="false" />
-            <element signature="e#40639#40719#1" expanded="false" />
-            <element signature="e#40802#40912#0" expanded="false" />
-            <element signature="e#40802#40882#1" expanded="false" />
-            <element signature="e#40987#41332#0" expanded="false" />
-            <element signature="e#40987#41182#1" expanded="false" />
-            <element signature="e#41248#41314#0" expanded="false" />
-            <element signature="e#41541#44387#0" expanded="false" />
-            <element signature="e#41541#41802#1" expanded="false" />
-            <element signature="e#42323#43375#0" expanded="false" />
-            <element signature="e#42424#42639#0" expanded="false" />
-            <element signature="e#42666#42934#0" expanded="false" />
-            <element signature="e#43394#44291#0" expanded="false" />
-            <element signature="e#43495#43684#0" expanded="false" />
-            <element signature="e#43711#43979#0" expanded="false" />
-            <element signature="e#44482#47397#0" expanded="false" />
-            <element signature="e#44482#45104#1" expanded="false" />
-            <element signature="e#45473#45616#0" expanded="false" />
-            <element signature="e#45635#45778#0" expanded="false" />
-            <element signature="e#45806#46144#0" expanded="false" />
-            <element signature="e#46886#47219#0" expanded="false" />
-            <element signature="e#47004#47219#0" expanded="false" />
-            <element signature="e#47400#47420#0" expanded="false" />
-            <element signature="e#48726#48888#0" expanded="false" />
-            <element signature="e#49125#49233#0" expanded="false" />
-            <element signature="e#50358#50445#0" expanded="false" />
-            <element signature="e#51299#52018#0" expanded="false" />
-            <element signature="e#52064#52496#1" expanded="false" />
-            <element signature="e#54016#54178#0" expanded="false" />
-            <element signature="e#54301#54466#1" expanded="false" />
-            <element signature="e#55695#55948#0" expanded="false" />
-            <element signature="e#56048#56194#0" expanded="false" />
-            <element signature="e#56048#56164#1" expanded="false" />
-            <element signature="e#56197#56217#0" expanded="false" />
-            <element signature="e#56485#57752#0" expanded="false" />
-            <element signature="e#56485#57321#1" expanded="false" />
-            <element signature="e#57916#58574#0" expanded="false" />
-            <element signature="e#57916#58383#1" expanded="false" />
-            <element signature="e#58723#60130#0" expanded="false" />
-            <element signature="e#58723#59860#1" expanded="false" />
-            <element signature="e#60218#63077#0" expanded="false" />
-            <element signature="e#60218#62997#1" expanded="false" />
-            <element signature="e#63218#65640#0" expanded="false" />
-            <element signature="e#63218#65427#1" expanded="false" />
-            <element signature="e#65643#65659#0" expanded="false" />
-            <element signature="e#68427#68441#0" expanded="false" />
-            <element signature="e#68515#68637#1" expanded="false" />
-            <element signature="e#69852#74347#1" expanded="false" />
-            <element signature="e#75340#82516#1" expanded="false" />
-            <element signature="e#83552#89395#1" expanded="false" />
-            <element signature="e#90333#99418#1" expanded="false" />
-            <element signature="e#99974#99987#0" expanded="false" />
-            <element signature="e#100134#101839#0" expanded="false" />
-            <element signature="e#100134#101563#1" expanded="false" />
-            <element signature="e#101842#101854#0" expanded="false" />
-            <element signature="e#102079#103782#0" expanded="false" />
-            <element signature="e#102079#103512#1" expanded="false" />
-            <element signature="e#105066#105078#0" expanded="false" />
-            <element signature="e#105274#106444#0" expanded="false" />
-            <element signature="e#105274#106263#1" expanded="false" />
-            <element signature="e#106447#106471#0" expanded="false" />
-            <element signature="e#106631#108339#0" expanded="false" />
-            <element signature="e#106631#108185#1" expanded="false" />
-            <element signature="e#108484#110293#0" expanded="false" />
-            <element signature="e#108484#110139#1" expanded="false" />
-            <element signature="e#110542#112621#0" expanded="false" />
-            <element signature="e#110542#112342#1" expanded="false" />
-            <element signature="e#112876#115114#0" expanded="false" />
-            <element signature="e#112876#114835#1" expanded="false" />
-            <element signature="e#115233#115347#1" expanded="false" />
-            <element signature="e#115352#115358#0" expanded="false" />
-            <element signature="e#115553#115699#0" expanded="false" />
-            <element signature="e#115733#116580#0" expanded="false" />
-            <element signature="e#115733#115766#0" expanded="false" />
-            <element signature="e#116359#116386#0" expanded="false" />
-            <element signature="e#116661#116687#0" expanded="false" />
-            <element signature="e#116756#116787#0" expanded="false" />
-            <element signature="e#116855#116884#0" expanded="false" />
-            <element signature="e#116946#116973#0" expanded="false" />
-            <element signature="e#117040#117068#0" expanded="false" />
-            <element signature="e#117132#117155#0" expanded="false" />
-            <element signature="e#117220#117241#0" expanded="false" />
-            <element signature="e#117334#117379#0" expanded="false" />
-            <element signature="e#117409#117792#0" expanded="false" />
-            <element signature="e#117474#117736#0" expanded="false" />
-            <element signature="e#117866#118356#0" expanded="false" />
-            <element signature="e#117866#117878#0" expanded="false" />
-            <element signature="e#118424#118480#0" expanded="false" />
-            <element signature="e#118554#119011#0" expanded="false" />
-            <element signature="e#118678#119011#0" expanded="false" />
-            <element signature="e#119070#122788#0" expanded="false" />
-            <element signature="e#119070#119101#0" expanded="false" />
-            <element signature="e#119266#119316#0" expanded="false" />
-            <element signature="e#119485#122788#0" expanded="false" />
-            <element signature="e#119859#119970#0" expanded="false" />
-            <element signature="e#119983#120055#0" expanded="false" />
-            <element signature="e#120599#120630#0" expanded="false" />
-            <element signature="e#120850#121151#0" expanded="false" />
-            <element signature="e#121001#121138#0" expanded="false" />
-            <element signature="e#121151#121203#0" expanded="false" />
-            <element signature="e#121436#122395#0" expanded="false" />
-            <element signature="e#121488#122221#0" expanded="false" />
-            <element signature="e#121816#122221#0" expanded="false" />
-            <element signature="e#122013#122030#0" expanded="false" />
-            <element signature="e#122266#122395#0" expanded="false" />
-            <element signature="e#122540#122764#0" expanded="false" />
-            <element signature="e#122828#122906#0" expanded="false" />
-            <element signature="e#122947#123339#0" expanded="false" />
-            <element signature="e#123009#123244#0" expanded="false" />
-            <element signature="e#123402#124084#0" expanded="false" />
-            <element signature="e#123534#123902#0" expanded="false" />
-            <element signature="e#123555#123767#0" expanded="false" />
-            <element signature="e#123804#123902#0" expanded="false" />
-            <element signature="e#123929#124054#0" expanded="false" />
-            <element signature="e#124134#124801#0" expanded="false" />
-            <element signature="e#124210#124801#0" expanded="false" />
-            <element signature="e#124263#124735#0" expanded="false" />
-            <element signature="e#124507#124580#0" expanded="false" />
-            <element signature="e#124623#124700#0" expanded="false" />
-            <element signature="e#124860#126072#0" expanded="false" />
-            <element signature="e#124860#124889#0" expanded="false" />
-            <element signature="e#125949#125968#0" expanded="false" />
-            <element signature="e#126169#126375#0" expanded="false" />
-            <element signature="e#126415#126500#0" expanded="false" />
-            <element signature="e#126567#126917#0" expanded="false" />
-            <element signature="e#126567#126598#0" expanded="false" />
-            <element signature="e#126770#126895#0" expanded="false" />
-            <element signature="e#126985#127004#0" expanded="false" />
-            <element signature="e#127621#128077#0" expanded="false" />
-            <element signature="e#127692#128051#0" expanded="false" />
-            <element signature="e#128210#128457#0" expanded="false" />
-            <element signature="e#128507#128841#0" expanded="false" />
-            <element signature="e#128718#128765#0" expanded="false" />
+            <element signature="e#134#757#0" expanded="false" />
+            <element signature="e#172#303#0" expanded="false" />
+            <element signature="e#349#587#0" expanded="false" />
+            <element signature="e#628#757#0" expanded="false" />
+            <element signature="e#800#1332#0" expanded="false" />
+            <element signature="e#830#1332#0" expanded="false" />
+            <element signature="e#1408#1476#1" expanded="false" />
+            <element signature="e#1616#1677#0" expanded="false" />
+            <element signature="e#1700#1751#0" expanded="false" />
+            <element signature="e#2132#2193#0" expanded="false" />
+            <element signature="e#2216#2264#0" expanded="false" />
+            <element signature="e#2643#2704#0" expanded="false" />
+            <element signature="e#3144#3177#1" expanded="false" />
+            <element signature="e#3698#4277#0" expanded="false" />
+            <element signature="e#3698#3788#1" expanded="false" />
+            <element signature="e#9626#13525#0" expanded="false" />
+            <element signature="e#9626#9728#0" expanded="false" />
+            <element signature="e#9805#9952#0" expanded="false" />
+            <element signature="e#9975#10123#0" expanded="false" />
+            <element signature="e#10146#10294#0" expanded="false" />
+            <element signature="e#10316#10460#0" expanded="false" />
+            <element signature="e#10507#10668#0" expanded="false" />
+            <element signature="e#10691#10850#0" expanded="false" />
+            <element signature="e#10873#11034#0" expanded="false" />
+            <element signature="e#11056#11217#0" expanded="false" />
+            <element signature="e#11264#11461#0" expanded="false" />
+            <element signature="e#11484#11677#0" expanded="false" />
+            <element signature="e#11700#11894#0" expanded="false" />
+            <element signature="e#11916#12104#0" expanded="false" />
+            <element signature="e#12129#12543#0" expanded="false" />
+            <element signature="e#13573#13789#0" expanded="false" />
+            <element signature="e#13573#13606#1" expanded="false" />
+            <element signature="e#13846#13879#1" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/__main__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="180">
+          <caret line="35" column="11" lean-forward="false" selection-start-line="35" selection-start-column="4" selection-end-line="35" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#25#0" expanded="true" />
+            <element signature="e#2196#2207#0" expanded="false" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/core.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-32">
-          <caret line="649" column="21" lean-forward="false" selection-start-line="649" selection-start-column="21" selection-end-line="649" selection-end-column="21" />
+        <state relative-caret-position="202">
+          <caret line="782" column="23" lean-forward="false" selection-start-line="782" selection-start-column="23" selection-end-line="782" selection-end-column="23" />
           <folding>
             <element signature="n#!!doc" expanded="false" />
             <element signature="e#26#45#0" expanded="true" />
@@ -2361,288 +2187,462 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/history.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="549">
+          <caret line="1009" column="4" lean-forward="true" selection-start-line="1009" selection-start-column="4" selection-end-line="1009" selection-end-column="15" />
+          <folding>
+            <element signature="e#251#486#0" expanded="false" />
+            <element signature="e#506#2624#0" expanded="false" />
+            <element signature="e#2645#7667#0" expanded="false" />
+            <element signature="e#7689#11295#0" expanded="false" />
+            <element signature="e#11318#17659#0" expanded="false" />
+            <element signature="e#17990#20358#1" expanded="false" />
+            <element signature="e#20502#20701#1" expanded="false" />
+            <element signature="e#21591#21677#0" expanded="false" />
+            <element signature="e#21819#21897#0" expanded="false" />
+            <element signature="e#22038#22128#0" expanded="false" />
+            <element signature="e#22273#22294#0" expanded="false" />
+            <element signature="e#22340#22359#0" expanded="false" />
+            <element signature="e#22405#22424#0" expanded="false" />
+            <element signature="e#22470#22567#0" expanded="false" />
+            <element signature="e#22632#22723#0" expanded="false" />
+            <element signature="e#22774#22794#0" expanded="false" />
+            <element signature="e#22838#22855#0" expanded="false" />
+            <element signature="e#22901#22996#0" expanded="false" />
+            <element signature="e#23061#23150#0" expanded="false" />
+            <element signature="e#23199#23219#0" expanded="false" />
+            <element signature="e#23265#23363#0" expanded="false" />
+            <element signature="e#23428#23520#0" expanded="false" />
+            <element signature="e#23567#23587#0" expanded="false" />
+            <element signature="e#23639#23659#0" expanded="false" />
+            <element signature="e#23704#23754#0" expanded="false" />
+            <element signature="e#25232#25462#0" expanded="false" />
+            <element signature="e#25271#25360#0" expanded="false" />
+            <element signature="e#25586#25712#0" expanded="false" />
+            <element signature="e#25759#25904#0" expanded="false" />
+            <element signature="e#25939#26084#0" expanded="false" />
+            <element signature="e#26098#26176#0" expanded="false" />
+            <element signature="e#26422#26489#0" expanded="false" />
+            <element signature="e#26649#27626#0" expanded="false" />
+            <element signature="e#26791#27598#0" expanded="false" />
+            <element signature="e#26988#27175#0" expanded="false" />
+            <element signature="e#27230#27598#0" expanded="false" />
+            <element signature="e#27322#27521#0" expanded="false" />
+            <element signature="e#27660#27681#0" expanded="false" />
+            <element signature="e#27711#27765#1" expanded="false" />
+            <element signature="e#28777#29178#0" expanded="false" />
+            <element signature="e#28777#28932#1" expanded="false" />
+            <element signature="e#28975#29178#0" expanded="false" />
+            <element signature="e#29220#29446#0" expanded="false" />
+            <element signature="e#29220#29314#1" expanded="false" />
+            <element signature="e#29690#34597#0" expanded="false" />
+            <element signature="e#29690#29921#1" expanded="false" />
+            <element signature="e#30185#34597#0" expanded="false" />
+            <element signature="e#30455#30559#0" expanded="false" />
+            <element signature="e#30594#30738#0" expanded="false" />
+            <element signature="e#30787#30891#0" expanded="false" />
+            <element signature="e#30926#31070#0" expanded="false" />
+            <element signature="e#31119#31223#0" expanded="false" />
+            <element signature="e#31258#31402#0" expanded="false" />
+            <element signature="e#31449#31605#0" expanded="false" />
+            <element signature="e#31697#34242#0" expanded="false" />
+            <element signature="e#31733#32340#0" expanded="false" />
+            <element signature="e#31787#32340#0" expanded="false" />
+            <element signature="e#32396#33003#0" expanded="false" />
+            <element signature="e#32450#33003#0" expanded="false" />
+            <element signature="e#33046#34242#0" expanded="false" />
+            <element signature="e#33100#34242#0" expanded="false" />
+            <element signature="e#33158#34242#0" expanded="false" />
+            <element signature="e#33786#33955#0" expanded="false" />
+            <element signature="e#34070#34242#0" expanded="false" />
+            <element signature="e#34637#35053#0" expanded="false" />
+            <element signature="e#34637#34749#1" expanded="false" />
+            <element signature="e#34830#35033#0" expanded="false" />
+            <element signature="e#35145#35531#0" expanded="false" />
+            <element signature="e#35223#35531#0" expanded="false" />
+            <element signature="e#35261#35367#0" expanded="false" />
+            <element signature="e#35418#35525#0" expanded="false" />
+            <element signature="e#35590#35696#0" expanded="false" />
+            <element signature="e#35590#35662#1" expanded="false" />
+            <element signature="e#35761#35867#0" expanded="false" />
+            <element signature="e#35761#35833#1" expanded="false" />
+            <element signature="e#35931#36082#0" expanded="false" />
+            <element signature="e#35931#36048#1" expanded="false" />
+            <element signature="e#36138#37007#1" expanded="false" />
+            <element signature="e#38147#38783#0" expanded="false" />
+            <element signature="e#38438#38783#0" expanded="false" />
+            <element signature="e#38543#38750#0" expanded="false" />
+            <element signature="e#38868#40297#0" expanded="false" />
+            <element signature="e#38868#39694#1" expanded="false" />
+            <element signature="e#39893#40022#0" expanded="false" />
+            <element signature="e#40078#40237#0" expanded="false" />
+            <element signature="e#40635#40745#0" expanded="false" />
+            <element signature="e#40635#40715#1" expanded="false" />
+            <element signature="e#40798#40908#0" expanded="false" />
+            <element signature="e#40798#40878#1" expanded="false" />
+            <element signature="e#40983#41328#0" expanded="false" />
+            <element signature="e#40983#41178#1" expanded="false" />
+            <element signature="e#41244#41310#0" expanded="false" />
+            <element signature="e#41537#44383#0" expanded="false" />
+            <element signature="e#41537#41798#1" expanded="false" />
+            <element signature="e#42319#43371#0" expanded="false" />
+            <element signature="e#42420#42635#0" expanded="false" />
+            <element signature="e#42662#42930#0" expanded="false" />
+            <element signature="e#43390#44287#0" expanded="false" />
+            <element signature="e#43491#43680#0" expanded="false" />
+            <element signature="e#43707#43975#0" expanded="false" />
+            <element signature="e#44478#47393#0" expanded="false" />
+            <element signature="e#44478#45100#1" expanded="false" />
+            <element signature="e#45469#45612#0" expanded="false" />
+            <element signature="e#45631#45774#0" expanded="false" />
+            <element signature="e#45802#46140#0" expanded="false" />
+            <element signature="e#46882#47215#0" expanded="false" />
+            <element signature="e#47000#47215#0" expanded="false" />
+            <element signature="e#47396#47416#0" expanded="false" />
+            <element signature="e#48721#48883#0" expanded="false" />
+            <element signature="e#49120#49228#0" expanded="false" />
+            <element signature="e#50352#50439#0" expanded="false" />
+            <element signature="e#51292#52010#0" expanded="false" />
+            <element signature="e#52056#52488#1" expanded="false" />
+            <element signature="e#54006#54168#0" expanded="false" />
+            <element signature="e#54291#54456#1" expanded="false" />
+            <element signature="e#55683#55936#0" expanded="false" />
+            <element signature="e#56036#56182#0" expanded="false" />
+            <element signature="e#56036#56152#1" expanded="false" />
+            <element signature="e#56185#56205#0" expanded="false" />
+            <element signature="e#56473#57740#0" expanded="false" />
+            <element signature="e#56473#57309#1" expanded="false" />
+            <element signature="e#57904#58562#0" expanded="false" />
+            <element signature="e#57904#58371#1" expanded="false" />
+            <element signature="e#58711#60118#0" expanded="false" />
+            <element signature="e#58711#59848#1" expanded="false" />
+            <element signature="e#60206#63065#0" expanded="false" />
+            <element signature="e#60206#62985#1" expanded="false" />
+            <element signature="e#63206#65628#0" expanded="false" />
+            <element signature="e#63206#65415#1" expanded="false" />
+            <element signature="e#65631#65647#0" expanded="false" />
+            <element signature="e#68415#68429#0" expanded="false" />
+            <element signature="e#68503#68625#1" expanded="false" />
+            <element signature="e#69840#74335#1" expanded="false" />
+            <element signature="e#75328#82504#1" expanded="false" />
+            <element signature="e#83540#89383#1" expanded="false" />
+            <element signature="e#90321#99406#1" expanded="false" />
+            <element signature="e#99962#99975#0" expanded="false" />
+            <element signature="e#100122#101827#0" expanded="false" />
+            <element signature="e#100122#101551#1" expanded="false" />
+            <element signature="e#101830#101842#0" expanded="false" />
+            <element signature="e#102067#103770#0" expanded="false" />
+            <element signature="e#102067#103500#1" expanded="false" />
+            <element signature="e#105054#105066#0" expanded="false" />
+            <element signature="e#105262#106432#0" expanded="false" />
+            <element signature="e#105262#106251#1" expanded="false" />
+            <element signature="e#106435#106459#0" expanded="false" />
+            <element signature="e#106619#108327#0" expanded="false" />
+            <element signature="e#106619#108173#1" expanded="false" />
+            <element signature="e#108472#110281#0" expanded="false" />
+            <element signature="e#108472#110127#1" expanded="false" />
+            <element signature="e#110530#112609#0" expanded="false" />
+            <element signature="e#110530#112330#1" expanded="false" />
+            <element signature="e#112864#115102#0" expanded="false" />
+            <element signature="e#112864#114823#1" expanded="false" />
+            <element signature="e#115221#115335#1" expanded="false" />
+            <element signature="e#115340#115346#0" expanded="false" />
+            <element signature="e#115541#115687#0" expanded="false" />
+            <element signature="e#115721#116568#0" expanded="false" />
+            <element signature="e#115721#115754#0" expanded="false" />
+            <element signature="e#116347#116374#0" expanded="false" />
+            <element signature="e#116649#116675#0" expanded="false" />
+            <element signature="e#116744#116775#0" expanded="false" />
+            <element signature="e#116843#116872#0" expanded="false" />
+            <element signature="e#116934#116961#0" expanded="false" />
+            <element signature="e#117028#117056#0" expanded="false" />
+            <element signature="e#117120#117143#0" expanded="false" />
+            <element signature="e#117208#117229#0" expanded="false" />
+            <element signature="e#117322#117367#0" expanded="false" />
+            <element signature="e#117397#117780#0" expanded="false" />
+            <element signature="e#117462#117724#0" expanded="false" />
+            <element signature="e#117854#118344#0" expanded="false" />
+            <element signature="e#117854#117866#0" expanded="false" />
+            <element signature="e#118412#118468#0" expanded="false" />
+            <element signature="e#118542#118999#0" expanded="false" />
+            <element signature="e#118666#118999#0" expanded="false" />
+            <element signature="e#119058#122776#0" expanded="false" />
+            <element signature="e#119058#119089#0" expanded="false" />
+            <element signature="e#119254#119304#0" expanded="false" />
+            <element signature="e#119473#122776#0" expanded="false" />
+            <element signature="e#119847#119958#0" expanded="false" />
+            <element signature="e#119971#120043#0" expanded="false" />
+            <element signature="e#120587#120618#0" expanded="false" />
+            <element signature="e#120838#121139#0" expanded="false" />
+            <element signature="e#120989#121126#0" expanded="false" />
+            <element signature="e#121139#121191#0" expanded="false" />
+            <element signature="e#121424#122383#0" expanded="false" />
+            <element signature="e#121476#122209#0" expanded="false" />
+            <element signature="e#121804#122209#0" expanded="false" />
+            <element signature="e#122001#122018#0" expanded="false" />
+            <element signature="e#122254#122383#0" expanded="false" />
+            <element signature="e#122528#122752#0" expanded="false" />
+            <element signature="e#122816#122894#0" expanded="false" />
+            <element signature="e#122935#123327#0" expanded="false" />
+            <element signature="e#122997#123232#0" expanded="false" />
+            <element signature="e#123390#124072#0" expanded="false" />
+            <element signature="e#123522#123890#0" expanded="false" />
+            <element signature="e#123543#123755#0" expanded="false" />
+            <element signature="e#123792#123890#0" expanded="false" />
+            <element signature="e#123917#124042#0" expanded="false" />
+            <element signature="e#124122#124789#0" expanded="false" />
+            <element signature="e#124198#124789#0" expanded="false" />
+            <element signature="e#124251#124723#0" expanded="false" />
+            <element signature="e#124495#124568#0" expanded="false" />
+            <element signature="e#124611#124688#0" expanded="false" />
+            <element signature="e#124848#126060#0" expanded="false" />
+            <element signature="e#124848#124877#0" expanded="false" />
+            <element signature="e#125937#125956#0" expanded="false" />
+            <element signature="e#126157#126363#0" expanded="false" />
+            <element signature="e#126403#126488#0" expanded="false" />
+            <element signature="e#126555#126905#0" expanded="false" />
+            <element signature="e#126555#126586#0" expanded="false" />
+            <element signature="e#126758#126883#0" expanded="false" />
+            <element signature="e#126973#126992#0" expanded="false" />
+            <element signature="e#127609#128065#0" expanded="false" />
+            <element signature="e#127680#128039#0" expanded="false" />
+            <element signature="e#128198#128445#0" expanded="false" />
+            <element signature="e#128495#128829#0" expanded="false" />
+            <element signature="e#128706#128753#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/operator.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="172">
-          <caret line="1185" column="0" lean-forward="false" selection-start-line="1185" selection-start-column="0" selection-end-line="1185" selection-end-column="0" />
+        <state relative-caret-position="-294">
+          <caret line="108" column="29" lean-forward="true" selection-start-line="108" selection-start-column="29" selection-end-line="108" selection-end-column="29" />
           <folding>
             <element signature="n#!!doc" expanded="false" />
-            <element signature="e#946#3716#0" expanded="false" />
-            <element signature="e#946#3077#1" expanded="false" />
-            <element signature="e#3852#3892#0" expanded="false" />
-            <element signature="e#3940#3982#0" expanded="false" />
-            <element signature="e#4031#4075#0" expanded="false" />
-            <element signature="e#4124#4218#0" expanded="false" />
-            <element signature="e#4266#4337#0" expanded="false" />
-            <element signature="e#4384#4426#0" expanded="false" />
-            <element signature="e#4470#4509#0" expanded="false" />
-            <element signature="e#4558#4606#0" expanded="false" />
-            <element signature="e#4657#4705#0" expanded="false" />
-            <element signature="e#4758#4812#0" expanded="false" />
-            <element signature="e#4862#4911#0" expanded="false" />
-            <element signature="e#6650#6755#1" expanded="false" />
-            <element signature="e#6858#6957#1" expanded="false" />
-            <element signature="e#7120#7576#0" expanded="false" />
-            <element signature="e#7120#7333#1" expanded="false" />
-            <element signature="e#7751#7836#0" expanded="false" />
-            <element signature="e#9190#9705#0" expanded="false" />
-            <element signature="e#9778#10916#0" expanded="false" />
-            <element signature="e#9778#10882#1" expanded="false" />
-            <element signature="e#10993#13105#0" expanded="false" />
-            <element signature="e#10993#11500#1" expanded="false" />
-            <element signature="e#11509#11618#0" expanded="false" />
-            <element signature="e#12403#12425#0" expanded="false" />
-            <element signature="e#13187#15236#0" expanded="false" />
-            <element signature="e#13187#13710#1" expanded="false" />
-            <element signature="e#13719#13802#0" expanded="false" />
-            <element signature="e#14202#14332#0" expanded="false" />
-            <element signature="e#14367#14404#0" expanded="false" />
-            <element signature="e#14681#14754#0" expanded="false" />
-            <element signature="e#15097#15173#0" expanded="false" />
-            <element signature="e#15271#15700#0" expanded="false" />
-            <element signature="e#15271#15380#1" expanded="false" />
-            <element signature="e#15414#15561#0" expanded="false" />
-            <element signature="e#15615#15700#0" expanded="false" />
-            <element signature="e#15738#17302#0" expanded="false" />
-            <element signature="e#15738#16024#1" expanded="false" />
-            <element signature="e#16078#16681#0" expanded="false" />
-            <element signature="e#16456#16635#0" expanded="false" />
-            <element signature="e#16735#17302#0" expanded="false" />
-            <element signature="e#17335#18840#0" expanded="false" />
-            <element signature="e#17335#17557#1" expanded="false" />
-            <element signature="e#17611#18105#0" expanded="false" />
-            <element signature="e#17906#18059#0" expanded="false" />
-            <element signature="e#18159#18840#0" expanded="false" />
-            <element signature="e#18159#18392#1" expanded="false" />
-            <element signature="e#18655#18700#0" expanded="false" />
-            <element signature="e#18872#20391#0" expanded="false" />
-            <element signature="e#18872#19053#1" expanded="false" />
-            <element signature="e#19098#19569#0" expanded="false" />
-            <element signature="e#19392#19523#0" expanded="false" />
-            <element signature="e#19623#20391#0" expanded="false" />
-            <element signature="e#19684#19754#0" expanded="false" />
-            <element signature="e#20012#20093#0" expanded="false" />
-            <element signature="e#20424#21964#0" expanded="false" />
-            <element signature="e#20424#20604#1" expanded="false" />
-            <element signature="e#20649#21242#0" expanded="false" />
-            <element signature="e#20924#21070#0" expanded="false" />
-            <element signature="e#21296#21964#0" expanded="false" />
-            <element signature="e#21296#21478#1" expanded="false" />
-            <element signature="e#21509#21574#0" expanded="false" />
-            <element signature="e#21769#21782#0" expanded="false" />
-            <element signature="e#21996#22882#0" expanded="false" />
-            <element signature="e#21996#22149#1" expanded="false" />
-            <element signature="e#22194#22625#0" expanded="false" />
-            <element signature="e#22684#22879#0" expanded="false" />
-            <element signature="e#22684#22735#1" expanded="false" />
-            <element signature="e#22882#22966#0" expanded="false" />
-            <element signature="e#23039#28129#0" expanded="false" />
-            <element signature="e#23726#24476#0" expanded="false" />
-            <element signature="e#24544#24817#0" expanded="false" />
-            <element signature="e#24544#24804#1" expanded="false" />
-            <element signature="e#24823#24892#0" expanded="false" />
-            <element signature="e#25017#26180#0" expanded="false" />
-            <element signature="e#25017#25415#1" expanded="false" />
-            <element signature="e#25722#25810#0" expanded="false" />
-            <element signature="e#25980#26054#0" expanded="false" />
-            <element signature="e#26186#26257#0" expanded="false" />
-            <element signature="e#26361#28129#0" expanded="false" />
-            <element signature="e#26361#26770#1" expanded="false" />
-            <element signature="e#27345#27398#0" expanded="false" />
-            <element signature="e#27698#27727#0" expanded="false" />
-            <element signature="e#27816#28076#0" expanded="false" />
-            <element signature="e#28169#28660#0" expanded="false" />
-            <element signature="e#28235#28397#0" expanded="false" />
-            <element signature="e#28445#28660#0" expanded="false" />
-            <element signature="e#28701#29113#0" expanded="false" />
-            <element signature="e#28785#28953#0" expanded="false" />
-            <element signature="e#29001#29113#0" expanded="false" />
-            <element signature="e#29154#29967#0" expanded="false" />
-            <element signature="e#29275#29448#0" expanded="false" />
-            <element signature="e#29496#29967#0" expanded="false" />
-            <element signature="e#29591#29695#0" expanded="false" />
-            <element signature="e#29752#29902#0" expanded="false" />
-            <element signature="e#30009#33685#0" expanded="false" />
-            <element signature="e#30009#30403#1" expanded="false" />
-            <element signature="e#30448#31023#0" expanded="false" />
-            <element signature="e#31029#31083#0" expanded="false" />
-            <element signature="e#31224#33685#0" expanded="false" />
-            <element signature="e#31224#31271#1" expanded="false" />
-            <element signature="e#31415#31509#0" expanded="false" />
-            <element signature="e#32084#32188#0" expanded="false" />
-            <element signature="e#32329#32430#0" expanded="false" />
-            <element signature="e#32804#32829#0" expanded="false" />
-            <element signature="e#32943#33064#0" expanded="false" />
-            <element signature="e#33184#33437#0" expanded="false" />
-            <element signature="e#33715#35428#0" expanded="false" />
-            <element signature="e#33715#34111#1" expanded="false" />
-            <element signature="e#34651#35207#0" expanded="false" />
-            <element signature="e#35287#35312#0" expanded="false" />
-            <element signature="e#35382#35428#0" expanded="false" />
-            <element signature="e#35459#35784#0" expanded="false" />
-            <element signature="e#35528#35672#0" expanded="false" />
-            <element signature="e#35742#35784#0" expanded="false" />
-            <element signature="e#35943#36273#0" expanded="false" />
-            <element signature="e#36333#37447#0" expanded="false" />
-            <element signature="e#36333#36622#1" expanded="false" />
-            <element signature="e#36662#36815#0" expanded="false" />
-            <element signature="e#37030#37105#0" expanded="false" />
-            <element signature="e#37254#37322#0" expanded="false" />
-            <element signature="e#37450#37457#0" expanded="false" />
-            <element signature="e#38246#38298#0" expanded="false" />
-            <element signature="e#38394#38459#0" expanded="false" />
-            <element signature="e#38590#38616#0" expanded="false" />
-            <element signature="e#38721#38799#0" expanded="false" />
-            <element signature="e#38872#39105#0" expanded="false" />
-            <element signature="e#38872#39042#1" expanded="false" />
-            <element signature="e#39155#39623#0" expanded="false" />
-            <element signature="e#39155#39305#1" expanded="false" />
-            <element signature="e#39489#39608#0" expanded="false" />
-            <element signature="e#39654#39941#0" expanded="false" />
-            <element signature="e#39654#39854#1" expanded="false" />
-            <element signature="e#39964#40348#0" expanded="false" />
-            <element signature="e#39964#40171#1" expanded="false" />
-            <element signature="e#40371#41008#1" expanded="false" />
-            <element signature="e#41173#41456#1" expanded="false" />
-            <element signature="e#41465#41472#0" expanded="false" />
-            <element signature="e#41561#41570#0" expanded="false" />
-            <element signature="e#42046#42885#0" expanded="false" />
-            <element signature="e#42885#42946#0" expanded="false" />
-            <element signature="e#43095#43148#0" expanded="false" />
-            <element signature="e#44735#45082#0" expanded="false" />
-            <element signature="e#45128#45147#0" expanded="false" />
-            <element signature="e#45196#45218#0" expanded="false" />
-            <element signature="e#45263#45281#0" expanded="false" />
-            <element signature="e#45331#45456#0" expanded="false" />
-            <element signature="e#45513#45915#0" expanded="false" />
-            <element signature="e#45592#45886#0" expanded="false" />
-            <element signature="e#45697#45768#0" expanded="false" />
-            <element signature="e#45820#45886#0" expanded="false" />
-            <element signature="e#45972#46213#0" expanded="false" />
-            <element signature="e#45972#46050#1" expanded="false" />
-            <element signature="e#46118#46191#0" expanded="false" />
-            <element signature="e#46219#46272#0" expanded="false" />
-            <element signature="e#46670#47063#0" expanded="false" />
-            <element signature="e#47021#47063#0" expanded="false" />
-            <element signature="e#47417#49385#0" expanded="false" />
-            <element signature="e#47417#47642#1" expanded="false" />
-            <element signature="e#47691#49284#0" expanded="false" />
-            <element signature="e#48011#48143#0" expanded="false" />
-            <element signature="e#48193#48370#0" expanded="false" />
-            <element signature="e#48423#48532#0" expanded="false" />
-            <element signature="e#48586#48711#0" expanded="false" />
-            <element signature="e#48907#49284#0" expanded="false" />
-            <element signature="e#49391#49442#0" expanded="false" />
-            <element signature="e#49498#50738#0" expanded="false" />
-            <element signature="e#49498#49687#1" expanded="false" />
-            <element signature="e#49827#49840#0" expanded="false" />
-            <element signature="e#50744#50828#0" expanded="false" />
-            <element signature="e#52070#52221#0" expanded="false" />
-            <element signature="e#52290#52473#0" expanded="false" />
-            <element signature="e#52521#52813#0" expanded="false" />
-            <element signature="e#52616#52696#0" expanded="false" />
-            <element signature="e#52858#53198#0" expanded="false" />
-            <element signature="e#53004#53084#0" expanded="false" />
-            <element signature="e#53242#53526#0" expanded="false" />
-            <element signature="e#53333#53413#0" expanded="false" />
-            <element signature="e#53532#53587#0" expanded="false" />
-            <element signature="e#53777#54072#1" expanded="false" />
-            <element signature="e#54081#54121#0" expanded="false" />
-            <element signature="e#54837#55081#0" expanded="false" />
-            <element signature="e#55281#55345#0" expanded="false" />
-            <element signature="e#55868#56138#0" expanded="false" />
-            <element signature="e#55868#55898#0" expanded="false" />
-            <element signature="e#56027#56053#0" expanded="false" />
-            <element signature="e#56330#56400#0" expanded="false" />
-            <element signature="e#56715#56844#0" expanded="false" />
-            <element signature="e#57039#57113#0" expanded="false" />
-            <element signature="e#57852#57909#0" expanded="false" />
-            <element signature="e#58301#58335#0" expanded="false" />
-            <element signature="e#58422#58832#0" expanded="false" />
-            <element signature="e#58422#58786#1" expanded="false" />
-            <element signature="e#58910#59349#0" expanded="false" />
-            <element signature="e#58910#59017#1" expanded="false" />
-            <element signature="e#59107#59202#0" expanded="false" />
-            <element signature="e#59229#59349#0" expanded="false" />
-            <element signature="e#59408#59443#0" expanded="false" />
-            <element signature="e#59492#59683#1" expanded="false" />
-            <element signature="e#60037#60602#0" expanded="false" />
-            <element signature="e#60037#60058#0" expanded="false" />
-            <element signature="e#60657#61535#0" expanded="false" />
-            <element signature="e#60800#61045#0" expanded="false" />
-            <element signature="e#60800#60858#0" expanded="false" />
-            <element signature="e#61100#61463#0" expanded="false" />
-            <element signature="e#61100#61157#0" expanded="false" />
-            <element signature="e#61601#62097#0" expanded="false" />
-            <element signature="e#61601#61743#1" expanded="false" />
-            <element signature="e#61917#62070#0" expanded="false" />
-            <element signature="e#62147#62344#0" expanded="false" />
-            <element signature="e#62192#62344#0" expanded="false" />
-            <element signature="e#62399#64247#0" expanded="false" />
-            <element signature="e#62399#62856#1" expanded="false" />
-            <element signature="e#62922#62958#0" expanded="false" />
-            <element signature="e#63037#63089#0" expanded="false" />
-            <element signature="e#63345#64139#0" expanded="false" />
-            <element signature="e#63376#63401#0" expanded="false" />
-            <element signature="e#63470#63516#0" expanded="false" />
-            <element signature="e#63561#63609#0" expanded="false" />
-            <element signature="e#63653#63786#0" expanded="false" />
-            <element signature="e#63838#64139#0" expanded="false" />
-            <element signature="e#63944#63991#0" expanded="false" />
-            <element signature="e#64034#64139#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2560">
-          <caret line="180" column="82" lean-forward="true" selection-start-line="180" selection-start-column="82" selection-end-line="180" selection-end-column="82" />
-          <folding>
-            <element signature="e#134#757#0" expanded="false" />
-            <element signature="e#172#303#0" expanded="false" />
-            <element signature="e#349#587#0" expanded="false" />
-            <element signature="e#628#757#0" expanded="false" />
-            <element signature="e#800#1332#0" expanded="false" />
-            <element signature="e#830#1332#0" expanded="false" />
-            <element signature="e#1408#1476#1" expanded="false" />
-            <element signature="e#1616#1677#0" expanded="false" />
-            <element signature="e#1700#1751#0" expanded="false" />
-            <element signature="e#2132#2193#0" expanded="false" />
-            <element signature="e#2216#2264#0" expanded="false" />
-            <element signature="e#2643#2704#0" expanded="false" />
-            <element signature="e#3144#3177#1" expanded="false" />
-            <element signature="e#3698#4277#0" expanded="false" />
-            <element signature="e#3698#3788#1" expanded="false" />
-            <element signature="e#9626#13525#0" expanded="false" />
-            <element signature="e#9626#9728#0" expanded="false" />
-            <element signature="e#9805#9952#0" expanded="false" />
-            <element signature="e#9975#10123#0" expanded="false" />
-            <element signature="e#10146#10294#0" expanded="false" />
-            <element signature="e#10316#10460#0" expanded="false" />
-            <element signature="e#10507#10668#0" expanded="false" />
-            <element signature="e#10691#10850#0" expanded="false" />
-            <element signature="e#10873#11034#0" expanded="false" />
-            <element signature="e#11056#11217#0" expanded="false" />
-            <element signature="e#11264#11461#0" expanded="false" />
-            <element signature="e#11484#11677#0" expanded="false" />
-            <element signature="e#11700#11894#0" expanded="false" />
-            <element signature="e#11916#12104#0" expanded="false" />
-            <element signature="e#12129#12543#0" expanded="false" />
-            <element signature="e#13573#13789#0" expanded="false" />
-            <element signature="e#13573#13606#1" expanded="false" />
-            <element signature="e#13846#13879#1" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/__main__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
-          <caret line="59" column="15" lean-forward="true" selection-start-line="59" selection-start-column="15" selection-end-line="59" selection-end-column="15" />
-          <folding>
-            <element signature="e#0#25#0" expanded="true" />
-            <element signature="e#2196#2207#0" expanded="false" />
+            <element signature="e#30#49#0" expanded="true" />
+            <element signature="e#994#3125#1" expanded="false" />
+            <element signature="e#4626#4666#0" expanded="false" />
+            <element signature="e#4714#4756#0" expanded="false" />
+            <element signature="e#4805#4849#0" expanded="false" />
+            <element signature="e#4898#4992#0" expanded="false" />
+            <element signature="e#5040#5111#0" expanded="false" />
+            <element signature="e#5158#5200#0" expanded="false" />
+            <element signature="e#5244#5283#0" expanded="false" />
+            <element signature="e#5332#5380#0" expanded="false" />
+            <element signature="e#5431#5479#0" expanded="false" />
+            <element signature="e#5532#5586#0" expanded="false" />
+            <element signature="e#5636#5685#0" expanded="false" />
+            <element signature="e#7424#7529#1" expanded="false" />
+            <element signature="e#7632#7731#1" expanded="false" />
+            <element signature="e#7894#8350#0" expanded="false" />
+            <element signature="e#7894#8107#1" expanded="false" />
+            <element signature="e#8525#8610#0" expanded="false" />
+            <element signature="e#9964#10479#0" expanded="false" />
+            <element signature="e#10552#11690#0" expanded="false" />
+            <element signature="e#10552#11656#1" expanded="false" />
+            <element signature="e#11767#13879#0" expanded="false" />
+            <element signature="e#11767#12274#1" expanded="false" />
+            <element signature="e#12283#12392#0" expanded="false" />
+            <element signature="e#13177#13199#0" expanded="false" />
+            <element signature="e#13961#16010#0" expanded="false" />
+            <element signature="e#13961#14484#1" expanded="false" />
+            <element signature="e#14493#14576#0" expanded="false" />
+            <element signature="e#14976#15106#0" expanded="false" />
+            <element signature="e#15141#15178#0" expanded="false" />
+            <element signature="e#15455#15528#0" expanded="false" />
+            <element signature="e#15871#15947#0" expanded="false" />
+            <element signature="e#16045#16474#0" expanded="false" />
+            <element signature="e#16045#16154#1" expanded="false" />
+            <element signature="e#16188#16335#0" expanded="false" />
+            <element signature="e#16389#16474#0" expanded="false" />
+            <element signature="e#16512#18076#0" expanded="false" />
+            <element signature="e#16512#16798#1" expanded="false" />
+            <element signature="e#16852#17455#0" expanded="false" />
+            <element signature="e#17230#17409#0" expanded="false" />
+            <element signature="e#17509#18076#0" expanded="false" />
+            <element signature="e#18109#19614#0" expanded="false" />
+            <element signature="e#18109#18331#1" expanded="false" />
+            <element signature="e#18385#18879#0" expanded="false" />
+            <element signature="e#18680#18833#0" expanded="false" />
+            <element signature="e#18933#19614#0" expanded="false" />
+            <element signature="e#18933#19166#1" expanded="false" />
+            <element signature="e#19429#19474#0" expanded="false" />
+            <element signature="e#19646#21165#0" expanded="false" />
+            <element signature="e#19646#19827#1" expanded="false" />
+            <element signature="e#19872#20343#0" expanded="false" />
+            <element signature="e#20166#20297#0" expanded="false" />
+            <element signature="e#20397#21165#0" expanded="false" />
+            <element signature="e#20458#20528#0" expanded="false" />
+            <element signature="e#20786#20867#0" expanded="false" />
+            <element signature="e#21198#22738#0" expanded="false" />
+            <element signature="e#21198#21378#1" expanded="false" />
+            <element signature="e#21423#22016#0" expanded="false" />
+            <element signature="e#21698#21844#0" expanded="false" />
+            <element signature="e#22070#22738#0" expanded="false" />
+            <element signature="e#22070#22252#1" expanded="false" />
+            <element signature="e#22283#22348#0" expanded="false" />
+            <element signature="e#22543#22556#0" expanded="false" />
+            <element signature="e#22770#23656#0" expanded="false" />
+            <element signature="e#22770#22923#1" expanded="false" />
+            <element signature="e#22968#23399#0" expanded="false" />
+            <element signature="e#23458#23653#0" expanded="false" />
+            <element signature="e#23458#23509#1" expanded="false" />
+            <element signature="e#23656#23740#0" expanded="false" />
+            <element signature="e#23813#28903#0" expanded="false" />
+            <element signature="e#24500#25250#0" expanded="false" />
+            <element signature="e#25318#25591#0" expanded="false" />
+            <element signature="e#25318#25578#1" expanded="false" />
+            <element signature="e#25597#25666#0" expanded="false" />
+            <element signature="e#25791#26954#0" expanded="false" />
+            <element signature="e#25791#26189#1" expanded="false" />
+            <element signature="e#26496#26584#0" expanded="false" />
+            <element signature="e#26754#26828#0" expanded="false" />
+            <element signature="e#26960#27031#0" expanded="false" />
+            <element signature="e#27135#28903#0" expanded="false" />
+            <element signature="e#27135#27544#1" expanded="false" />
+            <element signature="e#28119#28172#0" expanded="false" />
+            <element signature="e#28472#28501#0" expanded="false" />
+            <element signature="e#28590#28850#0" expanded="false" />
+            <element signature="e#28943#29434#0" expanded="false" />
+            <element signature="e#29009#29171#0" expanded="false" />
+            <element signature="e#29219#29434#0" expanded="false" />
+            <element signature="e#29475#29887#0" expanded="false" />
+            <element signature="e#29559#29727#0" expanded="false" />
+            <element signature="e#29775#29887#0" expanded="false" />
+            <element signature="e#29928#30741#0" expanded="false" />
+            <element signature="e#30049#30222#0" expanded="false" />
+            <element signature="e#30270#30741#0" expanded="false" />
+            <element signature="e#30365#30469#0" expanded="false" />
+            <element signature="e#30526#30676#0" expanded="false" />
+            <element signature="e#30783#34459#0" expanded="false" />
+            <element signature="e#30783#31177#1" expanded="false" />
+            <element signature="e#31222#31797#0" expanded="false" />
+            <element signature="e#31803#31857#0" expanded="false" />
+            <element signature="e#31998#34459#0" expanded="false" />
+            <element signature="e#31998#32045#1" expanded="false" />
+            <element signature="e#32189#32283#0" expanded="false" />
+            <element signature="e#32858#32962#0" expanded="false" />
+            <element signature="e#33103#33204#0" expanded="false" />
+            <element signature="e#33578#33603#0" expanded="false" />
+            <element signature="e#33717#33838#0" expanded="false" />
+            <element signature="e#33958#34211#0" expanded="false" />
+            <element signature="e#34489#36202#0" expanded="false" />
+            <element signature="e#34489#34885#1" expanded="false" />
+            <element signature="e#35425#35981#0" expanded="false" />
+            <element signature="e#36061#36086#0" expanded="false" />
+            <element signature="e#36156#36202#0" expanded="false" />
+            <element signature="e#36233#36558#0" expanded="false" />
+            <element signature="e#36302#36446#0" expanded="false" />
+            <element signature="e#36516#36558#0" expanded="false" />
+            <element signature="e#36717#37047#0" expanded="false" />
+            <element signature="e#37107#38221#0" expanded="false" />
+            <element signature="e#37107#37396#1" expanded="false" />
+            <element signature="e#37436#37589#0" expanded="false" />
+            <element signature="e#37804#37879#0" expanded="false" />
+            <element signature="e#38028#38096#0" expanded="false" />
+            <element signature="e#38224#38231#0" expanded="false" />
+            <element signature="e#39020#39072#0" expanded="false" />
+            <element signature="e#39168#39233#0" expanded="false" />
+            <element signature="e#39364#39390#0" expanded="false" />
+            <element signature="e#39495#39573#0" expanded="false" />
+            <element signature="e#39646#39879#0" expanded="false" />
+            <element signature="e#39646#39816#1" expanded="false" />
+            <element signature="e#39929#40397#0" expanded="false" />
+            <element signature="e#39929#40079#1" expanded="false" />
+            <element signature="e#40263#40382#0" expanded="false" />
+            <element signature="e#40428#40715#0" expanded="false" />
+            <element signature="e#40428#40628#1" expanded="false" />
+            <element signature="e#40738#41122#0" expanded="false" />
+            <element signature="e#40738#40945#1" expanded="false" />
+            <element signature="e#41145#41782#1" expanded="false" />
+            <element signature="e#41947#42230#1" expanded="false" />
+            <element signature="e#42239#42246#0" expanded="false" />
+            <element signature="e#42335#42344#0" expanded="false" />
+            <element signature="e#42820#43659#0" expanded="false" />
+            <element signature="e#43659#43720#0" expanded="false" />
+            <element signature="e#43869#43922#0" expanded="false" />
+            <element signature="e#45509#45856#0" expanded="false" />
+            <element signature="e#45902#45921#0" expanded="false" />
+            <element signature="e#45970#45992#0" expanded="false" />
+            <element signature="e#46037#46055#0" expanded="false" />
+            <element signature="e#46105#46230#0" expanded="false" />
+            <element signature="e#46287#46689#0" expanded="false" />
+            <element signature="e#46366#46660#0" expanded="false" />
+            <element signature="e#46471#46542#0" expanded="false" />
+            <element signature="e#46594#46660#0" expanded="false" />
+            <element signature="e#46746#46987#0" expanded="false" />
+            <element signature="e#46746#46824#1" expanded="false" />
+            <element signature="e#46892#46965#0" expanded="false" />
+            <element signature="e#46993#47046#0" expanded="false" />
+            <element signature="e#47444#47837#0" expanded="false" />
+            <element signature="e#47795#47837#0" expanded="false" />
+            <element signature="e#48191#50159#0" expanded="false" />
+            <element signature="e#48191#48416#1" expanded="false" />
+            <element signature="e#48465#50058#0" expanded="false" />
+            <element signature="e#48785#48917#0" expanded="false" />
+            <element signature="e#48967#49144#0" expanded="false" />
+            <element signature="e#49197#49306#0" expanded="false" />
+            <element signature="e#49360#49485#0" expanded="false" />
+            <element signature="e#49681#50058#0" expanded="false" />
+            <element signature="e#50165#50216#0" expanded="false" />
+            <element signature="e#50272#51512#0" expanded="false" />
+            <element signature="e#50272#50461#1" expanded="false" />
+            <element signature="e#50601#50614#0" expanded="false" />
+            <element signature="e#51518#51602#0" expanded="false" />
+            <element signature="e#52844#52995#0" expanded="false" />
+            <element signature="e#53064#53247#0" expanded="false" />
+            <element signature="e#53295#53587#0" expanded="false" />
+            <element signature="e#53390#53470#0" expanded="false" />
+            <element signature="e#53632#53972#0" expanded="false" />
+            <element signature="e#53778#53858#0" expanded="false" />
+            <element signature="e#54016#54300#0" expanded="false" />
+            <element signature="e#54107#54187#0" expanded="false" />
+            <element signature="e#54306#54361#0" expanded="false" />
+            <element signature="e#54551#54846#1" expanded="false" />
+            <element signature="e#54855#54895#0" expanded="false" />
+            <element signature="e#55611#55855#0" expanded="false" />
+            <element signature="e#56055#56119#0" expanded="false" />
+            <element signature="e#56642#56912#0" expanded="false" />
+            <element signature="e#56642#56672#0" expanded="false" />
+            <element signature="e#56801#56827#0" expanded="false" />
+            <element signature="e#57104#57174#0" expanded="false" />
+            <element signature="e#57489#57618#0" expanded="false" />
+            <element signature="e#57813#57887#0" expanded="false" />
+            <element signature="e#58626#58683#0" expanded="false" />
+            <element signature="e#59075#59109#0" expanded="false" />
+            <element signature="e#59196#59606#0" expanded="false" />
+            <element signature="e#59196#59560#1" expanded="false" />
+            <element signature="e#59684#60123#0" expanded="false" />
+            <element signature="e#59684#59791#1" expanded="false" />
+            <element signature="e#59881#59976#0" expanded="false" />
+            <element signature="e#60003#60123#0" expanded="false" />
+            <element signature="e#60182#60217#0" expanded="false" />
+            <element signature="e#60266#60457#1" expanded="false" />
+            <element signature="e#60811#61376#0" expanded="false" />
+            <element signature="e#60811#60832#0" expanded="false" />
+            <element signature="e#61431#62309#0" expanded="false" />
+            <element signature="e#61574#61819#0" expanded="false" />
+            <element signature="e#61574#61632#0" expanded="false" />
+            <element signature="e#61874#62237#0" expanded="false" />
+            <element signature="e#61874#61931#0" expanded="false" />
+            <element signature="e#62375#62871#0" expanded="false" />
+            <element signature="e#62375#62517#1" expanded="false" />
+            <element signature="e#62691#62844#0" expanded="false" />
+            <element signature="e#62921#63118#0" expanded="false" />
+            <element signature="e#62966#63118#0" expanded="false" />
+            <element signature="e#63173#65021#0" expanded="false" />
+            <element signature="e#63173#63630#1" expanded="false" />
+            <element signature="e#63696#63732#0" expanded="false" />
+            <element signature="e#63811#63863#0" expanded="false" />
+            <element signature="e#64119#64913#0" expanded="false" />
+            <element signature="e#64150#64175#0" expanded="false" />
+            <element signature="e#64244#64290#0" expanded="false" />
+            <element signature="e#64335#64383#0" expanded="false" />
+            <element signature="e#64427#64560#0" expanded="false" />
+            <element signature="e#64612#64913#0" expanded="false" />
+            <element signature="e#64718#64765#0" expanded="false" />
+            <element signature="e#64808#64913#0" expanded="false" />
           </folding>
         </state>
       </provider>

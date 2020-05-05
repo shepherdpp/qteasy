@@ -7,6 +7,7 @@ from qteasy.utilfuncs import sma, ema, trix, macd, cdldoji
 from qteasy import CashPlan
 from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
+from .history import str_to_list
 
 
 class Strategy:
@@ -23,12 +24,12 @@ class Strategy:
                  stg_name: str = 'strategy name',
                  stg_text: str = 'intro text of strategy',
                  par_count: int = 0,
-                 par_types: list = None,
+                 par_types: [list, str] = None,
                  par_bounds_or_enums: list = None,
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: str = ''):
+                 data_types: [str, list] = ''):
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
 
         input:
@@ -65,24 +66,37 @@ class Strategy:
                                             6, 'eps'
                                             7,
         """
-        self._pars = pars
-        self._opt_tag = opt_tag
-        self._stg_type = stg_type
-        self._stg_name = stg_name
-        self._stg_text = stg_text
-        self._par_count = par_count
+        self._pars = pars  # 策略的参数
+        self._opt_tag = opt_tag  # 策略的优化标记
+        self._stg_type = stg_type  # 策略类型
+        self._stg_name = stg_name  # 策略的名称
+        self._stg_text = stg_text  # 策略的描述文字
+        self._par_count = par_count  # 策略参数的元素个数
+
         if par_types is None:
+            # 当没有给出策略参数类型时，参数类型为空列表
             self._par_types = []
         else:
+            # 输入的par_types可以允许为字符串或列表，当给定类型为字符串时，使用逗号分隔不同的类型，如
+            # 'conti, conti' 代表 ['conti', 'conti']
+            if isinstance(par_types, str):
+                par_types = str_to_list(par_types, ',')
+            assert isinstance(par_types, list), f'TypeError, par type should be a list, got {type(par_types)} instead'
             self._par_types = par_types
         if par_bounds_or_enums is None:
             self._par_bounds_or_enums = []
         else:
             self._par_bounds_or_enums = par_bounds_or_enums
+        # 依赖的历史数据频率
         self._data_freq = data_freq
+        # 策略生成采样频率，即策略操作信号的生成频率
         self._sample_freq = sample_freq
+        # 表示历史数据窗口的长度，生成策略的一次操作所依赖的历史数据的数量
         self._window_length = window_length
-        self._data_types = data_types.split(',')
+        if isinstance(data_types, str):
+            data_types = str_to_list(data_types, ',')
+        assert isinstance(data_types, list), f'TypeError, data type should be a list, got {type(data_types)} instead'
+        self._data_types = data_types
 
     @property
     def stg_type(self):

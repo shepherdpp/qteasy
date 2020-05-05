@@ -938,13 +938,13 @@ def _list_or_slice(unknown_input, str_int_dict):
     elif isinstance(unknown_input, str):  # string should be converted to numbers
         string_input = unknown_input
         if string_input.find(',') > 0:
-            string_list = _str_to_list(input_string=string_input, sep_char=',')
+            string_list = str_to_list(input_string=string_input, sep_char=',')
             res = []
             for string in string_list:
                 res.append(str_int_dict[string])
             return np.array(res)
         elif string_input.find(':') > 0:
-            start_end_strings = _str_to_list(input_string=string_input, sep_char=':')
+            start_end_strings = str_to_list(input_string=string_input, sep_char=':')
             start = str_int_dict[start_end_strings[0]]
             end = str_int_dict[start_end_strings[1]]
             if start > end:
@@ -996,7 +996,7 @@ def _labels_to_dict(input_labels, target_list):
     :return:
     """
     if isinstance(input_labels, str):
-        input_labels = _str_to_list(input_string=input_labels)
+        input_labels = str_to_list(input_string=input_labels)
     unique_count = len(set(input_labels))
     assert len(input_labels) == unique_count, \
         f'InputError, label duplicated, count of target list is {len(target_list)},' \
@@ -1007,7 +1007,7 @@ def _labels_to_dict(input_labels, target_list):
     return dict(zip(input_labels, range(len(target_list))))
 
 
-def _str_to_list(input_string, sep_char: str = ','):
+def str_to_list(input_string, sep_char: str = ','):
     """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义"""
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     res = input_string.replace(' ', '').split(sep_char)
@@ -1199,7 +1199,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
     :return:
     """
     if isinstance(htypes, str):
-        htypes = _str_to_list(input_string=htypes, sep_char=',')
+        htypes = str_to_list(input_string=htypes, sep_char=',')
     price_type_data = []
     income_type_data = []
     balance_type_data = []
@@ -1231,7 +1231,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                            asset_type=asset_type,
                                                            chanel=chanel))
         if isinstance(shares, str):
-            shares = _str_to_list(shares)
+            shares = str_to_list(shares)
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
                                                           shares=shares),
@@ -1247,7 +1247,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                                  htypes=report_type,
                                                                  chanel=chanel)
         if isinstance(shares, str):
-            shares = _str_to_list(shares)
+            shares = str_to_list(shares)
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
                                                           shares=shares),
@@ -1262,7 +1262,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                           chanel=chanel)
         result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
                                                           stack_along='shares',
-                                                          shares=_str_to_list(shares)),
+                                                          shares=str_to_list(shares)),
                                    same_shares=True)
 
     # ============= 调试代码 :=============
@@ -1301,7 +1301,7 @@ def get_price_type_raw_data(start: str,
     if htypes is None:
         htypes = PRICE_TYPE_DATA
     if isinstance(htypes, str):
-        htypes = _str_to_list(input_string=htypes, sep_char=',')
+        htypes = str_to_list(input_string=htypes, sep_char=',')
     raw_df = get_bar(shares=shares, start=start, asset_type=asset_type, end=end, freq=freq)
     # print('raw df before rearange\n', raw_df)
     raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
@@ -1309,7 +1309,7 @@ def get_price_type_raw_data(start: str,
     # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
     if isinstance(shares, str):
-        shares = _str_to_list(input_string=shares, sep_char=',')
+        shares = str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
@@ -1333,7 +1333,7 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
     :return:
     """
     if isinstance(htypes, str):
-        htypes = _str_to_list(input_string=htypes, sep_char=',')
+        htypes = str_to_list(input_string=htypes, sep_char=',')
     report_fields = ['ts_code', 'ann_date']
     report_fields.extend(htypes)
     # print('htypes',htypes, "\nreport fields: ", report_fields)
@@ -1353,7 +1353,7 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
     # print('\nraw df after rearange\n', raw_df)
     df_per_share = []
     if isinstance(shares, str):
-        shares = _str_to_list(input_string=shares, sep_char=',')
+        shares = str_to_list(input_string=shares, sep_char=',')
     for share in shares:
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     for df in df_per_share:

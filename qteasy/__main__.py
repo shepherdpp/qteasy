@@ -49,6 +49,7 @@ if __name__ == '__main__':
     op.info()
     print(f'\n START QT RUNNING\n===========================\n')
     run(op, cont, mode=1)
+    run(op, cont, mode=0)
     print(f'test get history panel directly')
     hp = hs.get_history_panel(start='2017-01-01',
                               end='2019-08-23',
