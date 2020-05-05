@@ -9,6 +9,16 @@ from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
 from .history import str_to_list
 
+TIME_FREQ_STRINGS = ['TICK',
+                     'T',
+                     'MIN',
+                     'H',
+                     'D',
+                     'W',
+                     'M',
+                     'Q',
+                     'Y']
+
 
 class Strategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
@@ -197,6 +207,7 @@ class Strategy:
         return:
             int: 1: 设置成功，0: 设置失败
         """
+        assert isinstance(pars, tuple) or isinstance(pars, dict)
         if len(pars) == self.par_count or isinstance(pars, dict):
             self._pars = pars
             return 1
@@ -212,6 +223,8 @@ class Strategy:
             :param opt_tag: int，0：不参加优化，1：参加优化
         :return:
         """
+        assert isinstance(opt_tag, int), f'optimization tag should be an integer, got {type(opt_tag)} instead'
+        assert 0 <= opt_tag <= 1, f'ValueError, optimization tag should be 0 or 1, got {opt_tag} instead'
         self._opt_tag = opt_tag
         return opt_tag
 
@@ -234,32 +247,34 @@ class Strategy:
         :return: None
         """
         if sample_freq is not None:
+            assert isinstance(sample_freq, str), \
+                f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
+            assert sample_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {sample_freq} is not a valid frequency string'
             self._sample_freq = sample_freq
         if window_length is not None:
+            assert isinstance(window_length, int), \
+                f'TypeError, window length should an integer, got {type(window_length)} instead'
+            assert window_length > 0, f'ValueError, {window_length} is not a valid window length'
             self._window_length = window_length
         if data_types is not None:
+            if isinstance(data_types, str):
+                data_types = str_to_list(data_types, ',')
+            assert isinstance(data_types, list), \
+                f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
 
     @abstractmethod
-    def generate(self, hist_data: np.ndarray, shares: list, dates: list):
+    def generate(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
         raise NotImplementedError
 
 
 # TODO: 以后可以考虑把Timing改为Alpha Model， Selecting改为Portfolio Manager， Ricon改为Risk Control
 # ===============================
-# TODO: 一种更好的实现Strategy参数的方法：取消strategy类的类属性，改为用__init__()方法初始化的对象属性，所有属性值通过初始化方法初始化
-# TODO: 初始化方法参数给出默认值。这样在自定义每种策略的具体实现类的时候，就不需要通过类属性定义诸如par_count,data_freq等参数了，只需要
-# TODO: 定义好_realize()方法即可，而其他的具体参数均可以在实例化策略对象的时候通过初始化参数给出即可
-# ===============================
 # TODO: 关于Selecting策略的改进：
 # TODO: Selecting策略的选股周期和选股数量/比例两个参数作为Selecting类的固有参数放入__init__()方法中，并赋予默认值，同时将ranking table
 # TODO: 所涉及到的一系列特殊属性转化为Selecting类的固有属性，同样放入初始化方法中。这样对于所有的selecting继承类，在realize的时候只需要
 # TODO: 一个参数hist_data即可，share或dates参数都不再需要，都可以根据其他的固有属性动态生成。
-# ===============================
-# TODO: 关于Strategy策略的进一步改进：
-# TODO: 所有策略中可以设置一个pre_process()预处理方法，把需要放到循环外的计算开销全部放入这个预处理方法中，在循坏外调用，以提升（优化）
-# TODO: 的效率
 # ===============================
 class Timing(Strategy):
     """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略"""
@@ -289,7 +304,7 @@ class Timing(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_pack, params):
+    def _realize(self, hist_pack: np.ndarray, params: tuple) -> int:
         """ 策略的具体实现方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号
 
             在择时类策略中，_realize方法接受一个历史数据片段hist_pack，其中包含的数据类型为self.data_types参数定义。
@@ -313,7 +328,8 @@ class Timing(Strategy):
         return:
             :L/S position: int, 一个代表头寸位置的整数，1代表多头头寸，0代表中性，-1代表空头头寸
         """
-        raise NotImplementedError
+        h = hist_pack.T
+        return h[-1].clip(0, 0)
 
     def _generate_over(self, hist_slice: np.ndarray, pars: tuple):
         """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开
@@ -339,11 +355,12 @@ class Timing(Strategy):
         cat = np.zeros(hist_slice.shape[0])
         hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
-        if loop_count < 1:  # 在开始应用generate_one()
+        if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
             return cat
 
-        # 开始进行历史数据的滚动展开
+        # 如果有足够的非nan数据，则开始进行历史数据的滚动展开
         hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
+        # TODO：需要找到比循环的方式更快的数据滚动展开的方法，目前循环就是最快的办法
         for i in range(loop_count):
             hist_pack[i] = hist_nonan[i:i + self._window_length]
         # 滚动展开完成，形成一个新的3D或2D矩阵
@@ -354,10 +371,12 @@ class Timing(Strategy):
                                 par_list)))
         # 生成的结果缺少最前面window_length那一段，因此需要补齐
         capping = np.zeros(self._window_length - 1)
+        # debug
         # print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[drop] = res
+        # debug
         # print(f'created long/short mask for current hist_slice is: \n{cat[self.window_length:][:100]}')
         return cat[self.window_length:]
 
@@ -374,29 +393,33 @@ class Timing(Strategy):
         return：=====
             L/S mask: ndarray, 所有股票在整个历史区间内的所有多空信号矩阵，包含M行N列，每行是一个时间点上的多空信号，每列一只股票
         """
+        # debug
         # print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
         assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert len(hist_data.shape) == 3, \
-            f'DataError: historical data should be 3 dimensional, got {len(hist_data.shape)} dimensional data'
+        assert hist_data.ndim == 3, \
+            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
         assert hist_data.shape[1] >= self._window_length, \
             f'DataError: Not enough history data! expected hist data length {self._window_length},' \
             f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
+        # debug
         # print(f'in Timing.generate() pars is a {type(pars)}, value is {pars}')
         if isinstance(pars, dict):
             par_list = pars.values()  # 允许使用dict来为不同的股票定义不同的策略参数
         else:
-            par_list = [pars] * hist_data.shape[0]  # 生成长度与shares数量相同的序列
+            par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
         # print(len(par_list), len(hist_data))
         assert len(par_list) == len(hist_data), \
-            f'InputError: can not map {len(par_list)} parameters to {len(hist_data)} shares!'
+            f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
+        # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
         res = np.array(list(map(self._generate_over,
                                 hist_data,
                                 par_list))).T
 
+        # debug
         # print(f'generate result of np timing generate, result shaped {res.shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
@@ -507,12 +530,13 @@ class TimingMACD(Timing):
         # 计算指数的指数移动平均价格
         diff = ema(h[0], s) - ema(h[0], l)
         dea = ema(diff, m)
-        macd = 2 * (diff - dea)
-        # diff, dea, macd = macd(hist_price, s, l, m)
+        _macd = 2 * (diff - dea)
+        # 以下使用utfuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
+        # diff, dea, _macd = macd(hist_price, s, l, m)
 
         # 生成MACD多空判断：
         # 1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
-        cat = np.where(macd > 0, 1, 0)
+        cat = np.where(_macd > 0, 1, 0)
         return cat[-1]
 
 
@@ -567,8 +591,8 @@ class TimingTRIX(Timing):
     数据分析频率：天
     数据窗口长度：270天
     策略使用2个参数，
-        s: int,
-        m: int
+        s: int, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
+        m: int, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
     参数输入数据范围：[(10, 250), (10, 250)]
     """
 
@@ -589,9 +613,9 @@ class TimingTRIX(Timing):
         """参数:
 
         input:
-        :param idx: 指定的参考指数历史数据
-        :param sRange, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
-        :param mRange, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
+        :param hist_price:
+        :param params:
+        :return:
 
         """
         s, m = params
@@ -1028,20 +1052,7 @@ def _mask_to_signal(lst):
     # 补齐因为计算差额导致的第一行数据为NaN值的问题
     # print(f'creating operation signals, first signal is {lst[0]}')
     op[0] = lst[0]
-    return op
-
-
-# TODO：legalize函数将不再需要，理由有2，其一，风控策略能够从策略层面对交易信号进行控制，事实上与legalize函数作用相同，功能可以合并，
-# TODO：其二，通过设置sample_freq参数，交易信号的生成已经自动符合T+1规则了
-def _legalize(lst):
-    """交易信号合法化，整理生成的交易信号，使交易信号符合规则.
-
-    根据历史数据产生的交易信号不一定完全符合实际的交易规则，在必要时需要对交易信号进行
-    修改，以确保最终的交易信号符合交易规则，这里的交易规则仅包含与交易时间相关的规则如T+1规则等，与交易
-    成本或交易量相关的规则如费率、MOQ等都在回测模块中考虑"""
-
-    # 最基本的操作规则是不允许出现大于1或者小于-1的交易信号
-    return lst.clip(-1, 1)
+    return op.clip(-1, 1)
 
 
 def _timing_blend_change(ser: np.ndarray):
@@ -1137,9 +1148,10 @@ class Operator:
         # 对象属性：
         # 交易信号通用属性：
 
-        self.__Tp0 = False  # 是否允许T+0交易，True时允许T+0交易，否则不允许
+        self.__Tp0 = False  # 是否允许T+0交易，True时允许T+0交易，否则不允许 目前已经不再需要这个变量
         # 交易策略属性：
         # 对象的timings属性和timing_types属性都是列表，包含若干策略而不是一个策略
+        # 选股策略，投资组合管理器
         if selecting_types is None:
             selecting_types = ['simple']
         if timing_types is None:
@@ -1451,7 +1463,7 @@ class Operator:
             # print('SPEED test OP create, Time of sel_mask creation')
             history_length = dt.shape[1]
             sel_masks.append(
-                sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
+                    sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         et = time.clock()
         # print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
@@ -1492,7 +1504,7 @@ class Operator:
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并对交易信号进行合法化
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
-        op_mat = _legalize(_mask_to_signal(ls_mask * sel_mask) + ricon_mat)
+        op_mat = _mask_to_signal(ls_mask * sel_mask) + ricon_mat
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # print(f'length of date_list: {len(date_list)}')
