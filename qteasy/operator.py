@@ -1465,23 +1465,25 @@ class Operator:
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
         import time
-        # 生成空的
+        # 生成空的选股蒙板
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
+        # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
         assert len(self._timing_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
-        st = time.clock()
+        # 计时
+        # st = time.clock()
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             history_length = dt.shape[1]
             sel_masks.append(
                     sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
-        et = time.clock()
+        # et = time.clock()
         # print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
@@ -1491,7 +1493,7 @@ class Operator:
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
         # hist_selected = hist_data * selected_shares
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
-        st = time.clock()
+        # st = time.clock()
         ls_masks = []
         for tmg, dt in zip(self._timing, self._timing_history_data):  # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
             # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
@@ -1499,19 +1501,19 @@ class Operator:
             ls_masks.append(tmg.generate(dt))
             # print(tmg.generate(h_v))
             # print('ls mask created: ', tmg.generate(hist_selected).iloc[980:1000])
-        et = time.clock()
+        # et = time.clock()
         # print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
         ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print('\n long/short mask: \n', ls_mask[:100])
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
-        st = time.clock()
+        # st = time.clock()
         ricon_mats = []
         for ricon, dt in zip(self._ricon, self._ricon_history_data):  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
             # print('SPEED test OP create, Time of ricon_mask creation')
             ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
-        et = time.clock()
+        # et = time.clock()
         # print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
@@ -1521,6 +1523,7 @@ class Operator:
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并对交易信号进行合法化
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
+        # 生成交易信号矩阵
         op_mat = _mask_to_signal(ls_mask * sel_mask) + ricon_mat
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         date_list = hist_data.hdates[-op_mat.shape[0]:]
@@ -1528,14 +1531,16 @@ class Operator:
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # print('operation matrix: \n', lst.loc[lst.any(axis=1)])
         # 消除完全相同的行和数字全为0的行
+        # 定位lst中所有不全为0的行
         lst_out = lst[lst.any(1)]
+        # debug
         # print('operation matrix: ', '\n', lst_out)
+        # 进一步找到所有相同且相邻的交易信号行，删除所有较晚的交易信号，只保留最早的信号（这样做的目的是减少重复信号，从而提高回测效率）
         keep = (lst_out - lst_out.shift(1)).any(1)
         keep.iloc[0] = True
+        # debug
         # print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
         return lst_out[keep]
-
-        ################################################################
 
     # ================================
     # 下面是Operation模块的私有方法
