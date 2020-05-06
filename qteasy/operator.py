@@ -1400,35 +1400,47 @@ class Operator:
         :param cash_plan:
         :return:
         """
+        # 确保输入的历史数据是HistoryPanel类型
         assert isinstance(hist_data, HistoryPanel), \
             f'TypeError: historical data should be HistoryPanel, got {type(hist_data)}'
+        # TODO: 临时性处理方式
+        # 确保cash_plan的数据类型正确
         assert isinstance(cash_plan, CashPlan), \
             f'TypeError: cash plan should be CashPlan object, got {type(cash_plan)}'
+        # 确保输入的历史数据不为空
         assert not hist_data.is_empty, \
             f'ValueError: history data can not be empty!'
+        # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # debug
         # print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
+        # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date, expect {self.max_window_length},' \
             f' got {first_cash_pos} records only'
+        # 确保最后一个投资日也在输入的历史数据范围内
         assert last_cash_pos < len(hist_data.hdates), \
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
+        # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
         for stg in self.selecting:
             self._selecting_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
+            # debug
             # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
             #      f'{len(hist_data.hdates) - first_cash_pos}'
             #      f' rows for selecting strategies')
         for stg in self.timing:
+            # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
             start_pos = first_cash_pos - stg.window_length
             self._timing_history_data.append(hist_data[stg.data_types, :, start_pos:])
+            # debug
             # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
             #      f'{len(hist_data.hdates) - first_cash_pos}'
             #      f' rows for timing strategies')
         for stg in self.ricon:
             self._ricon_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
+            # debug
             # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
             #      f'{len(hist_data.hdates) - first_cash_pos}'
             #      f' rows for ricon strategies')
@@ -1436,6 +1448,10 @@ class Operator:
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
     # TODO: 1，Buy-开多仓，2，sell-平多仓，3，sel_short-开空仓，4，buy_to_cover-平空仓
     # TODO: 应该创建标准的交易订单模式，并且通过一个函数把交易信号转化为交易订单，以供回测或实盘交易使用
+    # TODO: 交易信号生成和回测模块需要大改：在交易信号生成模块不再仅仅生成+1/-1交易信号，而是同时生成交易信号
+    # TODO: 和多空目标位置，这样至少可以避免以下问题：当MOQ存在时，在逐步减仓的情况下，每次加仓的交易信号强度可能
+    # TODO: 都不足以买到一手股票，那么所有逐步加仓的信号都会失效。
+    # TODO: 另外，将交易信号和仓位信号分开也能更好地支持交易信号型策略和仓位变化型策略
     def create_signal(self, hist_data: HistoryPanel):
         """ 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
 
@@ -1449,6 +1465,7 @@ class Operator:
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
         import time
+        # 生成空的
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
