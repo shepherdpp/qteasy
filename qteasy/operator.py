@@ -1464,7 +1464,7 @@ class Operator:
         """
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
-        import time
+        # import time
         # 生成空的选股蒙板
         sel_masks = []
         shares = hist_data.shares
@@ -1665,7 +1665,12 @@ class Operator:
         # 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
         # 字符串进行分割
         # exp_list = self._selecting_blender_string.split()
-        exp_list = list(self._selecting_blender_string)
+        # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
+        exp_list = list(self._selecting_blender_string.
+                        replace(' ', '').
+                        replace('_', '').
+                        replace('.', '').
+                        replace('-', ''))
         # 开始循环读取所有操作元素
         while exp_list:
             s = exp_list.pop()
