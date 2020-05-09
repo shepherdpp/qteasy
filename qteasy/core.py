@@ -776,9 +776,16 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
               f'        OPERATION SIGNALS\n'
               f'====================================')
         print(f'\ntime consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n')
-        # print(f'Operation signals are generated on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
-        #       f'Total looped periods: {years} years.')
-        print(op_list[0])
+        print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
+              f'Total signals generated: {len(op_list.index)}.')
+        print(f'Operation signal for shares on {op_list.index[-1].date()}')
+        for share, signal in op_list.iloc[-1].iteritems():
+            print(f'share {share}:')
+            if signal > 0:
+                print(f'Buy in with {signal * 100}% of total investment value!')
+            elif signal < 0:
+                print(f'Sell out {-signal * 100}% of current on holding stock!')
+        print(f'\n===========END OF REPORT=============\n')
 
     elif run_mode == 1:
         """进入回测模式：
@@ -882,6 +889,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
               f'Sharp rate:          {sharp:.3f}\n'
               f'250 day volatility:  {volatility:.3f}\n'
               f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
+        print(f'\n===========END OF REPORT=============\n')
 
     elif run_mode == 2:
         """进入策略优化模式：
