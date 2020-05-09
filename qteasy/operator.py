@@ -1141,7 +1141,6 @@ class Operator:
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
     # TODO: 将三种策略的操作规范化并重新分类，不再以策略的目的分类，而以策略的形成机理不同而分类
     # TODO: 重新考虑单品种信号生成策略，考虑是否与单品种多空策略合并，还是保留并改进为完整的单品种信号生成策略
-    # TODO: 选股蒙板的混合方式，需要考虑浮点数情况下的逻辑运算的合理性
     def __init__(self, selecting_types=None,
                  timing_types=None,
                  ricon_types=None):
@@ -1392,6 +1391,32 @@ class Operator:
             if stg.window_length > max_wl:
                 max_wl = stg.window_length
         return max_wl
+
+    def set_opt_par(self, opt_par):
+        """将输入的opt参数切片后传入stg的参数中
+
+        本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
+
+        :param opt_par: 一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
+        :return
+        """
+        s = 0
+        k = 0
+        # 依次遍历operator对象中的所有策略：
+        for stg in self.strategies:
+            # 优化标记为0：该策略的所有参数在优化中不发生变化
+            if stg.opt_tag == 0:
+                pass
+            # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
+            elif stg.opt_tag == 1:
+                k += stg.par_count
+                stg.set_pars(opt_par[s:k])
+                s = k
+            # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
+            elif stg.opt_tag == 2:
+                k += 1
+                stg.set_pars(opt_par[s:k])
+                s = k
 
     # Operation对象有两类属性需要设置：blender混合器属性、Parameters策略参数或属性
     # 这些属性参数的设置需要在OP模块设置一个统一的设置入口，同时，为了实现与Optimizer模块之间的接口

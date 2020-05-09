@@ -741,6 +741,9 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     # ===============
     # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
     # ===============
+    print(f'====================================\n'
+          f'       RUNNING IN MODE {run_mode}\n'
+          f'====================================\n')
     if run_mode == 0:
         """进入实时信号生成模式：
         
@@ -955,7 +958,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             """
             pars, perfs = _search_exhaustive(hist=hist_op, op=operator,
                                              output_count=context.output_count,
-                                             keep_largest_perf=context.keep_largest_perf)
+                                             keep_largest_perf=context.keep_largest_perf,
+                                             step_size=50)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
