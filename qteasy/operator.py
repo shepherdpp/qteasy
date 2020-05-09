@@ -1095,6 +1095,10 @@ def _blend(n1, n2, op):
         return n1 + n2
     elif op == 'and':
         return n1 * n2
+    elif op == 'orr':
+        return 1 - (1 - n1) * (1 - n2)
+    else:
+        raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
 
 
 def unify(arr):
@@ -1210,7 +1214,17 @@ class Operator:
                 处理为乘法，or运算处理为加法。在只有0和1的情况下这样做是没有问题的，但是在普遍蒙板中存在大量介于0和1之间的浮点数的
                 时候，就需要注意了，如果蒙板0中某个股票的权重为0.5,在蒙板1中的权重为0.5，那么0 and 1 与0 or 1的结果分别应该是什么？
 
-                目前这个问题尚未解决，还需要解决
+                目前这个问题的解决方式是：
+                    0.5 and 0.5 = 0.5 * 0.5 = 0.25,
+                    0.5 or 0.5 = 0.5 + 0.5 = 1
+                完成上述计算后重新unify整个蒙板
+
+                想到还有另一种解决方式：
+                    0.5 and 0.5 = 0.5 * 0.5 = 0.25,
+                    0.5 or 0.5 = 1 - (1 - 0.5) * (1 - 0.5) = 0.75
+                同样在完成上述计算后unify整个蒙板
+
+                孰优孰劣，还需要观察和试验，但是现在先把后一种方式写入代码中，后续再进行验证
 
             3:  信号矩阵混合方式：
                 暂无混合方式
@@ -1401,8 +1415,8 @@ class Operator:
         pass
 
     def set_parameter(self, stg_id,
-                      pars=None,
-                      opt_tag=None,
+                      pars: tuple = None,
+                      opt_tag: int =None,
                       par_boes=None,
                       sample_freq=None,
                       window_length=None,
@@ -1410,47 +1424,48 @@ class Operator:
         """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
 
-           :param stg_id:
-           :param pars:
-           :param opt_tag:
-           :param par_boes:
-           :return:
 
+           :param stg_id: 策略ID字符串，格式为x-N，表示第N个x类策略，x的取值范围为{'s', 't', 'r'},分别表示选股、择时和风控策略
+           :param pars: 需要设置的策略参数，格式为tuple
+           :param opt_tag: 优化类型，0：不参加优化，1：参加优化
+           :param par_boes: 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如[(0, 1), (0, 100), (0, 100)]
+           :param sample_freq: 采样频率，策略运行时的采样频率
+           :param window_length: 窗口长度：策略计算的前视窗口长度
+           :param data_types: 策略计算所需历史数据的数据类型
+           :return:
         """
-        if isinstance(stg_id, str):
-            l = stg_id.split('-')
-            if l[0].lower() == 's':
-                strategy = self.selecting[int(l[1])]
-            elif l[0].lower() == 't':
-                strategy = self.timing[int(l[1])]
-            elif l[0].lower() == 'r':
-                strategy = self.ricon[int(l[1])]
-            else:
-                print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
-                return None
-            if pars is not None:
-                if strategy.set_pars(pars):
-                    print(f'{strategy} parameter has been set to {pars}')
-                else:
-                    print(f'parameter setting error')
-            if opt_tag is not None:
-                strategy.set_opt_tag(opt_tag)
-                print(f'{strategy} optimizaiton tag has been set to {opt_tag}')
-            if par_boes is not None:
-                strategy.set_par_boes(par_boes)
-                print(f'{strategy} parameter space range or enum has been set to {par_boes}')
-            has_sf = sample_freq is not None
-            has_wl = window_length is not None
-            has_dt = data_types is not None
-            if has_sf or has_wl or has_dt:
-                strategy.set_hist_pars(sample_freq=sample_freq,
-                                       window_length=window_length,
-                                       data_types=data_types)
-                print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
-                      f'window length: {window_length} \ndata types: {data_types}')
+        assert isinstance(stg_id, str), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
+        l = stg_id.split('-')
+        if l[0].lower() == 's':
+            strategy = self.selecting[int(l[1])]
+        elif l[0].lower() == 't':
+            strategy = self.timing[int(l[1])]
+        elif l[0].lower() == 'r':
+            strategy = self.ricon[int(l[1])]
         else:
-            print('stg_id should be a string like \'t-0\', got {stg_id}')
-        pass
+            print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
+            return None
+        if pars is not None:
+            if strategy.set_pars(pars):
+                print(f'{strategy} parameter has been set to {pars}')
+            else:
+                print(f'parameter setting error')
+        if opt_tag is not None:
+            strategy.set_opt_tag(opt_tag)
+            print(f'{strategy} optimizaiton tag has been set to {opt_tag}')
+        if par_boes is not None:
+            strategy.set_par_boes(par_boes)
+            print(f'{strategy} parameter space range or enum has been set to {par_boes}')
+        has_sf = sample_freq is not None
+        has_wl = window_length is not None
+        has_dt = data_types is not None
+        if has_sf or has_wl or has_dt:
+            strategy.set_hist_pars(sample_freq=sample_freq,
+                                   window_length=window_length,
+                                   data_types=data_types)
+            print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
+                  f'window length: {window_length} \ndata types: {data_types}')
+
 
     # =================================================
     # 下面是Operation模块的公有方法：
