@@ -956,7 +956,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                 
                 关于穷举法的具体参数和输出，参见self._search_exhaustive()函数的docstring
             """
-            pars, perfs = _search_exhaustive(hist=hist_op, op=operator,
+            pars, perfs = _search_exhaustive(hist=hist_op,
+                                             op=operator,
+                                             cash_plan=context.cash_plan,
+                                             cost_rate=context.rate,
                                              output_count=context.output_count,
                                              keep_largest_perf=context.keep_largest_perf,
                                              step_size=50)
@@ -1019,7 +1022,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         optimization_log.write_record(pars, perfs)
 
 
-def _search_exhaustive(hist, op, output_count: int, keep_largest_perf: bool, step_size: int = 1):
+def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_largest_perf: bool, step_size: int = 1):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1060,7 +1063,8 @@ def _search_exhaustive(hist, op, output_count: int, keep_largest_perf: bool, ste
         looped_val = apply_loop(op_list=op.create_signal(hist),
                                 history_list=hist,
                                 visual=False,
-                                cash_plan=context.cash_plan,
+                                cash_plan=cash_plan,
+                                cost_rate=cost_rate,
                                 price_visual=False)
         # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
         # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
@@ -1174,7 +1178,7 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                 looped_val = apply_loop(op_list=op.create_signal(hist),
                                         history_list=hist,
                                         visual=False,
-                                        cash_plan=context.cash_plan,
+                                        cash_plan=cash_plan,
                                         price_visual=False)
                 # 使用评价函数计算参数模拟交易的评价值
                 perf = _eval_fv(looped_val)
