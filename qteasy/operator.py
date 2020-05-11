@@ -1610,9 +1610,7 @@ class Operator:
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
         # import time
         # 生成空的选股蒙板
-        sel_masks = []
-        shares = hist_data.shares
-        date_list = hist_data.hdates
+
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
@@ -1620,6 +1618,9 @@ class Operator:
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
+        sel_masks = []
+        shares = hist_data.shares
+        date_list = hist_data.hdates
         # 计时
         # st = time.clock()
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板

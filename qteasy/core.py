@@ -596,7 +596,7 @@ def apply_loop(op_list: pd.DataFrame,
     price = history_list.fillna(0).loc[op_list.index].values
     looped_dates = list(op_list.index)
     if cash_plan is None:
-        cash_plan = CashPlan(dates=looped_dates[0], amounts=100000, interest_rate=0)
+        cash_plan = CashPlan(dates=looped_dates[0], amounts=[100000], interest_rate=0)
     op_count = op.shape[0]  # 获取行数
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
@@ -840,8 +840,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         et = time.clock()
         run_time_prepare_data = (et - st) * 1000
         st = time.clock()  # 记录交易信号回测耗时
-        looped_values = apply_loop(op_list,
-                                   hist_loop.fillna(0),
+        looped_values = apply_loop(op_list=op_list,
+                                   history_list=hist_loop.fillna(0),
                                    cash_plan=context.cash_plan,
                                    moq=context.moq,
                                    visual=True,
@@ -1018,8 +1018,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             
             """
             raise NotImplementedError
-        optimization_log = Log()
-        optimization_log.write_record(pars, perfs)
+
+        print(f'==========OPTIMIZATION COMPLETE============')
+        # optimization_log = Log()
+        # optimization_log.write_record(pars, perfs)
 
 
 def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_largest_perf: bool, step_size: int = 1):
@@ -1053,7 +1055,7 @@ def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_l
     print('Searching Space has been created: ')
     space.info()
     print('Number of points to be checked: ', total)
-    print('Searching Starts...')
+    print('Searching Starts...\n')
 
     for par in it:
         op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
@@ -1061,7 +1063,7 @@ def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_l
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
         looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=hist,
+                                history_list=hist.to_dataframe(htype='close'),
                                 visual=False,
                                 cash_plan=cash_plan,
                                 cost_rate=cost_rate,
@@ -1076,12 +1078,11 @@ def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_l
         # debug
         i += 1.
         if i % 10 == 0:
-            print('current result:', np.round(i / total * 100, 3), '%', end='\r')
-
-            pool.cut(keep_largest_perf)
-            print('Searching finished, best results:', pool.perfs)
-            print('best parameters:', pool.pars)
-            return pool.pars, pool.perfs
+            print(f'current result:', np.round(i / total * 100, 3), '%')
+    pool.cut(keep_largest_perf)
+    print('Searching finished, best results:', pool.perfs)
+    print('best parameters:', pool.pars)
+    return pool.pars, pool.perfs
 
 
 def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50):
@@ -1129,10 +1130,10 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
         # debug
         i += 1.0
         print('current result:', np.round(i / total * 100, 3), '%', end='\r')
-        pool.cut(keep_largest_perf)
-        print('Searching finished, best results:', pool.perfs)
-        print('best parameters:', pool.pars)
-        return pool.pars, pool.perfs
+    pool.cut(keep_largest_perf)
+    print('Searching finished, best results:', pool.perfs)
+    print('best parameters:', pool.pars)
+    return pool.pars, pool.perfs
 
 
 def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
