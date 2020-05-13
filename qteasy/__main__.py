@@ -16,7 +16,7 @@ if __name__ == '__main__':
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
-    op.set_parameter('t-0', opt_tag=1)
+    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 100), (100, 200), (50, 150)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01],
                    investment_dates=['2013-04-01', '2017-07-01', '2019-07-01'],
@@ -33,7 +33,7 @@ if __name__ == '__main__':
                     '000300': (73, 120, 143)}
     # timing_pars2 = {'000100': (77, 148, 144),
     #                 '000200': (86, 198, 58)}
-    timing_pars3 = (73, 120, 143)
+    timing_pars3 = (90, 100, 110)
     timing_pars4 = (37, 44)
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')

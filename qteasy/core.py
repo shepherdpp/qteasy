@@ -421,11 +421,11 @@ class CashPlan:
         raise NotImplementedError
 
     def __str__(self):
-        """
+        """ 打印cash plan
 
         :return:
         """
-        return f'type(self)'
+        return self._cash_plan.__str__()
 
     def __getitem__(self, item):
         """
@@ -591,9 +591,10 @@ def apply_loop(op_list: pd.DataFrame,
 
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，知道找到更好的向量化执行方法
-
     op = op_list.values
     price = history_list.fillna(0).loc[op_list.index].values
+    # debug
+    # print(price)
     looped_dates = list(op_list.index)
     if cash_plan is None:
         cash_plan = CashPlan(dates=looped_dates[0], amounts=[100000], interest_rate=0)
@@ -614,12 +615,16 @@ def apply_loop(op_list: pd.DataFrame,
             cash += invest_dict[i]
             # print(f'In loop process, on loop position {i} cash increased from {cash - invest_dict[i]} to {cash}')
         # 调用loop_step()函数，计算下一期剩余资金、资产组合的持有份额、交易成本和下期资产总额
+        # debug
+        # print('before:', cash, amounts, op[i], price[i], cost_rate, moq)
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
                                                op=op[i], prices=price[i],
                                                rate=cost_rate,
                                                moq=moq)
         # 保存计算结果
+        # debug
+        # print('after:', cash, amounts, fee)
         cashes.append(cash)
         fees.append(fee)
         values.append(value)
@@ -627,10 +632,13 @@ def apply_loop(op_list: pd.DataFrame,
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=op_list.index,
                                  columns=op_list.columns)
+
     # 填充标量计算结果
     value_history['cash'] = cashes
     value_history['fee'] = fees
     value_history['value'] = values
+    # debug
+    # print(value_history)
     if visual:  # Visual参数为True时填充完整历史记录并
         complete_value = _get_complete_hist(looped_value=value_history,
                                             h_list=history_list,
@@ -945,6 +953,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。
         """
         how = context.opti_method
+        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
+        pars, perfs = 0, 0
         if how == 0:
             """ Exhausetive Search 穷举法
             
@@ -958,11 +968,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             """
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
-                                             cash_plan=context.cash_plan,
-                                             cost_rate=context.rate,
+                                             context=context,
                                              output_count=context.output_count,
                                              keep_largest_perf=context.keep_largest_perf,
-                                             step_size=50)
+                                             step_size=20)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -1019,12 +1028,14 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             """
             raise NotImplementedError
 
+        print('Searching finished, best results:', perfs)
+        print('best parameters:', pars)
         print(f'==========OPTIMIZATION COMPLETE============')
         # optimization_log = Log()
         # optimization_log.write_record(pars, perfs)
 
 
-def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_largest_perf: bool, step_size: int = 1):
+def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: bool, step_size: int = 1):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1055,6 +1066,8 @@ def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_l
     print('Searching Space has been created: ')
     space.info()
     print('Number of points to be checked: ', total)
+    print(f'Historical Data List: \n{hist.info()}')
+    print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
     print('Searching Starts...\n')
 
     for par in it:
@@ -1062,26 +1075,27 @@ def _search_exhaustive(hist, op, cash_plan, cost_rate, output_count: int, keep_l
         # debug
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
-        looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=hist.to_dataframe(htype='close'),
+        op_signal = op.create_signal(hist)
+        # debug
+        # print(op_signal)
+        looped_val = apply_loop(op_list=op_signal,
+                                history_list=hist.to_dataframe(htype='close').fillna(0),
                                 visual=False,
-                                cash_plan=cash_plan,
-                                cost_rate=cost_rate,
-                                price_visual=False)
+                                cash_plan=context.cash_plan,
+                                cost_rate=context.rate,
+                                price_visual=False,
+                                moq=context.moq)
         # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
         # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
         perf = _eval_fv(looped_val)
-        # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
-        # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
-        # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
         pool.in_pool(par, perf)
-        # debug
         i += 1.
         if i % 10 == 0:
-            print(f'current result:', np.round(i / total * 100, 3), '%')
+            print(f'current progress:', np.round(i / total * 100, 3), '%')
+    # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
+    # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
+    # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     pool.cut(keep_largest_perf)
-    print('Searching finished, best results:', pool.perfs)
-    print('best parameters:', pool.pars)
     return pool.pars, pool.perfs
 
 
