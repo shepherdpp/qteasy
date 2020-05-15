@@ -969,8 +969,6 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             output_count=context.output_count,
-                                             keep_largest_perf=context.keep_largest_perf,
                                              step_size=20)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
@@ -980,9 +978,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                 
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
             """
-            pars, perfs = _search_montecarlo(hist=hist_op, op=operator,
-                                             output_count=context.output_count,
-                                             keep_largest_perf=context.keep_largest_perf)
+            pars, perfs = _search_montecarlo(hist=hist_op,
+                                             op=operator,
+                                             context=context,
+                                             point_count=500)
         elif how == 2:  #
             """ Incremental Stepped Search 递进步长法
             
@@ -997,9 +996,12 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                 
                 关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
             """
-            pars, perfs = _search_incremental(hist=hist_op, op=operator,
-                                              output_count=context.output_count,
-                                              keep_largest_perf=context.keep_largest_perf)
+            pars, perfs = _search_incremental(hist=hist_op,
+                                              op=operator,
+                                              context=context,
+                                              init_step=16,
+                                              min_step=1,
+                                              inc_step=2)
         elif how == 3:
             """ GA method遗传算法
             
@@ -1035,7 +1037,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         # optimization_log.write_record(pars, perfs)
 
 
-def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: bool, step_size: int = 1):
+def _search_exhaustive(hist, op, context, step_size: int = 1):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1045,8 +1047,7 @@ def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: 
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
-        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
-        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param context, object, 用于存储优化参数的上下文对象
         :param step_size，int或list，搜索参数，搜索步长，在参数空间中提取参数的间隔，如果是int型，则在空间的每一个轴上
             取同样的步长，如果是list型，则取list中的数字分别作为每个轴的步长
     return: =====tuple对象，包含两个变量
@@ -1054,7 +1055,7 @@ def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: 
         pool.perfs 输出的参数组的评价分数
     """
 
-    pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
+    pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
 
@@ -1069,7 +1070,7 @@ def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: 
     print(f'Historical Data List: \n{hist.info()}')
     print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
     print('Searching Starts...\n')
-
+    history_list = hist.to_dataframe(htype='close').fillna(0)
     for par in it:
         op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
         # debug
@@ -1079,7 +1080,7 @@ def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: 
         # debug
         # print(op_signal)
         looped_val = apply_loop(op_list=op_signal,
-                                history_list=hist.to_dataframe(htype='close').fillna(0),
+                                history_list=history_list,
                                 visual=False,
                                 cash_plan=context.cash_plan,
                                 cost_rate=context.rate,
@@ -1095,11 +1096,11 @@ def _search_exhaustive(hist, op, context, output_count: int, keep_largest_perf: 
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
-    pool.cut(keep_largest_perf)
+    pool.cut(context.keep_largest_perf)
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50):
+def _search_montecarlo(hist, op, context, point_count: int = 50):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1108,15 +1109,14 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
-        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
-        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param context, object 用于存储相关参数的上下文对象
         :param point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
             取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
     return: =====tuple对象，包含两个变量
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 """
-    pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
+    pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
@@ -1128,30 +1128,32 @@ def _search_montecarlo(hist, op, output_count, keep_largest_perf, point_count=50
     space.info()
     print('Number of points to be checked:', total)
     print('Searching Starts...')
-
+    history_list = hist.to_dataframe(htype='close').fillna(0)
     for par in it:
         op.set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
         looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=hist,
+                                history_list=history_list,
                                 visual=False,
                                 cash_plan=context.cash_plan,
-                                price_visual=False)
+                                cost_rate=context.rate,
+                                price_visual=False,
+                                moq=context.moq)
         # 使用评价函数计算该组参数模拟交易的评价值
         perf = _eval_fv(looped_val)
         # 将参数和评价值传入pool对象并过滤掉最差的结果
         pool.in_pool(par, perf)
         # debug
         i += 1.0
-        print('current result:', np.round(i / total * 100, 3), '%', end='\r')
-    pool.cut(keep_largest_perf)
+        if i % 10 == 0:
+            print(f'current progress:', np.round(i / total * 100, 3), '%')
+    pool.cut(context.keep_largest_perf)
     print('Searching finished, best results:', pool.perfs)
     print('best parameters:', pool.pars)
     return pool.pars, pool.perfs
 
 
-def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
-                        inc_step=2, min_step=1):
+def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1):
     """ 最优参数搜索算法3: 递进搜索法
 
         该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
@@ -1172,12 +1174,12 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
         pool.perfs 输出的参数组的评价分数
 
 """
-    pool = ResultPool(output_count)  # 用于存储中间结果或最终结果的参数池对象
+    pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     spaces.append(Space(s_range, s_type))  # 将整个空间作为第一个子空间对象存储起来
     step_size = init_step  # 设定初始搜索步长
-
+    history_list = hist.to_dataframe(htype='close').fillna(0)
     while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
         i = 0
         while len(spaces) > 0:
@@ -1191,17 +1193,18 @@ def _search_incremental(hist, op, output_count, keep_largest_perf, init_step=16,
                 op.set_opt_par(par)  # 设置择时参数``
                 # 声称交易清淡病进行模拟交易生成交易记录
                 looped_val = apply_loop(op_list=op.create_signal(hist),
-                                        history_list=hist,
+                                        history_list=history_list,
                                         visual=False,
-                                        cash_plan=cash_plan,
+                                        cash_plan=context.cash_plan,
+                                        cost_rate=context.rate,
                                         price_visual=False)
                 # 使用评价函数计算参数模拟交易的评价值
                 perf = _eval_fv(looped_val)
                 pool.in_pool(par, perf)
                 i += 1.
-                print(
-                        'current result:', np.round(i / (total * output_count) * 100, 5), '%', end='\r')
-                pool.cut(keep_largest_perf)
+                if i % 10 == 0:
+                    print('current result:', np.round(i / (total * context.output_count) * 100, 5), '%')
+                pool.cut(context.keep_largest_perf)
                 print('Completed one round, creating new space set')
                 # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
                 for item in pool.pars:
