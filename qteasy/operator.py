@@ -1558,7 +1558,8 @@ class Operator:
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # debug
-        # print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
+        print(f'period start {hist_data.hdates[0]}, ends {hist_data.hdates[-1]}')
+        print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date, expect {self.max_window_length},' \

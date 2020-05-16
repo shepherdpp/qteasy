@@ -16,16 +16,17 @@ if __name__ == '__main__':
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
-    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 100), (100, 200), (50, 150)])
+    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 100), (150, 200), (100, 150)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01],
-                   investment_dates=['2011-04-01', '2017-07-01', '2019-07-01'],
+                   investment_dates=['2006-04-01', '2017-07-01', '2019-07-01'],
                    reference_data='000300.SH',
                    moq=0)
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
     cont.opti_method = 2
     cont.output_count = 15
+    cont.loop_period_start = '20040101'
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 

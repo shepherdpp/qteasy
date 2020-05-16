@@ -781,10 +781,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
              以上信息被记录到log对象中，并最终存储在磁盘上
         """
         operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
-        st = time.clock()  # 记录交易信号生成耗时
+        st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
-        et = time.clock()
-        run_time_prepare_data = (et - st) * 1000
+        et = time.time()
+        run_time_prepare_data = (et - st)
         if context:
             # 根据context对象的某个属性确定后续的步骤：要么从磁盘上读取当前持仓，要么手动输入当前持仓，要么假定当前持仓为0
             pass
@@ -794,7 +794,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         print(f'==================================== \n'
               f'        OPERATION SIGNALS\n'
               f'====================================')
-        print(f'\ntime consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n')
+        print(f'\ntime consumption for operate signal creation: {_time_str_format(run_time_prepare_data)}\n')
         print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
               f'Total signals generated: {len(op_list.index)}.')
         print(f'Operation signal for shares on {op_list.index[-1].date()}')
@@ -850,12 +850,12 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             
         """
         operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
-        st = time.clock()  # 记录交易信号生成耗时
+        st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         # print(f'created operation list is: \n{op_list}')
-        et = time.clock()
-        run_time_prepare_data = (et - st) * 1000
-        st = time.clock()  # 记录交易信号回测耗时
+        et = time.time()
+        run_time_prepare_data = (et - st)
+        st = time.time()  # 记录交易信号回测耗时
         looped_values = apply_loop(op_list=op_list,
                                    history_list=hist_loop.fillna(0),
                                    cash_plan=context.cash_plan,
@@ -863,8 +863,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
                                    visual=True,
                                    cost_rate=context.rate,
                                    price_visual=True)
-        et = time.clock()
-        run_time_loop_full = (et - st) * 1000
+        et = time.time()
+        run_time_loop_full = (et - st)
         # print('looped values result is: \n', looped_values)
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
         years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
@@ -892,8 +892,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
               f'           LOOPING RESULT\n'
               f'====================================')
         print(f'\nqteasy running mode: 1 - History back looping\n'
-              f'time consumption for operate signal creation: {run_time_prepare_data:.3f} ms\n'
-              f'time consumption for operation back looping: {run_time_loop_full:.3f} ms\n')
+              f'time consumption for operate signal creation: {_time_str_format(run_time_prepare_data)} ms\n'
+              f'time consumption for operation back looping: {_time_str_format(run_time_loop_full)} ms\n')
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {years} years.')
         print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
@@ -1045,6 +1045,44 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         # optimization_log.write_record(pars, perfs)
 
 
+def _time_str_format(t: float, format: str = '%h%m%s.ms'):
+    """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
+
+    :param t:
+    :param format:
+    :return:
+    """
+    assert isinstance(t, float), f'TypeError: t should be a float number, got {type(t)}'
+    assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
+    # debug
+    # print(f'time input is {t}')
+    str_element = []
+    if t >= 86400:
+        days = t // 86400
+        t = t - days * 86400
+        str_element.append(str(int(days)))
+        str_element.append('days')
+    if t >= 3600:
+        hours = t // 3600
+        t = t - hours * 3600
+        str_element.append(str(int(hours)))
+        str_element.append('hrs')
+    if t >= 60:
+        minutes = t // 60
+        t = t - minutes * 60
+        str_element.append(str(int(minutes)))
+        str_element.append('min')
+    if t >= 1:
+        seconds = np.round(t)
+        t = t - seconds
+        str_element.append(str(int(seconds)))
+        str_element.append('sec')
+    milliseconds = np.round(t * 1000, 3)
+    str_element.append(str(milliseconds))
+    str_element.append('ms')
+    return ''.join(str_element)
+
+
 def _search_exhaustive(hist, op, context, step_size: int = 1):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
@@ -1079,7 +1117,7 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
     print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
-    st = time.clock()
+    st = time.time()
     for par in it:
         op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
         # debug
@@ -1106,8 +1144,8 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     pool.cut(context.keep_largest_perf)
-    et = time.clock()
-    print(f'Optimization completed, total time consumption {(et - st) * 1000} seconds')
+    et = time.time()
+    print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
@@ -1140,7 +1178,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
     print('Number of points to be checked:', total)
     print('Searching Starts...')
     history_list = hist.to_dataframe(htype='close').fillna(0)
-    st = time.clock()
+    st = time.time()
     for par in it:
         op.set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
@@ -1160,8 +1198,8 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
         if i % 10 == 0:
             print(f'current progress:', np.round(i / total * 100, 3), '%')
     pool.cut(context.keep_largest_perf)
-    et = time.clock()
-    print(f'Optimization completed, total time consumption {(et - st) * 1000} seconds')
+    et = time.time()
+    print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
@@ -1200,7 +1238,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
     print(f'Total Number of points to be checked:', total_calc_rounds)
     print('Searching Starts...')
     i = 0
-    st = time.clock()
+    st = time.time()
     while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
         while spaces:
             space = spaces.pop()
@@ -1239,8 +1277,8 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
         # debug
         # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
         step_size = step_size // inc_step
-    et = time.clock()
-    print(f'Optimization completed, total time consumption {(et - st) * 1000} seconds')
+    et = time.time()
+    print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
