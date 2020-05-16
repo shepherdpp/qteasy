@@ -324,8 +324,8 @@ class CashPlan:
         :param ir: float, 无风险利率
         :return:
         """
-        assert isinstance(ir, float)
-        assert 0. < ir < 1.
+        assert isinstance(ir, float), f'The interest rate should be a float number, not {type(ir)}'
+        assert 0. < ir < 1., f'Interest rate should be between 0 and 1'
         self._ir = ir
 
     @property
@@ -418,7 +418,7 @@ class CashPlan:
 
         :return:
         """
-        raise NotImplementedError
+        return self.__str__()
 
     def __str__(self):
         """ 打印cash plan
@@ -699,7 +699,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     import time
     # 从context 上下文对象中读取运行所需的参数：
     # 股票清单或投资产品清单
-    shares = context.share_pool
+    # shares = context.share_pool
     reference_data = context.reference_data
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     if mode is None:
@@ -1045,11 +1045,10 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         # optimization_log.write_record(pars, perfs)
 
 
-def _time_str_format(t: float, format: str = '%h%m%s.ms'):
+def _time_str_format(t: float):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
-    :param t:
-    :param format:
+    :param t: 输入时间，单位为秒
     :return:
     """
     assert isinstance(t, float), f'TypeError: t should be a float number, got {type(t)}'
