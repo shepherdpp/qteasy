@@ -25,6 +25,7 @@ if __name__ == '__main__':
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
     cont.opti_method = 2
+    cont.output_count = 15
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 

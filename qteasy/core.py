@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import itertools
-from qteasy.utilfuncs import *
+import time
 from .history import HistoryPanel, get_history_panel
 
 
@@ -364,7 +364,7 @@ class CashPlan:
         """
         return self._cash_plan
 
-    def to_dict(self, keys: list = None):
+    def to_dict(self, keys: [list, np.ndarray] = None):
         """ 返回整个投资区间的投资计划，形式为字典。默认key为日期，如果明确给出keys，则使用参数keys
 
         :return: dict
@@ -704,8 +704,15 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     if mode is None:
         run_mode = context.mode
+        run_mode_text = context.mode_text
     else:
         run_mode = mode
+        if run_mode == 0:
+            run_mode_text = 'Real-time running mode'
+        elif run_mode == 1:
+            run_mode_text = 'Back-looping mode'
+        elif run_mode == 2:
+            run_mode_text = 'Optimization mode'
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     if history_data is None:
         # 用于交易信号生成的历史数据
@@ -751,6 +758,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     # ===============
     print(f'====================================\n'
           f'       RUNNING IN MODE {run_mode}\n'
+          f'      --{run_mode_text}--\n'
           f'====================================\n')
     if run_mode == 0:
         """进入实时信号生成模式：
@@ -1071,6 +1079,7 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
     print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
+    st = time.clock()
     for par in it:
         op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
         # debug
@@ -1097,6 +1106,8 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     pool.cut(context.keep_largest_perf)
+    et = time.clock()
+    print(f'Optimization completed, total time consumption {(et - st) * 1000} seconds')
     return pool.pars, pool.perfs
 
 
@@ -1129,6 +1140,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
     print('Number of points to be checked:', total)
     print('Searching Starts...')
     history_list = hist.to_dataframe(htype='close').fillna(0)
+    st = time.clock()
     for par in it:
         op.set_opt_par(par)  # 设置timing参数
         # 生成交易清单并进行模拟交易生成交易记录
@@ -1148,8 +1160,8 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
         if i % 10 == 0:
             print(f'current progress:', np.round(i / total * 100, 3), '%')
     pool.cut(context.keep_largest_perf)
-    print('Searching finished, best results:', pool.perfs)
-    print('best parameters:', pool.pars)
+    et = time.clock()
+    print(f'Optimization completed, total time consumption {(et - st) * 1000} seconds')
     return pool.pars, pool.perfs
 
 
@@ -1164,8 +1176,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
-        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
-        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param context, object, 用于存储交易相关参数的上下文对象
         :param init_step，int，初始步长，默认值为16
         :param inc_step，float，递进系数，每次重新搜索时，新的步长缩小的倍数
         :param min_step，int，终止步长，当搜索步长最小达到min_step时停止搜索
@@ -1177,16 +1188,27 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
-    spaces.append(Space(s_range, s_type))  # 将整个空间作为第一个子空间对象存储起来
+    base_space = Space(s_range, s_type)
+    spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
     step_size = init_step  # 设定初始搜索步长
     history_list = hist.to_dataframe(htype='close').fillna(0)
+    total_calc_rounds = int(base_space.size / init_step ** base_space.dim +
+                            context.output_count * (init_step - min_step + 1) / inc_step * 21)
+    print(f'Result pool prepared, {pool.capacity} total output will be generated')
+    print(f'Base Searching Space has been created: ')
+    base_space.info()
+    print(f'Total Number of points to be checked:', total_calc_rounds)
+    print('Searching Starts...')
+    i = 0
+    st = time.clock()
     while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
-        i = 0
-        while len(spaces) > 0:
+        while spaces:
             space = spaces.pop()
             # 逐个弹出子空间列表中的子空间，用当前步长在其中搜索最佳参数，所有子空间的最佳参数全部进入pool并筛选最佳参数集合
-            # debug
             it, total = space.extract(step_size, how='interval')
+            # debug
+            # print(f'Searching the {context.output_count - len(spaces)}th Space from the space list:\n{space.info()}')
+            # print(f'{total} points to be checked at step size {step_size}\n')
             for par in it:
                 # 以下所有函数都是循环内函数，需要进行提速优化
                 # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
@@ -1197,24 +1219,29 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
                                         visual=False,
                                         cash_plan=context.cash_plan,
                                         cost_rate=context.rate,
-                                        price_visual=False)
+                                        price_visual=False,
+                                        moq=context.moq)
                 # 使用评价函数计算参数模拟交易的评价值
                 perf = _eval_fv(looped_val)
                 pool.in_pool(par, perf)
-                i += 1.
-                if i % 10 == 0:
-                    print('current result:', np.round(i / (total * context.output_count) * 100, 5), '%')
-                pool.cut(context.keep_largest_perf)
-                print('Completed one round, creating new space set')
-                # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
-                for item in pool.pars:
-                    spaces.append(space.from_point(point=item, distance=step_size))
-                # 刷新搜索步长
-                step_size = step_size // inc_step
-                print('new spaces created, start next round with new step size', step_size)
-            print('Searching finished, best results:', pool.perfs)
-            print('best parameters:', pool.pars)
-            return pool.pars, pool.perfs
+                i += 1
+                if i % 30 == 0:
+                    print(f'current progress: {i}/{total_calc_rounds} finished,'
+                          f' {np.round(i / total_calc_rounds * 100, 4)}%')
+        # debug
+        # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
+        pool.cut(context.keep_largest_perf)
+        # print(f'Cut the pool to reduce its items to capacity, {pool.item_count} items left')
+        # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
+        for item in pool.pars:
+            spaces.append(base_space.from_point(point=item, distance=step_size))
+        # 刷新搜索步长
+        # debug
+        # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
+        step_size = step_size // inc_step
+    et = time.clock()
+    print(f'Optimization completed, total time consumption {(et - st) * 1000} seconds')
+    return pool.pars, pool.perfs
 
 
 def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
@@ -1458,6 +1485,14 @@ class ResultPool:
     def capacity(self):
         return self.__capacity
 
+    @property
+    def item_count(self):
+        return len(self.pars)
+
+    @property
+    def is_empty(self):
+        return len(self.pars) == 0
+
     def in_pool(self, item, perf):
         """将新的结果压入池中
 
@@ -1600,6 +1635,13 @@ class Space:
         s = []
         for axis in self._axes:
             s.append(axis.size)
+        return np.product(s)
+
+    @property
+    def count(self):
+        s = []
+        for axis in self._axes:
+            s.append(axis.count)
         return np.product(s)
 
     def info(self):
