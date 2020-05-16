@@ -6,8 +6,16 @@ import numpy as np
 import datetime
 import itertools
 import time
+import sys
 from .history import HistoryPanel, get_history_panel
 
+PROGRESS_BAR = {0: '                    ', 1: '-                   ', 2: '--                  ',
+                3: '---                 ', 4: '----                ', 5: '-----               ',
+                6: '------              ', 7: '-------             ', 8: '--------            ',
+                9: '---------           ', 10: '----------          ', 11: '-----------         ',
+                12: '------------        ', 13: '-------------       ', 14: '--------------      ',
+                15: '---------------     ', 16: '----------------    ', 17: '-----------------   ',
+                18: '------------------  ', 19: '------------------- ', 20: '--------------------'}
 
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -989,8 +997,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_montecarlo(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             point_count=500)
-        elif how == 2:  #
+                                             point_count=150000)
+        elif how == 2:
             """ Incremental Stepped Search 递进步长法
             
                 递进步长法本质上与穷举法是一样的。不过规避了穷举法的计算量过大的缺点，大大降低了计算量，同时在对最优结果的搜索能力上并未作出太大
@@ -1138,7 +1146,10 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
         pool.in_pool(par, perf)
         i += 1.
         if i % 10 == 0:
-            print(f'current progress:', np.round(i / total * 100, 3), '%')
+            progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                           f'{i}/{total} {np.round(i / total * 100, 3)}%'
+            sys.stdout.write(progress_str)
+            sys.stdout.flush()
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
@@ -1195,10 +1206,13 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
         # debug
         i += 1.0
         if i % 10 == 0:
-            print(f'current progress:', np.round(i / total * 100, 3), '%')
+            progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                           f'{i}/{total} {np.round(i / total * 100, 3)}%'
+            sys.stdout.write(progress_str)
+            sys.stdout.flush()
     pool.cut(context.keep_largest_perf)
     et = time.time()
-    print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
@@ -1262,9 +1276,11 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
                 perf = _eval_fv(looped_val)
                 pool.in_pool(par, perf)
                 i += 1
-                if i % 30 == 0:
-                    print(f'current progress: {i}/{total_calc_rounds} finished,'
-                          f' {np.round(i / total_calc_rounds * 100, 4)}%')
+                if i % 20 == 0:
+                    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                                   f'{i}/{total} {np.round(i / total * 100, 3)}%'
+                    sys.stdout.write(progress_str)
+                    sys.stdout.flush()
         # debug
         # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
         pool.cut(context.keep_largest_perf)
