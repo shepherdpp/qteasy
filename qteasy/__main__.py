@@ -18,8 +18,8 @@ if __name__ == '__main__':
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 100), (150, 200), (100, 150)])
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context(investment_amounts=[10000, 10000, 10000],
-                   investment_dates=['2006-04-01', '2010-07-01', '2019-07-01'],
+    cont = Context(investment_amounts=[10000, 10000, 10000, 10000],
+                   investment_dates=['2016-04-01', '2017-07-01', '2018-06-01', '2019-07-01'],
                    reference_data='000300.SH',
                    moq=0)
     cont.share_pool = '000300.SH'

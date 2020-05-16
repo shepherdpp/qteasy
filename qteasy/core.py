@@ -1072,7 +1072,7 @@ def _time_str_format(t: float):
         str_element.append(str(int(minutes)))
         str_element.append('min')
     if t >= 1:
-        seconds = np.round(t)
+        seconds = np.floor(t)
         t = t - seconds
         str_element.append(str(int(seconds)))
         str_element.append('sec')
