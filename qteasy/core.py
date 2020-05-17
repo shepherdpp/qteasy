@@ -9,13 +9,14 @@ import time
 import sys
 from .history import HistoryPanel, get_history_panel
 
-PROGRESS_BAR = {0: '                    ', 1: '-                   ', 2: '--                  ',
-                3: '---                 ', 4: '----                ', 5: '-----               ',
-                6: '------              ', 7: '-------             ', 8: '--------            ',
-                9: '---------           ', 10: '----------          ', 11: '-----------         ',
-                12: '------------        ', 13: '-------------       ', 14: '--------------      ',
-                15: '---------------     ', 16: '----------------    ', 17: '-----------------   ',
-                18: '------------------  ', 19: '------------------- ', 20: '--------------------'}
+PROGRESS_BAR = {0: '--------------------', 1: '>-------------------', 2: '>>------------------',
+                3: '>>>-----------------', 4: '>>>>----------------', 5: '>>>>>---------------',
+                6: '>>>>>>--------------', 7: '>>>>>>>-------------', 8: '>>>>>>>>------------',
+                9: '>>>>>>>>>-----------', 10: '>>>>>>>>>>----------', 11: '>>>>>>>>>>>---------',
+                12: '>>>>>>>>>>>>--------', 13: '>>>>>>>>>>>>>-------', 14: '>>>>>>>>>>>>>>------',
+                15: '>>>>>>>>>>>>>>>-----', 16: '>>>>>>>>>>>>>>>>----', 17: '>>>>>>>>>>>>>>>>>---',
+                18: '>>>>>>>>>>>>>>>>>>--', 19: '>>>>>>>>>>>>>>>>>>>-', 20: '>>>>>>>>>>>>>>>>>>>>'
+                }
 
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -813,7 +814,6 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             elif signal < 0:
                 print(f'Sell out {-signal * 100}% of current on holding stock!')
         print(f'\n===========END OF REPORT=============\n')
-
     elif run_mode == 1:
         """进入回测模式：
         
@@ -917,7 +917,6 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
               f'250 day volatility:  {volatility:.3f}\n'
               f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
         print(f'\n===========END OF REPORT=============\n')
-
     elif run_mode == 2:
         """进入策略优化模式：
         
@@ -985,7 +984,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             step_size=20)
+                                             step_size=10)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -1068,23 +1067,23 @@ def _time_str_format(t: float):
         days = t // 86400
         t = t - days * 86400
         str_element.append(str(int(days)))
-        str_element.append('days')
+        str_element.append('days ')
     if t >= 3600:
         hours = t // 3600
         t = t - hours * 3600
         str_element.append(str(int(hours)))
-        str_element.append('hrs')
+        str_element.append('hrs ')
     if t >= 60:
         minutes = t // 60
         t = t - minutes * 60
         str_element.append(str(int(minutes)))
-        str_element.append('min')
+        str_element.append('min ')
     if t >= 1:
         seconds = np.floor(t)
         t = t - seconds
         str_element.append(str(int(seconds)))
-        str_element.append('sec')
-    milliseconds = np.round(t * 1000, 3)
+        str_element.append('s ')
+    milliseconds = np.round(t * 1000)
     str_element.append(str(milliseconds))
     str_element.append('ms')
     return ''.join(str_element)
@@ -1144,18 +1143,22 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
         # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
         perf = _eval_fv(looped_val)
         pool.in_pool(par, perf)
-        i += 1.
+        i += 1
         if i % 10 == 0:
             progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                           f'{i}/{total} {np.round(i / total * 100, 3)}%'
+                           f'{i}/{total} {np.round(i / total * 100, 1)}%'
             sys.stdout.write(progress_str)
             sys.stdout.flush()
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
+    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
+                   f'{i}/{total} {100.0}%'
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
     pool.cut(context.keep_largest_perf)
     et = time.time()
-    print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
@@ -1204,7 +1207,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
         # 将参数和评价值传入pool对象并过滤掉最差的结果
         pool.in_pool(par, perf)
         # debug
-        i += 1.0
+        i += 1
         if i % 10 == 0:
             progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
                            f'{i}/{total} {np.round(i / total * 100, 3)}%'
@@ -1212,6 +1215,10 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
             sys.stdout.flush()
     pool.cut(context.keep_largest_perf)
     et = time.time()
+    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
+                   f'{i}/{total} {100.0}%'
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
@@ -1293,6 +1300,10 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
         # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
         step_size = step_size // inc_step
     et = time.time()
+    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
+                   f'{i}/{i} {100.0}%'
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
     print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 

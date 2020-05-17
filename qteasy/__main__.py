@@ -1,7 +1,5 @@
 from qteasy.core import *
-import qteasy.history as hs
 from qteasy.operator import *
-import pandas as pd
 
 if __name__ == '__main__':
     op = Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
@@ -24,7 +22,7 @@ if __name__ == '__main__':
                    moq=0)
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
-    cont.opti_method = 1
+    cont.opti_method = 0
     cont.output_count = 50
     cont.loop_period_start = '20040101'
     print(cont)
