@@ -8,6 +8,7 @@ import itertools
 import time
 import sys
 from .history import HistoryPanel, get_history_panel
+from concurrent.futures import ProcessPoolExecutor
 
 PROGRESS_BAR = {0: '--------------------', 1: '>-------------------', 2: '>>------------------',
                 3: '>>>-----------------', 4: '>>>>----------------', 5: '>>>>>---------------',
@@ -984,7 +985,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             step_size=10)
+                                             step_size=25)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -996,7 +997,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_montecarlo(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             point_count=150000)
+                                             point_count=150)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
             
@@ -1089,6 +1090,30 @@ def _time_str_format(t: float):
     return ''.join(str_element)
 
 
+def _get_parameter_performance(par, op, hist, history_list, context)-> float:
+    """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
+
+    :param par:
+    :param op:
+    :param hist:
+    :param history_list:
+    :param context:
+    :return: a tuple
+    """
+    op.set_opt_par(par)  # 设置需要优化的策略参数
+    # 生成交易清单并进行模拟交易生成交易记录
+    looped_val = apply_loop(op_list=op.create_signal(hist),
+                            history_list=history_list,
+                            visual=False,
+                            cash_plan=context.cash_plan,
+                            cost_rate=context.rate,
+                            price_visual=False,
+                            moq=context.moq)
+    # 使用评价函数计算该组参数模拟交易的评价值
+    perf = _eval_fv(looped_val)
+    return perf
+
+
 def _search_exhaustive(hist, op, context, step_size: int = 1):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
@@ -1106,6 +1131,8 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
     """
+
+    proc_pool = ProcessPoolExecutor()
 
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
@@ -1129,10 +1156,8 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
         # debug
         # print('Optimization, created par for op:', par)
         # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
-        op_signal = op.create_signal(hist)
-        # debug
         # print(op_signal)
-        looped_val = apply_loop(op_list=op_signal,
+        looped_val = apply_loop(op_list=op.create_signal(hist),
                                 history_list=history_list,
                                 visual=False,
                                 cash_plan=context.cash_plan,
@@ -1178,6 +1203,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 """
+    proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
@@ -1193,26 +1219,25 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     for par in it:
-        op.set_opt_par(par)  # 设置timing参数
-        # 生成交易清单并进行模拟交易生成交易记录
-        looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=history_list,
-                                visual=False,
-                                cash_plan=context.cash_plan,
-                                cost_rate=context.rate,
-                                price_visual=False,
-                                moq=context.moq)
-        # 使用评价函数计算该组参数模拟交易的评价值
-        perf = _eval_fv(looped_val)
-        # 将参数和评价值传入pool对象并过滤掉最差的结果
-        pool.in_pool(par, perf)
-        # debug
+        # 计算所有的参数par的性能表现分数
+        # =========testing for concurrent calculation
+        futures = proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context)
+        # =========original serial calculation
+        # perf = _get_parameter_performance(par=par,
+        #                                   op=op,
+        #                                   hist=hist,
+        #                                   history_list=history_list,
+        # #                                   context=context)
+        # pool.in_pool(par, perf)
         i += 1
         if i % 10 == 0:
             progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
                            f'{i}/{total} {np.round(i / total * 100, 3)}%'
             sys.stdout.write(progress_str)
             sys.stdout.flush()
+
+    proc_pool.shutdown(wait=True)
+
     pool.cut(context.keep_largest_perf)
     et = time.time()
     progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
@@ -1284,7 +1309,8 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
                 pool.in_pool(par, perf)
                 i += 1
                 if i % 20 == 0:
-                    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                    # TODO: bug: 此处当i>total时发生无法找到键值错误
+                    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(np.min(i / total * 20, 20))]}] ' \
                                    f'{i}/{total} {np.round(i / total * 100, 3)}%'
                     sys.stdout.write(progress_str)
                     sys.stdout.flush()

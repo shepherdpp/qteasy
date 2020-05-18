@@ -2,7 +2,7 @@ from qteasy.core import *
 from qteasy.operator import *
 
 if __name__ == '__main__':
-    op = Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
     # d = pd.read_csv('000300_I_N.txt', index_col='date')
     # d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
     # d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
@@ -15,6 +15,7 @@ if __name__ == '__main__':
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 100), (150, 200), (100, 150)])
+    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 100), (150, 200), (100, 150)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(investment_amounts=[10000, 0.01, 0.01, 0.01],
                    investment_dates=['2006-04-01', '2017-07-01', '2018-06-01', '2019-07-01'],
@@ -22,25 +23,25 @@ if __name__ == '__main__':
                    moq=0)
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
-    cont.opti_method = 0
+    cont.opti_method = 1
     cont.output_count = 50
     cont.loop_period_start = '20040101'
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
-    timing_pars1 = (96, 144, 50)
+    timing_pars1 = (45, 152, 134)
     timing_pars2 = {'000100': (77, 118, 144),
                     '000200': (75, 128, 138),
                     '000300': (73, 120, 143)}
     # timing_pars2 = {'000100': (77, 148, 144),
     #                 '000200': (86, 198, 58)}
-    timing_pars3 = (90, 100, 110)
+    timing_pars3 = (89, 153, 108)
     timing_pars4 = (37, 44)
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars=timing_pars3)
-    # op.set_parameter('t-1', pars=timing_pars3)
+    op.set_parameter('t-0', pars=timing_pars1)
+    op.set_parameter('t-1', pars=timing_pars3)
     # op.set_parameter('t-2', pars=timing_pars4)
     # op.set_parameter('t-3', pars=timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
