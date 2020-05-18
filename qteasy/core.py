@@ -8,7 +8,7 @@ import itertools
 import time
 import sys
 from .history import HistoryPanel, get_history_panel
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 PROGRESS_BAR = {0: '--------------------', 1: '>-------------------', 2: '>>------------------',
                 3: '>>>-----------------', 4: '>>>>----------------', 5: '>>>>>---------------',
@@ -997,7 +997,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_montecarlo(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             point_count=150)
+                                             point_count=150,
+                                             parallel=True)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
             
@@ -1114,7 +1115,7 @@ def _get_parameter_performance(par, op, hist, history_list, context)-> float:
     return perf
 
 
-def _search_exhaustive(hist, op, context, step_size: int = 1):
+def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = False):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1133,7 +1134,6 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     """
 
     proc_pool = ProcessPoolExecutor()
-
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
@@ -1151,29 +1151,33 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
-    for par in it:
-        op.set_opt_par(par)  # 设置Operator子对象的当前择时Timing参数
-        # debug
-        # print('Optimization, created par for op:', par)
-        # 使用Operator.create()生成交易清单，并传入Looper.apply_loop()生成模拟交易记录
-        # print(op_signal)
-        looped_val = apply_loop(op_list=op.create_signal(hist),
-                                history_list=history_list,
-                                visual=False,
-                                cash_plan=context.cash_plan,
-                                cost_rate=context.rate,
-                                price_visual=False,
-                                moq=context.moq)
-        # 使用Optimizer的eval()函数对模拟交易记录进行评价并得到评价结果
-        # 交易结果评价的方法由method参数指定，评价函数的输出为一个实数
-        perf = _eval_fv(looped_val)
-        pool.in_pool(par, perf)
-        i += 1
-        if i % 10 == 0:
-            progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                           f'{i}/{total} {np.round(i / total * 100, 1)}%'
-            sys.stdout.write(progress_str)
-            sys.stdout.flush()
+    if parallel:
+        # 启用并行计算
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
+                   it}
+        for f in as_completed(futures):
+            pool.in_pool(futures[f], f.result())
+            i += 1
+            if i % 10 == 0:
+                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                               f'{i}/{total} {np.round(i / total * 100, 1)}%'
+                sys.stdout.write(progress_str)
+                sys.stdout.flush()
+
+    else:
+        for par in it:
+            perf = _get_parameter_performance(par=par,
+                                              op=op,
+                                              hist=hist,
+                                              history_list=history_list,
+                                              context=context)
+            pool.in_pool(par, perf)
+            i += 1
+            if i % 10 == 0:
+                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                               f'{i}/{total} {np.round(i / total * 100, 1)}%'
+                sys.stdout.write(progress_str)
+                sys.stdout.flush()
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
@@ -1187,7 +1191,7 @@ def _search_exhaustive(hist, op, context, step_size: int = 1):
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, op, context, point_count: int = 50):
+def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool = False):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1218,26 +1222,33 @@ def _search_montecarlo(hist, op, context, point_count: int = 50):
     print('Searching Starts...')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
-    for par in it:
-        # 计算所有的参数par的性能表现分数
-        # =========testing for concurrent calculation
-        futures = proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context)
-        # =========original serial calculation
-        # perf = _get_parameter_performance(par=par,
-        #                                   op=op,
-        #                                   hist=hist,
-        #                                   history_list=history_list,
-        # #                                   context=context)
-        # pool.in_pool(par, perf)
-        i += 1
-        if i % 10 == 0:
-            progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                           f'{i}/{total} {np.round(i / total * 100, 3)}%'
-            sys.stdout.write(progress_str)
-            sys.stdout.flush()
-
-    proc_pool.shutdown(wait=True)
-
+    if parallel:
+        # 启用并行计算
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
+                   it}
+        for f in as_completed(futures):
+            pool.in_pool(futures[f], f.result())
+            i += 1
+            if i % 10 == 0:
+                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                               f'{i}/{total} {np.round(i / total * 100, 1)}%'
+                sys.stdout.write(progress_str)
+                sys.stdout.flush()
+    else:
+        # 禁用并行计算
+        for par in it:
+            perf = _get_parameter_performance(par=par,
+                                              op=op,
+                                              hist=hist,
+                                              history_list=history_list,
+                                              context=context)
+            pool.in_pool(par, perf)
+            i += 1
+            if i % 10 == 0:
+                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                               f'{i}/{total} {np.round(i / total * 100, 3)}%'
+                sys.stdout.write(progress_str)
+                sys.stdout.flush()
     pool.cut(context.keep_largest_perf)
     et = time.time()
     progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
@@ -1292,28 +1303,37 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
             # debug
             # print(f'Searching the {context.output_count - len(spaces)}th Space from the space list:\n{space.info()}')
             # print(f'{total} points to be checked at step size {step_size}\n')
-            for par in it:
-                # 以下所有函数都是循环内函数，需要进行提速优化
-                # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
-                op.set_opt_par(par)  # 设置择时参数``
-                # 声称交易清淡病进行模拟交易生成交易记录
-                looped_val = apply_loop(op_list=op.create_signal(hist),
-                                        history_list=history_list,
-                                        visual=False,
-                                        cash_plan=context.cash_plan,
-                                        cost_rate=context.rate,
-                                        price_visual=False,
-                                        moq=context.moq)
-                # 使用评价函数计算参数模拟交易的评价值
-                perf = _eval_fv(looped_val)
-                pool.in_pool(par, perf)
-                i += 1
-                if i % 20 == 0:
-                    # TODO: bug: 此处当i>total时发生无法找到键值错误
-                    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(np.min(i / total * 20, 20))]}] ' \
-                                   f'{i}/{total} {np.round(i / total * 100, 3)}%'
-                    sys.stdout.write(progress_str)
-                    sys.stdout.flush()
+            if parallel:
+                # 启用并行计算
+                futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for
+                           par in
+                           it}
+                for f in as_completed(futures):
+                    pool.in_pool(futures[f], f.result())
+                    i += 1
+                    if i % 10 == 0:
+                        progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                                       f'{i}/{total} {np.round(i / total * 100, 1)}%'
+                        sys.stdout.write(progress_str)
+                        sys.stdout.flush()
+            else:
+                # 禁用并行计算
+                for par in it:
+                    # 以下所有函数都是循环内函数，需要进行提速优化
+                    # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
+                    perf = _get_parameter_performance(par=par,
+                                                      op=op,
+                                                      hist=hist,
+                                                      history_list=history_list,
+                                                      context=context)
+                    pool.in_pool(par, perf)
+                    i += 1
+                    if i % 20 == 0:
+                        # TODO: bug: 此处当i>total时发生无法找到键值错误
+                        progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
+                                       f'{i}/{total} {np.round(i / total * 100, 3)}%'
+                        sys.stdout.write(progress_str)
+                        sys.stdout.flush()
         # debug
         # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
         pool.cut(context.keep_largest_perf)
