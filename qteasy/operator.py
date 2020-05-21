@@ -1439,13 +1439,14 @@ class Operator:
             print('blender_type should be a string')
         pass
 
-    def set_parameter(self, stg_id,
-                      pars: tuple = None,
-                      opt_tag: int =None,
-                      par_boes=None,
-                      sample_freq=None,
-                      window_length=None,
-                      data_types=None):
+    def set_parameter(self,
+                      stg_id: str,
+                      pars: [tuple, dict] = None,
+                      opt_tag: int = None,
+                      par_boes: tuple = None,
+                      sample_freq: str = None,
+                      window_length: int = None,
+                      data_types: str = None):
         """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
 
@@ -1746,7 +1747,7 @@ class Operator:
         else:  # 另外两种混合方式都需要用到蒙板累加，因此一同处理
             l_count = len(ls_masks)
             # print 'the first long/short mask is\n', ls_masks[-1]
-            if blndr == 'cumulate':
+            if blndr == 'cumulative':
                 # cumulate方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，只有所有蒙板均看空时，最终结果才看空
                 # 所有蒙板的权重相同，因此，如果一共五个蒙板三个看多两个看空时，持仓为60%
                 # print 'long short masks are merged by', blndr, 'result as\n', l_m / l_count

@@ -10,14 +10,29 @@ import sys
 from .history import HistoryPanel, get_history_panel
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-PROGRESS_BAR = {0: '--------------------', 1: '>-------------------', 2: '>>------------------',
-                3: '>>>-----------------', 4: '>>>>----------------', 5: '>>>>>---------------',
-                6: '>>>>>>--------------', 7: '>>>>>>>-------------', 8: '>>>>>>>>------------',
-                9: '>>>>>>>>>-----------', 10: '>>>>>>>>>>----------', 11: '>>>>>>>>>>>---------',
-                12: '>>>>>>>>>>>>--------', 13: '>>>>>>>>>>>>>-------', 14: '>>>>>>>>>>>>>>------',
-                15: '>>>>>>>>>>>>>>>-----', 16: '>>>>>>>>>>>>>>>>----', 17: '>>>>>>>>>>>>>>>>>---',
-                18: '>>>>>>>>>>>>>>>>>>--', 19: '>>>>>>>>>>>>>>>>>>>-', 20: '>>>>>>>>>>>>>>>>>>>>'
+PROGRESS_BAR = {0: '----------------------------------------', 1: '>---------------------------------------',
+                2: '>>--------------------------------------', 3: '>>>-------------------------------------',
+                4: '>>>>------------------------------------', 5: '>>>>>-----------------------------------',
+                6: '>>>>>>----------------------------------', 7: '>>>>>>>---------------------------------',
+                8: '>>>>>>>>--------------------------------', 9: '>>>>>>>>>-------------------------------',
+                10: '>>>>>>>>>>------------------------------', 11: '>>>>>>>>>>>-----------------------------',
+                12: '>>>>>>>>>>>>----------------------------', 13: '>>>>>>>>>>>>>---------------------------',
+                14: '>>>>>>>>>>>>>>--------------------------', 15: '>>>>>>>>>>>>>>>-------------------------',
+                16: '>>>>>>>>>>>>>>>>------------------------', 17: '>>>>>>>>>>>>>>>>>-----------------------',
+                18: '>>>>>>>>>>>>>>>>>>----------------------', 19: '>>>>>>>>>>>>>>>>>>>---------------------',
+                20: '>>>>>>>>>>>>>>>>>>>>--------------------', 21: '>>>>>>>>>>>>>>>>>>>>>-------------------',
+                22: '>>>>>>>>>>>>>>>>>>>>>>------------------', 23: '>>>>>>>>>>>>>>>>>>>>>>>-----------------',
+                24: '>>>>>>>>>>>>>>>>>>>>>>>>----------------', 25: '>>>>>>>>>>>>>>>>>>>>>>>>>---------------',
+                26: '>>>>>>>>>>>>>>>>>>>>>>>>>>--------------', 27: '>>>>>>>>>>>>>>>>>>>>>>>>>>>-------------',
+                28: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>------------', 29: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-----------',
+                30: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>----------', 31: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>---------',
+                32: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>--------', 33: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-------',
+                34: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>------', 35: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-----',
+                36: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>----', 37: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>---',
+                38: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>--', 39: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-',
+                40: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
                 }
+
 
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -1091,7 +1106,7 @@ def _time_str_format(t: float):
     return ''.join(str_element)
 
 
-def _get_parameter_performance(par, op, hist, history_list, context)-> float:
+def _get_parameter_performance(par, op, hist, history_list, context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
     :param par:
@@ -1115,7 +1130,18 @@ def _get_parameter_performance(par, op, hist, history_list, context)-> float:
     return perf
 
 
-def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = False):
+def _progress_bar(prog: int = 40, total: int = 40):
+    """根据输入的数字生成进度条字符串并刷新
+
+    """
+    if prog > total: prog = total
+    progress_str = f'\r \rOptimization progress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
+                   f'{prog}/{total} {np.round(prog / total * 100, 1)}%'
+    sys.stdout.write(progress_str)
+    sys.stdout.flush()
+
+
+def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = True):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1159,11 +1185,7 @@ def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = F
             pool.in_pool(futures[f], f.result())
             i += 1
             if i % 10 == 0:
-                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                               f'{i}/{total} {np.round(i / total * 100, 1)}%'
-                sys.stdout.write(progress_str)
-                sys.stdout.flush()
-
+                _progress_bar(i, total)
     else:
         for par in it:
             perf = _get_parameter_performance(par=par,
@@ -1174,24 +1196,18 @@ def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = F
             pool.in_pool(par, perf)
             i += 1
             if i % 10 == 0:
-                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                               f'{i}/{total} {np.round(i / total * 100, 1)}%'
-                sys.stdout.write(progress_str)
-                sys.stdout.flush()
+                _progress_bar(i, total)
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
-    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
-                   f'{i}/{total} {100.0}%'
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
+    _progress_bar()
     pool.cut(context.keep_largest_perf)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool = False):
+def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool = True):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1230,10 +1246,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
             pool.in_pool(futures[f], f.result())
             i += 1
             if i % 10 == 0:
-                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                               f'{i}/{total} {np.round(i / total * 100, 1)}%'
-                sys.stdout.write(progress_str)
-                sys.stdout.flush()
+                _progress_bar(i, total)
     else:
         # 禁用并行计算
         for par in it:
@@ -1245,21 +1258,15 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
             pool.in_pool(par, perf)
             i += 1
             if i % 10 == 0:
-                progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                               f'{i}/{total} {np.round(i / total * 100, 3)}%'
-                sys.stdout.write(progress_str)
-                sys.stdout.flush()
+                _progress_bar(i, total)
     pool.cut(context.keep_largest_perf)
     et = time.time()
-    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
-                   f'{i}/{total} {100.0}%'
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
+    _progress_bar()
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
-def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1):
+def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1, parallel: bool = True):
     """ 最优参数搜索算法3: 递进搜索法
 
         该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
@@ -1279,6 +1286,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
         pool.perfs 输出的参数组的评价分数
 
 """
+    proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.get_opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
@@ -1291,7 +1299,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
     print(f'Result pool prepared, {pool.capacity} total output will be generated')
     print(f'Base Searching Space has been created: ')
     base_space.info()
-    print(f'Total Number of points to be checked:', total_calc_rounds)
+    print(f'Estimated Total Number of points to be checked:', total_calc_rounds)
     print('Searching Starts...')
     i = 0
     st = time.time()
@@ -1306,16 +1314,12 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
             if parallel:
                 # 启用并行计算
                 futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for
-                           par in
-                           it}
+                           par in it}
                 for f in as_completed(futures):
                     pool.in_pool(futures[f], f.result())
                     i += 1
                     if i % 10 == 0:
-                        progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                                       f'{i}/{total} {np.round(i / total * 100, 1)}%'
-                        sys.stdout.write(progress_str)
-                        sys.stdout.flush()
+                        _progress_bar(i, total)
             else:
                 # 禁用并行计算
                 for par in it:
@@ -1329,11 +1333,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
                     pool.in_pool(par, perf)
                     i += 1
                     if i % 20 == 0:
-                        # TODO: bug: 此处当i>total时发生无法找到键值错误
-                        progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[int(i / total * 20)]}] ' \
-                                       f'{i}/{total} {np.round(i / total * 100, 3)}%'
-                        sys.stdout.write(progress_str)
-                        sys.stdout.flush()
+                        _progress_bar(i, total)
         # debug
         # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
         pool.cut(context.keep_largest_perf)
@@ -1346,11 +1346,8 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1)
         # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
         step_size = step_size // inc_step
     et = time.time()
-    progress_str = f'\r \rOptimization progress:[{PROGRESS_BAR[20]}] ' \
-                   f'{i}/{i} {100.0}%'
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
-    print(f'Optimization completed, total time consumption: {_time_str_format(et - st)}')
+    _progress_bar()
+    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 

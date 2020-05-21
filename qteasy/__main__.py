@@ -29,19 +29,19 @@ if __name__ == '__main__':
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
-    timing_pars1 = (45, 152, 134)
+    timing_pars1 = (39, 160, 111)
     timing_pars2 = {'000100': (77, 118, 144),
                     '000200': (75, 128, 138),
                     '000300': (73, 120, 143)}
     # timing_pars2 = {'000100': (77, 148, 144),
     #                 '000200': (86, 198, 58)}
-    timing_pars3 = (89, 153, 108)
+    timing_pars3 = (80, 152, 101)
     timing_pars4 = (37, 44)
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
-    op.set_blender('timing', 'pos-1')
-    op.set_parameter('t-0', pars=timing_pars1)
-    op.set_parameter('t-1', pars=timing_pars3)
+    op.set_blender('timing', 'cumulative')
+    op.set_parameter(stg_id='t-0', pars=timing_pars1)
+    op.set_parameter(stg_id='t-1', pars=timing_pars3)
     # op.set_parameter('t-2', pars=timing_pars4)
     # op.set_parameter('t-3', pars=timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
