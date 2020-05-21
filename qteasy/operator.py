@@ -1443,7 +1443,7 @@ class Operator:
                       stg_id: str,
                       pars: [tuple, dict] = None,
                       opt_tag: int = None,
-                      par_boes: tuple = None,
+                      par_boes: [tuple, list] = None,
                       sample_freq: str = None,
                       window_length: int = None,
                       data_types: str = None):

@@ -6,6 +6,7 @@ import numpy as np
 import datetime
 import itertools
 import time
+import math
 import sys
 from .history import HistoryPanel, get_history_panel
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -1130,13 +1131,14 @@ def _get_parameter_performance(par, op, hist, history_list, context) -> float:
     return perf
 
 
-def _progress_bar(prog: int = 40, total: int = 40):
+def _progress_bar(prog: int = 40, total: int = 40, comments: str = ''):
     """根据输入的数字生成进度条字符串并刷新
 
     """
-    if prog > total: prog = total
+    if prog > total:
+        prog = total
     progress_str = f'\r \rOptimization progress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                   f'{prog}/{total} {np.round(prog / total * 100, 1)}%'
+                   f'{prog} of {total} {np.round(prog / total * 100, 1)}%  {comments}'
     sys.stdout.write(progress_str)
     sys.stdout.flush()
 
@@ -1261,7 +1263,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
                 _progress_bar(i, total)
     pool.cut(context.keep_largest_perf)
     et = time.time()
-    _progress_bar()
+    _progress_bar(total, total)
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
@@ -1294,8 +1296,10 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
     spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
     step_size = init_step  # 设定初始搜索步长
     history_list = hist.to_dataframe(htype='close').fillna(0)
-    total_calc_rounds = int(base_space.size / init_step ** base_space.dim +
-                            context.output_count * (init_step - min_step + 1) / inc_step * 21)
+    round_count = math.log(init_step / min_step) / math.log(inc_step)
+    round_size = context.output_count * 5 ** base_space.dim
+    first_round_size = base_space.size / init_step ** base_space.dim
+    total_calc_rounds = int(first_round_size + round_count * round_size)
     print(f'Result pool prepared, {pool.capacity} total output will be generated')
     print(f'Base Searching Space has been created: ')
     base_space.info()
@@ -1319,7 +1323,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
                     pool.in_pool(futures[f], f.result())
                     i += 1
                     if i % 10 == 0:
-                        _progress_bar(i, total)
+                        _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
             else:
                 # 禁用并行计算
                 for par in it:
@@ -1333,7 +1337,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
                     pool.in_pool(par, perf)
                     i += 1
                     if i % 20 == 0:
-                        _progress_bar(i, total)
+                        _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
         # debug
         # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
         pool.cut(context.keep_largest_perf)
@@ -1344,9 +1348,10 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
         # 刷新搜索步长
         # debug
         # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
-        step_size = step_size // inc_step
+        step_size //= inc_step
+        _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
     et = time.time()
-    _progress_bar()
+    _progress_bar(i, i, f'step size: {step_size}')
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
