@@ -1570,26 +1570,21 @@ class Operator:
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
-        for stg in self.selecting:
-            self._selecting_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
-            # debug
-            # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
-            #      f'{len(hist_data.hdates) - first_cash_pos}'
-            #      f' rows for selecting strategies')
-        for stg in self.timing:
-            # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
-            start_pos = first_cash_pos - stg.window_length
-            self._timing_history_data.append(hist_data[stg.data_types, :, start_pos:])
-            # debug
-            # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
-            #      f'{len(hist_data.hdates) - first_cash_pos}'
-            #      f' rows for timing strategies')
-        for stg in self.ricon:
-            self._ricon_history_data.append(hist_data[stg.data_types, :, first_cash_pos:])
-            # debug
-            # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
-            #      f'{len(hist_data.hdates) - first_cash_pos}'
-            #      f' rows for ricon strategies')
+        self._selecting_history_data = [hist_data[stg.data_types, :, first_cash_pos:] for stg in self.selecting]
+        # debug
+        print(f'slicing historical data \n{self._selecting_history_data}')
+        # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
+        self._timing_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                         for stg in self.timing]
+        # debug
+        # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+        #      f'{len(hist_data.hdates) - first_cash_pos}'
+        #      f' rows for timing strategies')
+        self._ricon_history_data = [hist_data[stg.data_types, :, first_cash_pos:] for stg in self.ricon]
+        # debug
+        # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
+        #      f'{len(hist_data.hdates) - first_cash_pos}'
+        #      f' rows for ricon strategies')
 
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
     # TODO: 1，Buy-开多仓，2，sell-平多仓，3，sel_short-开空仓，4，buy_to_cover-平空仓

@@ -11,27 +11,27 @@ import sys
 from .history import HistoryPanel, get_history_panel
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-PROGRESS_BAR = {0: '----------------------------------------', 1: '>---------------------------------------',
-                2: '>>--------------------------------------', 3: '>>>-------------------------------------',
-                4: '>>>>------------------------------------', 5: '>>>>>-----------------------------------',
-                6: '>>>>>>----------------------------------', 7: '>>>>>>>---------------------------------',
-                8: '>>>>>>>>--------------------------------', 9: '>>>>>>>>>-------------------------------',
-                10: '>>>>>>>>>>------------------------------', 11: '>>>>>>>>>>>-----------------------------',
-                12: '>>>>>>>>>>>>----------------------------', 13: '>>>>>>>>>>>>>---------------------------',
-                14: '>>>>>>>>>>>>>>--------------------------', 15: '>>>>>>>>>>>>>>>-------------------------',
-                16: '>>>>>>>>>>>>>>>>------------------------', 17: '>>>>>>>>>>>>>>>>>-----------------------',
-                18: '>>>>>>>>>>>>>>>>>>----------------------', 19: '>>>>>>>>>>>>>>>>>>>---------------------',
-                20: '>>>>>>>>>>>>>>>>>>>>--------------------', 21: '>>>>>>>>>>>>>>>>>>>>>-------------------',
-                22: '>>>>>>>>>>>>>>>>>>>>>>------------------', 23: '>>>>>>>>>>>>>>>>>>>>>>>-----------------',
-                24: '>>>>>>>>>>>>>>>>>>>>>>>>----------------', 25: '>>>>>>>>>>>>>>>>>>>>>>>>>---------------',
-                26: '>>>>>>>>>>>>>>>>>>>>>>>>>>--------------', 27: '>>>>>>>>>>>>>>>>>>>>>>>>>>>-------------',
-                28: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>------------', 29: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-----------',
-                30: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>----------', 31: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>---------',
-                32: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>--------', 33: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-------',
-                34: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>------', 35: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-----',
-                36: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>----', 37: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>---',
-                38: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>--', 39: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>-',
-                40: '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+PROGRESS_BAR = {0: '----------------------------------------', 1: '#---------------------------------------',
+                2: '##--------------------------------------', 3: '###-------------------------------------',
+                4: '####------------------------------------', 5: '#####-----------------------------------',
+                6: '######----------------------------------', 7: '#######---------------------------------',
+                8: '########--------------------------------', 9: '#########-------------------------------',
+                10: '##########------------------------------', 11: '###########-----------------------------',
+                12: '############----------------------------', 13: '#############---------------------------',
+                14: '##############--------------------------', 15: '###############-------------------------',
+                16: '################------------------------', 17: '#################-----------------------',
+                18: '##################----------------------', 19: '###################---------------------',
+                20: '####################--------------------', 21: '#####################-------------------',
+                22: '######################------------------', 23: '#######################-----------------',
+                24: '########################----------------', 25: '#########################---------------',
+                26: '##########################--------------', 27: '###########################-------------',
+                28: '############################------------', 29: '#############################-----------',
+                30: '##############################----------', 31: '###############################---------',
+                32: '################################--------', 33: '#################################-------',
+                34: '##################################------', 35: '###################################-----',
+                36: '####################################----', 37: '#####################################---',
+                38: '######################################--', 39: '#######################################-',
+                40: '########################################'
                 }
 
 
@@ -1001,7 +1001,8 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             step_size=25)
+                                             step_size=(1, 0.01),
+                                             parallel=True)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -1013,7 +1014,7 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
             pars, perfs = _search_montecarlo(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             point_count=150,
+                                             point_count=1500,
                                              parallel=True)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
@@ -1138,12 +1139,12 @@ def _progress_bar(prog: int = 40, total: int = 40, comments: str = ''):
     if prog > total:
         prog = total
     progress_str = f'\r \rOptimization progress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                   f'{prog} of {total} {np.round(prog / total * 100, 1)}%  {comments}'
+                   f' {prog}/{total}. {np.round(prog / total * 100, 1)}%  {comments}'
     sys.stdout.write(progress_str)
     sys.stdout.flush()
 
 
-def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = True):
+def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: bool = True):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1202,7 +1203,7 @@ def _search_exhaustive(hist, op, context, step_size: int = 1, parallel: bool = T
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
-    _progress_bar()
+    _progress_bar(i, i)
     pool.cut(context.keep_largest_perf)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
@@ -1343,8 +1344,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
         pool.cut(context.keep_largest_perf)
         # print(f'Cut the pool to reduce its items to capacity, {pool.item_count} items left')
         # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
-        for item in pool.pars:
-            spaces.append(base_space.from_point(point=item, distance=step_size))
+        spaces.append(base_space.from_point(point=item, distance=step_size) for item in pool.pars)
         # 刷新搜索步长
         # debug
         # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
@@ -1563,18 +1563,20 @@ def _eval_operation(op_list, looped_value, cash_plan):
 
 
 def _space_around_centre(space, centre, radius, ignore_enums=True):
-    """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间"""
-    '如果参数空间中包含枚举类型维度，可以予以忽略或其他操作'
+    """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间
+
+    如果参数空间中包含枚举类型维度，可以予以忽略或其他操作
+    """
     return space.from_point(point=centre, distance=radius, ignore_enums=ignore_enums)
 
 
 class ResultPool:
     """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
 
-    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序'
-    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序'
-    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序'
-    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右'
+    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序
+    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序
+    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序
+    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右
     即使在结果池很小，总数据量很大的情况下，循环排序的速度也慢于单次排序修剪
     """
 
@@ -1633,11 +1635,8 @@ class ResultPool:
             arr = np.array(per).argsort()[-cap:]
         else:
             arr = np.array(per).argsort()[:cap]
-        poo2 = []
-        per2 = []
-        for i in arr:
-            poo2.append(poo[i])
-            per2.append(per[i])
+        poo2 = [poo[i] for i in arr]
+        per2 = [per[i] for i in arr]
         self.__pool = poo2
         self.__perfs = per2
 
@@ -1718,42 +1717,36 @@ class Space:
     @property
     def types(self):
         """List of types of axis of the space"""
-        types = []
         if self.dim > 0:
-            for i in range(self.dim):
-                types.append(self._axes[i].axis_type)
-        return types
+            types = [self._axes[i].axis_type for i in range(self.dim)]
+            return types
+        else:
+            return None
 
     @property
     def boes(self):
         """List of bounds of axis of the space"""
-        boes = []
         if self.dim > 0:
-            for i in range(self.dim):
-                boes.append(self._axes[i].axis_boe)
-        return boes
+            boes = [self._axes[i].axis_boe for i in range(self.dim)]
+            return boes
+        else:
+            return None
 
     @property
     def shape(self):
         """输出空间的维度大小，输出形式为元组，每个元素代表对应维度的元素个数"""
-        s = []
-        for axis in self._axes:
-            s.append(axis.count)
+        s = [axis.count for axis in self._axes]
         return tuple(s)
 
     @property
     def size(self):
         """输出空间的尺度，输出每个维度的跨度之乘积"""
-        s = []
-        for axis in self._axes:
-            s.append(axis.size)
+        s = [axis.size for axis in self._axes]
         return np.product(s)
 
     @property
     def count(self):
-        s = []
-        for axis in self._axes:
-            s.append(axis.count)
+        s = [axis.count for axis in self._axes]
         return np.product(s)
 
     def info(self):

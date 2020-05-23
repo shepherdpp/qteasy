@@ -961,14 +961,13 @@ def _list_or_slice(unknown_input, str_int_dict):
         if is_list_of_bool:
             return np.array(str_int_dict.values())[unknown_input]
         else:
-            res = []
-            for list_item in unknown_input:  # convert all items into a number:
-                if is_list_of_str:
-                    res.append(str_int_dict[list_item])
-                elif is_list_of_int:
-                    res.append(list_item)
-                else:
-                    return None
+            # convert all items into a number:
+            if is_list_of_str:
+                res = [str_int_dict[list_item] for list_item in unknown_input]
+            elif is_list_of_int:
+                res = [list_item for list_item in unknown_input]
+            else:
+                return None
             return np.array(res)
     else:
         return None
