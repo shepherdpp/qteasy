@@ -1572,7 +1572,7 @@ class Operator:
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
         self._selecting_history_data = [hist_data[stg.data_types, :, first_cash_pos:] for stg in self.selecting]
         # debug
-        print(f'slicing historical data \n{self._selecting_history_data}')
+        # print(f'slicing historical data \n{self._selecting_history_data}')
         # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
         self._timing_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                          for stg in self.timing]

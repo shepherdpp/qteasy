@@ -3,6 +3,7 @@
 
 import pandas as pd
 import numpy as np
+import numba as nb
 import datetime
 import itertools
 import time
@@ -69,21 +70,84 @@ class Context:
         RUN_MODE_BACKLOOP = 1
         RUN_MODE_OPTIMIZE = 2
 
-    包含的变量：
+    包含的参数：
     ========
-        运行模式变量：
-            mode，运行模式，包括实盘模式、回测模式和优化模式三种方式
-        实盘模式相关变量：
+        基本参数：
+            mode: int,          运行模式，包括实盘模式、回测模式和优化模式三种方式: {0: 实盘模式, 1: 回测模式, 2: 优化模式}
+            mode_text, int,     只读属性
+            share_pool: str,    投资资产池
+            asset_type: str,    资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
+            moq: float,         金融资产交易最小单位
+            riskfree_interest_rate: float,
+            parallel: bool,     并行模式，默认True，True表示启用多核CPU加速，False表示只使用单核心
+            print_log: bool,    默认False，是否将回测或优化记录中的详细信息打印在屏幕上
 
-        回测费率变量：
+        实盘模式相关参数：
+            account_name: str,  账户用户名
+            proxy_name: str,    代理服务器名
+            server_name: str,   服务器名
+            password: str,      密码
 
-        回测历史区间变量：
+        回测模式相关参数:
+            reference_data:     str, 用于对比回测收益率优劣的参照投资产品
+            reference_asset_type: str, 参照投资产品的资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
+            rate:               qteasy.Rate, 投资费率对象
+            visual:             bool, 默认False，可视化输出回测结果
+            log:                bool, 默认True，输出回测详情到log文件
 
-        优化模式变量：
+        回测历史区间参数:
+            invest_cash_amounts: list, 只读属性，模拟回测的投资额分笔清单，通过cashplan对象获取
+            invest_cash_dates: list,  只读属性，模拟回测的投资额分笔投入时间清单，通过cashplan对象获取
+            invest_start: str, 投资开始日期
+            invest_cash_type: int, 投资金额类型，{0: 全部资金在投资起始日一次性投入, 1: 资金分笔投入（定投）}
+            invest_cash_freq: str, 资金投入频率，当资金分笔投入时有效
+            invest_cash_periods: str, 资金投入笔数，当资金分笔投入时有效
+            invest_end: str, 完成资金投入的日期
+            invest_total_amount: float, 总投资额
+            invest_unit_amount: float,  资金单次投入数量，仅当资金分笔投入时有效
+            riskfree_ir: float, 无风险利率水平，在回测时可以选择是否计算现金的无风险增值或通货膨胀
 
-        优化区间变量：
+            以下属性用于控制回测或优化时的费用，更改的费率保存在context对象中的rate对象中。为了加快优化速度，在优化时可以选择简单费率计算
+            fixed_buy_fee: float, 固定买入费用，买入资产时需要支付的固定费用
+            fixed_sell_fee: float, 固定卖出费用，卖出资产时需要支付的固定费用
+            fixed_buy_rate: float, 固定买入费率，买入资产时需要支付费用的费率
+            fixed_sell_rate: float, 固定卖出费率，卖出资产时需要支付费用的费率
+            min_buy_fee: float, 最小买入费用，买入资产时需要支付的最低费用
+            min_sell_fee: float, 最小卖出费用，卖出资产时需要支付的最低费用
+            slippage: float, 滑点，通过不同的模型应用滑点率估算交易中除交易费用以外的成本，如交易滑点和冲击成本等
+            rate_type: int, 费率计算模型，可以选用不同的模型以最佳地估算实际的交易成本
+            visual: bool, 默认值True，是否输出完整的投资价值图表和详细报告
+            performance_indicators: str, 回测后对回测结果计算各种指标，支持的指标包括：格式为逗号分隔的字符串，如'FV, sharp'
+                indicator           instructions
+                FV                  终值
+                sharp               夏普率
+                alpha               阿尔法比率
+                beta                贝塔比率
+                information         信息比率
 
-        优化目标函数变量：
+            loop_log_file_path: str, 回测记录日志文件存储路径
+            cash_inflate: bool, 默认为False，现金增长，在回测时是否考虑现金的时间价值，如果为True，则现金按照无风险利率增长
+            predict: bool, 默认False，决定是否利用蒙特卡洛方法对未来的策略表现进行统计预测
+            pred_period: str, 如果对策略的未来表现进行预测，这是预测期
+            pred_cycles: int, 蒙特卡洛预测的预测次数
+
+        优化模式参数:
+            opti_invest_amount: float,
+            opti_use_loop_cashplan: bool,
+            
+            opti_mode: int, 优化模式，{0: simple, 1, multiple}
+            opti_method: int, 不同的优化方法
+            output_count: int, 输出结果的个数
+
+        优化区间参数:
+            opti_period_start:
+            opti_period_end
+
+        优化目标函数变参数:
+            target_func_type:
+            target_func:
+            larger_is_better: bool, 最优策略和目标函数输出结果之间的关系
+
     """
     # 环境常量
     # ============
@@ -99,7 +163,7 @@ class Context:
     def __init__(self,
                  mode: int = RUN_MODE_BACKLOOP,
                  rate_fee: float = 0.003,
-                 rate_slipery: float = 0,
+                 rate_slipage: float = 0,
                  moq: float = 0.,
                  investment_amounts: list = None,
                  investment_dates: list = None,
@@ -112,7 +176,7 @@ class Context:
         input:
             :param mode: 操作模式：{0: 实盘操作模式, 1: 历史数据回测模式, 2: 历史数据优化模式}
             :param rate_fee: 交易费用
-            :param rate_slipery: 交易滑点成本
+            :param rate_slipage: 交易滑点成本
             :param moq: 最小交易单位
             :param visual: 是否输出可视化结果
             :param reference_visual: 是否可视化显示参考信息
@@ -121,7 +185,8 @@ class Context:
         self._mode = 0
         self._mode_text = ''
         self.mode = mode
-        self.rate = Rate(0, rate_fee, rate_slipery)
+        self.share_pool = []  # 优化参数所针对的投资产品
+        self.rate = Rate(0, rate_fee, rate_slipage)
         self.moq = moq  # 最小交易批量，设置为0表示可以买卖分数股
         assert investment_dates is not None, \
             f'InputError, investment dates should be given, got {type(investment_dates)}'
@@ -129,7 +194,7 @@ class Context:
                                   amounts=investment_amounts,
                                   interest_rate=riskfree_interest_rate)  # 回测初始现金金额
         today = datetime.datetime.today().date()
-        self.share_pool = []  # 优化参数所针对的投资产品
+
         self.opt_period_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')  # 默认优化历史区间开始日是十年前
         self.opt_period_end = (today - datetime.timedelta(365)).strftime('%Y%m%d')  # 优化历史区间结束日
         self.opt_period_freq = 'd'  # 优化历史区间采样频率
@@ -137,18 +202,19 @@ class Context:
         self.loop_period_end = today.strftime('%Y%m%d')  # 回测区间结束日（回测区间的采样频率与优化区间相同）
         self.loop_period_freq = 'd'
         self.loop_hist_data_type = 'close'
-        self.t_func_type = 1  # 'single'
-        self.t_func = 'FV'  # 评价函数
+        self.target_func_type = 1  # 'single'
+        self.target_func = 'FV'  # 评价函数
         self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
         self.opti_method = Context.OPTI_EXHAUSTIVE  # 策略优化模式或优化方法
         self.output_count = 50  # 输出的优化策略个数
-        self.keep_largest_perf = True  # 是否保留最大的结果为最优
+        self.larger_is_better = True  # 是否保留最大的结果为最优
         self.history_data_types = ['close']  # 历史数据类型
         self.history_data = None  # 历史数据
         self.visual = visual  # 是否可视化显示历史回测结果
         self.reference_visual = reference_visual  # 是否可视化显示参考数据
         self.reference_data = reference_data  # 参考数据
         self._asset_type = 'E'  # 资产类型
+        self.parallel = True
 
     def __str__(self):
         """定义Context类的打印样式"""
@@ -479,7 +545,13 @@ def distribute_investment(amount: float,
     """
 
 
-def _loop_step(pre_cash, pre_amounts, op, prices, rate, moq) -> tuple:
+@nb.jit
+def _loop_step(pre_cash: float,
+               pre_amounts: np.ndarray,
+               op: np.ndarray,
+               prices: np.ndarray,
+               rate: Rate,
+               moq: float) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
     input：=====
@@ -740,45 +812,32 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         elif run_mode == 2:
             run_mode_text = 'Optimization mode'
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
-    if history_data is None:
-        # 用于交易信号生成的历史数据
-        # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
-        op_start = (pd.to_datetime(context.loop_period_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
-        # debug
-        # print(f'preparing historical data, \nexpected start day: {context.loop_period_start}, '
-        #       f'\noperation generation dependency start date: {op_start}\n'
-        #       f'end date: {context.loop_period_end}\nshares: {context.share_pool}\n'
-        #       f'htypes: {context.history_data_types}')
-        hist_op = get_history_panel(start=op_start,
-                                    end=context.loop_period_end,
-                                    shares=context.share_pool,
-                                    htypes=context.history_data_types,
-                                    freq=context.loop_period_freq,
-                                    asset_type=context.asset_type,
-                                    chanel='online')
-        hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
-        # TODO: 应该根据需要生成用于优化的历史数据
-        hist_opti = None  # 用于策略优化的历史数据
-        # 生成参考历史数据，作为参考用于回测结果的评价
-        hist_reference = (get_history_panel(start=context.loop_period_start,
-                                            end=context.loop_period_end,
-                                            shares=context.reference_data,
-                                            htypes='close',
-                                            freq=context.loop_period_freq,
-                                            asset_type='I',
-                                            chanel='online')).to_dataframe(htype='close')
-    else:
-        # 当显式给出历史数据的时候，以一种最基本的方法处理历史数据的用途（为历史数据分配用途）。
-        # TODO: 由于存在不同的历史数据，因此显式给出的历史数据需要指明明确的用途，直接针对不同用途给出历史数据或判断历史数据。
-        assert isinstance(history_data, HistoryPanel), \
-            f'historical price should be HistoryPanel! got {type(history_data)}'
-        # 历史数据用途：交易信号生成
-        hist_op = history_data
-        # 历史数据用途：回测
-        hist_loop = history_data.to_dataframe(htype='close')
-        # 历史数据用途：参考评价
-        hist_reference = history_data.to_dataframe(htype='close')
-        # print('history data is not None')
+    # 用于交易信号生成的历史数据
+    # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
+    op_start = (pd.to_datetime(context.loop_period_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
+    # debug
+    # print(f'preparing historical data, \nexpected start day: {context.loop_period_start}, '
+    #       f'\noperation generation dependency start date: {op_start}\n'
+    #       f'end date: {context.loop_period_end}\nshares: {context.share_pool}\n'
+    #       f'htypes: {context.history_data_types}')
+    hist_op = get_history_panel(start=op_start,
+                                end=context.loop_period_end,
+                                shares=context.share_pool,
+                                htypes=context.history_data_types,
+                                freq=context.loop_period_freq,
+                                asset_type=context.asset_type,
+                                chanel='online')
+    hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
+    # TODO: 应该根据需要生成用于优化的历史数据
+    hist_opti = None  # 用于策略优化的历史数据
+    # 生成参考历史数据，作为参考用于回测结果的评价
+    hist_reference = (get_history_panel(start=context.loop_period_start,
+                                        end=context.loop_period_end,
+                                        shares=context.reference_data,
+                                        htypes='close',
+                                        freq=context.loop_period_freq,
+                                        asset_type='I',
+                                        chanel='online')).to_dataframe(htype='close')
     # ===============
     # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
     # ===============
@@ -1204,7 +1263,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     _progress_bar(i, i)
-    pool.cut(context.keep_largest_perf)
+    pool.cut(context.larger_is_better)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
     return pool.pars, pool.perfs
@@ -1262,7 +1321,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
             i += 1
             if i % 10 == 0:
                 _progress_bar(i, total)
-    pool.cut(context.keep_largest_perf)
+    pool.cut(context.larger_is_better)
     et = time.time()
     _progress_bar(total, total)
     print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
@@ -1341,7 +1400,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
                         _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
         # debug
         # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
-        pool.cut(context.keep_largest_perf)
+        pool.cut(context.larger_is_better)
         # print(f'Cut the pool to reduce its items to capacity, {pool.item_count} items left')
         # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
         spaces.append(base_space.from_point(point=item, distance=step_size) for item in pool.pars)

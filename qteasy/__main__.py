@@ -3,14 +3,6 @@ from qteasy.operator import *
 
 if __name__ == '__main__':
     op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
-    # d = pd.read_csv('000300_I_N.txt', index_col='date')
-    # d.index = pd.to_datetime(d.index, format='%Y-%m-%d')
-    # d.drop(labels=['volume', 'amount'], axis=1, inplace=True)
-    # d = d[::-1]
-    # hp = hs.dataframe_to_hp(d, column_type='htype', shares='000300')
-    # hp = hs.stack_dataframes([d, d, d], stack_along='shares', shares=['000100', '000200', '000300'])
-    # print('INFORMATION OF CREATED HISTORY PANEL: \n==========================')
-    # hp.info()
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
@@ -34,8 +26,6 @@ if __name__ == '__main__':
     timing_pars2 = {'000100': (77, 118, 144),
                     '000200': (75, 128, 138),
                     '000300': (73, 120, 143)}
-    # timing_pars2 = {'000100': (77, 148, 144),
-    #                 '000200': (86, 198, 58)}
     timing_pars3 = (80, 152, 101)
     timing_pars4 = (37, 44)
     timing_pars5 = (62, 132, 10, 'buy')
