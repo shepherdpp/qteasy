@@ -59,8 +59,10 @@ class Log:
         raise NotImplementedError
 
 
+# TODO: 将要增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
+# TODO: 完善Context类，将docstring中的所有参数和属性一一实现
 class Context:
-    """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及(伪)常量
+    """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及参数
 
     所有系统执行相关的变量都存储在Context对象中，在调用core模块中的主要公有方法时，应该引用Context对象以提供所有的环境变量。
 
@@ -69,91 +71,142 @@ class Context:
         RUN_MODE_LIVE = 0
         RUN_MODE_BACKLOOP = 1
         RUN_MODE_OPTIMIZE = 2
+        RUN_MODE_PREDICT = 3
 
     包含的参数：
     ========
         基本参数：
-            mode: int,          运行模式，包括实盘模式、回测模式和优化模式三种方式: {0: 实盘模式, 1: 回测模式, 2: 优化模式}
-            mode_text, int,     只读属性
-            share_pool: str,    投资资产池
-            asset_type: str,    资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
-            moq: float,         金融资产交易最小单位
-            riskfree_interest_rate: float,
-            parallel: bool,     并行模式，默认True，True表示启用多核CPU加速，False表示只使用单核心
-            print_log: bool,    默认False，是否将回测或优化记录中的详细信息打印在屏幕上
+            mode:                       int, 运行模式，包括实盘模式、回测模式和优化模式三种方式:
+                                        {0: 实盘模式,
+                                         1: 回测模式,
+                                         2: 优化模式}
+
+            mode_text,                  int, 只读属性
+            share_pool:                 str, 投资资产池
+            asset_type:                 str, 资产类型:
+                                        {'E': 股票,
+                                         'I': 指数,
+                                         'F': 期货}
+
+            moq:                        float, 金融资产交易最小单位
+            riskfree_interest_rate:     float, 无风险利率，在回测时可以选择考虑现金以无风险利率增长对资产价值和投资策略的影响
+            parallel:                   bool, 是否启用多核CPU多进程模式加速优化，默认True，False表示只使用单核心
+            print_log:                  bool, 默认False，是否将回测或优化记录中的详细信息打印在屏幕上
 
         实盘模式相关参数：
-            account_name: str,  账户用户名
-            proxy_name: str,    代理服务器名
-            server_name: str,   服务器名
-            password: str,      密码
+            account_name:               str,  账户用户名
+            proxy_name:                 str,    代理服务器名
+            server_name:                str,   服务器名
+            password:                   str,      密码
 
         回测模式相关参数:
-            reference_data:     str, 用于对比回测收益率优劣的参照投资产品
-            reference_asset_type: str, 参照投资产品的资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
-            rate:               qteasy.Rate, 投资费率对象
-            visual:             bool, 默认False，可视化输出回测结果
-            log:                bool, 默认True，输出回测详情到log文件
+            reference_data:             str, 用于对比回测收益率优劣的参照投资产品
+            reference_asset_type:       str, 参照投资产品的资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
+            rate:                       qteasy.Rate, 投资费率对象
+            visual:                     bool, 默认False，可视化输出回测结果
+            log:                        bool, 默认True，输出回测详情到log文件
 
         回测历史区间参数:
-            invest_cash_amounts: list, 只读属性，模拟回测的投资额分笔清单，通过cashplan对象获取
-            invest_cash_dates: list,  只读属性，模拟回测的投资额分笔投入时间清单，通过cashplan对象获取
-            invest_start: str, 投资开始日期
-            invest_cash_type: int, 投资金额类型，{0: 全部资金在投资起始日一次性投入, 1: 资金分笔投入（定投）}
-            invest_cash_freq: str, 资金投入频率，当资金分笔投入时有效
-            invest_cash_periods: str, 资金投入笔数，当资金分笔投入时有效
-            invest_end: str, 完成资金投入的日期
-            invest_total_amount: float, 总投资额
-            invest_unit_amount: float,  资金单次投入数量，仅当资金分笔投入时有效
-            riskfree_ir: float, 无风险利率水平，在回测时可以选择是否计算现金的无风险增值或通货膨胀
+            invest_cash_amounts:        list, 只读属性，模拟回测的投资额分笔清单，通过cashplan对象获取
+            invest_cash_dates:          list,  只读属性，模拟回测的投资额分笔投入时间清单，通过cashplan对象获取
+            invest_start:               str, 投资开始日期
+            invest_cash_type:           int, 投资金额类型，{0: 全部资金在投资起始日一次性投入, 1: 资金分笔投入（定投）}
+            invest_cash_freq:           str, 资金投入频率，当资金分笔投入时有效
+            invest_cash_periods:        str, 资金投入笔数，当资金分笔投入时有效
+            invest_end:                 str, 完成资金投入的日期
+            invest_total_amount:        float, 总投资额
+            invest_unit_amount:         float,  资金单次投入数量，仅当资金分笔投入时有效
+            riskfree_ir: float,         无风险利率水平，在回测时可以选择是否计算现金的无风险增值或通货膨胀
 
-            以下属性用于控制回测或优化时的费用，更改的费率保存在context对象中的rate对象中。为了加快优化速度，在优化时可以选择简单费率计算
-            fixed_buy_fee: float, 固定买入费用，买入资产时需要支付的固定费用
-            fixed_sell_fee: float, 固定卖出费用，卖出资产时需要支付的固定费用
-            fixed_buy_rate: float, 固定买入费率，买入资产时需要支付费用的费率
-            fixed_sell_rate: float, 固定卖出费率，卖出资产时需要支付费用的费率
-            min_buy_fee: float, 最小买入费用，买入资产时需要支付的最低费用
-            min_sell_fee: float, 最小卖出费用，卖出资产时需要支付的最低费用
-            slippage: float, 滑点，通过不同的模型应用滑点率估算交易中除交易费用以外的成本，如交易滑点和冲击成本等
-            rate_type: int, 费率计算模型，可以选用不同的模型以最佳地估算实际的交易成本
-            visual: bool, 默认值True，是否输出完整的投资价值图表和详细报告
-            performance_indicators: str, 回测后对回测结果计算各种指标，支持的指标包括：格式为逗号分隔的字符串，如'FV, sharp'
-                indicator           instructions
-                FV                  终值
-                sharp               夏普率
-                alpha               阿尔法比率
-                beta                贝塔比率
-                information         信息比率
+            fixed_buy_fee:              float, 固定买入费用，买入资产时需要支付的固定费用
+            fixed_sell_fee:             float, 固定卖出费用，卖出资产时需要支付的固定费用
+            fixed_buy_rate:             float, 固定买入费率，买入资产时需要支付费用的费率
+            fixed_sell_rate:            float, 固定卖出费率，卖出资产时需要支付费用的费率
+            min_buy_fee:                float, 最小买入费用，买入资产时需要支付的最低费用
+            min_sell_fee:               float, 最小卖出费用，卖出资产时需要支付的最低费用
+            slippage:                   float, 滑点，通过不同的模型应用滑点率估算交易中除交易费用以外的成本，如交易滑点和冲击成本等
+            rate_type:                  int, 费率计算模型，可以选用不同的模型以最佳地估算实际的交易成本
+            visual:                     bool, 默认值True，是否输出完整的投资价值图表和详细报告
+            performance_indicators:     str, 回测后对回测结果计算各种指标，支持的指标包括：格式为逗号分隔的字符串，如'FV, sharp'
+                                        indicator           instructions
+                                        FV                  终值
+                                        sharp               夏普率
+                                        alpha               阿尔法比率
+                                        beta                贝塔比率
+                                        information         信息比率
 
-            loop_log_file_path: str, 回测记录日志文件存储路径
-            cash_inflate: bool, 默认为False，现金增长，在回测时是否考虑现金的时间价值，如果为True，则现金按照无风险利率增长
-            predict: bool, 默认False，决定是否利用蒙特卡洛方法对未来的策略表现进行统计预测
-            pred_period: str, 如果对策略的未来表现进行预测，这是预测期
-            pred_cycles: int, 蒙特卡洛预测的预测次数
+            loop_log_file_path:         str, 回测记录日志文件存储路径
+            cash_inflate:               bool, 默认为False，现金增长，在回测时是否考虑现金的时间价值，如果为True，则现金按照无风险利率增长
 
         优化模式参数:
-            opti_invest_amount: float,
-            opti_use_loop_cashplan: bool,
-            
-            opti_mode: int, 优化模式，{0: simple, 1, multiple}
-            opti_method: int, 不同的优化方法
-            output_count: int, 输出结果的个数
+            opti_invest_amount:         float, 优化投资金额，优化时默认使用简单投资额，即一次性在优化期初投入所有金额
+            opti_use_loop_cashplan:     bool, 是否使用回测的现金投资计划设置，默认False，如果使用复杂现金计划，会更加耗时
+            opti_fixed_rate:            float, 优化回测交易费率，优化时默认使用简单投资费率，即固定费率，为了效率
+            opti_use_loop_rate:         bool, 是否使用回测投资成本估算模型，默认False，如果使用复杂成本估算模型，会更加耗时
 
-        优化区间参数:
-            opti_period_start:
-            opti_period_end
+            opti_period_type:           int, 优化区间类型:
+                                        {0: 单一优化区间，在一段历史数据区间上进行参数寻优,
+                                         1: 多重优化区间，根据策略参数在几段不同的历史数据区间上的平均表现来确定最优参数}
 
-        优化目标函数变参数:
-            target_func_type:
-            target_func:
-            larger_is_better: bool, 最优策略和目标函数输出结果之间的关系
+            opti_start:                 str, 优化历史区间起点
+            opti_window_span:           int, 优化历史区间跨度
+            opti_window_count:          int, 当选择多重优化区间时，优化历史区间的数量
+            opti_window_offset:         int, 当选择多重优化区间时，不同区间的开始间隔
+            opti_weighting_type:        int 当选择多重优化区间时，计算平均表现分数的方法：
+                                        {0: 简单平均值,
+                                         1: 线性加权平均值,
+                                         2: 指数加权平均值}
+
+            test_period_type:           int, 参数测试区间类型，在一段历史数据区间上找到最优参数后，可以在同一个区间上测试最优参数的
+                                        表现，也可以在不同的历史数据区间上测试（这是更好的办法），选项有三个：
+                                        {0: 相同区间,
+                                         1: 接续区间,
+                                         2: 自定义区间}
+
+            test_period_offset:         str, 如果选择自定义区间，测试区间与寻优区间之间的间隔
+            test_window_span:           int, 测试历史区间跨度
+            target_function:            str, 作为优化目标的评价函数
+            larger_is_better:           bool, 确定目标函数的优化方向，保留函数值最大的还是最小的结果，默认True，寻找函数值最大的结果
+
+            opti_method:                int, 不同的优化参数搜索算法：
+                                        {0: Exhaustive，固定步长搜索法,
+                                         1: MonteCarlo，蒙特卡洛搜索法 ,
+                                         2: Incremental，递减步长搜索 ,
+                                         3: GA，遗传算法 ,
+                                         4: ANN，基于机器学习或神经网络的算法}
+
+            opti_method_step_size:      [int, tuple], 用于固定步长搜索法，固定搜索步长
+            opti_method_sample_size:    int, 用于蒙特卡洛搜索法，在空间中随机选取的样本数量
+            opti_method_init_step_size: int, 用于递减步长搜索法，初始步长
+            opti_method_incre_ratio:    float, 用于递减步长搜索法，步长递减比率
+            opti_method_screen_size:    int, 用于递减步长搜索法，每一轮搜索保留的结果数量
+            opti_method_min_step_size:  int, 用于递减步长搜索法，最小搜索步长
+            opti_method_population:     int, 用于遗传算法，种群数量
+            opti_method_swap_rate:      float, 用于遗传算法，交换比率
+            opti_methdo_crossover_rate: float, 用于遗传算法，交配比率
+            opti_method_mute_rate:      float, 用于遗传算法，变异比率
+            opti_method_max_generation: int, 用于遗传算法，最大传递代数
+
+            opti_output_count:          int, 输出结果的个数
+            opti_log_file_path:         str, 输出结果日志文件的保存路径
+            opti_perf_report:           bool, 是否对所有结果进行详细表现评价，默认False，True时会生成所有策略在测试历史区间的详细评价报告
+            opti_report_indicators:     str, 用于上述详细评价报告的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
+
+        预测模式参数:
+            predict:                    bool, 默认False，决定是否利用蒙特卡洛方法对未来的策略表现进行统计预测
+            pred_period:                str, 如果对策略的未来表现进行预测，这是预测期
+            pred_cycles:                int, 蒙特卡洛预测的预测次数
+            pred_report_indicators:     str, 预测分析的报告中所涉及的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
 
     """
-    # 环境常量
-    # ============
     RUN_MODE_LIVE = 0
     RUN_MODE_BACKLOOP = 1
     RUN_MODE_OPTIMIZE = 2
+    RUN_MODE_PREDICT = 3
+    RUN_MODES = {RUN_MODE_LIVE: 'Real-time Running Mode',
+                 RUN_MODE_BACKLOOP: 'Back-looping Mode',
+                 RUN_MODE_OPTIMIZE: 'Optimization Mode',
+                 RUN_MODE_PREDICT: 'Predict Mode'}
 
     OPTI_EXHAUSTIVE = 0
     OPTI_MONTECARLO = 1
@@ -181,6 +234,8 @@ class Context:
             :param visual: 是否输出可视化结果
             :param reference_visual: 是否可视化显示参考信息
             :param reference_data: 参考历史数据
+
+        更多参数含义见Context类的docstring
         """
         self._mode = 0
         self._mode_text = ''
@@ -759,6 +814,7 @@ def get_current_holdings() -> tuple:
     """
 
 
+# TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
 def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     """开始运行，qteasy模块的主要入口函数
 
@@ -1128,6 +1184,13 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         print(f'==========OPTIMIZATION COMPLETE============')
         # optimization_log = Log()
         # optimization_log.write_record(pars, perfs)
+    elif run_mode == 3:
+        """ 进入策略统计预测分析模式
+        
+        使用蒙特卡洛方法预测策略的未来表现。
+        
+        """
+        raise NotImplementedError
 
 
 def _time_str_format(t: float):
