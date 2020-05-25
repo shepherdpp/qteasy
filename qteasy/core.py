@@ -116,8 +116,8 @@ class Context:
             invest_cash_periods:        str, 资金投入笔数，当资金分笔投入时有效
             invest_end:                 str, 完成资金投入的日期
             invest_total_amount:        float, 总投资额
-            invest_unit_amount:         float,  资金单次投入数量，仅当资金分笔投入时有效
-            riskfree_ir: float,         无风险利率水平，在回测时可以选择是否计算现金的无风险增值或通货膨胀
+            invest_unit_amount:         float, 资金单次投入数量，仅当资金分笔投入时有效
+            riskfree_ir:                float, 无风险利率水平，在回测时可以选择是否计算现金的无风险增值或通货膨胀
 
             fixed_buy_fee:              float, 固定买入费用，买入资产时需要支付的固定费用
             fixed_sell_fee:             float, 固定卖出费用，卖出资产时需要支付的固定费用
@@ -137,7 +137,8 @@ class Context:
                                         information         信息比率
 
             loop_log_file_path:         str, 回测记录日志文件存储路径
-            cash_inflate:               bool, 默认为False，现金增长，在回测时是否考虑现金的时间价值，如果为True，则现金按照无风险利率增长
+            cash_inflate:               bool, 默认为False，现金增长，在回测时是否考虑现金的时间价值，如果为True，则现金按照无风险
+                                        利率增长
 
         优化模式参数:
             opti_invest_amount:         float, 优化投资金额，优化时默认使用简单投资额，即一次性在优化期初投入所有金额
@@ -221,48 +222,63 @@ class Context:
 
     def __init__(self,
                  mode: int = 1,
-                 rate_fee: float = 0.003,
-                 rate_slipage: float = 0,
                  moq: float = 0.,
-                 investment_amounts: list = None,
-                 investment_dates: list = None,
                  riskfree_interest_rate: float = 0.035,
-                 visual: bool = False,
-                 reference_visual: bool = False,
-                 reference_data: str = None):
+                 visual: bool = False:
         """初始化所有的环境变量和环境常量
 
         input:
             :param mode: 操作模式：{0: 实盘操作模式, 1: 历史数据回测模式, 2: 历史数据优化模式}
-            :param rate_fee: 交易费用
-            :param rate_slipage: 交易滑点成本
             :param moq: 最小交易单位
+            :param riskfree_interest_rate: 无风险利率水平
             :param visual: 是否输出可视化结果
-            :param reference_visual: 是否可视化显示参考信息
-            :param reference_data: 参考历史数据
 
         更多参数含义见Context类的docstring
         """
         today = datetime.datetime.today().date()
 
-        self.mode: int, 运行模式，包括实盘模式、
-        self.share_pool: str, 投资资产池
-        self.asset_type: str, 资产类型:
-
-        self.moq: float, 金融资产交易最小单位
-        self.riskfree_interest_rate: float, 无风险利率，在回测时可以选择考虑现金以无风险利率增长对资产价值和投资策略的影响
-        self.parallel: bool, 是否启用多核CPU多进程模式加速优化，默认True，False表示只使用单核心
-        self.print_log: bool, 默认False，是否将回测或优化记录中的详细信息打印在屏幕上
-
         self.mode = mode
-        self.share_pool = []  # 优化参数所针对的投资产品
-        self.rate = Rate(0, rate_fee, rate_slipage)
-        self.moq = moq  # 最小交易批量，设置为0表示可以买卖分数股
-        assert investment_dates is not None, \
-            f'InputError, investment dates should be given, got {type(investment_dates)}'
-        self.cash_plan = CashPlan(dates=investment_dates,
-                                  amounts=investment_amounts,
-                                  interest_rate=riskfree_interest_rate)  # 回测初始现金金额
+        self.share_pool = None
+        self.asset_type = 'E'
+
+        self.moq = moq
+        self.riskfree_interest_rate = riskfree_interest_rate
+        self.parallel = True
+        self.print_log = False
+
+        self.account_name = None
+        self.proxy_name = None
+        self.server_name = None
+        self.password = None
+
+        self.reference_data = None
+        self.reference_asset_type = 'E'
+        self.rate = Rate()
+        self.visual = visual
+        self.log = True
+
+        self.invest_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')
+        self.invest_cash_type = 0
+        self.invest_cash_freq = 'Y'
+        self.invest_cash_periods = 5
+        self.invest_end = today.strftime('%Y%m%d')
+        self.invest_total_amount = 50000
+        self.invest_unit_amount = 10000
+        self.riskfree_ir = 0.015
+
+        self.fixed_buy_fee = 5
+        self.fixed_sell_fee = 0
+        self.fixed_buy_rate = 0.0035
+        self.fixed_sell_rate = 0.0015
+        self.min_buy_fee = 5
+        self.min_sell_fee = 5
+        self.slippage = 0.01
+        self.rate_type = 0
+        self.visual = True
+        self.performance_indicators = 'FV'
+
+        self.loop_log_file_path = None
+        self.cash_inflate = False
 
         self.opti_invest_amount = 10000
         self.opti_use_loop_cashplan = False
@@ -303,15 +319,6 @@ class Context:
         self.opti_perf_report = False
         self.opti_report_indicators = 'FV, Sharp'
 
-        self.output_count = 50  # 输出的优化策略个数
-        self.larger_is_better = True  # 是否保留最大的结果为最优
-        self.history_data_types = ['close']  # 历史数据类型
-        self.history_data = None  # 历史数据
-        self.visual = visual  # 是否可视化显示历史回测结果
-        self.reference_visual = reference_visual  # 是否可视化显示参考数据
-        self.reference_data = reference_data  # 参考数据
-        self._asset_type = 'E'  # 资产类型
-        self.parallel = True
 
     def __str__(self):
         """定义Context类的打印样式"""
@@ -326,17 +333,19 @@ class Context:
 
     @property
     def mode_text(self):
-        return self._mode_text
+        return self.mode_text[self.mode]
 
     @property
-    def asset_type(self):
-        return self._asset_type
+    def asset_type_text(self):
+        return self.asset_type_text[self.asset_type]
 
-    @asset_type.setter
-    def asset_type(self, asset):
-        assert asset in ['E', 'I', 'F', 'FD'], f'ValueError: the asset type \'{asset}\' is not recognized or supported'
-        self._asset_type = asset
+    @property
+    def invest_cash_amounts(self):
+        return None
 
+    @property
+    def invest_cash_dates(self):
+        return None
 
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
 # TODO: 5，与交易量相关的二阶费率
