@@ -12,11 +12,11 @@ import sys
 from .history import HistoryPanel, get_history_panel
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-PROGRESS_BAR = {0: '----------------------------------------', 1: '#---------------------------------------',
-                2: '##--------------------------------------', 3: '###-------------------------------------',
-                4: '####------------------------------------', 5: '#####-----------------------------------',
-                6: '######----------------------------------', 7: '#######---------------------------------',
-                8: '########--------------------------------', 9: '#########-------------------------------',
+PROGRESS_BAR = {0 : '----------------------------------------', 1: '#---------------------------------------',
+                2 : '##--------------------------------------', 3: '###-------------------------------------',
+                4 : '####------------------------------------', 5: '#####-----------------------------------',
+                6 : '######----------------------------------', 7: '#######---------------------------------',
+                8 : '########--------------------------------', 9: '#########-------------------------------',
                 10: '##########------------------------------', 11: '###########-----------------------------',
                 12: '############----------------------------', 13: '#############---------------------------',
                 14: '##############--------------------------', 15: '###############-------------------------',
@@ -81,12 +81,13 @@ class Context:
                                          1: 回测模式,
                                          2: 优化模式}
 
-            mode_text,                  int, 只读属性
+            mode_text,                  int, 只读属性，mode属性的解释文本
             share_pool:                 str, 投资资产池
             asset_type:                 str, 资产类型:
                                         {'E': 股票,
                                          'I': 指数,
                                          'F': 期货}
+            asset_type_text:            str, 只读属性，asset_type属性的解释文本
 
             moq:                        float, 金融资产交易最小单位
             riskfree_interest_rate:     float, 无风险利率，在回测时可以选择考虑现金以无风险利率增长对资产价值和投资策略的影响
@@ -149,9 +150,9 @@ class Context:
                                          1: 多重优化区间，根据策略参数在几段不同的历史数据区间上的平均表现来确定最优参数}
 
             opti_start:                 str, 优化历史区间起点
-            opti_window_span:           int, 优化历史区间跨度
+            opti_window_span:           str, 优化历史区间跨度
             opti_window_count:          int, 当选择多重优化区间时，优化历史区间的数量
-            opti_window_offset:         int, 当选择多重优化区间时，不同区间的开始间隔
+            opti_window_offset:         str, 当选择多重优化区间时，不同区间的开始间隔
             opti_weighting_type:        int 当选择多重优化区间时，计算平均表现分数的方法：
                                         {0: 简单平均值,
                                          1: 线性加权平均值,
@@ -164,7 +165,7 @@ class Context:
                                          2: 自定义区间}
 
             test_period_offset:         str, 如果选择自定义区间，测试区间与寻优区间之间的间隔
-            test_window_span:           int, 测试历史区间跨度
+            test_window_span:           str, 测试历史区间跨度
             target_function:            str, 作为优化目标的评价函数
             larger_is_better:           bool, 确定目标函数的优化方向，保留函数值最大的还是最小的结果，默认True，寻找函数值最大的结果
 
@@ -199,22 +200,27 @@ class Context:
             pred_report_indicators:     str, 预测分析的报告中所涉及的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
 
     """
-    RUN_MODE_LIVE = 0
-    RUN_MODE_BACKLOOP = 1
-    RUN_MODE_OPTIMIZE = 2
-    RUN_MODE_PREDICT = 3
-    RUN_MODES = {RUN_MODE_LIVE: 'Real-time Running Mode',
-                 RUN_MODE_BACKLOOP: 'Back-looping Mode',
-                 RUN_MODE_OPTIMIZE: 'Optimization Mode',
-                 RUN_MODE_PREDICT: 'Predict Mode'}
+    run_mode_text = {0: 'Real-time Running Mode',
+                     1: 'Back-looping Mode',
+                     2: 'Optimization Mode',
+                     3: 'Predict Mode'}
 
-    OPTI_EXHAUSTIVE = 0
-    OPTI_MONTECARLO = 1
-    OPTI_INCREMENTAL = 2
-    OPTI_GA = 3
+    asset_type_text = {'E': '',
+                       'I': '',
+                       'F': ''}
+
+    test_period_type_text = {0: '', 1: '', 2: '', 3: ''}
+
+    opti_mode_text = {0: 'Exhaustive searching method, searches the parameter space over all posible vectors '
+                         'at a fixed step size',
+                      1: 'MonteCarlo searching method, searches randomly distributed vectors in the parameter space',
+                      2: 'Decremental step size, searches the parameter space in multiple rounds, each time with '
+                         'decreasing step size to provide increased accuracy over rounds',
+                      3: 'Genetic Algorithm, searches for local optimal parameter by adopting genetic evolution laws'}
+
 
     def __init__(self,
-                 mode: int = RUN_MODE_BACKLOOP,
+                 mode: int = 1,
                  rate_fee: float = 0.003,
                  rate_slipage: float = 0,
                  moq: float = 0.,
@@ -237,8 +243,17 @@ class Context:
 
         更多参数含义见Context类的docstring
         """
-        self._mode = 0
-        self._mode_text = ''
+        today = datetime.datetime.today().date()
+
+        self.mode: int, 运行模式，包括实盘模式、
+        self.share_pool: str, 投资资产池
+        self.asset_type: str, 资产类型:
+
+        self.moq: float, 金融资产交易最小单位
+        self.riskfree_interest_rate: float, 无风险利率，在回测时可以选择考虑现金以无风险利率增长对资产价值和投资策略的影响
+        self.parallel: bool, 是否启用多核CPU多进程模式加速优化，默认True，False表示只使用单核心
+        self.print_log: bool, 默认False，是否将回测或优化记录中的详细信息打印在屏幕上
+
         self.mode = mode
         self.share_pool = []  # 优化参数所针对的投资产品
         self.rate = Rate(0, rate_fee, rate_slipage)
@@ -248,19 +263,46 @@ class Context:
         self.cash_plan = CashPlan(dates=investment_dates,
                                   amounts=investment_amounts,
                                   interest_rate=riskfree_interest_rate)  # 回测初始现金金额
-        today = datetime.datetime.today().date()
 
-        self.opt_period_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')  # 默认优化历史区间开始日是十年前
-        self.opt_period_end = (today - datetime.timedelta(365)).strftime('%Y%m%d')  # 优化历史区间结束日
-        self.opt_period_freq = 'd'  # 优化历史区间采样频率
-        self.loop_period_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')  # 回测区间开始日
-        self.loop_period_end = today.strftime('%Y%m%d')  # 回测区间结束日（回测区间的采样频率与优化区间相同）
-        self.loop_period_freq = 'd'
-        self.loop_hist_data_type = 'close'
-        self.target_func_type = 1  # 'single'
-        self.target_func = 'FV'  # 评价函数
-        self.compound_method_expr = '( FV + Sharp )'  # 复合评价函数表达式，使用表达式解析模块解析并计算
-        self.opti_method = Context.OPTI_EXHAUSTIVE  # 策略优化模式或优化方法
+        self.opti_invest_amount = 10000
+        self.opti_use_loop_cashplan = False
+        self.opti_fixed_rate = 0.0035
+        self.opti_use_loop_rate = False
+
+        self.opti_period_type = 0
+
+        self.opti_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')
+        self.opti_window_span = '3Y'
+        self.opti_window_count = 5
+        self.opti_window_offset = '1Y'
+        self.opti_weighting_type = 0
+
+        self.test_period_type = 0
+
+        self.test_period_offset = 180
+        self.test_window_span = '1Y'
+        self.target_function = 'FV'
+        self.larger_is_better = True
+
+        self.opti_method = 0
+
+        self.opti_method_step_size = 1
+        self.opti_method_sample_size = 1000
+        self.opti_method_init_step_size = 16
+        self.opti_method_incre_ratio = 2
+        self.opti_method_screen_size = 100
+        self.opti_method_min_step_size = 1
+        self.opti_method_population = 1000
+        self.opti_method_swap_rate = 0.3
+        self.opti_methdo_crossover_rate = 0.2
+        self.opti_method_mute_rate = 0.2
+        self.opti_method_max_generation = 10000
+
+        self.opti_output_count = 64
+        self.opti_log_file_path = ''
+        self.opti_perf_report = False
+        self.opti_report_indicators = 'FV, Sharp'
+
         self.output_count = 50  # 输出的优化策略个数
         self.larger_is_better = True  # 是否保留最大的结果为最优
         self.history_data_types = ['close']  # 历史数据类型
@@ -281,23 +323,6 @@ class Context:
                        f'')
         return ''.join(out_str)
 
-    @property
-    def mode(self):
-        return self._mode
-
-    @mode.setter
-    def mode(self, value):
-        assert isinstance(value, int), \
-            f'InputError, value of mode should be an integer between 0 and 2, got {type(value)} instead'
-        assert 0 <= value <= 2, \
-            f'InputError, value of mode should be an integer between 0 and 2, got {value} instead'
-        self._mode = value
-        if self._mode == 0:
-            self._mode_text = 'Real-time running mode'
-        elif self._mode == 1:
-            self._mode_text = 'Back-looping mode'
-        elif self._mode == 2:
-            self._mode_text = 'Optimization mode'
 
     @property
     def mode_text(self):
