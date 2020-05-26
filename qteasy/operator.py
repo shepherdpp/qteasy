@@ -681,7 +681,7 @@ class Selecting(Strategy):
                  par_count: int = 1,
                  par_types: list = None,
                  par_bounds_or_enums: list = None,
-                 data_freq: str = 'y',
+                 data_freq: str = 'd',
                  sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
                  window_length: int = 270,
@@ -1369,8 +1369,20 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
-        d_types = [item.data_types for item in self.timing + self.selecting + self.ricon]
+        d_types = []
+        for item in self.timing + self.selecting + self.ricon:
+            d_types.extend(item.data_types)
         return list(set(d_types))
+
+    @property
+    def op_data_freq(self):
+        """返回operator对象所有策略子对象所需数据的采样频率"""
+        d_freq = []
+        for item in self.timing + self.selecting + self.ricon:
+            d_freq.extend(item.data_freq)
+        d_freq = list(set(d_freq))
+        assert len(d_freq) == 1, f'ValueError, there are multiple history data frequency required by strategies'
+        return d_freq[0]
 
     @property
     def get_opt_space_par(self):

@@ -11,7 +11,8 @@ if __name__ == '__main__':
     op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(moq=0)
-    cont.reference_data='000300.SH'
+    cont.reference_asset='000300.SH'
+    cont.reference_asset_type = 'I'
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
     cont.opti_method = 0
@@ -39,9 +40,14 @@ if __name__ == '__main__':
     # print('\nTime of creating operation list:')
     op.info()
     print(f'\n START QT RUNNING\n===========================\n')
-    run(op, cont, mode=1)
-    run(op, cont, mode=0)
-    run(op, cont, mode=2)
+    cont.mode = 1
+    run(op, cont)
+    cont.mode = 0
+    run(op, cont)
+    cont.mode = 2
+    run(op, cont)
+    cont.mode = 3
+    run(op, cont)
     # print(f'test get history panel directly')
     # hp = hs.get_history_panel(start='2017-01-01',
     #                           end='2019-08-23',

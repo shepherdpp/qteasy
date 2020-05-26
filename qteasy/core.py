@@ -101,8 +101,9 @@ class Context:
             password:                   str,      密码
 
         回测模式相关参数:
-            reference_data:             str, 用于对比回测收益率优劣的参照投资产品
+            reference_asset:            str, 用于对比回测收益率优劣的参照投资产品
             reference_asset_type:       str, 参照投资产品的资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
+            reference_data_type:        str, 参照投资产品的数据类型（'close', 'open' 等）
             rate:                       qteasy.Rate, 投资费率对象
             visual:                     bool, 默认False，可视化输出回测结果
             log:                        bool, 默认True，输出回测详情到log文件
@@ -250,8 +251,9 @@ class Context:
         self.server_name = None
         self.password = None
 
-        self.reference_data = None
+        self.reference_asset = None
         self.reference_asset_type = 'E'
+        self.reference_data_type = 'close'
         self.rate = Rate()
         self.visual = visual
         self.log = True
@@ -329,11 +331,8 @@ class Context:
         return ''.join(out_str)
 
     @property
-    def mode_text(self, mode = None):
-        if mode is None:
-            return self.run_mode_text[self.mode]
-        else:
-            return self.run_mode_text[mode]
+    def mode_text(self):
+        return self.run_mode_text[self.mode]
 
     @property
     def asset_type_text(self):
@@ -346,6 +345,10 @@ class Context:
     @property
     def invest_cash_dates(self):
         return None
+
+    @property
+    def cash_plan(self):
+        return CashPlan(self.invest_start, self.invest_total_amount)
 
 
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
@@ -399,7 +402,7 @@ class CashPlan:
     投资计划对象包含一组带时间戳的投资金额数据，用于模拟在固定时间的现金投入，可以实现对一次性现金投入和资金定投的模拟
     """
 
-    def __init__(self, dates: [list, str], amounts: [list, str], interest_rate: float = 0.0):
+    def __init__(self, dates: [list, str], amounts: [list, str, int, float], interest_rate: float = 0.0):
         """
 
         :param dates:
@@ -635,7 +638,6 @@ def distribute_investment(amount: float,
     """
 
 
-@nb.jit
 def _loop_step(pre_cash: float,
                pre_amounts: np.ndarray,
                op: np.ndarray,
@@ -850,7 +852,7 @@ def get_current_holdings() -> tuple:
 
 
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
-def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
+def run(operator, context):
     """开始运行，qteasy模块的主要入口函数
 
         接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
@@ -889,42 +891,44 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
     # 从context 上下文对象中读取运行所需的参数：
     # 股票清单或投资产品清单
     # shares = context.share_pool
-    reference_data = context.reference_data
+    reference_data = context.reference_asset
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
-    if mode is None:
-        run_mode = context.mode
-        run_mode_text = context.mode_text
-    else:
-        run_mode = mode
-        run_mode_text = context.mode_text[mode]
+    run_mode = context.mode
+    run_mode_text = context.mode_text
 
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
-    op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
+    op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-420, unit='d')).strftime('%Y%m%d')
     # debug
-    # print(f'preparing historical data, \nexpected start day: {context.loop_period_start}, '
+    # print(f'preparing historical data, \ninvestment start date: {op_start}, '
     #       f'\noperation generation dependency start date: {op_start}\n'
-    #       f'end date: {context.loop_period_end}\nshares: {context.share_pool}\n'
-    #       f'htypes: {context.history_data_types}')
+    #       f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
+    #       f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
     hist_op = get_history_panel(start=op_start,
                                 end=context.invest_end,
                                 shares=context.share_pool,
-                                htypes=context.history_data_types,
-                                freq=context.loop_period_freq,
+                                htypes=operator.op_data_types,
+                                freq=operator.op_data_freq,
                                 asset_type=context.asset_type,
                                 chanel='online')
     hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
     # TODO: 应该根据需要生成用于优化的历史数据
     hist_opti = None  # 用于策略优化的历史数据
     # 生成参考历史数据，作为参考用于回测结果的评价
-    hist_reference = (get_history_panel(start=context.loop_period_start,
-                                        end=context.loop_period_end,
-                                        shares=context.reference_data,
-                                        htypes='close',
-                                        freq=context.loop_period_freq,
-                                        asset_type='I',
+    # debug
+    # print(f'preparing reference historical data, \n '
+    #       f'\noperation generation dependency start date: {context.invest_start}\n'
+    #       f'end date: {context.invest_end}\nshares: {context.reference_asset}\n'
+    #       f'htypes: {context.reference_data_type} at frequency \'{operator.op_data_freq}\'')
+    hist_reference = (get_history_panel(start=context.invest_start,
+                                        end=context.invest_end,
+                                        shares=context.reference_asset,
+                                        htypes=context.reference_data_type,
+                                        freq=operator.op_data_freq,
+                                        asset_type=context.reference_asset_type,
                                         chanel='online')).to_dataframe(htype='close')
+    print(hist_reference.info())
     # ===============
     # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
     # ===============
