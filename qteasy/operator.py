@@ -1347,26 +1347,45 @@ class Operator:
 
     @property
     def timing(self):
+        """返回operator对象的所有timing对象"""
         return self._timing
 
     @property
     def selecting(self):
+        """返回operator对象的所有selecting对象"""
         return self._selecting
 
     @property
     def ricon(self):
+        """返回operator对象的所有ricon对象"""
         return self._ricon
 
     @property
     def strategies(self):
-        stg = []
-        stg.extend(self.timing)
-        stg.extend(self.selecting)
-        stg.extend(self.ricon)
+        """返回operator对象的所有策略子对象"""
+        stg = [item for item in self.timing + self.selecting + self.ricon]
         return stg
 
     @property
+    def op_data_types(self):
+        """返回operator对象所有策略子对象所需数据类型的集合"""
+        d_types = [item.data_types for item in self.timing + self.selecting + self.ricon]
+        return list(set(d_types))
+
+    @property
     def get_opt_space_par(self):
+        """一次性返回operator对象中所有参加优化（opt_tag != 0）的子策略的参数空间信息
+
+        一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
+        stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
+        这样的控制，我们可以给每一个子策略一个属性opt_tag优化标签，通过设置这个标签的值，可以控制这个子策略是否参与优化：
+        {0: 'No optimization, 不参与优化，这个子策略在整个优化过程中将始终使用同一组参数',
+         1: 'Normal optimization, 普通优化，这个子策略在优化过程中使用不同的参数，这些参数都是从它的参数空间中按照规律取出的',
+         2: 'enumerate optimization, 枚举优化，在优化过程中使用不同的参数，但并非取自其参数空间，而是来自一个预设的枚举对象'}
+
+         这个函数遍历operator对象中所有子策略，根据其优化类型选择它的参数空间信息，组合成一个多维向量用于创建可以用于生成所有相关
+         策略的参数的高维空间
+        """
         ranges = []
         types = []
         for stg in self.strategies:
@@ -1382,9 +1401,9 @@ class Operator:
 
     @property
     def max_window_length(self):
-        """ find out max window length in all strategies
+        """ 计算并返回operator对象所有子策略中最长的策略形成期。在准备回测或优化历史数据时，以此确保有足够的历史数据供策略形成
 
-        :return:
+        :return: int
         """
         max_wl = 0
         for stg in self.strategies:
@@ -1393,7 +1412,7 @@ class Operator:
         return max_wl
 
     def set_opt_par(self, opt_par):
-        """将输入的opt参数切片后传入stg的参数中
+        """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
 
         本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
 
@@ -1418,13 +1437,8 @@ class Operator:
                 stg.set_pars(opt_par[s:k])
                 s = k
 
-    # Operation对象有两类属性需要设置：blender混合器属性、Parameters策略参数或属性
-    # 这些属性参数的设置需要在OP模块设置一个统一的设置入口，同时，为了实现与Optimizer模块之间的接口
-    # 还需要创建两个Opti接口函数，一个用来根据的值创建合适的Space初始化参数，另一个用于接受opt
-    # 模块传递过来的参数，分配到合适的策略中去
-    # TODO: convert all parameter setting functions to private except one single entry-function set_parameter()
     def set_blender(self, blender_type, *args, **kwargs):
-        # 统一的blender混合器属性设置入口
+        """统一的blender混合器属性设置入口"""
         if isinstance(blender_type, str):
             if blender_type.lower() == 'selecting':
                 self._set_selecting_blender(*args, **kwargs)

@@ -219,12 +219,11 @@ class Context:
                          'decreasing step size to provide increased accuracy over rounds',
                       3: 'Genetic Algorithm, searches for local optimal parameter by adopting genetic evolution laws'}
 
-
     def __init__(self,
                  mode: int = 1,
                  moq: float = 0.,
                  riskfree_interest_rate: float = 0.035,
-                 visual: bool = False:
+                 visual: bool = False):
         """初始化所有的环境变量和环境常量
 
         input:
@@ -319,7 +318,6 @@ class Context:
         self.opti_perf_report = False
         self.opti_report_indicators = 'FV, Sharp'
 
-
     def __str__(self):
         """定义Context类的打印样式"""
         out_str = list()
@@ -330,10 +328,12 @@ class Context:
                        f'')
         return ''.join(out_str)
 
-
     @property
-    def mode_text(self):
-        return self.mode_text[self.mode]
+    def mode_text(self, mode = None):
+        if mode is None:
+            return self.run_mode_text[self.mode]
+        else:
+            return self.run_mode_text[mode]
 
     @property
     def asset_type_text(self):
@@ -346,6 +346,7 @@ class Context:
     @property
     def invest_cash_dates(self):
         return None
+
 
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
 # TODO: 5，与交易量相关的二阶费率
@@ -895,23 +896,19 @@ def run(operator, context, mode: int = None, history_data: pd.DataFrame = None):
         run_mode_text = context.mode_text
     else:
         run_mode = mode
-        if run_mode == 0:
-            run_mode_text = 'Real-time running mode'
-        elif run_mode == 1:
-            run_mode_text = 'Back-looping mode'
-        elif run_mode == 2:
-            run_mode_text = 'Optimization mode'
+        run_mode_text = context.mode_text[mode]
+
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
-    op_start = (pd.to_datetime(context.loop_period_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
+    op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-400, unit='d')).strftime('%Y%m%d')
     # debug
     # print(f'preparing historical data, \nexpected start day: {context.loop_period_start}, '
     #       f'\noperation generation dependency start date: {op_start}\n'
     #       f'end date: {context.loop_period_end}\nshares: {context.share_pool}\n'
     #       f'htypes: {context.history_data_types}')
     hist_op = get_history_panel(start=op_start,
-                                end=context.loop_period_end,
+                                end=context.invest_end,
                                 shares=context.share_pool,
                                 htypes=context.history_data_types,
                                 freq=context.loop_period_freq,

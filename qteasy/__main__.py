@@ -10,10 +10,8 @@ if __name__ == '__main__':
     op.set_parameter('t-1', opt_tag=0, par_boes=[(10, 100), (150, 200), (100, 150)])
     op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
-    cont = Context(investment_amounts=[10000, 0.01, 0.01, 0.01],
-                   investment_dates=['2006-04-01', '2017-07-01', '2018-06-01', '2019-07-01'],
-                   reference_data='000300.SH',
-                   moq=0)
+    cont = Context(moq=0)
+    cont.reference_data='000300.SH'
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
     cont.opti_method = 0
