@@ -202,14 +202,15 @@ class Context:
             pred_report_indicators:     str, 预测分析的报告中所涉及的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
 
     """
+    # TODO: 完善context对象的信息属性
     run_mode_text = {0: 'Real-time Running Mode',
                      1: 'Back-looping Mode',
                      2: 'Optimization Mode',
                      3: 'Predict Mode'}
 
-    asset_type_text = {'E': '',
-                       'I': '',
-                       'F': ''}
+    asset_type_text = {'E': 'equity',
+                       'I': 'index',
+                       'F': 'futures'}
 
     test_period_type_text = {0: '', 1: '', 2: '', 3: ''}
 
@@ -266,6 +267,9 @@ class Context:
         self.invest_total_amount = 50000
         self.invest_unit_amount = 10000
         self.riskfree_ir = 0.015
+        self.invest_dates = '20100801, 20110801, 20120801'
+        self.invest_amounts = [10000, 10000, 10000]
+        self.cash_plan = CashPlan(self.invest_dates, self.invest_amounts)
 
         self.fixed_buy_fee = 5
         self.fixed_sell_fee = 0
@@ -345,10 +349,6 @@ class Context:
     @property
     def invest_cash_dates(self):
         return None
-
-    @property
-    def cash_plan(self):
-        return CashPlan(self.invest_start, self.invest_total_amount)
 
 
 # TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
@@ -662,6 +662,7 @@ def _loop_step(pre_cash: float,
     """
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
+    print(f'本期开始, 期初现金: {pre_cash:.2f}, 期初总资产: {pre_value:.2f}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
     if moq == 0:  # 当moq为0时，可以出售任意份额的投资产品
@@ -674,13 +675,16 @@ def _loop_step(pre_cash: float,
                           0)
     rate_out = rate(a_sold * prices)  # 计算出售持有资产的手续费和成本率
     cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
+    print(f'本期获得现金:{cash_gained.sum():.2f}, 出售资产 {a_sold} 交易费用 {(cash_gained * rate_out).sum():.2f}')
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained.sum()
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
+    print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
         pur_values = pur_values / pre_value * cash
+        print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
         # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
     rate_in = rate(pur_values)
@@ -697,7 +701,7 @@ def _loop_step(pre_cash: float,
     # 仅当a_purchased大于零时计算花费的现金额
     cash_spent = np.where(a_purchased > 0,
                           -1 * a_purchased * prices * (1 + rate_in), 0)
-
+    print(f'实际花费现金 {cash_spent.sum():.2f} 实际买入资产 {a_purchased} 交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = np.where(op == 0, 0,
                    np.where(op > 0, -1 * cash_spent * rate_in,
@@ -708,6 +712,7 @@ def _loop_step(pre_cash: float,
     cash += cash_spent.sum()
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
     value = (amounts * prices).sum() + cash
+    print(f'期末现金: {cash:.2f}, 期末总资产: {value:.2f}\n')
     return cash, amounts, fee, value
 
 
@@ -758,19 +763,21 @@ def apply_loop(op_list: pd.DataFrame,
                price_visual: bool = False,
                cash_plan: CashPlan = None,
                cost_rate: Rate = None,
-               moq: float = 100.) -> pd.DataFrame:
+               moq: float = 100.,
+               inflation_rate: float = 0.03) -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
     input：=====
-        :type cash_plan: float: 初始资金额，未来将被替换为CashPlan对象
-        :type price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效，未来将增加reference数据
-        :type history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
-        :type visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
+        :param cash_plan: float: 初始资金额，未来将被替换为CashPlan对象
+        :param price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效，未来将增加reference数据
+        :param history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
+        :param visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
                             为True时将数据填充到整个历史区间，并用图表输出
-        :type op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
-        :type cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
-        :type moq: float：每次交易的最小份额
+        :param op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
+        :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
+        :param moq: float：每次交易的最小份额单位
+        :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
 
     output：=====
         Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单
@@ -778,32 +785,50 @@ def apply_loop(op_list: pd.DataFrame,
     """
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
+    assert cash_plan is not None, 'ValueError: cash plan should not be None type'
 
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，知道找到更好的向量化执行方法
+    # 提取交易清单中的所有数据，生成np.ndarray，即所有的交易信号
     op = op_list.values
+    # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
     price = history_list.fillna(0).loc[op_list.index].values
-    # debug
-    # print(price)
+
     looped_dates = list(op_list.index)
-    if cash_plan is None:
-        cash_plan = CashPlan(dates=looped_dates[0], amounts=[100000], interest_rate=0)
+    # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
+    if inflation_rate > 0:
+        # print(f'looped dates are like: {looped_dates}')
+        days_timedelta = looped_dates - np.roll(looped_dates, 1)
+        # print(f'days differences between two operations dates are {days_timedelta}')
+        days_difference = np.zeros_like(looped_dates, dtype='int')
+        for i in range(len(looped_dates)):
+            days_difference[i] = days_timedelta[i].days
+        days_difference[0] = 0
+        inflation_factors = 1 + days_difference * inflation_rate / 250
+        print(f'number of difference in days are {days_difference}, inflation factors are {inflation_factors}')
     op_count = op.shape[0]  # 获取行数
+    # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
-    # print(f'investment date position calculated: {investment_date_pos}')
+    print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
-    cash = 0  # 持有现金总额，初始化为初始现金总额
+    cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
     amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
     cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
+    date_print_format = '%Y年%m月%d日'
     for i in range(op_count):  # 对每一行历史交易信号开始回测
+        print(f'交易日期:{looped_dates[i].strftime(date_print_format)}')
+        if inflation_rate > 0: # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
+            cash *= inflation_factors[i]
+            print(f'考虑现金增值, 上期现金: {(cash / inflation_factors[i]):.2f}, 经过{days_difference[i]}天后'
+                  f'现金增值到{cash:.2f}')
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
             cash += invest_dict[i]
-            # print(f'In loop process, on loop position {i} cash increased from {cash - invest_dict[i]} to {cash}')
+            print(f'本期新增投入现金, 本期现金: {(cash - invest_dict[i]):.2f}, 追加投资后现金增加到{cash:.2f}')
         # 调用loop_step()函数，计算下一期剩余资金、资产组合的持有份额、交易成本和下期资产总额
         # debug
         # print('before:', cash, amounts, op[i], price[i], cost_rate, moq)
@@ -931,7 +956,7 @@ def run(operator, context):
     print(hist_reference.info())
     # ===============
     # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
-    # ===============
+    # ===============~~
     print(f'====================================\n'
           f'       RUNNING IN MODE {run_mode}\n'
           f'      --{run_mode_text}--\n'
@@ -1151,7 +1176,7 @@ def run(operator, context):
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             step_size=(1, 0.01),
+                                             step_size=32,
                                              parallel=True)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法

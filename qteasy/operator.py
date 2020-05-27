@@ -1651,9 +1651,8 @@ class Operator:
             history_length = dt.shape[1]
             sel_masks.append(
                     sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
-        # et = time.clock()
-        # print(f'time elapsed for operator.create_signal.Selecting strategy: {et-st:.5f}')
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
+        # debug
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
         # print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
@@ -1661,29 +1660,19 @@ class Operator:
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
         # hist_selected = hist_data * selected_shares
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
-        # st = time.clock()
-        ls_masks = []
-        for tmg, dt in zip(self._timing, self._timing_history_data):  # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
-            # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
-            # print('SPEED test OP create, Time of ls_mask creation')
-            ls_masks.append(tmg.generate(dt))
-            # print(tmg.generate(h_v))
-            # print('ls mask created: ', tmg.generate(hist_selected).iloc[980:1000])
-        # et = time.clock()
-        # print(f'time elapsed for operator.create_signal.Timing Strategy: {et-st:.5f}')
+        # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
+        # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
+        ls_masks = [tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)]
         ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
+        # debug
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print('\n long/short mask: \n', ls_mask[:100])
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
-        # st = time.clock()
-        ricon_mats = []
-        for ricon, dt in zip(self._ricon, self._ricon_history_data):  # 依次使用风控策略队列中的所有策略生成风险控制矩阵
-            # print('SPEED test OP create, Time of ricon_mask creation')
-            ricon_mats.append(ricon.generate(dt))  # 所有风控矩阵添加到风控矩阵队列
-        # et = time.clock()
-        # print(f'time elapsed for operator.create_signal.Ricon Strategy: {et-st:.5f}')
+        # 依次使用风控策略队列中的所有策略生成风险控制矩阵
+        ricon_mats = [ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)]
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
+        # debug
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
         # print('risk control matrix \n', ricon_mat[:100])
         # print (ricon_mat)
