@@ -665,6 +665,7 @@ def _loop_step(pre_cash: float,
     pre_value = pre_cash + (pre_amounts * prices).sum()
     if print_log:
         print(f'本期开始, 期初现金: {pre_cash:.2f}, 期初总资产: {pre_value:.2f}')
+        print(f'本期交易信号{op}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
     if moq == 0:  # 当moq为0时，可以出售任意份额的投资产品
@@ -677,12 +678,15 @@ def _loop_step(pre_cash: float,
                           0)
     rate_out = rate(a_sold * prices)  # 计算出售持有资产的手续费和成本率
     cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
-
+    if print_log:
+        print(f'以本期资产价格{prices}出售资产 {-a_sold}')
+        print(f'获得现金:{cash_gained.sum():.2f}, 产生交易费用 {(cash_gained * rate_out).sum():.2f}')
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained.sum()
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
-
+    if print_log:
+        print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
         pur_values = pur_values / pre_value * cash
@@ -704,7 +708,9 @@ def _loop_step(pre_cash: float,
     # 仅当a_purchased大于零时计算花费的现金额
     cash_spent = np.where(a_purchased > 0,
                           -1 * a_purchased * prices * (1 + rate_in), 0)
-
+    if print_log:
+        print(f'以本期资产价格{prices}买入资产 {a_purchased}')
+        print(f'实际花费现金 {cash_spent.sum():.2f} 并产生交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = np.where(op == 0, 0,
                    np.where(op > 0, -1 * cash_spent * rate_in,
@@ -716,9 +722,6 @@ def _loop_step(pre_cash: float,
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
     value = (amounts * prices).sum() + cash
     if print_log:
-        print(f'本期获得现金:{cash_gained.sum():.2f}, 出售资产 {a_sold} 交易费用 {(cash_gained * rate_out).sum():.2f}')
-        print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
-        print(f'实际花费现金 {cash_spent.sum():.2f} 买入资产 {a_purchased} 交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
         print(f'期末现金: {cash:.2f}, 期末总资产: {value:.2f}\n')
     return cash, amounts, fee, value
 

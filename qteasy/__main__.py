@@ -8,7 +8,7 @@ if __name__ == '__main__':
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=0, par_boes=[(10, 100), (150, 200), (100, 150)])
-    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 100), (150, 200), (100, 150)])
+    op.set_parameter('t-1', opt_tag=0, par_boes=[(10, 100), (150, 200), (100, 150)])
     op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(moq=0)

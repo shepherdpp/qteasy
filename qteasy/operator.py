@@ -1692,7 +1692,7 @@ class Operator:
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         # 生成交易信号矩阵
-        op_mat = _mask_to_signal(ls_mask * sel_mask) + ricon_mat
+        op_mat = (_mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # print(f'length of date_list: {len(date_list)}')
@@ -1707,7 +1707,7 @@ class Operator:
         keep = (lst_out - lst_out.shift(1)).any(1)
         keep.iloc[0] = True
         # debug
-        # print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
+        print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
         return lst_out[keep]
 
     # ================================
