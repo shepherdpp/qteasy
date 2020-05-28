@@ -478,15 +478,21 @@ class TimingCrossline(Timing):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = hist_price.T
         # 计算长短均线之间的距离
-        diff = sma(h[0], l) - sma(h[0], s)
+        diff = sma(h[0], l) - sma(h[0], s)[-1]
         # 根据观望模式在不同的点位产生Long/short标记
         if hesitate == 'buy':
-            cat = np.where(diff < -m, 1, 0)
+            m = -m
+            # cat = np.where(diff < -m, 1, 0)
         elif hesitate == 'sell':
-            cat = np.where(diff < m, 1, 0)
+            pass
+            # cat = np.where(diff < m, 1, 0)
         else:  # hesitate == 'none'
-            cat = np.where(diff < 0, 1, 0)
-        return cat[-1]
+            m = 0
+            # cat = np.where(diff < 0, 1, 0)
+        if diff < m:
+            return 1
+        else:
+            return 0
 
 
 class TimingMACD(Timing):
@@ -536,8 +542,10 @@ class TimingMACD(Timing):
 
         # 生成MACD多空判断：
         # 1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
-        cat = np.where(_macd > 0, 1, 0)
-        return cat[-1]
+        if _macd[-1] > 0:
+            return 1
+        else:
+            return 0
 
 
 class TimingDMA(Timing):
@@ -579,9 +587,10 @@ class TimingDMA(Timing):
         # 1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
         # 2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
         # 3， DMA与股价发生背离时的交叉信号，可信度较高
-        cat = np.where(dma > ama, 1, 0)
-        # print('qDMA generate category data with as type', cat.size, cat)
-        return cat[-1]
+        if dma[-1] > ama[-1]:
+            return 1
+        else:
+            return 0
 
 
 class TimingTRIX(Timing):
@@ -630,8 +639,10 @@ class TimingTRIX(Timing):
         # 生成TRIX多空判断：
         # 1， TRIX位于MATRIX上方时，长期多头状态, signal = 1
         # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 0
-        cat = np.where(trxi > matrix, 1, 0)
-        return cat[-1]  # 返回时填充日期序列恢复nan值
+        if trxi[-1] > matrix[-1]:
+            return 1
+        else:
+            return 0
 
 
 class TimingCDL(Timing):

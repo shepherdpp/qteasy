@@ -31,7 +31,7 @@ if __name__ == '__main__':
     timing_pars4 = (37, 44)
     timing_pars5 = (62, 132, 10, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
-    op.set_blender('timing', 'cumulative')
+    op.set_blender('timing', 'pos-1')
     op.set_parameter(stg_id='t-0', pars=timing_pars1)
     op.set_parameter(stg_id='t-1', pars=timing_pars3)
     # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])

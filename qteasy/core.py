@@ -801,9 +801,8 @@ def apply_loop(op_list: pd.DataFrame,
         days_timedelta = looped_dates - np.roll(looped_dates, 1)
         # print(f'days differences between two operations dates are {days_timedelta}')
         days_difference = np.zeros_like(looped_dates, dtype='int')
-        for i in range(len(looped_dates)):
+        for i in range(1, len(looped_dates)):
             days_difference[i] = days_timedelta[i].days
-        days_difference[0] = 0
         inflation_factors = 1 + days_difference * inflation_rate / 250
         print(f'number of difference in days are {days_difference}, inflation factors are {inflation_factors}')
     op_count = op.shape[0]  # 获取行数
