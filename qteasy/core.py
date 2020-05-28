@@ -643,7 +643,8 @@ def _loop_step(pre_cash: float,
                op: np.ndarray,
                prices: np.ndarray,
                rate: Rate,
-               moq: float) -> tuple:
+               moq: float,
+               print_log: bool = False) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
     input：=====
@@ -662,7 +663,8 @@ def _loop_step(pre_cash: float,
     """
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
-    print(f'本期开始, 期初现金: {pre_cash:.2f}, 期初总资产: {pre_value:.2f}')
+    if print_log:
+        print(f'本期开始, 期初现金: {pre_cash:.2f}, 期初总资产: {pre_value:.2f}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
     if moq == 0:  # 当moq为0时，可以出售任意份额的投资产品
@@ -675,16 +677,17 @@ def _loop_step(pre_cash: float,
                           0)
     rate_out = rate(a_sold * prices)  # 计算出售持有资产的手续费和成本率
     cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
-    print(f'本期获得现金:{cash_gained.sum():.2f}, 出售资产 {a_sold} 交易费用 {(cash_gained * rate_out).sum():.2f}')
+
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained.sum()
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
-    print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
+
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
         pur_values = pur_values / pre_value * cash
-        print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
+        if print_log:
+            print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
         # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
     rate_in = rate(pur_values)
@@ -701,7 +704,7 @@ def _loop_step(pre_cash: float,
     # 仅当a_purchased大于零时计算花费的现金额
     cash_spent = np.where(a_purchased > 0,
                           -1 * a_purchased * prices * (1 + rate_in), 0)
-    print(f'实际花费现金 {cash_spent.sum():.2f} 实际买入资产 {a_purchased} 交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
+
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = np.where(op == 0, 0,
                    np.where(op > 0, -1 * cash_spent * rate_in,
@@ -712,7 +715,11 @@ def _loop_step(pre_cash: float,
     cash += cash_spent.sum()
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
     value = (amounts * prices).sum() + cash
-    print(f'期末现金: {cash:.2f}, 期末总资产: {value:.2f}\n')
+    if print_log:
+        print(f'本期获得现金:{cash_gained.sum():.2f}, 出售资产 {a_sold} 交易费用 {(cash_gained * rate_out).sum():.2f}')
+        print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
+        print(f'实际花费现金 {cash_spent.sum():.2f} 买入资产 {a_purchased} 交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
+        print(f'期末现金: {cash:.2f}, 期末总资产: {value:.2f}\n')
     return cash, amounts, fee, value
 
 
@@ -764,7 +771,8 @@ def apply_loop(op_list: pd.DataFrame,
                cash_plan: CashPlan = None,
                cost_rate: Rate = None,
                moq: float = 100.,
-               inflation_rate: float = 0.03) -> pd.DataFrame:
+               inflation_rate: float = 0.03,
+               print_log: bool = False) -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
@@ -804,12 +812,14 @@ def apply_loop(op_list: pd.DataFrame,
         for i in range(1, len(looped_dates)):
             days_difference[i] = days_timedelta[i].days
         inflation_factors = 1 + days_difference * inflation_rate / 250
-        print(f'number of difference in days are {days_difference}, inflation factors are {inflation_factors}')
+        # debug
+        # print(f'number of difference in days are {days_difference}, inflation factors are {inflation_factors}')
     op_count = op.shape[0]  # 获取行数
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
-    print(f'investment date position calculated: {investment_date_pos}')
+    # debug
+    # print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
     cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
     amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
@@ -819,15 +829,18 @@ def apply_loop(op_list: pd.DataFrame,
     amounts_matrix = []
     date_print_format = '%Y年%m月%d日'
     for i in range(op_count):  # 对每一行历史交易信号开始回测
-        print(f'交易日期:{looped_dates[i].strftime(date_print_format)}')
+        if print_log:
+            print(f'交易日期:{looped_dates[i].strftime(date_print_format)}')
         if inflation_rate > 0: # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             cash *= inflation_factors[i]
-            print(f'考虑现金增值, 上期现金: {(cash / inflation_factors[i]):.2f}, 经过{days_difference[i]}天后'
-                  f'现金增值到{cash:.2f}')
+            if print_log:
+                print(f'考虑现金增值, 上期现金: {(cash / inflation_factors[i]):.2f}, 经过{days_difference[i]}天后'
+                      f'现金增值到{cash:.2f}')
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
             cash += invest_dict[i]
-            print(f'本期新增投入现金, 本期现金: {(cash - invest_dict[i]):.2f}, 追加投资后现金增加到{cash:.2f}')
+            if print_log:
+                print(f'本期新增投入现金, 本期现金: {(cash - invest_dict[i]):.2f}, 追加投资后现金增加到{cash:.2f}')
         # 调用loop_step()函数，计算下一期剩余资金、资产组合的持有份额、交易成本和下期资产总额
         # debug
         # print('before:', cash, amounts, op[i], price[i], cost_rate, moq)
@@ -835,7 +848,8 @@ def apply_loop(op_list: pd.DataFrame,
                                                pre_amounts=amounts,
                                                op=op[i], prices=price[i],
                                                rate=cost_rate,
-                                               moq=moq)
+                                               moq=moq,
+                                               print_log=print_log)
         # 保存计算结果
         # debug
         # print('after:', cash, amounts, fee)
@@ -1061,7 +1075,8 @@ def run(operator, context):
                                    moq=context.moq,
                                    visual=True,
                                    cost_rate=context.rate,
-                                   price_visual=True)
+                                   price_visual=True,
+                                   print_log=True)
         et = time.time()
         run_time_loop_full = (et - st)
         # print('looped values result is: \n', looped_values)
