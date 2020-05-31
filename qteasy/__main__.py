@@ -37,7 +37,7 @@ if __name__ == '__main__':
     # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])
     # op.set_parameter('t-3', pars=timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
-    op.set_parameter('r-0', pars=(8, -0.11))
+    op.set_parameter('r-0', pars=(6, -0.06))
     # op.info()
     # print('\nTime of creating operation list:')
     op.info()

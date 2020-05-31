@@ -363,23 +363,38 @@ class Rate:
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
     """
 
-    def __init__(self, fix: float = 0, fee: float = 0.003, slipage: float = 0):
-        self.fix = fix
-        self.fee = fee
+    def __init__(self,
+                 buy_fix: float = 0.0,
+                 sell_fix: float = 0.0,
+                 buy_rate: float = 0.003,
+                 sell_rate: float = 0.001,
+                 buy_min: float = 5.0,
+                 sell_min: float = 0.0,
+                 slipage: float = 0.0):
+        self.buy_fix = buy_fix
+        self.sell_fix = sell_fix
+        self.buy_rate = buy_rate
+        self.sell_rate = sell_rate
+        self.buy_min = buy_min
+        self.sell_min = sell_min
         self.slipage = slipage
 
     def __str__(self):
         """设置Rate对象的打印形式"""
-        return f'<fixed fee: {self.fix}, rate fee:{self.fee}, slipage:{self.slipage}>'
+        return f'<Buying: {self.buy_fix}, rate:{self.buy_rate}, slipage:{self.slipage}\n' \
+               f'Selling: {self.sell_fix}, rate:{self.sell_rate}>'
 
     def __repr__(self):
         """设置Rate对象"""
         return f'Rate({self.fix}, {self.fee}, {self.slipage})'
 
     # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
-    def __call__(self, amount: np.ndarray):
+    def __call__(self, amount: np.ndarray, is_buying: bool = True):
         """直接调用对象，计算交易费率"""
-        return self.fee + self.slipage * amount
+        if is_buying:
+            return self.buy_rate + self.slipage * amount
+        else:
+            return self.sell_rate + self.slipage * amount
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
@@ -676,7 +691,9 @@ def _loop_step(pre_cash: float,
         a_sold = np.where(prices != 0,
                           np.where(op < 0, np.rint(pre_amounts * op), 0),
                           0)
-    rate_out = rate(a_sold * prices)  # 计算出售持有资产的手续费和成本率
+    rate_out = rate(a_sold * prices, is_buying=False)  # 计算出售持有资产的手续费和成本率
+    # debug
+    print(f'rate out is {rate_out}')
     cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
     if print_log:
         print(f'以本期资产价格{prices}出售资产 {-a_sold}')
@@ -696,11 +713,11 @@ def _loop_step(pre_cash: float,
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
     rate_in = rate(pur_values)
     if moq == 0:  # MOQ为零时，可以购入的资产数量允许为小数
-        a_purchased = np.where(prices != 0,
+        a_purchased = np.where(prices,
                                np.where(op > 0,
                                         pur_values / (prices * (1 + rate_in)), 0), 0)
     else:  # 否则，使用整除方式确保购入的资产数量为MOQ的整数倍，MOQ非整数时仍然成立
-        a_purchased = np.where(prices != 0,
+        a_purchased = np.where(prices,
                                np.where(op > 0,
                                         pur_values // (prices * moq * (1 + rate_in)) * moq,
                                         0), 0)

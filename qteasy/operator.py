@@ -360,7 +360,7 @@ class Timing(Strategy):
 
         # 如果有足够的非nan数据，则开始进行历史数据的滚动展开
         hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
-        # TODO：需要找到比循环的方式更快的数据滚动展开的方法，目前循环就是最快的办法
+        # TODO：需要找到比循环的方式更快的数据滚动展开的方法，目前循环就是最快的办法，是否可以尝试使用矩阵的公式创建？
         for i in range(loop_count):
             hist_pack[i] = hist_nonan[i:i + self._window_length]
         # 滚动展开完成，形成一个新的3D或2D矩阵
@@ -404,14 +404,11 @@ class Timing(Strategy):
             f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
-        # debug
-        # print(f'in Timing.generate() pars is a {type(pars)}, value is {pars}')
         if isinstance(pars, dict):
             par_list = pars.values()  # 允许使用dict来为不同的股票定义不同的策略参数
         else:
             par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
-        # print(len(par_list), len(hist_data))
         assert len(par_list) == len(hist_data), \
             f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
@@ -1704,10 +1701,12 @@ class Operator:
         # debug
         # print('operation matrix: ', '\n', lst_out)
         # 进一步找到所有相同且相邻的交易信号行，删除所有较晚的交易信号，只保留最早的信号（这样做的目的是减少重复信号，从而提高回测效率）
+        # TODO: 上面的做法是错误的。因为上面的操作实际上把连续买入或连续卖出的操作删除了。实际上这样的操作是需要的，例如，先建仓至1/3，再
+        # TODO  建仓至1/3，可以考虑的是仅删除所有连续为1或连续-1的数据
         keep = (lst_out - lst_out.shift(1)).any(1)
         keep.iloc[0] = True
         # debug
-        print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
+        # print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
         return lst_out[keep]
 
     # ================================
