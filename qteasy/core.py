@@ -268,7 +268,7 @@ class Context:
         self.invest_unit_amount = 10000
         self.riskfree_ir = 0.015
         self.invest_dates = '20100801, 20110801, 20120801'
-        self.invest_amounts = [10000, 10000, 10000]
+        self.invest_amounts = [10000, 0.01, 0.01]
         self.cash_plan = CashPlan(self.invest_dates, self.invest_amounts)
 
         self.fixed_buy_fee = 5
@@ -684,16 +684,16 @@ def _loop_step(pre_cash: float,
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
     if moq == 0:  # 当moq为0时，可以出售任意份额的投资产品
-        a_sold = np.where(prices != 0,
+        a_sold = np.where(prices,
                           np.where(op < 0, pre_amounts * op, 0),
                           0)
     else:  # 否则，可以购买的投资产品份数只能是MOQ的整数倍，MOQ本身可以是浮点数
-        a_sold = np.where(prices != 0,
+        a_sold = np.where(prices,
                           np.where(op < 0, np.rint(pre_amounts * op), 0),
                           0)
     rate_out = rate(a_sold * prices, is_buying=False)  # 计算出售持有资产的手续费和成本率
     # debug
-    print(f'rate out is {rate_out}')
+    # print(f'rate out is {rate_out}')
     cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
     if print_log:
         print(f'以本期资产价格{prices}出售资产 {-a_sold}')
@@ -729,9 +729,10 @@ def _loop_step(pre_cash: float,
         print(f'以本期资产价格{prices}买入资产 {a_purchased}')
         print(f'实际花费现金 {cash_spent.sum():.2f} 并产生交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
-    fee = np.where(op == 0, 0,
+    fee = np.where(op,
                    np.where(op > 0, -1 * cash_spent * rate_in,
-                            cash_gained * rate_out)).sum()
+                            cash_gained * rate_out),
+                   0).sum()
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
     amounts = pre_amounts + a_purchased + a_sold
     # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
@@ -1210,7 +1211,7 @@ def run(operator, context):
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             step_size=32,
+                                             step_size=context.opti_method_step_size,
                                              parallel=True)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
@@ -1223,7 +1224,7 @@ def run(operator, context):
             pars, perfs = _search_montecarlo(hist=hist_op,
                                              op=operator,
                                              context=context,
-                                             point_count=1500,
+                                             point_count=context.opti_method_sample_size,
                                              parallel=True)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
@@ -1242,9 +1243,9 @@ def run(operator, context):
             pars, perfs = _search_incremental(hist=hist_op,
                                               op=operator,
                                               context=context,
-                                              init_step=16,
-                                              min_step=1,
-                                              inc_step=2)
+                                              init_step=context.opti_method_init_step_size,
+                                              min_step=context.opti_method_min_step_size,
+                                              inc_step=context.opti_method_incre_ratio)
         elif how == 3:
             """ GA method遗传算法
             
