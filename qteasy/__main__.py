@@ -41,13 +41,14 @@ if __name__ == '__main__':
     # print('\nTime of creating operation list:')
     op.info()
     print(f'\n START QT RUNNING\n===========================\n')
+    cont.parallel = True
     cont.mode = 1
     run(op, cont)
     cont.mode = 0
     run(op, cont)
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 5000
+    cont.opti_method_sample_size = 500
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1

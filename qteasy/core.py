@@ -389,12 +389,15 @@ class Rate:
         return f'Rate({self.fix}, {self.fee}, {self.slipage})'
 
     # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
-    def __call__(self, amount: np.ndarray, is_buying: bool = True):
+    @nb.jit
+    def __call__(self,
+                 amounts: np.ndarray,
+                 is_buying: bool = True):
         """直接调用对象，计算交易费率"""
         if is_buying:
-            return self.buy_rate + self.slipage * amount
+            return self.buy_rate + self.slipage * amounts
         else:
-            return self.sell_rate + self.slipage * amount
+            return self.sell_rate + self.slipage * amounts
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
@@ -408,8 +411,50 @@ class Rate:
         else:
             raise TypeError
 
+    @nb.jit
+    def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray):
+        """计算出售投资产品的要素
 
-# TODO：在Cash类中增加现金投资的无风险利率，在apply_loop的时候，可以选择是否考虑现金的无风险利率，如果考虑时，现金按照无风险利率增长
+
+        :param prices: 投资产品的价格
+        :param op: 交易信号
+        :param amounts: 持有投资产品的份额
+
+        :return:
+        a_sold:
+        fee:
+        cash_gained: float
+        fee: float
+        """
+        a_sold = np.where(prices, np.where(op < 0, amounts * op, 0), 0)
+        sold_values = a_sold * prices
+        rates = self.__call__(sold_values, False)
+        cash_gained = (-1 * sold_values * (1 - rates)).sum()
+        fee = (sold_values * rates).sum()
+        return a_sold, cash_gained, fee
+
+    @nb.jit()
+    def get_purchase_results(self, prices: np.ndarray, op: np.ndarray, pur_values: np.ndarray, moq: float):
+        """获得购买资产时的要素
+
+
+        """
+        rates = self.__call__(pur_values, True)
+        if moq == 0:
+            a_purchased = np.where(prices,
+                                   np.where(op > 0,
+                                            pur_values / (prices * (1 + rates)), 0), 0)
+        else:
+            a_purchased = np.where(prices,
+                                   np.where(op > 0,
+                                            pur_values // (prices * moq * (1 + rates)) * moq,
+                                            0), 0)
+        cash_spent = np.where(a_purchased,
+                              -1 * a_purchased * prices * (1 + rates), 0).sum()
+        fee = -(cash_spent * rates).sum()
+        return a_purchased, cash_spent, fee
+
+
 # TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
 class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
@@ -682,24 +727,13 @@ def _loop_step(pre_cash: float,
         print(f'本期开始, 期初现金: {pre_cash:.2f}, 期初总资产: {pre_value:.2f}')
         print(f'本期交易信号{op}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
-    # 如果MOQ不要求出售的投资产品份额为整数，可以省去rint处理
-    if moq == 0:  # 当moq为0时，可以出售任意份额的投资产品
-        a_sold = np.where(prices,
-                          np.where(op < 0, pre_amounts * op, 0),
-                          0)
-    else:  # 否则，可以购买的投资产品份数只能是MOQ的整数倍，MOQ本身可以是浮点数
-        a_sold = np.where(prices,
-                          np.where(op < 0, np.rint(pre_amounts * op), 0),
-                          0)
-    rate_out = rate(a_sold * prices, is_buying=False)  # 计算出售持有资产的手续费和成本率
-    # debug
-    # print(f'rate out is {rate_out}')
-    cash_gained = np.where(a_sold < 0, -1 * a_sold * prices * (1 - rate_out), 0)  # 根据出售持有资产的份额数量计算获取的现金
+    # 根据出售持有资产的份额数量计算获取的现金
+    a_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices, op=op, amounts=pre_amounts)
     if print_log:
         print(f'以本期资产价格{prices}出售资产 {-a_sold}')
-        print(f'获得现金:{cash_gained.sum():.2f}, 产生交易费用 {(cash_gained * rate_out).sum():.2f}')
+        print(f'获得现金:{cash_gained:.2f}, 产生交易费用 {fee_selling:.2f}')
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
-    cash = pre_cash + cash_gained.sum()
+    cash = pre_cash + cash_gained
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
     if print_log:
@@ -711,32 +745,19 @@ def _loop_step(pre_cash: float,
             print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
         # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-    rate_in = rate(pur_values)
-    if moq == 0:  # MOQ为零时，可以购入的资产数量允许为小数
-        a_purchased = np.where(prices,
-                               np.where(op > 0,
-                                        pur_values / (prices * (1 + rate_in)), 0), 0)
-    else:  # 否则，使用整除方式确保购入的资产数量为MOQ的整数倍，MOQ非整数时仍然成立
-        a_purchased = np.where(prices,
-                               np.where(op > 0,
-                                        pur_values // (prices * moq * (1 + rate_in)) * moq,
-                                        0), 0)
-    # 由于MOQ的存在，需要根据实际购入的资产数量确定花费的现金资产
-    # 仅当a_purchased大于零时计算花费的现金额
-    cash_spent = np.where(a_purchased > 0,
-                          -1 * a_purchased * prices * (1 + rate_in), 0)
+    a_purchased, cash_spent, fee_buying = rate.get_purchase_results(prices=prices,
+                                                                    op=op,
+                                                                    pur_values=pur_values,
+                                                                    moq=moq)
     if print_log:
         print(f'以本期资产价格{prices}买入资产 {a_purchased}')
-        print(f'实际花费现金 {cash_spent.sum():.2f} 并产生交易费用: {(-1 * cash_spent * rate_in).sum():.2f}')
+        print(f'实际花费现金 {cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
-    fee = np.where(op,
-                   np.where(op > 0, -1 * cash_spent * rate_in,
-                            cash_gained * rate_out),
-                   0).sum()
+    fee = fee_buying + fee_selling
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
     amounts = pre_amounts + a_purchased + a_sold
     # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
-    cash += cash_spent.sum()
+    cash += cash_spent.sum
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
     value = (amounts * prices).sum() + cash
     if print_log:
@@ -1212,7 +1233,7 @@ def run(operator, context):
                                              op=operator,
                                              context=context,
                                              step_size=context.opti_method_step_size,
-                                             parallel=True)
+                                             parallel=context.parallel)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -1225,7 +1246,7 @@ def run(operator, context):
                                              op=operator,
                                              context=context,
                                              point_count=context.opti_method_sample_size,
-                                             parallel=True)
+                                             parallel=context.parallel)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
             
@@ -1245,7 +1266,8 @@ def run(operator, context):
                                               context=context,
                                               init_step=context.opti_method_init_step_size,
                                               min_step=context.opti_method_min_step_size,
-                                              inc_step=context.opti_method_incre_ratio)
+                                              inc_step=context.opti_method_incre_ratio,
+                                              parallel=context.parallel)
         elif how == 3:
             """ GA method遗传算法
             

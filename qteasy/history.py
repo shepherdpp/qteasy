@@ -502,10 +502,11 @@ class HistoryPanel():
             HistoryPanel.htypes 输出一个列表，包含按顺序排列的所有列标签，即所数据类型
             HistoryPanel.levels 输出一个字典，包含所有层标签及其对应的层编号（从0开始到M-1）
             HistoryPanel.columns 输出一个字典，包含所有数据类型标签及其对应的列编号（从0开始到L-1）
-            HistoryPanel.rows 输出一个字典，包含所有日期行标签及其对应的行号，从0开始知道N-1）
+            HistoryPanel.rows 输出一个字典，包含所有日期行标签及其对应的行号，从0开始一直到N-1）
         3, 方便地打印HistoryPanel的相关信息
-        4, 方便地打印及格式化输出HistoryPanel的内容
-        5, 方便地与pandas DataFrame对象互相转化
+        4, 方便地打印及格式化输出HistoryPanel的内容，如：
+
+        5, 方便地转化为 pandas DataFrame对象
             HistoryPanel不能完整转化为DataFrame对象，因为DataFrame只能适应2D数据。在转化为DataFrame的时候，用户只能选择
             HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
         6, 方便地由多个pandas DataFrame对象组合而成
@@ -768,7 +769,7 @@ class HistoryPanel():
             np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
-    # TODO implement this method
+
     def join(self,
              other,
              same_shares: bool = False,
@@ -872,7 +873,7 @@ class HistoryPanel():
         ALL_DTYPES = ['float', 'int']
         if not self.is_empty:
             assert isinstance(dtype, str), f'InputError, dtype should be a string, got {type(dtype)}'
-            assert dtype in ALL_DTYPES, f'dtype {dtype} is not recognized!'
+            assert dtype in ALL_DTYPES, f'data type {dtype} is not recognized or not supported!'
             self.values.astype(dtype)
         return self
 
