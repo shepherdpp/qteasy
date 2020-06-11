@@ -389,7 +389,6 @@ class Rate:
         return f'Rate({self.fix}, {self.fee}, {self.slipage})'
 
     # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
-    @nb.jit
     def __call__(self,
                  amounts: np.ndarray,
                  is_buying: bool = True):
@@ -411,50 +410,46 @@ class Rate:
         else:
             raise TypeError
 
-
-@nb.njit
-def get_selling_result(sell_rate, slipage, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray):
-    """计算出售投资产品的要素
+    def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray):
+        """计算出售投资产品的要素
 
 
-    :param prices: 投资产品的价格
-    :param op: 交易信号
-    :param amounts: 持有投资产品的份额
+        :param prices: 投资产品的价格
+        :param op: 交易信号
+        :param amounts: 持有投资产品的份额
 
-    :return:
-    a_sold:
-    fee:
-    cash_gained: float
-    fee: float
-    """
-    a_sold = np.where(prices, np.where(op < 0, amounts * op, 0), 0)
-    sold_values = a_sold * prices
-    rates = 0.003
-    cash_gained = (-1 * sold_values * (1 - rates)).sum()
-    fee = (sold_values * rates).sum()
-    return a_sold, cash_gained, fee
+        :return:
+        a_sold:
+        fee:
+        cash_gained: float
+        fee: float
+        """
+        a_sold = np.where(prices, np.where(op < 0, amounts * op, 0), 0)
+        sold_values = a_sold * prices
+        rates = self.__call__(amounts=amounts * prices, is_buying=False)
+        cash_gained = (-1 * sold_values * (1 - rates)).sum()
+        fee = (sold_values * rates).sum()
+        return a_sold, cash_gained, fee
 
-
-@nb.njit
-def get_purchase_results(prices: np.ndarray, op: np.ndarray, pur_values: np.ndarray, moq: float):
-    """获得购买资产时的要素
+    def get_purchase_results(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
+        """获得购买资产时的要素
 
 
-    """
-    rates = self.__call__(pur_values, True)
-    if moq == 0:
-        a_purchased = np.where(prices,
-                               np.where(op > 0,
-                                        pur_values / (prices * (1 + rates)), 0), 0)
-    else:
-        a_purchased = np.where(prices,
-                               np.where(op > 0,
-                                        pur_values // (prices * moq * (1 + rates)) * moq,
-                                        0), 0)
-    cash_spent = np.where(a_purchased,
-                          -1 * a_purchased * prices * (1 + rates), 0).sum()
-    fee = -(cash_spent * rates).sum()
-    return a_purchased, cash_spent, fee
+        """
+        rates = self.__call__(amounts=pur_values, is_buying=True)
+        if moq == 0:
+            a_purchased = np.where(prices,
+                                   np.where(op > 0,
+                                            pur_values / (prices * (1 + rates)), 0), 0)
+        else:
+            a_purchased = np.where(prices,
+                                   np.where(op > 0,
+                                            pur_values // (prices * moq * (1 + rates)) * moq,
+                                            0), 0)
+        cash_spent = np.where(a_purchased,
+                              -1 * a_purchased * prices * (1 + rates), 0).sum()
+        fee = -(cash_spent * rates).sum()
+        return a_purchased, cash_spent, fee
 
 
 # TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
@@ -730,11 +725,9 @@ def _loop_step(pre_cash: float,
         print(f'本期交易信号{op}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 根据出售持有资产的份额数量计算获取的现金
-    a_sold, cash_gained, fee_selling = get_selling_result(sell_rate=rate.sell_rate,
-                                                          slipage=rate.slipage,
-                                                          prices=prices,
-                                                          op=op,
-                                                          amounts=pre_amounts)
+    a_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
+                                                               op=op,
+                                                               amounts=pre_amounts)
     if print_log:
         print(f'以本期资产价格{prices}出售资产 {-a_sold}')
         print(f'获得现金:{cash_gained:.2f}, 产生交易费用 {fee_selling:.2f}')
@@ -751,10 +744,10 @@ def _loop_step(pre_cash: float,
             print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
             # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-    a_purchased, cash_spent, fee_buying = get_purchase_results(prices=prices,
-                                                               op=op,
-                                                               pur_values=pur_values,
-                                                               moq=moq)
+    a_purchased, cash_spent, fee_buying = rate.get_purchase_results(prices=prices,
+                                                                    op=op,
+                                                                    pur_values=pur_values,
+                                                                    moq=moq)
     if print_log:
         print(f'以本期资产价格{prices}买入资产 {a_purchased}')
         print(f'实际花费现金 {cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
@@ -763,7 +756,7 @@ def _loop_step(pre_cash: float,
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
     amounts = pre_amounts + a_purchased + a_sold
     # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
-    cash += cash_spent.sum
+    cash += cash_spent.sum()
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
     value = (amounts * prices).sum() + cash
     if print_log:
