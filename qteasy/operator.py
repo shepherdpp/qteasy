@@ -1100,6 +1100,14 @@ class CustomSimpleTiming(Simple_Timing):
     """自定义Simple Timing策略，一次性生成整个回测历史区间的时序信号
 
     """
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         stg_name='NONE',
+                         stg_text='Do not take any risk control activity')
+
+    @abstractmethod
+    def _realize(self, hist_data, params=None):
+        raise NotImplementedError
 
 # TODO：
 # TODO：作为完整的交易信号，为了实现更加贴近实际的交易信号，交易信号应该包括交易方向和头寸位置两个主要参数（对于股票来说
