@@ -269,14 +269,9 @@ class Strategy:
         raise NotImplementedError
 
 
-# TODO: 以后可以考虑把Timing改为Alpha Model， Selecting改为Portfolio Manager， Ricon改为Risk Control
+# TODO: 把Timing改为Roll_Timing， Selecting改为Selecting， Ricon改为Simple_Timing
 # ===============================
-# TODO: 关于Selecting策略的改进：
-# TODO: Selecting策略的选股周期和选股数量/比例两个参数作为Selecting类的固有参数放入__init__()方法中，并赋予默认值，同时将ranking table
-# TODO: 所涉及到的一系列特殊属性转化为Selecting类的固有属性，同样放入初始化方法中。这样对于所有的selecting继承类，在realize的时候只需要
-# TODO: 一个参数hist_data即可，share或dates参数都不再需要，都可以根据其他的固有属性动态生成。
-# ===============================
-class Timing(Strategy):
+class Rolling_Timing(Strategy):
     """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略"""
     __mataclass__ = ABCMeta
 
@@ -422,7 +417,7 @@ class Timing(Strategy):
         return res
 
 
-class TimingSimple(Timing):
+class TimingSimple(Rolling_Timing):
     """简单择时策略，返回整个历史周期上的恒定多头状态
 
     数据类型：N/A
@@ -442,7 +437,7 @@ class TimingSimple(Timing):
         return 1
 
 
-class TimingCrossline(Timing):
+class TimingCrossline(Rolling_Timing):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
     数据类型：close 收盘价，单数据输入
@@ -492,7 +487,7 @@ class TimingCrossline(Timing):
             return 0
 
 
-class TimingMACD(Timing):
+class TimingMACD(Rolling_Timing):
     """MACD择时策略类，运用MACD均线策略，在hist_price Series对象上生成交易信号
 
     数据类型：close 收盘价，单数据输入
@@ -545,7 +540,7 @@ class TimingMACD(Timing):
             return 0
 
 
-class TimingDMA(Timing):
+class TimingDMA(Rolling_Timing):
     """DMA择时策略
 
     数据类型：close 收盘价，单数据输入
@@ -590,7 +585,7 @@ class TimingDMA(Timing):
             return 0
 
 
-class TimingTRIX(Timing):
+class TimingTRIX(Rolling_Timing):
     """TRIX择时策略，运用TRIX均线策略，利用历史序列上生成交易信号
 
     数据类型：close 收盘价，单数据输入
@@ -642,7 +637,7 @@ class TimingTRIX(Timing):
             return 0
 
 
-class TimingCDL(Timing):
+class TimingCDL(Rolling_Timing):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
     数据类型：open, high, low, close 开盘，最高，最低，收盘价，多数据输入
@@ -674,8 +669,25 @@ class TimingCDL(Timing):
         return float(cat[-1])
 
 
-# TODO: 修改Selecting策略的结构，以支持更加统一的编码风格：generate()方法仅接受历史数据，realize()方法定义选股实现算法，通过静态属性
-# TODO: 设置数据类型、数据频率和采样频率，策略参数仅仅跟选股实现算法有关
+class CustomRollingTiming(Rolling_Timing):
+    """自定义rolling timing类，专用于自定义策略的生成
+
+
+    """
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=None,
+                         par_bounds_or_enums=None,
+                         stg_name='CUSTOMIZED',
+                         stg_text='Customized Rolling timing strategy, determine time series signals in rolling manner',
+                         window_length=200,
+                         data_types='open,high,low,close')
+
+    @abstractmethod
+    def _realize(self, hist_price, params=None):
+        raise NotImplementedError
+
 class Selecting(Strategy):
     """选股策略类的抽象基类，所有选股策略类都继承该类"""
     __metaclass__ = ABCMeta
@@ -929,7 +941,28 @@ class SelectingFinance(Selecting):
         return chosen
 
 
-class Ricon(Strategy):
+class CustomSelecting(Selecting):
+    """自定义Selecting策略，切片历史数据并对每个切片生成选股数据
+
+    """
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=4,
+                         par_types=['enum', 'enum', 'discr', 'conti'],
+                         par_bounds_or_enums=[(True, False), ('even', 'linear', 'proportion'), (0, 100), (0, 1)],
+                         stg_name='CUSTOMIZED SELECTING',
+                         stg_text='Selecting share_pool according to customized strategy',
+                         data_freq='d',
+                         sample_freq='y',
+                         window_length=90,
+                         data_types='eps')
+
+    @abstractmethod
+    def _realize(self, hist_segment):
+        raise NotImplementedError
+
+
+class Simple_Timing(Strategy):
     """ 风险控制抽象类，所有风险控制策略均继承该类
 
         风险控制策略在选股和择时策略之后发生作用，在选股和择时模块形成完整的投资组合及比例分配后，通过比较当前和预期的投资组合比例
@@ -968,14 +1001,37 @@ class Ricon(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_data, shares, dates):
+    def _realize(self, hist_data, params):
         raise NotImplementedError
 
     def generate(self, hist_data, shares=None, dates=None):
-        return self._realize(hist_data, shares, dates)
+        """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
+        Timing一样，是滚动生成的.
+
+        本方法基于np的ndarray计算
+        :param hist_data:
+        :param shares:
+        :param dates:
+        :return:
+        """
+        assert isinstance(hist_data, np.ndarray), 'Type Error: input should be Ndarray'
+        pars = self._pars
+
+        # assert pars.keys() = hist_extract.columns
+        if type(pars) is dict:
+            # 调用_generate_one方法计算单个个股的多空状态，并组合起来
+            # print('input Pars is dict type, different parameters shall be mapped within data')
+            par_list = list(pars.values())
+            # print('values of pars are listed:', par_list)
+            res = np.array(list(map(self._realize, hist_data.T, par_list))).T
+        else:
+            # 当参数不是字典状态时，直接使用pars作为参数
+            res = np.apply_along_axis(self._realize, 0, hist_data, pars)
+
+        return res
 
 
-class RiconNone(Ricon):
+class RiconNone(Simple_Timing):
     """无风险控制策略，不对任何风险进行控制"""
 
     def __init__(self, pars=None):
@@ -983,11 +1039,11 @@ class RiconNone(Ricon):
                          stg_name='NONE',
                          stg_text='Do not take any risk control activity')
 
-    def _realize(self, hist_data, shares=None, dates=None):
+    def _realize(self, hist_data, params=None):
         return np.zeros_like(hist_data[:, :, 0].T)
 
 
-class RiconUrgent(Ricon):
+class RiconUrgent(Simple_Timing):
     """urgent风控类，继承自Ricon类，重写_generate_ricon方法"""
 
     # 跌幅控制策略，当N日跌幅超过p%的时候，强制生成卖出信号
@@ -1000,7 +1056,7 @@ class RiconUrgent(Ricon):
                          stg_name='URGENT',
                          stg_text='Generate selling signal when N-day drop rate reaches target')
 
-    def _realize(self, hist_data, shares, dates):
+    def _realize(self, hist_data, params):
         """
         # 根据N日内下跌百分比确定的卖出信号，让N日内下跌百分比达到pct时产生卖出信号
 
@@ -1024,6 +1080,11 @@ class RiconUrgent(Ricon):
         # print(f'created array in ricon generate() is {np.where(diff < drop)}')
         return np.where(diff < drop, -1, 0)
 
+
+class CustomSimpleTiming(Simple_Timing):
+    """自定义Simple Timing策略，一次性生成整个回测历史区间的时序信号
+
+    """
 
 # TODO：
 # TODO：作为完整的交易信号，为了实现更加贴近实际的交易信号，交易信号应该包括交易方向和头寸位置两个主要参数（对于股票来说
