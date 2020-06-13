@@ -1385,7 +1385,11 @@ class Operator:
             elif timing_type.lower() == 'cdl':
                 self._timing.append(TimingCDL())
             elif timing_type.lower() == 'simple':
-                self._timing.append((TimingSimple()))
+                self._timing.append(TimingSimple())
+            elif timing_type.lower() == 'rolling_custom':
+                self._timing.append(CustomRollingTiming())
+            elif timing_type.lower() == 'simple_custom':
+                self._timing.append(CustomSimpleTiming())
             else:
                 raise TypeError(f'The timing strategy type \'{timing_type}\' can not be recognized!')
         # 根据输入参数创建不同的具体选股策略对象。selecting_types及selectings属性与择时策略对象属性相似
@@ -1417,6 +1421,8 @@ class Operator:
                 self._selecting.append(SelectingFinance())
             elif selecting_type.lower() == 'simple':
                 self._selecting.append(SelectingSimple())
+            elif selecting_type.lower() == 'custom':
+                self._selecting.append(CustomSelecting())
             else:
                 raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
         self._selecting_blender_string = ''.join(str_list)
@@ -1434,6 +1440,10 @@ class Operator:
                 self._ricon.append(RiconNone())
             elif ricon_type.lower() == 'urgent':
                 self._ricon.append(RiconUrgent())
+            elif ricon_type.lower() == 'rolling_custom':
+                self._ricon.append(CustomRollingTiming())
+            elif ricon_type.lower() == 'simple_custom':
+                self._ricon.append(CustomSimpleTiming())
             else:
                 raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
 
