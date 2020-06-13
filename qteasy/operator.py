@@ -376,7 +376,7 @@ class Rolling_Timing(Strategy):
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
-        """ 生成整个股票价格序列集合的多空状态历史矩阵
+        """ 生成整个股票价格序列集合的多空状态历史矩阵，采用滚动计算的方法，确保每一个时间点上的信号都只与它之前的一段历史数据有关
 
             本方法基于np的ndarray计算，是择时策略的打包方法。
             择时策略的具体实现方法写在self._realize()方法中，定义一种具体的方法，根据一个固定长度的历史数据片段来确定一只股票
@@ -1006,7 +1006,9 @@ class Simple_Timing(Strategy):
 
     def generate(self, hist_data, shares=None, dates=None):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
-        Timing一样，是滚动生成的.
+        Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
+
+        在generate()函数的定义方面，与Rolling_Timing完全一样，只是没有generate_over()函数
 
         本方法基于np的ndarray计算
         :param hist_data:
@@ -1014,20 +1016,29 @@ class Simple_Timing(Strategy):
         :param dates:
         :return:
         """
-        assert isinstance(hist_data, np.ndarray), 'Type Error: input should be Ndarray'
+        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
+        assert hist_data.ndim == 3, \
+            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
+        assert hist_data.shape[1] >= self._window_length, \
+            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
+            f' got {hist_data.shape[1]}'
         pars = self._pars
-
-        # assert pars.keys() = hist_extract.columns
-        if type(pars) is dict:
-            # 调用_generate_one方法计算单个个股的多空状态，并组合起来
-            # print('input Pars is dict type, different parameters shall be mapped within data')
-            par_list = list(pars.values())
-            # print('values of pars are listed:', par_list)
-            res = np.array(list(map(self._realize, hist_data.T, par_list))).T
+        # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
+        if isinstance(pars, dict):
+            par_list = pars.values()  # 允许使用dict来为不同的股票定义不同的策略参数
         else:
-            # 当参数不是字典状态时，直接使用pars作为参数
-            res = np.apply_along_axis(self._realize, 0, hist_data, pars)
+            par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
+        # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
+        assert len(par_list) == len(hist_data), \
+            f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
+        # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
+        res = np.array(list(map(self._realize,
+                                hist_data,
+                                par_list))).T
 
+        # debug
+        # print(f'generate result of np timing generate, result shaped {res.shape}')
+        # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
 
 
@@ -1040,7 +1051,7 @@ class RiconNone(Simple_Timing):
                          stg_text='Do not take any risk control activity')
 
     def _realize(self, hist_data, params=None):
-        return np.zeros_like(hist_data[:, :, 0].T)
+        return np.zeros_like(hist_data[:, :].squeeze())
 
 
 class RiconUrgent(Simple_Timing):
@@ -1070,15 +1081,19 @@ class RiconUrgent(Simple_Timing):
                                        'pct)\nN as days, pct as percent drop '
         assert isinstance(hist_data, np.ndarray), \
             f'Type Error: input historical data should be ndarray, got {type(hist_data)}'
+        # debug
+        # print(f'hist data: \n{hist_data}')
         day, drop = self._pars
-        h = hist_data[:, :, 0].T
+        h = hist_data[:, :]
         # print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
         # print(f'and the hist_data is converted to shape {h.shape}')
         diff = (h - np.roll(h, day)) / h
         diff[:day] = h[:day]
+        # debug
+        # print(f'diff result:\n{diff}')
         # print(f'created array in ricon generate() is shaped {diff.shape}')
         # print(f'created array in ricon generate() is {np.where(diff < drop)}')
-        return np.where(diff < drop, -1, 0)
+        return np.where(diff < drop, -1, 0).squeeze()
 
 
 class CustomSimpleTiming(Simple_Timing):
