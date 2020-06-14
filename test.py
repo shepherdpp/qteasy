@@ -17,10 +17,6 @@ class TestRates(unittest.TestCase):
         self.assertEqual(r['slipage'], 0.001, 'Item get wrong')
         self.assertEqual(r(1000), 1.001, 'fee calculation wrong')
 
-    def test_rate_print(self):
-        r = qt.Rate(0.1, 0.1)
-        self.assertEqual(str(r), '<fixed fee: 0.1, rate fee:0.1, slipage:0>', 'rate object printing wrong')
-
 
 class TestUnify(unittest.TestCase):
     def test_unify(self):
