@@ -3,7 +3,7 @@ from qteasy.operator import *
 
 if __name__ == '__main__':
     # TODO: TRIX 策略有问题
-    op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['urgent'])
+    op = Operator(timing_types=['DMA', 'rolling_custom'], selecting_types=['simple'], ricon_types=['urgent'])
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
@@ -14,8 +14,8 @@ if __name__ == '__main__':
     cont = Context(moq=0)
     cont.reference_asset='000300.SH'
     cont.reference_asset_type = 'I'
-    cont.share_pool = '000300.SH'
-    cont.asset_type = 'I'
+    cont.share_pool = '000001.SZ'
+    cont.asset_type = 'E'
     cont.output_count = 50
     cont.loop_period_start = '20040101'
     cont.moq = 1

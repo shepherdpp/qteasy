@@ -293,6 +293,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.selecting[1].pars, (0.5,))
 
 
+class TestQT(unittest.TestCase):
+    """对qteasy系统进行总体测试"""
+
 
 def suite():
     suite = unittest.TestSuite()

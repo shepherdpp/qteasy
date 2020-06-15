@@ -1304,6 +1304,7 @@ def get_price_type_raw_data(start: str,
         htypes = str_to_list(input_string=htypes, sep_char=',')
     raw_df = get_bar(shares=shares, start=start, asset_type=asset_type, end=end, freq=freq)
     # print('raw df before rearange\n', raw_df)
+    assert not raw_df is None, 'ValueError, something wrong downloading historical data!'
     raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
     raw_df.index = range(len(raw_df))
     # print('\nraw df after rearange\n', raw_df)

@@ -956,13 +956,14 @@ def run(operator, context):
             输出最优参数集合在优化区间和回测区间上的评价结果
             输出优化及回测日志
             投资资金模型不能为空，策略参数可以为空
+        context.mode == 3 or mode == 3:
+            进入评价模式（技术冻结后暂停开发此功能）
+            评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学
+            表现
     input：
 
         :param operator: Operator()，策略执行器对象
         :param context: Context()，策略执行环境的上下文对象
-        :param mode: int, default to None，qteasy运行模式，如果给出则override context中的mode参数
-        :param history_data: pd.DataFrame, default to None, 参与执行所需的历史数据，如果给出则overidecontext 中的hist参数
-        other params
     return：=====
         type: Log()，运行日志记录，txt 或 pd.DataFrame
     """
@@ -980,10 +981,10 @@ def run(operator, context):
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
     op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-420, unit='d')).strftime('%Y%m%d')
     # debug
-    # print(f'preparing historical data, \ninvestment start date: {op_start}, '
-    #       f'\noperation generation dependency start date: {op_start}\n'
-    #       f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
-    #       f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
+    print(f'preparing historical data, \ninvestment start date: {op_start}, '
+          f'\noperation generation dependency start date: {op_start}\n'
+          f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
+          f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
     hist_op = get_history_panel(start=op_start,
                                 end=context.invest_end,
                                 shares=context.share_pool,
@@ -1007,7 +1008,9 @@ def run(operator, context):
                                         freq=operator.op_data_freq,
                                         asset_type=context.reference_asset_type,
                                         chanel='online')).to_dataframe(htype='close')
-    print(hist_reference.info())
+    # debug
+    print(f'reference hist data downloaded, info: \n{hist_reference.info()}\n'
+          f'operation hist data downloaded, info: \n{hist_op.info()}')
     # ===============
     # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
     # ===============~~
