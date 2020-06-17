@@ -673,20 +673,7 @@ class CustomRollingTiming(Rolling_Timing):
 
 
     """
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=None,
-                         par_bounds_or_enums=None,
-                         stg_name='CUSTOMIZED',
-                         stg_text='Customized Rolling timing strategy, determine time series signals in rolling manner',
-                         window_length=200,
-                         data_types='open,high,low,close')
-
-    @abstractmethod
-    def _realize(self, hist_price, params=None):
-        raise NotImplementedError
+    pass
 
 
 class Selecting(Strategy):
