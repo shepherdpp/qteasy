@@ -10,13 +10,13 @@ class CustomRollingTiming(Rolling_Timing):
         super().__init__(pars=pars,
                          par_count=4,
                          par_types=['discr', 'discr', 'conti', 'enum'],
-                         par_bounds_or_enums=[(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
+                         par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')],
                          stg_name='CUSTOM ROLLING TIMING STRATEGY',
                          stg_text='Customized Rolling Timing Strategy for Testing',
                          data_types='close')
         print(f'=====================\n====================\n'
               f'custom strategy initialized, \npars: {self.pars}\npar_count:{self.par_count}\npar_types:'
-              f'{self.par_count}')
+              f'{self.par_types}')
 
     def _realize(self, hist_price, params):
         """crossline策略使用四个参数：
@@ -25,17 +25,14 @@ class CustomRollingTiming(Rolling_Timing):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = hist_price.T
         # 计算长短均线之间的距离
-        diff = sma(h[0], l) - sma(h[0], s)[-1]
+        diff = (sma(h[0], l) - sma(h[0], s))[-1]
         # 根据观望模式在不同的点位产生Long/short标记
         if hesitate == 'buy':
             m = -m
-            # cat = np.where(diff < -m, 1, 0)
         elif hesitate == 'sell':
             pass
-            # cat = np.where(diff < m, 1, 0)
         else:  # hesitate == 'none'
             m = 0
-            # cat = np.where(diff < 0, 1, 0)
         if diff < m:
             return 1
         else:
@@ -44,12 +41,13 @@ class CustomRollingTiming(Rolling_Timing):
 
 if __name__ == '__main__':
     # TODO: TRIX 策略有问题
-    op = Operator(timing_types=['DMA', 'rolling_custom'], selecting_types=['simple'], ricon_types=['urgent'])
+    custom_rolling = CustomRollingTiming()
+    op = Operator(timing_types=['DMA', custom_rolling], selecting_types=['simple'], ricon_types=['urgent'])
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
     op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250), ('buy', 'sell', 'none')])
+    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (0., 10.), ('buy', 'sell', 'none')])
     op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(moq=0)
@@ -64,13 +62,13 @@ if __name__ == '__main__':
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
-    timing_pars1 = (52, 112, 104)
+    timing_pars1 = (128, 131, 36)
     timing_pars2 = {'000100': (77, 118, 144),
                     '000200': (75, 128, 138),
                     '000300': (73, 120, 143)}
     timing_pars3 = (98, 177, 158)
     timing_pars4 = (37, 44)
-    timing_pars5 = (62, 132, 10, 'buy')
+    timing_pars5 = (179, 166, 7.90, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
     op.set_parameter(stg_id='t-0', pars=timing_pars1)

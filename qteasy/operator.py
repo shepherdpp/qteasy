@@ -469,7 +469,7 @@ class TimingCrossline(Rolling_Timing):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = hist_price.T
         # 计算长短均线之间的距离
-        diff = sma(h[0], l) - sma(h[0], s)[-1]
+        diff = (sma(h[0], l) - sma(h[0], s))[-1]
         # 根据观望模式在不同的点位产生Long/short标记
         if hesitate == 'buy':
             m = -m
@@ -1385,23 +1385,29 @@ class Operator:
         self._timing_blender = 'pos-1'  # 默认的择时策略混合方式
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
-            self._timing_types.append(timing_type)
-            if timing_type.lower() == 'cross_line':
-                self._timing.append(TimingCrossline())
-            elif timing_type.lower() == 'macd':
-                self._timing.append(TimingMACD())
-            elif timing_type.lower() == 'dma':
-                self._timing.append(TimingDMA())
-            elif timing_type.lower() == 'trix':
-                self._timing.append(TimingTRIX())
-            elif timing_type.lower() == 'cdl':
-                self._timing.append(TimingCDL())
-            elif timing_type.lower() == 'simple':
-                self._timing.append(TimingSimple())
-            elif timing_type.lower() == 'rolling_custom':
-                self._timing.append(CustomRollingTiming())
-            elif timing_type.lower() == 'simple_custom':
-                self._timing.append(CustomSimpleTiming())
+            # TODO: 其他种类的策略也采用同样方式生成
+            if isinstance(timing_type, str):
+                self._timing_types.append(timing_type)
+                if timing_type.lower() == 'cross_line':
+                    self._timing.append(TimingCrossline())
+                elif timing_type.lower() == 'macd':
+                    self._timing.append(TimingMACD())
+                elif timing_type.lower() == 'dma':
+                    self._timing.append(TimingDMA())
+                elif timing_type.lower() == 'trix':
+                    self._timing.append(TimingTRIX())
+                elif timing_type.lower() == 'cdl':
+                    self._timing.append(TimingCDL())
+                elif timing_type.lower() == 'simple':
+                    self._timing.append(TimingSimple())
+                elif timing_type.lower() == 'rolling_custom':
+                    self._timing.append(CustomRollingTiming())
+                elif timing_type.lower() == 'simple_custom':
+                    self._timing.append(CustomSimpleTiming())
+            # TODO: 这里可以直接将传入对象的类型信息读取后传入_timing_types
+            elif isinstance(timing_type, Rolling_Timing):
+                self._timing_types.append(timing_type.stg_type)
+                self._timing.append(timing_type)
             else:
                 raise TypeError(f'The timing strategy type \'{timing_type}\' can not be recognized!')
         # 根据输入参数创建不同的具体选股策略对象。selecting_types及selectings属性与择时策略对象属性相似
