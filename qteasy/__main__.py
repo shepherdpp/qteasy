@@ -46,7 +46,7 @@ if __name__ == '__main__':
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
-    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+    op.set_parameter('t-0', opt_tag=0, par_boes=[(10, 250), (10, 250), (10, 250)])
     op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (0., 10.), ('buy', 'sell', 'none')])
     op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
@@ -62,13 +62,13 @@ if __name__ == '__main__':
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
-    timing_pars1 = (128, 131, 36)
+    timing_pars1 = (94, 36, 107)
     timing_pars2 = {'000100': (77, 118, 144),
                     '000200': (75, 128, 138),
                     '000300': (73, 120, 143)}
     timing_pars3 = (98, 177, 158)
     timing_pars4 = (37, 44)
-    timing_pars5 = (179, 166, 7.90, 'buy')
+    timing_pars5 = (228, 83, 8.05, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
     op.set_parameter(stg_id='t-0', pars=timing_pars1)
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     run(op, cont)
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 200
+    cont.opti_method_sample_size = 300
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1

@@ -1200,22 +1200,16 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
     """
     if isinstance(htypes, str):
         htypes = str_to_list(input_string=htypes, sep_char=',')
-    price_type_data = []
-    income_type_data = []
-    balance_type_data = []
-    cashflow_type_data = []
-    indicator_type_data = []
-    composite_type_data = []
-    price_type_data.extend([t for t in htypes if t in PRICE_TYPE_DATA])
-    income_type_data.extend([t for t in htypes if t in INCOME_TYPE_DATA])
-    balance_type_data.extend(t for t in htypes if t in BALANCE_TYPE_DATA)
-    cashflow_type_data.extend(t for t in htypes if t in CASHFLOW_TYPE_DATA)
-    indicator_type_data.extend([t for t in htypes if t in INDICATOR_TYPE_DATA])
+    price_type_data = [t for t in htypes if t in PRICE_TYPE_DATA]
+    income_type_data = [t for t in htypes if t in INCOME_TYPE_DATA]
+    balance_type_data = [t for t in htypes if t in BALANCE_TYPE_DATA]
+    cashflow_type_data = [t for t in htypes if t in CASHFLOW_TYPE_DATA]
+    indicator_type_data = [t for t in htypes if t in INDICATOR_TYPE_DATA]
+    composite_type_data = [t for t in htypes if t in COMPOSIT_TYPE_DATA]
     finance_report_types = [income_type_data,
                             balance_type_data,
                             cashflow_type_data,
                             indicator_type_data]
-    composite_type_data.extend([t for t in htypes if t in COMPOSIT_TYPE_DATA])
     dataframes_to_stack = []
 
     result_hp = HistoryPanel()
@@ -1278,6 +1272,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
     return result_hp
 
 
+#TODO: 这个函数需要改造，由于tushare对最大下载行数有限制，因此当需要下载多个share的数据时，需要分批下载
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
@@ -1601,13 +1596,13 @@ def stock_company(ts_code: str = None,
 # Bar price data
 # ==================
 
-def get_bar(shares: str,
-            start: str,
-            end: str,
-            asset_type: str = 'E',
-            adj: str = 'None',
-            freq: str = 'D',
-            ma: list = None) -> pd.DataFrame:
+def get_bar(shares: object,
+            start: object,
+            end: object,
+            asset_type: object = 'E',
+            adj: object = 'None',
+            freq: object = 'D',
+            ma: object = None) -> object:
     """ 获取指数或股票的复权历史价格
 
     input:

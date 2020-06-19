@@ -1312,10 +1312,12 @@ def run(operator, context):
         raise NotImplementedError
 
 
-def _time_str_format(t: float):
+def _time_str_format(t: float, estimation: bool = False, short_form: bool = False):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
-    :param t: 输入时间，单位为秒
+    :param t:  输入时间，单位为秒
+    :param estimation:
+    :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XXsec", 为True时输出"XXD XXH XX'XX".XXX"
     :return:
     """
     assert isinstance(t, float), f'TypeError: t should be a float number, got {type(t)}'
@@ -1323,29 +1325,55 @@ def _time_str_format(t: float):
     # debug
     # print(f'time input is {t}')
     str_element = []
-    if t >= 86400:
+    enough_accuracy = False
+    if t >= 86400 and not enough_accuracy:
+        if estimation:
+            enough_accuracy = True
         days = t // 86400
         t = t - days * 86400
         str_element.append(str(int(days)))
-        str_element.append('days ')
-    if t >= 3600:
+        if short_form:
+            str_element.append('D')
+        else:
+            str_element.append('days ')
+    if t >= 3600 and not enough_accuracy:
+        if estimation:
+            enough_accuracy = True
         hours = t // 3600
         t = t - hours * 3600
         str_element.append(str(int(hours)))
-        str_element.append('hrs ')
-    if t >= 60:
+        if short_form:
+            str_element.append('H')
+        else:
+            str_element.append('hrs ')
+    if t >= 60 and not enough_accuracy:
+        if estimation:
+            enough_accuracy = True
         minutes = t // 60
         t = t - minutes * 60
         str_element.append(str(int(minutes)))
-        str_element.append('min ')
-    if t >= 1:
+        if short_form:
+            str_element.append('\'')
+        else:
+            str_element.append('min ')
+    if t >= 1 and not enough_accuracy:
+        if estimation:
+            enough_accuracy = True
         seconds = np.floor(t)
         t = t - seconds
         str_element.append(str(int(seconds)))
-        str_element.append('s ')
-    milliseconds = np.round(t * 1000)
-    str_element.append(str(milliseconds))
-    str_element.append('ms')
+        if short_form:
+            str_element.append('\"')
+        else:
+            str_element.append('s ')
+    if not enough_accuracy:
+        milliseconds = np.round(t * 1000)
+        if short_form:
+            str_element.append(f'{int(milliseconds):03d}')
+        else:
+            str_element.append(str(milliseconds))
+            str_element.append('ms')
+
     return ''.join(str_element)
 
 
@@ -1373,9 +1401,13 @@ def _get_parameter_performance(par, op, hist, history_list, context) -> float:
     return perf
 
 
-def _progress_bar(prog: int = 40, total: int = 40, comments: str = ''):
+def _progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bool = False):
     """根据输入的数字生成进度条字符串并刷新
 
+    :param prog: 当前进度，用整数表示
+    :param total:  总体进度，默认为100
+    :param comments:  需要显示在进度条中的文字信息
+    :param short_form:  显示
     """
     if prog > total:
         prog = total
@@ -1506,7 +1538,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     pool.cut(context.larger_is_better)
     et = time.time()
     _progress_bar(total, total)
-    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st, short_form=True)}')
     return pool.pars, pool.perfs
 
 
