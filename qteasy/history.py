@@ -1297,16 +1297,16 @@ def get_price_type_raw_data(start: str,
         htypes = PRICE_TYPE_DATA
     if isinstance(htypes, str):
         htypes = str_to_list(input_string=htypes, sep_char=',')
-    raw_df = get_bar(shares=shares, start=start, asset_type=asset_type, end=end, freq=freq)
-    # print('raw df before rearange\n', raw_df)
-    assert not raw_df is None, 'ValueError, something wrong downloading historical data!'
-    raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
-    raw_df.index = range(len(raw_df))
-    # print('\nraw df after rearange\n', raw_df)
-    df_per_share = []
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
+    df_per_share = []
     for share in shares:
+        raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
+        # print('raw df before rearange\n', raw_df)
+        assert raw_df is not None, 'ValueError, something wrong downloading historical data!'
+        raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
+        raw_df.index = range(len(raw_df))
+        # print('\nraw df after rearange\n', raw_df)
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     for df in df_per_share:

@@ -46,7 +46,7 @@ if __name__ == '__main__':
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
-    op.set_parameter('t-0', opt_tag=0, par_boes=[(10, 250), (10, 250), (10, 250)])
+    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
     op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (0., 10.), ('buy', 'sell', 'none')])
     op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     cont.reference_asset = '000300.SH'
     cont.reference_asset_type = 'I'
     # TODO: 当前tushare一次只能下载5000条数据，当股票的数量增加时，每只股票的历史数据就会减少，应该分批下载后再组合
-    cont.share_pool = '000001.SZ'
+    cont.share_pool = '000001.SZ, 000002.SZ, 000005.SZ'
     cont.asset_type = 'E'
     cont.output_count = 50
     cont.loop_period_start = '20040101'
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     run(op, cont)
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 300
+    cont.opti_method_sample_size = 3000
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1
