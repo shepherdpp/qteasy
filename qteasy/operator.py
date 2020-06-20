@@ -24,6 +24,14 @@ class Strategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
         类属性定义了策略类型、策略名称、策略关键属性的数量、类型和取值范围等
+        所有的策略类都包含相似的基础属性
+        所有的策略类都有一个generate()方法，这个方法是策略类的主入口方法，这个方法接受一组历史数据(np.ndarray对象)从历史数据中提取出
+        有用的信息，并生成用于投资的操作或交易信号。
+        另外，所有的策略类都有四个参数设置方法，用于对相关的参数进行设置：
+            set_par(): 设置策略参数
+            set_opt_tag(): 设置策略优化标志
+            set_par_boes(): 设置策略参数空间定义标识
+            set_hist_pars(): 设置策略的历史数据相关参数
     """
     __mataclass__ = ABCMeta
 
@@ -118,55 +126,99 @@ class Strategy:
         """策略名称"""
         return self._stg_name
 
+    @stg_name.setter
+    def stg_name(self, stg_name: str):
+        self._stg_name = stg_name
+
     @property
     def stg_text(self):
         """策略说明文本"""
         return self._stg_text
+
+    @stg_text.setter
+    def stg_text(self, stg_text: str):
+        self._stg_text = stg_text
 
     @property
     def par_count(self):
         """策略的参数数量"""
         return self._par_count
 
+    @par_count.setter
+    def par_count(self, par_count: int):
+        self._par_count = par_count
+
     @property
     def par_types(self):
         """策略的参数类型，与Space类中的定义匹配，分为离散型'discr', 连续型'conti', 枚举型'enum'"""
         return self._par_types
+
+    @par_types.setter
+    def par_types(self, par_types: [list, str]):
+        self._par_types = par_types
 
     @property
     def par_boes(self):
         """策略的参数取值范围，用来定义参数空间用于参数优化"""
         return self._par_bounds_or_enums
 
+    @par_boes.setter
+    def par_boes(self, boes: list):
+        self.set_par_boes(par_boes=boes)
+
     @property
     def opt_tag(self):
         """策略的优化类型"""
         return self._opt_tag
+
+    @opt_tag.setter
+    def opt_tag(self, opt_tag):
+        self.set_opt_tag(opt_tag=opt_tag)
 
     @property
     def pars(self):
         """策略参数，元组"""
         return self._pars
 
+    @pars.setter
+    def pars(self, pars: tuple):
+        self.set_pars(pars)
+
     @property
     def data_freq(self):
         """策略依赖的历史数据频率"""
         return self._data_freq
+
+    @data_freq.setter
+    def data_freq(self, data_freq):
+        self.set_hist_pars(data_freq=data_freq)
 
     @property
     def sample_freq(self):
         """策略生成的采样频率"""
         return self._sample_freq
 
+    @sample_freq.setter
+    def sample_freq(self, sample_freq):
+        self.set_hist_pars(sample_freq=sample_freq)
+
     @property
     def window_length(self):
         """策略依赖的历史数据窗口长度"""
         return self._window_length
 
+    @window_length.setter
+    def window_length(self, window_length):
+        self.set_hist_pars(window_length=window_length)
+
     @property
     def data_types(self):
         """策略依赖的历史数据类型"""
         return self._data_types
+
+    @data_types.setter
+    def data_types(self, data_types):
+        self.set_hist_pars(data_types=data_types)
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -212,8 +264,8 @@ class Strategy:
             self._pars = pars
             return 1
         else:
-            raise ValueError(f'parameter setting error in set_pars() method of {self}\n expected par count: '
-                             f'{self.par_count}, got {len(pars)}')
+            # raise ValueError(f'parameter setting error in set_pars() method of {self}\n expected par count: '
+            #                  f'{self.par_count}, got {len(pars)}')
             return 0
 
     def set_opt_tag(self, opt_tag: int) -> int:
@@ -238,7 +290,7 @@ class Strategy:
         self._par_bounds_or_enums = par_boes
         return par_boes
 
-    def set_hist_pars(self, sample_freq=None, window_length=None, data_types=None):
+    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None):
         """ 设置策略的历史数据回测相关属性
 
         :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
@@ -246,6 +298,12 @@ class Strategy:
         :param data_types: str，表示需要用到的历史数据类型
         :return: None
         """
+        if data_freq is not None:
+            assert isinstance(data_freq, str), \
+                f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
+            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {data_freq} is not a valid frequency ' \
+                                                             f'string'
+            self._data_freq = data_freq
         if sample_freq is not None:
             assert isinstance(sample_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
@@ -271,7 +329,35 @@ class Strategy:
 
 
 class Rolling_Timing(Strategy):
-    """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略"""
+    """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略
+
+        Rolling Timing择时策略的generate()函数采用了滚动信号生成机制，每次从全部历史数据中提取出一个片段（这个片段被称为"窗口"），
+        使用这个片段中的全部历史数据计算片段最后一个时间点的策略信号，一个时间点的策略信号计算完成后，再提取出第二个相邻的历史数据片段，
+        并计算下一个策略信号。例如：
+            假设历史数据开始于第0天，结束于第1000天，频率为'D'，若历史数据片段窗口长度为100天，那么首先0～100天的历史数据会被提取出来，用于
+            计算第100天的策略输出信号，接着，第1～101天的历史数据被提取出来用于计算第101天的策略输出信号，以此类推，重复901次，计算从100天
+            到1000天的全部策略信号
+
+        在择时类策略中，generate方法接受的历史数据片段hist_data为一个M * N * L的ndarray, 来自HistoryPanel对象，其定义是：
+            M: axis 1: 层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
+            N: axis 2: 行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
+            L: axis 3: 列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
+
+        在generate()函数中，每一个个股的历史数据被逐个取出，并送入generate_over()函数进行处理，每个个股的数据块为N行L列。
+        在generate_over()函数中，上述数据被打包成为一个历史数据片段hist_pack，其中包含的数据类型为self.data_types参数定义。
+        hist_pack是一个numpy ndarray对象，包含M行N列数据，其中:
+            M = self._window_length,
+            N = len(self._data_types)
+        这些数据代表投资产品在一个window_length长的历史区间内的历史价格数据，数据的频率为self.data_freq所指定。
+
+    Rolling Timing择时策略是通过realize()函数来实现的。一个继承了Rolling_Timing类的对象，必须具体实现realize()方法，在
+    Rolling_Timing对象中，这是个抽象方法。这个方法接受两个参数，一个是generate_over()函数传送过来的window_history数据，另一个
+    是策略参数，策略通过传入的参数，利用window_history历史数据进行某种特定计算，最后生成一个-1～1之间的浮点数，这个数子就是在某一
+    时间点的策略输出。
+
+    Rolling_Timing类会自动把上述特定计算算法滚动应用到整个历史数据区间，并且推广到所有的个股中。
+
+    """
     __mataclass__ = ABCMeta
 
     def __init__(self,
@@ -298,12 +384,10 @@ class Rolling_Timing(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_pack: np.ndarray, params: tuple) -> int:
+    def _realize(self, window_hist: np.ndarray, params: tuple) -> int:
         """ 策略的具体实现方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号
 
-            在择时类策略中，_realize方法接受一个历史数据片段hist_pack，其中包含的数据类型为self.data_types参数定义。
-            hist_pack是一个numpy ndarray对象，包含M行N列数据，其中 M = self._window_length, N = len(self._data_types)
-            这些数据代表投资产品在一个window_length长的历史区间内的历史价格数据，数据的频率为self.data_freq所指定。
+
 
             同时，params是一个元组，包含了应用于这一个投资产品的策略参数（由于同一个策略允许对不同的投资产品应用不同的策略参数，
             这里的策略参数已经被自动分配好了）。投资策略参数的个数为self.par_count所指定，每个投资参数的类型也为self.par_types
@@ -311,19 +395,24 @@ class Rolling_Timing(Strategy):
 
             在策略的实现方法中，需要做的仅仅是定义一种方法，根据hist_pack中给出的历史数据，作出关于这个投资产品在历史数据结束后紧
             接着的那个时刻的头寸位置（空头头寸还是多头头寸）。在择时策略的实现方法中，不需要考虑其他任何方面的问题，如交易品种、
-            费率、比例等等，也不需要考虑历史数据中的缺陷如停牌等，只需要返回一个代表头寸位置的整数即可：
-            返回1代表多头头寸，返回-1代表空头头寸，仅此而已
+            费率、比例等等，也不需要考虑历史数据中的缺陷如停牌等，只需要返回一个代表头寸位置或交易信号的整数即可：
+                ---------------------------------
+                return  |   L/S    | Signal
+                =================================
+                  1     |  多头头寸 | 开多仓或平空仓
+                  0     |  没有头寸 | 无操作
+                 -1     |  空头头寸 | 开空仓或平多仓
 
             qteasy系统会自行把适用于这个历史片段的策略，原样地推广到整个历史数据区间，同时推广到整个投资组合。并且根据投资组合管理
             策略（选股策略Selecting）中定义的选股方法确定每种投资产品的仓位比例。最终生成交易清单。
         input:
-            :param hist_pack: ndarray，历史数据，策略的计算在历史数据基础上进行
+            :param window_hist: ndarray，历史数据，策略的计算在历史数据基础上进行
             :param params: tuple, 策略参数，具体的策略输出结果依靠参数给出
         return:
-            :L/S position: int, 一个代表头寸位置的整数，1代表多头头寸，0代表中性，-1代表空头头寸
+            :stg_output: int, 一个代表策略输出的数字，可以代表头寸位置，1代表多头，-1代表空头，0代表空仓，策略输出同样可以代表操作
+            信号，1代表开多仓或平空仓，-1代表开空仓或平多仓，0代表不操作
         """
-        h = hist_pack.T
-        return h[-1].clip(0, 0)
+        raise NotImplementedError
 
     def _generate_over(self, hist_slice: np.ndarray, pars: tuple):
         """ 中间构造函数，将历史数据模块传递过来的单只股票历史数据去除nan值，并进行滚动展开
@@ -473,13 +562,10 @@ class TimingCrossline(Rolling_Timing):
         # 根据观望模式在不同的点位产生Long/short标记
         if hesitate == 'buy':
             m = -m
-            # cat = np.where(diff < -m, 1, 0)
         elif hesitate == 'sell':
             pass
-            # cat = np.where(diff < m, 1, 0)
         else:  # hesitate == 'none'
             m = 0
-            # cat = np.where(diff < 0, 1, 0)
         if diff < m:
             return 1
         else:
@@ -1016,7 +1102,7 @@ class Simple_Timing(Strategy):
             par_list = pars.values()  # 允许使用dict来为不同的股票定义不同的策略参数
         else:
             par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
-        # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
+        # 准备调用realize()函数，对每一个个股进行分别计算
         assert len(par_list) == len(hist_data), \
             f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多

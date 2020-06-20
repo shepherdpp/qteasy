@@ -868,7 +868,7 @@ def apply_loop(op_list: pd.DataFrame,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    date_print_format = '%Y年%m月%d日'
+    date_print_format = '%Y/%m/%d'
     for i in range(op_count):  # 对每一行历史交易信号开始回测
         if print_log:
             print(f'交易日期:{looped_dates[i].strftime(date_print_format)}')

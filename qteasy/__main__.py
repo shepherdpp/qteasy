@@ -4,16 +4,16 @@ from qteasy.operator import *
 
 class CustomRollingTiming(Rolling_Timing):
     """自定义策略"""
-
-    def __init__(self, pars: tuple = None):
+    # TODO: 这里需要修改super().__init__()方法，使得所有参数的设置从该方法中解放出来，允许在self.__init__()中显性设置关键参数
+    def __init__(self):
         """Crossline交叉线策略只有一个动态属性，其余属性均不可变"""
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['discr', 'discr', 'conti', 'enum'],
-                         par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')],
-                         stg_name='CUSTOM ROLLING TIMING STRATEGY',
-                         stg_text='Customized Rolling Timing Strategy for Testing',
-                         data_types='close')
+        super().__init__()
+        self.par_count = 4
+        self.par_types = ['discr', 'discr', 'conti', 'enum']
+        self.par_bounds_or_enums = [(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')]
+        self.stg_name = 'CUSTOM ROLLING TIMING STRATEGY'
+        self.stg_text = 'Customized Rolling Timing Strategy for Testing'
+        self.data_types = 'close, open'
         print(f'=====================\n====================\n'
               f'custom strategy initialized, \npars: {self.pars}\npar_count:{self.par_count}\npar_types:'
               f'{self.par_types}')
@@ -44,13 +44,13 @@ class CustomSimpleTiming(Simple_Timing):
 
     def __init__(self, pars: tuple = None):
         """Crossline交叉线策略只有一个动态属性，其余属性均不可变"""
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['discr', 'discr', 'conti', 'enum'],
-                         par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')],
-                         stg_name='CUSTOM ROLLING TIMING STRATEGY',
-                         stg_text='Customized Rolling Timing Strategy for Testing',
-                         data_types='close')
+        super().__init__()
+        self.par_count = 4
+        self.par_types = ['discr', 'discr', 'conti', 'enum']
+        self.par_bounds_or_enums = [(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')]
+        self.stg_name = 'CUSTOM SIMPLE'
+        self.stg_text = 'Customized Simple Timing Strategy for Testing'
+        self.data_types = 'open, close'
         print(f'=====================\n====================\n'
               f'custom strategy initialized, \npars: {self.pars}\npar_count:{self.par_count}\npar_types:'
               f'{self.par_types}')
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     run(op, cont)
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 30
+    cont.opti_method_sample_size = 300
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1
