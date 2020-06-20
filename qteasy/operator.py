@@ -1025,9 +1025,11 @@ class Simple_Timing(Strategy):
                                 par_list))).T
 
         # debug
+        # print(f'the history data passed to simple rolling realization function is shaped {hist_data.shape}')
         # print(f'generate result of np timing generate, result shaped {res.shape}')
+        # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
-        return res
+        return res[self.window_length:, :]
 
 
 class RiconNone(Simple_Timing):
@@ -1039,7 +1041,7 @@ class RiconNone(Simple_Timing):
                          stg_text='Do not take any risk control activity')
 
     def _realize(self, hist_data, params=None):
-        return np.zeros_like(hist_data[:, :].squeeze())
+        return np.zeros_like(hist_data.squeeze())
 
 
 class RiconUrgent(Simple_Timing):
@@ -1072,12 +1074,12 @@ class RiconUrgent(Simple_Timing):
         # debug
         # print(f'hist data: \n{hist_data}')
         day, drop = self._pars
-        h = hist_data[:, :]
-        # print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
-        # print(f'and the hist_data is converted to shape {h.shape}')
+        h = hist_data
         diff = (h - np.roll(h, day)) / h
         diff[:day] = h[:day]
         # debug
+        # print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
+        # print(f'and the hist_data is converted to shape {h.shape}')
         # print(f'diff result:\n{diff}')
         # print(f'created array in ricon generate() is shaped {diff.shape}')
         # print(f'created array in ricon generate() is {np.where(diff < drop)}')
@@ -1219,7 +1221,7 @@ class Operator:
             ==================|==================|=============|=================
             long/short mask   |       Yes        |     Yes     |       Yes
             ------------------|------------------|-------------|-----------------
-            Portfolio mask    |       No         |     Yes     |       Yes
+            Portfolio mask    |       No         |     Yes     |       No
             ------------------|------------------|-------------|-----------------
             signal matrix     |       Yes        |     No      |       Yes
 
@@ -1385,7 +1387,6 @@ class Operator:
         self._timing_blender = 'pos-1'  # 默认的择时策略混合方式
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
-            # TODO: 其他种类的策略也采用同样方式生成
             if isinstance(timing_type, str):
                 self._timing_types.append(timing_type)
                 if timing_type.lower() == 'cross_line':
@@ -1404,12 +1405,12 @@ class Operator:
                     self._timing.append(CustomRollingTiming())
                 elif timing_type.lower() == 'simple_custom':
                     self._timing.append(CustomSimpleTiming())
-            # TODO: 这里可以直接将传入对象的类型信息读取后传入_timing_types
-            elif isinstance(timing_type, Rolling_Timing):
+            # 当传入的对象是一个strategy时，直接
+            elif isinstance(timing_type, Rolling_Timing) or isinstance(timing_type, Simple_Timing):
                 self._timing_types.append(timing_type.stg_type)
                 self._timing.append(timing_type)
             else:
-                raise TypeError(f'The timing strategy type \'{timing_type}\' can not be recognized!')
+                raise TypeError(f'The timing strategy type \'{type(timing_type)}\' is not supported!')
         # 根据输入参数创建不同的具体选股策略对象。selecting_types及selectings属性与择时策略对象属性相似
         # 都是列表，包含若干相互独立的选股策略（至少一个）
         self._selecting_type = []
@@ -1420,24 +1421,30 @@ class Operator:
         str_list = []
 
         for selecting_type in selecting_types:
-            self._selecting_type.append(selecting_type)
-            if cur_type == 0:
-                str_list.append(str(cur_type))
+            if isinstance(selecting_type, str):
+                if cur_type == 0:
+                    str_list.append(str(cur_type))
+                else:
+                    str_list.append(f' or {str(cur_type)}')
+                cur_type += 1
+                self._selecting_type.append(selecting_type)
+                if selecting_type.lower() == 'trend':
+                    self._selecting.append(SelectingTrend())
+                elif selecting_type.lower() == 'random':
+                    self._selecting.append(SelectingRandom())
+                elif selecting_type.lower() == 'finance':
+                    self._selecting.append(SelectingFinance())
+                elif selecting_type.lower() == 'simple':
+                    self._selecting.append(SelectingSimple())
+                elif selecting_type.lower() == 'custom':
+                    self._selecting.append(CustomSelecting())
+                else:
+                    raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
+            elif isinstance(selecting_type, Selecting) or isinstance(selecting_type, Simple_Timing):
+                self._selecting_type.append(selecting_type.stg_type)
+                self._selecting.append(selecting_type)
             else:
-                str_list.append(f' or {str(cur_type)}')
-            cur_type += 1
-            if selecting_type.lower() == 'trend':
-                self._selecting.append(SelectingTrend())
-            elif selecting_type.lower() == 'random':
-                self._selecting.append(SelectingRandom())
-            elif selecting_type.lower() == 'finance':
-                self._selecting.append(SelectingFinance())
-            elif selecting_type.lower() == 'simple':
-                self._selecting.append(SelectingSimple())
-            elif selecting_type.lower() == 'custom':
-                self._selecting.append(CustomSelecting())
-            else:
-                raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
+                raise TypeError(f'Type Error, the type of object {type(selecting_type)} is not supported!')
         self._selecting_blender_string = ''.join(str_list)
         # create selecting blender by selecting blender string
         self._selecting_blender = self._exp_to_blender
@@ -1448,18 +1455,23 @@ class Operator:
         self._ricon_history_data = []
         self._ricon_blender = 'add'
         for ricon_type in ricon_types:
-            self._ricon_type.append(ricon_type)
-            if ricon_type.lower() == 'none':
-                self._ricon.append(RiconNone())
-            elif ricon_type.lower() == 'urgent':
-                self._ricon.append(RiconUrgent())
-            elif ricon_type.lower() == 'rolling_custom':
-                self._ricon.append(CustomRollingTiming())
-            elif ricon_type.lower() == 'simple_custom':
-                self._ricon.append(CustomSimpleTiming())
+            if isinstance(ricon_type, str):
+                self._ricon_type.append(ricon_type)
+                if ricon_type.lower() == 'none':
+                    self._ricon.append(RiconNone())
+                elif ricon_type.lower() == 'urgent':
+                    self._ricon.append(RiconUrgent())
+                elif ricon_type.lower() == 'rolling_custom':
+                    self._ricon.append(CustomRollingTiming())
+                elif ricon_type.lower() == 'simple_custom':
+                    self._ricon.append(CustomSimpleTiming())
+                else:
+                    raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
+            elif isinstance(ricon_type, Rolling_Timing) or isinstance(ricon_type, Simple_Timing):
+                self._ricon_type.append(ricon_type.stg_type)
+                self._ricon.append(ricon_type)
             else:
-                raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
-
+                raise TypeError(f'Type Error, the type of passed object {type(ricon_type)} is not supported!')
     @property
     def timing(self):
         """返回operator对象的所有timing对象"""
@@ -1699,8 +1711,8 @@ class Operator:
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # debug
-        print(f'period start {hist_data.hdates[0]}, ends {hist_data.hdates[-1]}')
-        print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
+        # print(f'period start {hist_data.hdates[0]}, ends {hist_data.hdates[-1]}')
+        # print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date, expect {self.max_window_length},' \
@@ -1720,7 +1732,8 @@ class Operator:
         # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
         #      f'{len(hist_data.hdates) - first_cash_pos}'
         #      f' rows for timing strategies')
-        self._ricon_history_data = [hist_data[stg.data_types, :, first_cash_pos:] for stg in self.ricon]
+        self._ricon_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                    for stg in self.ricon]
         # debug
         # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
         #      f'{len(hist_data.hdates) - first_cash_pos}'
@@ -1856,7 +1869,11 @@ class Operator:
         """
         blndr = self._timing_blender  # 从对象的属性中读取择时混合参数
         assert isinstance(blndr, str), 'Parmameter Type Error: the timing blender should be a text string!'
-        # print 'timing blender is:', blndr
+        # debug
+        # print(f'timing blender is:{blndr}')
+        # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
+        # for msk in ls_masks:
+        #     print(f'ls mask shape: {msk.shape}')
         l_m = 0
         for msk in ls_masks:  # 计算所有多空模版的和
             l_m += msk
