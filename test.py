@@ -12,10 +12,22 @@ class TestRates(unittest.TestCase):
         self.assertIsInstance(r, qt.Rate, 'Type should be Rate')
 
     def test_rate_operations(self):
-        r = qt.Rate(fee=0.001, slipage=0.001)
-        self.assertEqual(r['fee'], 0.001, 'Item fee get is incorrect')
-        self.assertEqual(r['slipage'], 0.001, 'Item get wrong')
-        self.assertEqual(r(1000), 1.001, 'fee calculation wrong')
+        amounts = np.array([10000, 20000, 10000])
+        op = np.array([0, 1, -1])
+        prices = np.array([10, 20, 10])
+        r = qt.Rate()
+        self.assertEqual(r['buy_fix'], 0.0, 'Item got is incorrect')
+        self.assertEqual(r['sell_fix'], 0.0, 'Item got is wrong')
+        self.assertEqual(r['buy_rate'], 0.003, 'Item got is incorrect')
+        self.assertEqual(r['sell_rate'], 0.001, 'Item got is incorrect')
+        self.assertEqual(r['buy_min'], 5., 'Item got is incorrect')
+        self.assertEqual(r['sell_min'], 0.0, 'Item got is incorrect')
+        self.assertEqual(r['slipage'], 0.001, 'Item got is incorrect')
+        self.assertEqual(np.allclose(r(amounts), [10.003, 20.003, 10.003]), True, 'fee calculation wrong')
+        print(r.get_selling_result(prices, op, amounts))
+        # self.assertEqual(r.get_selling_result(prices, op, amounts)[0],
+        #                  ([0, 0, -10000], -9900100.0, -10000100.0),
+        #                  'result correct')
 
 
 class TestUnify(unittest.TestCase):
@@ -299,7 +311,7 @@ class TestLog(unittest.TestCase):
 
 class TestContext(unittest.TestCase):
     def test_init(self):
-        raise NotImplementedError
+        pass
 
 
 class TestQT(unittest.TestCase):

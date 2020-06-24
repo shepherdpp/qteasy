@@ -370,7 +370,7 @@ class Rate:
                  sell_rate: float = 0.001,
                  buy_min: float = 5.0,
                  sell_min: float = 0.0,
-                 slipage: float = 0.0):
+                 slipage: float = 0.001):
         self.buy_fix = buy_fix
         self.sell_fix = sell_fix
         self.buy_rate = buy_rate
@@ -400,13 +400,23 @@ class Rate:
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
-        assert isinstance(item, str), 'TypeError, item should be a string in [\'fix\', \'fee\', \'slipage\']'
-        if item == 'fix':
-            return self.fix
-        elif item == 'fee':
-            return self.fee
+        assert isinstance(item, str), 'TypeError, item should be a string in ' \
+                                      '[\'buy_fix\', \'sell_fix\', \'buy_rate\', \'sell_rate\',' \
+                                      ' \'buy_min\', \'sell_min\',\'slipage\']'
+        if item == 'buy_fix':
+            return self.buy_fix
+        elif item == 'sell_fix':
+            return self.sell_fix
+        elif item == 'buy_rate':
+            return self.buy_rate
+        elif item == 'sell_rate':
+            return self.sell_rate
+        elif item == 'buy_min':
+            return self.buy_min
+        elif item == 'sell_min':
+            return self.sell_min
         elif item == 'slipage':
-            return self.fee
+            return self.slipage
         else:
             raise TypeError
 

@@ -104,7 +104,7 @@ if __name__ == '__main__':
     timing_pars5 = (228, 83, 8.05, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'pos-1')
-    op.set_parameter(stg_id='t-0', pars=timing_pars2)
+    op.set_parameter(stg_id='t-0', pars=timing_pars1)
     print(op.info())
     print('par_count is\n', op.timing[1].par_count)
     op.set_parameter(stg_id='t-1', pars=timing_pars5)

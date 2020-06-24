@@ -479,12 +479,12 @@ class Rolling_Timing(Strategy):
         # debug
         # print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
-        # assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        # assert hist_data.ndim == 3, \
-        #     f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        # assert hist_data.shape[1] >= self._window_length, \
-        #     f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-        #     f' got {hist_data.shape[1]}'
+        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
+        assert hist_data.ndim == 3, \
+            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
+        assert hist_data.shape[1] >= self._window_length, \
+            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
+            f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -492,15 +492,17 @@ class Rolling_Timing(Strategy):
         else:
             par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
-        # assert len(par_list) == len(hist_data), \
-        #     f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
+        assert len(par_list) == len(hist_data), \
+            f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
         res = np.array(list(map(self._generate_over,
                                 hist_data,
                                 par_list))).T
 
         # debug
+        # print(f'the history data passed to simple rolling realization function is shaped {hist_data.shape}')
         # print(f'generate result of np timing generate, result shaped {res.shape}')
+        # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
 
@@ -1040,12 +1042,12 @@ class Simple_Timing(Strategy):
         :param dates:
         :return:
         """
-        # assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        # assert hist_data.ndim == 3, \
-        #     f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        # assert hist_data.shape[1] >= self._window_length, \
-        #     f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-        #     f' got {hist_data.shape[1]}'
+        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
+        assert hist_data.ndim == 3, \
+            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
+        assert hist_data.shape[1] >= self._window_length, \
+            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
+            f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -1053,8 +1055,8 @@ class Simple_Timing(Strategy):
         else:
             par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
         # 准备调用realize()函数，对每一个个股进行分别计算
-        # assert len(par_list) == len(hist_data), \
-        #     f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
+        assert len(par_list) == len(hist_data), \
+            f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
         res = np.array(list(map(self._realize,
                                 hist_data,
