@@ -87,7 +87,7 @@ if __name__ == '__main__':
     cont = Context(moq=0)
     cont.reference_asset = '000300.SH'
     cont.reference_asset_type = 'I'
-    cont.share_pool = '000001.SZ, 000002.SZ, 000005.SZ'
+    cont.share_pool = '000001.SZ, 000002.SZ, 000005.SZ, 000651.SZ, 601398.SH'
     cont.asset_type = 'E'
     cont.output_count = 50
     cont.loop_period_start = '20040101'

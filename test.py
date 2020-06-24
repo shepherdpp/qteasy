@@ -293,6 +293,15 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.selecting[1].pars, (0.5,))
 
 
+class TestLog(unittest.TestCase):
+    def test_init(self):
+        pass
+
+class TestContext(unittest.TestCase):
+    def test_init(self):
+        raise NotImplementedError
+
+
 class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
@@ -300,10 +309,10 @@ class TestQT(unittest.TestCase):
 def suite():
     suite = unittest.TestSuite()
     # suite.addTest(TestHP())
-    suite.addTest(TestOperator())
     suite.addTest(TestRates())
     suite.addTest(TestSpace())
     suite.addTest(TestUnify())
+    suite.addTests(tests=[TestLog(), TestContext(), TestOperator()])
     return suite
 
 if __name__ == '__main__':

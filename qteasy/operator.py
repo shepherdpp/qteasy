@@ -384,7 +384,7 @@ class Rolling_Timing(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, window_hist: np.ndarray, params: tuple) -> int:
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> int:
         """ 策略的具体实现方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号
 
 
@@ -406,7 +406,7 @@ class Rolling_Timing(Strategy):
             qteasy系统会自行把适用于这个历史片段的策略，原样地推广到整个历史数据区间，同时推广到整个投资组合。并且根据投资组合管理
             策略（选股策略Selecting）中定义的选股方法确定每种投资产品的仓位比例。最终生成交易清单。
         input:
-            :param window_hist: ndarray，历史数据，策略的计算在历史数据基础上进行
+            :param hist_data: ndarray，历史数据，策略的计算在历史数据基础上进行
             :param params: tuple, 策略参数，具体的策略输出结果依靠参数给出
         return:
             :stg_output: int, 一个代表策略输出的数字，可以代表头寸位置，1代表多头，-1代表空头，0代表空仓，策略输出同样可以代表操作
@@ -479,12 +479,12 @@ class Rolling_Timing(Strategy):
         # debug
         # print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
-        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert hist_data.ndim == 3, \
-            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        assert hist_data.shape[1] >= self._window_length, \
-            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-            f' got {hist_data.shape[1]}'
+        # assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
+        # assert hist_data.ndim == 3, \
+        #     f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
+        # assert hist_data.shape[1] >= self._window_length, \
+        #     f'DataError: Not enough history data! expected hist data length {self._window_length},' \
+        #     f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -492,8 +492,8 @@ class Rolling_Timing(Strategy):
         else:
             par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
         # 调用_generate_over()函数，生成每一只股票的历史多空信号清单，用map函数把所有的个股数据逐一传入计算，并用list()组装结果
-        assert len(par_list) == len(hist_data), \
-            f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
+        # assert len(par_list) == len(hist_data), \
+        #     f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
         res = np.array(list(map(self._generate_over,
                                 hist_data,
@@ -503,26 +503,6 @@ class Rolling_Timing(Strategy):
         # print(f'generate result of np timing generate, result shaped {res.shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
-
-
-class TimingSimple(Rolling_Timing):
-    """简单择时策略，返回整个历史周期上的恒定多头状态
-
-    数据类型：N/A
-    数据分析频率：N/A
-    数据窗口长度：N/A
-    策略使用0个参数，
-    参数输入数据范围：N/A
-    """
-
-    def __init__(self):
-        super().__init__(stg_name='SIMPLE',
-                         stg_text='Simple Timing strategy, return constant long position on the whole history')
-
-    def _realize(self, hist_price, params):
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-
-        return 1
 
 
 class TimingCrossline(Rolling_Timing):
@@ -551,12 +531,12 @@ class TimingCrossline(Rolling_Timing):
                                   'cross point of long and short term moving average prices ',
                          data_types='close')
 
-    def _realize(self, hist_price, params):
+    def _realize(self, hist_data, params):
         """crossline策略使用四个参数：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
         s, l, m, hesitate = params
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_price.T
+        h = hist_data.T
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         # 根据观望模式在不同的点位产生Long/short标记
@@ -595,7 +575,7 @@ class TimingMACD(Rolling_Timing):
                                   'exponential weighted moving average prices',
                          data_types='close')
 
-    def _realize(self, hist_price, params):
+    def _realize(self, hist_data, params):
         """生成单只个股的择时多空信号.
 
         输入:
@@ -608,14 +588,14 @@ class TimingMACD(Rolling_Timing):
 
         s, l, m = params
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_price.T
+        h = hist_data.T
 
         # 计算指数的指数移动平均价格
         diff = ema(h[0], s) - ema(h[0], l)
         dea = ema(diff, m)
         _macd = 2 * (diff - dea)
         # 以下使用utfuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
-        # diff, dea, _macd = macd(hist_price, s, l, m)
+        # diff, dea, _macd = macd(hist_data, s, l, m)
 
         # 生成MACD多空判断：
         # 1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
@@ -648,14 +628,14 @@ class TimingDMA(Rolling_Timing):
                                   'average prices',
                          data_types='close')
 
-    def _realize(self, hist_price, params):
+    def _realize(self, hist_data, params):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
         s, l, d = params
         # print 'Generating Quick dma Long short Mask with parameters', params
 
         # 计算指数的移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_price.T
+        h = hist_data.T
         dma = sma(h[0], s) - sma(h[0], l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
@@ -695,11 +675,11 @@ class TimingTRIX(Rolling_Timing):
                          window_length=270,
                          data_types='close')
 
-    def _realize(self, hist_price, params):
+    def _realize(self, hist_data, params):
         """参数:
 
         input:
-        :param hist_price:
+        :param hist_data:
         :param params:
         :return:
 
@@ -709,7 +689,7 @@ class TimingTRIX(Rolling_Timing):
 
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_price.T
+        h = hist_data.T
         trxi = trix(h[0], s)
         matrix = sma(trxi, m)
 
@@ -741,25 +721,17 @@ class TimingCDL(Rolling_Timing):
                          window_length=200,
                          data_types='open,high,low,close')
 
-    def _realize(self, hist_price, params=None):
+    def _realize(self, hist_data, params=None):
         """参数:
 
         input:
             None
         """
         # 计算历史数据上的CDL指标
-        h = hist_price.T
+        h = hist_data.T
         cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
 
         return float(cat[-1])
-
-
-class CustomRollingTiming(Rolling_Timing):
-    """自定义rolling timing类，专用于自定义策略的生成
-
-
-    """
-    pass
 
 
 class Selecting(Strategy):
@@ -799,7 +771,7 @@ class Selecting(Strategy):
         self._poq = proportion_or_quantity
 
     @abstractmethod
-    def _realize(self, hist_segment):
+    def _realize(self, hist_data):
         """" Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
@@ -824,8 +796,8 @@ class Selecting(Strategy):
             len(seg_lens): 分段的数量
             生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
         """
-        assert isinstance(dates, list), \
-            f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
+        # assert isinstance(dates, list), \
+        #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq)
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
@@ -855,12 +827,12 @@ class Selecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
-        assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
-        assert isinstance(hist_data, np.ndarray), \
-            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
+        # assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
+        # assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
+        # assert len(self.pars) == self.par_count, \
+        #     f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+        # assert isinstance(hist_data, np.ndarray), \
+        #     f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
@@ -889,10 +861,10 @@ class SelectingTrend(Selecting):
                          stg_name='TREND SELECTING',
                          stg_text='Selecting share according to detected trends')
 
-    def _realize(self, hist_segment):
+    def _realize(self, hist_data):
         # 所有股票全部被选中，权值（投资比例）平均分配
-        print(f'in selecting realize method, hist_segment received, shaped: {hist_segment.shape}')
-        share_count = hist_segment.shape[0]
+        print(f'in selecting realize method, hist_data received, shaped: {hist_data.shape}')
+        share_count = hist_data.shape[0]
         return [1. / share_count] * share_count
 
 
@@ -904,9 +876,9 @@ class SelectingSimple(Selecting):
                          stg_name='SIMPLE SELECTING',
                          stg_text='Selecting all share and distribute weights evenly')
 
-    def _realize(self, hist_segment):
+    def _realize(self, hist_data):
         # 所有股票全部被选中，投资比例平均分配
-        share_count = hist_segment.shape[0]
+        share_count = hist_data.shape[0]
         return [1. / share_count] * share_count
 
 
@@ -918,9 +890,9 @@ class SelectingRandom(Selecting):
                          stg_name='RANDOM SELECTING',
                          stg_text='Selecting share Randomly and distribute weights evenly')
 
-    def _realize(self, hist_segment):
+    def _realize(self, hist_data):
         pct = self.pars[0]
-        share_count = hist_segment.shape[0]
+        share_count = hist_data.shape[0]
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
             chosen = np.random.choice([1, 0], size=share_count, p=[pct, 1 - pct])
@@ -958,22 +930,22 @@ class SelectingFinance(Selecting):
 
     # TODO: 因为Strategy主类代码重构，ranking table的代码结构也应该相应修改，待修改
     # TODO：实际上hist_segment就起到了ranking table 的作用，因此不再需要ranking_table()方法，所有排序都在_realize()方法中实现
-    def _realize(self, hist_segment):
+    def _realize(self, hist_data):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
         largest_win, distribution, drop_threshold, pct = self.pars
-        share_count = hist_segment.shape[0]
+        share_count = hist_data.shape[0]
         if pct < 1:
             # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
             pct = int(share_count * pct)
         else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
             pct = int(pct)
         # 历史数据片段必须是ndarray对象，否则无法进行
-        assert isinstance(hist_segment, np.ndarray), \
-            f'TypeError: expect np.ndarray as history segment, got {type(hist_segment)} instead'
+        assert isinstance(hist_data, np.ndarray), \
+            f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
         # 将历史数据片段中的eps求均值，忽略Nan值,
-        indices = hist_segment.mean(axis=1).squeeze()
+        indices = hist_data.mean(axis=1).squeeze()
         print(f'in Selecting realize method got ranking vector like:\n {np.round(indices, 3)}')
         nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
         if largest_win:
@@ -1012,28 +984,6 @@ class SelectingFinance(Selecting):
             chosen[args] = 1. / len(args)
         print(f'in Selecting realize method got share selecting vector like:\n {np.round(chosen,3)}')
         return chosen
-
-
-class CustomSelecting(Selecting):
-    """自定义Selecting策略，切片历史数据并对每个切片生成选股数据
-
-    """
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['enum', 'enum', 'discr', 'conti'],
-                         par_bounds_or_enums=[(True, False), ('even', 'linear', 'proportion'), (0, 100), (0, 1)],
-                         stg_name='CUSTOMIZED SELECTING',
-                         stg_text='Selecting share_pool according to customized strategy',
-                         data_freq='d',
-                         sample_freq='y',
-                         window_length=90,
-                         data_types='eps')
-
-    @abstractmethod
-    def _realize(self, hist_segment):
-        raise NotImplementedError
 
 
 class Simple_Timing(Strategy):
@@ -1090,12 +1040,12 @@ class Simple_Timing(Strategy):
         :param dates:
         :return:
         """
-        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert hist_data.ndim == 3, \
-            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        assert hist_data.shape[1] >= self._window_length, \
-            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-            f' got {hist_data.shape[1]}'
+        # assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
+        # assert hist_data.ndim == 3, \
+        #     f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
+        # assert hist_data.shape[1] >= self._window_length, \
+        #     f'DataError: Not enough history data! expected hist data length {self._window_length},' \
+        #     f' got {hist_data.shape[1]}'
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -1103,8 +1053,8 @@ class Simple_Timing(Strategy):
         else:
             par_list = [pars] * len(hist_data)  # 生成长度与shares数量相同的序列
         # 准备调用realize()函数，对每一个个股进行分别计算
-        assert len(par_list) == len(hist_data), \
-            f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
+        # assert len(par_list) == len(hist_data), \
+        #     f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
         res = np.array(list(map(self._realize,
                                 hist_data,
@@ -1128,6 +1078,26 @@ class RiconNone(Simple_Timing):
 
     def _realize(self, hist_data, params=None):
         return np.zeros_like(hist_data.squeeze())
+
+
+class TimingSimple(Simple_Timing):
+    """简单择时策略，返回整个历史周期上的恒定多头状态
+
+    数据类型：N/A
+    数据分析频率：N/A
+    数据窗口长度：N/A
+    策略使用0个参数，
+    参数输入数据范围：N/A
+    """
+
+    def __init__(self):
+        super().__init__(stg_name='SIMPLE',
+                         stg_text='Simple Timing strategy, return constant long position on the whole history')
+
+    def _realize(self, hist_data, params):
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+
+        return np.ones_like(hist_data.squeeze())
 
 
 class RiconUrgent(Simple_Timing):
@@ -1170,21 +1140,6 @@ class RiconUrgent(Simple_Timing):
         # print(f'created array in ricon generate() is shaped {diff.shape}')
         # print(f'created array in ricon generate() is {np.where(diff < drop)}')
         return np.where(diff < drop, -1, 0).squeeze()
-
-
-class CustomSimpleTiming(Simple_Timing):
-    """自定义Simple Timing策略，一次性生成整个回测历史区间的时序信号
-
-    """
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         stg_name='NONE',
-                         stg_text='Do not take any risk control activity')
-
-    @abstractmethod
-    def _realize(self, hist_data, params=None):
-        raise NotImplementedError
 
 
 # TODO：
@@ -1487,10 +1442,6 @@ class Operator:
                     self._timing.append(TimingCDL())
                 elif timing_type.lower() == 'simple':
                     self._timing.append(TimingSimple())
-                elif timing_type.lower() == 'rolling_custom':
-                    self._timing.append(CustomRollingTiming())
-                elif timing_type.lower() == 'simple_custom':
-                    self._timing.append(CustomSimpleTiming())
             # 当传入的对象是一个strategy时，直接
             elif isinstance(timing_type, Rolling_Timing) or isinstance(timing_type, Simple_Timing):
                 self._timing_types.append(timing_type.stg_type)
@@ -1522,8 +1473,6 @@ class Operator:
                     self._selecting.append(SelectingFinance())
                 elif selecting_type.lower() == 'simple':
                     self._selecting.append(SelectingSimple())
-                elif selecting_type.lower() == 'custom':
-                    self._selecting.append(CustomSelecting())
                 else:
                     raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
             elif isinstance(selecting_type, Selecting) or isinstance(selecting_type, Simple_Timing):
@@ -1547,10 +1496,6 @@ class Operator:
                     self._ricon.append(RiconNone())
                 elif ricon_type.lower() == 'urgent':
                     self._ricon.append(RiconUrgent())
-                elif ricon_type.lower() == 'rolling_custom':
-                    self._ricon.append(CustomRollingTiming())
-                elif ricon_type.lower() == 'simple_custom':
-                    self._ricon.append(CustomSimpleTiming())
                 else:
                     raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
             elif isinstance(ricon_type, Rolling_Timing) or isinstance(ricon_type, Simple_Timing):

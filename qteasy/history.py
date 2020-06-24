@@ -1032,7 +1032,6 @@ def hdf_to_hp():
     raise NotImplementedError
 
 
-# TODO: implement this function first!
 def hp_join(*historypanels):
     """ join *historypanels into one history panel if they are not None
 
