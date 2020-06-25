@@ -370,7 +370,7 @@ class Rate:
                  sell_rate: float = 0.001,
                  buy_min: float = 5.0,
                  sell_min: float = 0.0,
-                 slipage: float = 0.001):
+                 slipage: float = 0.0):
         self.buy_fix = buy_fix
         self.sell_fix = sell_fix
         self.buy_rate = buy_rate
@@ -441,7 +441,7 @@ class Rate:
         fee = (sold_values * rates).sum()
         return a_sold, cash_gained, fee
 
-    def get_purchase_results(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
+    def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
         """获得购买资产时的要素
 
 
@@ -754,10 +754,10 @@ def _loop_step(pre_cash: float,
             print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
             # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-    a_purchased, cash_spent, fee_buying = rate.get_purchase_results(prices=prices,
-                                                                    op=op,
-                                                                    pur_values=pur_values,
-                                                                    moq=moq)
+    a_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
+                                                                   op=op,
+                                                                   pur_values=pur_values,
+                                                                   moq=moq)
     if print_log:
         print(f'以本期资产价格{prices}买入资产 {a_purchased}')
         print(f'实际花费现金 {cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
