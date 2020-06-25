@@ -5,16 +5,16 @@ import numpy as np
 import itertools
 
 
-class TestRates(unittest.TestCase):
+class TestCost(unittest.TestCase):
     def setUp(self):
         self.amounts = np.array([10000, 20000, 10000])
         self.op = np.array([0, 1, -1])
         self.prices = np.array([10, 20, 10])
-        self.r = qt.Rate()
+        self.r = qt.Cost()
 
     def test_rate_creation(self):
         print('testing rates objects\n')
-        self.assertIsInstance(self.r, qt.Rate, 'Type should be Rate')
+        self.assertIsInstance(self.r, qt.Cost, 'Type should be Rate')
 
     def test_rate_operations(self):
         self.assertEqual(self.r['buy_fix'], 0.0, 'Item got is incorrect')
@@ -27,7 +27,7 @@ class TestRates(unittest.TestCase):
         self.assertEqual(np.allclose(self.r(self.amounts), [0.003, 0.003, 0.003]), True, 'fee calculation wrong')
 
     def test_rate_fee(self):
-        self.r = qt.Rate()
+        self.r = qt.Cost()
         print(self.r.get_selling_result(self.prices, self.op, self.amounts))
         self.assertEqual(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0], [0, 0, -10000]),
                          True,
@@ -86,8 +86,51 @@ class TestRates(unittest.TestCase):
                          180.0,
                          'result incorrect')
 
+        self.assertEqual(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0],
+                                     [0, 0, -10000]),
+                         True,
+                         'result incorrect')
+        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
+                         99900.0,
+                         'result incorrect')
+        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
+                         -100.0,
+                         'result incorrect')
+
     def test_fixed_fee(self):
-        pass
+        self.r.buy_fix = 300
+        self.r.sell_fix = 300
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
+        self.assertEqual(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0],
+                                     [0, 0, -10000]),
+                         True,
+                         'result incorrect')
+        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
+                         99700.0,
+                         'result incorrect')
+        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
+                         -300.0,
+                         'result incorrect')
+        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
+                                     [0., 985., 0.]),
+                         True,
+                         'result incorrect')
+        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
+                         -20000.0,
+                         'result incorrect')
+        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
+                         300.0,
+                         'result incorrect')
+        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[0],
+                                     [0., 900., 0.]),
+                         True,
+                         'result incorrect')
+        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[1],
+                         -18300.0,
+                         'result incorrect')
+        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[2],
+                         300.0,
+                         'result incorrect')
 
     def test_slipage(self):
         pass

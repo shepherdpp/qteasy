@@ -255,7 +255,7 @@ class Context:
         self.reference_asset = None
         self.reference_asset_type = 'E'
         self.reference_data_type = 'close'
-        self.rate = Rate()
+        self.rate = Cost()
         self.visual = visual
         self.log = True
 
@@ -351,15 +351,16 @@ class Context:
         return None
 
 
-# TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的一阶费率，
-# TODO: 5，与交易量相关的二阶费率
-class Rate:
-    """ 交易费率类，用于在回测过程中对交易成本进行估算
+# TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的二阶费率
+# TODO: 将Rate类改为Cost类
+class Cost:
+    """ 交易成本类，用于在回测过程中对交易成本进行估算
 
-    交易成本的估算依赖三个参数：
-    1， fix：type：float，固定费率，在交易过程中产生的固定现金费用，与交易金额和交易量无关： 固定费用 = 固定费用
-    2， fee：type：float，交易费率，交易过程中的固定费率，交易费用 = 交易金额 * 交易费率
-    3， slipage：type：float，交易滑点，用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
+    交易成本的估算依赖三种类型的成本：
+    1， fix：type：float，固定费用，在交易过程中产生的固定现金费用，与交易金额和交易量无关： 固定费用 = 固定费用
+    2， fee：type：float，交易费率，或者叫一阶费率，交易过程中的固定费率，交易费用 = 交易金额 * 交易费率
+    3， slipage：type：float，交易滑点，或者叫二阶费率。
+        用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
     """
 
@@ -390,13 +391,31 @@ class Rate:
 
     # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
     def __call__(self,
-                 amounts: np.ndarray,
-                 is_buying: bool = True):
-        """直接调用对象，计算交易费率"""
-        if is_buying:
-            return self.buy_rate + self.slipage * amounts
-        else:
-            return self.sell_rate + self.slipage * amounts
+                 trade_values: np.ndarray,
+                 is_buying: bool = True,
+                 fixed_fees: bool = False)->np.ndarray:
+        """直接调用对象，计算交易费率或交易费用
+
+        采用两种模式计算：
+            当fixed_fees为True时，采用固定费用模式计算，返回值为包含滑点的交易成本列表，
+            当fixed_fees为False时，采用固定费率模式计算，返回值为包含滑点的交易成本率列表
+
+        :param trade_values: ndarray: 总交易金额清单
+        :param is_buying: bool: 当前是否计算买入费用或费率
+        :param fixed_fees: bool: 当前是否采用固定费用模式计算
+        :return:
+        np.ndarray,
+        """
+        if fixed_fees: # 采用固定费用模式计算
+            if is_buying:
+                return self.buy_fix + self.slipage * trade_values ** 2
+            else:
+                return self.sell_fix + self.slipage * trade_values ** 2
+        else: # 采用固定费率模式计算
+            if is_buying:
+                return self.buy_rate + self.slipage * trade_values
+            else:
+                return self.sell_rate + self.slipage * trade_values
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
@@ -436,29 +455,62 @@ class Rate:
         """
         a_sold = np.where(prices, np.where(op < 0, amounts * op, 0), 0)
         sold_values = a_sold * prices
-        rates = self.__call__(amounts=amounts * prices, is_buying=False)
-        cash_gained = (-1 * sold_values * (1 - rates)).sum()
-        fee = (sold_values * rates).sum()
+        if self.sell_fix == 0: # 固定交易费用为0，按照交易费率模式计算
+            rates = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=False)
+            cash_gained = (-1 * sold_values * (1 - rates)).sum()
+            fee = (sold_values * rates).sum()
+        else:
+            fixed_fees = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=True)
+            fee = -np.where(a_sold, fixed_fees, 0).sum()
+            cash_gained = - sold_values.sum() + fee
         return a_sold, cash_gained, fee
 
     def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
         """获得购买资产时的要素
 
-
+        :param prices: ndarray, 投资组合中每只股票的当前单价
+        :param op: ndarray, 操作矩阵，针对投资组合中的每只股票的买卖操作，>0代表买入或平空仓,<0代表卖出或平多仓，绝对值表示买卖比例
+        :param pur_values: ndarray, 买入金额，可用于买入股票或资产的计划金额
+        :param moq: float, 最小交易单位
+        :return:
+        a_purchased: 一个ndarray, 代表所有股票分别买入的份额或数量
+        cash_spent: float，花费的总金额，包括费用在内
+        fee: 花费的费用，购买成本，包括佣金和滑点等投资成本
         """
-        rates = self.__call__(amounts=pur_values, is_buying=True)
-        if moq == 0:
-            a_purchased = np.where(prices,
-                                   np.where(op > 0,
-                                            pur_values / (prices * (1 + rates)), 0), 0)
-        else:
-            a_purchased = np.where(prices,
-                                   np.where(op > 0,
-                                            pur_values // (prices * moq * (1 + rates)) * moq,
-                                            0), 0)
-        cash_spent = np.where(a_purchased,
-                              -1 * a_purchased * prices * (1 + rates), 0).sum()
-        fee = -(cash_spent * rates).sum()
+        if self.buy_fix == 0:
+            # 固定费用为0，按照费率模式计算
+            rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False) # 费率模式下，计算综合费率（包含滑点）
+            if moq == 0:
+                a_purchased = np.where(prices,
+                                       np.where(op > 0,
+                                                pur_values / (prices * (1 + rates)),
+                                                0),
+                                       0)
+            else:
+                a_purchased = np.where(prices,
+                                       np.where(op > 0,
+                                                pur_values // (prices * moq * (1 + rates)) * moq,
+                                                0),
+                                       0)
+            cash_spent = np.where(a_purchased, -1 * a_purchased * prices * (1 + rates), 0).sum()
+            fee = -(cash_spent * rates).sum()
+        elif self.buy_fix:
+            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用
+            fixed_fees = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=True)
+            if moq == 0:
+                a_purchased = np.where(prices,
+                                       np.where(op > 0,
+                                                (pur_values - fixed_fees) / prices,
+                                                0),
+                                       0)
+            else:
+                a_purchased = np.where(prices,
+                                       np.where(op > 0,
+                                                (pur_values - fixed_fees) // (prices * moq) * moq,
+                                                0),
+                                       0)
+            cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0).sum()
+            fee = np.where(a_purchased, fixed_fees, 0).sum()
         return a_purchased, cash_spent, fee
 
 
@@ -709,7 +761,7 @@ def _loop_step(pre_cash: float,
                pre_amounts: np.ndarray,
                op: np.ndarray,
                prices: np.ndarray,
-               rate: Rate,
+               rate: Cost,
                moq: float,
                print_log: bool = False) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
@@ -820,7 +872,7 @@ def apply_loop(op_list: pd.DataFrame,
                visual: bool = False,
                price_visual: bool = False,
                cash_plan: CashPlan = None,
-               cost_rate: Rate = None,
+               cost_rate: Cost = None,
                moq: float = 100.,
                inflation_rate: float = 0.03,
                print_log: bool = False) -> pd.DataFrame:
