@@ -27,110 +27,122 @@ class TestCost(unittest.TestCase):
         self.assertEqual(np.allclose(self.r(self.amounts), [0.003, 0.003, 0.003]), True, 'fee calculation wrong')
 
     def test_rate_fee(self):
-        self.r = qt.Cost()
+        self.r.buy_rate = 0.003
+        self.r.sell_rate = 0.001
+        print('Sell result with fixed rate = 0.001:')
         print(self.r.get_selling_result(self.prices, self.op, self.amounts))
-        self.assertEqual(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0], [0, 0, -10000]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
-                         99900.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
-                         -100.0,
-                         'result incorrect')
+        self.assertIs(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0], [0, 0, -10000]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
+                               99900.0,
+                               msg='result incorrect')
+        self.assertAlmostEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
+                               -100.0,
+                               msg='result incorrect')
+        print('Purchase result with fixed rate = 0.003 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0))
+        print('Purchase result with fixed rate = 0.003 and moq = 1:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1))
+        print('Purchase result with fixed rate = 0.003 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
-        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
-                                     [0., 997.00897308, 0.]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
-                         -20000.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
-                         180.0,
-                         'result incorrect')
-        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)[0],
-                                     [0., 997., 0.]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)[1],
-                         -19999.819999999996,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)[2],
-                         179.99837999999997,
-                         'result incorrect')
-        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[0],
-                                     [0., 900., 0.]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[1],
-                         -18053.999999999996,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[2],
-                         162.486,
-                         'result incorrect')
+        self.assertIs(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
+                                  [0., 997.00897308, 0.]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
+                               -20000.0,
+                               msg='result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
+                               59.82053838484547,
+                               msg='result incorrect')
+        self.assertIs(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)[0],
+                                  [0., 997., 0.]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)[1],
+                               -19999.819999999996,
+                               msg='result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)[2],
+                               59.82,
+                               msg='result incorrect')
+        self.assertIs(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[0],
+                                  [0., 900., 0.]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[1],
+                               -18053.999999999996,
+                               msg='result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[2],
+                               54.0,
+                               msg='result incorrect')
 
     def test_min_fee(self):
+        self.r.sell_fix = 0
+        self.r.buy_fix = 0
         self.r.buy_min = 300
         self.r.sell_min = 300
-        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
-                                     [0., 997.00897308, 0.]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
-                         -20000.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
-                         180.0,
-                         'result incorrect')
-
-        self.assertEqual(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0],
-                                     [0, 0, -10000]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
-                         99900.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
-                         -100.0,
-                         'result incorrect')
+        self.r.slipage = 0
+        print('purchase result with fixed cost rate with min fee = 300:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0))
+        self.assertIs(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
+                                  [0., 985, 0.]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
+                               -20000.0,
+                               msg='result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
+                               300.0,
+                               msg='result incorrect')
+        print('selling result with fixed cost rate with min fee = 300:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts))
+        self.assertIs(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0],
+                                  [0, 0, -10000]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
+                               99700.0,
+                               msg='result incorrect')
+        self.assertAlmostEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
+                               -300.0,
+                               msg='result incorrect')
 
     def test_fixed_fee(self):
         self.r.buy_fix = 300
         self.r.sell_fix = 300
+        print('purchase result of fixed cost with fixed fee = 300:\n')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
-        self.assertEqual(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0],
-                                     [0, 0, -10000]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
-                         99700.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
-                         -300.0,
-                         'result incorrect')
-        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
-                                     [0., 985., 0.]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
-                         -20000.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
-                         300.0,
-                         'result incorrect')
-        self.assertEqual(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[0],
-                                     [0., 900., 0.]),
-                         True,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[1],
-                         -18300.0,
-                         'result incorrect')
-        self.assertEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[2],
-                         300.0,
-                         'result incorrect')
+        self.assertIs(np.allclose(self.r.get_selling_result(self.prices, self.op, self.amounts)[0],
+                                  [0, 0, -10000]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[1],
+                               99700.0,
+                               'result incorrect')
+        self.assertAlmostEqual(self.r.get_selling_result(self.prices, self.op, self.amounts)[2],
+                               -300.0,
+                               'result incorrect')
+        self.assertIs(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[0],
+                                  [0., 985., 0.]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[1],
+                               -20000.0,
+                               'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)[2],
+                               300.0,
+                               'result incorrect')
+        self.assertIs(np.allclose(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[0],
+                                  [0., 900., 0.]),
+                      True,
+                      'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[1],
+                               -18300.0,
+                               'result incorrect')
+        self.assertAlmostEqual(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)[2],
+                               300.0,
+                               'result incorrect')
 
     def test_slipage(self):
         pass
@@ -237,18 +249,17 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(self.hp.columns.keys), self.dtypes.split())
 
     def test_history_panel_slicing(self):
-
-        self.assertTrue(np.allclose(self.hp['close'], self.data[:,:,0:1]))
+        self.assertTrue(np.allclose(self.hp['close'], self.data[:, :, 0:1]))
         self.assertTrue(np.allclose(self.hp['close,open'], self.data[:, :, 0:2]))
-        self.assertTrue(np.allclose(self.hp[['close','open']], self.data[:, :, 0:2]))
+        self.assertTrue(np.allclose(self.hp[['close', 'open']], self.data[:, :, 0:2]))
         self.assertTrue(np.allclose(self.hp['close:high'], self.data[:, :, 0:3]))
-        self.assertTrue(np.allclose(self.hp['close,high'], self.data[:, :, [0,2]]))
-        self.assertTrue(np.allclose(self.hp[:,'000100'], self.data[0:1,:,]))
-        self.assertTrue(np.allclose(self.hp[:,'000100,000101'], self.data[0:2, :]))
-        self.assertTrue(np.allclose(self.hp[:,['000100','000101']], self.data[0:2, :]))
-        self.assertTrue(np.allclose(self.hp[:,'000100:000102'], self.data[0:3, :]))
-        self.assertTrue(np.allclose(self.hp[:,'000100,000102'], self.data[[0,2], :]))
-        self.assertTrue(np.allclose(self.hp['close,open','000100,000102'], self.data[[0,2], :, 0:2]))
+        self.assertTrue(np.allclose(self.hp['close,high'], self.data[:, :, [0, 2]]))
+        self.assertTrue(np.allclose(self.hp[:, '000100'], self.data[0:1, :, ]))
+        self.assertTrue(np.allclose(self.hp[:, '000100,000101'], self.data[0:2, :]))
+        self.assertTrue(np.allclose(self.hp[:, ['000100', '000101']], self.data[0:2, :]))
+        self.assertTrue(np.allclose(self.hp[:, '000100:000102'], self.data[0:3, :]))
+        self.assertTrue(np.allclose(self.hp[:, '000100,000102'], self.data[[0, 2], :]))
+        self.assertTrue(np.allclose(self.hp['close,open', '000100,000102'], self.data[[0, 2], :, 0:2]))
         print('start testing HistoryPanel')
         data = np.random.randint(10, size=(10, 5))
         index = pd.date_range(start='20200101', freq='d', periods=10)
@@ -274,7 +285,7 @@ class TestOperator(unittest.TestCase):
         print('==========================\n输出close类型的所有历史数据\n')
         self.assertTrue(np.allclose(hp['close', :, :], data[:, :, 0:1], equal_nan=True))
         print(f'==========================\n输出close和open类型的所有历史数据\n')
-        self.assertTrue(np.allclose(hp[[0,1], :, :], data[:, :, 0:2], equal_nan=True))
+        self.assertTrue(np.allclose(hp[[0, 1], :, :], data[:, :, 0:2], equal_nan=True))
         print(f'==========================\n输出第一只股票的所有类型历史数据\n')
         self.assertTrue(np.allclose(hp[:, [0], :], data[0:1, :, :], equal_nan=True))
         print('==========================\n输出第0、1、2个htype对应的所有股票全部历史数据\n')
@@ -316,7 +327,7 @@ class TestOperator(unittest.TestCase):
         cp = qt.CashPlan(['20100501'], 10000)
         cp.info()
         cp = qt.CashPlan(pd.date_range(start='2019-01-01', freq='Y', periods=12), [i * 1000 + 10000 for i in range(12)],
-                      0.035)
+                         0.035)
         cp.info()
 
     def create_test_data(self):
@@ -415,6 +426,7 @@ class TestLog(unittest.TestCase):
     def test_init(self):
         pass
 
+
 class TestContext(unittest.TestCase):
     def test_init(self):
         pass
@@ -426,15 +438,13 @@ class TestQT(unittest.TestCase):
 
 def suite():
     suite = unittest.TestSuite()
-    # suite.addTest(TestHP())
-    suite.addTest(TestRates())
-    suite.addTest(TestSpace())
-    suite.addTest(TestUnify())
-    suite.addTests(tests=[TestLog(), TestContext(), TestOperator()])
+    suite.addTest(TestCost())
+    # suite.addTest(TestSpace())
+    # suite.addTest(TestUnify())
+    # suite.addTests(tests=[TestLog(), TestContext(), TestOperator()])
     return suite
+
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner()
     runner.run(suite())
-
-

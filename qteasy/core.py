@@ -393,7 +393,7 @@ class Cost:
     def __call__(self,
                  trade_values: np.ndarray,
                  is_buying: bool = True,
-                 fixed_fees: bool = False)->np.ndarray:
+                 fixed_fees: bool = False) -> np.ndarray:
         """直接调用对象，计算交易费率或交易费用
 
         采用两种模式计算：
@@ -406,16 +406,24 @@ class Cost:
         :return:
         np.ndarray,
         """
-        if fixed_fees: # 采用固定费用模式计算
+        if fixed_fees:  # 采用固定费用模式计算
             if is_buying:
                 return self.buy_fix + self.slipage * trade_values ** 2
             else:
                 return self.sell_fix + self.slipage * trade_values ** 2
-        else: # 采用固定费率模式计算
+        else:  # 采用固定费率模式计算
             if is_buying:
-                return self.buy_rate + self.slipage * trade_values
+                if self.buy_min == 0:
+                    return self.buy_rate + self.slipage * trade_values
+                else:
+                    min_rate = self.buy_min / (trade_values - self.buy_min)
+                    return np.fmax(self.buy_rate, min_rate) + self.slipage * trade_values
             else:
-                return self.sell_rate + self.slipage * trade_values
+                if self.sell_min == 0:
+                    return self.sell_rate + self.slipage * trade_values
+                else:
+                    min_rate = self.sell_min / trade_values
+                    return np.fmax(self.sell_rate, min_rate) + self.slipage * trade_values
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
@@ -455,8 +463,9 @@ class Cost:
         """
         a_sold = np.where(prices, np.where(op < 0, amounts * op, 0), 0)
         sold_values = a_sold * prices
-        if self.sell_fix == 0: # 固定交易费用为0，按照交易费率模式计算
+        if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=False)
+            print(f'selling rate is {rates}')
             cash_gained = (-1 * sold_values * (1 - rates)).sum()
             fee = (sold_values * rates).sum()
         else:
@@ -479,39 +488,43 @@ class Cost:
         """
         if self.buy_fix == 0:
             # 固定费用为0，按照费率模式计算
-            rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False) # 费率模式下，计算综合费率（包含滑点）
-            if moq == 0:
+            rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False)
+            print(f'purchase rate is {rates}')
+            # 费率模式下，计算综合费率（包含滑点）
+            if moq == 0:  # moq为0，买入份额数为任意分数份额
                 a_purchased = np.where(prices,
                                        np.where(op > 0,
                                                 pur_values / (prices * (1 + rates)),
                                                 0),
                                        0)
-            else:
+            else:  # moq不为零，买入份额必须是moq的倍数
                 a_purchased = np.where(prices,
                                        np.where(op > 0,
                                                 pur_values // (prices * moq * (1 + rates)) * moq,
                                                 0),
                                        0)
-            cash_spent = np.where(a_purchased, -1 * a_purchased * prices * (1 + rates), 0).sum()
-            fee = -(cash_spent * rates).sum()
+            cash_spent = np.where(a_purchased, -1 * a_purchased * prices * (1 + rates), 0)
+            fee = -(cash_spent * rates / (1 + rates)).sum()
         elif self.buy_fix:
-            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用
+            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，只计算买入金额大于固定费用的份额
             fixed_fees = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=True)
             if moq == 0:
-                a_purchased = np.where(prices,
-                                       np.where(op > 0,
-                                                (pur_values - fixed_fees) / prices,
-                                                0),
-                                       0)
+                a_purchased = np.fmax(np.where(prices,
+                                               np.where(op > 0,
+                                                        (pur_values - fixed_fees) / prices,
+                                                        0),
+                                               0),
+                                      0)
             else:
-                a_purchased = np.where(prices,
-                                       np.where(op > 0,
-                                                (pur_values - fixed_fees) // (prices * moq) * moq,
-                                                0),
-                                       0)
-            cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0).sum()
+                a_purchased = np.fmax(np.where(prices,
+                                               np.where(op > 0,
+                                                        (pur_values - fixed_fees) // (prices * moq) * moq,
+                                                        0),
+                                               0),
+                                      0)
+            cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0)
             fee = np.where(a_purchased, fixed_fees, 0).sum()
-        return a_purchased, cash_spent, fee
+        return a_purchased, cash_spent.sum(), fee
 
 
 # TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
