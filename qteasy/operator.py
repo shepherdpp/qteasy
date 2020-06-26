@@ -259,7 +259,8 @@ class Strategy:
         return:
             int: 1: 设置成功，0: 设置失败
         """
-        assert isinstance(pars, tuple) or isinstance(pars, dict)
+        assert isinstance(pars, (tuple, dict)),\
+            f'parameter should be either a tuple or a dict, got {type(pars)} instead'
         if len(pars) == self.par_count or isinstance(pars, dict):
             self._pars = pars
             return 1
@@ -1445,7 +1446,7 @@ class Operator:
                 elif timing_type.lower() == 'simple':
                     self._timing.append(TimingSimple())
             # 当传入的对象是一个strategy时，直接
-            elif isinstance(timing_type, Rolling_Timing) or isinstance(timing_type, Simple_Timing):
+            elif isinstance(timing_type, (Rolling_Timing, Simple_Timing)):
                 self._timing_types.append(timing_type.stg_type)
                 self._timing.append(timing_type)
             else:
@@ -1477,7 +1478,7 @@ class Operator:
                     self._selecting.append(SelectingSimple())
                 else:
                     raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
-            elif isinstance(selecting_type, Selecting) or isinstance(selecting_type, Simple_Timing):
+            elif isinstance(selecting_type, (Selecting, Simple_Timing)):
                 self._selecting_type.append(selecting_type.stg_type)
                 self._selecting.append(selecting_type)
             else:
@@ -1500,7 +1501,7 @@ class Operator:
                     self._ricon.append(RiconUrgent())
                 else:
                     raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
-            elif isinstance(ricon_type, Rolling_Timing) or isinstance(ricon_type, Simple_Timing):
+            elif isinstance(ricon_type, (Rolling_Timing, Simple_Timing)):
                 self._ricon_type.append(ricon_type.stg_type)
                 self._ricon.append(ricon_type)
             else:

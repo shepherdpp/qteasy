@@ -465,7 +465,8 @@ class Cost:
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=False)
-            print(f'selling rate is {rates}')
+            # debug
+            # print(f'selling rate is {rates}')
             cash_gained = (-1 * sold_values * (1 - rates)).sum()
             fee = (sold_values * rates).sum()
         else:
@@ -489,7 +490,8 @@ class Cost:
         if self.buy_fix == 0:
             # 固定费用为0，按照费率模式计算
             rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False)
-            print(f'purchase rate is {rates}')
+            # debug
+            # print(f'purchase rate is {rates}')
             # 费率模式下，计算综合费率（包含滑点）
             if moq == 0:  # moq为0，买入份额数为任意分数份额
                 a_purchased = np.where(prices,
@@ -542,13 +544,15 @@ class CashPlan:
         :param interest_rate: float
         """
         from collections import Iterable
-        if isinstance(amounts, int) or isinstance(amounts, float):
+        if isinstance(amounts, (int, float)):
             amounts = [amounts]
-        assert isinstance(amounts, list), f'TypeError: amounts should be Iterable, got {type(amounts)} instead'
-        for amount in amounts:  # 检查是否每一个amount的数据类型
-            assert isinstance(amount, float) or isinstance(amount, int), \
-                f'TypeError: amount should be number format, got {type(amount)} instead'
-            assert amount > 0, f'InputError: Investment amount should be larger than 0'
+        assert isinstance(amounts,
+                          (list, np.ndarray)), f'TypeError: amounts should be Iterable, got {type(amounts)} instead'
+        if isinstance(amounts, list):
+            for amount in amounts:  # 检查是否每一个amount的数据类型
+                assert isinstance(amount, (int, float, np.int64, np.float64)), \
+                    f'TypeError: amount should be number format, got {type(amount)} instead'
+                assert amount > 0, f'InputError: Investment amount should be larger than 0'
         assert isinstance(dates, Iterable), f"Expect Iterable input dates, got {type(dates)} instead!"
 
         if isinstance(dates, str):
@@ -715,20 +719,74 @@ class CashPlan:
         print(f'memory usage: {sys.getsizeof(self.plan)} bytes\n')
 
     def __add__(self, other):
+        """ 两个CashPlan对象相加，得到一个新的CashPlan对象，这个对象包含两个CashPlan对象的投资计划的并集，如果两个投资计划的时间
+            相同，则新的CashPlan的投资计划每个投资日的投资额是两个投资计划的和
+
+            CashPlan对象与一个int或float对象相加，得到的新的CashPlan对象的每笔投资都增加int或float数额
+
+        :param other: (int, float, CashPlan): 另一个对象，根据对象类型不同行为不同
+        :return:
         """
+
+        if isinstance(other, (int, float)):
+            # 当other是一个数字时，在新的CashPlan的每个投资日期的投资额上加上other元
+            min_amount = np.min(self.amounts)
+            assert other > -min_amount, \
+                f'ValueError, the amount will cause illegal invest value in plan, {min_amount} - {other}'
+            new_amounts = np.array(self.amounts) + other
+            return CashPlan(self.dates, new_amounts, self.ir)
+        elif isinstance(other, CashPlan):
+            plan1 = self._cash_plan
+            plan2 = other._cash_plan
+            index_combo = list(plan1.index)
+            index_combo.extend(list(plan2.index))
+            index_combo = list(set(index_combo))  # 新的CashPlan的投资日期集合是两个CashPlan的并集
+            plan1 = plan1.reindex(index_combo).fillna(0)  # 填充Nan值避免相加后产生Nan值
+            plan2 = plan2.reindex(index_combo).fillna(0)
+            plan = (plan1 + plan2).sort_index()
+            if self.ir == 0:
+                new_ir = other.ir
+            else:
+                new_ir = self.ir
+            return CashPlan(list(plan.index), list(plan.amount), new_ir)
+        else:
+            raise TypeError(f'Only CashPlan and int objects are supported, got {type(other)}')
+
+    def __radd__(self, other):
+        """ 另一个对象other + CashPlan的结果与CashPlan + other相同， 即：
+            other + CashPlan == CashPlan + other
 
         :param other:
         :return:
         """
-        raise NotImplementedError
+        return self.__add__(other)
 
     def __mul__(self, other):
+        """CashPlan乘以一个int或float返回一个新的CashPlan，它的投资数量和投资日期与CashPlan对象相同，每次投资额增加int或float倍
+
+        :param other: (int, float):
+        :return:
         """
+        assert isinstance(other, (int, float))
+        assert other >= 0
+        new_dates = list(self.dates)
+        new_amounts = list(np.array(self.amounts) * other)
+        return CashPlan(new_dates, new_amounts, self.ir)
+
+    def __rmul__(self, other):
+        """ other 乘以一个CashPlan的结果是一个新的CashPlan，结果取决于other的类型：
+            other 为 int时，新的CashPlan的投资次数重复int次，投资额不变，投资日期按照相同的频率顺延，如果CashPlan只有一个投资日期时
+                频率为一年
+            other 为 float时，other * CashPlan == CashPlan * other
 
         :param other:
         :return:
         """
-        raise NotImplementedError
+        assert isinstance(other, (int, float))
+        if isinstance(other, int):
+            assert other > 1
+        else:
+            return self.__mul__(other)
 
     def __repr__(self):
         """
@@ -1999,7 +2057,7 @@ def _input_to_list(pars: [str, int, list], dim: int, padder):
     return: =====
         pars, list 转化好的元素清单
     """
-    if isinstance(pars, str) or isinstance(pars, int):  # 处理字符串类型的输入
+    if isinstance(pars, (str, int, np.int64)):  # 处理字符串类型的输入
         # print 'type of types', type(pars)
         pars = [pars] * dim
     else:

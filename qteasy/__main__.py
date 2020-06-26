@@ -76,7 +76,7 @@ if __name__ == '__main__':
     # TODO: TRIX 策略有问题
     custom_rolling = CustomRollingTiming()
     custom_simple = CustomSimpleTiming()
-    op = Operator(timing_types=['simple', custom_simple], selecting_types=['simple'], ricon_types=['none'])
+    op = Operator(timing_types=['simple', custom_rolling], selecting_types=['simple'], ricon_types=['none'])
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
