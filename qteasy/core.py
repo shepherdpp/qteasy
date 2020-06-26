@@ -785,7 +785,34 @@ class CashPlan:
         assert isinstance(other, (int, float))
         if isinstance(other, int):
             assert other > 1
-        else:
+            one_day = pd.Timedelta(1, 'd')
+            one_month = pd.Timedelta(31, 'd')
+            one_quarter = pd.Timedelta(93, 'd')
+            one_year = pd.Timedelta(365, 'd')
+            if self.investment_count == 1: # 如果只有一次投资，则以一年为间隔
+                new_dates = [self.first_day + one_year * i for i in range(other)]
+                return CashPlan(new_dates, self.amounts * other, self.ir)
+            else: # 如果有两次或以上投资，则计算首末两次投资之间的间隔，以此为依据计算未来投资间隔
+                if self.investment_count == 2: # 当只有两次投资时，新增投资的间距与频率与两次投资的间隔相同
+                    mult_delta = pd.Timedelta(self.period * 2, 'd')
+                else: # 当投资次数多于两次时，整个投资作为一个单元，未来新增投资为重复每个单元的投资。单元的跨度可以为月、季度及年
+                    if self.period <= 28:
+                        mult_delta = one_month
+                    elif self.period <= 90:
+                        mult_delta = one_quarter
+                    elif self.period <= 365:
+                        mult_delta = one_year
+                    else:
+                        mult_delta = one_year * (self.period // 365 + 1)
+                # 获取投资间隔后，循环生成所有的投资日期
+                original_dates = self.dates
+                new_dates = self.dates
+                for i in range(other - 1):
+                    for date in original_dates:
+                        new_dates.append(date + mult_delta * (i + 1) + one_day)
+                return CashPlan(new_dates, self.amounts * other, self.ir)
+
+        else: # 当other是浮点数时，返回CashPlan * other 的结果
             return self.__mul__(other)
 
     def __repr__(self):
