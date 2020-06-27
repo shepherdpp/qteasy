@@ -1271,7 +1271,6 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
     return result_hp
 
 
-#TODO: 这个函数需要改造，由于tushare对最大下载行数有限制，因此当需要下载多个share的数据时，需要分批下载
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
