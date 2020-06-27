@@ -1088,7 +1088,7 @@ def get_current_holdings() -> tuple:
 
     :return: tuple:
     """
-
+    return NotImplementedError
 
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
 def run(operator, context):

@@ -422,6 +422,69 @@ class TestPool(unittest.TestCase):
         self.assertEqual(self.p.perfs, [-1, 2, 3, 4, 5])
 
 
+class TestCoreSubFuncs(unittest.TestCase):
+    """Test all functions in core.py"""
+    def setUp(self):
+        pass
+
+    def test_input_to_list(self):
+        pass
+
+    def test_space_around_centre(self):
+        pass
+
+    def test_time_string_format(self):
+        pass
+
+
+class TestEvaluations(unittest.TestCase):
+    """Test all evaluation functions in core.py"""
+    def setUp(self):
+        self.oplist = []
+        self.reference = []
+        self.valuelist = []
+
+    def test_operation(self):
+        pass
+
+    def test_fv(self):
+        pass
+
+    def test_max_drawdown(self):
+        pass
+
+    def test_info_ratio(self):
+        pass
+
+    def test_volatility(self):
+        pass
+
+    def test_sharp(self):
+        pass
+
+    def test_beta(self):
+        pass
+
+    def test_alpha(self):
+        pass
+
+    def test_benchmark(self):
+        pass
+
+
+class TestLoop(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_loop_step(self):
+        pass
+
+    def test_loop(self):
+        pass
+
+
+
+
 class TestOperator(unittest.TestCase):
     def setUp(self):
         print('start testing HistoryPanel object\n')
