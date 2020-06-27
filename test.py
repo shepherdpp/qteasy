@@ -777,6 +777,42 @@ class TestTushare(unittest.TestCase):
     def test_get_index(self):
         pass
 
+    def test_income(self):
+        pass
+
+    def test_balance(self):
+        pass
+
+    def test_cash_flow(self):
+        pass
+
+    def test_indicators(self):
+        pass
+
+    def test_top_list(self):
+        pass
+
+    def test_index_basic(self):
+        pass
+
+    def test_composit(self):
+        pass
+
+    def test_fund_net_value(self):
+        pass
+
+    def test_future_basic(self):
+        pass
+
+    def test_options_basic(self):
+        pass
+
+    def test_future_daily(self):
+        pass
+
+    def test_options_daily(self):
+        pass
+
 
 class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
