@@ -389,6 +389,39 @@ class TestCashPlan(unittest.TestCase):
                                                  42000.0])
 
 
+class TestPool(unittest.TestCase):
+    def setUp(self):
+        self.p = qt.ResultPool(5)
+        self.items = ['first', 'second', (1, 2, 3), 'this', 24]
+        self.perfs = [1, 2, 3, 4, 5]
+        self.additional_result1 = ('abc', 12)
+        self.additional_result2 = ([1,2], -1)
+        self.additional_result3 = (12, 5)
+
+    def test_create(self):
+        self.assertIsInstance(self.p, qt.ResultPool)
+
+    def test_operation(self):
+        self.p.in_pool(self.additional_result1[0], self.additional_result1[1])
+        self.p.cut()
+        self.assertEqual(self.p.item_count, 1)
+        self.assertEqual(self.p.pars, ['abc'])
+        for item, perf in zip(self.items, self.perfs):
+            self.p.in_pool(item, perf)
+        self.assertEqual(self.p.item_count, 6)
+        self.assertEqual(self.p.pars, ['abc', 'first', 'second', (1, 2, 3), 'this', 24])
+        self.p.cut()
+        self.assertEqual(self.p.pars, ['second', (1, 2, 3), 'this', 24, 'abc'])
+        self.assertEqual(self.p.perfs, [2, 3, 4, 5, 12])
+
+        self.p.in_pool(self.additional_result2[0], self.additional_result2[1])
+        self.p.in_pool(self.additional_result3[0], self.additional_result3[1])
+        self.assertEqual(self.p.item_count, 7)
+        self.p.cut(keep_largest=False)
+        self.assertEqual(self.p.pars, [[1,2], 'second', (1, 2, 3), 'this', 24])
+        self.assertEqual(self.p.perfs, [-1, 2, 3, 4, 5])
+
+
 class TestOperator(unittest.TestCase):
     def setUp(self):
         print('start testing HistoryPanel object\n')
