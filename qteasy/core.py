@@ -9,7 +9,7 @@ import itertools
 import time
 import math
 import sys
-from .history import HistoryPanel, get_history_panel
+from .history import get_history_panel, str_to_list
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 PROGRESS_BAR = {0 : '----------------------------------------', 1: '#---------------------------------------',
@@ -794,22 +794,22 @@ class CashPlan:
                 return CashPlan(new_dates, self.amounts * other, self.ir)
             else: # 如果有两次或以上投资，则计算首末两次投资之间的间隔，以此为依据计算未来投资间隔
                 if self.investment_count == 2: # 当只有两次投资时，新增投资的间距与频率与两次投资的间隔相同
-                    mult_delta = pd.Timedelta(self.period * 2, 'd')
+                    time_offset = pd.Timedelta(self.period * 2, 'd')
                 else: # 当投资次数多于两次时，整个投资作为一个单元，未来新增投资为重复每个单元的投资。单元的跨度可以为月、季度及年
                     if self.period <= 28:
-                        mult_delta = one_month
+                        time_offset = one_month
                     elif self.period <= 90:
-                        mult_delta = one_quarter
+                        time_offset = one_quarter
                     elif self.period <= 365:
-                        mult_delta = one_year
+                        time_offset = one_year
                     else:
-                        mult_delta = one_year * (self.period // 365 + 1)
+                        time_offset = one_year * (self.period // 365 + 1)
                 # 获取投资间隔后，循环生成所有的投资日期
                 original_dates = self.dates
                 new_dates = self.dates
                 for i in range(other - 1):
                     for date in original_dates:
-                        new_dates.append(date + mult_delta * (i + 1) + one_day)
+                        new_dates.append(date + time_offset * (i + 1) + one_day)
                 return CashPlan(new_dates, self.amounts * other, self.ir)
 
         else: # 当other是浮点数时，返回CashPlan * other 的结果
@@ -2108,7 +2108,7 @@ class Space:
     列表中的值
     """
 
-    def __init__(self, pars, par_types: list = None):
+    def __init__(self, pars, par_types: [list, str] = None):
         """参数空间对象初始化，根据输入的参数生成一个空间
 
         input:
@@ -2131,10 +2131,13 @@ class Space:
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
         pars = list(pars)
         par_dim = len(pars)
+        # debug
+        # print('par types before processing:', par_types)
         if par_types is None:
             par_types = []
-        par_types = _input_to_list(par_types, par_dim, [None])
-
+        elif isinstance(par_types, str):
+            par_types = str_to_list(par_types, ',')
+        par_types = _input_to_list(par_types, par_dim, None)
         # debug：
         # print('par dim:', par_dim)
         # print('pars and par_types:', pars, par_types)

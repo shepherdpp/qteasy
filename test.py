@@ -3,6 +3,7 @@ import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
 import numpy as np
+from numpy import int64
 import itertools
 
 
@@ -151,26 +152,27 @@ class TestSpace(unittest.TestCase):
         """
         # first group of inputs, output Space with two discr axis from [0,10]
         print('testing space objects\n')
+        # pars_list = [[(0, 10), (0, 10)],
+        #              [[0, 10], [0, 10]]]
+        #
+        # types_list = ['discr',
+        #               ['discr', 'discr']]
+        #
+        # input_pars = itertools.product(pars_list, types_list)
+        # for p in input_pars:
+        #     # print(p)
+        #     s = qt.Space(*p)
+        #     b = s.boes
+        #     t = s.types
+        #     # print(s, t)
+        #     self.assertIsInstance(s, qt.Space)
+        #     self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
+        #     self.assertEqual(t, ['discr', 'discr'], 'types incorrect')
+        #
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
 
-        types_list = ['discr',
-                      ['discr', 'discr']]
-
-        input_pars = itertools.product(pars_list, types_list)
-        for p in input_pars:
-            # print(p)
-            s = qt.Space(*p)
-            b = s.boes
-            t = s.types
-            # print(s, t)
-            self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-            self.assertEqual(t, ['discr', 'discr'], 'types incorrect')
-
-        pars_list = [[(0, 10), (0, 10)],
-                     [[0, 10], [0, 10]]]
-
-        types_list = ['foobar',
+        types_list = ['foo, bar',
                       ['foo', 'bar']]
 
         input_pars = itertools.product(pars_list, types_list)
@@ -198,12 +200,87 @@ class TestSpace(unittest.TestCase):
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
 
+        pars_list = [(0., 10), (0, 10)]
+        s = qt.Space(pars=pars_list, par_types=None)
+        self.assertEqual(s.types, ['conti', 'discr'])
+        #
+        pars_list = [(0., 10), (0, 10)]
+        s = qt.Space(pars=pars_list, par_types='conti, enum')
+        self.assertEqual(s.types, ['conti', 'enum'])
+
     def test_extract(self):
         """
 
         :return:
         """
-        pass
+        pars_list = [(0, 10), (0, 10)]
+        types_list = ['discr', 'discr']
+        s = qt.Space(pars=pars_list, par_types=types_list)
+        extracted_int, count = s.extract(3, 'interval')
+        extracted_int_list = list(extracted_int)
+        print('extracted int\n', extracted_int_list)
+        self.assertEqual(count, 16, 'extraction count wrong!')
+        self.assertEqual(extracted_int_list, [(0, 0), (0, 3), (0, 6), (0, 9), (3, 0), (3, 3),
+                                           (3, 6), (3, 9), (6, 0), (6, 3), (6, 6), (6, 9),
+                                           (9, 0), (9, 3), (9, 6), (9, 9)],
+                         'space extraction wrong!')
+        extracted_rand, count = s.extract(10, 'rand')
+        extracted_rand_list = list(extracted_rand)
+        self.assertEqual(count, 10, 'extraction count wrong!')
+        print('extracted rand\n', extracted_rand_list)
+        for point in list(extracted_rand_list):
+            self.assertEqual(len(point), 2)
+            self.assertLessEqual(point[0], 10)
+            self.assertGreaterEqual(point[0], 0)
+            self.assertLessEqual(point[1], 10)
+            self.assertGreaterEqual(point[1], 0)
+
+        pars_list = [(0., 10), (0, 10)]
+        s = qt.Space(pars=pars_list, par_types=None)
+        extracted_int2, count = s.extract(3, 'interval')
+        self.assertEqual(count, 16, 'extraction count wrong!')
+        extracted_int_list2 = list(extracted_int2)
+        self.assertEqual(extracted_int_list2, [(0, 0), (0, 3), (0, 6), (0, 9), (3, 0), (3, 3),
+                                           (3, 6), (3, 9), (6, 0), (6, 3), (6, 6), (6, 9),
+                                           (9, 0), (9, 3), (9, 6), (9, 9)],
+                         'space extraction wrong!')
+        print('extracted int list 2\n', extracted_int_list2)
+        self.assertIsInstance(extracted_int_list2[0][0], float)
+        self.assertIsInstance(extracted_int_list2[0][1], (int, int64))
+        extracted_rand2, count = s.extract(10, 'rand')
+        self.assertEqual(count, 10, 'extraction count wrong!')
+        extracted_rand_list2 = list(extracted_rand2)
+        print('extracted rand list 2:\n', extracted_rand_list2)
+        for point in extracted_rand_list2:
+            self.assertEqual(len(point), 2)
+            self.assertIsInstance(point[0], float)
+            self.assertLessEqual(point[0], 10)
+            self.assertGreaterEqual(point[0], 0)
+            self.assertIsInstance(point[1], (int, int64))
+            self.assertLessEqual(point[1], 10)
+            self.assertGreaterEqual(point[1], 0)
+
+        pars_list = [(0., 10), ('a', 'b')]
+        s = qt.Space(pars=pars_list, par_types='enum, enum')
+        extracted_int3, count = s.extract(1, 'interval')
+        self.assertEqual(count, 4, 'extraction count wrong!')
+        extracted_int_list3 = list(extracted_int3)
+        self.assertEqual(extracted_int_list3, [(0., 'a'), (0, 'b'), (10., 'a'), (10., 'b')],
+                         'space extraction wrong!')
+        print('extracted int list 2\n', extracted_int_list3)
+        self.assertIsInstance(extracted_int_list3[0][0], float)
+        self.assertIsInstance(extracted_int_list3[0][1], str)
+        extracted_rand3, count = s.extract(3, 'rand')
+        self.assertEqual(count, 3, 'extraction count wrong!')
+        extracted_rand_list3 = list(extracted_rand3)
+        print('extracted rand list 2:\n', extracted_rand_list3)
+        for point in extracted_rand_list3:
+            self.assertEqual(len(point), 2)
+            self.assertIsInstance(point[0], float)
+            self.assertLessEqual(point[0], 10)
+            self.assertGreaterEqual(point[0], 0)
+            self.assertIsInstance(point[1], str)
+            self.assertIn(point[1], ['a', 'b'])
 
 
 class TestCashPlan(unittest.TestCase):
