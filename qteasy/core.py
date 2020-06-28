@@ -2074,7 +2074,8 @@ class ResultPool:
         self.__perfs = per2
 
 
-def _input_to_list(pars: [str, int, list], dim: int, padder):
+# TODO: this function can be merged with str_to_list() in history.py
+def input_to_list(pars: [str, int, list], dim: int, padder = None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
     input:
@@ -2137,7 +2138,7 @@ class Space:
             par_types = []
         elif isinstance(par_types, str):
             par_types = str_to_list(par_types, ',')
-        par_types = _input_to_list(par_types, par_dim, None)
+        par_types = input_to_list(par_types, par_dim, None)
         # debug：
         # print('par dim:', par_dim)
         # print('pars and par_types:', pars, par_types)
@@ -2209,9 +2210,9 @@ class Space:
             iter，迭代器数据，打包好的所有需要被提取的点的集合
             total，int，迭代器输出的点的数量
         """
-        interval_or_qty_list = _input_to_list(pars=interval_or_qty,
-                                              dim=self.dim,
-                                              padder=[1])
+        interval_or_qty_list = input_to_list(pars=interval_or_qty,
+                                             dim=self.dim,
+                                             padder=[1])
         axis_ranges = []
         i = 0
         total = 1

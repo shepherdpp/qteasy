@@ -414,7 +414,15 @@ class TestCoreSubFuncs(unittest.TestCase):
         pass
 
     def test_input_to_list(self):
-        pass
+        input_str = 'first'
+        self.assertEqual(qt.input_to_list(input_str, 3), ['first', 'first', 'first'])
+        self.assertEqual(qt.input_to_list(input_str, 4), ['first', 'first', 'first', 'first'])
+        self.assertEqual(qt.input_to_list(input_str, 2, None), ['first', 'first'])
+        input_list = ['first', 'second']
+        self.assertEqual(qt.input_to_list(input_list, 3), ['first', 'second', None])
+        self.assertEqual(qt.input_to_list(input_list, 4, 'padder'), ['first', 'second', 'padder', 'padder'])
+        self.assertEqual(qt.input_to_list(input_list, 1), ['first', 'second'])
+        self.assertEqual(qt.input_to_list(input_list, -5), ['first', 'second'])
 
     def test_space_around_centre(self):
         pass
