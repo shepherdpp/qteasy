@@ -259,6 +259,7 @@ class Context:
         self.visual = visual
         self.log = True
 
+        # TODO: 这里除了invest_dates 以及invest_amounts以外，其他的参数均不起作用，需要重新规划
         self.invest_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')
         self.invest_cash_type = 0
         self.invest_cash_freq = 'Y'
@@ -267,8 +268,8 @@ class Context:
         self.invest_total_amount = 50000
         self.invest_unit_amount = 10000
         self.riskfree_ir = 0.015
-        self.invest_dates = '20100801, 20110801, 20120801'
-        self.invest_amounts = [10000, 0.01, 0.01]
+        self.invest_dates = '20060801'
+        self.invest_amounts = [10000]
         self.cash_plan = CashPlan(self.invest_dates, self.invest_amounts)
 
         self.fixed_buy_fee = 5
@@ -1212,7 +1213,7 @@ def run(operator, context):
         print(f'==================================== \n'
               f'        OPERATION SIGNALS\n'
               f'====================================')
-        print(f'\ntime consumption for operate signal creation: {_time_str_format(run_time_prepare_data)}\n')
+        print(f'\ntime consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
         print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
               f'Total signals generated: {len(op_list.index)}.')
         print(f'Operation signal for shares on {op_list.index[-1].date()}')
@@ -1310,8 +1311,8 @@ def run(operator, context):
               f'           LOOPING RESULT\n'
               f'====================================')
         print(f'\nqteasy running mode: 1 - History back looping\n'
-              f'time consumption for operate signal creation: {_time_str_format(run_time_prepare_data)} ms\n'
-              f'time consumption for operation back looping: {_time_str_format(run_time_loop_full)} ms\n')
+              f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)} ms\n'
+              f'time consumption for operation back looping: {time_str_format(run_time_loop_full)} ms\n')
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {years} years.')
         print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
@@ -1472,7 +1473,7 @@ def run(operator, context):
         raise NotImplementedError
 
 
-def _time_str_format(t: float, estimation: bool = False, short_form: bool = False):
+def time_str_format(t: float, estimation: bool = False, short_form: bool = False):
     """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
 
     :param t:  输入时间，单位为秒
@@ -1527,9 +1528,9 @@ def _time_str_format(t: float, estimation: bool = False, short_form: bool = Fals
         else:
             str_element.append('s ')
     if not enough_accuracy:
-        milliseconds = np.round(t * 1000)
+        milliseconds = np.round(t * 1000, 1)
         if short_form:
-            str_element.append(f'{int(milliseconds):03d}')
+            str_element.append(f'{int(np.round(milliseconds)):03d}')
         else:
             str_element.append(str(milliseconds))
             str_element.append('ms')
@@ -1639,7 +1640,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
     _progress_bar(i, i)
     pool.cut(context.larger_is_better)
     et = time.time()
-    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
@@ -1698,7 +1699,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     pool.cut(context.larger_is_better)
     et = time.time()
     _progress_bar(total, total)
-    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st, short_form=True)}')
+    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st, short_form=True)}')
     return pool.pars, pool.perfs
 
 
@@ -1785,7 +1786,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
         _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
     et = time.time()
     _progress_bar(i, i, f'step size: {step_size}')
-    print(f'\nOptimization completed, total time consumption: {_time_str_format(et - st)}')
+    print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 

@@ -76,21 +76,21 @@ if __name__ == '__main__':
     # TODO: TRIX 策略有问题
     custom_rolling = CustomRollingTiming()
     custom_simple = CustomSimpleTiming()
-    op = Operator(timing_types=['simple', custom_rolling], selecting_types=['simple'], ricon_types=['none'])
+    op = Operator(timing_types=['DMA', 'MACD'], selecting_types=['simple'], ricon_types=['Urgent'])
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
-    op.set_parameter('t-0', opt_tag=0, par_boes=[(10, 250), (10, 250), (10, 250)])
-    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (0., 10.), ('buy', 'sell', 'none')])
-    op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
+    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+    op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
     print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(moq=0)
     cont.reference_asset = '000300.SH'
     cont.reference_asset_type = 'I'
-    cont.share_pool = '000001.SZ, 000002.SZ, 000005.SZ, 000651.SZ, 601398.SH'
-    cont.asset_type = 'E'
+    cont.share_pool = '000300.SH'  # '000001.SZ, 000002.SZ, 000005.SZ, 000651.SZ, 601398.SH'
+    cont.asset_type = 'I'
     cont.output_count = 50
-    cont.loop_period_start = '20040101'
+    cont.invest_start = '20020101'
     cont.moq = 1
     print(cont)
     print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
@@ -107,7 +107,7 @@ if __name__ == '__main__':
     op.set_parameter(stg_id='t-0', pars=timing_pars1)
     print(op.info())
     print('par_count is\n', op.timing[1].par_count)
-    op.set_parameter(stg_id='t-1', pars=timing_pars5)
+    op.set_parameter(stg_id='t-1', pars=timing_pars3)
     # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])
     # op.set_parameter('t-3', pars=timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
@@ -123,7 +123,7 @@ if __name__ == '__main__':
     run(op, cont)
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 300
+    cont.opti_method_sample_size = 3000
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1

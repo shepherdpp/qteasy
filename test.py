@@ -414,6 +414,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         pass
 
     def test_input_to_list(self):
+        print('Testing input_to_list() function')
         input_str = 'first'
         self.assertEqual(qt.input_to_list(input_str, 3), ['first', 'first', 'first'])
         self.assertEqual(qt.input_to_list(input_str, 4), ['first', 'first', 'first', 'first'])
@@ -428,7 +429,27 @@ class TestCoreSubFuncs(unittest.TestCase):
         pass
 
     def test_time_string_format(self):
-        pass
+        print('Testing qt.time_string_format() function:')
+        t = 3.14
+        self.assertEqual(qt.time_str_format(t), '3s 140.0ms')
+        self.assertEqual(qt.time_str_format(t, estimation=True), '3s ')
+        self.assertEqual(qt.time_str_format(t, short_form=True), '3"140')
+        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), '3"')
+        t = 300.14
+        self.assertEqual(qt.time_str_format(t), '5min 140.0ms')
+        self.assertEqual(qt.time_str_format(t, estimation=True), '5min ')
+        self.assertEqual(qt.time_str_format(t, short_form=True), "5'140")
+        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), "5'")
+        t = 7435.0014
+        self.assertEqual(qt.time_str_format(t), '2hrs 3min 55s 1.4ms')
+        self.assertEqual(qt.time_str_format(t, estimation=True), '2hrs ')
+        self.assertEqual(qt.time_str_format(t, short_form=True), "2H3'55\"001")
+        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), "2H")
+        t = 88425.0509
+        self.assertEqual(qt.time_str_format(t), '1days 33min 45s 50.9ms')
+        self.assertEqual(qt.time_str_format(t, estimation=True), '1days ')
+        self.assertEqual(qt.time_str_format(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), "1D")
 
 
 class TestEvaluations(unittest.TestCase):
