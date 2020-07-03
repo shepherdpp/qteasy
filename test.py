@@ -754,10 +754,21 @@ class TestHistorySubFuncs(unittest.TestCase):
         pass
 
     def test_str_to_list(self):
-        pass
+        self.assertEqual(qt.str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
+        self.assertEqual(qt.str_to_list('a, b, c '), ['a', 'b', 'c'])
+        self.assertEqual(qt.str_to_list('a, b: c', sep_char=':'), ['a,b', 'c'])
 
-    def list_or_slice(self):
-        pass
+    def test_list_or_slice(self):
+        str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
+        self.assertEqual(qt.list_or_slice(slice(1,2,1), str_dict), slice(1,2,1))
+        self.assertEqual(qt.list_or_slice('open', str_dict), [1])
+        self.assertEqual(list(qt.list_or_slice('close, high, low', str_dict)), [0, 2, 3])
+        self.assertEqual(list(qt.list_or_slice('close:high', str_dict)), [0, 1, 2])
+        self.assertEqual(list(qt.list_or_slice(['open'], str_dict)), [1])
+        self.assertEqual(list(qt.list_or_slice(['open', 'high'], str_dict)), [1, 2])
+        self.assertEqual(list(qt.list_or_slice(0, str_dict)), [0])
+        self.assertEqual(list(qt.list_or_slice([0, 2], str_dict)), [0, 2])
+        self.assertEqual(list(qt.list_or_slice([True, False, True, False], str_dict)), [0, 2])
 
     def test_label_to_dict(self):
         pass

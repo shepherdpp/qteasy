@@ -684,9 +684,9 @@ class HistoryPanel():
 
             # check and convert each of the slice segments to the right type: a slice or \
             # a list of indices
-            htype_slice = _list_or_slice(htype_slice, self.columns)
-            share_slice = _list_or_slice(share_slice, self.levels)
-            hdate_slice = _list_or_slice(hdate_slice, self.rows)
+            htype_slice = list_or_slice(htype_slice, self.columns)
+            share_slice = list_or_slice(share_slice, self.levels)
+            hdate_slice = list_or_slice(hdate_slice, self.rows)
 
             # print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
             #      '\nhdates is ', hdate_slice)
@@ -913,7 +913,7 @@ class HistoryPanel():
         raise NotImplementedError
 
 
-def _list_or_slice(unknown_input, str_int_dict):
+def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
     """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
 
     1，当输入item为slice时，直接返回slice
@@ -940,9 +940,7 @@ def _list_or_slice(unknown_input, str_int_dict):
         string_input = unknown_input
         if string_input.find(',') > 0:
             string_list = str_to_list(input_string=string_input, sep_char=',')
-            res = []
-            for string in string_list:
-                res.append(str_int_dict[string])
+            res = [str_int_dict[string] for string in string_list]
             return np.array(res)
         elif string_input.find(':') > 0:
             start_end_strings = str_to_list(input_string=string_input, sep_char=':')
@@ -960,7 +958,7 @@ def _list_or_slice(unknown_input, str_int_dict):
         is_list_of_int = isinstance(unknown_input[0], int)
         is_list_of_bool = isinstance(unknown_input[0], bool)
         if is_list_of_bool:
-            return np.array(str_int_dict.values())[unknown_input]
+            return np.array(list(str_int_dict.values()))[unknown_input]
         else:
             # convert all items into a number:
             if is_list_of_str:
