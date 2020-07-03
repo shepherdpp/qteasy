@@ -771,16 +771,24 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertEqual(list(qt.list_or_slice([True, False, True, False], str_dict)), [0, 2])
 
     def test_label_to_dict(self):
-        pass
+        target_list = [0, 1, 10, 100]
+        target_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
+        target_dict2 = {'close': 0, 'open': 2, 'high': 1, 'low': 3}
+        self.assertEqual(qt.labels_to_dict('close, open, high, low', target_list), target_dict)
+        self.assertEqual(qt.labels_to_dict(['close', 'open', 'high', 'low'], target_list), target_dict)
+        self.assertEqual(qt.labels_to_dict('close, high, open, low', target_list), target_dict2)
+        self.assertEqual(qt.labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
 
     def test_stack_dataframes(self):
         pass
 
     def test_regulate_date_format(self):
-        pass
+        self.assertEqual(qt.regulate_date_format('2019/11/06'), '20191106')
+        self.assertEqual(qt.regulate_date_format('2019-11-06'), '20191106')
+        self.assertEqual(qt.regulate_date_format('20191106'), '20191106')
 
     def test_list_to_str_format(self):
-        pass
+        self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']), 'close,open,high,low')
 
 
 class TestTushare(unittest.TestCase):

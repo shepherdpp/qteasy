@@ -544,19 +544,19 @@ class HistoryPanel():
                 levels = range(self._l_count)
                 self._levels = dict(zip(levels, levels))
             else:
-                self._levels = _labels_to_dict(levels, range(self._l_count))
+                self._levels = labels_to_dict(levels, range(self._l_count))
 
             if rows is None:
                 rows = range(self._r_count)
                 self._rows = dict(zip(rows, rows))
             else:
-                self._rows = _labels_to_dict(rows, range(self._r_count))
+                self._rows = labels_to_dict(rows, range(self._r_count))
 
             if columns is None:
                 columns = range(self._c_count)
                 self._columns = dict(zip(columns, columns))
             else:
-                self._columns = _labels_to_dict(columns, range(self._c_count))
+                self._columns = labels_to_dict(columns, range(self._c_count))
 
     @property
     def is_empty(self):
@@ -580,7 +580,7 @@ class HistoryPanel():
     @shares.setter
     def shares(self, input_shares):
         if not self.is_empty:
-            self._levels = _labels_to_dict(input_shares, self.shares)
+            self._levels = labels_to_dict(input_shares, self.shares)
 
     @property
     def level_count(self):
@@ -600,7 +600,7 @@ class HistoryPanel():
     @hdates.setter
     def hdates(self, input_hdates):
         if not self.is_empty:
-            self._rows = _labels_to_dict(input_hdates, self.hdates)
+            self._rows = labels_to_dict(input_hdates, self.hdates)
 
     @property
     def row_count(self):
@@ -616,7 +616,7 @@ class HistoryPanel():
     @htypes.setter
     def htypes(self, input_htypes):
         if not self.is_empty:
-            self._columns = _labels_to_dict(input_htypes, self.htypes)
+            self._columns = labels_to_dict(input_htypes, self.htypes)
 
     @property
     def columns(self):
@@ -823,9 +823,9 @@ class HistoryPanel():
             if same_shares:
                 if same_htypes:
                     for hdate in combined_hdates:
-                        combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
-                        this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
-                        other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
+                        combined_hdate_id = labels_to_dict(combined_hdates, combined_hdates)
+                        this_hdate_id = labels_to_dict(this_hdates, this_hdates)
+                        other_hdate_id = labels_to_dict(other_hdates, other_hdates)
                         if hdate in this_hdates:
                             combined_values[:, combined_hdate_id[hdate], :] = self.values[:, this_hdate_id[hdate], :]
                         else:
@@ -833,9 +833,9 @@ class HistoryPanel():
 
                 elif same_hdates:
                     for htype in combined_htypes:
-                        combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
-                        this_htype_id = _labels_to_dict(this_htypes, this_htypes)
-                        other_htype_id = _labels_to_dict(other_htypes, other_htypes)
+                        combined_htype_id = labels_to_dict(combined_htypes, combined_htypes)
+                        this_htype_id = labels_to_dict(this_htypes, this_htypes)
+                        other_htype_id = labels_to_dict(other_htypes, other_htypes)
                         if htype in this_htypes:
                             combined_values[:, :, combined_htype_id[htype]] = self.values[:, :, this_htype_id[htype]]
                         else:
@@ -843,12 +843,12 @@ class HistoryPanel():
                 else:
                     for hdate in combined_hdates:
                         for htype in combined_htypes:
-                            combined_hdate_id = _labels_to_dict(combined_hdates, combined_hdates)
-                            this_hdate_id = _labels_to_dict(this_hdates, this_hdates)
-                            other_hdate_id = _labels_to_dict(other_hdates, other_hdates)
-                            combined_htype_id = _labels_to_dict(combined_htypes, combined_htypes)
-                            this_htype_id = _labels_to_dict(this_htypes, this_htypes)
-                            other_htype_id = _labels_to_dict(other_htypes, other_htypes)
+                            combined_hdate_id = labels_to_dict(combined_hdates, combined_hdates)
+                            this_hdate_id = labels_to_dict(this_hdates, this_hdates)
+                            other_hdate_id = labels_to_dict(other_hdates, other_hdates)
+                            combined_htype_id = labels_to_dict(combined_htypes, combined_htypes)
+                            this_htype_id = labels_to_dict(this_htypes, this_htypes)
+                            other_htype_id = labels_to_dict(other_htypes, other_htypes)
                             if htype in this_htypes and hdate in this_hdates:
                                 combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
                                     self.values[:, this_hdate_id[hdate], this_htype_id[htype]]
@@ -972,7 +972,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         return None
 
 
-def _labels_to_dict(input_labels, target_list):
+def labels_to_dict(input_labels: [list, str], target_list: list)-> dict:
     """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
@@ -1637,7 +1637,7 @@ def get_bar(shares: object,
     4    000001.SZ   20180928  10.7800  11.2700  10.7800  11.0500    10.7400  0.3100   2.8864  2110242.67  2331358.288
     """
     if isinstance(shares, list):
-        shares = _list_to_str_format(shares)
+        shares = list_to_str_format(shares)
     return ts.pro_bar(ts_code=shares,
                       start_date=start,
                       end_date=end,
@@ -1667,7 +1667,7 @@ def get_index(index: str,
 # Finance Data
 # ================
 
-def _regulate_date_format(date_str: str) -> str:
+def regulate_date_format(date_str: str) -> str:
     """ tushare的财务报表函数只支持YYYYMMDD格式的日期，因此需要把YYYY-MM-DD及YYYY/MM/DD格式的日期转化为YYYYMMDD格式
 
     :param date_str:
@@ -1683,8 +1683,11 @@ def _regulate_date_format(date_str: str) -> str:
     return date_str
 
 
-def _list_to_str_format(str_list: list) -> str:
+def list_to_str_format(str_list: list) -> str:
     """ tushare的财务报表函数只支持逗号分隔值的字符串形式作为ts_code或fields等字段的输入，如果输入是list[str]类型，则需要转换
+
+    将list型数据转变为str类型，如
+    ['close', 'open', 'high', 'low'] -> 'close, open, high, low'
 
     :param str_list: type: list[str]
     :return: string
@@ -1805,12 +1808,12 @@ def income(shares: [str, list],
     if fields is None:
         fields = 'shares,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
     if isinstance(shares, list):
-        shares = _list_to_str_format(shares)
+        shares = list_to_str_format(shares)
     if isinstance(fields, list):
-        fields = _list_to_str_format(fields)
+        fields = list_to_str_format(fields)
     pro = ts.pro_api()
-    start = _regulate_date_format(start)
-    end = _regulate_date_format(end)
+    start = regulate_date_format(start)
+    end = regulate_date_format(end)
     return pro.income(ts_code=shares,
                       ann_date=rpt_date,
                       start_date=start,
@@ -2002,12 +2005,12 @@ def balance(shares: [str, list],
     if fields is None:
         fields = 'shares,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
     if isinstance(shares, list):
-        shares = _list_to_str_format(shares)
+        shares = list_to_str_format(shares)
     if isinstance(fields, list):
-        fields = _list_to_str_format(fields)
+        fields = list_to_str_format(fields)
     pro = ts.pro_api()
-    start = _regulate_date_format(start)
-    end = _regulate_date_format(end)
+    start = regulate_date_format(start)
+    end = regulate_date_format(end)
     return pro.balancesheet(ts_code=shares,
                             ann_date=rpt_date,
                             start_date=start,
@@ -2151,12 +2154,12 @@ def cashflow(shares: [str, list],
     if fields is None:
         fields = 'shares,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
     if isinstance(shares, list):
-        shares = _list_to_str_format(shares)
+        shares = list_to_str_format(shares)
     if isinstance(fields, list):
-        fields = _list_to_str_format(fields)
+        fields = list_to_str_format(fields)
     pro = ts.pro_api()
-    start = _regulate_date_format(start)
-    end = _regulate_date_format(end)
+    start = regulate_date_format(start)
+    end = regulate_date_format(end)
     return pro.cashflow(ts_code=shares,
                         ann_date=rpt_date,
                         start_date=start,
@@ -2363,9 +2366,9 @@ def indicators(shares: [str, list],
     if fields is None:
         fields = 'shares,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
     if isinstance(shares, list):
-        shares = _list_to_str_format(shares)
+        shares = list_to_str_format(shares)
     if isinstance(fields, list):
-        fields = _list_to_str_format(fields)
+        fields = list_to_str_format(fields)
     pro = ts.pro_api()
     return pro.fina_indicator(ts_code=shares,
                               ann_date=rpt_date,
