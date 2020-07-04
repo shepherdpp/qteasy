@@ -780,12 +780,91 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertEqual(qt.labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
 
     def test_stack_dataframes(self):
-        pass
+        print('test stack dataframes')
+        df1 = pd.DataFrame({'a': [1, 2, 3, 4], 'b': [2, 3, 4, 5], 'c': [3, 4, 5, 6]})
+        df1.index = ['20200101', '20200102', '20200103', '20200104']
+        df2 = pd.DataFrame({'b': [4, 3, 2, 1], 'd': [1, 1, 1, 1], 'c': [6, 5, 4, 3]})
+        df2.index = ['20200101', '20200102', '20200104', '20200105']
+        df3 = pd.DataFrame({'a': [6, 6, 6, 6], 'd': [4, 4, 4, 4], 'b': [2, 4, 6, 8]})
+        df3.index = ['20200101', '20200102', '20200103', '20200106']
+        values1 = np.array([[[ 1., 2., 3., np.nan],
+                             [ 2., 3., 4., np.nan],
+                             [ 3., 4., 5., np.nan],
+                             [ 4., 5., 6., np.nan],
+                             [np.nan, np.nan, np.nan, np.nan],
+                             [np.nan, np.nan, np.nan, np.nan]],
+                            [[np.nan, 4., 6., 1.],
+                             [np.nan, 3., 5., 1.],
+                             [np.nan, np.nan, np.nan, np.nan],
+                             [np.nan, 2., 4., 1.],
+                             [np.nan, 1., 3., 1.],
+                             [np.nan, np.nan, np.nan, np.nan]],
+                            [[ 6., 2., np.nan, 4.],
+                             [ 6., 4., np.nan, 4.],
+                             [ 6., 6., np.nan, 4.],
+                             [np.nan, np.nan, np.nan, np.nan],
+                             [np.nan, np.nan, np.nan, np.nan],
+                             [ 6., 8., np.nan, 4.]]])
+        values2 = np.array([[[ 1., np.nan, 6.],
+                             [ 2., np.nan, 6.],
+                             [ 3., np.nan, 6.],
+                             [ 4., np.nan, np.nan],
+                             [np.nan, np.nan, np.nan],
+                             [np.nan, np.nan, 6.]],
+                            [[ 2., 4., 2.],
+                             [ 3., 3., 4.],
+                             [ 4., np.nan, 6.],
+                             [ 5., 2., np.nan],
+                             [np.nan, 1., np.nan],
+                             [np.nan, np.nan, 8.]],
+                            [[ 3., 6., np.nan],
+                             [ 4., 5., np.nan],
+                             [ 5., np.nan, np.nan],
+                             [ 6., 4., np.nan],
+                             [np.nan, 3., np.nan],
+                             [np.nan, np.nan, np.nan]],
+                            [[np.nan, 1., 4.],
+                             [np.nan, 1., 4.],
+                             [np.nan, np.nan, 4.],
+                             [np.nan, 1., np.nan],
+                             [np.nan, 1., np.nan],
+                             [np.nan, np.nan, 4.]]])
+        print(df1.rename(index=pd.to_datetime))
+        print(df2.rename(index=pd.to_datetime))
+        print(df3.rename(index=pd.to_datetime))
+
+        hp1 = qt.stack_dataframes([df1, df2, df3], stack_along='shares',
+                                  shares=['000100', '000200', '000300'])
+        hp2 = qt.stack_dataframes([df1, df2, df3], stack_along='shares',
+                                  shares='000100, 000300, 000200')
+        print('hp1 is:\n', hp1)
+        print('hp2 is:\n', hp2)
+        self.assertEqual(hp1.htypes, ['a', 'b', 'c', 'd'])
+        self.assertEqual(hp1.shares, ['000100', '000200', '000300'])
+        self.assertTrue(np.allclose(hp1.values, values1, equal_nan=True), True)
+        self.assertEqual(hp2.htypes, ['a', 'b', 'c', 'd'])
+        self.assertEqual(hp2.shares, ['000100', '000300', '000200'])
+        self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True), True)
+
+        hp3 = qt.stack_dataframes([df1, df2, df3], stack_along='htypes',
+                                  htypes=['close', 'high', 'low'])
+        hp4 = qt.stack_dataframes([df1, df2, df3], stack_along='htypes',
+                                  htypes='open, close, high')
+        print('hp3 is:\n', hp3.values)
+        print('hp4 is:\n', hp4.values)
+        self.assertEqual(hp3.htypes, ['close', 'high', 'low'])
+        self.assertEqual(hp3.shares, ['a', 'b', 'c', 'd'])
+        self.assertTrue(np.allclose(hp3.values, values2, equal_nan=True), True)
+        self.assertEqual(hp4.htypes, ['open', 'close', 'high'])
+        self.assertEqual(hp4.shares, ['a', 'b', 'c', 'd'])
+        self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True), True)
 
     def test_regulate_date_format(self):
         self.assertEqual(qt.regulate_date_format('2019/11/06'), '20191106')
         self.assertEqual(qt.regulate_date_format('2019-11-06'), '20191106')
         self.assertEqual(qt.regulate_date_format('20191106'), '20191106')
+        self.assertEqual(qt.regulate_date_format('191106'), '20061119')
+        self.assertEqual(qt.regulate_date_format('830522'), '19830522')
 
     def test_list_to_str_format(self):
         self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']), 'close,open,high,low')

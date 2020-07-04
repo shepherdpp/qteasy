@@ -1133,26 +1133,37 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     combined_htypes = []
     if stack_along == 'shares':
         assert shares is not None
-        assert isinstance(shares, list)
+        assert htypes is None, \
+            f'ValueError, Only shares should be given if the dataframes shall be stacked along axis shares'
+        assert isinstance(shares, (list, str))
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
         assert len(shares) == len(dfs)
         combined_shares.extend(shares)
     else:
         assert htypes is not None
-        assert isinstance(htypes, list)
+        assert shares is None, \
+            f'ValueError, Only htypes should be given if the dataframes shall be stacked along axis htypes'
+        assert isinstance(htypes, (list, str))
+        if isinstance(htypes, str):
+            htypes = str_to_list(htypes)
         assert len(htypes) == len(dfs)
         combined_htypes.extend(htypes)
     for df in dfs:
         assert isinstance(df, pd.DataFrame), \
             f'InputError, dfs should be a list of pandas DataFrame, got {type(df)} instead.'
-        combined_index.extend(pd.to_datetime(df.index.values))
+        combined_index.extend(df.rename(index = pd.to_datetime).index.values)
         if stack_along == 'shares':
             combined_htypes.extend(df.columns)
         else:
             combined_shares.extend(df.columns)
+    dfs = [df.rename(index=pd.to_datetime) for df in dfs]
     if stack_along == 'shares':
         combined_htypes = list(set(combined_htypes))
+        combined_htypes.sort()
     else:
         combined_shares = list(set(combined_shares))
+        combined_shares.sort()
     combined_index = list(set(combined_index))
     htype_count = len(combined_htypes)
     share_count = len(combined_shares)
@@ -1674,8 +1685,11 @@ def regulate_date_format(date_str: str) -> str:
     :return:
     """
     if isinstance(date_str, str):
-        date_str = date_str.replace('-', '')
-        date_str = date_str.replace('/', '')
+        try:
+            date_time = pd.to_datetime(date_str)
+            date_str = date_time.strftime('%Y%m%d')
+        except:
+            raise ValueError(f'Input string {date_str} can not be converted to a time format')
     elif isinstance(date_str, (pd.Timestamp, datetime.datetime)):
         date_str = date_str.strftime('%Y%m%d')
     else:
