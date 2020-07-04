@@ -425,8 +425,46 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertEqual(qt.input_to_list(input_list, 1), ['first', 'second'])
         self.assertEqual(qt.input_to_list(input_list, -5), ['first', 'second'])
 
+    def test_point_in_space(self):
+        sp = qt.Space([(0., 10.), (0., 10.), (0., 10.)])
+        p1 = (5.5, 3.2, 7)
+        p2 = (-1, 3, 10)
+        self.assertTrue(p1 in sp)
+        print(f'point {p1} is in space {sp}')
+        self.assertFalse(p2 in sp)
+        print(f'point {p2} is not in space {sp}')
+        sp = qt.Space([(0., 10.), (0., 10.), range(40, 3, -2)], 'conti, conti, enum')
+        p1 = (5.5, 3.2, 8)
+        self.assertTrue(p1 in sp)
+        print(f'point {p1} is in space {sp}')
+
     def test_space_around_centre(self):
-        pass
+        sp = qt.Space([(0., 10.), (0., 10.), (0., 10.)])
+        p1 = (5.5, 3.2, 7)
+        ssp = qt.space_around_centre(space=sp, centre=p1, radius=1.2)
+        print(ssp.boes)
+        print('\ntest multiple diameters:')
+        self.assertEqual(ssp.boes, [(4.3, 6.7), (2.0, 4.4), (5.8, 8.2)])
+        ssp = qt.space_around_centre(space=sp, centre=p1, radius=[1, 2, 1])
+        print(ssp.boes)
+        self.assertEqual(ssp.boes, [(4.5, 6.5), (1.2000000000000002, 5.2), (6.0, 8.0)])
+        print('\ntest points on edge:')
+        p2 = (5.5, 3.2, 10)
+        ssp = qt.space_around_centre(space=sp, centre=p1, radius=3.9)
+        print(ssp.boes)
+        self.assertEqual(ssp.boes, [(1.6, 9.4), (0.0, 7.1), (3.1, 10.0)])
+        print('\ntest enum spaces')
+        sp = qt.Space([(0, 100), range(40, 3, -2)], 'discr, enum')
+        p1 = [34, 12]
+        ssp = qt.space_around_centre(space=sp, centre=p1, radius=5, ignore_enums=False)
+        self.assertEqual(ssp.boes, [(29, 39), (22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
+        print(ssp.boes)
+        print('\ntest enum space and ignore enum axis')
+        ssp = qt.space_around_centre(space=sp, centre=p1, radius=5)
+        self.assertEqual(ssp.boes, [(29, 39),
+                                    (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
+        print(sp.boes)
+
 
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')

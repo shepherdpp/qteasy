@@ -790,13 +790,13 @@ class CashPlan:
             one_month = pd.Timedelta(31, 'd')
             one_quarter = pd.Timedelta(93, 'd')
             one_year = pd.Timedelta(365, 'd')
-            if self.investment_count == 1: # 如果只有一次投资，则以一年为间隔
+            if self.investment_count == 1:  # 如果只有一次投资，则以一年为间隔
                 new_dates = [self.first_day + one_year * i for i in range(other)]
                 return CashPlan(new_dates, self.amounts * other, self.ir)
-            else: # 如果有两次或以上投资，则计算首末两次投资之间的间隔，以此为依据计算未来投资间隔
-                if self.investment_count == 2: # 当只有两次投资时，新增投资的间距与频率与两次投资的间隔相同
+            else:  # 如果有两次或以上投资，则计算首末两次投资之间的间隔，以此为依据计算未来投资间隔
+                if self.investment_count == 2:  # 当只有两次投资时，新增投资的间距与频率与两次投资的间隔相同
                     time_offset = pd.Timedelta(self.period * 2, 'd')
-                else: # 当投资次数多于两次时，整个投资作为一个单元，未来新增投资为重复每个单元的投资。单元的跨度可以为月、季度及年
+                else:  # 当投资次数多于两次时，整个投资作为一个单元，未来新增投资为重复每个单元的投资。单元的跨度可以为月、季度及年
                     if self.period <= 28:
                         time_offset = one_month
                     elif self.period <= 90:
@@ -813,7 +813,7 @@ class CashPlan:
                         new_dates.append(date + time_offset * (i + 1) + one_day)
                 return CashPlan(new_dates, self.amounts * other, self.ir)
 
-        else: # 当other是浮点数时，返回CashPlan * other 的结果
+        else:  # 当other是浮点数时，返回CashPlan * other 的结果
             return self.__mul__(other)
 
     def __repr__(self):
@@ -1090,6 +1090,7 @@ def get_current_holdings() -> tuple:
     :return: tuple:
     """
     return NotImplementedError
+
 
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
 def run(operator, context):
@@ -1996,7 +1997,7 @@ def _eval_operation(op_list, looped_value, cash_plan):
     return total_year, op_counts, total_investment, total_op_fee
 
 
-def _space_around_centre(space, centre, radius, ignore_enums=True):
+def space_around_centre(space, centre, radius, ignore_enums=True):
     """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间
 
     如果参数空间中包含枚举类型维度，可以予以忽略或其他操作
@@ -2076,7 +2077,7 @@ class ResultPool:
 
 
 # TODO: this function can be merged with str_to_list() in history.py
-def input_to_list(pars: [str, int, list], dim: int, padder = None):
+def input_to_list(pars: [str, int, list], dim: int, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
     input:
@@ -2226,7 +2227,26 @@ class Space:
         elif how == 'rand':
             return itertools.zip_longest(*axis_ranges), interval_or_qty  # 使用迭代器工具将所有点组合打包为点集
 
-    def from_point(self, point, distance, ignore_enums=True):
+    def __contains__(self, point: [list, tuple]):
+        """ 判断item是否在Space对象中, 返回True如果item在Space中，否则返回False
+
+        :param point:
+        :return: bool
+        """
+        assert isinstance(point, (list, tuple)), \
+            f'TypeError, a point in a space must be in forms of a tuple or a list, got {type(point)}'
+        if len(point) != self.dim:
+            return False
+        for coordinate, boe, type in zip(point, self.boes, self.types):
+            if type == 'enum':
+                if not coordinate in boe:
+                    return False
+            else:
+                if not boe[0] < coordinate < boe[1]:
+                    return False
+        return True
+
+    def from_point(self, point, distance: [int, float, list], ignore_enums=True):
         """在已知空间中以一个点为中心点生成一个字空间
 
         input:
@@ -2237,19 +2257,31 @@ class Space:
         return: =====
 
         """
-        if ignore_enums:
-            pass
+        assert point in self, f'ValueError, point {point} is not in space!'
         assert self.dim > 0, 'original space should not be empty!'
+        assert isinstance(distance, (int, float, list)), \
+            f'TypeError, the distance must be a number of a list of numbers, got {type(distance)} instead'
         pars = []
-        for i in range(self.dim):
-            if self.types[i] != 'enum':
-                space_lbound = self.boes[i][0]
-                space_ubound = self.boes[i][1]
-                lbound = max((point[i] - distance), space_lbound)
-                ubound = min((point[i] + distance), space_ubound)
+        if isinstance(distance, list):
+            assert len(distance) == self.dim, \
+                f'ValueError, can not match {len(distance)} distances in {self.dim} dimensions!'
+        else:
+            distance = [distance] * self.dim
+        for coordinate, boe, type, dis in zip(point, self.boes, self.types, distance):
+            if type != 'enum':
+                space_lbound = boe[0]
+                space_ubound = boe[1]
+                lbound = max((coordinate - dis), space_lbound)
+                ubound = min((coordinate + dis), space_ubound)
                 pars.append((lbound, ubound))
             else:
-                pars.append(self.boes[i])
+                if ignore_enums:
+                    pars.append(boe)
+                else:
+                    enum_pos = boe.index(coordinate)
+                    lbound = max((enum_pos - dis), 0)
+                    ubound = min((enum_pos + dis), len(boe))
+                    pars.append(boe[lbound:ubound])
         return Space(pars, self.types)
 
 
