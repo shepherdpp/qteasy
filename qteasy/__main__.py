@@ -123,7 +123,7 @@ if __name__ == '__main__':
     run(op, cont)
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 3000
+    cont.opti_method_sample_size = 300
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1

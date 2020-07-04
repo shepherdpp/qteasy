@@ -1742,6 +1742,9 @@ class Operator:
         assert not hist_data.is_empty, \
             f'ValueError: history data can not be empty!'
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
+        # debug
+        # print(f'searching the first date ({cash_plan.first_day}), type {type(cash_plan.first_day)} '
+        #       f'in hdates of historical data: \n {hist_data.hdates} of type {type(hist_data.hdates[0])}')
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # debug

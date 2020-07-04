@@ -550,6 +550,8 @@ class HistoryPanel():
                 rows = range(self._r_count)
                 self._rows = dict(zip(rows, rows))
             else:
+                # assert isinstance(rows[0], pd.Timestamp), \
+                #     f'TypeError, rows should be in Timestamp, got {type(rows[0])}'
                 self._rows = labels_to_dict(rows, range(self._r_count))
 
             if columns is None:
@@ -595,7 +597,7 @@ class HistoryPanel():
         if self.is_empty:
             return 0
         else:
-            return list(self._rows.keys())
+            return np.array(list(self._rows.keys()))
 
     @hdates.setter
     def hdates(self, input_hdates):
@@ -1064,7 +1066,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     from collections import Iterable
     assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
     if hdates is None:
-        hdates = df.index
+        hdates = df.rename(index=pd.to_datetime).index
     assert isinstance(hdates, Iterable), f'TypeError, hdates should be iterable, got {type(hdates)} instead.'
     index_count = len(hdates)
     assert index_count == len(df.index), \
@@ -1073,8 +1075,7 @@ def dataframe_to_hp(df: pd.DataFrame,
         if shares is None:
             shares = df.columns
         elif isinstance(shares, str):
-            shares = shares.split(',')
-            print(shares)
+            shares = str_to_list(shares, sep_char=',')
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
         else:
@@ -1152,7 +1153,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     for df in dfs:
         assert isinstance(df, pd.DataFrame), \
             f'InputError, dfs should be a list of pandas DataFrame, got {type(df)} instead.'
-        combined_index.extend(df.rename(index = pd.to_datetime).index.values)
+        combined_index.extend(df.rename(index=pd.to_datetime).index)
         if stack_along == 'shares':
             combined_htypes.extend(df.columns)
         else:

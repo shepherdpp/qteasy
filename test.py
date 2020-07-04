@@ -608,6 +608,9 @@ class TestOperator(unittest.TestCase):
         self.test_data_2D[1, :] = share2_close
         self.test_data_2D[2, :] = share3_close
 
+    def test_prepare_data(self):
+        pass
+
     def test_operator_generate(self):
         """
 
