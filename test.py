@@ -465,7 +465,6 @@ class TestCoreSubFuncs(unittest.TestCase):
                                     (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(sp.boes)
 
-
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')
         t = 3.14
@@ -687,8 +686,8 @@ class TestHistoryPanel(unittest.TestCase):
         self.data = np.random.randint(10, size=(5, 10, 4))
         self.index = pd.date_range(start='20200101', freq='d', periods=10)
         self.shares = '000100,000101,000102,000103,000104'
-        self.dtypes = 'close,open,high,low'
-        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.dtypes, rows=self.index)
+        self.htypes = 'close,open,high,low'
+        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
 
     def create_history_panel(self):
         """ test the creation of a HistoryPanel object by passing all data explicitly
@@ -702,7 +701,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp.row_count, 11)
         self.assertEqual(self.hp.column_count, 4)
         self.assertEqual(list(self.hp.levels.keys), self.shares.split())
-        self.assertEqual(list(self.hp.columns.keys), self.dtypes.split())
+        self.assertEqual(list(self.hp.columns.keys), self.htypes.split())
 
     def test_history_panel_slicing(self):
         self.assertTrue(np.allclose(self.hp['close'], self.data[:, :, 0:1]))
@@ -725,7 +724,7 @@ class TestHistoryPanel(unittest.TestCase):
         print('=========================\nTesting HistoryPanel creation from DataFrame')
         hp = qt.dataframe_to_hp(df=df, shares=shares, htypes=dtypes)
         hp.info()
-        hp = qt.dataframe_to_hp(df=df, shares='000100', htypes='close, open, high, low, middle', column_type='dtypes')
+        hp = qt.dataframe_to_hp(df=df, shares='000100', htypes='close, open, high, low, middle', column_type='htypes')
         hp.info()
 
         print('=========================\nTesting HistoryPanel creation from initialization')
@@ -777,6 +776,21 @@ class TestHistoryPanel(unittest.TestCase):
         hp.shares = ['000300', '600227', '600222', '000123', '000129']
         hp.info()
 
+    def test_relabel(self):
+        new_shares_list = ['000001', '000002', '000003', '000004', '000005']
+        new_shares_str = '000001, 000002, 000003, 000004, 000005'
+        new_htypes_list = ['close', 'volume', 'value', 'exchange']
+        new_htypes_str = 'close, volume, value, exchange'
+        hp2 = self.hp.copy()
+        hp2.re_label(shares=new_shares_list)
+        print(hp2.info())
+        self.assertTrue(np.allclose(self.hp.values, hp2.values))
+        self.assertTrue(np.allclose(self.hp.htypes, hp2.htypes))
+        self.assertTrue(np.allclose(self.hp.hdates, hp2.hdates))
+        hp2.re_label(shares=new_shares_str)
+        hp2.re_label(htypes=new_htypes_list)
+        hp2.re_label(htypes=new_htypes_str)
+
     def test_csv_to_hp(self):
         pass
 
@@ -787,6 +801,18 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_df_to_hp(self):
+        pass
+
+    def test_to_dataframe(self):
+        pass
+
+    def test_to_csv(self):
+        pass
+
+    def test_to_hdf(self):
+        pass
+
+    def test_fill_na(self):
         pass
 
 
@@ -801,7 +827,7 @@ class TestHistorySubFuncs(unittest.TestCase):
 
     def test_list_or_slice(self):
         str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
-        self.assertEqual(qt.list_or_slice(slice(1,2,1), str_dict), slice(1,2,1))
+        self.assertEqual(qt.list_or_slice(slice(1, 2, 1), str_dict), slice(1, 2, 1))
         self.assertEqual(qt.list_or_slice('open', str_dict), [1])
         self.assertEqual(list(qt.list_or_slice('close, high, low', str_dict)), [0, 2, 3])
         self.assertEqual(list(qt.list_or_slice('close:high', str_dict)), [0, 1, 2])
@@ -828,10 +854,10 @@ class TestHistorySubFuncs(unittest.TestCase):
         df2.index = ['20200101', '20200102', '20200104', '20200105']
         df3 = pd.DataFrame({'a': [6, 6, 6, 6], 'd': [4, 4, 4, 4], 'b': [2, 4, 6, 8]})
         df3.index = ['20200101', '20200102', '20200103', '20200106']
-        values1 = np.array([[[ 1., 2., 3., np.nan],
-                             [ 2., 3., 4., np.nan],
-                             [ 3., 4., 5., np.nan],
-                             [ 4., 5., 6., np.nan],
+        values1 = np.array([[[1., 2., 3., np.nan],
+                             [2., 3., 4., np.nan],
+                             [3., 4., 5., np.nan],
+                             [4., 5., 6., np.nan],
                              [np.nan, np.nan, np.nan, np.nan],
                              [np.nan, np.nan, np.nan, np.nan]],
                             [[np.nan, 4., 6., 1.],
@@ -840,28 +866,28 @@ class TestHistorySubFuncs(unittest.TestCase):
                              [np.nan, 2., 4., 1.],
                              [np.nan, 1., 3., 1.],
                              [np.nan, np.nan, np.nan, np.nan]],
-                            [[ 6., 2., np.nan, 4.],
-                             [ 6., 4., np.nan, 4.],
-                             [ 6., 6., np.nan, 4.],
+                            [[6., 2., np.nan, 4.],
+                             [6., 4., np.nan, 4.],
+                             [6., 6., np.nan, 4.],
                              [np.nan, np.nan, np.nan, np.nan],
                              [np.nan, np.nan, np.nan, np.nan],
-                             [ 6., 8., np.nan, 4.]]])
-        values2 = np.array([[[ 1., np.nan, 6.],
-                             [ 2., np.nan, 6.],
-                             [ 3., np.nan, 6.],
-                             [ 4., np.nan, np.nan],
+                             [6., 8., np.nan, 4.]]])
+        values2 = np.array([[[1., np.nan, 6.],
+                             [2., np.nan, 6.],
+                             [3., np.nan, 6.],
+                             [4., np.nan, np.nan],
                              [np.nan, np.nan, np.nan],
                              [np.nan, np.nan, 6.]],
-                            [[ 2., 4., 2.],
-                             [ 3., 3., 4.],
-                             [ 4., np.nan, 6.],
-                             [ 5., 2., np.nan],
+                            [[2., 4., 2.],
+                             [3., 3., 4.],
+                             [4., np.nan, 6.],
+                             [5., 2., np.nan],
                              [np.nan, 1., np.nan],
                              [np.nan, np.nan, 8.]],
-                            [[ 3., 6., np.nan],
-                             [ 4., 5., np.nan],
-                             [ 5., np.nan, np.nan],
-                             [ 6., 4., np.nan],
+                            [[3., 6., np.nan],
+                             [4., 5., np.nan],
+                             [5., np.nan, np.nan],
+                             [6., 4., np.nan],
                              [np.nan, 3., np.nan],
                              [np.nan, np.nan, np.nan]],
                             [[np.nan, 1., 4.],

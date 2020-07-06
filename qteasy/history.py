@@ -745,6 +745,9 @@ class HistoryPanel():
             print(df)
             print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
+    def copy(self):
+        return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
+
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
         """ 给HistoryPanel对象的层、行、列标签重新赋值
 
@@ -761,16 +764,16 @@ class HistoryPanel():
             if hdates is not None:
                 self.hdates = hdates
 
-    def fillna(self, with_val):
+    def fillna(self, with_val: [int, float, np.int, np.float]):
         """ 使用with_value来填充HistoryPanel中的所有nan值
 
         :param with_val:
         :return:
         """
+        assert isinstance(with_val, (int, float, np.int, np.float))
         if not self.is_empty:
             np._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
-
 
     def join(self,
              other,
@@ -974,7 +977,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         return None
 
 
-def labels_to_dict(input_labels: [list, str], target_list: list)-> dict:
+def labels_to_dict(input_labels: [list, str], target_list: list) -> dict:
     """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
@@ -1089,7 +1092,7 @@ def dataframe_to_hp(df: pd.DataFrame,
         history_panel_value = np.zeros(shape=(share_count, len(hdates), 1))
         for i in range(share_count):
             history_panel_value[i, :, 0] = df.values[:, i]
-    else:
+    else:  # column_type == 'htype'
         if htypes is None:
             htypes = df.columns
         elif isinstance(htypes, str):
@@ -2768,6 +2771,5 @@ def options_daily(trade_date: str = None,
                          start_date=start,
                          end_date=end,
                          fields=fields)
-
 
 # TODO: 将History类改为MySQL数据库模块，管理本地历史数据
