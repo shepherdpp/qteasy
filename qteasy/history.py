@@ -582,10 +582,19 @@ class HistoryPanel():
     @shares.setter
     def shares(self, input_shares):
         if not self.is_empty:
+            if isinstance(input_shares, str):
+                input_shares = str_to_list(input_string=input_shares)
+            assert len(input_shares) == self.level_count, \
+                f'ValueError, the number of input shares ({len(input_shares)}) does not match level ' \
+                f'count ({self.level_count})'
             self._levels = labels_to_dict(input_shares, self.shares)
 
     @property
     def level_count(self):
+        return self._l_count
+
+    @property
+    def share_count(self):
         return self._l_count
 
     @property
@@ -594,18 +603,31 @@ class HistoryPanel():
 
     @property
     def hdates(self):
+        """hdates 是一个list"""
         if self.is_empty:
             return 0
         else:
-            return np.array(list(self._rows.keys()))
+            return list(self._rows.keys())
 
     @hdates.setter
-    def hdates(self, input_hdates):
+    def hdates(self, input_hdates: list):
         if not self.is_empty:
-            self._rows = labels_to_dict(input_hdates, self.hdates)
+            assert isinstance(input_hdates, list), f'TypeError, input_hdates should be '
+            assert len(input_hdates) == self.row_count, \
+                f'ValueError, the number of input shares ({len(input_hdates)}) does not match level ' \
+                f'count ({self.row_count})'
+            try:
+                new_hdates = [pd.to_datetime(date) for date in input_hdates]
+            except:
+                raise ValueError('one or more item in hdate list can not be converted to Timestamp')
+            self._rows = labels_to_dict(new_hdates, self.hdates)
 
     @property
     def row_count(self):
+        return self._r_count
+
+    @property
+    def hdate_count(self):
         return self._r_count
 
     @property
@@ -616,8 +638,13 @@ class HistoryPanel():
             return list(self._columns.keys())
 
     @htypes.setter
-    def htypes(self, input_htypes):
+    def htypes(self, input_htypes: [str, list]):
         if not self.is_empty:
+            if isinstance(input_htypes, str):
+                input_htypes = str_to_list(input_string=input_htypes)
+            assert len(input_htypes) == self.column_count, \
+                f'ValueError, the number of input shares ({len(input_htypes)}) does not match level ' \
+                f'count ({self.column_count})'
             self._columns = labels_to_dict(input_htypes, self.htypes)
 
     @property
@@ -626,6 +653,10 @@ class HistoryPanel():
 
     @property
     def column_count(self):
+        return self._c_count
+
+    @property
+    def htype_count(self):
         return self._c_count
 
     @property
