@@ -2,7 +2,7 @@ from qteasy.core import *
 from qteasy.operator import *
 
 
-class CustomRollingTiming(Rolling_Timing):
+class CustomRollingTiming(RollingTiming):
     """自定义策略"""
     # TODO: 这里需要修改super().__init__()方法，使得所有参数的设置从该方法中解放出来，允许在self.__init__()中显性设置关键参数
     def __init__(self):
@@ -39,7 +39,7 @@ class CustomRollingTiming(Rolling_Timing):
             return 0
 
 
-class CustomSimpleTiming(Simple_Timing):
+class CustomSimpleTiming(SimpleTiming):
     """自定义策略"""
 
     def __init__(self, pars: tuple = None):
@@ -76,10 +76,12 @@ if __name__ == '__main__':
     # TODO: TRIX 策略有问题
     custom_rolling = CustomRollingTiming()
     custom_simple = CustomSimpleTiming()
-    op = Operator(timing_types=['DMA', 'DMA', 'DMA', 'DMA'], selecting_types=['simple'], ricon_types=['Urgent'])
+    op = Operator(timing_types=[custom_simple, custom_simple, custom_simple, custom_simple],
+                  selecting_types=['simple'], ricon_types=['Urgent'])
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
     print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
+    print('strategy count of operation object is:===================', op.strategy_count)
     op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
     op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
     op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
@@ -107,9 +109,9 @@ if __name__ == '__main__':
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'cumulative')
     op.set_parameter(stg_id='t-0', pars=timing_pars1)
-    op.set_parameter(stg_id='t-1', pars=timing_pars1)
-    op.set_parameter(stg_id='t-2', pars=timing_pars1)
-    op.set_parameter(stg_id='t-3', pars=timing_pars1)
+    op.set_parameter(stg_id='t-1', pars=timing_pars5)
+    op.set_parameter(stg_id='t-2', pars=timing_pars5)
+    op.set_parameter(stg_id='t-3', pars=timing_pars5)
     # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])
     # op.set_parameter('t-3', pars=timing_pars1)
     print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')

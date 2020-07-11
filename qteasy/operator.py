@@ -3,7 +3,7 @@
 
 import pandas as pd
 import numpy as np
-from qteasy.utilfuncs import sma, ema, trix, macd, cdldoji
+from qteasy.utilfuncs import sma, ema, trix, cdldoji
 from qteasy import CashPlan
 from abc import abstractmethod, ABCMeta
 from .history import HistoryPanel
@@ -259,15 +259,15 @@ class Strategy:
         return:
             int: 1: 设置成功，0: 设置失败
         """
-        assert isinstance(pars, (tuple, dict)),\
+        assert isinstance(pars, (tuple, dict)), \
             f'parameter should be either a tuple or a dict, got {type(pars)} instead'
         if len(pars) == self.par_count or isinstance(pars, dict):
             self._pars = pars
             return 1
         else:
-            # raise ValueError(f'parameter setting error in set_pars() method of {self}\n expected par count: '
-            #                  f'{self.par_count}, got {len(pars)}')
-            return 0
+            raise ValueError(f'parameter setting error in set_pars() method of \n{self}expected par count: '
+                             f'{self.par_count}, got {len(pars)}')
+            # return 0
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型
@@ -294,6 +294,7 @@ class Strategy:
     def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None):
         """ 设置策略的历史数据回测相关属性
 
+        :param data_freq: str,
         :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
         :param window_length: int，表示回测时需要用到的历史数据深度
         :param data_types: str，表示需要用到的历史数据类型
@@ -303,7 +304,7 @@ class Strategy:
             assert isinstance(data_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
             assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {data_freq} is not a valid frequency ' \
-                                                             f'string'
+                                                           f'string'
             self._data_freq = data_freq
         if sample_freq is not None:
             assert isinstance(sample_freq, str), \
@@ -329,7 +330,7 @@ class Strategy:
         raise NotImplementedError
 
 
-class Rolling_Timing(Strategy):
+class RollingTiming(Strategy):
     """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略
 
         Rolling Timing择时策略的generate()函数采用了滚动信号生成机制，每次从全部历史数据中提取出一个片段（这个片段被称为"窗口"），
@@ -508,7 +509,7 @@ class Rolling_Timing(Strategy):
         return res
 
 
-class TimingCrossline(Rolling_Timing):
+class TimingCrossline(RollingTiming):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
     数据类型：close 收盘价，单数据输入
@@ -555,7 +556,7 @@ class TimingCrossline(Rolling_Timing):
             return 0
 
 
-class TimingMACD(Rolling_Timing):
+class TimingMACD(RollingTiming):
     """MACD择时策略类，运用MACD均线策略，在hist_price Series对象上生成交易信号
 
     数据类型：close 收盘价，单数据输入
@@ -608,7 +609,7 @@ class TimingMACD(Rolling_Timing):
             return 0
 
 
-class TimingDMA(Rolling_Timing):
+class TimingDMA(RollingTiming):
     """DMA择时策略
 
     数据类型：close 收盘价，单数据输入
@@ -653,7 +654,7 @@ class TimingDMA(Rolling_Timing):
             return 0
 
 
-class TimingTRIX(Rolling_Timing):
+class TimingTRIX(RollingTiming):
     """TRIX择时策略，运用TRIX均线策略，利用历史序列上生成交易信号
 
     数据类型：close 收盘价，单数据输入
@@ -705,7 +706,7 @@ class TimingTRIX(Rolling_Timing):
             return 0
 
 
-class TimingCDL(Rolling_Timing):
+class TimingCDL(RollingTiming):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
     数据类型：open, high, low, close 开盘，最高，最低，收盘价，多数据输入
@@ -778,9 +779,10 @@ class Selecting(Strategy):
         """" Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
-            :param hist_segment: type: ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史数据片段
+            :param hist_data: type: numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史
+            数据片段
         :return
-            ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
+            numpy.ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
         """
         pass
 
@@ -989,7 +991,7 @@ class SelectingFinance(Selecting):
         return chosen
 
 
-class Simple_Timing(Strategy):
+class SimpleTiming(Strategy):
     """ 风险控制抽象类，所有风险控制策略均继承该类
 
         风险控制策略在选股和择时策略之后发生作用，在选股和择时模块形成完整的投资组合及比例分配后，通过比较当前和预期的投资组合比例
@@ -1071,7 +1073,7 @@ class Simple_Timing(Strategy):
         return res[self.window_length:, :]
 
 
-class RiconNone(Simple_Timing):
+class RiconNone(SimpleTiming):
     """无风险控制策略，不对任何风险进行控制"""
 
     def __init__(self, pars=None):
@@ -1083,7 +1085,7 @@ class RiconNone(Simple_Timing):
         return np.zeros_like(hist_data.squeeze())
 
 
-class TimingSimple(Simple_Timing):
+class TimingSimple(SimpleTiming):
     """简单择时策略，返回整个历史周期上的恒定多头状态
 
     数据类型：N/A
@@ -1103,7 +1105,7 @@ class TimingSimple(Simple_Timing):
         return np.ones_like(hist_data.squeeze())
 
 
-class RiconUrgent(Simple_Timing):
+class RiconUrgent(SimpleTiming):
     """urgent风控类，继承自Ricon类，重写_generate_ricon方法"""
 
     # 跌幅控制策略，当N日跌幅超过p%的时候，强制生成卖出信号
@@ -1446,7 +1448,7 @@ class Operator:
                 elif timing_type.lower() == 'simple':
                     self._timing.append(TimingSimple())
             # 当传入的对象是一个strategy时，直接
-            elif isinstance(timing_type, (Rolling_Timing, Simple_Timing)):
+            elif isinstance(timing_type, (RollingTiming, SimpleTiming)):
                 self._timing_types.append(timing_type.stg_type)
                 self._timing.append(timing_type)
             else:
@@ -1478,7 +1480,7 @@ class Operator:
                     self._selecting.append(SelectingSimple())
                 else:
                     raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
-            elif isinstance(selecting_type, (Selecting, Simple_Timing)):
+            elif isinstance(selecting_type, (Selecting, SimpleTiming)):
                 self._selecting_type.append(selecting_type.stg_type)
                 self._selecting.append(selecting_type)
             else:
@@ -1501,15 +1503,20 @@ class Operator:
                     self._ricon.append(RiconUrgent())
                 else:
                     raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
-            elif isinstance(ricon_type, (Rolling_Timing, Simple_Timing)):
+            elif isinstance(ricon_type, (RollingTiming, SimpleTiming)):
                 self._ricon_type.append(ricon_type.stg_type)
                 self._ricon.append(ricon_type)
             else:
                 raise TypeError(f'Type Error, the type of passed object {type(ricon_type)} is not supported!')
+
     @property
     def timing(self):
         """返回operator对象的所有timing对象"""
         return self._timing
+
+    @property
+    def timing_count(self):
+        return len(self.timing)
 
     @property
     def selecting(self):
@@ -1517,15 +1524,27 @@ class Operator:
         return self._selecting
 
     @property
+    def selecting_count(self):
+        return len(self.selecting)
+
+    @property
     def ricon(self):
         """返回operator对象的所有ricon对象"""
         return self._ricon
+
+    @property
+    def ricon_count(self):
+        return len(self.ricon)
 
     @property
     def strategies(self):
         """返回operator对象的所有策略子对象"""
         stg = [item for item in self.timing + self.selecting + self.ricon]
         return stg
+
+    @property
+    def strategy_count(self):
+        return len(self.strategies)
 
     @property
     def op_data_types(self):
@@ -1650,10 +1669,16 @@ class Operator:
         assert isinstance(stg_id, str), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
         l = stg_id.split('-')
         if l[0].lower() == 's':
+            assert int(l[1]) < self.selecting_count, \
+                f'ValueError: too many {l[1] + 1} parameters to match with {self.selecting_count} selecting strategies'
             strategy = self.selecting[int(l[1])]
         elif l[0].lower() == 't':
+            assert int(l[1]) < self.timing_count, \
+                f'ValueError: too many {l[1] + 1} parameters to match with {self.timing_count} timing strategies'
             strategy = self.timing[int(l[1])]
         elif l[0].lower() == 'r':
+            assert int(l[1]) < self.ricon_count, \
+                f'ValueError: too many {l[1] + 1} parameters to match with {self.ticon_count} ricon strategies'
             strategy = self.ricon[int(l[1])]
         else:
             print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')

@@ -781,29 +781,32 @@ class TestHistoryPanel(unittest.TestCase):
         new_shares_str = '000001, 000002, 000003, 000004, 000005'
         new_htypes_list = ['close', 'volume', 'value', 'exchange']
         new_htypes_str = 'close, volume, value, exchange'
-        hp2 = self.hp.copy()
-        hp2.re_label(shares=new_shares_list)
-        print(hp2.info())
-        print(hp2.htypes)
-        self.assertTrue(np.allclose(self.hp.values, hp2.values))
-        self.assertEqual(self.hp.htypes, hp2.htypes)
-        self.assertEqual(self.hp.hdates, hp2.hdates)
-        self.assertEqual(hp2.shares, new_shares_list)
-        hp2.re_label(shares=new_shares_str)
-        self.assertTrue(np.allclose(self.hp.values, hp2.values))
-        self.assertEqual(self.hp.htypes, hp2.htypes)
-        self.assertEqual(self.hp.hdates, hp2.hdates)
-        self.assertEqual(hp2.shares, new_shares_list)
-        hp2.re_label(htypes=new_htypes_list)
-        self.assertTrue(np.allclose(self.hp.values, hp2.values))
-        self.assertEqual(new_shares_list, hp2.shares)
-        self.assertEqual(self.hp.hdates, hp2.hdates)
-        self.assertEqual(hp2.htypes, new_htypes_list)
-        hp2.re_label(htypes=new_htypes_str)
-        self.assertTrue(np.allclose(self.hp.values, hp2.values))
-        self.assertEqual(new_shares_list, hp2.shares)
-        self.assertEqual(self.hp.hdates, hp2.hdates)
-        self.assertEqual(hp2.htypes, new_htypes_list)
+        temp_hp = self.hp.copy()
+        temp_hp.re_label(shares=new_shares_list)
+        print(temp_hp.info())
+        print(temp_hp.htypes)
+        self.assertTrue(np.allclose(self.hp.values, temp_hp.values))
+        self.assertEqual(self.hp.htypes, temp_hp.htypes)
+        self.assertEqual(self.hp.hdates, temp_hp.hdates)
+        self.assertEqual(temp_hp.shares, new_shares_list)
+        temp_hp = self.hp.copy()
+        temp_hp.re_label(shares=new_shares_str)
+        self.assertTrue(np.allclose(self.hp.values, temp_hp.values))
+        self.assertEqual(self.hp.htypes, temp_hp.htypes)
+        self.assertEqual(self.hp.hdates, temp_hp.hdates)
+        self.assertEqual(temp_hp.shares, new_shares_list)
+        temp_hp = self.hp.copy()
+        temp_hp.re_label(htypes=new_htypes_list)
+        self.assertTrue(np.allclose(self.hp.values, temp_hp.values))
+        self.assertEqual(self.hp.shares, temp_hp.shares)
+        self.assertEqual(self.hp.hdates, temp_hp.hdates)
+        self.assertEqual(temp_hp.htypes, new_htypes_list)
+        temp_hp = self.hp.copy()
+        temp_hp.re_label(htypes=new_htypes_str)
+        self.assertTrue(np.allclose(self.hp.values, temp_hp.values))
+        self.assertEqual(self.hp.shares, temp_hp.shares)
+        self.assertEqual(self.hp.hdates, temp_hp.hdates)
+        self.assertEqual(temp_hp.htypes, new_htypes_list)
 
     def test_csv_to_hp(self):
         pass
@@ -827,8 +830,16 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_fill_na(self):
-        pass
-
+        print(self.hp)
+        new_values = self.hp.values.astype(float)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
+        print(new_values)
+        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
+        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
+        temp_hp.fillna(2.3)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
+        self.assertTrue(np.allclose(temp_hp.values,
+                                    new_values, equal_nan=True))
 
 class TestHistorySubFuncs(unittest.TestCase):
     def setUp(self):
