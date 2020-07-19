@@ -511,8 +511,6 @@ class HistoryPanel():
             HistoryPanel的一个切片，或者是一个股票品种，或者是一个数据类型，输出的DataFrame包含的数据行数与
         6, 方便地由多个pandas DataFrame对象组合而成
     """
-
-    # TODO 应该把rows的格式转化为pandas.Timestamp()对象
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
         """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 
@@ -550,9 +548,16 @@ class HistoryPanel():
                 rows = range(self._r_count)
                 self._rows = dict(zip(rows, rows))
             else:
-                # assert isinstance(rows[0], pd.Timestamp), \
-                #     f'TypeError, rows should be in Timestamp, got {type(rows[0])}'
-                self._rows = labels_to_dict(rows, range(self._r_count))
+                assert isinstance(rows, (list, dict, pd.DatetimeIndex)), \
+                    f'TypeError, input_hdates should be a list or DatetimeIndex, got {type(rows)} instead'
+                assert len(rows) == self.row_count, \
+                    f'ValueError, the number of input shares ({len(rows)}) does not match level ' \
+                    f'count ({self.row_count})'
+                try:
+                    new_rows = [pd.to_datetime(date) for date in rows]
+                except:
+                    raise ValueError('one or more item in hdate list can not be converted to Timestamp')
+                self._rows = labels_to_dict(new_rows, range(self._r_count))
 
             if columns is None:
                 columns = range(self._c_count)
