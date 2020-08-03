@@ -1154,7 +1154,7 @@ class RiconUrgent(SimpleTiming):
 # TODO：position < 0时，表示空头头寸
 # TODO：两种不同的头寸位置配合开仓（signal>0）或平仓（signal<0）才能完整地表示所有的交易方式
 # TODO：另外，还需要加入更多交易相关信息，如限价单、市价单、交易数量等等，总之，之前仅用singal表示交易信号的方式太过于简单了
-def _mask_to_signal(lst):
+def mask_to_signal(lst):
     """将持仓蒙板转化为交易信号.
 
         转换的规则为比较前后两个交易时间点的持仓比率，如果持仓比率提高，
@@ -1870,7 +1870,7 @@ class Operator:
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         # 生成交易信号矩阵
-        op_mat = (_mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
+        op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # print(f'length of date_list: {len(date_list)}')

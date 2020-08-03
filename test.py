@@ -538,7 +538,24 @@ class TestLoop(unittest.TestCase):
 
 class TestOperatorSubFuncs(unittest.TestCase):
     def setUp(self):
-        pass
+        mask_list = [[0.0, 0.0, 0.0, 0.0],
+                     [0.5, 0.0, 0.0, 1.0],
+                     [0.5, 0.0, 0.3, 1.0],
+                     [0.5, 0.0, 0.3, 0.5],
+                     [0.5, 0.5, 0.3, 0.5],
+                     [0.5, 0.5, 0.3, 1.0],
+                     [0.3, 0.5, 0.0, 1.0],
+                     [0.3, 1.0, 0.0, 1.0]]
+        signal_list = [[0.0, 0.0, 0.0, 0.0],
+                       [0.5, 0.0, 0.0, 1.0],
+                       [0.0, 0.0, 0.3, 0.0],
+                       [0.0, 0.0, 0.0, -0.5],
+                       [0.0, 0.5, 0.0, 0.0],
+                       [0.0, 0.0, 0.0, 0.5],
+                       [-0.4, 0.0, -1.0, 0.0],
+                       [0.0, 0.5, 0.0, 0.0]]
+        self.mask = np.array(mask_list)
+        self.correct_signal = np.array(signal_list)
 
     def test_blend(self):
         pass
@@ -557,7 +574,9 @@ class TestOperatorSubFuncs(unittest.TestCase):
         self.assertIs(np.allclose(res, target), True, 'sum of all elements is 1')
 
     def test_mask_to_signal(self):
-        pass
+        self.signal = qt.mask_to_signal(self.mask)
+        print(self.signal)
+        self.assertTrue(np.allclose(self.signal, self.correct_signal))
 
     def test_timing_blend_change(self):
         pass
@@ -840,6 +859,7 @@ class TestHistoryPanel(unittest.TestCase):
         new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
         self.assertTrue(np.allclose(temp_hp.values,
                                     new_values, equal_nan=True))
+
 
 class TestHistorySubFuncs(unittest.TestCase):
     def setUp(self):
