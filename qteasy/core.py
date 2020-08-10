@@ -1460,8 +1460,13 @@ def run(operator, context):
             """
             raise NotImplementedError
 
-        print('Searching finished, best results:', perfs)
-        print('best parameters:', pars)
+        print(f'\n==========SEARCHING FINISHED===============')
+        print(f'Searching finished, {len(perfs)} best results are generated')
+        print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result')
+        print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{pars[-1]}')
+        print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{pars[0]}')
+        result_df = pd.DataFrame(perfs, pars)
+        print(f'complete list of performance and parameters are following, \n{result_df}')
         print(f'==========OPTIMIZATION COMPLETE============')
         # optimization_log = Log()
         # optimization_log.write_record(pars, perfs)
@@ -1606,13 +1611,13 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
     i = 0
     it, total = space.extract(step_size)
     # debug
-    print('Result pool has been created, capacity of result pool: ', pool.capacity)
-    print('Searching Space has been created: ')
-    space.info()
-    print('Number of points to be checked: ', total)
-    print(f'Historical Data List: \n{hist.info()}')
-    print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
-    print('Searching Starts...\n')
+    # print('Result pool has been created, capacity of result pool: ', pool.capacity)
+    # print('Searching Space has been created: ')
+    # space.info()
+    # print('Number of points to be checked: ', total)
+    # print(f'Historical Data List: \n{hist.info()}')
+    # print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
+    # print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     if parallel:
@@ -1669,11 +1674,11 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     i = 0
     it, total = space.extract(point_count, how='rand')
     # debug
-    print('Result pool has been created, capacity of result pool: ', pool.capacity)
-    print('Searching Space has been created: ')
-    space.info()
-    print('Number of points to be checked:', total)
-    print('Searching Starts...')
+    # print('Result pool has been created, capacity of result pool: ', pool.capacity)
+    # print('Searching Space has been created: ')
+    # space.info()
+    # print('Number of points to be checked:', total)
+    # print('Searching Starts...')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     if parallel:
@@ -1736,11 +1741,12 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
     round_size = context.output_count * 5 ** base_space.dim
     first_round_size = base_space.size / init_step ** base_space.dim
     total_calc_rounds = int(first_round_size + round_count * round_size)
-    print(f'Result pool prepared, {pool.capacity} total output will be generated')
-    print(f'Base Searching Space has been created: ')
-    base_space.info()
-    print(f'Estimated Total Number of points to be checked:', total_calc_rounds)
-    print('Searching Starts...')
+    # debug
+    # print(f'Result pool prepared, {pool.capacity} total output will be generated')
+    # print(f'Base Searching Space has been created: ')
+    # base_space.info()
+    # print(f'Estimated Total Number of points to be checked:', total_calc_rounds)
+    # print('Searching Starts...')
     i = 0
     st = time.time()
     while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
