@@ -53,7 +53,7 @@ class Strategy:
         input:
             :param pars: tuple,             策略参数, 动态参数
             :param opt_tag: int,            0: 参加优化，1: 不参加优化
-            :param stg_type: str,           策略类型，可取值'TIMING', 'SELECTING', 'RICON'等
+            :param stg_type: str,           策略类型，可取值'ROLLING TIMING', 'SELECTING', 'SIMPLE TIMNG'等
             :param stg_name: str,           策略名称，在创建继承具体类时赋予该类
             :param stg_text: str,           策略简介，类似于docstring，简单介绍该类的策略内容
             :param par_count: int,          策略参数个数
@@ -84,23 +84,13 @@ class Strategy:
                                             6, 'eps'
                                             7,
         """
-        self._pars = pars  # 策略的参数
-        self._opt_tag = opt_tag  # 策略的优化标记
+        self._pars = pars  # 策略的参数，动态属性，可以直接赋值（通过set_pars函数赋值）
+        self._opt_tag = opt_tag  # 策略的优化标记，
         self._stg_type = stg_type  # 策略类型
         self._stg_name = stg_name  # 策略的名称
         self._stg_text = stg_text  # 策略的描述文字
         self._par_count = par_count  # 策略参数的元素个数
-
-        if par_types is None:
-            # 当没有给出策略参数类型时，参数类型为空列表
-            self._par_types = []
-        else:
-            # 输入的par_types可以允许为字符串或列表，当给定类型为字符串时，使用逗号分隔不同的类型，如
-            # 'conti, conti' 代表 ['conti', 'conti']
-            if isinstance(par_types, str):
-                par_types = str_to_list(par_types, ',')
-            assert isinstance(par_types, list), f'TypeError, par type should be a list, got {type(par_types)} instead'
-            self._par_types = par_types
+        self._par_types = par_types
         if par_bounds_or_enums is None:
             self._par_bounds_or_enums = []
         else:
@@ -118,12 +108,12 @@ class Strategy:
 
     @property
     def stg_type(self):
-        """策略类型"""
+        """策略类型，策略类型决定了策略的实现方式，目前支持的策略类型共有三种：'ROLLING TIMING', 'SELECTING', 'SIMPLE TIMNG'"""
         return self._stg_type
 
     @property
     def stg_name(self):
-        """策略名称"""
+        """策略名称，打印策略信息的时候策略名称会被打印出来"""
         return self._stg_name
 
     @stg_name.setter
@@ -132,7 +122,7 @@ class Strategy:
 
     @property
     def stg_text(self):
-        """策略说明文本"""
+        """策略说明文本，对策略的实现方法和功能进行简要介绍"""
         return self._stg_text
 
     @stg_text.setter
@@ -155,7 +145,23 @@ class Strategy:
 
     @par_types.setter
     def par_types(self, par_types: [list, str]):
-        self._par_types = par_types
+        """ 设置par_types属性
+
+        输入的par_types可以允许为字符串或列表，当给定类型为字符串时，使用逗号分隔不同的类型，如
+        'conti, conti' 代表 ['conti', 'conti']
+
+        :param par_types:
+
+        """
+        if par_types is None:
+            # 当没有给出策略参数类型时，参数类型为空列表
+            self._par_types = []
+        else:
+
+            if isinstance(par_types, str):
+                par_types = str_to_list(par_types, ',')
+            assert isinstance(par_types, list), f'TypeError, par type should be a list, got {type(par_types)} instead'
+            self._par_types = par_types
 
     @property
     def par_boes(self):
@@ -259,15 +265,16 @@ class Strategy:
         return:
             int: 1: 设置成功，0: 设置失败
         """
-        assert isinstance(pars, (tuple, dict)), \
+        assert isinstance(pars, (tuple, dict)) or pars is None, \
             f'parameter should be either a tuple or a dict, got {type(pars)} instead'
+        if pars is None:
+            self._pars = pars
+            return 1
         if len(pars) == self.par_count or isinstance(pars, dict):
             self._pars = pars
             return 1
-        else:
-            raise ValueError(f'parameter setting error in set_pars() method of \n{self}expected par count: '
+        raise ValueError(f'parameter setting error in set_pars() method of \n{self}expected par count: '
                              f'{self.par_count}, got {len(pars)}')
-            # return 0
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型

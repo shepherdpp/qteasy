@@ -557,6 +557,7 @@ class TestOperatorSubFuncs(unittest.TestCase):
         self.mask = np.array(mask_list)
         self.correct_signal = np.array(signal_list)
 
+
     def test_blend(self):
         pass
 
@@ -687,6 +688,63 @@ class TestOperator(unittest.TestCase):
 
     def test_exp_to_blender(self):
         pass
+
+    def test_set_parameters(self):
+        pass
+
+
+class TestStrategy(unittest.TestCase):
+    def setUp(self):
+        self.stg = qt.TimingCrossline()
+        self.stg_type = 'TIMING'
+        self.stg_name = "CROSSLINE STRATEGY"
+        self.stg_text = 'Moving average crossline strategy, determin long/short position according to the cross point ' \
+                        'of long and short term moving average prices '
+        self.pars = None
+        self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
+        self.par_count = 4
+        self.par_types = ['discr', 'discr', 'conti', 'enum']
+        self.opt_tag = 0
+        self.data_types = ['close']
+        self.data_freq = 'd'
+        self.sample_freq = 'd'
+        self.window_length = 270
+
+    def test_attribute_get_and_set(self):
+        self.assertEqual(self.stg.stg_type, self.stg_type)
+        self.assertEqual(self.stg.stg_name, self.stg_name)
+        self.assertEqual(self.stg.stg_text, self.stg_text)
+        self.assertEqual(self.stg.pars, self.pars)
+        self.assertEqual(self.stg.par_types, self.par_types)
+        self.assertEqual(self.stg.par_boes, self.par_boes)
+        self.assertEqual(self.stg.par_count, self.par_count)
+        self.assertEqual(self.stg.opt_tag, self.opt_tag)
+        self.assertEqual(self.stg.data_freq, self.data_freq)
+        self.assertEqual(self.stg.sample_freq, self.sample_freq)
+        self.assertEqual(self.stg.data_types, self.data_types)
+        self.assertEqual(self.stg.window_length, self.window_length)
+        self.stg.stg_name = 'NEW NAME'
+        self.stg.stg_text = 'NEW TEXT'
+        self.assertEqual(self.stg.stg_name, 'NEW NAME')
+        self.assertEqual(self.stg.stg_text, 'NEW TEXT')
+        self.stg.pars = (1, 2, 3, 4)
+        self.assertEqual(self.stg.pars, (1, 2, 3, 4))
+        self.stg.par_count = 3
+        self.assertEqual(self.stg.par_count, 3)
+        self.stg.par_boes = [(1, 10), (1, 10), (1, 10), (1, 10)]
+        self.assertEqual(self.stg.par_boes, [(1, 10), (1, 10), (1, 10), (1, 10)])
+        self.stg.par_types = ['conti', 'conti', 'discr', 'enum']
+        self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'enum'])
+        self.stg.par_types = 'conti, conti, discr, conti'
+        self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'conti'])
+        self.stg.data_types = 'close, open'
+        self.assertEqual(self.stg.data_types, ['close', 'open'])
+        self.stg.data_types = ['close', 'high', 'low']
+        self.assertEqual(self.stg.data_types, ['close', 'high', 'low'])
+        self.stg.data_freq = 'w'
+        self.assertEqual(self.stg.data_freq, 'w')
+        self.stg.window_length = 300
+        self.assertEqual(self.stg.window_length, 300)
 
 
 class TestLog(unittest.TestCase):
