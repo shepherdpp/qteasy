@@ -90,8 +90,8 @@ class Strategy:
         self._stg_name = stg_name  # 策略的名称
         self._stg_text = stg_text  # 策略的描述文字
         self._par_count = par_count  # 策略参数的元素个数
-        self._par_types = par_types
-        if par_bounds_or_enums is None:
+        self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
+        if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
             self._par_bounds_or_enums = []
         else:
             self._par_bounds_or_enums = par_bounds_or_enums
@@ -295,7 +295,10 @@ class Strategy:
             :param par_boes: 策略的参数取值范围
         :return:
         """
-        self._par_bounds_or_enums = par_boes
+        if par_boes is None:
+            self._par_bounds_or_enums = []
+        else:
+            self._par_bounds_or_enums = par_boes
         return par_boes
 
     def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None):
@@ -587,7 +590,9 @@ class TimingMACD(RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        """生成单只个股的择时多空信号.
+        """生成单只个股的择时多空信号
+        生成MACD多空判断：
+        1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
 
         输入:
             idx: 指定的参考指数历史数据
@@ -608,8 +613,7 @@ class TimingMACD(RollingTiming):
         # 以下使用utfuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
         # diff, dea, _macd = macd(hist_data, s, l, m)
 
-        # 生成MACD多空判断：
-        # 1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
+
         if _macd[-1] > 0:
             return 1
         else:
@@ -618,6 +622,10 @@ class TimingMACD(RollingTiming):
 
 class TimingDMA(RollingTiming):
     """DMA择时策略
+    生成DMA多空判断：
+        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
+        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
+        3， DMA与股价发生背离时的交叉信号，可信度较高
 
     数据类型：close 收盘价，单数据输入
     数据分析频率：天
@@ -651,10 +659,7 @@ class TimingDMA(RollingTiming):
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
         # print('qDMA generated DMA and ama signal:', dma.size, dma, '\n', ama.size, ama)
-        # 生成DMA多空判断：
-        # 1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
-        # 2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
-        # 3， DMA与股价发生背离时的交叉信号，可信度较高
+
         if dma[-1] > ama[-1]:
             return 1
         else:
@@ -865,21 +870,6 @@ class Selecting(Strategy):
         return sel_mask
 
 
-class SelectingTrend(Selecting):
-    """趋势选股策略，继承自选股策略类"""
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         stg_name='TREND SELECTING',
-                         stg_text='Selecting share according to detected trends')
-
-    def _realize(self, hist_data):
-        # 所有股票全部被选中，权值（投资比例）平均分配
-        print(f'in selecting realize method, hist_data received, shaped: {hist_data.shape}')
-        share_count = hist_data.shape[0]
-        return [1. / share_count] * share_count
-
-
 class SelectingSimple(Selecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
@@ -921,11 +911,12 @@ class SelectingFinance(Selecting):
         数据类型：由data_types指定的财报指标财报数据，单数据输入，默认数据为EPS
         数据分析频率：季度
         数据窗口长度：90
-        策略使用2个参数:
-            :param largest_win: boolean 为真时选出EPS最高的股票，否则选出EPS最低的股票
-            :param distribution: str 确定如何分配选中股票的权重,
-            :param drop_threshold: 确定丢弃值，丢弃当期EPS低于该值的股票
-        参数输入数据范围：[('even', 'linear', 'proportion'), (0, 100)]
+        策略使用3个参数:
+            largest_win:    bool,   为真时选出EPS最高的股票，否则选出EPS最低的股票
+            distribution:   str ,   确定如何分配选中股票的权重,
+            drop_threshold: float,  确定丢弃值，丢弃当期EPS低于该值的股票
+            pct:            float,  确定从股票池中选出的投资组合的数量或比例，当0<pct<1时，选出pct%的股票，当pct>=1时，选出pct只股票
+        参数输入数据范围：[(True, False), ('even', 'linear', 'proportion'), (0, 100)]
     """
 
     def __init__(self, pars=None):
@@ -941,7 +932,6 @@ class SelectingFinance(Selecting):
                          data_types='eps')
 
     # TODO: 因为Strategy主类代码重构，ranking table的代码结构也应该相应修改，待修改
-    # TODO：实际上hist_segment就起到了ranking table 的作用，因此不再需要ranking_table()方法，所有排序都在_realize()方法中实现
     def _realize(self, hist_data):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
@@ -1110,6 +1100,50 @@ class TimingSimple(SimpleTiming):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
         return np.ones_like(hist_data.squeeze())
+
+
+class SimpleDMA(SimpleTiming):
+    """DMA择时策略
+    生成DMA多空判断：
+        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
+        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
+        3， DMA与股价发生背离时的交叉信号，可信度较高
+
+    数据类型：close 收盘价，单数据输入
+    数据分析频率：天
+    数据窗口长度：270
+    策略使用3个参数，
+        s: int,
+        l: int,
+        d: int,
+    参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
+                         stg_name='QUICK DMA STRATEGY',
+                         stg_text='Quick DMA strategy, determine long/short position according to differences of '
+                                  'moving average prices with simple timing strategy',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        # 使用基于np的移动平均计算函数的快速DMA择时方法
+        s, l, d = params
+        # print 'Generating Quick dma Long short Mask with parameters', params
+
+        # 计算指数的移动平均价格
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_data.T
+        dma = sma(h[0], s) - sma(h[0], l)
+        ama = dma.copy()
+        ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
+        # print('qDMA generated DMA and ama signal:', dma.size, dma, '\n', ama.size, ama)
+
+        cat = np.where(dma > ama, 1, 0)
+        return cat
 
 
 class RiconUrgent(SimpleTiming):
