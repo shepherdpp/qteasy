@@ -1279,10 +1279,10 @@ def run(operator, context):
                                    history_list=hist_loop.fillna(0),
                                    cash_plan=context.cash_plan,
                                    moq=context.moq,
-                                   visual=True,
+                                   visual=context.visual,
                                    cost_rate=context.rate,
-                                   price_visual=True,
-                                   print_log=True)
+                                   price_visual=context.visual,
+                                   print_log=context.print_log)
         et = time.time()
         run_time_loop_full = (et - st)
         # print('looped values result is: \n', looped_values)

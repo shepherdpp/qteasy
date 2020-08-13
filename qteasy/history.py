@@ -818,13 +818,17 @@ class HistoryPanel():
              same_hdates: bool = False,
              fill_value: float = np.nan):
         """ Join one historypanel object with another one
+            将一个HistoryPanel对象与另一个HistoryPanel对象连接起来
 
-        :param same_shares:
-        :param same_htypes:
-        :param same_hdates:
-        :param fill_value:
-        :param other: type: HistoryPanel
+            连接时可以指定两个HistoryPanel之间共享的
+
+        :param other: type: HistoryPanel 需要合并的另一个HistoryPanel
+        :param same_shares: 两个HP的shares是否相同，如果相同，可以省去shares纬度的标签合并。默认False，
+        :param same_htypes: 两个HP的htypes是否相同，如果相同，可以省去htypes纬度的标签合并。默认False，
+        :param same_hdates: 两个HP的hdates是否相同，如果相同，可以省去hdates纬度的标签合并。默认False，
+        :param fill_value:  空数据填充值，当组合后的HP存在空数据时，应该以什么值填充，默认为np.nan
         :return:
+        一个新的History Panel对象
         """
         assert isinstance(other, HistoryPanel), \
             f'TypeError, HistoryPanel can only be joined with other HistoryPanel.'
@@ -871,7 +875,6 @@ class HistoryPanel():
                             combined_values[:, combined_hdate_id[hdate], :] = self.values[:, this_hdate_id[hdate], :]
                         else:
                             combined_values[:, combined_hdate_id[hdate], :] = other.values[:, other_hdate_id[hdate], :]
-
                 elif same_hdates:
                     for htype in combined_htypes:
                         combined_htype_id = labels_to_dict(combined_htypes, combined_htypes)
@@ -1072,7 +1075,7 @@ def hdf_to_hp():
 
 
 def hp_join(*historypanels):
-    """ join *historypanels into one history panel if they are not None
+    """ 当元组*historypanels不是None，且内容全都是HistoryPanel对象时，将所有的HistoryPanel对象连接成一个HistoryPanel
 
     :param same_shares:
     :param same_htypes:

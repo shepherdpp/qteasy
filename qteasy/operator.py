@@ -1818,8 +1818,8 @@ class Operator:
         # print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         assert first_cash_pos >= self.max_window_length, \
-            f'InputError, Not enough history data records on first cash date, expect {self.max_window_length},' \
-            f' got {first_cash_pos} records only'
+            f'InputError, Not enough history data records on first cash date {cash_plan.first_day}, ' \
+            f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
         # 确保最后一个投资日也在输入的历史数据范围内
         assert last_cash_pos < len(hist_data.hdates), \
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
