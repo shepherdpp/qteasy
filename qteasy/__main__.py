@@ -76,18 +76,18 @@ if __name__ == '__main__':
     # TODO: TRIX 策略有问题
     custom_rolling = CustomRollingTiming()
     custom_simple = CustomSimpleTiming()
-    op = Operator(timing_types=[custom_simple, custom_simple, custom_simple, custom_simple],
+    op = Operator(timing_types=['DMA', 'DMA', 'DMA', custom_simple],
                   selecting_types=['simple'], ricon_types=['Urgent'])
     print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
-    print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
-    print('strategy count of operation object is:===================', op.strategy_count)
-    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')])
-    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')])
-    op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')])
+    # print('SET THE TIMING STRATEGY TO BE OPTIMIZABLE\n========================')
+    # print('strategy count of operation object is:===================', op.strategy_count)
+    op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+    op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+    op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
     op.set_parameter('t-3', opt_tag=1, par_boes=[(10, 250), (10, 250), (0.0, 10.0), ('buy', 'sell', 'none')])
     op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
-    print('CREATE CONTEXT OBJECT\n=======================')
+    # print('CREATE CONTEXT OBJECT\n=======================')
     cont = Context(moq=0)
     cont.reference_asset = '000300.SH'
     cont.reference_asset_type = 'I'
@@ -96,8 +96,8 @@ if __name__ == '__main__':
     cont.output_count = 50
     cont.invest_start = '20020101'
     cont.moq = 1
-    print(cont)
-    print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
+    # print(cont)
+    # print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
     timing_pars1 = (94, 36, 107)
     timing_pars2 = {'000100': (77, 118, 144),
@@ -108,9 +108,9 @@ if __name__ == '__main__':
     timing_pars5 = (228, 83, 8.05, 'buy')
     print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
     op.set_blender('timing', 'cumulative')
-    op.set_parameter(stg_id='t-0', pars=timing_pars5)
-    op.set_parameter(stg_id='t-1', pars=timing_pars5)
-    op.set_parameter(stg_id='t-2', pars=timing_pars5)
+    op.set_parameter(stg_id='t-0', pars=timing_pars1)
+    op.set_parameter(stg_id='t-1', pars=timing_pars3)
+    op.set_parameter(stg_id='t-2', pars=timing_pars1)
     op.set_parameter(stg_id='t-3', pars=timing_pars5)
     # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])
     # op.set_parameter('t-3', pars=timing_pars1)
@@ -118,9 +118,10 @@ if __name__ == '__main__':
     op.set_parameter('r-0', pars=(6, -0.06))
     # op.info()
     # print('\nTime of creating operation list:')
-    op.info()
+    # op.info()
     print(f'\n START QT RUNNING\n===========================\n')
     cont.parallel = True
+    cont.print_log = True
     cont.mode = 1
     run(op, cont)
     cont.mode = 0

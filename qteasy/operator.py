@@ -1726,15 +1726,17 @@ class Operator:
             return None
         if pars is not None:
             if strategy.set_pars(pars):
-                print(f'{strategy} parameter has been set to {pars}')
+                pass
+                # print(f'{strategy} parameter has been set to {pars}')
             else:
-                print(f'parameter setting error')
+                raise ValueError(f'parameter setting error')
+                # print(f'parameter setting error')
         if opt_tag is not None:
             strategy.set_opt_tag(opt_tag)
-            print(f'{strategy} optimizaiton tag has been set to {opt_tag}')
+            # print(f'{strategy} optimizaiton tag has been set to {opt_tag}')
         if par_boes is not None:
             strategy.set_par_boes(par_boes)
-            print(f'{strategy} parameter space range or enum has been set to {par_boes}')
+            # print(f'{strategy} parameter space range or enum has been set to {par_boes}')
         has_sf = sample_freq is not None
         has_wl = window_length is not None
         has_dt = data_types is not None
@@ -1742,8 +1744,8 @@ class Operator:
             strategy.set_hist_pars(sample_freq=sample_freq,
                                    window_length=window_length,
                                    data_types=data_types)
-            print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
-                  f'window length: {window_length} \ndata types: {data_types}')
+            # print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
+            #       f'window length: {window_length} \ndata types: {data_types}')
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -1977,7 +1979,7 @@ class Operator:
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
         # for msk in ls_masks:
         #     print(f'ls mask shape: {msk.shape}')
-        l_m = 0
+        l_m = 0.
         for msk in ls_masks:  # 计算所有多空模版的和
             l_m += msk
         if blndr[0:3] == 'chg':  # 出现N个状态变化信号时状态变化
