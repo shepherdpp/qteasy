@@ -13,7 +13,7 @@ TIME_FREQ_STRINGS = ['TICK',
                      'T',
                      'MIN',
                      'H',
-                     'D',
+                     'D', '5D', '10D', '20D',
                      'W',
                      'M',
                      'Q',
@@ -1568,6 +1568,10 @@ class Operator:
         return len(self.timing)
 
     @property
+    def timing_blender(self):
+        return self._timing_blender
+
+    @property
     def selecting(self):
         """返回operator对象的所有selecting对象"""
         return self._selecting
@@ -1577,6 +1581,10 @@ class Operator:
         return len(self.selecting)
 
     @property
+    def selecting_blender(self):
+        return self._selecting_blender_string
+
+    @property
     def ricon(self):
         """返回operator对象的所有ricon对象"""
         return self._ricon
@@ -1584,6 +1592,10 @@ class Operator:
     @property
     def ricon_count(self):
         return len(self.ricon)
+
+    @property
+    def ricon_blender(self):
+        return self._ricon_blender
 
     @property
     def strategies(self):
@@ -1596,17 +1608,23 @@ class Operator:
         return len(self.strategies)
 
     @property
+    def strategy_benders(self):
+        return [self.timing_blender, self.selecting_blender, self.ricon_blender]
+
+    @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
         d_types = []
-        for item in self.timing + self.selecting + self.ricon:
+        for item in self.strategies:
             d_types.extend(item.data_types)
-        return list(set(d_types))
+        d_types = list(set(d_types))
+        d_types.sort()
+        return d_types
 
     @property
     def op_data_freq(self):
         """返回operator对象所有策略子对象所需数据的采样频率"""
-        d_freq = [item.data_freq for item in self.strategies]
+        d_freq = [stg.data_freq for stg in self.strategies]
         d_freq = list(set(d_freq))
         assert len(d_freq) == 1, f'ValueError, there are multiple history data frequency required by strategies'
         return d_freq[0]
@@ -1686,10 +1704,9 @@ class Operator:
             elif blender_type.lower() == 'ricon':
                 self._set_ricon_blender(*args, **kwargs)
             else:
-                print('wrong input!')
-                pass
+                raise ValueError(f'wrong input!')
         else:
-            print('blender_type should be a string')
+            raise TypeError(f'blender_type should be a string, got {type(blender_type)} instead')
         pass
 
     def set_parameter(self,
@@ -1699,7 +1716,7 @@ class Operator:
                       par_boes: [tuple, list] = None,
                       sample_freq: str = None,
                       window_length: int = None,
-                      data_types: str = None):
+                      data_types: [str, list] = None):
         """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
 
@@ -1715,17 +1732,21 @@ class Operator:
         """
         assert isinstance(stg_id, str), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
         l = stg_id.split('-')
+        assert len(l) == 2 and l[1].isdigit(), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
         if l[0].lower() == 's':
             assert int(l[1]) < self.selecting_count, \
-                f'ValueError: too many {l[1] + 1} parameters to match with {self.selecting_count} selecting strategies'
+                f'ValueError: trying to set parameter for the {int(l[1]) + 1}-th selecting strategy but there\'s only' \
+                f' {self.selecting_count} selecting strategy(s)'
             strategy = self.selecting[int(l[1])]
         elif l[0].lower() == 't':
             assert int(l[1]) < self.timing_count, \
-                f'ValueError: too many {l[1] + 1} parameters to match with {self.timing_count} timing strategies'
+                f'ValueError: trying to set parameter for the {int(l[1]) + 1}-th timing strategy but there\'s only' \
+                f' {self.timing_count} timing strategies'
             strategy = self.timing[int(l[1])]
         elif l[0].lower() == 'r':
             assert int(l[1]) < self.ricon_count, \
-                f'ValueError: too many {l[1] + 1} parameters to match with {self.ticon_count} ricon strategies'
+                f'ValueError: trying to set parameter for the {int(l[1]) + 1}-th ricon strategy but there\'s only ' \
+                f'{self.ricon_count} ricon strategies'
             strategy = self.ricon[int(l[1])]
         else:
             print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
