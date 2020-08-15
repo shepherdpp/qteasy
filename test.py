@@ -557,8 +557,8 @@ class TestOperatorSubFuncs(unittest.TestCase):
         self.mask = np.array(mask_list)
         self.correct_signal = np.array(signal_list)
 
-
     def test_blend(self):
+        """测试timing_blend，selecting_blend 以及ricon_blend三种混合器"""
         pass
 
     def test_unify(self):
@@ -584,86 +584,140 @@ class TestOperatorSubFuncs(unittest.TestCase):
 
 
 class TestOperator(unittest.TestCase):
-    def setUp(self):
-        print('start testing HistoryPanel object\n')
-        self.data = np.random.randint(10, size=(5, 10, 4))
-        self.index = pd.date_range(start='20200101', freq='d', periods=10)
-        self.shares = '000100,000101,000102,000103,000104'
-        self.dtypes = 'close,open,high,low'
-        self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.dtypes, rows=self.index)
+    """全面测试Operator对象的所有功能。包括：
 
-    def create_test_data(self):
-        # build up test data: a 4-type, 3-share, 21-day matrix of prices that contains nan values in some days
+        1，
+    """
+
+    def setUp(self):
+        """prepare data for Operator test"""
+        print('start testing HistoryPanel object\n')
+
+        # build up test data: a 4-type, 3-share, 50-day matrix of prices that contains nan values in some days
         # for some share_pool
 
         # for share1:
-        share1_close = [7.74, 7.83, 7.79, 7.93, 7.84, 7.83, 7.77, 7.84, 7.86, 7.92, 7.84,
-                        7.83, 7.85, 8.14, 8.05, 8., 8.07, 8.1, 7.74, 7.71, 7.69]
-        share1_open = [7.88, 7.93, 7.86, 7.95, 7.92, 7.95, 8.01, 7.87, 7.88, 7.94, 7.93,
-                       7.88, 7.86, 8.43, 8.2, 8.19, 8.12, 8.15, 8.19, 7.79, 7.93]
-        share1_high = [7.88, 7.93, 7.86, 7.95, 7.92, 7.95, 8.01, 7.87, 7.88, 7.94, 7.93,
-                       7.88, 7.86, 8.43, 8.2, 8.19, 8.12, 8.15, 8.19, 7.79, 7.93]
-        share1_low = [7.68, 7.66, 7.76, 7.76, 7.75, 7.79, 7.76, 7.65, 7.81, 7.79, 7.81,
-                      7.7, 7.74, 7.82, 8., 7.97, 7.93, 8.01, 7.6, 7.58, 7.67]
+        DATA_ROWS = 50
+
+        share1_close = [10.04, 10, 10, 9.99, 9.97, 9.99, 10.03, 10.03, 10.06, 10.06, 10.11,
+                        10.09, 10.07, 10.06, 10.09, 10.03, 10.03, 10.06, 10.08, 10, 9.99,
+                        10.03, 10.03, 10.06, 10.03, 9.97, 9.94, 9.83, 9.77, 9.84, 9.91, 9.93,
+                        9.96, 9.91, 9.91, 9.88, 9.91, 9.64, 9.56, 9.57, 9.55, 9.57, 9.61, 9.61,
+                        9.55, 9.57, 9.63, 9.64, 9.65, 9.62]
+        share1_open = [10.02, 10, 9.98, 9.97, 9.99, 10.01, 10.04, 10.06, 10.06, 10.11,
+                       10.11, 10.07, 10.06, 10.09, 10.03, 10.02, 10.06, 10.08, 9.99, 10,
+                       10.03, 10.02, 10.06, 10.03, 9.97, 9.94, 9.83, 9.78, 9.77, 9.91, 9.92,
+                       9.97, 9.91, 9.9, 9.88, 9.91, 9.63, 9.64, 9.57, 9.55, 9.58, 9.61, 9.62,
+                       9.55, 9.57, 9.61, 9.63, 9.64, 9.61, 9.56]
+        share1_high = [10.07, 10, 10, 10, 10.03, 10.03, 10.04, 10.09, 10.1, 10.14, 10.11, 10.1,
+                       10.09, 10.09, 10.1, 10.05, 10.07, 10.09, 10.1, 10, 10.04, 10.04, 10.06,
+                       10.09, 10.05, 9.97, 9.96, 9.86, 9.77, 9.92, 9.94, 9.97, 9.97, 9.92, 9.92,
+                       9.92, 9.93, 9.64, 9.58, 9.6, 9.58, 9.62, 9.62, 9.64, 9.59, 9.62, 9.63,
+                       9.7, 9.66, 9.64]
+        share1_low = [9.99, 10, 9.97, 9.97, 9.97, 9.98, 9.99, 10.03, 10.03, 10.04, 10.11, 10.07,
+                      10.05, 10.03, 10.03, 10.01, 9.99, 10.03, 9.95, 10, 9.95, 10, 10.01, 9.99,
+                      9.96, 9.89, 9.83, 9.77, 9.77, 9.8, 9.9, 9.91, 9.89, 9.89, 9.87, 9.85, 9.6,
+                      9.64, 9.53, 9.55, 9.54, 9.55, 9.58, 9.54, 9.53, 9.53, 9.63, 9.64, 9.59, 9.56]
 
         # for share2:
-        share2_close = [6.98, 7.1, 7.14, 7.12, 7.1, 7.1, 7.11, 7.32, 7.36, np.nan, np.nan,
-                        np.nan, np.nan, np.nan, np.nan, np.nan, 7.58, 7.97, 7.47, 7.75, 7.51]
-        share2_open = [7.04, 6.94, 7.11, 7.14, 7.1, 7.11, 7.11, 7.11, 7.29, np.nan, np.nan,
-                       np.nan, np.nan, np.nan, np.nan, np.nan, 7.8, 7.43, 7.9, 7.43, 7.7]
-        share2_high = [7.06, 7.13, 7.15, 7.15, 7.14, 7.21, 7.27, 7.33, 7.39, np.nan, np.nan,
-                       np.nan, np.nan, np.nan, np.nan, np.nan, 7.8, 8.11, 7.93, 7.8, 7.74]
-        share2_low = [6.94, 6.94, 7.06, 7.05, 7.03, 7.06, 7.07, 7.1, 7.26, np.nan, np.nan,
-                      np.nan, np.nan, np.nan, np.nan, np.nan, 7.37, 7.43, 7.33, 7.38, 7.44]
+        share2_close = [9.68, 9.87, 9.86, 9.87, 9.79, 9.82, 9.8, 9.66, 9.62, 9.58, 9.69, 9.78, 9.75,
+                        9.96, 9.9, 10.04, 10.06, 10.08, 10.24, 10.24, 10.24, 9.86, 10.13, 10.12,
+                        10.1, 10.25, 10.24, 10.22, 10.75, 10.64, 10.56, 10.6, 10.42, 10.25, 10.24,
+                        10.49, 10.57, 10.63, 10.48, 10.37, 10.96, 11.02, 11, 11, 10.88, 10.87, 11.01,
+                        11.01, 11.58, 11.8]
+        share2_open = [9.88, 9.88, 9.89, 9.75, 9.74, 9.8, 9.62, 9.65, 9.58, 9.67, 9.81, 9.8, 10,
+                       9.95, 10.1, 10.06, 10.14, 9.9, 10.2, 10.29, 9.86, 9.48, 10.01, 10.24, 10.26,
+                       10.24, 10.12, 10.65, 10.64, 10.56, 10.42, 10.43, 10.29, 10.3, 10.44, 10.6,
+                       10.67, 10.46, 10.39, 10.9, 11.01, 11.01, 11.02, 10.8, 10.82, 11.02, 10.96,
+                       11.55, 11.74, 11.8]
+        share2_high = [9.91, 10.04, 9.93, 10.04, 9.84, 9.88, 9.99, 9.7, 9.67, 9.71, 9.85, 9.9, 10,
+                       10.2, 10.11, 10.18, 10.21, 10.26, 10.38, 10.47, 10.42, 10.07, 10.24, 10.27,
+                       10.38, 10.43, 10.39, 10.65, 10.84, 10.65, 10.73, 10.63, 10.51, 10.35, 10.46,
+                       10.63, 10.74, 10.76, 10.54, 11.02, 11.12, 11.17, 11.11, 11.06, 10.92, 11.15,
+                       11.11, 11.55, 11.95, 11.93]
+        share2_low = [9.63, 9.84, 9.81, 9.74, 9.67, 9.72, 9.57, 9.54, 9.51, 9.47, 9.68, 9.63, 9.75,
+                      9.65, 9.9, 9.93, 10.03, 9.8, 10.14, 10.09, 9.78, 9.21, 9.11, 9.68, 10.05,
+                      10.12, 9.89, 9.89, 10.59, 10.43, 10.34, 10.32, 10.21, 10.2, 10.18, 10.36,
+                      10.51, 10.41, 10.32, 10.37, 10.87, 10.95, 10.8, 10.72, 10.65, 10.71, 10.75,
+                      10.91, 11.31, 11.58]
 
         # for share3:
-        share3_close = [13.89, 14.13, 14.27, np.nan, np.nan, 14.53, 14.25, 14.56, 14.61,
-                        14.61, 14.01, 13.85, 13.93, 14.00, 13.98, 13.85, 13.85, 13.99,
-                        13.64, 13.82, 13.71]
-        share3_open = [13.92, 13.85, 14.14, np.nan, np.nan, 14.38, 14.39, 14.26, 14.69,
-                       14.68, 14.12, 13.99, 13.85, 14.02, 14., 13.95, 13.85, 13.86,
-                       13.99, 13.63, 13.82]
-        share3_high = [14.02, 14.16, 14.47, np.nan, np.nan, 14.8, 14.51, 14.58, 14.73,
-                       14.77, 14.22, 13.99, 13.96, 14.04, 14.06, 14.08, 13.95, 14.01,
-                       14.13, 13.84, 13.83]
-        share3_low = [13.8, 13.8, 14.11, np.nan, np.nan, 14.15, 14.24, 14.14, 14.48,
-                      14.5, 13.94, 13.79, 13.8, 13.91, 13.95, 13.83, 13.76, 13.8,
-                      13.46, 13.58, 13.68]
+        share3_close = [6.64, 7.26, 7.03, 6.87, 6.86, 6.64, 6.85, 6.7, 6.39, 6.22, 5.92, 5.91, 6.11,
+                        5.91, 6.23, 6.28, 6.28, 6.27, 5.7, 5.56, 5.67, 5.16, 5.69, 6.32, 6.14, 6.25,
+                        5.79, 5.26, 5.05, 5.45, 6.06, 6.21, 5.69, 5.46, 6.02, 6.69, 7.43, 7.72, 8.16,
+                        7.83, 8.7, 8.71, 8.88, 8.54, 8.87, 8.87, 8.18, 7.8, 7.97, 8.25]
+        share3_open = [7.26, 7, 6.88, 6.91, 6.61, 6.81, 6.63, 6.45, 6.16, 6.24, 5.96, 5.97, 5.96,
+                       6.2, 6.35, 6.11, 6.37, 5.58, 5.65, 5.65, 5.19, 5.42, 6.3, 6.15, 6.05, 5.89,
+                       5.22, 5.2, 5.07, 6.04, 6.12, 5.85, 5.67, 6.02, 6.04, 7.07, 7.64, 7.99, 7.59,
+                       8.73, 8.72, 8.97, 8.58, 8.71, 8.77, 8.4, 7.95, 7.76, 8.25, 7.51]
+        share3_high = [7.41, 7.31, 7.14, 7, 6.87, 6.82, 6.96, 6.85, 6.5, 6.34, 6.04, 6.02, 6.12, 6.38,
+                       6.43, 6.46, 6.43, 6.27, 5.77, 6.01, 5.67, 5.67, 6.35, 6.32, 6.43, 6.36, 5.79,
+                       5.47, 5.65, 6.04, 6.14, 6.23, 5.83, 6.25, 6.27, 7.12, 7.82, 8.14, 8.27, 8.92,
+                       8.76, 9.15, 8.9, 9.01, 9.16, 9, 8.27, 7.99, 8.33, 8.25]
+        share3_low = [6.53, 6.87, 6.83, 6.7, 6.6, 6.63, 6.57, 6.41, 6.15, 6.07, 5.89, 5.82, 5.73, 5.81,
+                      6.1, 6.06, 6.16, 5.57, 5.54, 5.51, 5.19, 5.12, 5.69, 6.01, 5.97, 5.86, 5.18, 5.19,
+                      4.96, 5.45, 5.84, 5.85, 5.28, 5.42, 6.02, 6.69, 7.28, 7.64, 7.25, 7.83, 8.41, 8.66,
+                      8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
 
         date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
                         '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
                         '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
                         '2016-07-19', '2016-07-20', '2016-07-21', '2016-07-22',
                         '2016-07-25', '2016-07-26', '2016-07-27', '2016-07-28',
-                        '2016-07-29']
+                        '2016-07-29', '2016-08-01', '2016-08-02', '2016-08-03',
+                        '2016-08-04', '2016-08-05', '2016-08-08', '2016-08-09',
+                        '2016-08-10', '2016-08-11', '2016-08-12', '2016-08-15',
+                        '2016-08-16', '2016-08-17', '2016-08-18', '2016-08-19',
+                        '2016-08-22', '2016-08-23', '2016-08-24', '2016-08-25',
+                        '2016-08-26', '2016-08-29', '2016-08-30', '2016-08-31',
+                        '2016-09-01', '2016-09-02', '2016-09-05', '2016-09-06',
+                        '2016-09-07', '2016-09-08']
 
         shares = ['000010', '000030', '000039']
 
         types = ['close', 'open', 'high', 'low']
 
-        self.test_data_3D = np.zeros((3, 4, 21))
-        self.test_data_2D = np.zeros((3, 21))
+        self.test_data_3D = np.zeros((3, DATA_ROWS, 4))
+        self.test_data_2D = np.zeros((DATA_ROWS, 3))
+        self.test_data_2D2 = np.zeros((DATA_ROWS, 4))
 
         # Build up 3D data
-        self.test_data_3D[0, 0, :] = share1_close
-        self.test_data_3D[0, 1, :] = share1_open
-        self.test_data_3D[0, 2, :] = share1_high
-        self.test_data_3D[0, 3, :] = share1_low
+        self.test_data_3D[0, :, 0] = share1_close
+        self.test_data_3D[0, :, 1] = share1_open
+        self.test_data_3D[0, :, 2] = share1_high
+        self.test_data_3D[0, :, 3] = share1_low
 
-        self.test_data_3D[1, 0, :] = share2_close
-        self.test_data_3D[1, 1, :] = share2_open
-        self.test_data_3D[1, 2, :] = share2_high
-        self.test_data_3D[1, 3, :] = share2_low
+        self.test_data_3D[1, :, 0] = share2_close
+        self.test_data_3D[1, :, 1] = share2_open
+        self.test_data_3D[1, :, 2] = share2_high
+        self.test_data_3D[1, :, 3] = share2_low
 
-        self.test_data_3D[2, 0, :] = share3_close
-        self.test_data_3D[2, 1, :] = share3_open
-        self.test_data_3D[2, 2, :] = share3_high
-        self.test_data_3D[2, 3, :] = share3_low
+        self.test_data_3D[2, :, 0] = share3_close
+        self.test_data_3D[2, :, 1] = share3_open
+        self.test_data_3D[2, :, 2] = share3_high
+        self.test_data_3D[2, :, 3] = share3_low
 
-        # Build up 2D data
-        self.test_data_2D[0, :] = share1_close
-        self.test_data_2D[1, :] = share2_close
-        self.test_data_2D[2, :] = share3_close
+        self.hp1 = qt.HistoryPanel(values=self.test_data_3D, levels=shares, columns=types, rows=date_indices)
+        self.op = qt.Operator(selecting_types=['simple'], timing_types='dma', ricon_types='urgent')
+
+    def test_property_get(self):
+        self.assertIsInstance(self.op, qt.Operator)
+        self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.selecting[0], qt.SelectingSimple)
+        self.assertIsInstance(self.op.ricon[0], qt.RiconUrgent)
+        self.assertEqual(self.op.selecting_count, 1)
+        self.assertEqual(self.op.strategy_count, 3)
+        self.assertEqual(self.op.ricon_count, 1)
+        self.assertEqual(self.op.timing_count, 1)
+        print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingSimple, qt.RiconUrgent])
+        self.assertEqual(len(self.op.strategies), 3)
+        self.assertIsInstance(self.op.strategies[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.strategies[1], qt.SelectingSimple)
+        self.assertIsInstance(self.op.strategies[2], qt.RiconUrgent)
+        self.assertEqual(self.op.strategy_count, 3)
+        self.assertEqual(self.op.op_data_freq, 'd')
+        self.assertEqual(self.op.op_data_types, ['close'])
+        self.assertEqual(self.op.get_opt_space_par, ([], []))
 
     def test_prepare_data(self):
         pass
@@ -690,6 +744,12 @@ class TestOperator(unittest.TestCase):
         pass
 
     def test_set_parameters(self):
+        pass
+
+    def test_set_opt_par(self):
+        pass
+
+    def test_set_blender(self):
         pass
 
 
@@ -764,7 +824,13 @@ class TestHistoryPanel(unittest.TestCase):
         self.index = pd.date_range(start='20200101', freq='d', periods=10)
         self.shares = '000100,000101,000102,000103,000104'
         self.htypes = 'close,open,high,low'
+        self.data2 = np.random.randint(10, size=(10, 5))
+        self.data3 = np.random.randint(10, size=(10, 4))
+        self.data4 = np.random.randint(10, size=(10))
         self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
+        self.hp2 = qt.HistoryPanel(values=self.data2, levels=self.shares, columns='close', rows=self.index)
+        self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index)
+        self.hp4 = qt.HistoryPanel(values=self.data4, levels='000100', columns='close', rows=self.index)
 
     def create_history_panel(self):
         """ test the creation of a HistoryPanel object by passing all data explicitly
@@ -779,6 +845,36 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp.column_count, 4)
         self.assertEqual(list(self.hp.levels.keys), self.shares.split())
         self.assertEqual(list(self.hp.columns.keys), self.htypes.split())
+
+        self.assertIsInstance(self.hp2, qt.HistoryPanel)
+        self.assertEqual(self.hp2.shape[0], 5)
+        self.assertEqual(self.hp2.shape[1], 10)
+        self.assertEqual(self.hp2.shape[2], 4)
+        self.assertEqual(self.hp2.level_count, 5)
+        self.assertEqual(self.hp2.row_count, 11)
+        self.assertEqual(self.hp2.column_count, 4)
+        self.assertEqual(list(self.hp2.levels.keys), self.shares.split())
+        self.assertEqual(list(self.hp2.columns.keys), self.htypes.split())
+
+        self.assertIsInstance(self.hp3, qt.HistoryPanel)
+        self.assertEqual(self.hp3.shape[0], 5)
+        self.assertEqual(self.hp3.shape[1], 10)
+        self.assertEqual(self.hp3.shape[2], 4)
+        self.assertEqual(self.hp3.level_count, 5)
+        self.assertEqual(self.hp3.row_count, 11)
+        self.assertEqual(self.hp3.column_count, 4)
+        self.assertEqual(list(self.hp3.levels.keys), self.shares.split())
+        self.assertEqual(list(self.hp3.columns.keys), self.htypes.split())
+
+        self.assertIsInstance(self.hp4, qt.HistoryPanel)
+        self.assertEqual(self.hp4.shape[0], 5)
+        self.assertEqual(self.hp4.shape[1], 10)
+        self.assertEqual(self.hp4.shape[2], 4)
+        self.assertEqual(self.hp4.level_count, 5)
+        self.assertEqual(self.hp4.row_count, 11)
+        self.assertEqual(self.hp4.column_count, 4)
+        self.assertEqual(list(self.hp4.levels.keys), self.shares.split())
+        self.assertEqual(list(self.hp4.columns.keys), self.htypes.split())
 
     def test_history_panel_slicing(self):
         self.assertTrue(np.allclose(self.hp['close'], self.data[:, :, 0:1]))
@@ -1108,6 +1204,14 @@ class TestTushare(unittest.TestCase):
         pass
 
     def test_options_daily(self):
+        pass
+
+
+class TestTAFuncs(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_bbands(self):
         pass
 
 

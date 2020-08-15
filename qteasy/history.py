@@ -530,40 +530,56 @@ class HistoryPanel():
             assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
             assert values.ndim <= 3, \
                 f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
+            # 检查输入数据的标签，处理标签数据以确认标签代表的数据各维度的数据量
 
+            if levels is None:
+                levels = range(self._l_count)
+            if isinstance(levels, str):
+                levels = str_to_list(levels)
+            if rows is None:
+                rows = pd.date_range(periods=self._r_count, end='2020-08-08', freq='d')
+            if columns is None:
+                columns = range(self._c_count)
+            if isinstance(columns, str):
+                columns = str_to_list(columns)
+
+            # 处理输入数据，补齐缺失的维度，根据输入数据的维度以及各维度的标签数据数量确定缺失的维度
             if values.ndim == 1:
-                values = values.reshape(1, 1, values.shape[0])
+                assert len(levels) == 1 and len(columns) == 1, \
+                    f'ValueError, number of levels and columns should be 1 in case input value is 1-dimensional, ' \
+                    f'got {len(levels)} levels and {len(columns)} columns'
+                values = values.reshape(1, values.shape[0], 1)
             elif values.ndim == 2:
-                values = values.reshape(1, *values.shape)
+                assert len(levels) == 1 or len(columns) == 1, \
+                    f'ValueError, number of either levels or columns should be 1 in case input value is ' \
+                    f'2-dimensional, got {len(levels)} levels and {len(columns)} columns'
+                if len(levels) == 1:
+                    values = values.reshape(1, *values.shape)
+                else:
+                    values = values.reshape(*values.T.shape, 1)
             self._l_count, self._r_count, self._c_count = values.shape
             self._values = values
             self._is_empty = False
-            if levels is None:
-                levels = range(self._l_count)
-                self._levels = dict(zip(levels, levels))
-            else:
-                self._levels = labels_to_dict(levels, range(self._l_count))
 
-            if rows is None:
-                rows = range(self._r_count)
-                self._rows = dict(zip(rows, rows))
-            else:
-                assert isinstance(rows, (list, dict, pd.DatetimeIndex)), \
-                    f'TypeError, input_hdates should be a list or DatetimeIndex, got {type(rows)} instead'
-                assert len(rows) == self.row_count, \
-                    f'ValueError, the number of input shares ({len(rows)}) does not match level ' \
-                    f'count ({self.row_count})'
-                try:
-                    new_rows = [pd.to_datetime(date) for date in rows]
-                except:
-                    raise ValueError('one or more item in hdate list can not be converted to Timestamp')
-                self._rows = labels_to_dict(new_rows, range(self._r_count))
+            assert (len(levels), len(rows), len(columns)) == values.shape, \
+                f'ValueError, value shape does not match, input data: ({(values.shape)}) while given axis' \
+                f' imply ({(len(levels), len(rows), len(columns))})'
 
-            if columns is None:
-                columns = range(self._c_count)
-                self._columns = dict(zip(columns, columns))
-            else:
-                self._columns = labels_to_dict(columns, range(self._c_count))
+            # 建立三个纬度的标签配对——建立标签序号字典，通过labels_to_dict()函数将标签和该纬度数据序号一一匹配
+            # 首先建立层标签序号字典：
+            self._levels = labels_to_dict(levels, range(self._l_count))
+
+            # 再建立行标签序号字典，即日期序号字典，再生成字典之前，检查输入标签数据的类型，并将数据转化为pd.Timestamp格式
+            assert isinstance(rows, (list, dict, pd.DatetimeIndex)), \
+                f'TypeError, input_hdates should be a list or DatetimeIndex, got {type(rows)} instead'
+            try:
+                new_rows = [pd.to_datetime(date) for date in rows]
+            except:
+                raise ValueError('one or more item in hdate list can not be converted to Timestamp')
+            self._rows = labels_to_dict(new_rows, range(self._r_count))
+
+            # 建立列标签序号字典
+            self._columns = labels_to_dict(columns, range(self._c_count))
 
     @property
     def is_empty(self):
@@ -1025,8 +1041,8 @@ def labels_to_dict(input_labels: [list, str], target_list: list) -> dict:
     现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
     使用labels_to_dict函数生成一个字典ID如下：
     ID:  {'first' : 0
-         'second': 1
-         'third' : 2}
+          'second': 1
+          'third' : 2}
     通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
     target_list[ID['first']] == target_list[0] == 100
 
@@ -1034,7 +1050,7 @@ def labels_to_dict(input_labels: [list, str], target_list: list) -> dict:
     :param input_labels: 输入标签，可以接受两种形式的输入：
                                     字符串形式: 如:     'first,second,third'
                                     列表形式，如:      ['first', 'second', 'third']
-    :param target_list: 需要
+    :param target_list: 需要进行映射的目标列表
     :return:
     """
     if isinstance(input_labels, str):

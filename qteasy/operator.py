@@ -243,7 +243,9 @@ class Strategy:
 
         :return:
         """
-        return self.__str__()
+        str1 = f'{type(self)}'
+        str2 = ''  # f'\nStrategy {self.stg_type}'
+        return str1
 
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""
@@ -1298,7 +1300,7 @@ class Operator:
         在一个Operator对象中，可以包含任意多个"策略对象"，而运行Operator生成交易信号的过程，就是调用这些不同的交易策略，并通过
         不同的方法对这些交易策略的结果进行组合的过程
 
-        目前在Operator对象中可以支持三种策略生成器，而每种类型的策略生成器都有不同的策略信号生成方式，可以在Operator对象使用若干不同
+        目前在Operator对象中可以支持三种策略生成器，而每种类型的策略生成器用不同的方式生成策略相关信号，可以在Operator对象使用若干不同
         生成类型的策略。同时，Operator对象在生成最终交易信号时，成员策略会被用于三种用途，分别用于创建多空蒙板、选股蒙板以及交易信号矩阵
         最后将两种蒙板和一种信号矩阵组合生成最终的交易信号清单。
 
@@ -1314,7 +1316,7 @@ class Operator:
 
         ==三种策略信号生成器==
 
-        目前Operator支持三种不同生成类型的策略，它们并不仅局限于某一种用途，不同生成类型之间的区别在于策略利用历史数据并生成最终结果的
+        目前Operator支持三种不同生成类型的策略，它们并不仅局限于某一种用途，不同生成器之间的区别在于策略利用历史数据并生成最终结果的
         方法不一样。三种生成类型的策略分别如下：
 
             1,  逐品种滚动时序信号生成器，用于生成择时信号的策略
@@ -1327,7 +1329,7 @@ class Operator:
                 同时，每个投资产品可以应用不同的参数生成信号，是最为灵活的择时信号生成器。
 
                 另外，为了避免前视偏差，滚动择时策略仅利用一小段有限的历史数据（被称为时间窗口）来生成每一个时间点上的信号，同时确保
-                时间窗口总是处于需要计算多空位置那一点的过去。这种技术我称为"时间窗口滚动"。这样的滚动择时信号生成方法适用于未来数据会
+                时间窗口总是处于需要计算多空位置那一点的过去。这种技术称为"时间窗口滚动"。这样的滚动择时信号生成方法适用于未来数据会
                 对当前的信号产生影响的情况下。采用滚动择时策略生成方法，可以确保每个时间点的交易信号只跟过去一段时间有关，从而彻底排除
                 前视偏差可能给策略带来的影响。
 
@@ -1335,7 +1337,7 @@ class Operator:
                 的乘积M*N成正比，效率显著低于简单时序信号生成策略，因此，在可能的情况下（例如，简单移动平均值相关策略不受未来价格影响）
                 应该尽量使用简单时序信号生成策略，以提升执行速度。
 
-            2,  周期运行比例分配器，用于周期性地调整投资组合中每个个股的权重比例
+            2,  周期运行投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
 
                 这类策略的共同特征是周期性运行，且运行的周期与其历史数据的粒度不同。在每次运行时，根据其历史数据，为潜在投资组合中的每
                 一个投资产品分配一个权重，并最终确保所有的权重值归一化。权重为0时表示该投资产品被从组合中剔除，而权重的大小则代表投资
@@ -1415,7 +1417,7 @@ class Operator:
 
         以上三类策略通过不同的方式混合后，可以任意组合一种复杂的策略，因此，在qteasy系统中，复杂的策略是可以由很多个简单的策略组合而来
         的。
-        在一个Operator对象中，作为容器可以容纳任意多个任意类型的策略，所有的策略以用途氛围三组，所有的策略可以引用不同的历史数据，生成
+        在一个Operator对象中，作为容器可以容纳任意多个任意类型的策略，所有的策略以用途分成三组，所有的策略可以引用不同的历史数据，生成
         同样大小尺度的结果（也就是说，生成的结果有相同的历史区间，相同的时间粒度），最后这些结果被通过某种方法"混合"起来，形成每个用途
         的最终的结果，即多空模版、选股蒙板以及交易信号矩阵。
         三种用途的结果又再次被组合起来，变成整个Operator对象的输出。
@@ -1458,10 +1460,16 @@ class Operator:
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if selecting_types is None:
             selecting_types = ['simple']
+        if isinstance(selecting_types, str):
+            selecting_types = str_to_list(selecting_types)
         if timing_types is None:
             timing_types = ['simple']
+        if isinstance(timing_types, str):
+            timing_types = str_to_list(timing_types)
         if ricon_types is None:
             ricon_types = ['none']
+        if isinstance(ricon_types, str):
+            ricon_types = str_to_list(ricon_types)
         # 在Operator对象中，对每一种类型的策略，需要三个列表对象加上一个字符串作为基本数据结构，存储相关信息：
         # 对于每一类型的策略，第一个列表是_stg_types， 按照顺序保存所有相关策略对象的种类字符串，如['MACD', 'DMA', 'MACD']
         # 第二个列表是_stg，按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
@@ -1598,9 +1606,7 @@ class Operator:
     @property
     def op_data_freq(self):
         """返回operator对象所有策略子对象所需数据的采样频率"""
-        d_freq = []
-        for item in self.timing + self.selecting + self.ricon:
-            d_freq.extend(item.data_freq)
+        d_freq = [item.data_freq for item in self.strategies]
         d_freq = list(set(d_freq))
         assert len(d_freq) == 1, f'ValueError, there are multiple history data frequency required by strategies'
         return d_freq[0]
