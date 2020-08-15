@@ -148,7 +148,7 @@ In practice, an Operation module contains multiple strategies, and combined, the
 In order to limit the number of possible parameter combinations and, also, reduce unnecessary calculation burden, the Operation module provides mechanics to serve that purpose in three folded way:
 
 1. the **optimization_tag** for each parameter: each member strategy object in the operation module (the operation object) has an attribute of``````, that can be marked as either ```0-opt_open```, or ```1-opt_closed```, indicating either the parameters of this strategy shall be included or not included in the opimization loop
-2. the ```operation.get_opt_space_par()``` method: that checks the  of each member strategies, and create the input needed for the optimization searching space to be created: the searching range and searching space type pair. these parameters can be passed directly to the optimzation module to create a searching space for the Operation module
+2. the ```operation.opt_space_par()``` method: that checks the  of each member strategies, and create the input needed for the optimization searching space to be created: the searching range and searching space type pair. these parameters can be passed directly to the optimzation module to create a searching space for the Operation module
 3. the ```operation.set_opt_par()```method: that takes created parameters extracted from the optimization module, and fit them into the opt-open strategies 
 
 #### Improvement 190621:

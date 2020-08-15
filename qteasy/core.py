@@ -1604,7 +1604,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
 
     proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
-    s_range, s_type = op.get_opt_space_par
+    s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
 
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
@@ -1668,7 +1668,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
 """
     proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
-    s_range, s_type = op.get_opt_space_par
+    s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
@@ -1731,7 +1731,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
 """
     proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
-    s_range, s_type = op.get_opt_space_par
+    s_range, s_type = op.opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     base_space = Space(s_range, s_type)
     spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来

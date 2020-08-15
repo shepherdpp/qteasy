@@ -717,11 +717,12 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategy_count, 3)
         self.assertEqual(self.op.op_data_freq, 'd')
         self.assertEqual(self.op.op_data_types, ['close'])
-        self.assertEqual(self.op.get_opt_space_par, ([], []))
+        self.assertEqual(self.op.opt_space_par, ([], []))
         self.assertEqual(self.op.max_window_length, 270)
         self.assertEqual(self.op.timing_blender, 'pos-1')
         self.assertEqual(self.op.selecting_blender, '0')
         self.assertEqual(self.op.ricon_blender, 'add')
+        self.assertEqual(self.op.opt_types, [0, 0, 0])
 
     def test_prepare_data(self):
         pass
@@ -762,27 +763,63 @@ class TestOperator(unittest.TestCase):
 
         self.assertEqual(self.op.op_data_freq, 'd')
         self.assertEqual(self.op.op_data_types, ['close', 'high', 'open'])
-        self.assertEqual(self.op.get_opt_space_par,
+        self.assertEqual(self.op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (0, 1)], ['discr', 'discr', 'discr', 'conti']))
         self.assertEqual(self.op.max_window_length, 20)
         self.assertRaises(AssertionError, self.op.set_parameter, stg_id='t-1', pars=(1, 2))
         self.assertRaises(AssertionError, self.op.set_parameter, stg_id='t1', pars=(1, 2))
         self.assertRaises(AssertionError, self.op.set_parameter, stg_id=32, pars=(1, 2))
 
-        self.op.set_blender('selecting', '0 and 1')
+        self.op.set_blender('selecting', '0 and 1 or 2')
         self.op.set_blender('timing', 'chg-1')
         self.assertEqual(self.op.timing_blender, 'chg-1')
-        self.assertEqual(self.op.selecting_blender, '0 and 1')
+        self.assertEqual(self.op.selecting_blender, '0 and 1 or 2')
+        self.assertEqual(self.op.selecting_blender_expr, ['or', 'and', '0', '1', '2'])
         self.assertEqual(self.op.ricon_blender, 'add')
 
         self.assertRaises(ValueError, self.op.set_blender, 'select', '0 and 1')
         self.assertRaises(TypeError, self.op.set_blender, 35, '0 and 1')
 
+        self.assertEqual(self.op.opt_space_par,
+                         ([(5, 10), (5, 15), (10, 15), (0, 1)], ['discr', 'discr', 'discr', 'conti']))
+        self.assertEqual(self.op.opt_types, [1, 1, 0])
+
     def test_exp_to_blender(self):
-        pass
+        self.op.set_blender('selecting', '0 and 1 or 2')
+        self.assertEqual(self.op.selecting_blender_expr, ['or', 'and', '0', '1', '2'])
+        self.op.set_blender('selecting', '0 and ( 1 or 2 )')
+        self.assertEqual(self.op.selecting_blender_expr, ['and', '0', 'or', '1', '2'])
+        self.assertRaises(ValueError, self.op.set_blender, 'selecting', '0 and (1 or 2)')
 
     def test_set_opt_par(self):
-        pass
+        self.op.set_parameter('t-0',
+                              pars=(5, 10, 5),
+                              opt_tag=1,
+                              par_boes=((5, 10), (5, 15), (10, 15)),
+                              window_length=10,
+                              data_types=['close', 'open', 'high'])
+        self.op.set_parameter(stg_id='s-0',
+                              pars=(0.5,),
+                              opt_tag=0,
+                              sample_freq='10d',
+                              window_length=10,
+                              data_types='close, open')
+        self.op.set_parameter(stg_id='r-0',
+                              pars=(9, -0.23),
+                              opt_tag=1,
+                              sample_freq='d',
+                              window_length=20,
+                              data_types='close, open')
+        self.assertEqual(self.op.timing[0].pars, (5, 10, 5))
+        self.assertEqual(self.op.selecting[0].pars, (0.5,))
+        self.assertEqual(self.op.ricon[0].pars, (9, -0.23))
+        self.assertEqual(self.op.opt_types, [1, 0, 1])
+        self.op.set_opt_par((5, 12, 9, 8, -0.1))
+        self.assertEqual(self.op.timing[0].pars, (5, 12, 9))
+        self.assertEqual(self.op.selecting[0].pars, (0.5,))
+        self.assertEqual(self.op.ricon[0].pars, (8, -0.1))
+
+        self.assertRaises(ValueError, self.op.set_opt_par, (5, 12, 9, 8))
 
     def test_set_blender(self):
         pass

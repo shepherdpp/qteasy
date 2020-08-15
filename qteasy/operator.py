@@ -1585,6 +1585,10 @@ class Operator:
         return self._selecting_blender_string
 
     @property
+    def selecting_blender_expr(self):
+        return self._selecting_blender
+
+    @property
     def ricon(self):
         """返回operator对象的所有ricon对象"""
         return self._ricon
@@ -1630,8 +1634,10 @@ class Operator:
         return d_freq[0]
 
     @property
-    def get_opt_space_par(self):
-        """一次性返回operator对象中所有参加优化（opt_tag != 0）的子策略的参数空间信息
+    def opt_space_par(self):
+        """一次性返回operator对象中所有参加优化（opt_tag != 0）的子策略的参数空间Space信息
+            改属性的返回值是一个元组，包含ranges, types两个列表，这两个列表正好可以直接用作Space对象的创建参数，用于创建一个合适的
+            Space对象
 
         一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
         stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
@@ -1642,6 +1648,8 @@ class Operator:
 
          这个函数遍历operator对象中所有子策略，根据其优化类型选择它的参数空间信息，组合成一个多维向量用于创建可以用于生成所有相关
          策略的参数的高维空间
+
+         return: ranges, types
         """
         ranges = []
         types = []
@@ -1655,6 +1663,10 @@ class Operator:
                 ranges.append(stg.par_boes)
                 types.extend(['enum'])
         return ranges, types
+
+    @property
+    def opt_types(self):
+        return [stg.opt_tag for stg in self.strategies]
 
     @property
     def max_window_length(self):
@@ -1982,11 +1994,16 @@ class Operator:
             给选股策略混合表达式赋值后，直接解析表达式，将选股策略混合表达式的前缀表达式存入选股策略混合器
         """
         if not isinstance(selecting_blender_expression, str):  # 如果输入不是str类型
-            self._selecting_blender = self._exp_to_blender
             self._selecting_blender_string = '0'
+            self._selecting_blender = ['0']
         else:
-            self._selecting_blender = self._exp_to_blender
             self._selecting_blender_string = selecting_blender_expression
+            try:
+                self._selecting_blender = self._exp_to_blender
+            except:
+                raise ValueError(f'Selecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
+                                 f', all elements should be separated by blank space, for example: '
+                                 f'\' 0 and ( 1 or 2 )\'')
 
     def _set_ricon_blender(self, ricon_blender):
         self._ricon_blender = ricon_blender
@@ -2086,13 +2103,13 @@ class Operator:
         # 读取字符串并读取字符串中的各个元素（操作数和操作符），当前使用str对象的split()方法进行，要
         # 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
         # 字符串进行分割
-        # exp_list = self._selecting_blender_string.split()
+        exp_list = self._selecting_blender_string.split()
         # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
-        exp_list = list(self._selecting_blender_string.
-                        replace(' ', '').
-                        replace('_', '').
-                        replace('.', '').
-                        replace('-', ''))
+        # exp_list = list(self._selecting_blender_string.
+        #                 replace(' ', '').
+        #                 replace('_', '').
+        #                 replace('.', '').
+        #                 replace('-', ''))
         # 开始循环读取所有操作元素
         while exp_list:
             s = exp_list.pop()
@@ -2119,6 +2136,8 @@ class Operator:
                     # 否则就弹出s1中的符号压入s2，并将元素放回队列
                     s2.append(s1.pop())
                     exp_list.append(s)
+            else:
+                raise ValueError(f'unidentified characters found in blender string: \'{s}\'')
         while s1:
             s2.append(s1.pop())
         s2.reverse()  # 表达式解析完成，生成前缀表达式
