@@ -1479,7 +1479,7 @@ class Operator:
         self._timing_types = []
         self._timing = []
         self._timing_history_data = []
-        self._timing_blender = 'pos-1'  # 默认的择时策略混合方式
+        self._ls_blender = 'pos-1'  # 默认的择时策略混合方式
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
             if isinstance(timing_type, str):
@@ -1519,9 +1519,7 @@ class Operator:
                     str_list.append(f' or {str(cur_type)}')
                 cur_type += 1
                 self._selecting_type.append(selecting_type)
-                if selecting_type.lower() == 'trend':
-                    self._selecting.append(SelectingTrend())
-                elif selecting_type.lower() == 'random':
+                if selecting_type.lower() == 'random':
                     self._selecting.append(SelectingRandom())
                 elif selecting_type.lower() == 'finance':
                     self._selecting.append(SelectingFinance())
@@ -1568,8 +1566,8 @@ class Operator:
         return len(self.timing)
 
     @property
-    def timing_blender(self):
-        return self._timing_blender
+    def ls_blender(self):
+        return self._ls_blender
 
     @property
     def selecting(self):
@@ -1613,7 +1611,7 @@ class Operator:
 
     @property
     def strategy_benders(self):
-        return [self.timing_blender, self.selecting_blender, self.ricon_blender]
+        return [self.ls_blender, self.selecting_blender, self.ricon_blender]
 
     @property
     def op_data_types(self):
@@ -1711,12 +1709,12 @@ class Operator:
         if isinstance(blender_type, str):
             if blender_type.lower() == 'selecting':
                 self._set_selecting_blender(*args, **kwargs)
-            elif blender_type.lower() == 'timing':
-                self._set_timing_blender(*args, **kwargs)
+            elif blender_type.lower() == 'ls':
+                self._set_ls_blender(*args, **kwargs)
             elif blender_type.lower() == 'ricon':
                 self._set_ricon_blender(*args, **kwargs)
             else:
-                raise ValueError(f'wrong input!')
+                raise ValueError(f'wrong input! {blender_type} is not recognized')
         else:
             raise TypeError(f'blender_type should be a string, got {type(blender_type)} instead')
         pass
@@ -1808,7 +1806,7 @@ class Operator:
 
         # 接着打印 timing模块的信息
         print('Total count of timing strategies:', len(self._timing))
-        print('The blend type of timing strategies is', self._timing_blender)
+        print('The blend type of timing strategies is', self._ls_blender)
         print('Parameters of timing Strategies:')
         for tmg in self.timing:
             tmg.info()
@@ -1934,7 +1932,7 @@ class Operator:
         # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
         # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
         ls_masks = [tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)]
-        ls_mask = self._timing_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
+        ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # debug
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
         # print('\n long/short mask: \n', ls_mask[:100])
@@ -1975,18 +1973,22 @@ class Operator:
     # ================================
     # 下面是Operation模块的私有方法
 
-    def _set_timing_blender(self, timing_blender):
-        """设置择时策略混合方式，混合方式包括pos-N,chg-N，以及cumulate三种
+    def _set_ls_blender(self, ls_blender):
+        """设置多空蒙板的混合方式，混合方式包括pos-N-T, str-T, 及'avg'三种, 专门用于控制多空蒙板的混合方式。
 
         input:
-            :param timing_blender，str，合法的输入包括：
-                'chg-N': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
-                'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-                'cumulate': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
+            :param ls_blender，str，合法的输入包括：
+                'str-T': T为浮点数，取值区间为大于零的浮点数，当所有策略的多空信号强度之和大于T时，输出信号为1或-1，没有中间地带
+                'pos-N-T': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空，当策略的多空输出存在浮点数时，
+                T表示判断某个多空值为多的阈值，例如：
+                    'pos-2-0.2' 表示当至少有两个策略输出的多空值>0.2时，策略输出值为多，信号强度为所有多空信号之和。信号强度clip到(-1, 1)
+                'avg': 在每个策略发生反转时都会产生交易信号，总信号强度为所有策略信号强度的平均值
         return:=====
             无
         """
-        self._timing_blender = timing_blender
+        # TODO: 使用regex判断输入的ls_blender各式是否正确
+        assert isinstance(ls_blender, str), f'TypeError, expecting string but got {type(ls_blender)}'
+        self._ls_blender = ls_blender
 
     def _set_selecting_blender(self, selecting_blender_expression):
         """ 设置选股策略的混合方式，混合方式通过选股策略混合表达式来表示
@@ -2008,7 +2010,7 @@ class Operator:
     def _set_ricon_blender(self, ricon_blender):
         self._ricon_blender = ricon_blender
 
-    def _timing_blend(self, ls_masks):
+    def _ls_blend(self, ls_masks):
         """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
 
         input：=====
@@ -2016,8 +2018,13 @@ class Operator:
         return：=====
             :rtype: object: 一个混合后的多空蒙板
         """
-        blndr = self._timing_blender  # 从对象的属性中读取择时混合参数
-        assert isinstance(blndr, str), 'Parmameter Type Error: the timing blender should be a text string!'
+        SUPPORTED_TYPE = ['avg', 'pos', 'str']
+        try:
+            blndr = str_to_list(self._ls_blender, '-')  # 从对象的属性中读取择时混合参数
+        except:
+            raise TypeError(f'the timing blender converted successfully!')
+        assert isinstance(blndr[0], str) and blndr[0] in SUPPORTED_TYPE, \
+            f'extracted blender can not be recognized, make sure your input is like "str-T", "pos-N-T" or "avg"'
         # debug
         # print(f'timing blender is:{blndr}')
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
@@ -2026,34 +2033,35 @@ class Operator:
         l_m = 0.
         for msk in ls_masks:  # 计算所有多空模版的和
             l_m += msk
-        if blndr[0:3] == 'chg':  # 出现N个状态变化信号时状态变化
-            # TODO: ！！本混合方法暂未完成！！
-            # chg-N方式下，持仓仅有两个位置，1或0，持仓位置与各个蒙板的状态变化有关，如果当前状态为空头，只要有N个或更多
-            # 蒙板空转多，则结果转换为多头，反之亦然。这种方式与pos-N的区别在于，pos-N在多转空时往往滞后，因为要满足剩余
-            # 的空头数量小于N后才会转空头，而chg-N则不然。例如，三个组合策略下pos-1要等至少两个策略多转空后才会转空，而
-            # chg-1只要有一个策略多转空后，就会立即转空
-            # 已经实现的chg-1方法由pandas实现，效率很低
-            # print 'the first long/short mask is\n', ls_masks[-1]
-            assert isinstance(l_m, np.ndarray), 'TypeError: the long short position mask should be an ndArray'
-            return np.apply_along_axis(_timing_blend_change, 1, l_m)
-        else:  # 另外两种混合方式都需要用到蒙板累加，因此一同处理
-            l_count = len(ls_masks)
-            # print 'the first long/short mask is\n', ls_masks[-1]
-            if blndr == 'cumulative':
-                # cumulate方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，只有所有蒙板均看空时，最终结果才看空
-                # 所有蒙板的权重相同，因此，如果一共五个蒙板三个看多两个看空时，持仓为60%
-                # print 'long short masks are merged by', blndr, 'result as\n', l_m / l_count
-                return l_m / l_count
-            elif blndr[0:3] == 'pos':
-                # pos-N方式下，持仓同样取决于看多的蒙板的数量，但是持仓只能为1或0，只有满足N个或更多蒙板看多时，最终结果
-                # 看多，否则看空，如pos-2方式下，至少两个蒙板看多则最终看多，否则看空
-                # print 'timing blender mode: ', blndr
-                n = int(blndr[-1])
-                # print 'long short masks are merged by', blndr, 'result as\n', l_m.clip(n - 1, n) - (n - 1)
-                return l_m.clip(n - 1, n) - (n - 1)
+
+        l_count = len(ls_masks)
+        # print 'the first long/short mask is\n', ls_masks[-1]
+        if blndr[0] == 'avg':
+            # avg方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，只有所有蒙板均看空时，最终结果才看空
+            # 所有蒙板的权重相同，因此，如果一共五个蒙板三个看多两个看空时，持仓为60%
+            # print 'long short masks are merged by', blndr, 'result as\n', l_m / l_count
+            return l_m / l_count
+        elif blndr[0] == 'pos':
+            # pos-N方式下，持仓同样取决于看多的蒙板的数量，但是持仓只能为1或0，只有满足N个或更多蒙板看多时，最终结果
+            # 看多，否则看空，如pos-2方式下，至少两个蒙板看多则最终看多，否则看空
+            # print 'timing blender mode: ', blndr
+            n = int(blndr[1])
+            l_m_sign = 0.
+            if len(blndr) == 3:
+                threshold = float(blndr[2])
+                for msk in ls_masks:
+                    l_m_sign += np.sign(np.where(np.abs(msk)<threshold, 0, msk))
             else:
-                print('Blender text not recognized!')
-        pass
+                for msk in ls_masks:
+                    l_m_sign += np.sign(msk)
+            # print 'long short masks are merged by', blndr, 'result as\n', l_m.clip(n - 1, n) - (n - 1)
+            res = np.where(np.abs(l_m_sign) >= n, l_m, 0) / n
+            return res.clip(-1, 1)
+        elif blndr[0] == 'str':
+            threshold = float(blndr[1])
+            return np.where(np.abs(l_m) >= threshold, 1, 0) * np.sign(l_m)
+        else:
+            raise ValueError(f'Blender text ({blndr}) not recognized!')
 
     def _selecting_blend(self, sel_masks):
         """ 选股策略混合器，将各个选股策略生成的选股蒙板按规则混合成一个蒙板

@@ -554,11 +554,106 @@ class TestOperatorSubFuncs(unittest.TestCase):
                        [0.0, 0.0, 0.0, 0.5],
                        [-0.4, 0.0, -1.0, 0.0],
                        [0.0, 0.5, 0.0, 0.0]]
+
         self.mask = np.array(mask_list)
         self.correct_signal = np.array(signal_list)
+        self.op = qt.Operator()
 
-    def test_blend(self):
-        """测试timing_blend，selecting_blend 以及ricon_blend三种混合器"""
+    def test_ls_blend(self):
+        """测试多空蒙板的混合器，三种混合方式均需要测试"""
+        ls_mask1 = [[0.0, 0.0, 0.0, -0.0],
+                    [1.0, 0.0, 0.0, -1.0],
+                    [1.0, 0.0, 1.0, -1.0],
+                    [1.0, 0.0, 1.0, -1.0],
+                    [1.0, 1.0, 1.0, -1.0],
+                    [1.0, 1.0, 1.0, -1.0],
+                    [0.0, 1.0, 0.0, -1.0],
+                    [0.0, 1.0, 0.0, -1.0]]
+        ls_mask2 = [[0.0, 0.0, 0.5, -0.5],
+                    [0.0, 0.0, 0.5, -0.3],
+                    [0.0, 0.5, 0.5, -0.0],
+                    [0.5, 0.5, 0.3, -0.0],
+                    [0.5, 0.5, 0.3, -0.3],
+                    [0.5, 0.5, 0.0, -0.5],
+                    [0.3, 0.5, 0.0, -1.0],
+                    [0.3, 1.0, 0.0, -1.0]]
+        ls_mask3 = [[0.5, 0.0, 1.0, -0.4],
+                    [0.4, 0.0, 1.0, -0.3],
+                    [0.3, 0.0, 0.8, -0.2],
+                    [0.2, 0.0, 0.6, -0.1],
+                    [0.1, 0.2, 0.4, -0.2],
+                    [0.1, 0.3, 0.2, -0.5],
+                    [0.1, 0.4, 0.0, -0.5],
+                    [0.1, 0.5, 0.0, -1.0]]
+        ls_blnd_avg = [[0.16666667, 0.00000000, 0.50000000, -0.3],
+                       [0.46666667, 0.00000000, 0.50000000, -0.53333333],
+                       [0.43333333, 0.16666667, 0.76666667, -0.4],
+                       [0.56666667, 0.16666667, 0.63333333, -0.36666667],
+                       [0.53333333, 0.56666667, 0.56666667, -0.5],
+                       [0.53333333, 0.60000000, 0.40000000, -0.66666667],
+                       [0.13333333, 0.63333333, 0.00000000, -0.83333333],
+                       [0.13333333, 0.83333333, 0.00000000, -1.]]
+        # result with blender 'str-1.5'
+        ls_blnd_str_15 = [[0, 0, 1, 0],
+                          [0, 0, 1, -1],
+                          [0, 0, 1, 0],
+                          [1, 0, 1, 0],
+                          [1, 1, 1, -1],
+                          [1, 1, 0, -1],
+                          [0, 1, 0, -1],
+                          [0, 1, 0, -1]]
+        # result with blender 'pos-2' == 'pos-2-0'
+        ls_blnd_pos_2 = [[0.00, 0.00, 0.75, -0.45],
+                         [0.70, 0.00, 0.75, -0.80],
+                         [0.65, 0.00, 1.00, -0.60],
+                         [0.85, 0.00, 0.95, -0.55],
+                         [0.80, 0.85, 0.85, -0.75],
+                         [0.80, 0.90, 0.60, -1.00],
+                         [0.20, 0.95, 0.00, -1.00],
+                         [0.20, 1.00, 0.00, -1.00]]
+        # result with blender 'pos-2-0.25'
+        ls_blnd_pos_2_25 = [[0.00, 0.00, 0.75, -0.45],
+                            [0.70, 0.00, 0.75, -0.8],
+                            [0.65, 0.00, 1.00, 0.],
+                            [0.85, 0.00, 0.95, 0.],
+                            [0.80, 0.85, 0.85, -0.75],
+                            [0.80, 0.90, 0.00, -1.],
+                            [0.00, 0.95, 0.00, -1.],
+                            [0.00, 1.00, 0.00, -1.]]
+
+        ls_masks = [np.array(ls_mask1), np.array(ls_mask2), np.array(ls_mask3)]
+
+        # test A: the ls_blender 'str-T'
+        self.op.set_blender('ls', 'str-1.5')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(res)
+        self.assertTrue(np.allclose(res, ls_blnd_str_15))
+
+        # test B: the ls_blender 'pos-N-T'
+        self.op.set_blender('ls', 'pos-2')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(res)
+        self.assertTrue(np.allclose(res, ls_blnd_pos_2))
+
+        self.op.set_blender('ls', 'pos-2-0.25')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(res)
+        self.assertTrue(np.allclose(res, ls_blnd_pos_2_25))
+
+        # test C: the ls_blender 'avg'
+        self.op.set_blender('ls', 'avg')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(res)
+        self.assertTrue(np.allclose(res, ls_blnd_avg))
+
+    def test_sel_blend(self):
+        """测试选股蒙板的混合器，包括所有的混合模式"""
+        # step2, test blending of sel masks
+        pass
+
+    def test_bs_blend(self):
+        """测试买卖信号混合模式"""
+        # step3, test blending of op signals
         pass
 
     def test_unify(self):
@@ -578,9 +673,6 @@ class TestOperatorSubFuncs(unittest.TestCase):
         self.signal = qt.mask_to_signal(self.mask)
         print(self.signal)
         self.assertTrue(np.allclose(self.signal, self.correct_signal))
-
-    def test_timing_blend_change(self):
-        pass
 
 
 class TestOperator(unittest.TestCase):
@@ -623,38 +715,38 @@ class TestOperator(unittest.TestCase):
         share2_close = [9.68, 9.87, 9.86, 9.87, 9.79, 9.82, 9.8, 9.66, 9.62, 9.58, 9.69, 9.78, 9.75,
                         9.96, 9.9, 10.04, 10.06, 10.08, 10.24, 10.24, 10.24, 9.86, 10.13, 10.12,
                         10.1, 10.25, 10.24, 10.22, 10.75, 10.64, 10.56, 10.6, 10.42, 10.25, 10.24,
-                        10.49, 10.57, 10.63, 10.48, 10.37, 10.96, 11.02, 11, 11, 10.88, 10.87, 11.01,
+                        10.49, 10.57, 10.63, 10.48, 10.37, 10.96, 11.02, np.nan, np.nan, 10.88, 10.87, 11.01,
                         11.01, 11.58, 11.8]
         share2_open = [9.88, 9.88, 9.89, 9.75, 9.74, 9.8, 9.62, 9.65, 9.58, 9.67, 9.81, 9.8, 10,
                        9.95, 10.1, 10.06, 10.14, 9.9, 10.2, 10.29, 9.86, 9.48, 10.01, 10.24, 10.26,
                        10.24, 10.12, 10.65, 10.64, 10.56, 10.42, 10.43, 10.29, 10.3, 10.44, 10.6,
-                       10.67, 10.46, 10.39, 10.9, 11.01, 11.01, 11.02, 10.8, 10.82, 11.02, 10.96,
+                       10.67, 10.46, 10.39, 10.9, 11.01, 11.01, np.nan, np.nan, 10.82, 11.02, 10.96,
                        11.55, 11.74, 11.8]
         share2_high = [9.91, 10.04, 9.93, 10.04, 9.84, 9.88, 9.99, 9.7, 9.67, 9.71, 9.85, 9.9, 10,
                        10.2, 10.11, 10.18, 10.21, 10.26, 10.38, 10.47, 10.42, 10.07, 10.24, 10.27,
                        10.38, 10.43, 10.39, 10.65, 10.84, 10.65, 10.73, 10.63, 10.51, 10.35, 10.46,
-                       10.63, 10.74, 10.76, 10.54, 11.02, 11.12, 11.17, 11.11, 11.06, 10.92, 11.15,
+                       10.63, 10.74, 10.76, 10.54, 11.02, 11.12, 11.17, np.nan, np.nan, 10.92, 11.15,
                        11.11, 11.55, 11.95, 11.93]
         share2_low = [9.63, 9.84, 9.81, 9.74, 9.67, 9.72, 9.57, 9.54, 9.51, 9.47, 9.68, 9.63, 9.75,
                       9.65, 9.9, 9.93, 10.03, 9.8, 10.14, 10.09, 9.78, 9.21, 9.11, 9.68, 10.05,
                       10.12, 9.89, 9.89, 10.59, 10.43, 10.34, 10.32, 10.21, 10.2, 10.18, 10.36,
-                      10.51, 10.41, 10.32, 10.37, 10.87, 10.95, 10.8, 10.72, 10.65, 10.71, 10.75,
+                      10.51, 10.41, 10.32, 10.37, 10.87, 10.95, np.nan, np.nan, 10.65, 10.71, 10.75,
                       10.91, 11.31, 11.58]
 
         # for share3:
-        share3_close = [6.64, 7.26, 7.03, 6.87, 6.86, 6.64, 6.85, 6.7, 6.39, 6.22, 5.92, 5.91, 6.11,
+        share3_close = [6.64, 7.26, 7.03, 6.87, np.nan, 6.64, 6.85, 6.7, 6.39, 6.22, 5.92, 5.91, 6.11,
                         5.91, 6.23, 6.28, 6.28, 6.27, 5.7, 5.56, 5.67, 5.16, 5.69, 6.32, 6.14, 6.25,
                         5.79, 5.26, 5.05, 5.45, 6.06, 6.21, 5.69, 5.46, 6.02, 6.69, 7.43, 7.72, 8.16,
                         7.83, 8.7, 8.71, 8.88, 8.54, 8.87, 8.87, 8.18, 7.8, 7.97, 8.25]
-        share3_open = [7.26, 7, 6.88, 6.91, 6.61, 6.81, 6.63, 6.45, 6.16, 6.24, 5.96, 5.97, 5.96,
+        share3_open = [7.26, 7, 6.88, 6.91, np.nan, 6.81, 6.63, 6.45, 6.16, 6.24, 5.96, 5.97, 5.96,
                        6.2, 6.35, 6.11, 6.37, 5.58, 5.65, 5.65, 5.19, 5.42, 6.3, 6.15, 6.05, 5.89,
                        5.22, 5.2, 5.07, 6.04, 6.12, 5.85, 5.67, 6.02, 6.04, 7.07, 7.64, 7.99, 7.59,
                        8.73, 8.72, 8.97, 8.58, 8.71, 8.77, 8.4, 7.95, 7.76, 8.25, 7.51]
-        share3_high = [7.41, 7.31, 7.14, 7, 6.87, 6.82, 6.96, 6.85, 6.5, 6.34, 6.04, 6.02, 6.12, 6.38,
+        share3_high = [7.41, 7.31, 7.14, 7, np.nan, 6.82, 6.96, 6.85, 6.5, 6.34, 6.04, 6.02, 6.12, 6.38,
                        6.43, 6.46, 6.43, 6.27, 5.77, 6.01, 5.67, 5.67, 6.35, 6.32, 6.43, 6.36, 5.79,
                        5.47, 5.65, 6.04, 6.14, 6.23, 5.83, 6.25, 6.27, 7.12, 7.82, 8.14, 8.27, 8.92,
                        8.76, 9.15, 8.9, 9.01, 9.16, 9, 8.27, 7.99, 8.33, 8.25]
-        share3_low = [6.53, 6.87, 6.83, 6.7, 6.6, 6.63, 6.57, 6.41, 6.15, 6.07, 5.89, 5.82, 5.73, 5.81,
+        share3_low = [6.53, 6.87, 6.83, 6.7, np.nan, 6.63, 6.57, 6.41, 6.15, 6.07, 5.89, 5.82, 5.73, 5.81,
                       6.1, 6.06, 6.16, 5.57, 5.54, 5.51, 5.19, 5.12, 5.69, 6.01, 5.97, 5.86, 5.18, 5.19,
                       4.96, 5.45, 5.84, 5.85, 5.28, 5.42, 6.02, 6.69, 7.28, 7.64, 7.25, 7.83, 8.41, 8.66,
                       8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
@@ -719,7 +811,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.op_data_types, ['close'])
         self.assertEqual(self.op.opt_space_par, ([], []))
         self.assertEqual(self.op.max_window_length, 270)
-        self.assertEqual(self.op.timing_blender, 'pos-1')
+        self.assertEqual(self.op.ls_blender, 'pos-1')
         self.assertEqual(self.op.selecting_blender, '0')
         self.assertEqual(self.op.ricon_blender, 'add')
         self.assertEqual(self.op.opt_types, [0, 0, 0])
@@ -771,8 +863,8 @@ class TestOperator(unittest.TestCase):
         self.assertRaises(AssertionError, self.op.set_parameter, stg_id=32, pars=(1, 2))
 
         self.op.set_blender('selecting', '0 and 1 or 2')
-        self.op.set_blender('timing', 'chg-1')
-        self.assertEqual(self.op.timing_blender, 'chg-1')
+        self.op.set_blender('ls', 'str-1.2')
+        self.assertEqual(self.op.ls_blender, 'str-1.2')
         self.assertEqual(self.op.selecting_blender, '0 and 1 or 2')
         self.assertEqual(self.op.selecting_blender_expr, ['or', 'and', '0', '1', '2'])
         self.assertEqual(self.op.ricon_blender, 'add')
@@ -821,9 +913,6 @@ class TestOperator(unittest.TestCase):
 
         self.assertRaises(ValueError, self.op.set_opt_par, (5, 12, 9, 8))
 
-    def test_set_blender(self):
-        pass
-
 
 class TestStrategy(unittest.TestCase):
     def setUp(self):
@@ -831,6 +920,14 @@ class TestStrategy(unittest.TestCase):
         self.stg_type = 'TIMING'
         self.stg_name = "CROSSLINE STRATEGY"
         self.stg_text = 'Moving average crossline strategy, determin long/short position according to the cross point ' \
+                        '' \
+                        '' \
+                        '' \
+                        '' \
+                        '' \
+                        '' \
+                        '' \
+                        '' \
                         'of long and short term moving average prices '
         self.pars = None
         self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
