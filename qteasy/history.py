@@ -1765,14 +1765,11 @@ def list_to_str_format(str_list: list) -> str:
     :param str_list: type: list[str]
     :return: string
     """
-    assert isinstance(str_list, list), f'TypeError: expect list[str] type, got {type(str_list)} instead'
-    res = []
-    for string in str_list:
-        assert isinstance(string, str), f'TypeError: expect list[str], got at least one item {type(string)}'
-        res.append(string.replace(' ', ''))
-        res.append(',')
-    res.pop()
-    return ''.join(res)
+    assert isinstance(str_list, (list, str)), f'TypeError: expect list[str] or str type, got {type(str_list)} instead'
+    if isinstance(str_list, str):
+        str_list = str_list.split(' ')
+    res = ''.join([item.replace(' ', '') + ',' for item in str_list if isinstance(item, str)])
+    return res[0:-1]
 
 
 def income(shares: [str, list],

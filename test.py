@@ -1302,7 +1302,13 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertEqual(qt.regulate_date_format('830522'), '19830522')
 
     def test_list_to_str_format(self):
-        self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']), 'close,open,high,low')
+        self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']),
+                         'close,open,high,low')
+        self.assertEqual(qt.list_to_str_format(['letter', '  ', '123  4', 123, '   kk  l']),
+                         'letter,,1234,kkl')
+        self.assertEqual(qt.list_to_str_format('a string input'),
+                         'a,string,input')
+        self.assertRaises(AssertionError, qt.list_to_str_format, 123)
 
 
 class TestTushare(unittest.TestCase):
