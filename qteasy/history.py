@@ -1756,7 +1756,7 @@ def regulate_date_format(date_str: str) -> str:
     return date_str
 
 
-def list_to_str_format(str_list: list) -> str:
+def list_to_str_format(str_list: [list, str]) -> str:
     """ tushare的财务报表函数只支持逗号分隔值的字符串形式作为ts_code或fields等字段的输入，如果输入是list[str]类型，则需要转换
 
     将list型数据转变为str类型，如

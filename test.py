@@ -1304,10 +1304,12 @@ class TestHistorySubFuncs(unittest.TestCase):
     def test_list_to_str_format(self):
         self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']),
                          'close,open,high,low')
-        self.assertEqual(qt.list_to_str_format(['letter', '  ', '123  4', 123, '   kk  l']),
+        self.assertEqual(qt.list_to_str_format(['letters', '  ', '123  4', 123, '   kk  l']),
                          'letter,,1234,kkl')
         self.assertEqual(qt.list_to_str_format('a string input'),
                          'a,string,input')
+        self.assertEqual(qt.list_to_str_format('already,a,good,string'),
+                         'already,a,good,string')
         self.assertRaises(AssertionError, qt.list_to_str_format, 123)
 
 
