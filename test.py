@@ -5,6 +5,7 @@ from pandas import Timestamp
 import numpy as np
 from numpy import int64
 import itertools
+import datetime
 
 
 class TestCost(unittest.TestCase):
@@ -1276,10 +1277,10 @@ class TestHistorySubFuncs(unittest.TestCase):
         print('hp2 is:\n', hp2)
         self.assertEqual(hp1.htypes, ['a', 'b', 'c', 'd'])
         self.assertEqual(hp1.shares, ['000100', '000200', '000300'])
-        self.assertTrue(np.allclose(hp1.values, values1, equal_nan=True), True)
+        self.assertTrue(np.allclose(hp1.values, values1, equal_nan=True))
         self.assertEqual(hp2.htypes, ['a', 'b', 'c', 'd'])
         self.assertEqual(hp2.shares, ['000100', '000300', '000200'])
-        self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True), True)
+        self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = qt.stack_dataframes([df1, df2, df3], stack_along='htypes',
                                   htypes=['close', 'high', 'low'])
@@ -1289,10 +1290,10 @@ class TestHistorySubFuncs(unittest.TestCase):
         print('hp4 is:\n', hp4.values)
         self.assertEqual(hp3.htypes, ['close', 'high', 'low'])
         self.assertEqual(hp3.shares, ['a', 'b', 'c', 'd'])
-        self.assertTrue(np.allclose(hp3.values, values2, equal_nan=True), True)
+        self.assertTrue(np.allclose(hp3.values, values2, equal_nan=True))
         self.assertEqual(hp4.htypes, ['open', 'close', 'high'])
         self.assertEqual(hp4.shares, ['a', 'b', 'c', 'd'])
-        self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True), True)
+        self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_regulate_date_format(self):
         self.assertEqual(qt.regulate_date_format('2019/11/06'), '20191106')
@@ -1300,12 +1301,17 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertEqual(qt.regulate_date_format('20191106'), '20191106')
         self.assertEqual(qt.regulate_date_format('191106'), '20061119')
         self.assertEqual(qt.regulate_date_format('830522'), '19830522')
+        self.assertEqual(qt.regulate_date_format(datetime.datetime(2010, 3, 15)), '20100315')
+        self.assertEqual(qt.regulate_date_format(pd.Timestamp('2010.03.15')), '20100315')
+        self.assertRaises(ValueError, qt.regulate_date_format, 'abc')
+        self.assertRaises(ValueError, qt.regulate_date_format, '2019/13/43')
+        self.assertRaises(TypeError, qt.regulate_date_format, 123)
 
     def test_list_to_str_format(self):
         self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']),
                          'close,open,high,low')
         self.assertEqual(qt.list_to_str_format(['letters', '  ', '123  4', 123, '   kk  l']),
-                         'letter,,1234,kkl')
+                         'letters,,1234,kkl')
         self.assertEqual(qt.list_to_str_format('a string input'),
                          'a,string,input')
         self.assertEqual(qt.list_to_str_format('already,a,good,string'),

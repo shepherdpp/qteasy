@@ -4,7 +4,7 @@ import pandas as pd
 import tushare as ts
 import numpy as np
 from datetime import datetime
-import datetime as dt
+from pandas import Timestamp
 
 TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
@@ -1737,7 +1737,7 @@ def get_index(index: str,
 # Finance Data
 # ================
 
-def regulate_date_format(date_str: str) -> str:
+def regulate_date_format(date_str: [str, object]) -> str:
     """ tushare的财务报表函数只支持YYYYMMDD格式的日期，因此需要把YYYY-MM-DD及YYYY/MM/DD格式的日期转化为YYYYMMDD格式
 
     :param date_str:
@@ -1749,7 +1749,7 @@ def regulate_date_format(date_str: str) -> str:
             date_str = date_time.strftime('%Y%m%d')
         except:
             raise ValueError(f'Input string {date_str} can not be converted to a time format')
-    elif isinstance(date_str, (pd.Timestamp, datetime.datetime)):
+    elif isinstance(date_str, (Timestamp, datetime)):
         date_str = date_str.strftime('%Y%m%d')
     else:
         raise TypeError(f'Input is {type(date_str)}, it\'s not a time or not in correct time format')
