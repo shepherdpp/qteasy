@@ -676,6 +676,75 @@ class TestOperatorSubFuncs(unittest.TestCase):
         self.assertTrue(np.allclose(self.signal, self.correct_signal))
 
 
+class TestLSStrategy(qt.RollingTiming):
+    """用于test测试"""
+    def __init__(self):
+        super().__init__(stg_name='test_LS',
+                         stg_text='test long/short strategy',
+                         par_count=2,
+                         par_types='discr, conti',
+                         par_bounds_or_enums=([1, 8], [2, 10]),
+                         data_types='open, high, low, close',
+                         window_length=8)
+        pass
+
+    def _realize(self, hist_data: np.ndarray, params: tuple):
+        n, price = params
+        h = hist_data.T
+
+        avg = (h[0] + h[1] + h[2] + h[3]) / 4
+        ma = qt.sma(avg, n)
+        if ma[-1] < price:
+            return 0
+        else:
+            return 1
+
+
+class TestSelStrategy(qt.Selecting):
+    """"""
+    def __init__(self):
+        super().__init__(stg_name='test_SEL',
+                         stg_text='test portfolio selection strategy',
+                         par_count=0,
+                         par_types='',
+                         par_bounds_or_enums=(),
+                         data_types='open, high, low, close',
+                         window_length=8)
+        pass
+
+    def _realize(self, hist_data: np.ndarray):
+        chosen = np.zeros_like(hist_data.mean(axis=1).squeeze())
+        large2 = chosen.argsort()[0:2]
+        chosen[large2] = 0.5
+        return chosen
+
+
+class TestSigStrategy(qt.SimpleTiming):
+    """"""
+    def __init__(self):
+        super().__init__(stg_name='test_SIG',
+                         stg_text='test signal creation strategy',
+                         par_count=3,
+                         par_types='conti, conti, conti',
+                         par_bounds_or_enums=([2, 10], [0, 3], [0, 3]),
+                         data_types='open, high, low, close',
+                         window_length=8)
+        pass
+
+    def _realize(self, hist_data: np.ndarray, params: tuple):
+        r, price1, price2 = params
+        h = hist_data.T
+
+        ratio = np.abs(h[1] - h[2]) / np.abs(h[0] - h[3])
+        diff = h[3] - np.roll(h[3], 1)
+
+        sig = np.where((ratio > r) & (diff > price1),
+                       1,
+                       np.where((ratio > r) & (diff > price2), -1, 0))
+
+        return sig
+
+
 class TestOperator(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：
 
@@ -736,19 +805,19 @@ class TestOperator(unittest.TestCase):
 
         # for share3:
         share3_close = [6.64, 7.26, 7.03, 6.87, np.nan, 6.64, 6.85, 6.7, 6.39, 6.22, 5.92, 5.91, 6.11,
-                        5.91, 6.23, 6.28, 6.28, 6.27, 5.7, 5.56, 5.67, 5.16, 5.69, 6.32, 6.14, 6.25,
+                        5.91, 6.23, 6.28, 6.28, 6.27, np.nan, 5.56, 5.67, 5.16, 5.69, 6.32, 6.14, 6.25,
                         5.79, 5.26, 5.05, 5.45, 6.06, 6.21, 5.69, 5.46, 6.02, 6.69, 7.43, 7.72, 8.16,
                         7.83, 8.7, 8.71, 8.88, 8.54, 8.87, 8.87, 8.18, 7.8, 7.97, 8.25]
         share3_open = [7.26, 7, 6.88, 6.91, np.nan, 6.81, 6.63, 6.45, 6.16, 6.24, 5.96, 5.97, 5.96,
-                       6.2, 6.35, 6.11, 6.37, 5.58, 5.65, 5.65, 5.19, 5.42, 6.3, 6.15, 6.05, 5.89,
+                       6.2, 6.35, 6.11, 6.37, 5.58, np.nan, 5.65, 5.19, 5.42, 6.3, 6.15, 6.05, 5.89,
                        5.22, 5.2, 5.07, 6.04, 6.12, 5.85, 5.67, 6.02, 6.04, 7.07, 7.64, 7.99, 7.59,
                        8.73, 8.72, 8.97, 8.58, 8.71, 8.77, 8.4, 7.95, 7.76, 8.25, 7.51]
         share3_high = [7.41, 7.31, 7.14, 7, np.nan, 6.82, 6.96, 6.85, 6.5, 6.34, 6.04, 6.02, 6.12, 6.38,
-                       6.43, 6.46, 6.43, 6.27, 5.77, 6.01, 5.67, 5.67, 6.35, 6.32, 6.43, 6.36, 5.79,
+                       6.43, 6.46, 6.43, 6.27, np.nan, 6.01, 5.67, 5.67, 6.35, 6.32, 6.43, 6.36, 5.79,
                        5.47, 5.65, 6.04, 6.14, 6.23, 5.83, 6.25, 6.27, 7.12, 7.82, 8.14, 8.27, 8.92,
                        8.76, 9.15, 8.9, 9.01, 9.16, 9, 8.27, 7.99, 8.33, 8.25]
         share3_low = [6.53, 6.87, 6.83, 6.7, np.nan, 6.63, 6.57, 6.41, 6.15, 6.07, 5.89, 5.82, 5.73, 5.81,
-                      6.1, 6.06, 6.16, 5.57, 5.54, 5.51, 5.19, 5.12, 5.69, 6.01, 5.97, 5.86, 5.18, 5.19,
+                      6.1, 6.06, 6.16, 5.57, np.nan, 5.51, 5.19, 5.12, 5.69, 6.01, 5.97, 5.86, 5.18, 5.19,
                       4.96, 5.45, 5.84, 5.85, 5.28, 5.42, 6.02, 6.69, 7.28, 7.64, 7.25, 7.83, 8.41, 8.66,
                       8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
 
@@ -825,8 +894,21 @@ class TestOperator(unittest.TestCase):
 
         :return:
         """
-        self.op = qt.Operator(timing_types=['DMA'], selecting_types=['simple'], ricon_types=['urgent'])
+        test_ls = TestLSStrategy()
+        test_sel = TestSelStrategy()
+        test_sig = TestSigStrategy()
+        self.op = qt.Operator(timing_types=[test_ls],
+                              selecting_types=[test_sel],
+                              ricon_types=[test_sig])
         self.assertIsInstance(self.op, qt.Operator, 'Operator Creation Error')
+        self.op.set_parameter(stg_id='t-0',
+                              pars={'000300': (5, 10.),
+                                    '000400': (5, 10.),
+                                    '000500': (5, 6.)})
+        self.op.set_parameter(stg_id='s-0',
+                              pars=())
+        self.op.set_parameter(stg_id='r-0',
+                              pars=(3.5, 0.2, 0.5))
 
     def test_operator_parameter_setting(self):
         """

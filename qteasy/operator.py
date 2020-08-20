@@ -43,7 +43,7 @@ class Strategy:
                  stg_text: str = 'intro text of strategy',
                  par_count: int = 0,
                  par_types: [list, str] = None,
-                 par_bounds_or_enums: list = None,
+                 par_bounds_or_enums: [list, tuple] = None,
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
@@ -379,12 +379,12 @@ class RollingTiming(Strategy):
                  stg_name: str = 'NONE',
                  stg_text: str = 'intro text of timing strategy',
                  par_count: int = 0,
-                 par_types: list = None,
-                 par_bounds_or_enums: list = None,
+                 par_types: [list, str] = None,
+                 par_bounds_or_enums: [list, tuple] = None,
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: str = 'close'):
+                 data_types: [list, str] = 'close'):
         super().__init__(pars=pars,
                          stg_type='TIMING',
                          stg_name=stg_name,
@@ -763,13 +763,13 @@ class Selecting(Strategy):
                  stg_name: str = 'NONE',
                  stg_text: str = 'intro text of selecting strategy',
                  par_count: int = 1,
-                 par_types: list = None,
-                 par_bounds_or_enums: list = None,
+                 par_types: [list, str] = None,
+                 par_bounds_or_enums: [list, tuple] = None,
                  data_freq: str = 'd',
                  sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
                  window_length: int = 270,
-                 data_types: str = 'close'):
+                 data_types: [list, str] = 'close'):
         if par_types is None:
             par_types = ['conti']
         if par_bounds_or_enums is None:
@@ -789,7 +789,7 @@ class Selecting(Strategy):
         self._poq = proportion_or_quantity
 
     @abstractmethod
-    def _realize(self, hist_data):
+    def _realize(self, hist_data: np.ndarray):
         """" Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
@@ -798,7 +798,7 @@ class Selecting(Strategy):
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
         """
-        pass
+        raise NotImplementedError
 
     # TODO：改写Selecting类，使用sample_freq来定义分段频率，使Timing策略和Selecting策略更多地共享属性
     # TODO：Selecting的分段与Timing的Rolling Expansion滚动展开其实是同一个过程，未来可以尝试合并并一同优化
@@ -950,7 +950,7 @@ class SelectingFinance(Selecting):
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
         # 将历史数据片段中的eps求均值，忽略Nan值,
         indices = hist_data.mean(axis=1).squeeze()
-        print(f'in Selecting realize method got ranking vector like:\n {np.round(indices, 3)}')
+        print(f'in Selecting realize method got ranking vector like:\n {indices: .3f}')
         nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
         if largest_win:
             # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
@@ -1009,12 +1009,12 @@ class SimpleTiming(Strategy):
                  stg_name: str = 'NONE',
                  stg_text: str = 'intro text of selecting strategy',
                  par_count: int = 2,
-                 par_types: list = None,
-                 par_bounds_or_enums: list = None,
+                 par_types: [list, str] = None,
+                 par_bounds_or_enums: [list, tuple] = None,
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: str = 'close'):
+                 data_types: [list, str] = 'close'):
         super().__init__(pars=pars,
                          opt_tag=opt_tag,
                          stg_type='RICON',
@@ -1029,7 +1029,7 @@ class SimpleTiming(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_data, params):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         raise NotImplementedError
 
     def generate(self, hist_data, shares=None, dates=None):
@@ -1480,6 +1480,7 @@ class Operator:
         self._timing = []
         self._timing_history_data = []
         self._ls_blender = 'pos-1'  # 默认的择时策略混合方式
+        print(timing_types)
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
             if isinstance(timing_type, str):
