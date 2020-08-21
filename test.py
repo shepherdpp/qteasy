@@ -748,7 +748,11 @@ class TestSigStrategy(qt.SimpleTiming):
 class TestOperator(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：
 
-        1，
+        1, Strategy 参数的设置
+        2, 历史数据的获取与分配提取
+        3, 策略优化参数的批量设置和优化空间的获取
+        4, 策略输出值的正确性验证
+        5, 策略结果的混合结果确认
     """
 
     def setUp(self):
