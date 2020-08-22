@@ -527,7 +527,7 @@ class HistoryPanel():
             self._values = None
             self._is_empty = True
         else:
-            assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
+            assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(values)}'
             assert values.ndim <= 3, \
                 f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
 
@@ -535,6 +535,8 @@ class HistoryPanel():
                 levels = str_to_list(levels)
             if isinstance(columns, str):
                 columns = str_to_list(columns)
+            if isinstance(rows, str):
+                rows = str_to_list(rows)
             # 处理输入数据，补齐缺失的维度，根据输入数据的维度以及各维度的标签数据数量确定缺失的维度
             if values.ndim == 1:
                 values = values.reshape(1, values.shape[0], 1)
@@ -1026,7 +1028,7 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
         return None
 
 
-def labels_to_dict(input_labels: [list, str], target_list: list) -> dict:
+def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dict:
     """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
 
     根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量

@@ -684,13 +684,14 @@ class TestLSStrategy(qt.RollingTiming):
     该策略有两个参数，N与Price
     N用于计算OHLC价格平均值的N日简单移动平均，判断，当移动平均值大于等于Price时，状态为看多，否则为看空
     """
+
     def __init__(self):
         super().__init__(stg_name='test_LS',
                          stg_text='test long/short strategy',
                          par_count=2,
                          par_types='discr, conti',
                          par_bounds_or_enums=([1, 5], [2, 10]),
-                         data_types='open, high, low, close',
+                         data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
         pass
@@ -714,13 +715,14 @@ class TestSelStrategy(qt.Selecting):
     在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（OHLC平均股价）最高的两支，放入中选池，否则落选。
     选股比例为平均分配
     """
+
     def __init__(self):
         super().__init__(stg_name='test_SEL',
                          stg_text='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
                          par_bounds_or_enums=(),
-                         data_types='open, high, low, close',
+                         data_types='high, low',
                          data_freq='d',
                          sample_freq='5d',
                          window_length=2)
@@ -728,7 +730,7 @@ class TestSelStrategy(qt.Selecting):
 
     def _realize(self, hist_data: np.ndarray):
         avg = np.zeros_like(hist_data.mean(axis=1).squeeze())
-        difper = (hist_data[3] - np.roll(hist_data, 1))/avg
+        difper = (hist_data[3] - np.roll(hist_data, 1)) / avg
         large2 = difper.argsort()[0:2]
         chosen = np.zeros_like(difper)
         chosen[large2] = 0.5
@@ -745,13 +747,14 @@ class TestSigStrategy(qt.SimpleTiming):
     1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
     2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
     """
+
     def __init__(self):
         super().__init__(stg_name='test_SIG',
                          stg_text='test signal creation strategy',
                          par_count=3,
                          par_types='conti, conti, conti',
                          par_bounds_or_enums=([2, 10], [0, 3], [0, 3]),
-                         data_types='open, high, low, close',
+                         data_types='close, open, high, low',
                          window_length=2)
         pass
 
@@ -928,6 +931,23 @@ class TestOperator(unittest.TestCase):
         multi_cash = qt.CashPlan(dates='2016-07-08, 2016-08-08', amounts=[10000, 10000])
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
+        self.assertIsInstance(self.op._selecting_history_data, list)
+        self.assertIsInstance(self.op._timing_history_data, list)
+        self.assertIsInstance(self.op._ricon_history_data, list)
+        self.assertEqual(len(self.op._selecting_history_data), 1)
+        self.assertEqual(len(self.op._timing_history_data), 1)
+        self.assertEqual(len(self.op._ricon_history_data), 1)
+        sel_hist_data = self.op._selecting_history_data[0]
+        tim_hist_data = self.op._timing_history_data[0]
+        ric_hist_data = self.op._ricon_history_data[0]
+        print('selecting history data:\n', sel_hist_data)
+        print('originally passed data:\n', self.test_data_3D[:, 5:, 2:])
+        print('difference is \n', sel_hist_data - self.test_data_3D[:, 5:, 2:])
+        #TODO: 为什么生成的数据的行数都这么奇怪？为什么不是把所有的数据带入计算？尤其是RollingTiming，第一条结果也需要利用之前的数据生成的
+        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, 5:, 2:], equal_nan=True))
+        self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
+        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
+
         # raises Valueerror if empty history panel is given
         empty_hp = qt.HistoryPanel()
         correct_hp = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 4)))
@@ -939,9 +959,32 @@ class TestOperator(unittest.TestCase):
                           on_spot_cash)
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
-                          empty_hp,
+                          correct_hp,
                           early_cash)
-
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          correct_hp,
+                          late_cash)
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          correct_hp,
+                          multi_cash)
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          too_many_shares,
+                          on_spot_cash)
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          correct_hp,
+                          too_early_cash)
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          too_many_types,
+                          on_spot_cash)
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          too_many_types,
+                          on_spot_cash)
 
     def test_operator_generate(self):
         """
@@ -1056,16 +1099,8 @@ class TestStrategy(unittest.TestCase):
         self.stg = qt.TimingCrossline()
         self.stg_type = 'TIMING'
         self.stg_name = "CROSSLINE STRATEGY"
-        self.stg_text = 'Moving average crossline strategy, determin long/short position according to the cross point ' \
-                        '' \
-                        '' \
-                        '' \
-                        '' \
-                        '' \
-                        '' \
-                        '' \
-                        '' \
-                        'of long and short term moving average prices '
+        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross point'\
+                        ' of long and short term moving average prices '
         self.pars = None
         self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
         self.par_count = 4
@@ -1128,6 +1163,11 @@ class TestHistoryPanel(unittest.TestCase):
         print('start testing HistoryPanel object\n')
         self.data = np.random.randint(10, size=(5, 10, 4))
         self.index = pd.date_range(start='20200101', freq='d', periods=10)
+        self.index2 = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
+                       '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
+                       '2016-07-13', '2016-07-14']
+        self.index3 = '2016-07-01, 2016-07-04, 2016-07-05, 2016-07-06, 2016-07-07, ' \
+                      '2016-07-08, 2016-07-11, 2016-07-12, 2016-07-13, 2016-07-14'
         self.shares = '000100,000101,000102,000103,000104'
         self.htypes = 'close,open,high,low'
         self.data2 = np.random.randint(10, size=(10, 5))
@@ -1135,10 +1175,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.data4 = np.random.randint(10, size=(10))
         self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
         self.hp2 = qt.HistoryPanel(values=self.data2, levels=self.shares, columns='close', rows=self.index)
-        self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index)
-        self.hp4 = qt.HistoryPanel(values=self.data4, levels='000100', columns='close', rows=self.index)
+        self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index2)
+        self.hp4 = qt.HistoryPanel(values=self.data4, levels='000100', columns='close', rows=self.index3)
         self.hp5 = qt.HistoryPanel(values=self.data)
-        self.hp6 = qt.HistoryPanel(values=self.data, levels=self.shares)
+        self.hp6 = qt.HistoryPanel(values=self.data, levels=self.shares, rows=self.index3)
 
     def test_create_history_panel(self):
         """ test the creation of a HistoryPanel object by passing all data explicitly
@@ -1153,6 +1193,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp.column_count, 4)
         self.assertEqual(list(self.hp.levels.keys()), self.shares.split(','))
         self.assertEqual(list(self.hp.columns.keys()), self.htypes.split(','))
+        self.assertEqual(list(self.hp.rows.keys())[0], pd.Timestamp('20200101'))
 
         self.assertIsInstance(self.hp2, qt.HistoryPanel)
         self.assertEqual(self.hp2.shape[0], 5)
@@ -1163,6 +1204,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp2.column_count, 1)
         self.assertEqual(list(self.hp2.levels.keys()), self.shares.split(','))
         self.assertEqual(list(self.hp2.columns.keys()), ['close'])
+        self.assertEqual(list(self.hp2.rows.keys())[0], pd.Timestamp('20200101'))
 
         self.assertIsInstance(self.hp3, qt.HistoryPanel)
         self.assertEqual(self.hp3.shape[0], 1)
@@ -1173,6 +1215,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp3.column_count, 4)
         self.assertEqual(list(self.hp3.levels.keys()), ['000100'])
         self.assertEqual(list(self.hp3.columns.keys()), self.htypes.split(','))
+        self.assertEqual(list(self.hp3.rows.keys())[0], pd.Timestamp('2016-07-01'))
 
         self.assertIsInstance(self.hp4, qt.HistoryPanel)
         self.assertEqual(self.hp4.shape[0], 1)
@@ -1183,6 +1226,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp4.column_count, 1)
         self.assertEqual(list(self.hp4.levels.keys()), ['000100'])
         self.assertEqual(list(self.hp4.columns.keys()), ['close'])
+        self.assertEqual(list(self.hp4.rows.keys())[0], pd.Timestamp('2016-07-01'))
 
         self.hp5.info()
         self.assertIsInstance(self.hp5, qt.HistoryPanel)
@@ -1195,6 +1239,46 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp5.column_count, 4)
         self.assertEqual(list(self.hp5.levels.keys()), [0, 1, 2, 3, 4])
         self.assertEqual(list(self.hp5.columns.keys()), [0, 1, 2, 3])
+        self.assertEqual(list(self.hp5.rows.keys())[0], pd.Timestamp('2020-07-30'))
+
+        self.hp6.info()
+        self.assertIsInstance(self.hp6, qt.HistoryPanel)
+        self.assertTrue(np.allclose(self.hp6.values, self.data))
+        self.assertEqual(self.hp6.shape[0], 5)
+        self.assertEqual(self.hp6.shape[1], 10)
+        self.assertEqual(self.hp6.shape[2], 4)
+        self.assertEqual(self.hp6.level_count, 5)
+        self.assertEqual(self.hp6.row_count, 10)
+        self.assertEqual(self.hp6.column_count, 4)
+        self.assertEqual(list(self.hp6.levels.keys()), ['000100', '000101', '000102', '000103', '000104'])
+        self.assertEqual(list(self.hp6.columns.keys()), [0, 1, 2, 3])
+        self.assertEqual(list(self.hp6.rows.keys())[0], pd.Timestamp('2016-07-01'))
+
+        # Error testing during HistoryPanel creating
+        # shape does not match
+        self.assertRaises(AssertionError,
+                          qt.HistoryPanel,
+                          self.data,
+                          levels=self.shares, columns='close', rows=self.index)
+        # valus is not np.ndarray
+        self.assertRaises(AssertionError,
+                          qt.HistoryPanel,
+                          list(self.data))
+        # dimension/shape does not match
+        self.assertRaises(AssertionError,
+                          qt.HistoryPanel,
+                          self.data2,
+                          levels='000100', columns=self.htypes, rows=self.index)
+        # value dimension over 3
+        self.assertRaises(AssertionError,
+                          qt.HistoryPanel,
+                          np.random.randint(10, size=(5, 10, 4, 2)))
+        # lebel value not valid
+        self.assertRaises(ValueError,
+                          qt.HistoryPanel,
+                          self.data2,
+                          levels=self.shares, columns='close',
+                          rows='a,b,c,d,e,f,g,h,i,j')
 
     def test_history_panel_slicing(self):
         self.assertTrue(np.allclose(self.hp['close'], self.data[:, :, 0:1]))

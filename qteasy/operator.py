@@ -543,7 +543,7 @@ class TimingCrossline(RollingTiming):
                          par_types=['discr', 'discr', 'conti', 'enum'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
                          stg_name='CROSSLINE STRATEGY',
-                         stg_text='Moving average crossline strategy, determin long/short position according to the ' \
+                         stg_text='Moving average crossline strategy, determine long/short position according to the ' \
                                   'cross point of long and short term moving average prices ',
                          data_types='close')
 
