@@ -530,29 +530,15 @@ class HistoryPanel():
             assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(value)}'
             assert values.ndim <= 3, \
                 f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
-            # 检查输入数据的标签，处理标签数据以确认标签代表的数据各维度的数据量
 
-            if levels is None:
-                levels = range(self._l_count)
             if isinstance(levels, str):
                 levels = str_to_list(levels)
-            if rows is None:
-                rows = pd.date_range(periods=self._r_count, end='2020-08-08', freq='d')
-            if columns is None:
-                columns = range(self._c_count)
             if isinstance(columns, str):
                 columns = str_to_list(columns)
-
             # 处理输入数据，补齐缺失的维度，根据输入数据的维度以及各维度的标签数据数量确定缺失的维度
             if values.ndim == 1:
-                assert len(levels) == 1 and len(columns) == 1, \
-                    f'ValueError, number of levels and columns should be 1 in case input value is 1-dimensional, ' \
-                    f'got {len(levels)} levels and {len(columns)} columns'
                 values = values.reshape(1, values.shape[0], 1)
             elif values.ndim == 2:
-                assert len(levels) == 1 or len(columns) == 1, \
-                    f'ValueError, number of either levels or columns should be 1 in case input value is ' \
-                    f'2-dimensional, got {len(levels)} levels and {len(columns)} columns'
                 if len(levels) == 1:
                     values = values.reshape(1, *values.shape)
                 else:
@@ -560,6 +546,14 @@ class HistoryPanel():
             self._l_count, self._r_count, self._c_count = values.shape
             self._values = values
             self._is_empty = False
+
+            # 检查输入数据的标签，处理标签数据以确认标签代表的数据各维度的数据量
+            if levels is None:
+                levels = range(self._l_count)
+            if rows is None:
+                rows = pd.date_range(periods=self._r_count, end='2020-08-08', freq='d')
+            if columns is None:
+                columns = range(self._c_count)
 
             assert (len(levels), len(rows), len(columns)) == values.shape, \
                 f'ValueError, value shape does not match, input data: ({(values.shape)}) while given axis' \
