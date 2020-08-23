@@ -1636,6 +1636,14 @@ class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
 
+class TestVisual(unittest.TestCase):
+    """ Test the visual effects and charts
+
+    """
+    def test_ohlc(self):
+        qt.ohlc('000001.SZ', start='2020-01-01', end='2020-04-30', style='yahoo', type='candle')
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTest(TestCost())

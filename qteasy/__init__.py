@@ -3,6 +3,7 @@
 from .core import *
 from .history import *
 from .operator import *
+from .visual import *
 import pandas as pd
 import numpy as np
 
