@@ -1,9 +1,14 @@
 # coding=utf-8
 # core.py
 
+# ======================================
+# This file contains core functions and
+# core Classes. Such as looping and
+# optimizations, Contexts and Spaces, etc.
+# ======================================
+
 import pandas as pd
 import numpy as np
-import numba as nb
 import datetime
 import itertools
 import time
@@ -550,10 +555,9 @@ class CashPlan:
         assert isinstance(amounts,
                           (list, np.ndarray)), f'TypeError: amounts should be Iterable, got {type(amounts)} instead'
         if isinstance(amounts, list):
-            for amount in amounts:  # 检查是否每一个amount的数据类型
-                assert isinstance(amount, (int, float, np.int64, np.float64)), \
-                    f'TypeError: amount should be number format, got {type(amount)} instead'
-                assert amount > 0, f'InputError: Investment amount should be larger than 0'
+            assert all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]), \
+                f'TypeError: amount should be number format, got {type(amount)} instead'
+            assert all([amount > 0 for amount in amounts]), f'InputError: Investment amount should be larger than 0'
         assert isinstance(dates, Iterable), f"Expect Iterable input dates, got {type(dates)} instead!"
 
         if isinstance(dates, str):
@@ -809,8 +813,7 @@ class CashPlan:
                 original_dates = self.dates
                 new_dates = self.dates
                 for i in range(other - 1):
-                    for date in original_dates:
-                        new_dates.append(date + time_offset * (i + 1) + one_day)
+                    new_dates.extend([date + time_offset * (i + 1) + one_day for date in original_dates])
                 return CashPlan(new_dates, self.amounts * other, self.ir)
 
         else:  # 当other是浮点数时，返回CashPlan * other 的结果
@@ -956,9 +959,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     # 重新计算整个清单中的资产总价值，生成pandas.Series对象
     looped_value['value'] = (looped_history * looped_value[shares]).sum(axis=1) + looped_value['cash']
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
-        share_price_column_names = []
-        for name in shares:
-            share_price_column_names.append(name + '_p')
+        share_price_column_names = [name + '_p' for name in shares]
         looped_value[share_price_column_names] = looped_history[shares]
     return looped_value
 
@@ -2136,7 +2137,7 @@ class Space:
         return: =====
             无
         """
-        self._axes = []
+        self._axis = []
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
         pars = list(pars)
         par_dim = len(pars)
@@ -2151,19 +2152,22 @@ class Space:
         # print('par dim:', par_dim)
         # print('pars and par_types:', pars, par_types)
         # 逐一生成Axis对象并放入axes列表中
-        for i in range(par_dim):
-            # print('appending', i+1, '-th par', pars[i],'in type:', par_types[i])
-            self._axes.append(Axis(pars[i], par_types[i]))
+        self._axis = [Axis(par, par_type) for par, par_type in zip(pars, par_types)]
+
 
     @property
     def dim(self):  # 空间的维度
-        return len(self._axes)
+        return len(self._axis)
+
+    @property
+    def axis(self):
+        return self._axis
 
     @property
     def types(self):
         """List of types of axis of the space"""
         if self.dim > 0:
-            types = [self._axes[i].axis_type for i in range(self.dim)]
+            types = [ax.axis_type for ax in self.axis]
             return types
         else:
             return None
@@ -2172,7 +2176,7 @@ class Space:
     def boes(self):
         """List of bounds of axis of the space"""
         if self.dim > 0:
-            boes = [self._axes[i].axis_boe for i in range(self.dim)]
+            boes = [ax.axis_boe for ax in self.axis]
             return boes
         else:
             return None
@@ -2180,18 +2184,18 @@ class Space:
     @property
     def shape(self):
         """输出空间的维度大小，输出形式为元组，每个元素代表对应维度的元素个数"""
-        s = [axis.count for axis in self._axes]
+        s = [ax.count for ax in self._axis]
         return tuple(s)
 
     @property
     def size(self):
         """输出空间的尺度，输出每个维度的跨度之乘积"""
-        s = [axis.size for axis in self._axes]
+        s = [ax.size for ax in self._axis]
         return np.product(s)
 
     @property
     def count(self):
-        s = [axis.count for axis in self._axes]
+        s = [ax.count for ax in self._axis]
         return np.product(s)
 
     def info(self):
@@ -2221,13 +2225,9 @@ class Space:
         interval_or_qty_list = input_to_list(pars=interval_or_qty,
                                              dim=self.dim,
                                              padder=[1])
-        axis_ranges = []
-        i = 0
-        total = 1
-        for axis in self._axes:  # 分别从各个Axis中提取相应的坐标
-            axis_ranges.append(axis.extract(interval_or_qty_list[i], how))
-            total *= len(axis_ranges[i])
-            i += 1
+        axis_ranges = [ax.extract(ioq, how) for ax, ioq in zip(self.axis, interval_or_qty_list)]
+        total = np.array(list(map(len, axis_ranges))).prod()
+
         if how == 'interval':
             return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
         elif how == 'rand':

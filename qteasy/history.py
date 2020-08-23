@@ -1,4 +1,13 @@
 # coding=utf-8
+# history.py
+
+# ======================================
+# This file contains history data related
+# Classes and functions. Such as
+# HistoryPanel class, and historical
+# data downloading functions based on
+# tushare
+# ======================================
 
 import pandas as pd
 import tushare as ts

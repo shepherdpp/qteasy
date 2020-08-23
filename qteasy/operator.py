@@ -1,6 +1,12 @@
 # coding=utf-8
 # operator.py
 
+# ======================================
+# This file contains core operation
+# related functions and Classes, Such as
+# Strategy and Operator
+# ======================================
+
 import pandas as pd
 import numpy as np
 from qteasy.utilfuncs import sma, ema, trix, cdldoji
@@ -1617,9 +1623,8 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
-        d_types = []
-        for item in self.strategies:
-            d_types.extend(item.data_types)
+
+        d_types = [typ for item in self.strategies for typ in item.data_types]
         d_types = list(set(d_types))
         d_types.sort()
         return d_types
@@ -1673,11 +1678,7 @@ class Operator:
 
         :return: int
         """
-        max_wl = 0
-        for stg in self.strategies:
-            if stg.window_length > max_wl:
-                max_wl = stg.window_length
-        return max_wl
+        return max(stg.window_length for stg in self.strategies)
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -1916,6 +1917,12 @@ class Operator:
         date_list = hist_data.hdates
         # 计时
         # st = time.clock()
+        # TODO: here shares and dates should NOT be passed
+        # TODO: into sel.generate() function as parameters
+        # TODO: for uniformity reason. it should be the same
+        # TODO: as tmg.generate() and ricon.generate()
+        # TODO: the function should work with pure numpy.ndarray
+        # TODO: to gain the best performance
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             history_length = dt.shape[1]
