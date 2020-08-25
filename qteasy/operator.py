@@ -197,6 +197,10 @@ class Strategy:
         self.set_pars(pars)
 
     @property
+    def has_pars(self):
+        return self.pars is not None
+
+    @property
     def data_freq(self):
         """策略依赖的历史数据频率"""
         return self._data_freq
@@ -1525,12 +1529,12 @@ class Operator:
         str_list = []
 
         for selecting_type in selecting_types:
+            if cur_type == 0:
+                str_list.append(str(cur_type))
+            else:
+                str_list.append(f' or {str(cur_type)}')
+            cur_type += 1
             if isinstance(selecting_type, str):
-                if cur_type == 0:
-                    str_list.append(str(cur_type))
-                else:
-                    str_list.append(f' or {str(cur_type)}')
-                cur_type += 1
                 self._selecting_type.append(selecting_type)
                 if selecting_type.lower() == 'random':
                     self._selecting.append(SelectingRandom())
@@ -1871,6 +1875,13 @@ class Operator:
         assert last_cash_pos < len(hist_data.hdates), \
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
+        # 确保op的策略都设置了参数
+        assert all([stg.has_pars for stg in self.strategies]),\
+            f'One or more strategies has no parameter set properly!'
+        # 确保op的策略都设置了混合方式
+        assert self.selecting_blender != ''
+        assert self.ls_blender != ''
+        assert self.ricon_blender != ''
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
         self._selecting_history_data = [hist_data[stg.data_types, :, first_cash_pos:] for stg in self.selecting]
         # debug
@@ -2090,7 +2101,8 @@ class Operator:
             ndarray, 混合完成的选股蒙板
         """
         exp = self._selecting_blender[:]
-        # print('expression in operation module', exp)
+        # debug
+        print('expression in operation module', exp)
         s = []
         while exp:  # previously: while exp != []
             if exp[-1].isdigit():

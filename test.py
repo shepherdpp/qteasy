@@ -729,16 +729,16 @@ class TestSelStrategy(qt.Selecting):
         pass
 
     def _realize(self, hist_data: np.ndarray):
-        print(f'hist_data while received is\n{hist_data}\n')
-        avg = np.zeros_like(hist_data.mean(axis=1).squeeze())
-        print(f'avg is \n{avg}\n')
+        avg = np.mean(hist_data, axis=(1, 2))
+        print(f'avg is \n{np.mean(hist_data, axis=(1, 2))}\n')
         print(f'hist_data is\n{hist_data}\n')
-        print(f'hist[2] is \n{hist_data[2]}\n')
-        print(f'hist diff is\n{(hist_data[2] - np.roll(hist_data[2], 1))}\n')
-        difper = (hist_data[2] - np.roll(hist_data[2], 1)) / avg
+        print(f'last close price is\n{hist_data[:, :, 2]}\n')
+        print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))}\n')
+        difper = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))[:, -1] / avg
         large2 = difper.argsort()[0:2]
-        chosen = np.zeros_like(difper)
+        chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
+        print(f'selected largest two args:\n{large2}\nchosen is\n{chosen}\n')
         return chosen
 
 
@@ -763,10 +763,10 @@ class TestSelStrategy_diff_data_time(qt.Selecting):
         pass
 
     def _realize(self, hist_data: np.ndarray):
-        avg = np.zeros_like(hist_data.mean(axis=1).squeeze())
-        difper = (hist_data[2] - np.roll(hist_data[2], 1)) / avg
+        avg = hist_data.mean(axis=1).squeeze()
+        difper = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))[:, -1] / avg
         large2 = difper.argsort()[0:2]
-        chosen = np.zeros_like(difper)
+        chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
         return chosen
 
@@ -963,6 +963,14 @@ class TestOperator(unittest.TestCase):
         on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
         late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
         multi_cash = qt.CashPlan(dates='2016-07-08, 2016-08-08', amounts=[10000, 10000])
+        self.op.set_parameter(stg_id='t-0',
+                              pars={'000300': (5, 10.),
+                                    '000400': (5, 10.),
+                                    '000500': (5, 6.)})
+        self.op.set_parameter(stg_id='s-0',
+                              pars=())
+        self.op.set_parameter(stg_id='r-0',
+                              pars=(0.2, 0.02, -0.02))
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
         self.assertIsInstance(self.op._selecting_history_data, list)
@@ -1040,10 +1048,16 @@ class TestOperator(unittest.TestCase):
                                     '000500': (5, 6.)})
         self.op.set_parameter(stg_id='s-0',
                               pars=())
+        # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          hist_data=self.hp1,
+                          cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         self.op.set_parameter(stg_id='r-0',
                               pars=(0.2, 0.02, -0.02))
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.info()
 
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
