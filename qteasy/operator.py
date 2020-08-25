@@ -828,10 +828,10 @@ class Selecting(Strategy):
         # assert isinstance(dates, list), \
         #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq)
-        # 写入第一个选股区间分隔位——0
+        # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
         # debug
-        print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
+        # print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
         # 用searchsorted函数把输入的日期与历史数据日期匹配起来
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # 最后一个分隔位等于历史区间的总长度
@@ -839,7 +839,21 @@ class Selecting(Strategy):
         # print('Results check, selecting - segment creation, segments:', seg_pos)
         # 计算每个分段的长度
         seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
-        return seg_pos, seg_lens, len(seg_pos) - 1
+        # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一个分割位，因为这样会有两个
+        # 【0】了，例子如下（为简单起见，例子中的日期都用整数代替）：
+        # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
+        # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
+        # 第3天的位置为2，第6天的位置为5，第9天的位置为8
+        # 然而，为了确保在生成选股数据时，第一天也不会被拉下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，这样才不会漏掉第一天和第二天
+        # 以上是正常情况的处理方式
+        # 如果分段的界限是[1,5,10]的时候，情况就不同了
+        # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成[0,0,4,9],会出现问题
+        # 因为系统会判断第一个分段起点为0，终点也为0，因此会传递一个空的ndarray到_realize()函数中，引发难以预料的错误
+        # 因此，出现这种情况时，要忽略最前面一位，返回时忽略第一位即可
+        if seg_pos[1] == 0:
+            return seg_pos[1:], seg_lens[1:], len(seg_pos) - 2
+        else:
+            return seg_pos, seg_lens, len(seg_pos) - 1
 
     # TODO：需要重新定义Selecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
     # TODO: 使函数的定义符合继承类的抽象方法定义规则

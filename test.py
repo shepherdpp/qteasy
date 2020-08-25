@@ -724,21 +724,22 @@ class TestSelStrategy(qt.Selecting):
                          par_bounds_or_enums=(),
                          data_types='high, low, close',
                          data_freq='d',
-                         sample_freq='w',
+                         sample_freq='10d',
                          window_length=2)
         pass
 
     def _realize(self, hist_data: np.ndarray):
         avg = np.mean(hist_data, axis=(1, 2))
-        print(f'avg is \n{np.mean(hist_data, axis=(1, 2))}\n')
-        print(f'hist_data is\n{hist_data}\n')
-        print(f'last close price is\n{hist_data[:, :, 2]}\n')
-        print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))}\n')
         difper = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))[:, -1] / avg
         large2 = difper.argsort()[0:2]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
-        print(f'selected largest two args:\n{large2}\nchosen is\n{chosen}\n')
+        # debug
+        # print(f'avg is \n{np.mean(hist_data, axis=(1, 2))}\n')
+        # print(f'hist_data is\n{hist_data}\n')
+        # print(f'last close price is\n{hist_data[:, :, 2]}\n')
+        # print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))}\n')
+        # print(f'selected largest two args:\n{large2}\nchosen is\n{chosen}\n')
         return chosen
 
 
