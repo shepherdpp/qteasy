@@ -722,15 +722,49 @@ class TestSelStrategy(qt.Selecting):
                          par_count=0,
                          par_types='',
                          par_bounds_or_enums=(),
-                         data_types='high, low',
+                         data_types='high, low, close',
                          data_freq='d',
-                         sample_freq='5d',
+                         sample_freq='w',
+                         window_length=2)
+        pass
+
+    def _realize(self, hist_data: np.ndarray):
+        print(f'hist_data while received is\n{hist_data}\n')
+        avg = np.zeros_like(hist_data.mean(axis=1).squeeze())
+        print(f'avg is \n{avg}\n')
+        print(f'hist_data is\n{hist_data}\n')
+        print(f'hist[2] is \n{hist_data[2]}\n')
+        print(f'hist diff is\n{(hist_data[2] - np.roll(hist_data[2], 1))}\n')
+        difper = (hist_data[2] - np.roll(hist_data[2], 1)) / avg
+        large2 = difper.argsort()[0:2]
+        chosen = np.zeros_like(difper)
+        chosen[large2] = 0.5
+        return chosen
+
+
+class TestSelStrategy_diff_data_time(qt.Selecting):
+    """用于Test测试的简单选股策略，基于Selecting策略生成
+
+    策略没有参数，选股周期为5D
+    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（OHLC平均股价）最高的两支，放入中选池，否则落选。
+    选股比例为平均分配
+    """
+
+    def __init__(self):
+        super().__init__(stg_name='test_SEL',
+                         stg_text='test portfolio selection strategy',
+                         par_count=0,
+                         par_types='',
+                         par_bounds_or_enums=(),
+                         data_types='close, low, open',
+                         data_freq='d',
+                         sample_freq='w',
                          window_length=2)
         pass
 
     def _realize(self, hist_data: np.ndarray):
         avg = np.zeros_like(hist_data.mean(axis=1).squeeze())
-        difper = (hist_data[3] - np.roll(hist_data, 1)) / avg
+        difper = (hist_data[2] - np.roll(hist_data[2], 1)) / avg
         large2 = difper.argsort()[0:2]
         chosen = np.zeros_like(difper)
         chosen[large2] = 0.5
@@ -941,10 +975,10 @@ class TestOperator(unittest.TestCase):
         tim_hist_data = self.op._timing_history_data[0]
         ric_hist_data = self.op._ricon_history_data[0]
         print('selecting history data:\n', sel_hist_data)
-        print('originally passed data:\n', self.test_data_3D[:, 5:, 2:])
-        print('difference is \n', sel_hist_data - self.test_data_3D[:, 5:, 2:])
-        #TODO: 为什么生成的数据的行数都这么奇怪？为什么不是把所有的数据带入计算？尤其是RollingTiming，第一条结果也需要利用之前的数据生成的
-        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, 5:, 2:], equal_nan=True))
+        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 5:, [2, 3, 0]])
+        print('difference is \n', sel_hist_data - self.test_data_3D[:, 5:, [2, 3, 0]])
+        # TODO: 为什么生成的数据的行数都这么奇怪？为什么不是把所有的数据带入计算？尤其是RollingTiming，第一条结果也需要利用之前的数据生成的
+        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, 5:, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
         self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
 
@@ -986,6 +1020,8 @@ class TestOperator(unittest.TestCase):
                           too_many_types,
                           on_spot_cash)
 
+        # test the effect of datatype sequence in strategy definition
+
     def test_operator_generate(self):
         """
 
@@ -1006,6 +1042,11 @@ class TestOperator(unittest.TestCase):
                               pars=())
         self.op.set_parameter(stg_id='r-0',
                               pars=(0.2, 0.02, -0.02))
+        self.op.prepare_data(hist_data=self.hp1,
+                             cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+
+        op_list = self.op.create_signal(hist_data=self.hp1)
+        print(f'operation list is created: as following:\n {op_list}')
 
     def test_operator_parameter_setting(self):
         """
@@ -1099,7 +1140,7 @@ class TestStrategy(unittest.TestCase):
         self.stg = qt.TimingCrossline()
         self.stg_type = 'TIMING'
         self.stg_name = "CROSSLINE STRATEGY"
-        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross point'\
+        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross point' \
                         ' of long and short term moving average prices '
         self.pars = None
         self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
@@ -1640,6 +1681,7 @@ class TestVisual(unittest.TestCase):
     """ Test the visual effects and charts
 
     """
+
     def test_ohlc(self):
         qt.ohlc('000001.SZ', start='2020-01-01', end='2020-04-30', style='yahoo', type='candle')
 

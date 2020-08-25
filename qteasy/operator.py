@@ -826,7 +826,8 @@ class Selecting(Strategy):
         bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq)
         # 写入第一个选股区间分隔位——0
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
-        # print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
+        # debug
+        print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
         # 用searchsorted函数把输入的日期与历史数据日期匹配起来
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # 最后一个分隔位等于历史区间的总长度
@@ -867,8 +868,13 @@ class Selecting(Strategy):
         seg_start = 0
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
+        # debug
+        print(f'hist data received in selecting strategy:\n{hist_data}')
+        print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
         for sp, sl in zip(seg_pos, seg_lens):
             # share_sel向量代表当前区间内的投资组合比例
+            # debug
+            print(f'following data will be passed to selection realize function:\n{hist_data[:, sp:sp + sl, :]}')
             share_sel = self._realize(hist_data[:, sp:sp + sl, :])
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
@@ -1890,6 +1896,10 @@ class Operator:
     # TODO: 和多空目标位置，这样至少可以避免以下问题：当MOQ存在时，在逐步减仓的情况下，每次加仓的交易信号强度可能
     # TODO: 都不足以买到一手股票，那么所有逐步加仓的信号都会失效。
     # TODO: 另外，将交易信号和仓位信号分开也能更好地支持交易信号型策略和仓位变化型策略
+
+    # TODO: 为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
+    # TODO: hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
+    # TODO: 需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
     def create_signal(self, hist_data: HistoryPanel):
         """ 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
 
