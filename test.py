@@ -738,12 +738,12 @@ class TestSelStrategy(qt.Selecting):
         # print(f'avg is \n{np.mean(hist_data, axis=(1, 2))}\n')
         # print(f'hist_data is\n{hist_data}\n')
         # print(f'last close price is\n{hist_data[:, :, 2]}\n')
-        # print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))}\n')
-        # print(f'selected largest two args:\n{large2}\nchosen is\n{chosen}\n')
+        print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))}\n')
+        print(f'selected largest two args:\n{large2}\n chosen is\n{chosen}\n')
         return chosen
 
 
-class TestSelStrategy_diff_data_time(qt.Selecting):
+class TestSelStrategyDiffTime(qt.Selecting):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -887,7 +887,7 @@ class TestOperator(unittest.TestCase):
                       4.96, 5.45, 5.84, 5.85, 5.28, 5.42, 6.02, 6.69, 7.28, 7.64, 7.25, 7.83, 8.41, 8.66,
                       8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
 
-        date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
+        self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
                         '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
                         '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
                         '2016-07-19', '2016-07-20', '2016-07-21', '2016-07-22',
@@ -901,9 +901,9 @@ class TestOperator(unittest.TestCase):
                         '2016-09-01', '2016-09-02', '2016-09-05', '2016-09-06',
                         '2016-09-07', '2016-09-08']
 
-        shares = ['000010', '000030', '000039']
+        self.shares = ['000010', '000030', '000039']
 
-        types = ['close', 'open', 'high', 'low']
+        self.types = ['close', 'open', 'high', 'low']
 
         self.test_data_3D = np.zeros((3, data_rows, 4))
         self.test_data_2D = np.zeros((data_rows, 3))
@@ -925,7 +925,10 @@ class TestOperator(unittest.TestCase):
         self.test_data_3D[2, :, 2] = share3_high
         self.test_data_3D[2, :, 3] = share3_low
 
-        self.hp1 = qt.HistoryPanel(values=self.test_data_3D, levels=shares, columns=types, rows=date_indices)
+        self.hp1 = qt.HistoryPanel(values=self.test_data_3D,
+                                   levels=self.shares,
+                                   columns=self.types,
+                                   rows=self.date_indices)
         self.op = qt.Operator(selecting_types=['simple'], timing_types='dma', ricon_types='urgent')
 
     def test_property_get(self):
@@ -1062,6 +1065,8 @@ class TestOperator(unittest.TestCase):
 
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
+        self.assertTrue(isinstance(op_list, pd.DataFrame))
+        self.assertEqual(op_list.shape, (14, 3))
 
     def test_operator_parameter_setting(self):
         """
@@ -1149,9 +1154,7 @@ class TestOperator(unittest.TestCase):
 
         self.assertRaises(ValueError, self.op.set_opt_par, (5, 12, 9, 8))
 
-
-class TestStrategy(unittest.TestCase):
-    def setUp(self):
+    def test_stg_attribute_get_and_set(self):
         self.stg = qt.TimingCrossline()
         self.stg_type = 'TIMING'
         self.stg_name = "CROSSLINE STRATEGY"
@@ -1167,7 +1170,6 @@ class TestStrategy(unittest.TestCase):
         self.sample_freq = 'd'
         self.window_length = 270
 
-    def test_attribute_get_and_set(self):
         self.assertEqual(self.stg.stg_type, self.stg_type)
         self.assertEqual(self.stg.stg_name, self.stg_name)
         self.assertEqual(self.stg.stg_text, self.stg_text)
@@ -1202,6 +1204,36 @@ class TestStrategy(unittest.TestCase):
         self.assertEqual(self.stg.data_freq, 'w')
         self.stg.window_length = 300
         self.assertEqual(self.stg.window_length, 300)
+
+    def test_rolling_timing(self):
+        stg = TestLSStrategy()
+        stg_pars = (5, 10)
+        stg.set_pars(stg_pars)
+        history_data = self.hp1.values
+        output = stg.generate(hist_data=history_data)
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+    def test_sel_timing(self):
+        stg = TestSelStrategy()
+        stg_pars = ()
+        stg.set_pars(stg_pars)
+        history_data = self.hp1['close, low, open', :, 5:50]
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates[5:50])
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+    def test_simple_timing(self):
+        stg = TestSigStrategy()
+        stg_pars = (0.2, 0.02, -0.02)
+        stg.set_pars(stg_pars)
+        history_data = self.hp1['close, open, high, low', :, 3:50]
+        output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
 
 
 class TestLog(unittest.TestCase):

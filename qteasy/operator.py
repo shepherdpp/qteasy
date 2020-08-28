@@ -871,12 +871,18 @@ class Selecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        # assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        # assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
-        # assert len(self.pars) == self.par_count, \
-        #     f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
-        # assert isinstance(hist_data, np.ndarray), \
-        #     f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
+        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
+        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
+        assert len(self.pars) == self.par_count, \
+            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+        assert isinstance(hist_data, np.ndarray), \
+            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
+        assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
+        assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
+        assert all([isinstance(share, str) for share in shares]), \
+            f'TypeError, all elements in shares should be str, got otherwise'
+        assert all([isinstance(date, pd.Timestamp) for date in dates]), \
+            f'TYpeError, all elements in dates should be Timestamp, got otherwise'
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
@@ -887,12 +893,12 @@ class Selecting(Strategy):
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
         # debug
-        print(f'hist data received in selecting strategy:\n{hist_data}')
-        print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
+        # print(f'hist data received in selecting strategy:\n{hist_data}')
+        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
         for sp, sl in zip(seg_pos, seg_lens):
             # share_sel向量代表当前区间内的投资组合比例
             # debug
-            print(f'following data will be passed to selection realize function:\n{hist_data[:, sp:sp + sl, :]}')
+            # print(f'following data will be passed to selection realize function:\n{hist_data[:, sp:sp + sl, :]}')
             share_sel = self._realize(hist_data[:, sp:sp + sl, :])
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
@@ -1965,8 +1971,8 @@ class Operator:
                     sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # debug
-        # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
-        # print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
+        print(f'Sel_mask has been created! shape is {sel_mask.shape}')
+        print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
@@ -1977,18 +1983,18 @@ class Operator:
         ls_masks = [tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)]
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # debug
-        # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
-        # print('\n long/short mask: \n', ls_mask[:100])
+        print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
+        print('\n long/short mask: \n', ls_mask[:100])
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
         ricon_mats = [ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)]
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # debug
-        # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
-        # print('risk control matrix \n', ricon_mat[:100])
-        # print (ricon_mat)
-        # print('sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
+        print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
+        print('risk control matrix \n', ricon_mat[:100])
+        print (ricon_mat)
+        print('sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并对交易信号进行合法化
         # print('SPEED test OP create, Time of operation mask creation')
         # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
