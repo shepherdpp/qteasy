@@ -1730,7 +1730,7 @@ class TestVisual(unittest.TestCase):
     """
 
     def test_ohlc(self):
-        qt.ohlc('000001.SZ', start='2020-01-01', end='2020-04-30', style='yahoo', type='candle')
+        qt.ohlc('000002.SZ', start='2020-04-01', type='candle')
 
 
 def test_suite():
