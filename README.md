@@ -50,8 +50,10 @@ With `qteasy`, historical stock price data can be easily loaded and displayed, w
 qt.ohlt('000300.SZ', start='2020-03-01')
 
 ```
-![image of ohlc plot]
-(https://user-images.githubusercontent.com/34448648/91590745-648fe080-e98e-11ea-9b73-369e9dd78990.png)
+the ohlc chart of stock 000300 will be displayed:
+
+![image of ohlc plot](https://user-images.githubusercontent.com/34448648/91590745-648fe080-e98e-11ea-9b73-369e9dd78990.png)
+
 ### Creating Strategies
 
 
