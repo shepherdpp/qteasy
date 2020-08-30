@@ -889,23 +889,32 @@ class Selecting(Strategy):
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
         # 一个空的ndarray对象用于存储生成的选股蒙版
         sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
-        seg_start = 0
+        # 原来的函数实际上使用未来的数据生成今天的结果，这样是错误的
+        # 例如，对于seg_start = 0，seg_lengt = 6的时候，使用seg_start:seg_start + seg_length的数据生成seg_start的数据，
+        # 也就是说，用第0:6天的数据，生成了第0天的信号
+        # 因此，seg_start不应该是seg_pos[0]，而是seg_pos[1]的数，因为这才是真正应该开始计算的第一条信号
+        # 正确的方法是用seg_start:seg_length的数据生成seg_start+seg_length那天的信号，即
+        # 使用0:6天的数据（不含第6天）生成第6天的信号
+        # 不过这样会带来一个变化，即生成全部操作信号需要更多的历史数据，包括第一个信号所在日期之前window_length日的数据
+        # 因此在输出数据的时候需要将前window_length个数据截取掉
+        seg_start = seg_pos[1]
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
         # debug
-        # print(f'hist data received in selecting strategy:\n{hist_data}')
-        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
-        for sp, sl in zip(seg_pos, seg_lens):
+        print(f'hist data received in selecting strategy:\n{hist_data}')
+        print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
+        for sp, sl in zip(seg_pos[1:], seg_lens):
             # share_sel向量代表当前区间内的投资组合比例
             # debug
-            # print(f'following data will be passed to selection realize function:\n{hist_data[:, sp:sp + sl, :]}')
-            share_sel = self._realize(hist_data[:, sp:sp + sl, :])
+            print(f'{sl} rows of data,\n starting from {sp - sl} to {sp},\n'
+                  f' will be passed to selection realize function:\n{hist_data[:, sp:sp + sl, :]}')
+            share_sel = self._realize(hist_data[:, sp - sl:sp, :])
             seg_end = seg_start + sl
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
-        return sel_mask
+        return sel_mask[seg_pos[1] - 1:]
 
 
 class SelectingSimple(Selecting):

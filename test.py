@@ -806,7 +806,7 @@ class TestSigStrategy(qt.SimpleTiming):
         r, price1, price2 = params
         h = hist_data.T
 
-        ratio = np.abs((h[0] - h[3]) / (h[1] - h[2]))
+        ratio = np.abs((h[0] - h[1]) / (h[3] - h[2]))
         diff = h[3] - np.roll(h[3], 1)
 
         sig = np.where((ratio < r) & (diff > price1),
@@ -897,18 +897,18 @@ class TestOperator(unittest.TestCase):
                       8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
 
         self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
-                        '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
-                        '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
-                        '2016-07-19', '2016-07-20', '2016-07-21', '2016-07-22',
-                        '2016-07-25', '2016-07-26', '2016-07-27', '2016-07-28',
-                        '2016-07-29', '2016-08-01', '2016-08-02', '2016-08-03',
-                        '2016-08-04', '2016-08-05', '2016-08-08', '2016-08-09',
-                        '2016-08-10', '2016-08-11', '2016-08-12', '2016-08-15',
-                        '2016-08-16', '2016-08-17', '2016-08-18', '2016-08-19',
-                        '2016-08-22', '2016-08-23', '2016-08-24', '2016-08-25',
-                        '2016-08-26', '2016-08-29', '2016-08-30', '2016-08-31',
-                        '2016-09-01', '2016-09-02', '2016-09-05', '2016-09-06',
-                        '2016-09-07', '2016-09-08']
+                             '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
+                             '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
+                             '2016-07-19', '2016-07-20', '2016-07-21', '2016-07-22',
+                             '2016-07-25', '2016-07-26', '2016-07-27', '2016-07-28',
+                             '2016-07-29', '2016-08-01', '2016-08-02', '2016-08-03',
+                             '2016-08-04', '2016-08-05', '2016-08-08', '2016-08-09',
+                             '2016-08-10', '2016-08-11', '2016-08-12', '2016-08-15',
+                             '2016-08-16', '2016-08-17', '2016-08-18', '2016-08-19',
+                             '2016-08-22', '2016-08-23', '2016-08-24', '2016-08-25',
+                             '2016-08-26', '2016-08-29', '2016-08-30', '2016-08-31',
+                             '2016-09-01', '2016-09-02', '2016-09-05', '2016-09-06',
+                             '2016-09-07', '2016-09-08']
 
         self.shares = ['000010', '000030', '000039']
 
@@ -1075,7 +1075,7 @@ class TestOperator(unittest.TestCase):
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
         self.assertTrue(isinstance(op_list, pd.DataFrame))
-        self.assertEqual(op_list.shape, (14, 3))
+        self.assertEqual(op_list.shape, (22, 3))
 
     def test_operator_parameter_setting(self):
         """
@@ -1167,7 +1167,8 @@ class TestOperator(unittest.TestCase):
         self.stg = qt.TimingCrossline()
         self.stg_type = 'TIMING'
         self.stg_name = "CROSSLINE STRATEGY"
-        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross point' \
+        self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
+                        'point' \
                         ' of long and short term moving average prices '
         self.pars = None
         self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
@@ -1216,7 +1217,9 @@ class TestOperator(unittest.TestCase):
 
     def test_rolling_timing(self):
         stg = TestLSStrategy()
-        stg_pars = (5, 10)
+        stg_pars = {'000100': (5, 10),
+                    '000200': (5, 10),
+                    '000300': (5, 6)}
         stg.set_pars(stg_pars)
         history_data = self.hp1.values
         output = stg.generate(hist_data=history_data)
@@ -1224,15 +1227,119 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
+        lsmask = np.array([[0., 0., 1.],
+                           [0., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 0., 1.],
+                           [1., 1., 1.],
+                           [1., 1., 0.],
+                           [1., 1., 1.],
+                           [1., 1., 0.],
+                           [1., 1., 0.],
+                           [1., 1., 0.],
+                           [1., 0., 0.],
+                           [1., 0., 0.],
+                           [1., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 0.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 0., 1.],
+                           [0., 0., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.],
+                           [0., 1., 1.]])
+        # debug
+        print(f'output is\n{output}\n and lsmask target is\n{lsmask}')
+        # TODO: Issue to be solved: the np.nan value are converted to 0 in the lsmask，这样做可能会有意想不到的后果
+        # TODO: 需要解决nan值的问题
+        self.assertEqual(output.shape, lsmask.shape)
+        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+
     def test_sel_timing(self):
         stg = TestSelStrategy()
         stg_pars = ()
         stg.set_pars(stg_pars)
-        history_data = self.hp1['close, low, open', :, 5:50]
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates[5:50])
+        history_data = self.hp1['close, low, open', :, :]
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0]])
+        # debug
+        print(f'output is\n{pd.DataFrame(output)}\n and selmask target is\n{pd.DataFrame(selmask)}')
+
+        # TODO: 存在未来函数！实际上Sel模块的选股结果是参照了当天以后的未来数据生成的！！极大的BUG，应该立即修正！
+        self.assertEqual(output.shape, selmask.shape)
+        self.assertTrue(np.allclose(output, selmask))
 
     def test_simple_timing(self):
         stg = TestSigStrategy()
@@ -1244,6 +1351,60 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
+        sigmatrix = np.array([[0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, np.nan],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, np.nan, 0.0],
+                              [0.0, np.nan, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0]])
+
+        print(f'output is \n{output}\nsigmal matrix is {sigmatrix}')
+        self.assertEqual(sigmatrix.shape, output.shape)
+        self.assertTrue(np.allclose(output, sigmatrix))
 
 class TestLog(unittest.TestCase):
     def test_init(self):
