@@ -14,14 +14,25 @@ import datetime
 from .history import get_bar, stock_basic, name_change
 
 
-def ohlc(stock, start, end=None, asset_type='E', type='candle', figsize=(10, 5), mav=(5, 10, 20, 30)):
+def ohlc(stock, start=None, end=None, asset_type='E', type='candle', figsize=(10, 5), mav=(5, 10, 20, 30)):
+    today = datetime.datetime.today()
     if end is None:
-        today = datetime.datetime.today()
-        end = today.strftime('dddd-mm-dd')
+        end = today.strftime('%Y-%m-%d')
+    if start is None:
+        try:
+            start = (pd.Timestamp(end) - pd.Timedelta(30, 'd')).strftime('%Y-%m-%d')
+        except:
+            start = today - pd.Timedelta(30, 'd')
+
     data = get_bar(shares=stock, start=start, end=end, asset_type=asset_type)
-    share_basic = name_change(ts_code=stock, fields='ts_code,name,start_date,end_date,change_reason')
-    share_name = stock + ' - ' + share_basic.name[0]
-    print(share_basic.head())
+    if asset_type == 'E':
+        share_basic = name_change(ts_code=stock, fields='ts_code,name,start_date,end_date,change_reason')
+        if share_basic.empty:
+            raise ValueError(f'stock {stock} can not be found or does not exist!')
+        share_name = stock + ' - ' + share_basic.name[0]
+        print(share_basic.head())
+    else:
+        share_name = stock + ' - ' + asset_type
     # data.info()
     daily = data[['open', 'high', 'low', 'close', 'vol']]
     daily.columns=['open', 'high', 'low', 'close', 'volume']

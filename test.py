@@ -1900,7 +1900,7 @@ class TestVisual(unittest.TestCase):
     """
 
     def test_ohlc(self):
-        qt.ohlc('000002.SZ', start='2020-04-01')
+        qt.ohlc('513100.SH', start='2020-04-01', asset_type='FD')
 
 
 def test_suite():
