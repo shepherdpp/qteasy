@@ -62,6 +62,18 @@ the ohlc chart of stock 000300 will be displayed:
 In this section, a short and simple example will be given for the readers to go through the process of creating a 
 strategy, testing it throught back-testing function, and searching for parameters that allows the strategy to provide 
 the best output with given historical data.
+
+There are multiple internally preset strategies such as crossline timing strategy or DMA timing strategy provided in
+ qteasy, a strategy should be created with an Operator object, the Operator is the container of strategies, and provides
+ multiple methods to utilize and operate on these strategies.
+ 
+ An Opertor with a DMA strategy can be created like this:
+ 
+ ```python
+op = qt.Operator(timing='DMA')
+```
+
+
  
 #### Timing strategy Example: Cross-Line strategy
 
