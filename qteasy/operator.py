@@ -827,7 +827,7 @@ class Selecting(Strategy):
         """
         # assert isinstance(dates, list), \
         #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
-        bnds = pd.date_range(start=dates[0], end=dates[-1], freq=freq)
+        bnds = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
         # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
         # debug
@@ -840,7 +840,7 @@ class Selecting(Strategy):
         # 计算每个分段的长度
         seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
         # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一个分割位，因为这样会有两个
-        # 【0】了，例子如下（为简单起见，例子中的日期都用整数代替）：
+        # [0]了，例子如下（为简单起见，例子中的日期都用整数代替）：
         # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
         # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
         # 第3天的位置为2，第6天的位置为5，第9天的位置为8
@@ -903,18 +903,21 @@ class Selecting(Strategy):
         # debug
         print(f'hist data received in selecting strategy:\n{hist_data}')
         print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
-        for sp, sl in zip(seg_pos[1:], seg_lens):
+        for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
             # debug
-            print(f'{sl} rows of data,\n starting from {sp - sl} to {sp},\n'
-                  f' will be passed to selection realize function:\n{hist_data[:, sp:sp + sl, :]}')
+            print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
+                  f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
             share_sel = self._realize(hist_data[:, sp - sl:sp, :])
-            seg_end = seg_start + sl
+            seg_end = seg_start + fill_len
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
+            # debug
+            print(f'filling data into the sel_mask, now filling \n{share_sel}\nin she sell mask '
+                  f'from row {seg_start} to {seg_end} (not included)\n')
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
-        return sel_mask[seg_pos[1] - 1:]
+        return sel_mask[seg_pos[1]:]
 
 
 class SelectingSimple(Selecting):
@@ -1912,7 +1915,8 @@ class Operator:
         assert self.ls_blender != ''
         assert self.ricon_blender != ''
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
-        self._selecting_history_data = [hist_data[stg.data_types, :, first_cash_pos:] for stg in self.selecting]
+        self._selecting_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                        for stg in self.selecting]
         # debug
         # print(f'slicing historical data \n{self._selecting_history_data}')
         # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算

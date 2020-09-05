@@ -65,7 +65,9 @@ class Log:
 
 
 # TODO: 将要增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
-# TODO: 完善Context类，将docstring中的所有参数和属性一一实现
+# TODO: 取消Context类，采用config字典的形式处理所有的qt.run()参数。借鉴matplotlib.finance的处理方法，将所有的参数内容都以**kwargs
+# TODO: 的形式传入qt.run()方法，使用config字典来获取所有的参数。使用_valid_qt_args()函数来保存并设置所有可用的参数以及他们的验证方法
+# TODO: 使用_validate_qt_args()方法来对所有的参数进行验证，在qt.run()中调用config字典，使用config字典中的参数来控制qt的行为。
 class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及参数
 
@@ -755,7 +757,7 @@ class CashPlan:
                 new_ir = self.ir
             return CashPlan(list(plan.index), list(plan.amount), new_ir)
         else:
-            raise TypeError(f'Only CashPlan and int objects are supported, got {type(other)}')
+            raise TypeError(f'Only CashPlan and numbers are supported, got {type(other)}')
 
     def __radd__(self, other):
         """ 另一个对象other + CashPlan的结果与CashPlan + other相同， 即：

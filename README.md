@@ -72,8 +72,6 @@ There are multiple internally preset strategies such as crossline timing strateg
  ```python
 op = qt.Operator(timing='DMA')
 ```
-
-
  
 #### Timing strategy Example: Cross-Line strategy
 

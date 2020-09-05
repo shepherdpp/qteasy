@@ -734,21 +734,24 @@ class TestSelStrategy(qt.Selecting):
                          data_types='high, low, close',
                          data_freq='d',
                          sample_freq='10d',
-                         window_length=2)
+                         window_length=5)
         pass
 
     def _realize(self, hist_data: np.ndarray):
-        avg = np.mean(hist_data, axis=(1, 2))
-        difper = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))[:, -1] / avg
-        large2 = difper.argsort()[0:2]
+        avg = np.nanmean(hist_data, axis=(1, 2))
+        dif = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))
+        dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
+        difper = dif_no_nan / avg
+        large2 = difper.argsort()[1:]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
         # debug
-        # print(f'avg is \n{np.mean(hist_data, axis=(1, 2))}\n')
-        # print(f'hist_data is\n{hist_data}\n')
-        # print(f'last close price is\n{hist_data[:, :, 2]}\n')
-        print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))}\n')
-        print(f'selected largest two args:\n{large2}\n chosen is\n{chosen}\n')
+        print(f'avg is \n{np.nanmean(hist_data, axis=(1, 2))}\n')
+        print(f'last close price is\n{hist_data[:, :, 2]}\n')
+        print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))}\n')
+        print(f'selected largest two args: {large2} in'
+              f'\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))[:, -1] / avg}\n'
+              f'and got result chosen:\n{chosen}\n')
         return chosen
 
 
@@ -774,7 +777,7 @@ class TestSelStrategyDiffTime(qt.Selecting):
 
     def _realize(self, hist_data: np.ndarray):
         avg = hist_data.mean(axis=1).squeeze()
-        difper = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 2))[:, -1] / avg
+        difper = (hist_data[:, :, 0] - np.roll(hist_data[:, :, 0], 1))[:, -1] / avg
         large2 = difper.argsort()[0:2]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
@@ -996,14 +999,14 @@ class TestOperator(unittest.TestCase):
         tim_hist_data = self.op._timing_history_data[0]
         ric_hist_data = self.op._ricon_history_data[0]
         print('selecting history data:\n', sel_hist_data)
-        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 5:, [2, 3, 0]])
-        print('difference is \n', sel_hist_data - self.test_data_3D[:, 5:, [2, 3, 0]])
+        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
+        print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
         # TODO: 为什么生成的数据的行数都这么奇怪？为什么不是把所有的数据带入计算？尤其是RollingTiming，第一条结果也需要利用之前的数据生成的
-        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, 5:, [2, 3, 0]], equal_nan=True))
+        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
         self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
 
-        # raises Valueerror if empty history panel is given
+        # raises Value Error if empty history panel is given
         empty_hp = qt.HistoryPanel()
         correct_hp = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 4)))
         too_many_shares = qt.HistoryPanel(values=np.random.randint(10, size=(5, 50, 4)))
@@ -1041,7 +1044,7 @@ class TestOperator(unittest.TestCase):
                           too_many_types,
                           on_spot_cash)
 
-        # test the effect of datatype sequence in strategy definition
+        # test the effect of data type sequence in strategy definition
 
     def test_operator_generate(self):
         """
@@ -1283,7 +1286,12 @@ class TestOperator(unittest.TestCase):
         stg = TestSelStrategy()
         stg_pars = ()
         stg.set_pars(stg_pars)
-        history_data = self.hp1['close, low, open', :, :]
+        history_data = self.hp1['high, low, close', :, :]
+        seg_pos, seg_length, seg_count = stg._seg_periods(dates=self.hp1.hdates, freq=stg.sample_freq)
+        self.assertEqual(list(seg_pos), [0, 5, 11, 19, 26, 33, 41, 47, 49])
+        self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
+        self.assertEqual(seg_count, 8)
+
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
 
         self.assertIsInstance(output, np.ndarray)
@@ -1349,7 +1357,7 @@ class TestOperator(unittest.TestCase):
         output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
 
         self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (45, 3))
+        self.assertEqual(output.shape, (50, 3))
 
         sigmatrix = np.array([[0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
