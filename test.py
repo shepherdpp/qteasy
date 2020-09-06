@@ -1080,7 +1080,42 @@ class TestOperator(unittest.TestCase):
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
         self.assertTrue(isinstance(op_list, pd.DataFrame))
-        self.assertEqual(op_list.shape, (22, 3))
+        self.assertEqual(op_list.shape, (23, 3))
+        target_op_dates = ['2016/7/8', '2016/7/12', '2016/7/13',
+                           '2016/7/14', '2016/7/18', '2016/7/20',
+                           '2016/7/22', '2016/7/26', '2016/7/27',
+                           '2016/7/28', '2016/8/2', '2016/8/3',
+                           '2016/8/4', '2016/8/5', '2016/8/10',
+                           '2016/8/16', '2016/8/18', '2016/8/24',
+                           '2016/8/26', '2016/8/29', '2016/9/5',
+                           '2016/9/6', '2016/9/8']
+        target_op_values = np.array([[0.0, 1.0, 0.0],
+                                     [0.5, -1.0, 0.0],
+                                     [1.0, 0.0, 0.0],
+                                     [0.0, 0.0, -1.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 0.0, -1.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, -0.5, 0.0],
+                                     [0.0, 0.0, -1.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 0.0, -1.0],
+                                     [0.0, 0.0, -1.0],
+                                     [0.0, 0.0, 1.0],
+                                     [-1.0, 0.0, 0.0],
+                                     [0.0, 1.0, 1.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 1.0, 0.0],
+                                     [0.0, 0.0, -1.0],
+                                     [0.0, 1.0, 0.0]])
+        target_op = pd.DataFrame(data=target_op_values, index=target_op_dates, columns=['000010', '000030', '000039'])
+        target_op = target_op.rename(index=pd.Timestamp)
+        self.assertTrue(np.allclose(target_op.values, op_list.values))
+        self.assertTrue(np.allclose(target_op.index, op_list.index))
 
     def test_operator_parameter_setting(self):
         """
@@ -1409,10 +1444,15 @@ class TestOperator(unittest.TestCase):
 
         # debug
         print(f'the output is \n{pd.DataFrame(output)}\nand signal matrix is \n{pd.DataFrame(sigmatrix)}')
+        side_by_side_array = np.array([[i, out_line, sig_line]
+                                       for
+                                       i, out_line, sig_line
+                                       in zip(range(len(output)), output, sigmatrix)])
         print(f'output and signal matrix lined up side by side is \n'
-              f'{np.array([[i, out_line, sig_line] for i, out_line, sig_line in zip(range(len(output)), output, sigmatrix)])}')
+              f'{side_by_side_array}')
         self.assertEqual(sigmatrix.shape, output.shape)
         self.assertTrue(np.allclose(output, sigmatrix))
+
 
 class TestLog(unittest.TestCase):
     def test_init(self):
