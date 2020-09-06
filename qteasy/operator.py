@@ -411,8 +411,6 @@ class RollingTiming(Strategy):
     def _realize(self, hist_data: np.ndarray, params: tuple) -> int:
         """ 策略的具体实现方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号
 
-
-
             同时，params是一个元组，包含了应用于这一个投资产品的策略参数（由于同一个策略允许对不同的投资产品应用不同的策略参数，
             这里的策略参数已经被自动分配好了）。投资策略参数的个数为self.par_count所指定，每个投资参数的类型也为self.par_types
             所指定。
@@ -453,17 +451,19 @@ class RollingTiming(Strategy):
         """
         # print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}, parameter: {pars}')
         # print(f'first 20 rows of hist_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
-        # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用generate_one()函数
-        if len(hist_slice.shape) == 2:
-            drop = ~np.isnan(hist_slice[:, 0])
-        else:
-            drop = ~np.isnan(hist_slice)
+        # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用_realize()函数
+        # 由于输入的历史数据来自于HistoryPanel，因此总是三维数据的切片即二维数据，因此可以简化：
+        # if len(hist_slice.shape) == 2:
+        #     no_nan = ~np.isnan(hist_slice[:, 0])
+        # else:
+        #     no_nan = ~np.isnan(hist_slice)
+        no_nan = ~np.isnan(hist_slice[:, 0])
         # 生成输出值一维向量
         cat = np.zeros(hist_slice.shape[0])
-        hist_nonan = hist_slice[drop]  # 仅针对非nan值计算，忽略股票停牌时期
+        hist_nonan = hist_slice[no_nan]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
         if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
-            return cat
+            return cat[self.window_length:]
 
         # 如果有足够的非nan数据，则开始进行历史数据的滚动展开
         hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
@@ -473,16 +473,19 @@ class RollingTiming(Strategy):
         # 滚动展开完成，形成一个新的3D或2D矩阵
         # 开始将参数应用到策略实施函数generate中
         par_list = [pars] * loop_count
+        # TODO: 因为在generate_over()函数中接受的参数都只会是一个个股的数据，因此不存在par_list会不同的情况，因此不需要使用map，
+        # TODO: 可以使用apply_along_axis()从而进一步提高效率
         res = np.array(list(map(self._realize,
                                 hist_pack,
                                 par_list)))
+        # TODO: 如果在创建cat的时候就去掉最前面一段，那么这里的capping和concatenate()就都不需要了，这都是很费时的操作
         # 生成的结果缺少最前面window_length那一段，因此需要补齐
         capping = np.zeros(self._window_length - 1)
         # debug
         # print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
-        cat[drop] = res
+        cat[no_nan] = res
         # debug
         # print(f'created long/short mask for current hist_slice is: \n{cat[self.window_length:][:100]}')
         return cat[self.window_length:]
@@ -1078,8 +1081,32 @@ class SimpleTiming(Strategy):
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple):
+        """抽象方法，在实际实现SimpleTiming对象的时候必须实现这个方法，以实现策略的计算"""
         raise NotImplementedError
 
+    def _generate_over(self, hist_slice: np.ndarray, pars: tuple):
+        """处理给定的历史数据中的nan值，因为nan值代表股票历史数据中的停牌或空缺位，在计算时应该忽略这些数据
+
+        input:
+            :param hist_slice: 历史数据切片，一只个股的所有类型历史数据，shape为(rows, columns)
+                rows： 历史数据行数，每行包含个股在每一个时间点上的历史数据
+                columns： 历史数据列数，每列一类数据如close收盘价、open开盘价等
+            :param pars: 策略生成参数，将被原样传递到_realize()函数中
+        :return:
+            np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
+        """
+        nonan = ~np.isnan(hist_slice[:, 0])
+        # 生成输出值一维向量
+        cat = np.zeros(hist_slice.shape[0])
+        hist_nonan = hist_slice[nonan]  # 仅针对非nan值计算，忽略股票停牌时期
+        loop_count = len(hist_nonan) - self.window_length + 1
+        if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
+            return cat
+        # 将所有的非nan值（即hist_nonan）传入_realize()函数，并将结果填充到cat[nonan],从而让计算结果不受影响
+        cat[nonan] = self._realize(hist_data=hist_nonan, params=pars)
+        return cat
+
+    # TODO: 增加generate_over()函数，处理nan值
     def generate(self, hist_data, shares=None, dates=None):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
@@ -1108,7 +1135,7 @@ class SimpleTiming(Strategy):
         assert len(par_list) == len(hist_data), \
             f'InputError: can not map {len(par_list)} parameters to {hist_data.shape[0]} shares!'
         # 使用map()函数将每一个参数应用到历史数据矩阵的每一列上（每一列代表一个个股的全部历史数据），使用map函数的速度比循环快得多
-        res = np.array(list(map(self._realize,
+        res = np.array(list(map(self._generate_over,
                                 hist_data,
                                 par_list))).T
 

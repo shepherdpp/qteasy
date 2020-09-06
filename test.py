@@ -810,11 +810,13 @@ class TestSigStrategy(qt.SimpleTiming):
         h = hist_data.T
 
         ratio = np.abs((h[0] - h[1]) / (h[3] - h[2]))
-        diff = h[3] - np.roll(h[3], 1)
+        diff = h[0] - np.roll(h[0], 1)
 
         sig = np.where((ratio < r) & (diff > price1),
                        1,
                        np.where((ratio < r) & (diff < price2), -1, 0))
+        # debug
+        print(f'In TestSigStrategy: \nthe history data is\n{h}\nthe ratio is \n{ratio}\nthe diff is\n{diff}')
 
         return sig
 
@@ -1357,14 +1359,9 @@ class TestOperator(unittest.TestCase):
         output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
 
         self.assertIsInstance(output, np.ndarray)
-        self.assertEqual(output.shape, (50, 3))
+        self.assertEqual(output.shape, (45, 3))
 
-        sigmatrix = np.array([[0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 0.0, 0.0],
-                              [0.0, 1.0, 0.0],
+        sigmatrix = np.array([[0.0, 1.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, -1.0, 0.0],
                               [1.0, 0.0, 0.0],
@@ -1377,7 +1374,7 @@ class TestOperator(unittest.TestCase):
                               [0.0, 1.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
-                              [0.0, 1.0, np.nan],
+                              [0.0, 1.0, 0.0],
                               [0.0, 0.0, -1.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
@@ -1401,8 +1398,8 @@ class TestOperator(unittest.TestCase):
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 1.0],
                               [0.0, 1.0, 0.0],
-                              [0.0, np.nan, 0.0],
-                              [0.0, np.nan, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0],
@@ -1410,7 +1407,10 @@ class TestOperator(unittest.TestCase):
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0]])
 
-        print(f'output is \n{output}\nsigmal matrix is {sigmatrix}')
+        # debug
+        print(f'the output is \n{pd.DataFrame(output)}\nand signal matrix is \n{pd.DataFrame(sigmatrix)}')
+        print(f'output and signal matrix lined up side by side is \n'
+              f'{np.array([[i, out_line, sig_line] for i, out_line, sig_line in zip(range(len(output)), output, sigmatrix)])}')
         self.assertEqual(sigmatrix.shape, output.shape)
         self.assertTrue(np.allclose(output, sigmatrix))
 
