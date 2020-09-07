@@ -904,20 +904,20 @@ class Selecting(Strategy):
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
         # debug
-        print(f'hist data received in selecting strategy:\n{hist_data}')
-        print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
+        # print(f'hist data received in selecting strategy:\n{hist_data}')
+        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
             # debug
-            print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
-                  f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
+            # print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
+            #       f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
             share_sel = self._realize(hist_data[:, sp - sl:sp, :])
             seg_end = seg_start + fill_len
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
             # debug
-            print(f'filling data into the sel_mask, now filling \n{share_sel}\nin she sell mask '
-                  f'from row {seg_start} to {seg_end} (not included)\n')
+            # print(f'filling data into the sel_mask, now filling \n{share_sel}\nin she sell mask '
+            #       f'from row {seg_start} to {seg_end} (not included)\n')
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         return sel_mask[seg_pos[1]:]
@@ -2010,9 +2010,9 @@ class Operator:
             sel_masks.append(
                     sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
-        # debug
-        print(f'Sel_mask has been created! shape is {sel_mask.shape}')
-        print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
+        # # debug
+        # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
+        # print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
@@ -2022,32 +2022,35 @@ class Operator:
         # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
         ls_masks = [tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)]
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
-        # debug
-        print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
-        print('\n long/short mask: \n', ls_mask[:100])
+        # # debug
+        # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
+        # print('\n long/short mask: \n', ls_mask[:100])
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
         ricon_mats = [ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)]
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # debug
-        print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
-        print('risk control matrix \n', ricon_mat[:100])
-        print (ricon_mat)
-        print('sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
-        # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并对交易信号进行合法化
+        # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
+        # print('risk control matrix \n', ricon_mat[:100])
+        # print('sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
+        # print(f'sel_mask * ls_mask converted to signal matrix:\n{mask_to_signal(ls_mask * sel_mask)[:100]}')
+        # print(f'created operation matrix:\n{(mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)}')
+
+        # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并移除所有大于1或小于-1的信号
         # print('SPEED test OP create, Time of operation mask creation')
-        # %time self._legalize(self._mask_to_signal(ls_mask * sel_mask) + (ricon_mat))
         # 生成交易信号矩阵
         op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
-        # print(f'Finally op mask has been created, shaped {op_mat.shape}')
+        # 生成DataFrame，并且填充日期数据
         date_list = hist_data.hdates[-op_mat.shape[0]:]
-        # print(f'length of date_list: {len(date_list)}')
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
-        # print('operation matrix: \n', lst.loc[lst.any(axis=1)])
+        # # debug
+        # print(f'Finally op mask has been created, shaped {op_mat.shape}')
+        # print(f'length of date_list: {len(date_list)}')
+        # print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
         # 消除完全相同的行和数字全为0的行
         # 定位lst中所有不全为0的行
-        lst_out = lst[lst.any(1)]
+        lst_out = lst[lst.any(axis=1)]
         # debug
         # print('operation matrix: ', '\n', lst_out)
         # 进一步找到所有相同且相邻的交易信号行，删除所有较晚的交易信号，只保留最早的信号（这样做的目的是减少重复信号，从而提高回测效率）

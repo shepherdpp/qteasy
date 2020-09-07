@@ -746,12 +746,12 @@ class TestSelStrategy(qt.Selecting):
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
         # debug
-        print(f'avg is \n{np.nanmean(hist_data, axis=(1, 2))}\n')
-        print(f'last close price is\n{hist_data[:, :, 2]}\n')
-        print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))}\n')
-        print(f'selected largest two args: {large2} in'
-              f'\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))[:, -1] / avg}\n'
-              f'and got result chosen:\n{chosen}\n')
+        # print(f'avg is \n{np.nanmean(hist_data, axis=(1, 2))}\n')
+        # print(f'last close price is\n{hist_data[:, :, 2]}\n')
+        # print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))}\n')
+        # print(f'selected largest two args: {large2} in'
+        #       f'\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))[:, -1] / avg}\n'
+        #       f'and got result chosen:\n{chosen}\n')
         return chosen
 
 
@@ -816,7 +816,7 @@ class TestSigStrategy(qt.SimpleTiming):
                        1,
                        np.where((ratio < r) & (diff < price2), -1, 0))
         # debug
-        print(f'In TestSigStrategy: \nthe history data is\n{h}\nthe ratio is \n{ratio}\nthe diff is\n{diff}')
+        # print(f'In TestSigStrategy: \nthe history data is\n{h}\nthe ratio is \n{ratio}\nthe diff is\n{diff}')
 
         return sig
 
@@ -1081,41 +1081,52 @@ class TestOperator(unittest.TestCase):
         print(f'operation list is created: as following:\n {op_list}')
         self.assertTrue(isinstance(op_list, pd.DataFrame))
         self.assertEqual(op_list.shape, (23, 3))
-        target_op_dates = ['2016/7/8', '2016/7/12', '2016/7/13',
-                           '2016/7/14', '2016/7/18', '2016/7/20',
-                           '2016/7/22', '2016/7/26', '2016/7/27',
-                           '2016/7/28', '2016/8/2', '2016/8/3',
-                           '2016/8/4', '2016/8/5', '2016/8/10',
-                           '2016/8/16', '2016/8/18', '2016/8/24',
-                           '2016/8/26', '2016/8/29', '2016/9/5',
-                           '2016/9/6', '2016/9/8']
+        target_op_dates = ['2016/07/08', '2016/07/12', '2016/07/13', '2016/07/14',
+                           '2016/07/18', '2016/07/26', '2016/07/27', '2016/07/28',
+                           '2016/08/02', '2016/08/03', '2016/08/04', '2016/08/05',
+                           '2016/08/08', '2016/08/10', '2016/08/18', '2016/08/24',
+                           '2016/08/26', '2016/08/29', '2016/08/30', '2016/09/01',
+                           '2016/09/05', '2016/09/06', '2016/09/08']
         target_op_values = np.array([[0.0, 1.0, 0.0],
                                      [0.5, -1.0, 0.0],
                                      [1.0, 0.0, 0.0],
                                      [0.0, 0.0, -1.0],
                                      [0.0, 1.0, 0.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 1.0, 0.0],
                                      [0.0, 0.5, 0.0],
                                      [0.0, 1.0, 0.0],
                                      [0.0, 0.0, -1.0],
                                      [0.0, 1.0, 0.0],
-                                     [0.0, -0.5, 0.0],
+                                     [0.0, -1.0, 0.0],
                                      [0.0, 0.0, -1.0],
                                      [0.0, 1.0, 0.0],
-                                     [0.0, 0.0, -1.0],
+                                     [-1.0, 0.0, 0.0],
                                      [0.0, 0.0, -1.0],
                                      [0.0, 0.0, 1.0],
                                      [-1.0, 0.0, 0.0],
                                      [0.0, 1.0, 1.0],
-                                     [0.0, 1.0, 0.0],
+                                     [0.0, 1.0, 0.5],
+                                     [0.0, -1.0, 0.0],
+                                     [0.0, 0.5, 0.0],
                                      [0.0, 1.0, 0.0],
                                      [0.0, 0.0, -1.0],
                                      [0.0, 1.0, 0.0]])
         target_op = pd.DataFrame(data=target_op_values, index=target_op_dates, columns=['000010', '000030', '000039'])
         target_op = target_op.rename(index=pd.Timestamp)
+        print(f'target operation list is as following:\n {target_op}')
+        dates_pairs = [[date1, date2, date1 == date2]
+                       for date1, date2
+                       in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]
+        signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
+                        for sig1, sig2
+                        in zip(list(target_op.values), list(op_list.values))]
+        print(f'dates side by side:\n '
+              f'{dates_pairs}')
+        print(f'signals side by side:\n'
+              f'{signal_pairs}')
         self.assertTrue(np.allclose(target_op.values, op_list.values))
-        self.assertTrue(np.allclose(target_op.index, op_list.index))
+        self.assertTrue(all([date1 == date2
+                             for date1, date2
+                             in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]))
 
     def test_operator_parameter_setting(self):
         """
