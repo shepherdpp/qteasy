@@ -943,15 +943,31 @@ class HistoryPanel():
         return self
 
     def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
+        """将HistoryPanel对象中的指定片段转化为DataFrame
+
+        由于HistoryPanel对象包含三维数据，因此在转化时必须指定
+        """
         if self.is_empty:
             return pd.DataFrame()
         else:
+            if all([par is not None for par in [htype, share]]) or all([par is None for par in [htype, share]]):
+                # 两个参数都是非None或都是None，应该弹出警告信息
+                raise KeyError(f'Only and exactly one of the parameters htype and share should be given, '
+                               f'got both or none')
             if htype is not None:
-                v = self[htype].T.squeeze()
-                return pd.DataFrame(v, index=self.hdates, columns=self.shares)
+                assert isinstance(htype, str), f'htype must be a string, got {type(htype)}'
+                if htype in self.htypes:
+                    v = self[htype].T.squeeze()
+                    return pd.DataFrame(v, index=self.hdates, columns=self.shares)
+                else:
+                    raise KeyError(f'htype {htype} is not found!')
             if share is not None:
-                v = self[:, share].squeeze()
-                return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
+                assert isinstance(share, str), f'share must be a string, got {type(share)}'
+                if share in self.shares:
+                    v = self[:, share].squeeze()
+                    return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
+                else:
+                    raise KeyError(f'share {share} is not found!')
 
     # TODO implement this method
     def to_csv(self):

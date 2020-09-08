@@ -1324,7 +1324,7 @@ class TestOperator(unittest.TestCase):
                            [0., 1., 1.],
                            [0., 1., 1.]])
         # debug
-        print(f'output is\n{output}\n and lsmask target is\n{lsmask}')
+        # print(f'output is\n{output}\n and lsmask target is\n{lsmask}')
         # TODO: Issue to be solved: the np.nan value are converted to 0 in the lsmask，这样做可能会有意想不到的后果
         # TODO: 需要解决nan值的问题
         self.assertEqual(output.shape, lsmask.shape)
@@ -1390,10 +1390,9 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0]])
-        # debug
-        print(f'output is\n{pd.DataFrame(output)}\n and selmask target is\n{pd.DataFrame(selmask)}')
+        # # debug
+        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
-        # TODO: 存在未来函数！实际上Sel模块的选股结果是参照了当天以后的未来数据生成的！！极大的BUG，应该立即修正！
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask))
 
@@ -1454,7 +1453,7 @@ class TestOperator(unittest.TestCase):
                               [0.0, 1.0, 0.0]])
 
         # debug
-        print(f'the output is \n{pd.DataFrame(output)}\nand signal matrix is \n{pd.DataFrame(sigmatrix)}')
+        # print(f'the output is \n{pd.DataFrame(output)}\nand signal matrix is \n{pd.DataFrame(sigmatrix)}')
         side_by_side_array = np.array([[i, out_line, sig_line]
                                        for
                                        i, out_line, sig_line
@@ -1715,7 +1714,53 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_to_dataframe(self):
-        pass
+        """ 测试HistoryPanel对象的to_dataframe方法
+
+        """
+        print(f'START TEST == test_to_dataframe')
+        print(f'test converting test hp to dataframe with share == "000102":')
+        df_test = self.hp.to_dataframe(share='000102')
+        self.assertIsInstance(df_test, pd.DataFrame)
+        self.assertEqual(list(self.hp.hdates), list(df_test.index))
+        self.assertEqual(list(self.hp.htypes), list(df_test.columns))
+        self.assertTrue(np.allclose(self.hp[:, '000102'], df_test.values))
+
+        print(f'test DataFrame conversion with share == "000100"')
+        df_test = self.hp.to_dataframe(share='000100')
+        self.assertIsInstance(df_test, pd.DataFrame)
+        self.assertEqual(list(self.hp.hdates), list(df_test.index))
+        self.assertEqual(list(self.hp.htypes), list(df_test.columns))
+        self.assertTrue(np.allclose(self.hp[:, '000100'], df_test.values))
+
+        print(f'test DataFrame conversion error: type incorrect')
+        self.assertRaises(AssertionError, self.hp.to_dataframe, share=3)
+
+        print(f'test DataFrame error raising with share not found error')
+        self.assertRaises(KeyError, self.hp.to_dataframe, share='000300')
+
+        print(f'test DataFrame conversion with htype == "close"')
+        df_test = self.hp.to_dataframe(htype='close')
+        self.assertIsInstance(df_test, pd.DataFrame)
+        self.assertEqual(list(self.hp.hdates), list(df_test.index))
+        self.assertEqual(list(self.hp.shares), list(df_test.columns))
+        self.assertTrue(np.allclose(self.hp['close'].T, df_test.values))
+
+        print(f'test DataFrame conversion with htype == "high"')
+        df_test = self.hp.to_dataframe(htype='high')
+        self.assertIsInstance(df_test, pd.DataFrame)
+        self.assertEqual(list(self.hp.hdates), list(df_test.index))
+        self.assertEqual(list(self.hp.shares), list(df_test.columns))
+        self.assertTrue(np.allclose(self.hp['high'].T, df_test.values))
+
+        print(f'test DataFrame conversion error: type incorrect')
+        self.assertRaises(AssertionError, self.hp.to_dataframe, htype=pd.DataFrame())
+
+        print(f'test DataFrame error raising with share not found error')
+        self.assertRaises(KeyError, self.hp.to_dataframe, htype='non_type')
+
+        print(f'Raises ValueError when both or none parameter is given')
+        self.assertRaises(KeyError, self.hp.to_dataframe)
+        self.assertRaises(KeyError, self.hp.to_dataframe, share='000100', htype='close')
 
     def test_to_csv(self):
         pass
