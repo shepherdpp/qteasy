@@ -668,10 +668,13 @@ class HistoryPanel():
         if not self.is_empty:
             if isinstance(input_htypes, str):
                 input_htypes = str_to_list(input_string=input_htypes)
-            assert len(input_htypes) == self.column_count, \
-                f'ValueError, the number of input shares ({len(input_htypes)}) does not match level ' \
-                f'count ({self.column_count})'
-            self._columns = labels_to_dict(input_htypes, self.htypes)
+            if isinstance(input_htypes, list):
+                assert len(input_htypes) == self.column_count, \
+                    f'ValueError, the number of input shares ({len(input_htypes)}) does not match level ' \
+                    f'count ({self.column_count})'
+                self._columns = labels_to_dict(input_htypes, self.htypes)
+            else:
+                raise TypeError(f'Expect string or list as input htypes, got {type(input_htypes)} instead')
 
     @property
     def columns(self):

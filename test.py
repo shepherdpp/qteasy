@@ -1700,6 +1700,11 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(self.hp.shares, temp_hp.shares)
         self.assertEqual(self.hp.hdates, temp_hp.hdates)
         self.assertEqual(temp_hp.htypes, new_htypes_list)
+        print(f'test errors raising')
+        temp_hp = self.hp.copy()
+        self.assertRaises(AssertionError, temp_hp.re_label, htypes=new_shares_str)
+        self.assertRaises(TypeError, temp_hp.re_label, htypes=123)
+        self.assertRaises(AssertionError, temp_hp.re_label, htypes='wrong input!')
 
     def test_csv_to_hp(self):
         pass
