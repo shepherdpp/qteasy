@@ -1134,10 +1134,14 @@ def dataframe_to_hp(df: pd.DataFrame,
                     hdates=None,
                     htypes=None,
                     shares=None,
-                    column_type: str = 'share') -> HistoryPanel:
-    """ 根据DataFrame中的数据创建历史数据板HistoryPanel对象
+                    column_type: str = None) -> HistoryPanel:
+    """ 根据DataFrame中的数据创建HistoryPanel对象。由于DataFrame只有一个二维数组，因此一个DataFrame只能转化为以下两种HistoryPanel之一：
+        1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的share为(1, dates, htypes)
+            在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而htypes则必须给出
+        2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
+        具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
 
-    :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame
+    :param df: pd.DataFrame, 需要被转化为HistoryPanel的DataFrame。
     :param hdates:
     :param htypes: str,
     :param shares: str,
@@ -1145,6 +1149,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     :return:
         HistoryPanel对象
     """
+    available_column_types = ['shares', 'htypes', None]
     from collections import Iterable
     assert isinstance(df, pd.DataFrame), f'Input df should be pandas DataFrame! got {type(df)} instead.'
     if hdates is None:
@@ -1153,7 +1158,33 @@ def dataframe_to_hp(df: pd.DataFrame,
     index_count = len(hdates)
     assert index_count == len(df.index), \
         f'InputError, can not match {index_count} indices with {len(df.hdates)} rows of DataFrame'
-    if column_type.lower() == 'share':
+    assert column_type in available_column_types, f'column_type should be a string in ["shares", "htypes"], ' \
+                                         f'got {type(column_type)} instead!'
+    # TODO: Temp codes, implement this method when column_type is not given -- the column type should be infered
+    # TODO: by the input combination of shares and htypes
+    if column_type is None:
+        if shares is None:
+            if htypes is None: raise KeyError(f'shares and htypes can not both be None if column_type is not given!')
+            if isinstance(htypes, str): htype_list = str_to_list(htypes)
+            try:
+                if len(htype_list) == 1:
+                    column_type = 'shares'
+                else:
+                    column_type = 'htypes'
+            except:
+                raise ValueError(f'htypes should be a list or a string, got {type(htypes)} instead')
+        else:
+            if shares is None: raise KeyError(f'shares and htypes can not both be None if column_type is not given!')
+            if isinstance(shares, str): share_list = str_to_list(shares)
+            try:
+                if len(share_list) == 1:
+                    column_type = 'htypes'
+                else:
+                    column_type = 'shares'
+            except:
+                raise ValueError(f'shares should be a list or a string, got {type(shares)} instead')
+        print(f'got None in function for column_type, column type is set to {column_type}')
+    if column_type == 'shares':
         if shares is None:
             shares = df.columns
         elif isinstance(shares, str):
@@ -1164,7 +1195,8 @@ def dataframe_to_hp(df: pd.DataFrame,
             assert isinstance(shares, Iterable), f'TypeError: levels should be iterable, got {type(shares)} instead.'
             assert len(shares) == len(df.columns), \
                 f'InputError, can not match {len(shares)} shares with {len(df.columns)} columns of DataFrame'
-        assert htypes is not None, f'InputError, htypes should be given when they can not inferred'
+        if htypes is None:
+            raise KeyError(f', Please provide a valid name for the htype of the History Panel')
         assert isinstance(htypes, str), \
             f'TypeError, data type of dtype should be a string, got {type(htypes)} instead.'
         share_count = len(shares)

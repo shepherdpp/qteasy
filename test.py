@@ -1713,10 +1713,45 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_hp_join(self):
-        pass
+        print(f'join two simple HistoryPanels with same shares')
+        temp_hp = self.hp.join(self.hp2, same_shares=True)
+        self.assertIsInstance(temp_hp, qt.HistoryPanel)
 
     def test_df_to_hp(self):
-        pass
+        print(f'test converting DataFrame to HistoryPanel')
+        data = np.random.randint(10, size=(10, 5))
+        df1 = pd.DataFrame(data)
+        df2 = pd.DataFrame(data, columns=qt.str_to_list(self.shares))
+        df3 = pd.DataFrame(data[:, 0:4])
+        df4 = pd.DataFrame(data[:, 0:4], columns=qt.str_to_list(self.htypes))
+        hp = qt.dataframe_to_hp(df1, htypes='close')
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertEqual(hp.shares, [0, 1, 2, 3, 4])
+        self.assertEqual(hp.htypes, ['close'])
+        self.assertEqual(hp.hdates, [pd.Timestamp('1970-01-01 00:00:00'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000001'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000002'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000003'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000004'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000005'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000006'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000007'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000008'),
+                                     pd.Timestamp('1970-01-01 00:00:00.000000009')])
+        hp = qt.dataframe_to_hp(df2, shares=self.shares, htypes='close')
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertEqual(hp.shares, qt.str_to_list(self.shares))
+        self.assertEqual(hp.htypes, ['close'])
+        hp = qt.dataframe_to_hp(df3, shares='000100', column_type='htypes')
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertEqual(hp.shares, ['000100'])
+        self.assertEqual(hp.htypes, [0, 1, 2, 3])
+        hp = qt.dataframe_to_hp(df4, shares='000100', htypes=self.htypes, column_type='htypes')
+        self.assertIsInstance(hp, qt.HistoryPanel)
+        self.assertEqual(hp.shares, ['000100'])
+        self.assertEqual(hp.htypes, qt.str_to_list(self.htypes))
+        hp.info()
+        self.assertRaises(KeyError, qt.dataframe_to_hp, df1)
 
     def test_to_dataframe(self):
         """ 测试HistoryPanel对象的to_dataframe方法
