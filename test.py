@@ -2037,6 +2037,75 @@ class TestTAFuncs(unittest.TestCase):
 class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
+    def setUp(self):
+        self.op = qt.Operator(timing_types=['DMA', 'DMA', 'DMA'],
+                              selecting_types=['simple'],
+                              ricon_types=['Urgent'])
+        self.cont = qt.Context(moq=0)
+        print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
+        self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
+        self.op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
+        # print('CREATE CONTEXT OBJECT\n=======================')
+
+        self.cont.reference_asset = '000300.SH'
+        self.cont.reference_asset_type = 'I'
+        self.cont.share_pool = '000300.SH'
+        self.cont.asset_type = 'I'
+        self.cont.output_count = 50
+        self.cont.invest_start = '20020101'
+        self.cont.moq = 1
+        # print(cont)
+        # print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
+
+        timing_pars1 = (94, 36, 107)
+        timing_pars2 = {'000100': (77, 118, 144),
+                        '000200': (75, 128, 138),
+                        '000300': (73, 120, 143)}
+        timing_pars3 = (98, 177, 158)
+        timing_pars4 = (37, 44)
+        print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
+        self.op.set_blender('ls', 'avg')
+        self.op.set_parameter(stg_id='t-0', pars=timing_pars1)
+        self.op.set_parameter(stg_id='t-1', pars=timing_pars3)
+        self.op.set_parameter(stg_id='t-2', pars=timing_pars1)
+        # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])
+        # op.set_parameter('t-3', pars=timing_pars1)
+        print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
+        self.op.set_parameter('r-0', pars=(6, -0.06))
+        # op.info()
+        # print('\nTime of creating operation list:')
+        # op.info()
+        print(f'\n START QT RUNNING\n===========================\n')
+        self.cont.parallel = True
+        self.cont.print_log = True
+
+    def test_run_mode_0(self):
+        """测试策略的实时信号生成模式"""
+        self.cont.mode = 0
+        qt.run(self.op, self.cont)
+
+    def test_run_mode_1(self):
+        """测试策略的回测模式"""
+        self.cont.mode = 1
+        qt.run(self.op, self.cont)
+
+    def test_run_mode_2(self):
+        """测试策略的优化模式"""
+        self.cont.mode = 2
+        self.cont.opti_method = 1
+        self.cont.opti_method_sample_size = 30
+        self.cont.opti_method_step_size = 32
+        self.cont.opti_method_init_step_size = 16
+        self.cont.opti_method_min_step_size = 1
+        self.cont.opti_method_incre_ratio = 2
+        qt.run(self.op, self.cont)
+
+    def test_built_in_strategies(self):
+        pass
+
 
 class TestVisual(unittest.TestCase):
     """ Test the visual effects and charts

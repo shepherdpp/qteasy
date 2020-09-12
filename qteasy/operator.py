@@ -904,7 +904,7 @@ class Selecting(Strategy):
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
         # debug
-        # print(f'hist data received in selecting strategy:\n{hist_data}')
+        # print(f'hist data received in selecting strategy (shape: {hist_data.shape}):\n{hist_data}')
         # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{seg_count}')
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
@@ -920,7 +920,12 @@ class Selecting(Strategy):
             #       f'from row {seg_start} to {seg_end} (not included)\n')
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
-        return sel_mask[seg_pos[1]:]
+        # debug
+        # print(f'hist data is filled with sel value, shape is {sel_mask.shape}')
+        # print(f'but the first {self.window_length} rows will be removed from the data\n'
+        #       f'only last {sel_mask.shape[0] - self.window_length} rows will be returned\n'
+        #       f'returned mask shape is {sel_mask[self.window_length:].shape}')
+        return sel_mask[self.window_length:]
 
 
 class SelectingSimple(Selecting):
@@ -1785,7 +1790,8 @@ class Operator:
             elif blender_type.lower() == 'ricon':
                 self._set_ricon_blender(*args, **kwargs)
             else:
-                raise ValueError(f'wrong input! {blender_type} is not recognized')
+                raise ValueError(f'wrong input! \'{blender_type}\' is not a valid input, '
+                                 f'choose from [\'selecting\', \'ls\', \'ricon\']')
         else:
             raise TypeError(f'blender_type should be a string, got {type(blender_type)} instead')
         pass
@@ -2116,7 +2122,8 @@ class Operator:
         except:
             raise TypeError(f'the timing blender converted successfully!')
         assert isinstance(blndr[0], str) and blndr[0] in SUPPORTED_TYPE, \
-            f'extracted blender can not be recognized, make sure your input is like "str-T", "pos-N-T" or "avg"'
+            f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
+            f'your input is like "str-T", "pos-N-T" or "avg"'
         # debug
         # print(f'timing blender is:{blndr}')
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
@@ -2165,7 +2172,7 @@ class Operator:
         """
         exp = self._selecting_blender[:]
         # debug
-        print('expression in operation module', exp)
+        # print('expression in operation module', exp)
         s = []
         while exp:  # previously: while exp != []
             if exp[-1].isdigit():
