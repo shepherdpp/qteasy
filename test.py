@@ -2096,7 +2096,7 @@ class TestQT(unittest.TestCase):
         """测试策略的优化模式"""
         self.cont.mode = 2
         self.cont.opti_method = 1
-        self.cont.opti_method_sample_size = 30
+        self.cont.opti_method_sample_size = 10
         self.cont.opti_method_step_size = 32
         self.cont.opti_method_init_step_size = 16
         self.cont.opti_method_min_step_size = 1
@@ -2114,6 +2114,12 @@ class TestVisual(unittest.TestCase):
 
     def test_ohlc(self):
         qt.ohlc('513100.SH', start='2020-04-01', asset_type='FD')
+
+    def test_candle(self):
+        qt.candle('513100.SH', start='2020-04-01', asset_type='FD')
+
+    def test_renko(self):
+        qt.renko('513100.SH', start='2020-04-01', asset_type='FD')
 
 
 def test_suite():

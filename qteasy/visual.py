@@ -14,7 +14,51 @@ import datetime
 from .history import get_bar, stock_basic, name_change
 
 
-def ohlc(stock, start=None, end=None, asset_type='E', type='candle', figsize=(10, 5), mav=(5, 10, 20, 30)):
+def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30)):
+    daily, share_name = prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    mc = mpf.make_marketcolors(up='r', down='g',
+                               volume='in')
+    s = mpf.make_mpf_style(marketcolors=mc)
+    mpf.plot(daily,
+             title=share_name,
+             volume=True,
+             type='candle',
+             style=s,
+             figsize=figsize,
+             mav=mav,
+             figscale=0.5)
+
+
+def ohlc(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30)):
+    daily, share_name = prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    mc = mpf.make_marketcolors(up='r', down='g',
+                               volume='in')
+    s = mpf.make_mpf_style(marketcolors=mc)
+    mpf.plot(daily,
+             title=share_name,
+             volume=True,
+             type='ohlc',
+             style=s,
+             figsize=figsize,
+             mav=mav,
+             figscale=0.5)
+
+def renko(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30)):
+    daily, share_name = prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    mc = mpf.make_marketcolors(up='r', down='g',
+                               volume='in')
+    s = mpf.make_mpf_style(marketcolors=mc)
+    mpf.plot(daily,
+             title=share_name,
+             volume=True,
+             type='renko',
+             style=s,
+             figsize=figsize,
+             mav=mav,
+             figscale=0.5)
+
+
+def prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     today = datetime.datetime.today()
     if end is None:
         end = today.strftime('%Y-%m-%d')
@@ -35,19 +79,9 @@ def ohlc(stock, start=None, end=None, asset_type='E', type='candle', figsize=(10
         share_name = stock + ' - ' + asset_type
     # data.info()
     daily = data[['open', 'high', 'low', 'close', 'vol']]
-    daily.columns=['open', 'high', 'low', 'close', 'volume']
+    daily.columns = ['open', 'high', 'low', 'close', 'volume']
     daily.index = data['trade_date']
     daily = daily.rename(index=pd.Timestamp).sort_index()
     # print(daily.head())
     # manipulating of mpf:
-    mc = mpf.make_marketcolors(up='r', down='g',
-                               volume='in')
-    s = mpf.make_mpf_style(marketcolors=mc)
-    mpf.plot(daily,
-             title=share_name,
-             volume=True,
-             type=type,
-             style=s,
-             figsize=figsize,
-             mav=mav,
-             figscale=0.5)
+    return daily, share_name
