@@ -677,7 +677,23 @@ class TestEvaluations(unittest.TestCase):
                           pd.DataFrame([1,2,3], columns=['non_value']))
 
     def test_max_drawdown(self):
-        pass
+        print(f'test with test data and empty DataFrame')
+        self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data1)[0], 0.977076663)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data1)[1], 13)
+        self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data2)[0], 18.37435422)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data2)[1], 10)
+        self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data3)[0], 1.132225958)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data3)[1], 10)
+        self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data6)[0], 39.4490245)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data6)[1], 70)
+        self.assertEqual(qt.core._eval_max_drawdown(pd.DataFrame()), -np.inf)
+        print(f'Error testing')
+        self.assertRaises(AssertionError, qt.core._eval_fv, 15)
+        self.assertRaises(KeyError,
+                          qt.core._eval_fv,
+                          pd.DataFrame([1, 2, 3], columns=['non_value']))
+        # devide by zero error:
+        self.assertRaises(ZeroDivisionError, qt.core._eval_max_drawdown, self.test_data4)
 
     def test_info_ratio(self):
         pass
