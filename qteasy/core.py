@@ -1811,7 +1811,6 @@ def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
     让其死亡，而从剩下的（幸存）的个体中根据繁殖几率挑选几率最高的个体进行杂交并繁殖下一代个体，
     同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
     一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
-
     input：
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
@@ -1949,17 +1948,30 @@ def _eval_max_drawdown(looped_value):
 def _eval_fv(looped_val):
     """评价函数 Future Value 终值评价
 
-'投资模拟期最后一个交易日的资产总值
+    '投资模拟期最后一个交易日的资产总值
 
-input:
-:param looped_val，ndarray，回测器生成输出的交易模拟记录
-return: =====
-perf：float，应用该评价方法对回测模拟结果的评价分数
+    input:
+        :param looped_val，ndarray，回测器生成输出的交易模拟记录
+    return:
+        perf: float，应用该评价方法对回测模拟结果的评价分数
 
 """
+    assert isinstance(looped_val, pd.DataFrame), \
+        f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
+    # debug
+    # print(f'======================================\n'
+    #       f'=                                    =\n'
+    #       f'=   Start Evaluation of final value  =\n'
+    #       f'=                                    =\n'
+    #       f'======================================\n'
+    #       f'IN EVAL_FV:\n'
+    #       f'got DataFrame as following: \n{looped_val.info()}')
     if not looped_val.empty:
-        perf = looped_val['value'][-1]
-        return perf
+        try:
+            perf = looped_val['value'].iloc[-1]
+            return perf
+        except:
+            raise KeyError(f'the key \'value\' can not be found in given looped value!')
     else:
         return -np.inf
 
@@ -2155,7 +2167,6 @@ class Space:
         # print('pars and par_types:', pars, par_types)
         # 逐一生成Axis对象并放入axes列表中
         self._axis = [Axis(par, par_type) for par, par_type in zip(pars, par_types)]
-
 
     @property
     def dim(self):  # 空间的维度
