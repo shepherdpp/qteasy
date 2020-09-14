@@ -1895,7 +1895,7 @@ def _eval_sharp(looped_val, total_invest, riskfree_interest_rate):
     return (strategy_return - riskfree_interest_rate) / volatility
 
 
-def _eval_volatility(looped_value):
+def _eval_volatility(looped_value, logarithm:bool = True):
     """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差 。
 
     :param looped_value:
@@ -1905,9 +1905,13 @@ def _eval_volatility(looped_value):
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if not looped_value.empty:
-        ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
+        if logarithm:
+            ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
+        else:
+            ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
         # debug
-        print(f'return is \n {ret}')
+        looped_value['ret'] = ret
+        print(f'return is \n {looped_value}')
         if len(ret) > 250:
             volatility = ret.rolling(250).std() * np.sqrt(250)
             # debug

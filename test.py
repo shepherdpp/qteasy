@@ -705,13 +705,20 @@ class TestEvaluations(unittest.TestCase):
         pass
 
     def test_volatility(self):
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data1), 0.750993311)
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data2), 0.75571473)
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data3), 0.655331424)
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data4), 0.692683021)
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data5), 1.09602969)
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data6), 1.774789504)
-        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data7), 2.003329156)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data1), 0.748646166)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data2), 0.75527442)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data3), 0.654188853)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data4), 0.688375814)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data5), 1.089989522)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data6), 1.775419308)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data7), 1.962758406)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data1, logarithm=False), 0.750993311)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data2, logarithm=False), 0.75571473)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data3, logarithm=False), 0.655331424)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data4, logarithm=False), 0.692683021)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data5, logarithm=False), 1.09602969)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data6, logarithm=False), 1.774789504)
+        self.assertAlmostEqual(qt.core._eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
     def test_sharp(self):
         pass
