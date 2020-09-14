@@ -1906,8 +1906,18 @@ def _eval_volatility(looped_value):
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if not looped_value.empty:
         ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
-        volatility = ret.rolling(250).std() * np.sqrt(250)
-        return volatility[-1]
+        # debug
+        print(f'return is \n {ret}')
+        if len(ret) > 250:
+            volatility = ret.rolling(250).std() * np.sqrt(250)
+            # debug
+            print(f'standard deviations (a list rolling calculated) are {ret.rolling(250).std()}')
+            return volatility.iloc[-1]
+        else:
+            volatility = ret.std() * np.sqrt(250)
+            # debug
+            print(f'standard deviation (a single number with all data) is {ret.std()}')
+            return volatility
     else:
         return -np.inf
 
