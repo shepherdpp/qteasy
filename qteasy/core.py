@@ -1824,6 +1824,27 @@ def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
 """
     raise NotImplementedError
 
+def _get_yearly_span(value_df: pd.DataFrame)->float:
+    """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
+
+    :param value_df: pd.DataFrame, 回测结果
+    :return:
+    """
+    if not isinstance(value_df, pd.DataFrame):
+        raise TypeError(f'Looped value should be a pandas DataFrame, got {type(value_df)} instead!')
+    first_day = value_df.index[0]
+    last_day = value_df.index[-1]
+    if isinstance(last_day, (int, float)) and isinstance(first_day, (int, float)):
+        total_year = (last_day - first_day).days / 365
+    else:
+        try:
+            total_year = (last_day - first_day) / 365
+        except:
+            raise ValueError(f'The yearly time span of the looped value can not be calculated, '
+                             f'DataFrame index should be time or number format!, '
+                             f'got {type(first_day)} and {type(last_day)}')
+    return total_year
+
 
 def _eval_benchmark(looped_value, reference_value, reference_data):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
@@ -1832,32 +1853,28 @@ def _eval_benchmark(looped_value, reference_value, reference_data):
     :param reference_value:
     :return:
     """
-    first_day = looped_value.index[0]
-    last_day = looped_value.index[-1]
-    total_year = (last_day - first_day).days / 365
+    total_year = _get_yearly_span(looped_value)
     rtn_data = reference_value[reference_data]
-    rtn = (rtn_data[last_day] / rtn_data[first_day])
+    rtn = (rtn_data[looped_value.index[0]] / rtn_data[looped_value.index[-1]])
     return rtn, rtn ** (1 / total_year) - 1.
 
 
-def _eval_alpha(looped_val, total_invest, reference_value, reference_data):
+def _eval_alpha(looped_value, total_invest, reference_value, reference_data):
     """ 回测结果评价函数：alpha率
 
     阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
     这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
-    :param looped_val:
+    :param looped_value:
     :param total_invest:
     :param reference_value:
     :param reference_data:
     :return:
     """
-    first_day = looped_val.index[0]
-    last_day = looped_val.index[-1]
-    total_year = (last_day - first_day).days / 365
-    final_value = _eval_fv(looped_val)
+    total_year = _get_yearly_span(looped_value)
+    final_value = _eval_fv(looped_value)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    reference_return, reference_yearly_return = _eval_benchmark(looped_val, reference_value, reference_data)
-    b = _eval_beta(looped_val, reference_value, reference_data)
+    reference_return, reference_yearly_return = _eval_benchmark(looped_value, reference_value, reference_data)
+    b = _eval_beta(looped_value, reference_value, reference_data)
     return (strategy_return - 0.035) - b * (reference_yearly_return - 0.035)
 
 
@@ -1878,20 +1895,18 @@ def _eval_beta(looped_value, reference_value, reference_data):
     return looped_value.ref.cov(looped_value.ret) / ret_dev
 
 
-def _eval_sharp(looped_val, total_invest, riskfree_interest_rate):
+def _eval_sharp(looped_value, total_invest, riskfree_interest_rate):
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
 
-    :param looped_val:
+    :param looped_value:
     :return:
     """
-    first_day = looped_val.index[0]
-    last_day = looped_val.index[-1]
-    total_year = (last_day - first_day).days / 365
-    final_value = _eval_fv(looped_val)
+    total_year = _get_yearly_span(looped_value)
+    final_value = _eval_fv(looped_value)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    volatility = _eval_volatility(looped_val)
+    volatility = _eval_volatility(looped_value)
     return (strategy_return - riskfree_interest_rate) / volatility
 
 
@@ -1910,23 +1925,23 @@ def _eval_volatility(looped_value, logarithm:bool = True):
         else:
             ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
         # debug
-        looped_value['ret'] = ret
-        print(f'return is \n {looped_value}')
+        # looped_value['ret'] = ret
+        # print(f'return is \n {looped_value}')
         if len(ret) > 250:
             volatility = ret.rolling(250).std() * np.sqrt(250)
             # debug
-            print(f'standard deviations (a list rolling calculated) are {ret.rolling(250).std()}')
+            # print(f'standard deviations (a list rolling calculated) are {ret.rolling(250).std()}')
             return volatility.iloc[-1]
         else:
             volatility = ret.std() * np.sqrt(250)
             # debug
-            print(f'standard deviation (a single number with all data) is {ret.std()}')
+            # print(f'standard deviation (a single number with all data) is {ret.std()}')
             return volatility
     else:
         return -np.inf
 
 
-def _eval_info_ratio(looped_value):
+def _eval_info_ratio(looped_value, reference_value):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
 
     :param looped_value:

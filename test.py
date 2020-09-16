@@ -720,6 +720,10 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEqual(qt.core._eval_volatility(self.test_data6, logarithm=False), 1.774789504)
         self.assertAlmostEqual(qt.core._eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
+        self.assertEqual(qt.core._eval_volatility(pd.DataFrame()), -np.inf)
+
+        self.assertRaises(AssertionError, qt.core._eval_volatility, [1, 2, 3])
+
     def test_sharp(self):
         pass
 
