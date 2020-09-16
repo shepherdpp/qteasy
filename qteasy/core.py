@@ -1835,10 +1835,10 @@ def _get_yearly_span(value_df: pd.DataFrame)->float:
     first_day = value_df.index[0]
     last_day = value_df.index[-1]
     if isinstance(last_day, (int, float)) and isinstance(first_day, (int, float)):
-        total_year = (last_day - first_day).days / 365
+        total_year = (last_day - first_day) / 365.
     else:
         try:
-            total_year = (last_day - first_day) / 365
+            total_year = (last_day - first_day).days / 365.
         except:
             raise ValueError(f'The yearly time span of the looped value can not be calculated, '
                              f'DataFrame index should be time or number format!, '
