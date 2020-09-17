@@ -9,3 +9,4 @@ qteasy/__pycache__/core.cpython-36.pyc
 *.pyc
 *.pyc
 .idea/workspace.xml
+*.xml
