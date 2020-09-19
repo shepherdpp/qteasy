@@ -744,8 +744,25 @@ class TestEvaluations(unittest.TestCase):
         pass
 
     def test_benchmark(self):
-        pass
-
+        reference = self.test_data1
+        tr, yr = qt.core._eval_benchmark(self.test_data2, reference, 'value')
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
+        tr, yr = qt.core._eval_benchmark(self.test_data3, reference, 'value')
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
+        tr, yr = qt.core._eval_benchmark(self.test_data4, reference, 'value')
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
+        tr, yr = qt.core._eval_benchmark(self.test_data5, reference, 'value')
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
+        tr, yr = qt.core._eval_benchmark(self.test_data6, reference, 'value')
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
+        tr, yr = qt.core._eval_benchmark(self.test_data7, reference, 'value')
+        self.assertAlmostEqual(tr, 0.19509091)
+        self.assertAlmostEqual(yr, 0.929154957)
 
 class TestLoop(unittest.TestCase):
     def setUp(self):

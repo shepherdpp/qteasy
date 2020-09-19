@@ -1849,17 +1849,23 @@ def _get_yearly_span(value_df: pd.DataFrame)->float:
 def _eval_benchmark(looped_value, reference_value, reference_data):
     """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
 
-    :param looped_value:
-    :param reference_value:
-    :return:
+        :param looped_value:
+        :param reference_value:
+        :param reference_data:
+        :return:
     """
     total_year = _get_yearly_span(looped_value)
+
     rtn_data = reference_value[reference_data]
-    rtn = (rtn_data[looped_value.index[0]] / rtn_data[looped_value.index[-1]])
-    return rtn, rtn ** (1 / total_year) - 1.
+    rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
+    # # debug
+    # print(f'total year is \n{total_year}')
+    # print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
+    # print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
+    return rtn - 1, rtn ** (1 / total_year) - 1.
 
 
-def _eval_alpha(looped_value, total_invest, reference_value, reference_data):
+def _eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.035):
     """ 回测结果评价函数：alpha率
 
     阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
@@ -1875,7 +1881,7 @@ def _eval_alpha(looped_value, total_invest, reference_value, reference_data):
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
     reference_return, reference_yearly_return = _eval_benchmark(looped_value, reference_value, reference_data)
     b = _eval_beta(looped_value, reference_value, reference_data)
-    return (strategy_return - 0.035) - b * (reference_yearly_return - 0.035)
+    return (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
 
 
 def _eval_beta(looped_value, reference_value, reference_data):
@@ -1899,8 +1905,8 @@ def _eval_beta(looped_value, reference_value, reference_data):
     looped_value['ref'] = ref_ret
     looped_value['ret'] = ret
     # debug
-    print(f'return is:\n{looped_value.ret.values}')
-    print(f'reference value is:\n{looped_value.ref.values}')
+    # print(f'return is:\n{looped_value.ret.values}')
+    # print(f'reference value is:\n{looped_value.ref.values}')
     return looped_value.ref.cov(looped_value.ret) / ret_dev
 
 
