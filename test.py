@@ -728,20 +728,26 @@ class TestEvaluations(unittest.TestCase):
         pass
 
     def test_beta(self):
-        benchmark = self.test_data1
-        self.assertAlmostEqual(qt.core._eval_beta(self.test_data2, benchmark, 'value'), -0.017148939)
-        self.assertAlmostEqual(qt.core._eval_beta(self.test_data3, benchmark, 'value'), -0.042204233)
-        self.assertAlmostEqual(qt.core._eval_beta(self.test_data4, benchmark, 'value'), -0.15652986)
-        self.assertAlmostEqual(qt.core._eval_beta(self.test_data5, benchmark, 'value'), -0.049195532)
-        self.assertAlmostEqual(qt.core._eval_beta(self.test_data6, benchmark, 'value'), -0.026995082)
-        self.assertAlmostEqual(qt.core._eval_beta(self.test_data7, benchmark, 'value'), -0.01147809)
+        reference = self.test_data1
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data2, reference, 'value'), -0.017148939)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data3, reference, 'value'), -0.042204233)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data4, reference, 'value'), -0.15652986)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data5, reference, 'value'), -0.049195532)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data6, reference, 'value'), -0.026995082)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data7, reference, 'value'), -0.01147809)
 
-        self.assertRaises(TypeError, qt.core._eval_beta, [1, 2, 3], benchmark, 'value')
+        self.assertRaises(TypeError, qt.core._eval_beta, [1, 2, 3], reference, 'value')
         self.assertRaises(TypeError, qt.core._eval_beta, self.test_data3, [1, 2, 3], 'value')
-        self.assertRaises(KeyError, qt.core._eval_beta, self.test_data3, benchmark, 'not_found_value')
+        self.assertRaises(KeyError, qt.core._eval_beta, self.test_data3, reference, 'not_found_value')
 
     def test_alpha(self):
-        pass
+        reference = self.test_data1
+        self.assertAlmostEqual(qt.core._eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
+        self.assertAlmostEqual(qt.core._eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
+        self.assertAlmostEqual(qt.core._eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
+        self.assertAlmostEqual(qt.core._eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
+        self.assertAlmostEqual(qt.core._eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
+        self.assertAlmostEqual(qt.core._eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
 
     def test_benchmark(self):
         reference = self.test_data1
