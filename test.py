@@ -702,7 +702,13 @@ class TestEvaluations(unittest.TestCase):
         self.assertRaises(ZeroDivisionError, qt.core._eval_max_drawdown, self.test_data4 - 5)
 
     def test_info_ratio(self):
-        pass
+        reference = self.test_data1
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data2, reference, 'value'), 0.075170765)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data3, reference, 'value'), 0.01885351)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data4, reference, 'value'), 0.056042935)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data5, reference, 'value'), -0.004248448)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data6, reference, 'value'), 0.009151454)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data7, reference, 'value'), -0.000885775)
 
     def test_volatility(self):
         self.assertAlmostEqual(qt.core._eval_volatility(self.test_data1), 0.748646166)
@@ -725,7 +731,13 @@ class TestEvaluations(unittest.TestCase):
         self.assertRaises(AssertionError, qt.core._eval_volatility, [1, 2, 3])
 
     def test_sharp(self):
-        pass
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data1, 5, 0.5), 1.296801489)
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data2, 5, 0.5), 15.38063209)
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data3, 5, 0.5), 2.85119536)
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data4, 5, 0.5), 9.758931719)
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data5, 5, 0.92), -1.088214637)
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data6, 5, 0.92), -0.809892945)
+        self.assertAlmostEqual(qt.core._eval_sharp(self.test_data7, 5, 0.92), -0.889228124)
 
     def test_beta(self):
         reference = self.test_data1

@@ -1309,6 +1309,8 @@ def run(operator, context):
         sharp = _eval_sharp(looped_values, total_invest, 0.035)
         # 评价回测结果——计算投资期间的alpha阿尔法系数
         alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+        # 评价回测结果——计算投资回报的信息比率
+        info = _eval_info_ratio(looped_values, hist_reference, reference_data)
         # 格式化输出回测结果
         # TODO: 将回测的更详细结果及回测的每一次操作详情登记到log文件中（可选内容）
         print(f'==================================== \n'
@@ -1328,7 +1330,8 @@ def run(operator, context):
         print(f'strategy performance indicators: \n'
               f'alpha:               {alpha:.3f}\n'
               f'Beta:                {beta:.3f}\n'
-              f'Sharp rate:          {sharp:.3f}\n'
+              f'Sharp ratio:         {sharp:.3f}\n'
+              f'Info ratio:          {info:.3f}\n'
               f'250 day volatility:  {volatility:.3f}\n'
               f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
         print(f'\n===========END OF REPORT=============\n')
@@ -1910,7 +1913,7 @@ def _eval_beta(looped_value, reference_value, reference_data):
     return looped_value.ref.cov(looped_value.ret) / ret_dev
 
 
-def _eval_sharp(looped_value, total_invest, riskfree_interest_rate):
+def _eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035):
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
@@ -1921,7 +1924,10 @@ def _eval_sharp(looped_value, total_invest, riskfree_interest_rate):
     total_year = _get_yearly_span(looped_value)
     final_value = _eval_fv(looped_value)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    volatility = _eval_volatility(looped_value)
+    volatility = _eval_volatility(looped_value, logarithm=False)
+    # debug
+    print(f'yearly return is: \n{final_value} / {total_invest} = \n{strategy_return}\n'
+          f'volatility is:  \n{volatility}')
     return (strategy_return - riskfree_interest_rate) / volatility
 
 
@@ -1956,13 +1962,22 @@ def _eval_volatility(looped_value, logarithm:bool = True):
         return -np.inf
 
 
-def _eval_info_ratio(looped_value, reference_value):
+def _eval_info_ratio(looped_value, reference_value, reference_data):
     """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
+        information ratio = (portfolio return - reference return) / tracking error
 
     :param looped_value:
     :return:
     """
-    raise NotImplementedError
+    ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
+    ref = reference_value[reference_data]
+    ref_ret = (ref / ref.shift(1)) - 1
+    track_error = (ref_ret - ret).std()
+    # debug
+    print(f'average return is {ret.mean()} from:\n{ret}\n'
+          f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
+          f'tracking error is {track_error} from difference of return:\n{ref_ret - ret}')
+    return (ret.mean() - ref_ret.mean()) / track_error
 
 
 def _eval_max_drawdown(looped_value):
