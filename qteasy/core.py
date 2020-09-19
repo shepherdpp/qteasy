@@ -1881,17 +1881,26 @@ def _eval_alpha(looped_value, total_invest, reference_value, reference_data):
 def _eval_beta(looped_value, reference_value, reference_data):
     """ 贝塔。具体计算方法为 策略每日收益与参考标准每日收益的协方差 / 参考标准每日收益的方差 。
 
-    :param reference_value:
-    :param looped_value:
+    :param looped_value: pandas.DataFrame, 回测结果，需要计算Beta的股票价格或投资收益历史价格
+    :param reference_value: pandas.DataFrame, 参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
+    :param reference_data: str: 参考结果的数据类型，如close, open, low 等
     :return:
     """
-    assert isinstance(reference_value, pd.DataFrame)
-    ret = looped_value['value'] / looped_value['value'].shift(1)
-    ret_dev = ret.std()
+    if not isinstance(reference_value, pd.DataFrame):
+        raise TypeError(f'reference value should be pandas DataFrame, got {type(reference_value)} instead!')
+    if not isinstance(looped_value, pd.DataFrame):
+        raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
+    if not reference_data in reference_value.columns:
+        raise KeyError(f'reference data should \'{reference_data}\' can not be found in reference data')
+    ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
+    ret_dev = ret.var()
     ref = reference_value[reference_data]
-    ref_ret = ref / ref.shift(1)
+    ref_ret = (ref / ref.shift(1)) - 1
     looped_value['ref'] = ref_ret
     looped_value['ret'] = ret
+    # debug
+    print(f'return is:\n{looped_value.ret.values}')
+    print(f'reference value is:\n{looped_value.ref.values}')
     return looped_value.ref.cov(looped_value.ret) / ret_dev
 
 

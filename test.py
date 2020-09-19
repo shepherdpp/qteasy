@@ -674,7 +674,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertRaises(AssertionError, qt.core._eval_fv, 15)
         self.assertRaises(KeyError,
                           qt.core._eval_fv,
-                          pd.DataFrame([1,2,3], columns=['non_value']))
+                          pd.DataFrame([1, 2, 3], columns=['non_value']))
 
     def test_max_drawdown(self):
         print(f'test with test data and empty DataFrame')
@@ -728,7 +728,17 @@ class TestEvaluations(unittest.TestCase):
         pass
 
     def test_beta(self):
-        pass
+        benchmark = self.test_data1
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data2, benchmark, 'value'), -0.017148939)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data3, benchmark, 'value'), -0.042204233)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data4, benchmark, 'value'), -0.15652986)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data5, benchmark, 'value'), -0.049195532)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data6, benchmark, 'value'), -0.026995082)
+        self.assertAlmostEqual(qt.core._eval_beta(self.test_data7, benchmark, 'value'), -0.01147809)
+
+        self.assertRaises(TypeError, qt.core._eval_beta, [1, 2, 3], benchmark, 'value')
+        self.assertRaises(TypeError, qt.core._eval_beta, self.test_data3, [1, 2, 3], 'value')
+        self.assertRaises(KeyError, qt.core._eval_beta, self.test_data3, benchmark, 'not_found_value')
 
     def test_alpha(self):
         pass
