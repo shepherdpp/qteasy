@@ -15,7 +15,7 @@ from .history import get_bar, stock_basic, name_change
 
 
 def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    daily, share_name = prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
     mc = mpf.make_marketcolors(up='r', down='g',
                                volume='in')
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -31,7 +31,7 @@ def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5,
 
 
 def ohlc(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    daily, share_name = prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
     mc = mpf.make_marketcolors(up='r', down='g',
                                volume='in')
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -47,7 +47,7 @@ def ohlc(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 1
 
 
 def renko(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    daily, share_name = prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
     mc = mpf.make_marketcolors(up='r', down='g',
                                volume='in')
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -62,7 +62,7 @@ def renko(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 
                  figscale=0.5)
 
 
-def prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
+def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     today = datetime.datetime.today()
     if end is None:
         end = today.strftime('%Y-%m-%d')

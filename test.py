@@ -703,12 +703,12 @@ class TestEvaluations(unittest.TestCase):
 
     def test_info_ratio(self):
         reference = self.test_data1
-        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data2, reference, 'value'), 0.075170765)
-        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data3, reference, 'value'), 0.01885351)
-        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data4, reference, 'value'), 0.056042935)
-        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data5, reference, 'value'), -0.004248448)
-        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data6, reference, 'value'), 0.009151454)
-        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data7, reference, 'value'), -0.000885775)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
+        self.assertAlmostEqual(qt.core._eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
 
     def test_volatility(self):
         self.assertAlmostEqual(qt.core._eval_volatility(self.test_data1), 0.748646166)

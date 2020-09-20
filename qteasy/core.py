@@ -1314,7 +1314,9 @@ def run(operator, context):
         # 格式化输出回测结果
         # TODO: 将回测的更详细结果及回测的每一次操作详情登记到log文件中（可选内容）
         print(f'==================================== \n'
-              f'           LOOPING RESULT\n'
+              f'|                                  |\n'
+              f'|          LOOPING RESULT          |\n'
+              f'|                                  |\n'
               f'====================================')
         print(f'\nqteasy running mode: 1 - History back looping\n'
               f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)} ms\n'
@@ -1932,10 +1934,10 @@ def _eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.03
 
 
 def _eval_volatility(looped_value, logarithm:bool = True):
-    """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差 。
+    """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差。可以使用logarithm参数指定是否计算对数收益率
 
     :param looped_value:
-    :parma hist_list:
+    :parma logarithm: 是否计算指数收益率，默认为True，计算对数收益率，为False时计算常规收益率
     :return:
     """
     assert isinstance(looped_value, pd.DataFrame), \
@@ -1972,7 +1974,7 @@ def _eval_info_ratio(looped_value, reference_value, reference_data):
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
     ref = reference_value[reference_data]
     ref_ret = (ref / ref.shift(1)) - 1
-    track_error = (ref_ret - ret).std()
+    track_error = (ref_ret - ret).std(ddof=0) # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
     # debug
     print(f'average return is {ret.mean()} from:\n{ret}\n'
           f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
