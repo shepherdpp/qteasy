@@ -887,16 +887,17 @@ def _loop_step(pre_cash: float,
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
     if print_log:
-        print(f'本期开始, 期初现金: {pre_cash:.2f}, 期初总资产: {pre_value:.2f}')
-        print(f'本期交易信号{op}')
+        print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n期初现金: {pre_cash:.2f}, \n'
+              f'期初持有资产: {np.round(pre_amounts, 2)}\n且资产价格为: {np.round(prices, 2)}')
+        print(f'本期交易信号{np.round(op, 2)}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 根据出售持有资产的份额数量计算获取的现金
     a_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                op=op,
                                                                amounts=pre_amounts)
     if print_log:
-        print(f'以本期资产价格{prices}出售资产 {-a_sold}')
-        print(f'获得现金:{cash_gained:.2f}, 产生交易费用 {fee_selling:.2f}')
+        print(f'以本期资产价格{np.round(prices, 2)}出售资产 {np.round(-a_sold, 2)}')
+        print(f'获得现金:{cash_gained:.2f}, 产生交易费用 {fee_selling:.2f}, 交易后现金余额: {pre_cash + cash_gained}')
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
@@ -905,7 +906,7 @@ def _loop_step(pre_cash: float,
         print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
-        pur_values = pur_values / pre_value * cash
+        pur_values = pur_values / pur_values.sum() * cash
         if print_log:
             print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
             # 按比例降低分配给每个拟买入资产的现金额度
@@ -915,7 +916,7 @@ def _loop_step(pre_cash: float,
                                                                    pur_values=pur_values,
                                                                    moq=moq)
     if print_log:
-        print(f'以本期资产价格{prices}买入资产 {a_purchased}')
+        print(f'以本期资产价格{np.round(prices, 2)}买入资产 {np.round(a_purchased, 2)}')
         print(f'实际花费现金 {cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
