@@ -968,7 +968,6 @@ def _get_complete_hist(looped_value: pd.DataFrame,
 
 
 # TODO: 回测主入口函数需要增加回测结果可视化和回测结果参照标准
-# TODO: 增加一个参数，允许用户选择是否考虑现金的无风险利率增长
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
