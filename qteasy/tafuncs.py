@@ -1,5 +1,5 @@
 # coding=utf-8
-# utilfuncs.py
+# tafuncs.py
 
 # ======================================
 # This file contains wrapper functions
@@ -41,8 +41,8 @@ def bbands(close, timeperiod: int = 5, nbdevup: int = 2, nbdevdn: int = 2, matyp
         :param matype:
     :return:
         :upperband,
-        middleband,
-        lowerband: np.ndarray
+        :middleband,
+        :lowerband: np.ndarray
     """
     return BBANDS(close, timeperiod, nbdevup, nbdevdn, matype)
 
