@@ -6,6 +6,7 @@ import numpy as np
 from numpy import int64
 import itertools
 import datetime
+from qteasy.built_in import TestTimingClass
 
 
 class TestCost(unittest.TestCase):
@@ -2820,6 +2821,14 @@ class TestVisual(unittest.TestCase):
 
     def test_renko(self):
         qt.renko('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+
+
+class TestBuiltIns(unittest.TestCase):
+
+    def test_first(self):
+        stg = TestTimingClass()
+        self.assertIsInstance(stg, qt.built_in.TestTimingClass)
+        print(f'type of class: {type(stg)}')
 
 
 def test_suite():
