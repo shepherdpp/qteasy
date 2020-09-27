@@ -15,6 +15,7 @@ import time
 import math
 import sys
 from .history import get_history_panel, str_to_list
+from .utilfuncs import time_str_format
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 PROGRESS_BAR = {0 : '----------------------------------------', 1: '#---------------------------------------',
@@ -1486,70 +1487,6 @@ def run(operator, context):
         """
         raise NotImplementedError
 
-
-def time_str_format(t: float, estimation: bool = False, short_form: bool = False):
-    """ 将int或float形式的时间(秒数)转化为便于打印的字符串格式
-
-    :param t:  输入时间，单位为秒
-    :param estimation:
-    :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XXsec", 为True时输出"XXD XXH XX'XX".XXX"
-    :return:
-    """
-    assert isinstance(t, float), f'TypeError: t should be a float number, got {type(t)}'
-    assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
-    # debug
-    # print(f'time input is {t}')
-    str_element = []
-    enough_accuracy = False
-    if t >= 86400 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        days = t // 86400
-        t = t - days * 86400
-        str_element.append(str(int(days)))
-        if short_form:
-            str_element.append('D')
-        else:
-            str_element.append('days ')
-    if t >= 3600 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        hours = t // 3600
-        t = t - hours * 3600
-        str_element.append(str(int(hours)))
-        if short_form:
-            str_element.append('H')
-        else:
-            str_element.append('hrs ')
-    if t >= 60 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        minutes = t // 60
-        t = t - minutes * 60
-        str_element.append(str(int(minutes)))
-        if short_form:
-            str_element.append('\'')
-        else:
-            str_element.append('min ')
-    if t >= 1 and not enough_accuracy:
-        if estimation:
-            enough_accuracy = True
-        seconds = np.floor(t)
-        t = t - seconds
-        str_element.append(str(int(seconds)))
-        if short_form:
-            str_element.append('\"')
-        else:
-            str_element.append('s ')
-    if not enough_accuracy:
-        milliseconds = np.round(t * 1000, 1)
-        if short_form:
-            str_element.append(f'{int(np.round(milliseconds)):03d}')
-        else:
-            str_element.append(str(milliseconds))
-            str_element.append('ms')
-
-    return ''.join(str_element)
 
 
 def _get_parameter_performance(par, op, hist, history_list, context) -> float:

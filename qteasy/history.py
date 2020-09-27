@@ -15,6 +15,8 @@ import numpy as np
 from datetime import datetime
 from pandas import Timestamp
 
+from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
+
 TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
 
@@ -996,104 +998,6 @@ class HistoryPanel():
         """
         raise NotImplementedError
 
-
-def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
-    """ 将输入的item转化为slice或数字列表的形式,用于生成HistoryPanel的数据切片：
-
-    1，当输入item为slice时，直接返回slice
-    2 输入数据为string, 根据string的分隔符类型确定选择的切片：
-        2.1, 当字符串不包含分隔符时，直接输出对应的单片数据, 如'close'输出为[0]
-        2.2, 当字符串以逗号分隔时，输出每个字段对应的切片，如'close,open', 输出[0, 2]
-        2.3, 当字符串以冒号分割时，输出第一个字段起第二个字段止的切片，如'close:open',输出[0:2] -> [0,1,2]
-    3 输入数据为列表时，检查列表元素的类型（不支持混合数据类型的列表如['close', 1, True]）：
-        3.1 如果列表元素为string，输出每个字段名对应的列表编号，如['close','open'] 输出为 [0,2]
-        3.2 如果列表元素为int时，输出对应的列表编号，如[0,1,3] 输出[0,1,3]
-        3.3 如果列表元素为boolean时，输出True对应的切片编号，如[True, True, False, False] 输出为[0,1]
-    4 输入数据为int型时，输出相应的切片，如输入0的输出为[0]
-
-    :param unknown_input: slice or int/str or list of int/string
-    :param str_int_dict: a dictionary that contains strings as keys and integer as values
-    :return:
-        a list of slice/list that can be used to slice the Historical Data Object
-    """
-    if isinstance(unknown_input, slice):
-        return unknown_input  # slice object can be directly used
-    elif isinstance(unknown_input, int):  # number should be converted to a list containing itself
-        return np.array([unknown_input])
-    elif isinstance(unknown_input, str):  # string should be converted to numbers
-        string_input = unknown_input
-        if string_input.find(',') > 0:
-            string_list = str_to_list(input_string=string_input, sep_char=',')
-            res = [str_int_dict[string] for string in string_list]
-            return np.array(res)
-        elif string_input.find(':') > 0:
-            start_end_strings = str_to_list(input_string=string_input, sep_char=':')
-            start = str_int_dict[start_end_strings[0]]
-            end = str_int_dict[start_end_strings[1]]
-            if start > end:
-                start, end = end, start
-            return np.arange(start, end + 1)
-        else:
-            # debug
-            # print(str_int_dict)
-            return [str_int_dict[string_input]]
-    elif isinstance(unknown_input, list):
-        is_list_of_str = isinstance(unknown_input[0], str)
-        is_list_of_int = isinstance(unknown_input[0], int)
-        is_list_of_bool = isinstance(unknown_input[0], bool)
-        if is_list_of_bool:
-            return np.array(list(str_int_dict.values()))[unknown_input]
-        else:
-            # convert all items into a number:
-            if is_list_of_str:
-                res = [str_int_dict[list_item] for list_item in unknown_input]
-            elif is_list_of_int:
-                res = [list_item for list_item in unknown_input]
-            else:
-                return None
-            return np.array(res)
-    else:
-        return None
-
-
-def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dict:
-    """ 给target_list中的元素打上标签，建立标签-元素序号映射以方便通过标签访问元素
-
-    根据输入的参数生成一个字典序列，这个字典的键为input_labels中的内容，值为一个[0~N]的range，且N=target_list中的元素的数量
-    这个函数生成的字典可以生成一个适合快速访问的label与target_list中的元素映射，使得可以快速地通过label访问列表中的元素
-    例如，列表target_list 中含有三个元素，分别是[100, 130, 170]
-    现在输入一个label清单，作为列表中三个元素的标签，分别为：['first', 'second', 'third']
-    使用labels_to_dict函数生成一个字典ID如下：
-    ID:  {'first' : 0
-          'second': 1
-          'third' : 2}
-    通过这个字典，可以容易且快速地使用标签访问target_list中的元素：
-    target_list[ID['first']] == target_list[0] == 100
-
-    本函数对输入的input_labels进行合法性检查，确保input_labels中没有重复的标签，且标签的数量与target_list相同
-    :param input_labels: 输入标签，可以接受两种形式的输入：
-                                    字符串形式: 如:     'first,second,third'
-                                    列表形式，如:      ['first', 'second', 'third']
-    :param target_list: 需要进行映射的目标列表
-    :return:
-    """
-    if isinstance(input_labels, str):
-        input_labels = str_to_list(input_string=input_labels)
-    unique_count = len(set(input_labels))
-    assert len(input_labels) == unique_count, \
-        f'InputError, label duplicated, count of target list is {len(target_list)},' \
-        f' got {unique_count} unique labels only.'
-    assert unique_count == len(target_list), \
-        f'InputError, length of input labels does not equal to that of target list, expect ' \
-        f'{len(target_list)}, got {unique_count} unique labels instead.'
-    return dict(zip(input_labels, range(len(target_list))))
-
-
-def str_to_list(input_string, sep_char: str = ','):
-    """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义"""
-    assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
-    res = input_string.replace(' ', '').split(sep_char)
-    return res
 
 
 # TODO implement this method
