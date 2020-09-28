@@ -369,6 +369,32 @@ class RollingTiming(Strategy):
 
     Rolling_Timing类会自动把上述特定计算算法滚动应用到整个历史数据区间，并且推广到所有的个股中。
 
+    在实现具体的Rolling_Timing类时，必须且仅需要实现两个方法：__init__()方法和_realize()方法，且两个方法的实现都需要遵循一定的规则：
+
+        * __init__()方法的实现：
+
+        __init__()方法定义了该策略的最基本参数，这些参数与策略的使用息息相关，而且推荐使用"super().__init__()"的形式设置这些参数，这些参数
+        包括：
+            stg_name:
+            stg_text:
+            par_count:
+            par_types:
+            par_boes:
+            data_freq:
+            sample_freq:
+            window_length:
+            data_types:
+
+        * _realize()方法的实现：
+
+        _realize()方法确定了策略的具体实现方式，要注意_realize()方法需要有两个参数：
+
+            hist_data: ndarray
+            parames: tuple
+
+        在_realize()方法中用户可以以任何可能的方法使用hist_data，但必须知道hist_data的结构，同时确保返回值为一个浮点数，且返回值在-1～1
+        之间（包括-1和+1）。
+
     """
     __mataclass__ = ABCMeta
 
@@ -525,6 +551,22 @@ class RollingTiming(Strategy):
 class Selecting(Strategy):
     """选股策略类的抽象基类，所有选股策略类都继承该类。该类定义的策略生成方法是历史数据分段处理，根据历史数据的分段生成横向投资组合分配比例。
 
+        Selecting选股策略的生成方式与投资产品的组合方式有关。与择时类策略相比，选股策略与之的区别在于对历史数据的运用方式不同。择时类策略逐一
+        计算每个投资品种的投资比例，每一种投资组合的投资比例与其他投资产品无关，因此需要循环读取每一个投资品种的全部或部分历史数据并基于该数据
+        确定投资的方向和比例，完成一个投资品种后，用同样的方法独立地确定第二种产品，依此顺序完成所有投资品种的分析决策。而择时策略则不同，该策略
+        同时读取所有备选投资产品的历史数据或历史数据片段，并确定这一时期期末所有备选投资产品的投资组合。
+
+        Selecting策略主要由两个成员函数，seg_periods函数根据策略的self.sample_period属性值，将全部历史数据（历史数据以HistoryPanel的
+        形式给出）分成数段，每一段历史数据都包含所有的备选投资产品的全部数据类型，但是在时间上首尾相接。例如，从2010年1月1日开始到2020年1月1日
+        的全部历史数据可以以"y"为sample_period分为十段，每一段包含一整年的历史数据。
+
+        将数据分段完成后，每一段数据会被整体送入generate()函数中进行处理，该函数会对每一段数据进行运算后确定一个向量，该向量代表从所有备选投资
+        产品中建立投资组合的比例。例如：[0, 0.2, 0.3, 0.5, 0]表示建立一个投资组合：从一个含有5个备选投资产品的库中，分别将
+        0，20%，30%，50%，0的资金投入到相应的投资产品中。
+
+        同其他类型的策略一样，Selecting策略同样需要实现抽象方法_realize()，并在该方法中具体描述策略如何根据输入的参数建立投资组合。而
+        generate()函数则负责正确地将该定义好的生成方法循环应用到每一个数据分段中。
+
 
     """
     __metaclass__ = ABCMeta
@@ -673,6 +715,9 @@ class Selecting(Strategy):
             # print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
             #       f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
             share_sel = self._realize(hist_data[:, sp - sl:sp, :])
+            # TODO: 此处应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
+            # assert isinstance(share_sel, np.ndarray)
+            # assert len(share_sel) == len(shares)
             seg_end = seg_start + fill_len
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
