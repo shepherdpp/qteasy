@@ -11,9 +11,12 @@ import numpy as np
 from qteasy import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
-from .strategy import RollingTiming, TimingTRIX, TimingMACD, TimingCDL, TimingCrossline, TimingSimple, TimingDMA
-from .strategy import Selecting, SelectingRandom, SelectingFinance, SelectingSimple
-from .strategy import SimpleTiming, RiconNone, RiconUrgent
+from .strategy import RollingTiming
+from .strategy import Selecting
+from .strategy import SimpleTiming
+from .built_in import TimingCrossline, TimingTRIX, TimingMACD, TimingCDL, TimingDMA, TimingSimple
+from .built_in import SelectingRandom, SelectingFinance, SelectingSimple
+from .built_in import RiconNone, RiconUrgent
 
 from .utilfuncs import unify, mask_to_signal
 

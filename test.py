@@ -7,6 +7,7 @@ from numpy import int64
 import itertools
 import datetime
 from qteasy.built_in import TestTimingClass
+from qteasy.tafuncs import sma
 
 
 class TestCost(unittest.TestCase):
@@ -1411,7 +1412,7 @@ class TestLSStrategy(qt.RollingTiming):
         h = hist_data.T
 
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
-        ma = qt.sma(avg, n)
+        ma = sma(avg, n)
         if ma[-1] < price:
             return 0
         else:
