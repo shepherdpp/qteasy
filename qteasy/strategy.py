@@ -340,6 +340,7 @@ class Strategy:
         raise NotImplementedError
 
 
+# TODO: 在所有的generate()方法中应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
 class RollingTiming(Strategy):
     """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略
 
@@ -567,6 +568,20 @@ class Selecting(Strategy):
         同其他类型的策略一样，Selecting策略同样需要实现抽象方法_realize()，并在该方法中具体描述策略如何根据输入的参数建立投资组合。而
         generate()函数则负责正确地将该定义好的生成方法循环应用到每一个数据分段中。
 
+            * _realize()方法的实现：
+
+            _realize()方法确定了策略的具体实现方式，要注意_realize()方法需要有两个参数：
+
+                :input:
+                hist_data: ndarray, 3-dimensional
+                parames: tuple
+
+                :output
+                sel_vector: ndarray, 1-dimensional
+
+            在_realize()方法中用户可以以任何可能的方法使用hist_data，hist_data是一个三维数组，包含L层，R行，C列，分别代表L只个股、
+            R个时间序列上的C种数据类型。明确这一点非常重要，因为在_realize()方法中需要正确地利用这些数据生成选股向量。
+
 
     """
     __metaclass__ = ABCMeta
@@ -715,7 +730,6 @@ class Selecting(Strategy):
             # print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
             #       f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
             share_sel = self._realize(hist_data[:, sp - sl:sp, :])
-            # TODO: 此处应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
             # assert isinstance(share_sel, np.ndarray)
             # assert len(share_sel) == len(shares)
             seg_end = seg_start + fill_len
@@ -735,15 +749,60 @@ class Selecting(Strategy):
 
 
 class SimpleTiming(Strategy):
-    """ 风险控制抽象类，所有风险控制策略均继承该类
+    """ 快速择时策略的抽象基类，所有快速择时策略都继承自该抽象类，本类继承自策略基类，同时定义了_realize()抽象方法，用于实现具体的择时策略
 
-        风险控制策略在选股和择时策略之后发生作用，在选股和择时模块形成完整的投资组合及比例分配后，通过比较当前和预期的投资组合比例
-        生成交易信号，而风控策略则在交易信号生成以后，根据历史数据对交易信号进行调整，其作用可以在已有的交易信号基础上增加新的交易信号
-        也可以删除某些交易信号，或对交易信号进行修改。通过对交易信号的直接操作，实现风险控制的目的。
+        SimpleTiming择时策略的generate()函数采用了简单的整体择时信号计算方式，针对投资组合中的所有个股，逐个将其全部历史数据一次
+        性读入后计算整个历史区间的择时信号。
+        与RollingTiming相比，SimpleTiming并不会在同一个个股上反复滚动计算，在整个历史区间上将_realize()只应用一次，因此在计算速度上比
+        RollingTiming快很多。但是这样的方法并不能完全避免"未来函数"的问题，因此建议将同样的策略同时使用RollingTiming方法实现一次，检查
+        两者的输出是否一致，如果一致，则表明算法不存在"未来函数"，可以使用SimpleTiming实现，否则必须使用RollingTiming实现。
 
-        风险控制策略目前的作用仅仅是在多空蒙版和选股蒙板之外对交易信号作出一些补充，但是从根本上来说这是远远不够的
-        风控策略应该能够起到更大的作用，对整个选股和择时策略的系统性运行风险进行监控，控制或降低系统性风险。
-        因此，未来可能会对风控策略的基本架构进行重新调整，以适应起应有的功能
+
+        在择时类策略中，generate方法接受的历史数据片段hist_data为一个M * N * L的ndarray, 来自HistoryPanel对象，其定义是：
+            M: axis 1: 层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
+            N: axis 2: 行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
+            L: axis 3: 列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
+
+        在SimpleTiming的generate()函数中，每一个个股的历史数据被逐个取出，并送入generate_over()函数进行处理，消除掉N/A值之后，传入
+        generate()函数，针对每个个股进行逐个计算，并将最终的结果组合成一个2D的矩阵输出
+
+    Simple Timing择时策略是通过realize()函数来实现的。一个继承了Simple_Timing类的对象，必须具体实现realize()方法。这是个抽象方法。
+    这个方法接受两个参数，一个是generate_over()函数传送过来的window_history数据，另一个是策略参数，策略通过传入的参数，最后生成一个
+    包含一串-1～1之间的浮点数的向量，这个向量代表该个股在整个历史周期中的多空仓位比例，-1代表满仓做空，+1代表满仓做多，0代表空仓。
+
+    Simple_Timing类会自动把上述特定计算算法推广到所有的个股中。
+
+    在实现具体的Simple_Timing类时，必须且仅需要实现两个方法：__init__()方法和_realize()方法，且两个方法的实现都需要遵循一定的规则：
+
+        * __init__()方法的实现：
+
+        __init__()方法定义了该策略的最基本参数，这些参数与策略的使用息息相关，而且推荐使用"super().__init__()"的形式设置这些参数，这些参数
+        包括：
+            stg_name:
+            stg_text:
+            par_count:
+            par_types:
+            par_boes:
+            data_freq:
+            sample_freq:
+            window_length:
+            data_types:
+
+        * _realize()方法的实现：
+
+        _realize()方法确定了策略的具体实现方式，要注意_realize()方法需要有两个参数：
+
+            hist_data: ndarray, 3 dimensional
+            parames: tuple
+
+            :output:
+            long-short-vector: ndarray, 1 dimensional
+
+        在_realize()方法中用户可以以任何可能的方法使用hist_data，但必须知道hist_data的结构，同时确保返回一个向量（ndarray），且向量
+        包含的值在-1～1之间（包括-1和+1），同时向量的长度和hist_data中包含的Timestamp数量相同。这个向量代表了在每一个Timestamp上该个股
+        应该持有的仓位及持仓方向。-1代表在这个Timestamp应该持有满仓做空，+1代表应该满仓做多，0代表空仓，而-1与+1之间的不为零浮点数代表介于
+        0～100%之间的仓位。
+        注意输出的l/s vector的长度必须与历史数据Timestamp的数量相同，否则会报错
     """
     __metaclass__ = ABCMeta
 
@@ -799,7 +858,6 @@ class SimpleTiming(Strategy):
         cat[nonan] = self._realize(hist_data=hist_nonan, params=pars)
         return cat
 
-    # TODO: 增加generate_over()函数，处理nan值
     def generate(self, hist_data, shares=None, dates=None):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
