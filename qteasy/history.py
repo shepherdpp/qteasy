@@ -476,9 +476,7 @@ FINANCE_TYPE_DATA.extend(INDICATOR_TYPE_DATA)
 COMPOSIT_TYPE_DATA = []
 
 
-# TODO: 将History类重新定义为History模块，取消类的定义，转而使History模块变成对历史数据进行操作或读取的一个函数包的集合
-
-
+# TODO: 将History类改为MySQL数据库模块，管理本地历史数据
 class HistoryPanel():
     """qteasy 量化投资系统使用的主要历史数据的数据类型.
 
@@ -2784,4 +2782,3 @@ def options_daily(trade_date: str = None,
                          end_date=end,
                          fields=fields)
 
-# TODO: 将History类改为MySQL数据库模块，管理本地历史数据

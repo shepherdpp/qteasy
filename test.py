@@ -430,14 +430,14 @@ class TestCoreSubFuncs(unittest.TestCase):
     def test_input_to_list(self):
         print('Testing input_to_list() function')
         input_str = 'first'
-        self.assertEqual(qt.input_to_list(input_str, 3), ['first', 'first', 'first'])
-        self.assertEqual(qt.input_to_list(input_str, 4), ['first', 'first', 'first', 'first'])
-        self.assertEqual(qt.input_to_list(input_str, 2, None), ['first', 'first'])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_str, 3), ['first', 'first', 'first'])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_str, 4), ['first', 'first', 'first', 'first'])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_str, 2, None), ['first', 'first'])
         input_list = ['first', 'second']
-        self.assertEqual(qt.input_to_list(input_list, 3), ['first', 'second', None])
-        self.assertEqual(qt.input_to_list(input_list, 4, 'padder'), ['first', 'second', 'padder', 'padder'])
-        self.assertEqual(qt.input_to_list(input_list, 1), ['first', 'second'])
-        self.assertEqual(qt.input_to_list(input_list, -5), ['first', 'second'])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_list, 3), ['first', 'second', None])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_list, 4, 'padder'), ['first', 'second', 'padder', 'padder'])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_list, 1), ['first', 'second'])
+        self.assertEqual(qt.utilfuncs.input_to_list(input_list, -5), ['first', 'second'])
 
     def test_point_in_space(self):
         sp = qt.Space([(0., 10.), (0., 10.), (0., 10.)])
