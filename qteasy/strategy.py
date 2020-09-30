@@ -838,8 +838,3 @@ class SimpleTiming(Strategy):
         # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res[self.window_length:, :]
-
-
-
-
-
