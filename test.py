@@ -8,6 +8,7 @@ import itertools
 import datetime
 from qteasy.built_in import TestTimingClass
 from qteasy.tafuncs import sma
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format
 
 
 class TestCost(unittest.TestCase):
@@ -2634,27 +2635,27 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_regulate_date_format(self):
-        self.assertEqual(qt.regulate_date_format('2019/11/06'), '20191106')
-        self.assertEqual(qt.regulate_date_format('2019-11-06'), '20191106')
-        self.assertEqual(qt.regulate_date_format('20191106'), '20191106')
-        self.assertEqual(qt.regulate_date_format('191106'), '20061119')
-        self.assertEqual(qt.regulate_date_format('830522'), '19830522')
-        self.assertEqual(qt.regulate_date_format(datetime.datetime(2010, 3, 15)), '20100315')
-        self.assertEqual(qt.regulate_date_format(pd.Timestamp('2010.03.15')), '20100315')
-        self.assertRaises(ValueError, qt.regulate_date_format, 'abc')
-        self.assertRaises(ValueError, qt.regulate_date_format, '2019/13/43')
-        self.assertRaises(TypeError, qt.regulate_date_format, 123)
+        self.assertEqual(regulate_date_format('2019/11/06'), '20191106')
+        self.assertEqual(regulate_date_format('2019-11-06'), '20191106')
+        self.assertEqual(regulate_date_format('20191106'), '20191106')
+        self.assertEqual(regulate_date_format('191106'), '20061119')
+        self.assertEqual(regulate_date_format('830522'), '19830522')
+        self.assertEqual(regulate_date_format(datetime.datetime(2010, 3, 15)), '20100315')
+        self.assertEqual(regulate_date_format(pd.Timestamp('2010.03.15')), '20100315')
+        self.assertRaises(ValueError, regulate_date_format, 'abc')
+        self.assertRaises(ValueError, regulate_date_format, '2019/13/43')
+        self.assertRaises(TypeError, regulate_date_format, 123)
 
     def test_list_to_str_format(self):
-        self.assertEqual(qt.list_to_str_format(['close', 'open', 'high', 'low']),
+        self.assertEqual(list_to_str_format(['close', 'open', 'high', 'low']),
                          'close,open,high,low')
-        self.assertEqual(qt.list_to_str_format(['letters', '  ', '123  4', 123, '   kk  l']),
+        self.assertEqual(list_to_str_format(['letters', '  ', '123  4', 123, '   kk  l']),
                          'letters,,1234,kkl')
-        self.assertEqual(qt.list_to_str_format('a string input'),
+        self.assertEqual(list_to_str_format('a string input'),
                          'a,string,input')
-        self.assertEqual(qt.list_to_str_format('already,a,good,string'),
+        self.assertEqual(list_to_str_format('already,a,good,string'),
                          'already,a,good,string')
-        self.assertRaises(AssertionError, qt.list_to_str_format, 123)
+        self.assertRaises(AssertionError, list_to_str_format, 123)
 
 
 class TestTushare(unittest.TestCase):

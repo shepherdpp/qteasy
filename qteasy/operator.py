@@ -2,8 +2,10 @@
 # operator.py
 
 # ======================================
-# This file contains core operation
-# related functions and Operator class
+# This file contains Operator class, that
+# merges and applies investment strategies
+# to generate operation signals with
+# given history data.
 # ======================================
 
 import pandas as pd

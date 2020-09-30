@@ -989,7 +989,6 @@ def run(operator, context):
         raise NotImplementedError
 
 
-
 def _get_parameter_performance(par, op, hist, history_list, context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
@@ -1266,6 +1265,7 @@ def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
 
 """
     raise NotImplementedError
+
 
 def _get_yearly_span(value_df: pd.DataFrame)->float:
     """ 计算回测结果的时间跨度，单位为年。一年按照365天计算

@@ -11,7 +11,7 @@
 import mplfinance as mpf
 import pandas as pd
 import datetime
-from .history import get_bar, stock_basic, name_change
+from .tsfuncs import get_bar, name_change
 
 
 def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):

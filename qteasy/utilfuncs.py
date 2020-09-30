@@ -8,7 +8,9 @@
 # ======================================
 
 import numpy as np
-
+import pandas as pd
+from pandas import Timestamp
+from datetime import datetime
 
 TIME_FREQ_STRINGS = ['TICK',
                      'T',
@@ -254,3 +256,38 @@ def input_to_list(pars: [str, int, list], dim: int, padder=None):
     if par_dim < dim:
         pars.extend([padder] * (dim - par_dim))
     return pars
+
+
+def regulate_date_format(date_str: [str, object]) -> str:
+    """ tushare的财务报表函数只支持YYYYMMDD格式的日期，因此需要把YYYY-MM-DD及YYYY/MM/DD格式的日期转化为YYYYMMDD格式
+
+    :param date_str:
+    :return:
+    """
+    if isinstance(date_str, str):
+        try:
+            date_time = pd.to_datetime(date_str)
+            date_str = date_time.strftime('%Y%m%d')
+        except:
+            raise ValueError(f'Input string {date_str} can not be converted to a time format')
+    elif isinstance(date_str, (Timestamp, datetime)):
+        date_str = date_str.strftime('%Y%m%d')
+    else:
+        raise TypeError(f'Input is {type(date_str)}, it\'s not a time or not in correct time format')
+    return date_str
+
+
+def list_to_str_format(str_list: [list, str]) -> str:
+    """ tushare的财务报表函数只支持逗号分隔值的字符串形式作为ts_code或fields等字段的输入，如果输入是list[str]类型，则需要转换
+
+    将list型数据转变为str类型，如
+    ['close', 'open', 'high', 'low'] -> 'close, open, high, low'
+
+    :param str_list: type: list[str]
+    :return: string
+    """
+    assert isinstance(str_list, (list, str)), f'TypeError: expect list[str] or str type, got {type(str_list)} instead'
+    if isinstance(str_list, str):
+        str_list = str_list.split(' ')
+    res = ''.join([item.replace(' ', '') + ',' for item in str_list if isinstance(item, str)])
+    return res[0:-1]
