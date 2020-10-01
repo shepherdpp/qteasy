@@ -5,6 +5,7 @@ from .history import *
 from .operator import *
 from .strategy import *
 from .visual import *
+from .built_in import *
 import pandas as pd
 import numpy as np
 

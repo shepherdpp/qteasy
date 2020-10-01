@@ -247,7 +247,7 @@ class Strategy:
 
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""
-        print(type(self), f'Strategy type: {self.stg_name}')
+        print(f'{type(self)} at {hex(id(self))}\nStrategy type: {self.stg_name}')
         print('Optimization Tag and opti ranges:', self.opt_tag, self.par_boes)
         if self._pars is not None:
             print('Parameter Loaded：', type(self._pars), self._pars)

@@ -16,9 +16,7 @@ from .utilfuncs import str_to_list
 from .strategy import RollingTiming
 from .strategy import Selecting
 from .strategy import SimpleTiming
-from .built_in import TimingCrossline, TimingTRIX, TimingMACD, TimingCDL, TimingDMA, TimingSimple
-from .built_in import SelectingRandom, SelectingFinance, SelectingSimple
-from .built_in import RiconNone, RiconUrgent
+from .built_in import AVAILABLE_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
 from .utilfuncs import unify, mask_to_signal
 
@@ -241,19 +239,17 @@ class Operator:
         # 对象属性：
         # 交易信号通用属性：
 
-        self.__Tp0 = False  # 是否允许T+0交易，True时允许T+0交易，否则不允许 目前已经不再需要这个变量
-
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if selecting_types is None:
-            selecting_types = ['simple']
+            selecting_types = ['all']
         if isinstance(selecting_types, str):
             selecting_types = str_to_list(selecting_types)
         if timing_types is None:
-            timing_types = ['simple']
+            timing_types = ['long']
         if isinstance(timing_types, str):
             timing_types = str_to_list(timing_types)
         if ricon_types is None:
-            ricon_types = ['none']
+            ricon_types = ['ricon_none']
         if isinstance(ricon_types, str):
             ricon_types = str_to_list(ricon_types)
         # 在Operator对象中，对每一种类型的策略，需要三个列表对象加上一个字符串作为基本数据结构，存储相关信息：
@@ -266,23 +262,15 @@ class Operator:
         self._timing = []
         self._timing_history_data = []
         self._ls_blender = 'pos-1'  # 默认的择时策略混合方式
-        print(timing_types)
+        # debug
+        # print(timing_types)
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
             if isinstance(timing_type, str):
+                if not timing_type in AVAILABLE_STRATEGIES:
+                    raise KeyError(f'built-in timing strategy \'{timing_type}\' not found!')
                 self._timing_types.append(timing_type)
-                if timing_type.lower() == 'cross_line':
-                    self._timing.append(TimingCrossline())
-                elif timing_type.lower() == 'macd':
-                    self._timing.append(TimingMACD())
-                elif timing_type.lower() == 'dma':
-                    self._timing.append(TimingDMA())
-                elif timing_type.lower() == 'trix':
-                    self._timing.append(TimingTRIX())
-                elif timing_type.lower() == 'cdl':
-                    self._timing.append(TimingCDL())
-                elif timing_type.lower() == 'simple':
-                    self._timing.append(TimingSimple())
+                self._timing.append(BUILT_IN_STRATEGY_DICT[timing_type]())
             # 当传入的对象是一个strategy时，直接
             elif isinstance(timing_type, (RollingTiming, SimpleTiming)):
                 self._timing_types.append(timing_type.stg_type)
@@ -305,15 +293,10 @@ class Operator:
                 str_list.append(f' or {str(cur_type)}')
             cur_type += 1
             if isinstance(selecting_type, str):
+                if not selecting_type in AVAILABLE_STRATEGIES:
+                    raise KeyError(f'KeyError: built-in selecting type \'{selecting_type}\' not found!')
                 self._selecting_type.append(selecting_type)
-                if selecting_type.lower() == 'random':
-                    self._selecting.append(SelectingRandom())
-                elif selecting_type.lower() == 'finance':
-                    self._selecting.append(SelectingFinance())
-                elif selecting_type.lower() == 'simple':
-                    self._selecting.append(SelectingSimple())
-                else:
-                    raise TypeError(f'The selecting type \'{selecting_type}\' can not be recognized!')
+                self._selecting.append(BUILT_IN_STRATEGY_DICT[selecting_type]())
             elif isinstance(selecting_type, (Selecting, SimpleTiming)):
                 self._selecting_type.append(selecting_type.stg_type)
                 self._selecting.append(selecting_type)
@@ -330,13 +313,10 @@ class Operator:
         self._ricon_blender = 'add'
         for ricon_type in ricon_types:
             if isinstance(ricon_type, str):
+                if not ricon_type in AVAILABLE_STRATEGIES:
+                    raise KeyError(f'ricon type {ricon_type} not found!')
                 self._ricon_type.append(ricon_type)
-                if ricon_type.lower() == 'none':
-                    self._ricon.append(RiconNone())
-                elif ricon_type.lower() == 'urgent':
-                    self._ricon.append(RiconUrgent())
-                else:
-                    raise TypeError(f'The risk control strategy \'{ricon_type}\' can not be recognized!')
+                self._ricon.append(BUILT_IN_STRATEGY_DICT[ricon_type]())
             elif isinstance(ricon_type, (RollingTiming, SimpleTiming)):
                 self._ricon_type.append(ricon_type.stg_type)
                 self._ricon.append(ricon_type)

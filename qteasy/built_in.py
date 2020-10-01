@@ -277,7 +277,7 @@ class RiconNone(stg.SimpleTiming):
         return np.zeros_like(hist_data.squeeze())
 
 
-class TimingSimple(stg.SimpleTiming):
+class TimingLong(stg.SimpleTiming):
     """简单择时策略，返回整个历史周期上的恒定多头状态
 
     数据类型：N/A
@@ -288,13 +288,53 @@ class TimingSimple(stg.SimpleTiming):
     """
 
     def __init__(self):
-        super().__init__(stg_name='SIMPLE',
+        super().__init__(stg_name='Long',
                          stg_text='Simple Timing strategy, return constant long position on the whole history')
 
     def _realize(self, hist_data, params):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
         return np.ones_like(hist_data.squeeze())
+
+
+class TimingShort(stg.SimpleTiming):
+    """简单择时策略，返回整个历史周期上的恒定空头状态
+
+    数据类型：N/A
+    数据分析频率：N/A
+    数据窗口长度：N/A
+    策略使用0个参数，
+    参数输入数据范围：N/A
+    """
+
+    def __init__(self):
+        super().__init__(stg_name='Short',
+                         stg_text='Simple Timing strategy, return constant Short position on the whole history')
+
+    def _realize(self, hist_data, params):
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+
+        return -np.ones_like(hist_data.squeeze())
+
+
+class TimingZero(stg.SimpleTiming):
+    """简单择时策略，返回整个历史周期上的空仓状态
+
+    数据类型：N/A
+    数据分析频率：N/A
+    数据窗口长度：N/A
+    策略使用0个参数，
+    参数输入数据范围：N/A
+    """
+
+    def __init__(self):
+        super().__init__(stg_name='Zero',
+                         stg_text='Simple Timing strategy, return constant Zero position ratio on the whole history')
+
+    def _realize(self, hist_data, params):
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+
+        return np.zeros_like(hist_data.squeeze())
 
 
 class SimpleDMA(stg.SimpleTiming):
@@ -501,3 +541,22 @@ class SelectingFinance(stg.Selecting):
             chosen[args] = 1. / len(args)
         print(f'in Selecting realize method got share selecting vector like:\n {np.round(chosen,3)}')
         return chosen
+
+
+BUILT_IN_STRATEGY_DICT = {'test':               TestTimingClass,
+                          'crossline':          TimingCrossline,
+                          'macd':               TimingMACD,
+                          'dma':                TimingDMA,
+                          'trix':               TimingTRIX,
+                          'cdl':                TimingCDL,
+                          'ricon_none':         RiconNone,
+                          'urgent':             RiconUrgent,
+                          'long':               TimingLong,
+                          'short':              TimingShort,
+                          'zero':               TimingZero,
+                          's_dma':              SimpleDMA,
+                          'all':                SelectingSimple,
+                          'random':             SelectingRandom,
+                          'finance':            SelectingFinance}
+
+AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()

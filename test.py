@@ -6,7 +6,6 @@ import numpy as np
 from numpy import int64
 import itertools
 import datetime
-from qteasy.built_in import TestTimingClass
 from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format
 
@@ -1646,7 +1645,7 @@ class TestOperator(unittest.TestCase):
                                    levels=self.shares,
                                    columns=self.types,
                                    rows=self.date_indices)
-        self.op = qt.Operator(selecting_types=['simple'], timing_types='dma', ricon_types='urgent')
+        self.op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
 
     def test_property_get(self):
         self.assertIsInstance(self.op, qt.Operator)
@@ -1658,6 +1657,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.ricon_count, 1)
         self.assertEqual(self.op.timing_count, 1)
         print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingSimple, qt.RiconUrgent])
+        print(f'info of Timing strategy: \n{self.op.strategies[0].info()}')
         self.assertEqual(len(self.op.strategies), 3)
         self.assertIsInstance(self.op.strategies[0], qt.TimingDMA)
         self.assertIsInstance(self.op.strategies[1], qt.SelectingSimple)
@@ -1836,6 +1836,9 @@ class TestOperator(unittest.TestCase):
 
         :return:
         """
+        new_op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
+        print(new_op.strategies, '\n', [qt.TimingDMA, qt.SelectingSimple, qt.RiconUrgent])
+        print(f'info of Timing strategy in new op: \n{new_op.strategies[0].info()}')
         self.op.set_parameter('t-0',
                               pars=(5, 10, 5),
                               opt_tag=1,
@@ -2741,9 +2744,9 @@ class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
     def setUp(self):
-        self.op = qt.Operator(timing_types=['DMA', 'DMA'],
-                              selecting_types=['simple'],
-                              ricon_types=['Urgent'])
+        self.op = qt.Operator(timing_types=['dma', 'dma'],
+                              selecting_types=['all'],
+                              ricon_types=['urgent'])
         self.cont = qt.Context(moq=0)
         print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
         self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
