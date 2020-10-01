@@ -843,6 +843,7 @@ class Operator:
             res = np.where(np.abs(l_m_sign) >= n, l_m, 0) / n
             return res.clip(-1, 1)
         elif blndr[0] == 'str':
+            # str方式下
             threshold = float(blndr[1])
             return np.where(np.abs(l_m) >= threshold, 1, 0) * np.sign(l_m)
         else:

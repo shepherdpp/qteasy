@@ -2831,7 +2831,7 @@ class TestVisual(unittest.TestCase):
 class TestBuiltIns(unittest.TestCase):
 
     def test_first(self):
-        stg = TestTimingClass()
+        stg = qt.TestTimingClass()
         self.assertIsInstance(stg, qt.built_in.TestTimingClass)
         print(f'type of class: {type(stg)}')
 

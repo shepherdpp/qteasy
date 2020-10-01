@@ -11,7 +11,7 @@
 
 import numpy as np
 import qteasy.strategy as stg
-from .tafuncs import sma, ema, trix, cdldoji
+from .tafuncs import sma, ema, trix, cdldoji, bbands
 
 
 # All following strategies can be used to create strategies by referring to its name
@@ -232,6 +232,52 @@ class TimingTRIX(stg.RollingTiming):
             return 0
 
 
+class TimingBBand(stg.SimpleTiming):
+    """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
+
+        数据类型：close 收盘价，单数据输入
+        数据分析频率：天
+        数据窗口长度：270天
+        策略使用2个参数，
+            span: int, 移动平均计算窗口宽度，单位为日
+            upper: float, 布林带的上边缘所处的标准差倍数
+            lower: float, 布林带的下边缘所处的标准差倍数
+        参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
+        """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'conti', 'conti'],
+                         par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
+                         stg_name='BBand STRATEGY',
+                         stg_text='BBand strategy, determine long/short position according to Bollinger bands',
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=270,
+                         data_types=['close', 'high', 'low'])
+
+    def _realize(self, hist_data, params):
+
+        span, upper, lower = params
+        # 计算指数的指数移动平均价格
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_data.T
+        avg_price = np.mean(h[0], 1)
+        upper, middle, lower = bbands(close=avg_price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
+
+        # 生成BBANDS操作信号判断：
+        # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
+        # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
+        # 3, 其余时刻不产生任何信号
+        if avg_price[-2] >= upper[-2] and avg_price[-1] < upper[-1]:
+            return -1
+        elif avg_price[-2] <= lower[-2] and avg_price[-1] > lower[-1]:
+            return +1
+        else:
+            return 0
+
+
 class TimingCDL(stg.RollingTiming):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
@@ -382,7 +428,7 @@ class SimpleDMA(stg.SimpleTiming):
 
 
 class RiconUrgent(stg.SimpleTiming):
-    """urgent风控类，继承自Ricon类，重写_generate_ricon方法"""
+    """urgent风控类，继承自Ricon类，重写_realize方法"""
 
     # 跌幅控制策略，当N日跌幅超过p%的时候，强制生成卖出信号
 
