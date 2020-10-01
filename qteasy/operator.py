@@ -802,14 +802,14 @@ class Operator:
         return：=====
             :rtype: object: 一个混合后的多空蒙板
         """
-        SUPPORTED_TYPE = ['avg', 'pos', 'str']
+        SUPPORTED_TYPE = ['avg', 'pos', 'str', 'combo']
         try:
             blndr = str_to_list(self._ls_blender, '-')  # 从对象的属性中读取择时混合参数
         except:
             raise TypeError(f'the timing blender converted successfully!')
         assert isinstance(blndr[0], str) and blndr[0] in SUPPORTED_TYPE, \
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
-            f'your input is like "str-T", "pos-N-T" or "avg"'
+            f'your input is like "str-T", "pos-N-T", "combo", or "avg"'
         # debug
         # print(f'timing blender is:{blndr}')
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
@@ -824,11 +824,16 @@ class Operator:
         if blndr[0] == 'avg':
             # avg方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，只有所有蒙板均看空时，最终结果才看空
             # 所有蒙板的权重相同，因此，如果一共五个蒙板三个看多两个看空时，持仓为60%
+            # 更简单的解释是，混合后的多空仓位是所有蒙版仓位的平均值.
+            # debug
             # print 'long short masks are merged by', blndr, 'result as\n', l_m / l_count
             return l_m / l_count
         elif blndr[0] == 'pos':
             # pos-N方式下，持仓同样取决于看多的蒙板的数量，但是持仓只能为1或0，只有满足N个或更多蒙板看多时，最终结果
             # 看多，否则看空，如pos-2方式下，至少两个蒙板看多则最终看多，否则看空
+            # pos-N还有一种变体，即pos-N-T模式，在这种模式下，N参数仍然代表看多的参数个数阈值，但是并不是所有判断持仓为正的数据都会被判断为正
+            # 只有绝对值大于T的数据才会被接受，例如，当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因此尽管有两个策略在这个
+            # 时间点判断为多头，但是实际上只有一个策略会被接受.
             # print 'timing blender mode: ', blndr
             n = int(blndr[1])
             l_m_sign = 0.
@@ -843,9 +848,12 @@ class Operator:
             res = np.where(np.abs(l_m_sign) >= n, l_m, 0) / n
             return res.clip(-1, 1)
         elif blndr[0] == 'str':
-            # str方式下
+            # str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于某一个阈值T的时候，最终结果才会是多头，否则就是空头
             threshold = float(blndr[1])
             return np.where(np.abs(l_m) >= threshold, 1, 0) * np.sign(l_m)
+        elif blndr[0] == 'combo':
+            # 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，虽然并不是所有的信号都有效
+            return l_m
         else:
             raise ValueError(f'Blender text ({blndr}) not recognized!')
 

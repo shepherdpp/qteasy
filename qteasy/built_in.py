@@ -196,13 +196,13 @@ class TimingTRIX(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
-                         par_bounds_or_enums=[(10, 250), (10, 250)],
+                         par_bounds_or_enums=[(2, 50), (3, 150)],
                          stg_name='TRIX STRATEGY',
                          stg_text='TRIX strategy, determine long/short position according to triple exponential '
                                   'weighted moving average prices',
                          data_freq='d',
                          sample_freq='d',
-                         window_length=270,
+                         window_length=300,
                          data_types='close')
 
     def _realize(self, hist_data, params):
@@ -220,13 +220,18 @@ class TimingTRIX(stg.RollingTiming):
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = hist_data.T
-        trxi = trix(h[0], s)
-        matrix = sma(trxi, m)
+        trx = trix(h[0], s) * 100
+        # debug
+        # print(f'In TimingTRIX strategy calculated with s = {s} and input data:\n{np.round(h[0], 3)} \n'
+        #       f'triple ema: \n{np.round(trx, 3)}')
+        matrix = sma(trx, m)
+        # debug:
+        # print(f'In TimingTRIX strategy calculated matrix with m = {m} is:\n{np.round(matrix, 3)}')
 
         # 生成TRIX多空判断：
         # 1， TRIX位于MATRIX上方时，长期多头状态, signal = 1
         # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 0
-        if trxi[-1] > matrix[-1]:
+        if trx[-1] > matrix[-1]:
             return 1
         else:
             return 0

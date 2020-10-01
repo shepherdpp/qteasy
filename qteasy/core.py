@@ -289,7 +289,7 @@ class Context:
         self.fixed_sell_rate = 0.0015
         self.min_buy_fee = 5
         self.min_sell_fee = 5
-        self.slippage = 0.01
+        self.slippage = 0
         self.rate_type = 0
         self.visual = True
         self.performance_indicators = 'FV'
@@ -1065,6 +1065,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
     # print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
+    best_so_far = 0
     if parallel:
         # 启用并行计算
         futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
@@ -1072,8 +1073,10 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
             i += 1
+            if f.result() > best_so_far:
+                best_so_far = f.result()
             if i % 10 == 0:
-                _progress_bar(i, total)
+                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     else:
         for par in it:
             perf = _get_parameter_performance(par=par,
@@ -1083,8 +1086,10 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
                                               context=context)
             pool.in_pool(par, perf)
             i += 1
+            if perf > best_so_far:
+                best_so_far = perf
             if i % 10 == 0:
-                _progress_bar(i, total)
+                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
@@ -1126,6 +1131,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     # print('Searching Starts...')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
+    best_so_far = 0
     if parallel:
         # 启用并行计算
         futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
@@ -1133,8 +1139,10 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
             i += 1
+            if f.result() > best_so_far:
+                best_so_far = f.result()
             if i % 10 == 0:
-                _progress_bar(i, total)
+                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     else:
         # 禁用并行计算
         for par in it:
@@ -1145,8 +1153,10 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
                                               context=context)
             pool.in_pool(par, perf)
             i += 1
+            if perf > best_so_far:
+                best_so_far = perf
             if i % 10 == 0:
-                _progress_bar(i, total)
+                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     pool.cut(context.larger_is_better)
     et = time.time()
     _progress_bar(total, total)
