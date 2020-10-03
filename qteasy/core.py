@@ -279,7 +279,7 @@ class Context:
         self.invest_total_amount = 50000
         self.invest_unit_amount = 10000
         self.riskfree_ir = 0.015
-        self.invest_dates = '20060801'
+        self.invest_dates = '20060401'
         self.invest_amounts = [10000]
         self.cash_plan = CashPlan(self.invest_dates, self.invest_amounts)
 
@@ -526,6 +526,9 @@ def apply_loop(op_list: pd.DataFrame,
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
     # debug
+    # print(f'finding cash investment date position: finding: \n{cash_plan.dates} \nin looped dates (first 3):\n '
+    #       f'{looped_dates[0:3]}'
+    #       f', got result:\n{investment_date_pos}')
     # print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
     cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
@@ -648,10 +651,10 @@ def run(operator, context):
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
     op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-420, unit='d')).strftime('%Y%m%d')
     # debug
-    print(f'preparing historical data, \ninvestment start date: {op_start}, '
-          f'\noperation generation dependency start date: {op_start}\n'
-          f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
-          f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
+    # print(f'preparing historical data, \ninvestment start date: {op_start}, '
+    #       f'\noperation generation dependency start date: {op_start}\n'
+    #       f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
+    #       f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
     hist_op = get_history_panel(start=op_start,
                                 end=context.invest_end,
                                 shares=context.share_pool,
@@ -676,8 +679,8 @@ def run(operator, context):
                                         asset_type=context.reference_asset_type,
                                         chanel='online')).to_dataframe(htype='close')
     # debug
-    print(f'reference hist data downloaded, info: \n{hist_reference.info()}\n'
-          f'operation hist data downloaded, info: \n{hist_op.info()}')
+    # print(f'reference hist data downloaded, info: \n{hist_reference.info()}\n'
+    #       f'operation hist data downloaded, info: \n{hist_op.info()}')
     # ===============
     # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
     # ===============~~
@@ -839,6 +842,7 @@ def run(operator, context):
               f'250 day volatility:  {volatility:.3f}\n'
               f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
         print(f'\n===========END OF REPORT=============\n')
+        return sharp
     elif run_mode == 2:
         """进入策略优化模式：
         
@@ -978,6 +982,7 @@ def run(operator, context):
         result_df = pd.DataFrame(perfs, pars)
         print(f'complete list of performance and parameters are following, \n{result_df}')
         print(f'==========OPTIMIZATION COMPLETE============')
+        return perfs, pars
         # optimization_log = Log()
         # optimization_log.write_record(pars, perfs)
     elif run_mode == 3:
@@ -1424,9 +1429,9 @@ def _eval_info_ratio(looped_value, reference_value, reference_data):
     ref_ret = (ref / ref.shift(1)) - 1
     track_error = (ref_ret - ret).std(ddof=0) # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
     # debug
-    print(f'average return is {ret.mean()} from:\n{ret}\n'
-          f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
-          f'tracking error is {track_error} from difference of return:\n{ref_ret - ret}')
+    # print(f'average return is {ret.mean()} from:\n{ret}\n'
+    #       f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
+    #       f'tracking error is {track_error} from difference of return:\n{ref_ret - ret}')
     return (ret.mean() - ref_ret.mean()) / track_error
 
 

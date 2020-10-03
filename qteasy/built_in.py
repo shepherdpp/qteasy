@@ -202,7 +202,7 @@ class TimingTRIX(stg.RollingTiming):
                                   'weighted moving average prices',
                          data_freq='d',
                          sample_freq='d',
-                         window_length=300,
+                         window_length=270,
                          data_types='close')
 
     def _realize(self, hist_data, params):
