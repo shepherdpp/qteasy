@@ -333,9 +333,32 @@ class TestSpace(unittest.TestCase):
         print('extracted rand list 4:\n', extracted_rand_list4)
         for point in extracted_rand_list4:
             self.assertEqual(len(point), 2)
-            self.assertIsInstance(point[0], int)
+            self.assertIsInstance(point[0], (int, str))
+            self.assertIn(point[0], [0, 1, 'a'])
             self.assertIsInstance(point[1], (int, str))
+            self.assertIn(point[1], [10, 14, 'b', 'c'])
             self.assertIn(point, [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
+
+        pars_list = [((0, 10), (1, 'c'), ('a', 'b'), (1, 14)), (1, 4)]
+        s = qt.Space(pars=pars_list, par_types='enum, discr')
+        extracted_int5, count = s.extract(1, 'interval')
+        self.assertEqual(count, 16, 'extraction count wrong!')
+        extracted_int_list5 = list(extracted_int5)
+        for item, item2 in extracted_int_list5:
+            print(item, item2)
+        self.assertTrue(all([tuple(ext_item) == item for ext_item, item in it]))
+        print('extracted int list 5\n', extracted_int_list5)
+        self.assertIsInstance(extracted_int_list5[0], tuple)
+        extracted_rand5, count = s.extract(5, 'rand')
+        self.assertEqual(count, 5, 'extraction count wrong!')
+        extracted_rand_list5 = list(extracted_rand5)
+        print('extracted rand list 5:\n', extracted_rand_list5)
+        for point in extracted_rand_list5:
+            self.assertEqual(len(point), 2)
+            self.assertIsInstance(point[0], tuple)
+            print(f'type of point[1] is {type(point[1])}')
+            self.assertIsInstance(point[1], (int, np.int64))
+            self.assertIn(point[0], [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
 
 class TestCashPlan(unittest.TestCase):

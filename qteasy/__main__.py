@@ -7,7 +7,7 @@ if __name__ == '__main__':
     cont.reference_asset_type = 'I'
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
-    cont.output_count = 20
+    cont.output_count = 3
     cont.invest_start = '20020101'
     cont.parallel = True
     cont.print_log = True
@@ -29,7 +29,7 @@ if __name__ == '__main__':
           f'==================================================')
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 100000
+    cont.opti_method_sample_size = 6
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1
@@ -99,10 +99,10 @@ if __name__ == '__main__':
     op = Operator(timing_types=['dma', 'macd', 'trix', 'crossline'],
                   selecting_types=['all'], ricon_types=['urgent'])
     op.set_parameter('s-0', pars=(2,), sample_freq='y')
-    op.set_parameter('t-0', opt_tag=1, par_boes=[tuple(pars_dma)], par_types='enum')
-    op.set_parameter('t-1', opt_tag=1, par_boes=[tuple(pars_macd)], par_types='enum')
-    op.set_parameter('t-2', opt_tag=1, par_boes=[tuple(pars_trix)], par_types='enum')
-    op.set_parameter('t-3', opt_tag=1, par_boes=[tuple(pars_cl)], par_types='enum')
+    op.set_parameter('t-0', opt_tag=2, par_boes=pars_dma, par_types='enum')
+    op.set_parameter('t-1', opt_tag=2, par_boes=pars_macd, par_types='enum')
+    op.set_parameter('t-2', opt_tag=2, par_boes=pars_trix, par_types='enum')
+    op.set_parameter('t-3', opt_tag=2, par_boes=pars_cl, par_types='enum')
     op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, -0.01)])
 
     op.set_blender('ls', 'combo')

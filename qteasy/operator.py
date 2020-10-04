@@ -444,6 +444,44 @@ class Operator:
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
 
         本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
+        在一个包含多个Strategy的Operator中，可能同时有几个不同的strategy需要寻优。这时，为了寻找最优解，需要建立一个Space，包含需要寻优的
+        几个strategy的所有参数空间。通过这个space生成参数空间后，空间中的每一个向量实际上包含了不同的策略的参数，因此需要将他们原样分配到不
+        同的策略中。
+
+        举例如下：
+
+            一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
+            成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数：
+                     stg1:   stg2:       stg3:
+                     tag=1   tag=0       tag=1
+                    [p0, p1, p2, p3, p4, p5, p6, p7]
+                     ==  ==              ==  ==  ==
+            为了寻优方便，可以建立一个五维参数空间，用于生成五维参数向量：
+                    [v0, v1, v2, v3, v4]
+            set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，只要发现opt_tag不为0，则将相应的参数赋值给strategy：
+                     stg1:   stg2:       stg3:
+                     tag=1   tag=0       tag=1
+                    [p0, p1, p2, p3, p4, p5, p6, p7]
+                     ==  ==              ==  ==  ==
+                    [v0, v1]            [v2, v3, v4]
+
+            在另一种情况下，一个策略的参数本身就以一个tuple的形式给出，一系列的合法参数组以enum的形式形成一个完整的参数空间，这时，opt_tag被
+            设置为2，此时参数空间中每个向量的一个分量就包含了完整的参数信息，例子如下：
+
+            一个Operator对象有三个strategy，分别需要2， 3， 3个参数，而其中第一和第三个策略需要参数寻优，这个operator的所有策略参数可以写
+            成一个2+3+2维向量，其中下划线的几个是需要寻优的策略的参数，注意其中stg3的opt_tag被设置为2：
+                     stg1:   stg2:       stg3:
+                     tag=1   tag=0       tag=2
+                    [p0, p1, p2, p3, p4, p5, p6, p7]
+                     ==  ==              ==  ==  ==
+            为了寻优建立一个3维参数空间，用于生成五维参数向量：
+                    [v0, v1, v2]，其中v2 = (i0, i1, i2)
+            set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策略，则分配参数给这个策略
+                     stg1:   stg2:       stg3:
+                     tag=1   tag=0       tag=1
+                    [p0, p1, p2, p3, p4, p5, p6, p7]
+                     ==  ==              ==  ==  ==
+                    [v0, v1]         v2=[i0, i1, i2]
 
         :param opt_par: 一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
         :return
@@ -458,12 +496,21 @@ class Operator:
             # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
             elif stg.opt_tag == 1:
                 k += stg.par_count
+                # debug
+                # print(f'in strategy.set_opt_par, got par like {opt_par[s:k]}\nsetting items from {s}-th to {k}-th '
+                #       f'in par_list {opt_par}\n'
+                #       f'to set to strategy \n{stg}')
                 stg.set_pars(opt_par[s:k])
                 s = k
             # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
             elif stg.opt_tag == 2:
+                # 在这种情况下，只需要取出参数向量中的一个分量，赋值给策略作为参数即可。因为这一个分量就包含了完整的策略参数tuple
                 k += 1
-                stg.set_pars(opt_par[s:k])
+                # debug
+                # print(f'in strategy.set_opt_par, got par like {opt_par[s:k]}\nsetting the {s}-th item'
+                #       f'in par_list {opt_par}\n'
+                #       f'to set to strategy \n{stg}')
+                stg.set_pars(opt_par[s])
                 s = k
 
     def set_blender(self, blender_type, *args, **kwargs):
