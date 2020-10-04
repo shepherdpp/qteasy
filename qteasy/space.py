@@ -132,7 +132,9 @@ class Space:
                                              padder=[1])
         axis_ranges = [ax.extract(ioq, how) for ax, ioq in zip(self.axis, interval_or_qty_list)]
         total = np.array(list(map(len, axis_ranges))).prod()
-
+        if self.types == ['enum'] and isinstance(self.boes[0], tuple):
+            # in this case, space is an enum of tuple parameters, no formation of tuple is needed
+            return axis_ranges[0], len(axis_ranges[0])
         if how == 'interval':
             return itertools.product(*axis_ranges), total  # 使用迭代器工具将所有的坐标乘积打包为点集
         elif how == 'rand':
@@ -248,15 +250,14 @@ class Axis:
         if self_type == 'conti':
             return np.inf
         elif self_type == 'discr':
-            return self._ubound - self._lbound
+            return self._ubound - self._lbound + 1
         else:
             return len(self._enum_val)
 
     @property
     def size(self):
         """输出数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界"""
-        self_type = self._axis_type
-        if self_type == 'conti':
+        if self.axis_type == 'conti':
             return self._ubound - self._lbound
         else:
             return self.count
@@ -308,7 +309,9 @@ class Axis:
         self.__enum = None
 
     def _set_enum_val(self, enum):
-        """设置数轴的枚举值，适用于枚举型数轴
+        """设置数轴的枚举值，适用于枚举型数轴, 此处需要区分tuple_enum类型和普通enum类型的数轴，tuple_enum类型的数轴需要保留tuple类型，
+            因此不能使用np.array转换类型。普通enum类型可以使用np.array转换类型。转换类型的原因是为了便于使用np的random直接读出多个值，
+            而对于tuple_enum类型来说，使用np.array会强制将tuple类型转换为array，会在后续操作中导致问题。
 
         input:
             :param enum: 数轴枚举值
@@ -317,7 +320,7 @@ class Axis:
         """
         self._lbound = None
         self._ubound = None
-        self._enum_val = np.array(enum, subok=True)
+        self._enum_val = enum
 
     def _new_discrete_axis(self, lbound, ubound):
         """ 创建一个新的离散型数轴
@@ -361,7 +364,10 @@ class Axis:
         :return:
             np.array 从数轴中提取出的值对象
         """
-        return np.arange(self._lbound, self._ubound, interval)
+        if self._axis_type == 'conti':
+            return np.arange(self._lbound, self._ubound, interval)
+        if self._axis_type == 'discr':
+            return np.arange(self._lbound, self._ubound + 1, interval)
 
     def _extract_bounding_random(self, qty: int):
         """ 按照随机方式从离散或连续型数轴中提取值
@@ -372,10 +378,9 @@ class Axis:
             np.array 从数轴中提取出的值对象
         """
         if self._axis_type == 'discr':
-            result = np.random.randint(self._lbound, self._ubound + 1, size=qty)
-        else:
-            result = self._lbound + np.random.random(size=qty) * (self._ubound - self._lbound)
-        return result
+            return np.random.randint(self._lbound, self._ubound + 1, size=qty)
+        if self._axis_type == 'conti':
+            return self._lbound + np.random.random(size=qty) * (self._ubound - self._lbound)
 
     def _extract_enum_interval(self, interval):
         """ 按照间隔方式从枚举型数轴中提取值
@@ -385,8 +390,8 @@ class Axis:
         :return:
             list 从数轴中提取出的值对象
         """
-        count = self.count
-        return self._enum_val[np.arange(0, count, interval)]
+        selected = np.arange(0, self.count, interval)
+        return [self._enum_val[i] for i in selected]
 
     def _extract_enum_random(self, qty: int):
         """ 按照随机方式从枚举型数轴中提取值
@@ -396,5 +401,5 @@ class Axis:
         :return:
             list 从数轴中提取出的值对象
         """
-        count = self.count
-        return self._enum_val[np.random.choice(count, size=qty)]
+        selected = np.random.choice(self.count, size=qty)
+        return [self._enum_val[i] for i in selected]

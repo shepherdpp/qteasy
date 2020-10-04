@@ -284,7 +284,7 @@ class Strategy:
         :return:
         """
         assert isinstance(opt_tag, int), f'optimization tag should be an integer, got {type(opt_tag)} instead'
-        assert 0 <= opt_tag <= 1, f'ValueError, optimization tag should be 0 or 1, got {opt_tag} instead'
+        assert 0 <= opt_tag <= 2, f'ValueError, optimization tag should be between 0 and 2, got {opt_tag} instead'
         self._opt_tag = opt_tag
         return opt_tag
 

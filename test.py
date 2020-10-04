@@ -191,26 +191,56 @@ class TestSpace(unittest.TestCase):
         pars_list = [(0., 10), (0, 10)]
         s = qt.Space(pars=pars_list, par_types=None)
         self.assertEqual(s.types, ['conti', 'discr'])
-        #
+        self.assertEqual(s.dim, 2)
+        self.assertEqual(s.size, 110)
+        self.assertEqual(s.shape, (np.inf, 11))
+        self.assertEqual(s.count, np.inf)
+        self.assertEqual(s.boes, [(0., 10), (0, 10)])
+
         pars_list = [(0., 10), (0, 10)]
         s = qt.Space(pars=pars_list, par_types='conti, enum')
         self.assertEqual(s.types, ['conti', 'enum'])
+        self.assertEqual(s.dim, 2)
+        self.assertEqual(s.size, 20.)
+        self.assertEqual(s.shape, (np.inf, 2))
+        self.assertEqual(s.count, np.inf)
+        self.assertEqual(s.boes, [(0., 10), (0, 10)])
 
         pars_list = [(1, 2), (2, 3), (3, 4)]
         s = qt.Space(pars=pars_list)
         self.assertEqual(s.types, ['discr', 'discr', 'discr'])
+        self.assertEqual(s.dim, 3)
+        self.assertEqual(s.size, 8)
+        self.assertEqual(s.shape, (2, 2, 2))
+        self.assertEqual(s.count, 8)
+        self.assertEqual(s.boes, [(1, 2), (2, 3), (3, 4)])
 
         pars_list = [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
         s = qt.Space(pars=pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
+        self.assertEqual(s.dim, 3)
+        self.assertEqual(s.size, 27)
+        self.assertEqual(s.shape, (3, 3, 3))
+        self.assertEqual(s.count, 27)
+        self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
 
         pars_list = [((1, 2, 3), (2, 3, 4), (3, 4, 5))]
         s = qt.Space(pars=pars_list)
         self.assertEqual(s.types, ['enum'])
+        self.assertEqual(s.dim, 1)
+        self.assertEqual(s.size, 3)
+        self.assertEqual(s.shape, (3,))
+        self.assertEqual(s.count, 3)
 
         pars_list = ((1, 2, 3), (2, 3, 4), (3, 4, 5))
         s = qt.Space(pars=pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
+        self.assertEqual(s.dim, 3)
+        self.assertEqual(s.size, 27)
+        self.assertEqual(s.shape, (3, 3, 3))
+        self.assertEqual(s.count, 27)
+        self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
+
 
     def test_extract(self):
         """
@@ -269,22 +299,43 @@ class TestSpace(unittest.TestCase):
         extracted_int3, count = s.extract(1, 'interval')
         self.assertEqual(count, 4, 'extraction count wrong!')
         extracted_int_list3 = list(extracted_int3)
-        self.assertEqual(extracted_int_list3, [(0., 'a'), (0, 'b'), (10., 'a'), (10., 'b')],
+        self.assertEqual(extracted_int_list3, [(0., 'a'), (0., 'b'), (10, 'a'), (10, 'b')],
                          'space extraction wrong!')
-        print('extracted int list 2\n', extracted_int_list3)
+        print('extracted int list 3\n', extracted_int_list3)
         self.assertIsInstance(extracted_int_list3[0][0], float)
         self.assertIsInstance(extracted_int_list3[0][1], str)
         extracted_rand3, count = s.extract(3, 'rand')
         self.assertEqual(count, 3, 'extraction count wrong!')
         extracted_rand_list3 = list(extracted_rand3)
-        print('extracted rand list 2:\n', extracted_rand_list3)
+        print('extracted rand list 3:\n', extracted_rand_list3)
         for point in extracted_rand_list3:
             self.assertEqual(len(point), 2)
-            self.assertIsInstance(point[0], float)
+            self.assertIsInstance(point[0], (float, int))
             self.assertLessEqual(point[0], 10)
             self.assertGreaterEqual(point[0], 0)
             self.assertIsInstance(point[1], str)
             self.assertIn(point[1], ['a', 'b'])
+
+        pars_list = [((0, 10), (1, 'c'), ('a', 'b'), (1, 14))]
+        s = qt.Space(pars=pars_list, par_types='enum')
+        extracted_int4, count = s.extract(1, 'interval')
+        self.assertEqual(count, 4, 'extraction count wrong!')
+        extracted_int_list4 = list(extracted_int4)
+        it = zip(extracted_int_list4, [(0, 10), (1, 'c'), (0, 'b'), (1, 14)])
+        for item, item2 in it:
+            print(item, item2)
+        self.assertTrue(all([tuple(ext_item) == item for ext_item, item in it]))
+        print('extracted int list 4\n', extracted_int_list4)
+        self.assertIsInstance(extracted_int_list4[0], tuple)
+        extracted_rand4, count = s.extract(3, 'rand')
+        self.assertEqual(count, 3, 'extraction count wrong!')
+        extracted_rand_list4 = list(extracted_rand4)
+        print('extracted rand list 4:\n', extracted_rand_list4)
+        for point in extracted_rand_list4:
+            self.assertEqual(len(point), 2)
+            self.assertIsInstance(point[0], int)
+            self.assertIsInstance(point[1], (int, str))
+            self.assertIn(point, [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
 
 class TestCashPlan(unittest.TestCase):
@@ -1933,6 +1984,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.timing[0].pars, (5, 12, 9))
         self.assertEqual(self.op.selecting[0].pars, (0.5,))
         self.assertEqual(self.op.ricon[0].pars, (8, -0.1))
+
+        # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
+
 
         self.assertRaises(ValueError, self.op.set_opt_par, (5, 12, 9, 8))
 
