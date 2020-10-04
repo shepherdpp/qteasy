@@ -201,8 +201,31 @@ class Space:
 class Axis:
     """数轴对象，空间对象的一个组成部分，代表空间对象的一个维度
 
+        Axis对象包含Space对象的一个维度，与Space对象相似，Axis对象也有三种类型：
+            1，discr Axis，离散型数轴，包含一系列连续的整数，由这些整数值的上下界来定义。例如Axis([0, 10])代表一个Axis，这个Axis上的
+                取值范围为0～10，包括0与10
+            2，conti Axis，连续数轴对象，包含从下界到上界之间的所有浮点数，同样使用上下界定义，如Axis([0., 2.0])
+            3，enum Axis，枚举值数轴，取值范围为一系列任意类型对象，这些对象需要在创建Axis的时候就定义好。
+                例如：Axis(['a', 1, 'abc', (1, 2, 3)])就是一个枚举轴，它的取值可以是以下列表中的任意一个
+                                ['a', 1, 'abc', (1, 2, 3)]
+        Axis对象最重要的方法是extract()方法，代表从数轴的所有可能值中取出一部分并返回给Space对象生成迭代器。
+        对于Axis对象来说，有两种基本的extract()方法：
+            1，interval方法：间隔取值方法，即按照一定的间隔从数轴中取出一定数量的值。这种方法的参数主要是step_size，对于conti类型的数轴
+                step_size可以为一个浮点数，对于其他类型的数轴，step_size只能为整数。取值的举例如下：
+                a: 从一个conti数值轴中，以step_size=0.5取值：
+                    Axis([0, 3]).extract(step_size=0.5) -> [0, 0.5, 1, 1.5, 2. 2.5, 3]
+                b: 从一个discr数值轴中，以step_size=2取值:
+                    Axis([1, 5]).extract(step_size-2) -> [1, 3, 5]
+                c: 从一个enum轴中，以step_size=2取值:
+                    Axis([1, 2, 3, 'a', 'b', 'c', (1, 2)]).extract(step_size=2) -> [1, 3, 'b', (1, 2)]
+            2，random方法: 从数轴的所有可选值中随机选出指定数量的值返回到Space对象，对于任何类型的Axis，其取值方法都是类似的，指定的取值数量
+            必须是整数：举例如下：
+                a: 从一个enum轴中随机取出四个值：
+                    Axis(['a', 'b', 'c']).extract(count=4) -> ['b', 'a', 'c', 'a']
+
 
     """
+    AVAILABLE_EXTRACT_METHODS = ['int', 'interval', 'random', 'rand']
 
     def __init__(self, bounds_or_enum, typ=None):
         self._axis_type = None  # 数轴类型
@@ -284,16 +307,20 @@ class Axis:
         return:
             一个迭代器对象，包含所有抽取的数值
         """
-        if how == 'interval':
+        if not isinstance(how, str):
+            raise TypeError(f'extract method \'how\' should be a string in {self.AVAILABLE_EXTRACT_METHODS}')
+        if how.lower in ['interval', 'int']:
             if self.axis_type == 'enum':
                 return self._extract_enum_interval(interval_or_qty)
             else:
                 return self._extract_bounding_interval(interval_or_qty)
-        else:
+        if how.lower in ['rand', 'random']:
             if self.axis_type == 'enum':
                 return self._extract_enum_random(interval_or_qty)
             else:
                 return self._extract_bounding_random(interval_or_qty)
+        raise KeyError(f'extract method {how} is not valid, make sure method is one of '
+                       f'{self.AVAILABLE_EXTRACT_METHODS}')
 
     def _set_bounds(self, lbound, ubound):
         """设置数轴的上下界, 只适用于离散型或连续型数轴
@@ -356,7 +383,7 @@ class Axis:
         self._axis_type = 'enum'
         self._set_enum_val(enum)
 
-    def _extract_bounding_interval(self, interval):
+    def _extract_bounding_interval(self, interval: [int, float]):
         """ 按照间隔方式从离散或连续型数轴中提取值
 
         input:
@@ -367,6 +394,10 @@ class Axis:
         if self._axis_type == 'conti':
             return np.arange(self._lbound, self._ubound, interval)
         if self._axis_type == 'discr':
+            if not float(interval).is_integer():
+                raise ValueError(f'interval should be an integer, got {interval} instead!')
+            if not float(self._lbound).is_integer():
+                raise ValueError(f'l-bound of discrete axis should be an integer, got {self._lbound} instead')
             return np.arange(self._lbound, self._ubound + 1, interval)
 
     def _extract_bounding_random(self, qty: int):
@@ -377,6 +408,8 @@ class Axis:
         :return:
             np.array 从数轴中提取出的值对象
         """
+        if not float(qty).is_integer():
+            raise ValueError(f'interval should be an integer, got {qty} instead!')
         if self._axis_type == 'discr':
             return np.random.randint(self._lbound, self._ubound + 1, size=qty)
         if self._axis_type == 'conti':
@@ -390,6 +423,8 @@ class Axis:
         :return:
             list 从数轴中提取出的值对象
         """
+        if not float(interval).is_integer():
+            raise ValueError(f'interval should be an integer, got {interval} instead!')
         selected = np.arange(0, self.count, interval)
         return [self._enum_val[i] for i in selected]
 
@@ -401,5 +436,7 @@ class Axis:
         :return:
             list 从数轴中提取出的值对象
         """
+        if not float(qty).is_integer():
+            raise ValueError(f'interval should be an integer, got {qty} instead!')
         selected = np.random.choice(self.count, size=qty)
         return [self._enum_val[i] for i in selected]

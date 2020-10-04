@@ -8,6 +8,7 @@ import itertools
 import datetime
 from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format
+from qteasy.space import Space, Axis
 
 
 class TestCost(unittest.TestCase):
@@ -241,7 +242,6 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.count, 27)
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
 
-
     def test_extract(self):
         """
 
@@ -359,6 +359,46 @@ class TestSpace(unittest.TestCase):
             print(f'type of point[1] is {type(point[1])}')
             self.assertIsInstance(point[1], (int, np.int64))
             self.assertIn(point[0], [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
+
+    def test_axis_extract(self):
+        # test axis object with conti type
+        axis = Axis((0., 5))
+        self.assertIsInstance(axis, Axis)
+        self.assertEqual(axis.axis_type, 'conti')
+        self.assertEqual(axis.axis_boe, (0., 5.))
+        self.assertEqual(axis.count, np.inf)
+        self.assertEqual(axis.size, 10)
+        self.assertEqual(axis.extract(1, 'int'), [0, 1, 2, 3, 4, 5])
+        self.assertEqual(axis.extract(0.5, 'int'), [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5])
+        extracted = axis.extract(8, 'rand')
+        self.assertEqual(len(extracted), 8)
+        self.assertTrue(all([(0 <= item <= 5) for item in extracted]))
+
+        # test axis object with discrete type
+        axis = Axis((1, 5))
+        self.assertIsInstance(axis, Axis)
+        self.assertEqual(axis.axis_type, 'discr')
+        self.assertEqual(axis.axis_boe, (1, 5))
+        self.assertEqual(axis.count, 5)
+        self.assertEqual(axis.size, 5)
+        self.assertEqual(axis.extract(1, 'int'), [1, 2, 3, 4, 5])
+        self.assertRaises(ValueError, axis.extract, 0.5, 'int')
+        extracted = axis.extract(8, 'rand')
+        self.assertEqual(len(extracted), 8)
+        self.assertTrue(all([(item in [1, 2, 3, 4, 5]) for item in extracted]))
+
+        # test axis object with enumerate type
+        axis = Axis((1, 5, 7, 10, 'A', 'F'))
+        self.assertIsInstance(axis, Axis)
+        self.assertEqual(axis.axis_type, 'enum')
+        self.assertEqual(axis.axis_boe, (1, 5, 7, 10, 'A', 'F'))
+        self.assertEqual(axis.count, 6)
+        self.assertEqual(axis.size, 6)
+        self.assertEqual(axis.extract(1, 'int'), [1, 5, 7, 10, 'A', 'F'])
+        self.assertRaises(ValueError, axis.extract, 0.5, 'int')
+        extracted = axis.extract(8, 'rand')
+        self.assertEqual(len(extracted), 8)
+        self.assertTrue(all([(item in [1, 5, 7, 10, 'A', 'F']) for item in extracted]))
 
 
 class TestCashPlan(unittest.TestCase):
@@ -2922,7 +2962,6 @@ class TestVisual(unittest.TestCase):
 
 
 class TestBuiltIns(unittest.TestCase):
-
     def test_first(self):
         stg = qt.TestTimingClass()
         self.assertIsInstance(stg, qt.built_in.TestTimingClass)

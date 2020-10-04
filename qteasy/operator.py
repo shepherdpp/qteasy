@@ -267,7 +267,7 @@ class Operator:
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
             if isinstance(timing_type, str):
-                if not timing_type in AVAILABLE_STRATEGIES:
+                if timing_type.lower() not in AVAILABLE_STRATEGIES:
                     raise KeyError(f'built-in timing strategy \'{timing_type}\' not found!')
                 self._timing_types.append(timing_type)
                 self._timing.append(BUILT_IN_STRATEGY_DICT[timing_type]())
@@ -293,7 +293,7 @@ class Operator:
                 str_list.append(f' or {str(cur_type)}')
             cur_type += 1
             if isinstance(selecting_type, str):
-                if not selecting_type in AVAILABLE_STRATEGIES:
+                if selecting_type.lower() not in AVAILABLE_STRATEGIES:
                     raise KeyError(f'KeyError: built-in selecting type \'{selecting_type}\' not found!')
                 self._selecting_type.append(selecting_type)
                 self._selecting.append(BUILT_IN_STRATEGY_DICT[selecting_type]())
@@ -313,7 +313,7 @@ class Operator:
         self._ricon_blender = 'add'
         for ricon_type in ricon_types:
             if isinstance(ricon_type, str):
-                if not ricon_type in AVAILABLE_STRATEGIES:
+                if ricon_type.lower() not in AVAILABLE_STRATEGIES:
                     raise KeyError(f'ricon type {ricon_type} not found!')
                 self._ricon_type.append(ricon_type)
                 self._ricon.append(BUILT_IN_STRATEGY_DICT[ricon_type]())
@@ -546,6 +546,7 @@ class Operator:
            :param pars: 需要设置的策略参数，格式为tuple
            :param opt_tag: 优化类型，0：不参加优化，1：参加优化
            :param par_boes: 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如[(0, 1), (0, 100), (0, 100)]
+           :param par_types: 策略参数类型列表，与par_boes配合确定策略参数取值范围类型，详情参见Space类的介绍
            :param sample_freq: 采样频率，策略运行时的采样频率
            :param window_length: 窗口长度：策略计算的前视窗口长度
            :param data_types: 策略计算所需历史数据的数据类型

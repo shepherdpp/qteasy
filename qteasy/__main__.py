@@ -7,7 +7,7 @@ if __name__ == '__main__':
     cont.reference_asset_type = 'I'
     cont.share_pool = '000300.SH'
     cont.asset_type = 'I'
-    cont.output_count = 3
+    cont.output_count = 30
     cont.invest_start = '20020101'
     cont.parallel = True
     cont.print_log = True
@@ -29,13 +29,12 @@ if __name__ == '__main__':
           f'==================================================')
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 6
+    cont.opti_method_sample_size = 50000
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1
     cont.opti_method_incre_ratio = 2
     perfs_dma, pars_dma = run(op, cont)
-    print(op.info())
 
     # TODO: Following codes are new, but not running well, should find out why
     # find out best performers for strategy macd
@@ -54,7 +53,6 @@ if __name__ == '__main__':
 
     cont.mode = 2
     perfs_macd, pars_macd = run(op, cont)
-    print(op.info())
 
     # find out best performers for strategy trix
     print(f'==================SEARCHING FOR TRIX PARAMS===================\n'
@@ -71,7 +69,6 @@ if __name__ == '__main__':
 
     cont.mode = 2
     perfs_trix, pars_trix = run(op, cont)
-    print(op.info())
 
     # find out best performers for strategy crossline
     print(f'===============SEARCHING FOR CROSSLINE PARAMS=================\n'
@@ -88,7 +85,6 @@ if __name__ == '__main__':
 
     cont.mode = 2
     perfs_cl, pars_cl = run(op, cont)
-    print(op.info())
 
     # find out best performance with all four strategies combined:
     print(f'===============SEARCHING FOR COMBINED PARAMS==================\n'
@@ -114,9 +110,8 @@ if __name__ == '__main__':
     print(f'=========================================\n'
           f'op object\'s opt space par is: {op.opt_space_par}\n'
           f'op object\'s par boes and par types are:\n')
-    for stg in op.strategies:
-        print(f'stg{stg.stg_type}:   {stg.par_types}, {stg.par_boes}')
 
-    print(op.info())
     cont.mode = 2
+    cont.opti_method = 1
+    cont.opti_method_step_size = 1
     run(op, cont)
