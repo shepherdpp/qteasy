@@ -487,6 +487,7 @@ class Operator:
                       pars: [tuple, dict] = None,
                       opt_tag: int = None,
                       par_boes: [tuple, list] = None,
+                      par_types: [list, str] = None,
                       sample_freq: str = None,
                       window_length: int = None,
                       data_types: [str, list] = None):
@@ -537,6 +538,8 @@ class Operator:
         if par_boes is not None:
             strategy.set_par_boes(par_boes)
             # print(f'{strategy} parameter space range or enum has been set to {par_boes}')
+        if par_types is not None:
+            strategy.par_types = par_types
         has_sf = sample_freq is not None
         has_wl = window_length is not None
         has_dt = data_types is not None

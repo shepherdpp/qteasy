@@ -196,6 +196,22 @@ class TestSpace(unittest.TestCase):
         s = qt.Space(pars=pars_list, par_types='conti, enum')
         self.assertEqual(s.types, ['conti', 'enum'])
 
+        pars_list = [(1, 2), (2, 3), (3, 4)]
+        s = qt.Space(pars=pars_list)
+        self.assertEqual(s.types, ['discr', 'discr', 'discr'])
+
+        pars_list = [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
+        s = qt.Space(pars=pars_list)
+        self.assertEqual(s.types, ['enum', 'enum', 'enum'])
+
+        pars_list = [((1, 2, 3), (2, 3, 4), (3, 4, 5))]
+        s = qt.Space(pars=pars_list)
+        self.assertEqual(s.types, ['enum'])
+
+        pars_list = ((1, 2, 3), (2, 3, 4), (3, 4, 5))
+        s = qt.Space(pars=pars_list)
+        self.assertEqual(s.types, ['enum', 'enum', 'enum'])
+
     def test_extract(self):
         """
 
