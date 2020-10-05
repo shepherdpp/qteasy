@@ -13,8 +13,6 @@ import numpy as np
 import pandas as pd
 
 
-# TODO: 对Rate对象进行改进，实现以下功能：1，最低费率，2，卖出和买入费率不同，3，固定费用，4，与交易量相关的二阶费率
-# TODO: 将Rate类改为Cost类
 class Cost:
     """ 交易成本类，用于在回测过程中对交易成本进行估算
 

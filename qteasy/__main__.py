@@ -103,9 +103,9 @@ if __name__ == '__main__':
 
     op.set_blender('ls', 'combo')
     op.set_parameter(stg_id='t-0', pars=(96, 111, 64))
-    op.set_parameter(stg_id='t-1', pars=(96, 111, 64))
-    op.set_parameter(stg_id='t-2', pars=(96, 111))
-    op.set_parameter(stg_id='t-3', pars=(97, 124, 3.8286731572085966, 'buy'))
+    op.set_parameter(stg_id='t-1', pars=(157, 188, 20))
+    op.set_parameter(stg_id='t-2', pars=(50, 34))
+    op.set_parameter(stg_id='t-3', pars=(105, 109, 9.99064183436002, 'buy'))
     op.set_parameter('r-0', pars=(8, -0.1443033))
     print(f'=========================================\n'
           f'op object\'s opt space par is: {op.opt_space_par}\n'

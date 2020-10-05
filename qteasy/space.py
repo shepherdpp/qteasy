@@ -309,12 +309,12 @@ class Axis:
         """
         if not isinstance(how, str):
             raise TypeError(f'extract method \'how\' should be a string in {self.AVAILABLE_EXTRACT_METHODS}')
-        if how.lower in ['interval', 'int']:
+        if how.lower() in ['interval', 'int']:
             if self.axis_type == 'enum':
                 return self._extract_enum_interval(interval_or_qty)
             else:
                 return self._extract_bounding_interval(interval_or_qty)
-        if how.lower in ['rand', 'random']:
+        if how.lower() in ['rand', 'random']:
             if self.axis_type == 'enum':
                 return self._extract_enum_random(interval_or_qty)
             else:

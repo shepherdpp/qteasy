@@ -162,9 +162,13 @@ class Operator:
 
                 多空蒙板的混合方式由多空混合字符串来确定，字符串的格式为"[chg|pos]-0/9|cumulative"(此处应该使用正则表达式)
 
-                'chg-N': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
+                'str-T': T为浮点数，当多个策略多空蒙板的总体信号强度达到阈值T时，总体输出为1(或者-1)，否则为0
                 'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-                'cumulative': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
+                    这种类型有一个变体：
+                    'pos-N-T': T为信号强度阈值，忽略信号强度达不到该阈值的多空蒙板信号，将剩余的多空蒙板进行计数，信号数量达到或
+                    超过N时，输出为1（或者-1），否则为0
+                'avg': 平均信号强度，所有多空蒙板的信号强度的平均值
+                'comboo': 在每个策略发生反转时都会产生交易信号，信号的强度不经过衰减，但是通常第一个信号产生后，后续信号就再无意义
 
             用途2,  生成选股蒙板：
                 选股蒙板定义了每一个时刻整个投资组合中每一个投资产品被分配到的权重。同样，如果定义了多个策略，也必须将它们的输出结果混
@@ -226,6 +230,9 @@ class Operator:
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
     # TODO: 将三种策略的操作规范化并重新分类，不再以策略的目的分类，而以策略的形成机理不同而分类
     # TODO: 重新考虑单品种信号生成策略，考虑是否与单品种多空策略合并，还是保留并改进为完整的单品种信号生成策略
+
+    SUPPORTED_LS_BLENDER_TYPES = ['avg', 'pos', 'str', 'combo']
+
     def __init__(self, selecting_types=None,
                  timing_types=None,
                  ricon_types=None):
@@ -853,12 +860,11 @@ class Operator:
         return：=====
             :rtype: object: 一个混合后的多空蒙板
         """
-        SUPPORTED_TYPE = ['avg', 'pos', 'str', 'combo']
         try:
             blndr = str_to_list(self._ls_blender, '-')  # 从对象的属性中读取择时混合参数
         except:
             raise TypeError(f'the timing blender converted successfully!')
-        assert isinstance(blndr[0], str) and blndr[0] in SUPPORTED_TYPE, \
+        assert isinstance(blndr[0], str) and blndr[0] in self.SUPPORTED_LS_BLENDER_TYPES, \
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
             f'your input is like "str-T", "pos-N-T", "combo", or "avg"'
         # debug
