@@ -872,9 +872,7 @@ class Operator:
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
         # for msk in ls_masks:
         #     print(f'ls mask shape: {msk.shape}')
-        l_m = 0.
-        for msk in ls_masks:  # 计算所有多空模版的和
-            l_m += msk
+        l_m = np.sum(np.array(ls_masks), 0) # 计算所有多空模版的和
 
         l_count = len(ls_masks)
         # print 'the first long/short mask is\n', ls_masks[-1]
