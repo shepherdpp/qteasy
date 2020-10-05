@@ -241,9 +241,9 @@ class Strategy:
 
         :return:
         """
-        str1 = f'{type(self)}'
-        str2 = ''  # f'\nStrategy {self.stg_type}'
-        return str1
+        str1 = f'{type(self)} at {hex(id(self))}\n'
+        str2 = f'{self.stg_name} of type: \'{self.stg_type}\''  # f'\nStrategy {self.stg_type}'
+        return ''.join([str1, str2])
 
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""

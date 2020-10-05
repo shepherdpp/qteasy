@@ -70,7 +70,7 @@ There are multiple internally preset strategies such as crossline timing strateg
  An Opertor with a DMA strategy can be created like this:
  
  ```python
-op = qt.Operator(timing='DMA')
+op = qt.Operator(timing_types='DMA')
 ```
  
 #### Timing strategy Example: Cross-Line strategy
