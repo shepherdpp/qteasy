@@ -1,5 +1,6 @@
 from qteasy.core import *
 from qteasy.operator import *
+from qteasy.visual import candle
 
 if __name__ == '__main__':
     cont = Context(moq=0)
@@ -12,6 +13,9 @@ if __name__ == '__main__':
     cont.parallel = True
     cont.print_log = True
     cont.moq = 0
+    cont.rate = Cost(buy_fix=0.0, buy_rate=0.0015, buy_min=0.0,
+                     sell_fix=0.0, sell_rate=0.0, sell_min=0.0,
+                     slipage=0.0)
 
     op = Operator(timing_types=['dma'],
                   selecting_types=['all'], ricon_types=['urgent'])
@@ -29,14 +33,13 @@ if __name__ == '__main__':
           f'==================================================')
     cont.mode = 2
     cont.opti_method = 1
-    cont.opti_method_sample_size = 50000
+    cont.opti_method_sample_size = 500
     cont.opti_method_step_size = 32
     cont.opti_method_init_step_size = 16
     cont.opti_method_min_step_size = 1
     cont.opti_method_incre_ratio = 2
     perfs_dma, pars_dma = run(op, cont)
 
-    # TODO: Following codes are new, but not running well, should find out why
     # find out best performers for strategy macd
 
     print(f'==================SEARCHING FOR MACD PARAMS===================\n'
@@ -64,10 +67,11 @@ if __name__ == '__main__':
     op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, -0.01)])
 
     op.set_blender('ls', 'combo')
-    op.set_parameter(stg_id='t-0', pars=(96, 111))
+    op.set_parameter(stg_id='t-0', pars=(50, 34))
     op.set_parameter('r-0', pars=(8, -0.1443033))
 
     cont.mode = 2
+    cont.opti_method_sample_size = 500
     perfs_trix, pars_trix = run(op, cont)
 
     # find out best performers for strategy crossline
@@ -104,14 +108,15 @@ if __name__ == '__main__':
     op.set_blender('ls', 'combo')
     op.set_parameter(stg_id='t-0', pars=(96, 111, 64))
     op.set_parameter(stg_id='t-1', pars=(157, 188, 20))
-    op.set_parameter(stg_id='t-2', pars=(50, 34))
+    op.set_parameter(stg_id='t-2', pars=(28, 95))
     op.set_parameter(stg_id='t-3', pars=(105, 109, 9.99064183436002, 'buy'))
     op.set_parameter('r-0', pars=(8, -0.1443033))
     print(f'=========================================\n'
           f'op object\'s opt space par is: {op.opt_space_par}\n'
           f'op object\'s par boes and par types are:\n')
 
-    cont.mode = 2
+    cont.mode = 1
     cont.opti_method = 1
+    cont.opti_method_sample_size = 100
     cont.opti_method_step_size = 1
     run(op, cont)

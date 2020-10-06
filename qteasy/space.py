@@ -150,9 +150,9 @@ class Space:
             f'TypeError, a point in a space must be in forms of a tuple or a list, got {type(point)}'
         if len(point) != self.dim:
             return False
-        for coordinate, boe, type in zip(point, self.boes, self.types):
-            if type == 'enum':
-                if not coordinate in boe:
+        for coordinate, boe, s_type in zip(point, self.boes, self.types):
+            if s_type == 'enum':
+                if coordinate not in boe:
                     return False
             else:
                 if not boe[0] < coordinate < boe[1]:
@@ -180,8 +180,8 @@ class Space:
                 f'ValueError, can not match {len(distance)} distances in {self.dim} dimensions!'
         else:
             distance = [distance] * self.dim
-        for coordinate, boe, type, dis in zip(point, self.boes, self.types, distance):
-            if type != 'enum':
+        for coordinate, boe, s_type, dis in zip(point, self.boes, self.types, distance):
+            if s_type != 'enum':
                 space_lbound = boe[0]
                 space_ubound = boe[1]
                 lbound = max((coordinate - dis), space_lbound)

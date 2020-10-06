@@ -291,7 +291,7 @@ def get_index(index: str,
               start: str,
               end: str,
               freq: str = 'D',
-              ma: list = None) -> pd.DataFrame:
+              ma: list = None) -> object:
     """ 获取指数的历史价格数据的快捷通道，实际上调用get_bar实现
 
     :param index:

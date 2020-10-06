@@ -630,7 +630,6 @@ class Selecting(Strategy):
         """
         raise NotImplementedError
 
-    # TODO：改写Selecting类，使用sample_freq来定义分段频率，使Timing策略和Selecting策略更多地共享属性
     # TODO：Selecting的分段与Timing的Rolling Expansion滚动展开其实是同一个过程，未来可以尝试合并并一同优化
     def _seg_periods(self, dates, freq):
         """ 对输入的价格序列数据进行分段，Selection类会对每个分段应用不同的股票组合
