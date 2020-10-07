@@ -870,7 +870,7 @@ class Operator:
             raise TypeError(f'the timing blender converted successfully!')
         assert isinstance(blndr[0], str) and blndr[0] in self.SUPPORTED_LS_BLENDER_TYPES, \
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
-            f'your input is like "str-T", "pos-N-T", "combo", or "avg"'
+            f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", or "avg"'
         # debug
         # print(f'timing blender is:{blndr}')
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
@@ -890,16 +890,17 @@ class Operator:
             # 最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以上的蒙板信号值为多(>0)
             # 或者为空(<0)时，最终蒙板的多空信号才为多或为空。最终信号的强度始终为-1或1，如果希望最终信号强度为输入
             # 信号的平均值，应该使用avg_pos-N方式混合
-            # avg_pos-N还有一种变体，即avg_pos-N-T模式，在通常的模式下加入了一个阈值Threshold参数T，用来判断
-            # 何种情况下输入的多空蒙板信号可以被保留，当T大于0时，只有输入信号绝对值大于T的时候才会被接受为有意义的信号
-            # 否则就会被忽略。使用avg_pos-N-T模式，并把T设置为一个较小的浮点数能够过滤掉一些非常微弱的多空信号.
+            # pos-N还有一种变体，即pos-N-T模式，在这种模式下，N参数仍然代表看多的参数个数阈值，但是并不是所有判断持仓为正的数据都会被判断为正
+            # 只有绝对值大于T的数据才会被接受，例如，当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因此尽管有两个策略在这个
+            # 时间点判断为多头，但是实际上只有一个策略会被接受.
             # avg_pos-N方式下，
             # 持仓同样取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
             # 看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度。当然，avg_pos-1与avg等价
             # 如avg_pos-2方式下，至少两个蒙板看多则最终看多，否则看空
-            # pos-N还有一种变体，即pos-N-T模式，在这种模式下，N参数仍然代表看多的参数个数阈值，但是并不是所有判断持仓为正的数据都会被判断为正
-            # 只有绝对值大于T的数据才会被接受，例如，当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因此尽管有两个策略在这个
-            # 时间点判断为多头，但是实际上只有一个策略会被接受.
+            # avg_pos-N还有一种变体，即avg_pos-N-T模式，在通常的模式下加入了一个阈值Threshold参数T，用来判断
+            # 何种情况下输入的多空蒙板信号可以被保留，当T大于0时，只有输入信号绝对值大于T的时候才会被接受为有意义的信号
+            # 否则就会被忽略。使用avg_pos-N-T模式，并把T设置为一个较小的浮点数能够过滤掉一些非常微弱的多空信号.
+
             l_m_sign = 0.
             n = int(blndr[1])
             if len(blndr) == 3:
@@ -921,8 +922,10 @@ class Operator:
             return np.where(np.abs(l_m) >= threshold, 1, 0) * np.sign(l_m)
         if blndr[0] == 'combo':
             # 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，虽然并不是所有的信号都有效
+            # 在这种模式下，本意是原样保存所有单个输入多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会运用"比例机制"生成
+            # 卖出证券占持有份额的比例。这种比例机制会在针对combo模式的信号组合进行计算的过程中产生问题。
             return l_m
-        raise ValueError(f'Blender text ({blndr}) not recognized!')
+        raise ValueError(f'Blender text \'({blndr})\' not recognized!')
 
     def _selecting_blend(self, sel_masks):
         """ 选股策略混合器，将各个选股策略生成的选股蒙板按规则混合成一个蒙板

@@ -78,7 +78,8 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
         if share_basic.empty:
             raise ValueError(f'stock {stock} can not be found or does not exist!')
         share_name = stock + ' - ' + share_basic.name[0]
-        print(share_basic.head())
+        # debug
+        # print(share_basic.head())
     else:
         share_name = stock + ' - ' + asset_type
     # data.info()
