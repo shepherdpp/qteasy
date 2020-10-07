@@ -236,7 +236,7 @@ class Operator:
     # TODO: 将三种策略的操作规范化并重新分类，不再以策略的目的分类，而以策略的形成机理不同而分类
     # TODO: 重新考虑单品种信号生成策略，考虑是否与单品种多空策略合并，还是保留并改进为完整的单品种信号生成策略
 
-    SUPPORTED_LS_BLENDER_TYPES = ['avg', 'pos', 'str', 'combo']
+    SUPPORTED_LS_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo']
 
     def __init__(self, selecting_types=None,
                  timing_types=None,
@@ -583,8 +583,7 @@ class Operator:
                 f'{self.ricon_count} ricon strategies'
             strategy = self.ricon[int(l[1])]
         else:
-            print(f'InputError: The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
-            return None
+            raise ValueError(f'The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
         if pars is not None:
             if strategy.set_pars(pars):
                 pass
@@ -885,37 +884,45 @@ class Operator:
             # avg方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，只有所有蒙板均看空时，最终结果才看空
             # 所有蒙板的权重相同，因此，如果一共五个蒙板三个看多两个看空时，持仓为60%
             # 更简单的解释是，混合后的多空仓位是所有蒙版仓位的平均值.
-            # debug
-            # print 'long short masks are merged by', blndr, 'result as\n', l_m / l_count
             return l_m / l_count
-        elif blndr[0] == 'pos':
-            # pos-N方式下，持仓同样取决于看多的蒙板的数量，但是持仓只能为1或0，只有满足N个或更多蒙板看多时，最终结果
-            # 看多，否则看空，如pos-2方式下，至少两个蒙板看多则最终看多，否则看空
+        if blndr[0] == 'pos' or blndr[0] == 'avg_pos':
+            # 在pos-N方式下，
+            # 最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以上的蒙板信号值为多(>0)
+            # 或者为空(<0)时，最终蒙板的多空信号才为多或为空。最终信号的强度始终为-1或1，如果希望最终信号强度为输入
+            # 信号的平均值，应该使用avg_pos-N方式混合
+            # avg_pos-N还有一种变体，即avg_pos-N-T模式，在通常的模式下加入了一个阈值Threshold参数T，用来判断
+            # 何种情况下输入的多空蒙板信号可以被保留，当T大于0时，只有输入信号绝对值大于T的时候才会被接受为有意义的信号
+            # 否则就会被忽略。使用avg_pos-N-T模式，并把T设置为一个较小的浮点数能够过滤掉一些非常微弱的多空信号.
+            # avg_pos-N方式下，
+            # 持仓同样取决于看多的蒙板的数量，只有满足N个或更多蒙板看多时，最终结果
+            # 看多，否则看空，在看多/空情况下，最终的多空信号强度=平均多空信号强度。当然，avg_pos-1与avg等价
+            # 如avg_pos-2方式下，至少两个蒙板看多则最终看多，否则看空
             # pos-N还有一种变体，即pos-N-T模式，在这种模式下，N参数仍然代表看多的参数个数阈值，但是并不是所有判断持仓为正的数据都会被判断为正
             # 只有绝对值大于T的数据才会被接受，例如，当T为0.25的时候，0.35会被接受为多头，但是0.15不会被接受为多头，因此尽管有两个策略在这个
             # 时间点判断为多头，但是实际上只有一个策略会被接受.
-            # print 'timing blender mode: ', blndr
-            n = int(blndr[1])
             l_m_sign = 0.
+            n = int(blndr[1])
             if len(blndr) == 3:
                 threshold = float(blndr[2])
                 for msk in ls_masks:
-                    l_m_sign += np.sign(np.where(np.abs(msk)<threshold, 0, msk))
+                    l_m_sign += np.sign(np.where(np.abs(msk) < threshold, 0, msk))
             else:
                 for msk in ls_masks:
                     l_m_sign += np.sign(msk)
-            # print 'long short masks are merged by', blndr, 'result as\n', l_m.clip(n - 1, n) - (n - 1)
-            res = np.where(np.abs(l_m_sign) >= n, l_m, 0) / n
+            if blndr[0] == 'pos':
+                res = np.where(np.abs(l_m_sign) >= n, l_m_sign, 0)
+            if blndr[0] == 'avg_pos':
+                res = np.where(np.abs(l_m_sign) >= n, l_m, 0) / l_count
             return res.clip(-1, 1)
-        elif blndr[0] == 'str':
+
+        if blndr[0] == 'str':
             # str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于某一个阈值T的时候，最终结果才会是多头，否则就是空头
             threshold = float(blndr[1])
             return np.where(np.abs(l_m) >= threshold, 1, 0) * np.sign(l_m)
-        elif blndr[0] == 'combo':
+        if blndr[0] == 'combo':
             # 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，虽然并不是所有的信号都有效
             return l_m
-        else:
-            raise ValueError(f'Blender text ({blndr}) not recognized!')
+        raise ValueError(f'Blender text ({blndr}) not recognized!')
 
     def _selecting_blend(self, sel_masks):
         """ 选股策略混合器，将各个选股策略生成的选股蒙板按规则混合成一个蒙板

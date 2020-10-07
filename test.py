@@ -1429,6 +1429,8 @@ class TestOperatorSubFuncs(unittest.TestCase):
                     [0.1, 0.3, 0.2, -0.5],
                     [0.1, 0.4, 0.0, -0.5],
                     [0.1, 0.5, 0.0, -1.0]]
+
+        # result with blender 'avg'
         ls_blnd_avg = [[0.16666667, 0.00000000, 0.50000000, -0.3],
                        [0.46666667, 0.00000000, 0.50000000, -0.53333333],
                        [0.43333333, 0.16666667, 0.76666667, -0.4],
@@ -1447,48 +1449,92 @@ class TestOperatorSubFuncs(unittest.TestCase):
                           [0, 1, 0, -1],
                           [0, 1, 0, -1]]
         # result with blender 'pos-2' == 'pos-2-0'
-        ls_blnd_pos_2 = [[0.00, 0.00, 0.75, -0.45],
-                         [0.70, 0.00, 0.75, -0.80],
-                         [0.65, 0.00, 1.00, -0.60],
-                         [0.85, 0.00, 0.95, -0.55],
-                         [0.80, 0.85, 0.85, -0.75],
-                         [0.80, 0.90, 0.60, -1.00],
-                         [0.20, 0.95, 0.00, -1.00],
-                         [0.20, 1.00, 0.00, -1.00]]
+        ls_blnd_pos_2 = [[0, 0, 1, -1],
+                         [1, 0, 1, -1],
+                         [1, 0, 1, -1],
+                         [1, 0, 1, -1],
+                         [1, 1, 1, -1],
+                         [1, 1, 1, -1],
+                         [1, 1, 0, -1],
+                         [1, 1, 0, -1]]
         # result with blender 'pos-2-0.25'
-        ls_blnd_pos_2_25 = [[0.00, 0.00, 0.75, -0.45],
-                            [0.70, 0.00, 0.75, -0.8],
-                            [0.65, 0.00, 1.00, 0.],
-                            [0.85, 0.00, 0.95, 0.],
-                            [0.80, 0.85, 0.85, -0.75],
-                            [0.80, 0.90, 0.00, -1.],
-                            [0.00, 0.95, 0.00, -1.],
-                            [0.00, 1.00, 0.00, -1.]]
+        ls_blnd_pos_2_25 = [[0, 0, 1, -1],
+                            [1, 0, 1, -1],
+                            [1, 0, 1, 0],
+                            [1, 0, 1, 0],
+                            [1, 1, 1, -1],
+                            [1, 1, 0, -1],
+                            [0, 1, 0, -1],
+                            [0, 1, 0, -1]]
+        # result with blender 'avg_pos-2' == 'pos-2-0'
+        ls_blnd_avg_pos_2 = [[0.00000000, 0.00000000, 0.50000000, -0.3],
+                             [0.46666667, 0.00000000, 0.50000000, -0.53333333],
+                             [0.43333333, 0.00000000, 0.76666667, -0.4],
+                             [0.56666667, 0.00000000, 0.63333333, -0.36666667],
+                             [0.53333333, 0.56666667, 0.56666667, -0.5],
+                             [0.53333333, 0.60000000, 0.40000000, -0.66666667],
+                             [0.13333333, 0.63333333, 0.00000000, -0.83333333],
+                             [0.13333333, 0.83333333, 0.00000000, -1.]]
+        # result with blender 'avg_pos-2-0.25'
+        ls_blnd_avg_pos_2_25 = [[0.00000000, 0.00000000, 0.50000000, -0.3],
+                                [0.46666667, 0.00000000, 0.50000000, -0.53333333],
+                                [0.43333333, 0.00000000, 0.76666667, 0.00000000],
+                                [0.56666667, 0.00000000, 0.63333333, 0.00000000],
+                                [0.53333333, 0.56666667, 0.56666667, -0.5],
+                                [0.53333333, 0.60000000, 0.00000000, -0.66666667],
+                                [0.00000000, 0.63333333, 0.00000000, -0.83333333],
+                                [0.00000000, 0.83333333, 0.00000000, -1.]]
+        # result with blender 'combo'
+        ls_blnd_combo = [[0.5, 0., 1.5, -0.9],
+                         [1.4, 0., 1.5, -1.6],
+                         [1.3, 0.5, 2.3, -1.2],
+                         [1.7, 0.5, 1.9, -1.1],
+                         [1.6, 1.7, 1.7, -1.5],
+                         [1.6, 1.8, 1.2, -2.],
+                         [0.4, 1.9, 0., -2.5],
+                         [0.4, 2.5, 0., -3.]]
 
         ls_masks = [np.array(ls_mask1), np.array(ls_mask2), np.array(ls_mask3)]
 
         # test A: the ls_blender 'str-T'
         self.op.set_blender('ls', 'str-1.5')
         res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(res)
+        print(f'test A: result of ls_blender: str-1.5: \n{res}')
         self.assertTrue(np.allclose(res, ls_blnd_str_15))
 
         # test B: the ls_blender 'pos-N-T'
         self.op.set_blender('ls', 'pos-2')
         res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(res)
+        print(f'Test B-1: result of ls_blender: pos-2: \n{res}')
         self.assertTrue(np.allclose(res, ls_blnd_pos_2))
 
         self.op.set_blender('ls', 'pos-2-0.25')
         res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(res)
+        print(f'Test B-2: result of ls_blender: pos-2-0.25: \n{res}')
         self.assertTrue(np.allclose(res, ls_blnd_pos_2_25))
 
-        # test C: the ls_blender 'avg'
+        # test C: the ls_blender 'avg_pos-N-T'
+        self.op.set_blender('ls', 'avg_pos-2')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(f'Test C-1: result of ls_blender: avg_pos-2: \n{res}')
+        self.assertTrue(np.allclose(res, ls_blnd_pos_2, 5))
+
+        self.op.set_blender('ls', 'avg_pos-2-0.25')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(f'Test C-2: result of ls_blender: avg_pos-2-0.25: \n{res}')
+        self.assertTrue(np.allclose(res, ls_blnd_pos_2_25, 5))
+
+        # test D: the ls_blender 'avg'
         self.op.set_blender('ls', 'avg')
         res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(res)
+        print(f'Test D: result of ls_blender: avg: \n{res}')
         self.assertTrue(np.allclose(res, ls_blnd_avg))
+
+        # test E: the ls_blender 'combo'
+        self.op.set_blender('ls', 'combo')
+        res = qt.Operator._ls_blend(self.op, ls_masks)
+        print(f'Test E: result of ls_blender: combo: \n{res}')
+        self.assertTrue(np.allclose(res, ls_blnd_combo))
 
     def test_sel_blend(self):
         """测试选股蒙板的混合器，包括所有的混合模式"""
