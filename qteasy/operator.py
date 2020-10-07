@@ -236,7 +236,7 @@ class Operator:
     # TODO: 将三种策略的操作规范化并重新分类，不再以策略的目的分类，而以策略的形成机理不同而分类
     # TODO: 重新考虑单品种信号生成策略，考虑是否与单品种多空策略合并，还是保留并改进为完整的单品种信号生成策略
 
-    SUPPORTED_LS_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo']
+    SUPPORTED_LS_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
 
     def __init__(self, selecting_types=None,
                  timing_types=None,
@@ -794,7 +794,12 @@ class Operator:
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并移除所有大于1或小于-1的信号
         # print('SPEED test OP create, Time of operation mask creation')
         # 生成交易信号矩阵
-        op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
+        if self._ls_blender != 'none':
+            # 常规情况下，所有的ls_mask会先被混合起来，然后再与sel_mask相乘后生成交易信号，与ricon_mat相加
+            op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
+        else:
+            # 在ls_blender为"none"的时候，代表择时多空蒙板不会进行混合，分别与sel_mask相乘后单独生成交易信号，再与ricon_mat相加
+            op_mat = ((mask_to_signal(ls_mask) * sel_mask).sum(axis=0) + ricon_mat).clip(-1, 1)
         # 生成DataFrame，并且填充日期数据
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
@@ -870,21 +875,25 @@ class Operator:
             raise TypeError(f'the timing blender converted successfully!')
         assert isinstance(blndr[0], str) and blndr[0] in self.SUPPORTED_LS_BLENDER_TYPES, \
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
-            f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", or "avg"'
+            f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
         # debug
         # print(f'timing blender is:{blndr}')
         # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
         # for msk in ls_masks:
         #     print(f'ls mask shape: {msk.shape}')
-        l_m = np.sum(np.array(ls_masks), 0) # 计算所有多空模版的和
-
+        l_m = np.array(ls_masks) #
+        l_m_sum = np.sum(l_m, 0) # 计算所有多空模版的和
         l_count = len(ls_masks)
         # print 'the first long/short mask is\n', ls_masks[-1]
+        if blndr[0] == 'none':
+            # none 模式表示输入的蒙板不会被混合，所有的蒙板会被转化为一个三维的ndarray返回,不做任何混合，在后续计算中采用特殊计算方式
+            # 分别计算每一个多空蒙板的交易信号，然后再将交易信号混合起来.
+            return l_m
         if blndr[0] == 'avg':
             # avg方式下，持仓取决于看多的蒙板的数量，看多蒙板越多，持仓越高，只有所有蒙板均看空时，最终结果才看空
             # 所有蒙板的权重相同，因此，如果一共五个蒙板三个看多两个看空时，持仓为60%
             # 更简单的解释是，混合后的多空仓位是所有蒙版仓位的平均值.
-            return l_m / l_count
+            return l_m_sum / l_count
         if blndr[0] == 'pos' or blndr[0] == 'avg_pos':
             # 在pos-N方式下，
             # 最终的多空信号强度取决于蒙板集合中各个蒙板的信号值，只有满足N个以上的蒙板信号值为多(>0)
@@ -912,19 +921,19 @@ class Operator:
                     l_m_sign += np.sign(msk)
             if blndr[0] == 'pos':
                 res = np.where(np.abs(l_m_sign) >= n, l_m_sign, 0)
+                return res.clip(-1, 1)
             if blndr[0] == 'avg_pos':
-                res = np.where(np.abs(l_m_sign) >= n, l_m, 0) / l_count
-            return res.clip(-1, 1)
-
+                res = np.where(np.abs(l_m_sign) >= n, l_m_sum, 0) / l_count
+                return res.clip(-1, 1)
         if blndr[0] == 'str':
             # str-T模式下，持仓只能为0或+1，只有当所有多空模版的输出的总和大于某一个阈值T的时候，最终结果才会是多头，否则就是空头
             threshold = float(blndr[1])
-            return np.where(np.abs(l_m) >= threshold, 1, 0) * np.sign(l_m)
+            return np.where(np.abs(l_m_sum) >= threshold, 1, 0) * np.sign(l_m_sum)
         if blndr[0] == 'combo':
             # 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，虽然并不是所有的信号都有效
             # 在这种模式下，本意是原样保存所有单个输入多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会运用"比例机制"生成
             # 卖出证券占持有份额的比例。这种比例机制会在针对combo模式的信号组合进行计算的过程中产生问题。
-            return l_m
+            return l_m_sum
         raise ValueError(f'Blender text \'({blndr})\' not recognized!')
 
     def _selecting_blend(self, sel_masks):

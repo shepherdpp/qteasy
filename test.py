@@ -1398,9 +1398,74 @@ class TestOperatorSubFuncs(unittest.TestCase):
                        [0.0, 0.0, 0.0, 0.5],
                        [-0.4, 0.0, -1.0, 0.0],
                        [0.0, 0.5, 0.0, 0.0]]
+        mask_multi = [[[0, 0, 1, 1, 0],
+                       [0, 1, 1, 1, 0],
+                       [1, 1, 1, 1, 0],
+                       [1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1],
+                       [1, 1, 0, 1, 1],
+                       [0, 1, 0, 0, 1],
+                       [1, 1, 0, 0, 1],
+                       [1, 1, 0, 0, 1],
+                       [1, 0, 0, 0, 1]],
 
+                      [[0, 0, 1, 0, 1],
+                       [0, 1, 1, 1, 1],
+                       [1, 1, 0, 1, 1],
+                       [1, 1, 1, 0, 0],
+                       [1, 1, 0, 0, 0],
+                       [1, 0, 0, 0, 0],
+                       [1, 0, 0, 0, 0],
+                       [1, 1, 0, 0, 0],
+                       [1, 1, 0, 1, 0],
+                       [0, 1, 0, 1, 0]],
+
+                      [[0, 0, 0., 0, 1],
+                       [0, 0, 1., 0, 1],
+                       [0, 0, 1., 0, 1],
+                       [1, 0, 1., 0, 1],
+                       [1, 1, .5, 1, 1],
+                       [1, 0, .5, 1, 0],
+                       [1, 1, .5, 1, 0],
+                       [0, 1, 0., 0, 0],
+                       [1, 0, 0., 0, 0],
+                       [0, 1, 0., 0, 0]]]
+        signal_multi = [[[0., 0., 1., 1., 0.],
+                         [0., 1., 0., 0., 0.],
+                         [1., 0., 0., 0., 0.],
+                         [0., 0., 0., 0., 1.],
+                         [0., 0., 0., 0., 0.],
+                         [0., 0., -1., 0., 0.],
+                         [-1., 0., 0., -1., 0.],
+                         [1., 0., 0., 0., 0.],
+                         [0., 0., 0., 0., 0.],
+                         [0., -1., 0., 0., 0.]],
+
+                        [[0., 0., 1., 0., 1.],
+                         [0., 1., 0., 1., 0.],
+                         [1., 0., -1., 0., 0.],
+                         [0., 0., 1., -1., -1.],
+                         [0., 0., -1., 0., 0.],
+                         [0., -1., 0., 0., 0.],
+                         [0., 0., 0., 0., 0.],
+                         [0., 1., 0., 0., 0.],
+                         [0., 0., 0., 1., 0.],
+                         [-1., 0., 0., 0., 0.]],
+
+                        [[0., 0., 0., 0., 1.],
+                         [0., 0., 1., 0., 0.],
+                         [0., 0., 0., 0., 0.],
+                         [1., 0., 0., 0., 0.],
+                         [0., 1., -0.5, 1., 0.],
+                         [0., -1., 0., 0., -1.],
+                         [0., 1., 0., 0., 0.],
+                         [-1., 0., -1., -1., 0.],
+                         [1., -1., 0., 0., 0.],
+                         [-1., 1., 0., 0., 0.]]]
         self.mask = np.array(mask_list)
+        self.multi_mask = np.array(mask_multi)
         self.correct_signal = np.array(signal_list)
+        self.correct_multi_signal = np.array(signal_multi)
         self.op = qt.Operator()
 
     def test_ls_blend(self):
@@ -1560,9 +1625,13 @@ class TestOperatorSubFuncs(unittest.TestCase):
         self.assertIs(np.allclose(res, target), True, 'sum of all elements is 1')
 
     def test_mask_to_signal(self):
-        self.signal = qt.mask_to_signal(self.mask)
-        print(self.signal)
-        self.assertTrue(np.allclose(self.signal, self.correct_signal))
+        signal = qt.mask_to_signal(self.mask)
+        print(f'Test A: single mask to signal, result: \n{signal}')
+        self.assertTrue(np.allclose(signal, self.correct_signal))
+
+        signal = qt.mask_to_signal(self.multi_mask)
+        print(f'Test A: single mask to signal, result: \n{signal}')
+        self.assertTrue(np.allclose(signal, self.correct_multi_signal))
 
 
 class TestLSStrategy(qt.RollingTiming):

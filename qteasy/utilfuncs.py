@@ -42,15 +42,20 @@ def mask_to_signal(lst):
         op，ndarray，交易信号矩阵
     """
 
-    # 比较本期交易时间点和上期之间的持仓比率差额，差额大于0者可以直接作为补仓买入信号，如上期为0.35，
-    # 本期0.7，买入信号为0.35，即使用总资金的35%买入该股，加仓到70%
-    op = (lst - np.roll(lst, shift=1, axis=0))
-    # 差额小于0者需要计算差额与上期持仓数之比，作为卖出信号的强度，如上期为0.7，本期为0.35，差额为-0.35，则卖出信号强度
-    # 为 (0.7 - 0.35) / 0.35 = 0.5即卖出50%的持仓数额，从70%仓位减仓到35%
-    op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=0)), op)
-    # 补齐因为计算差额导致的第一行数据为NaN值的问题
-    # print(f'creating operation signals, first signal is {lst[0]}')
-    op[0] = lst[0]
+    if lst.ndim == 2: # 如果输入信号是2D的，则逐行操作（axis=0）
+        # 比较本期交易时间点和上期之间的持仓比率差额，差额大于0者可以直接作为补仓买入信号，如上期为0.35，
+        # 本期0.7，买入信号为0.35，即使用总资金的35%买入该股，加仓到70%
+        op = (lst - np.roll(lst, shift=1, axis=0))
+        # 差额小于0者需要计算差额与上期持仓数之比，作为卖出信号的强度，如上期为0.7，本期为0.35，差额为-0.35，则卖出信号强度
+        # 为 (0.7 - 0.35) / 0.35 = 0.5即卖出50%的持仓数额，从70%仓位减仓到35%
+        op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=0)), op)
+        # 补齐因为计算差额导致的第一行数据为NaN值的问题
+        # print(f'creating operation signals, first signal is {lst[0]}')
+        op[0] = lst[0]
+    else:  # 如果输入信号是3D的，同样逐行操作，但Axis和2D情形不同(axis=1)
+        op = (lst - np.roll(lst, shift=1, axis=1))
+        op = np.where(op < 0, (op / np.roll(lst, shift=1, axis=1)), op)
+        op[:, 0, :] = lst[:, 0, :]
     return op.clip(-1, 1)
 
 
