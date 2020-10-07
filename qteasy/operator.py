@@ -20,53 +20,6 @@ from .built_in import AVAILABLE_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
 from .utilfuncs import unify, mask_to_signal
 
-
-def _timing_blend_change(ser: np.ndarray):
-    """ 多择时策略混合模式——变动计数混合
-
-    当发生状态反转的择时策略个数达到N个时，及触发状态反转
-    input:
-        :type ser: object np.ndarray
-    return:
-        ndarray: 混合后的择时策略输出
-    """
-    if ser[0] > 0:
-        state = 1
-    else:
-        state = 0
-    res = np.zeros_like(ser)
-    prev = ser[0]
-    for u, v in np.nditer([res, ser], op_flags=['readwrite']):
-        if v < prev:
-            state = 0
-        elif v > prev:
-            state = 1
-        u[...] = state
-        prev = v
-    return res
-
-
-def _blend(n1, n2, op):
-    """混合操作符函数，将两个选股、多空蒙板混合为一个
-
-    input:
-        :param n1: np.ndarray: 第一个输入矩阵
-        :param n2: np.ndarray: 第二个输入矩阵
-        :param op: np.ndarray: 运算符
-    return:
-        :return: np.ndarray
-
-    """
-    if op == 'or':
-        return n1 + n2
-    elif op == 'and':
-        return n1 * n2
-    elif op == 'orr':
-        return 1 - (1 - n1) * (1 - n2)
-    else:
-        raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
-
-
 # TODO：
 # TODO：作为完整的交易信号，为了实现更加贴近实际的交易信号，交易信号应该包括交易方向和头寸位置两个主要参数（对于股票来说
 # TODO：只有多头头寸）
@@ -451,6 +404,69 @@ class Operator:
         :return: int
         """
         return max(stg.window_length for stg in self.strategies)
+
+    @property
+    def _exp_to_blender(self):
+        """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
+
+        系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
+        优先计算，如 '0 + (1 + 2) * 3'; 表达式中的数字0～3代表选股策略列表中的不同策略的索引号
+        上述表达式虽然便于人类理解，但是不利于快速计算，因此需要转化为前缀表达式，其优势是没有括号
+        按照顺序读取并直接计算，便于程序的运行。为了节省系统运行开销，在给出混合表达式的时候直接将它
+        转化为前缀表达式的形式并直接存储在blender列表中，在混合时直接调用并计算即可
+        input： =====
+            no input parameter
+        return：===== s2: 前缀表达式
+            :rtype: list: 前缀表达式
+        """
+        # TODO: extract expression with re module
+        prio = {'or' : 0,
+                'and': 1}
+        # 定义两个队列作为操作堆栈
+        s1 = []  # 运算符栈
+        s2 = []  # 结果栈
+        # 读取字符串并读取字符串中的各个元素（操作数和操作符），当前使用str对象的split()方法进行，要
+        # 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
+        # 字符串进行分割
+        exp_list = self._selecting_blender_string.split()
+        # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
+        # exp_list = list(self._selecting_blender_string.
+        #                 replace(' ', '').
+        #                 replace('_', '').
+        #                 replace('.', '').
+        #                 replace('-', ''))
+        # 开始循环读取所有操作元素
+        while exp_list:
+            s = exp_list.pop()
+            # 从右至左逐个读取表达式中的元素（数字或操作符）
+            # 并按照以下算法处理
+            if s.isdigit():
+                # 1，如果元素是数字则压入结果栈
+                s2.append(s)
+
+            elif s == ')':
+                # 2，如果元素是反括号则压入运算符栈
+                s1.append(s)
+            elif s == '(':
+                # 3，扫描到（时，依次弹出所有运算符直到遇到），并把该）弹出
+                while s1[-1] != ')':
+                    s2.append(s1.pop())
+                s1.pop()
+            elif s in prio.keys():
+                # 4，扫描到运算符时：
+                if s1 == [] or s1[-1] == ')' or prio[s] >= prio[s1[-1]]:
+                    # 如果这三种情况则直接入栈
+                    s1.append(s)
+                else:
+                    # 否则就弹出s1中的符号压入s2，并将元素放回队列
+                    s2.append(s1.pop())
+                    exp_list.append(s)
+            else:
+                raise ValueError(f'unidentified characters found in blender string: \'{s}\'')
+        while s1:
+            s2.append(s1.pop())
+        s2.reverse()  # 表达式解析完成，生成前缀表达式
+        return s2
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -948,77 +964,35 @@ class Operator:
         # debug
         # print('expression in operation module', exp)
         s = []
-        while exp:  # previously: while exp != []
+        while exp:  # 等同于但是更好: while exp != []
             if exp[-1].isdigit():
                 s.append(sel_masks[int(exp.pop())])
             else:
-                s.append(_blend(s.pop(), s.pop(), exp.pop()))
+                s.append(self._blend(s.pop(), s.pop(), exp.pop()))
         return unify(s[0])
+
+    def _blend(self, n1, n2, op):
+        """混合操作符函数，将两个选股、多空蒙板混合为一个
+
+        input:
+            :param n1: np.ndarray: 第一个输入矩阵
+            :param n2: np.ndarray: 第二个输入矩阵
+            :param op: np.ndarray: 运算符
+        return:
+            :return: np.ndarray
+
+        """
+        if op == 'or':
+            return n1 + n2
+        elif op == 'and':
+            return n1 * n2
+        elif op == 'orr':
+            return 1 - (1 - n1) * (1 - n2)
+        else:
+            raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
 
     def _ricon_blend(self, ricon_mats):
         if self._ricon_blender == 'add':
             return ricon_mats.sum(axis=0)
         raise NotImplementedError(f'ricon singal blender method ({self._ricon_blender}) is not supported!')
 
-    @property
-    def _exp_to_blender(self):
-        """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
-
-        系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
-        优先计算，如 '0 + (1 + 2) * 3'; 表达式中的数字0～3代表选股策略列表中的不同策略的索引号
-        上述表达式虽然便于人类理解，但是不利于快速计算，因此需要转化为前缀表达式，其优势是没有括号
-        按照顺序读取并直接计算，便于程序的运行。为了节省系统运行开销，在给出混合表达式的时候直接将它
-        转化为前缀表达式的形式并直接存储在blender列表中，在混合时直接调用并计算即可
-        input： =====
-            no input parameter
-        return：===== s2: 前缀表达式
-            :rtype: list: 前缀表达式
-        """
-        # TODO: extract expression with re module
-        prio = {'or' : 0,
-                'and': 1}
-        # 定义两个队列作为操作堆栈
-        s1 = []  # 运算符栈
-        s2 = []  # 结果栈
-        # 读取字符串并读取字符串中的各个元素（操作数和操作符），当前使用str对象的split()方法进行，要
-        # 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
-        # 字符串进行分割
-        exp_list = self._selecting_blender_string.split()
-        # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
-        # exp_list = list(self._selecting_blender_string.
-        #                 replace(' ', '').
-        #                 replace('_', '').
-        #                 replace('.', '').
-        #                 replace('-', ''))
-        # 开始循环读取所有操作元素
-        while exp_list:
-            s = exp_list.pop()
-            # 从右至左逐个读取表达式中的元素（数字或操作符）
-            # 并按照以下算法处理
-            if s.isdigit():
-                # 1，如果元素是数字则压入结果栈
-                s2.append(s)
-
-            elif s == ')':
-                # 2，如果元素是反括号则压入运算符栈
-                s1.append(s)
-            elif s == '(':
-                # 3，扫描到（时，依次弹出所有运算符直到遇到），并把该）弹出
-                while s1[-1] != ')':
-                    s2.append(s1.pop())
-                s1.pop()
-            elif s in prio.keys():
-                # 4，扫描到运算符时：
-                if s1 == [] or s1[-1] == ')' or prio[s] >= prio[s1[-1]]:
-                    # 如果这三种情况则直接入栈
-                    s1.append(s)
-                else:
-                    # 否则就弹出s1中的符号压入s2，并将元素放回队列
-                    s2.append(s1.pop())
-                    exp_list.append(s)
-            else:
-                raise ValueError(f'unidentified characters found in blender string: \'{s}\'')
-        while s1:
-            s2.append(s1.pop())
-        s2.reverse()  # 表达式解析完成，生成前缀表达式
-        return s2
