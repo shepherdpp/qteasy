@@ -760,9 +760,12 @@ class Operator:
         # TODO: to gain the best performance
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
+            # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，未来应该考虑消除掉这两个参数
             history_length = dt.shape[1]
             sel_masks.append(
-                    sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))  # 生成的选股蒙板添加到选股蒙板队列中
+                    sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
+            # 生成的选股蒙板添加到选股蒙板队列中，
+
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # # debug
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
@@ -774,7 +777,7 @@ class Operator:
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
         # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
         # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
-        ls_masks = [tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)]
+        ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)])
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # # debug
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
@@ -782,7 +785,7 @@ class Operator:
         # print 'Time measurement: risk-control_mask creation'
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
-        ricon_mats = [ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)]
+        ricon_mats = np.array([ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)])
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # debug
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
@@ -878,13 +881,10 @@ class Operator:
             f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
         # debug
         # print(f'timing blender is:{blndr}')
-        # print(f'there are {len(ls_masks)} long/short masks in the list, the shapes are\n')
-        # for msk in ls_masks:
-        #     print(f'ls mask shape: {msk.shape}')
-        l_m = np.array(ls_masks) #
+        # print(f'there are {ls_masks.shape[0]} long/short masks in the list, the combined shape is:\n{ls_masks.shape}')
+        l_m = ls_masks
         l_m_sum = np.sum(l_m, 0) # 计算所有多空模版的和
-        l_count = len(ls_masks)
-        # print 'the first long/short mask is\n', ls_masks[-1]
+        l_count = ls_masks.shape[0]
         if blndr[0] == 'none':
             # none 模式表示输入的蒙板不会被混合，所有的蒙板会被转化为一个三维的ndarray返回,不做任何混合，在后续计算中采用特殊计算方式
             # 分别计算每一个多空蒙板的交易信号，然后再将交易信号混合起来.
@@ -957,10 +957,8 @@ class Operator:
 
     def _ricon_blend(self, ricon_mats):
         if self._ricon_blender == 'add':
-            r_m = ricon_mats.pop()
-            while ricon_mats:  # previously while ricon_mats != []
-                r_m += ricon_mats.pop()
-            return r_m
+            return ricon_mats.sum(axis=0)
+        raise NotImplementedError(f'ricon singal blender method ({self._ricon_blender}) is not supported!')
 
     @property
     def _exp_to_blender(self):

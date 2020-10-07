@@ -1559,7 +1559,7 @@ class TestOperatorSubFuncs(unittest.TestCase):
                          [0.4, 1.9, 0., -2.5],
                          [0.4, 2.5, 0., -3.]]
 
-        ls_masks = [np.array(ls_mask1), np.array(ls_mask2), np.array(ls_mask3)]
+        ls_masks = np.array([np.array(ls_mask1), np.array(ls_mask2), np.array(ls_mask3)])
 
         # test A: the ls_blender 'str-T'
         self.op.set_blender('ls', 'str-1.5')
