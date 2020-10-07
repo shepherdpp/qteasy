@@ -507,7 +507,7 @@ def apply_loop(op_list: pd.DataFrame,
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
 
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
-    # 因此改回for-loop执行，知道找到更好的向量化执行方法
+    # 因此改回for-loop执行，直到找到更好的向量化执行方法
     # 提取交易清单中的所有数据，生成np.ndarray，即所有的交易信号
     op = op_list.values
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
@@ -530,6 +530,7 @@ def apply_loop(op_list: pd.DataFrame,
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
     # debug
+    # print(f'op list is loaded, op list head is \n{op_list.head(5)}')
     # print(f'finding cash investment date position: finding: \n{cash_plan.dates} \nin looped dates (first 3):\n '
     #       f'{looped_dates[0:3]}'
     #       f', got result:\n{investment_date_pos}')

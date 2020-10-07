@@ -822,23 +822,24 @@ class Operator:
         # 生成DataFrame，并且填充日期数据
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
-        # # debug
+        # debug
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         # print(f'length of date_list: {len(date_list)}')
-        # print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
+        print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
         # 消除完全相同的行和数字全为0的行
         # 定位lst中所有不全为0的行
-        lst_out = lst[lst.any(axis=1)]
+        lst_out = lst.loc[lst.any(axis=1)]
+        return lst_out
         # debug
         # print('operation matrix: ', '\n', lst_out)
         # 进一步找到所有相同且相邻的交易信号行，删除所有较晚的交易信号，只保留最早的信号（这样做的目的是减少重复信号，从而提高回测效率）
         # TODO: 上面的做法是错误的。因为上面的操作实际上把连续买入或连续卖出的操作删除了。实际上这样的操作是需要的，例如，先建仓至1/3，再
-        # TODO  建仓至1/3，可以考虑的是仅删除所有连续为1或连续-1的数据
-        keep = (lst_out - lst_out.shift(1)).any(1)
-        keep.iloc[0] = True
+        # TODO  建仓至2/3，可以考虑的是仅删除所有连续为1或连续-1的数据
+        # keep = (lst_out - lst_out.shift(1)).any(1)
+        # keep.iloc[0] = True
         # debug
         # print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
-        return lst_out[keep]
+        # return lst_out[keep]
 
     # ================================
     # 下面是Operation模块的私有方法
