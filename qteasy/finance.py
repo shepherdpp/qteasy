@@ -11,6 +11,7 @@
 
 import numpy as np
 import pandas as pd
+from collections import Iterable
 
 
 class Cost:
@@ -203,11 +204,10 @@ class CashPlan:
         :param amounts:
         :param interest_rate: float
         """
-        from collections import Iterable
         if isinstance(amounts, (int, float)):
             amounts = [amounts]
-        assert isinstance(amounts,
-                          (list, np.ndarray)), f'TypeError: amounts should be Iterable, got {type(amounts)} instead'
+        assert isinstance(amounts,(list, np.ndarray)), \
+            f'TypeError: amounts should be a list of numbers, got {type(amounts)} instead'
         if isinstance(amounts, list):
             assert all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]), \
                 f'TypeError: amount should be number format, got {type(amount)} instead'

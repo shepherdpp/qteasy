@@ -6,6 +6,7 @@ from .operator import *
 from .strategy import *
 from .visual import *
 from .built_in import *
+from .finance import *
 import pandas as pd
 import numpy as np
 

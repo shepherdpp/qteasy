@@ -279,9 +279,9 @@ class Context:
         self.invest_total_amount = 50000
         self.invest_unit_amount = 10000
         self.riskfree_ir = 0.015
-        self.invest_dates = '20060401'
-        self.invest_amounts = [10000]
-        self.cash_plan = CashPlan(self.invest_dates, self.invest_amounts)
+        self._invest_dates = '20060403'
+        self._invest_amounts = [10000]
+        self.cash_plan = CashPlan(self._invest_dates, self._invest_amounts)
 
         self.fixed_buy_fee = 5
         self.fixed_sell_fee = 0
@@ -355,12 +355,26 @@ class Context:
         return self.asset_type_text[self.asset_type]
 
     @property
-    def invest_cash_amounts(self):
-        return None
+    def invest_amounts(self):
+        return self.cash_plan.amounts
+
+    @invest_amounts.setter
+    def invest_amounts(self, amounts):
+        try:
+            self.cash_plan = CashPlan(dates=self._invest_dates, amounts=amounts)
+        except:
+            raise ValueError(f'Your input does not fit the invest dates')
 
     @property
-    def invest_cash_dates(self):
-        return None
+    def invest_dates(self):
+        return [day.strftime('%Y%m%d') for day in self.cash_plan.dates]
+
+    @invest_dates.setter
+    def invest_dates(self, dates):
+        try:
+            self.cash_plan = CashPlan(dates=dates, amounts=self._invest_amounts)
+        except:
+            raise ValueError(f'Your input does not fit the invest amounts')
 
 
 def _loop_step(pre_cash: float,
@@ -468,13 +482,42 @@ def _get_complete_hist(looped_value: pd.DataFrame,
         looped_value[share_price_column_names] = looped_history[shares]
     return looped_value
 
+def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame:
+    """将完成的交易信号清单与现金投资计划合并：
+        检查现金投资计划中的日期是否都存在于交易信号清单op_list中，如果op_list中没有相应日期时，当交易信号清单中没有相应日期时，添加空交易
+        信号，以便使op_list中存在相应的日期。
+
+        注意，在目前的设计中，要求invest中的所有投资日期都为交易日（意思是说，投资日期当天资产价格不为np.nan）
+        否则，将会导致回测失败（回测当天取到np.nan作为价格，引起总资产计算失败，引起连锁反应所有的输出结果均为np.nan。
+
+        需要在CashPlan投资计划类中增加合法性判断
+
+    :param op_list: 交易信号清单，一个DataFrame。index为Timestamp类型
+    :param invest: CashPlan对象，投资日期和投资金额
+    :return:
+    """
+    if not isinstance(op_list, pd.DataFrame):
+        raise TypeError(f'operation list should be a pandas DataFrame, got {type(op_list)} instead')
+    if not isinstance(invest, CashPlan):
+        raise TypeError(f'invest plan should be a qteasy CashPlan, got {type(invest)} instead')
+    # debug
+    # print(f'in function merge_invest_dates, got op_list BEFORE merging:\n{op_list}\n'
+    #       f'will merge following dates into op_list:\n{invest.dates}')
+    for date in invest.dates:
+        try:
+            op_list.loc[date]
+        except:
+            op_list.loc[date] = 0
+    # debug
+    # print(f'in function merge_invest_dates, got op_list AFTER merging:\n{op_list}')
+    op_list.sort_index(inplace=True)
+    # debug
+    # print(f'in function merge_invest_dates, got op_list AFTER merging:\n{op_list}')
+    return op_list
+
 
 # TODO: 回测主入口函数需要增加回测结果可视化和回测结果参照标准
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
-# TODO: ===========================================
-# TODO: 仍然没有实现回测开始时间与策略参数无关，经过实测，不同
-# TODO: 的策略参数都能产生足够的的信号历史时长，但是实际投资
-# TODO: 开始时间仍然不等于资金投入日期，需要改进.
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                visual: bool = False,
@@ -509,6 +552,7 @@ def apply_loop(op_list: pd.DataFrame,
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，直到找到更好的向量化执行方法
     # 提取交易清单中的所有数据，生成np.ndarray，即所有的交易信号
+    op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
     price = history_list.fillna(0).loc[op_list.index].values
@@ -561,7 +605,8 @@ def apply_loop(op_list: pd.DataFrame,
         # print('before:', cash, amounts, op[i], price[i], cost_rate, moq)
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
-                                               op=op[i], prices=price[i],
+                                               op=op[i],
+                                               prices=price[i],
                                                rate=cost_rate,
                                                moq=moq,
                                                print_log=print_log)

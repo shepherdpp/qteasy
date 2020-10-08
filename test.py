@@ -936,8 +936,8 @@ class TestLoop(unittest.TestCase):
                       '2016/09/30', '2016/10/10', '2016/10/11', '2016/10/12', '2016/10/13',
                       '2016/10/14', '2016/10/17', '2016/10/18', '2016/10/19', '2016/10/20',
                       '2016/10/21', '2016/10/23', '2016/10/24', '2016/10/25', '2016/10/26',
-                      '2016/10/27', '2010/10/29', '2010/10/30', '2010/10/31', '2010/11/01',
-                      '2010/11/02', '2016/11/05', '2016/11/06', '2016/11/07', '2016/11/08',
+                      '2016/10/27', '2016/10/29', '2016/10/30', '2016/10/31', '2016/11/01',
+                      '2016/11/02', '2016/11/05', '2016/11/06', '2016/11/07', '2016/11/08',
                       '2016/11/09', '2016/11/12', '2016/11/13', '2016/11/14', '2016/11/15',
                       '2016/11/16', '2016/11/19', '2016/11/20', '2016/11/21', '2016/11/22']
         self.dates = [pd.Timestamp(date_text) for date_text in self.dates]
@@ -1377,7 +1377,8 @@ class TestLoop(unittest.TestCase):
                             moq=0,
                             inflation_rate=0)
         self.assertIsInstance(res, pd.DataFrame)
-        self.assertTrue(np.allclose(res.values, self.res, rtol=1.e-2))
+        print(f'in test_loop:\nresult of loop test is \n{res}')
+        self.assertTrue(np.allclose(res.values, self.res, 5))
 
 
 class TestOperatorSubFuncs(unittest.TestCase):
@@ -1927,6 +1928,8 @@ class TestOperator(unittest.TestCase):
         too_early_cash = qt.CashPlan(dates='2016-01-01', amounts=10000)
         early_cash = qt.CashPlan(dates='2016-07-01', amounts=10000)
         on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
+        no_trade_cash = qt.CashPlan(dates='2016-07-08, 2016-07-30, 2016-08-11, 2016-09-03',
+                                    amounts=[10000, 10000, 10000, 10000])
         late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
         multi_cash = qt.CashPlan(dates='2016-07-08, 2016-08-08', amounts=[10000, 10000])
         self.op.set_parameter(stg_id='t-0',
@@ -1948,6 +1951,7 @@ class TestOperator(unittest.TestCase):
         sel_hist_data = self.op._selecting_history_data[0]
         tim_hist_data = self.op._timing_history_data[0]
         ric_hist_data = self.op._ricon_history_data[0]
+        print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)
         print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
@@ -1958,37 +1962,43 @@ class TestOperator(unittest.TestCase):
 
         # raises Value Error if empty history panel is given
         empty_hp = qt.HistoryPanel()
-        correct_hp = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 4)))
+        correct_hp = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 4)),
+                                     columns=self.types,
+                                     levels=self.shares,
+                                     rows=self.date_indices)
         too_many_shares = qt.HistoryPanel(values=np.random.randint(10, size=(5, 50, 4)))
         too_many_types = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 5)))
-        self.assertRaises(AssertionError,
+        # raises Error when history panel is empty
+        self.assertRaises(ValueError,
                           self.op.prepare_data,
                           empty_hp,
                           on_spot_cash)
+        # raises Error when first investment date is too early
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
                           correct_hp,
                           early_cash)
+        # raises Error when last investment date is too late
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
                           correct_hp,
                           late_cash)
-        self.assertRaises(AssertionError,
+        # raises Error when some of the investment dates are on no-trade-days
+        self.assertRaises(ValueError,
                           self.op.prepare_data,
                           correct_hp,
-                          multi_cash)
+                          no_trade_cash)
+        # raises Error when number of shares in history data does not fit
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
                           too_many_shares,
                           on_spot_cash)
+        # raises Error when too early cash investment date
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
                           correct_hp,
                           too_early_cash)
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
-                          too_many_types,
-                          on_spot_cash)
+        # raises Error when number of d_types in history data does not fit
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
                           too_many_types,
@@ -2433,6 +2443,16 @@ class TestContext(unittest.TestCase):
     def test_init(self):
         pass
 
+    def test_invest(self):
+        cont = qt.Context()
+        print(f'Test: test_invest in TestContext\n'
+              f'cont.invest_dates:      {cont.invest_dates}\n'
+              f'cont.invest_amounts:    {cont.invest_amounts}')
+        self.assertEqual(cont.invest_dates, ['20060403'])
+        self.assertEqual(cont.invest_amounts, [10000])
+        cont.invest_dates = '20060401'
+        self.assertEqual(cont.invest_dates, ['20060401'])
+        self.assertEqual(cont.invest_amounts, [10000])
 
 class TestHistoryPanel(unittest.TestCase):
     def setUp(self):

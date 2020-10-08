@@ -669,6 +669,7 @@ class Operator:
         检查cash_plan投资计划的类型正确；
         检查hist_data是否为空（要求不为空）；
         在hist_data中找到cash_plan投资计划中投资时间点的具体位置
+        检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
         检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
         检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
         从hist_data中根据各个量化策略的参数选取正确的切片放入各个策略数据仓库中
@@ -678,15 +679,15 @@ class Operator:
         :return:
         """
         # 确保输入的历史数据是HistoryPanel类型
-        assert isinstance(hist_data, HistoryPanel), \
-            f'TypeError: historical data should be HistoryPanel, got {type(hist_data)}'
+        if not isinstance(hist_data, HistoryPanel):
+            raise TypeError(f'Historical data should be HistoryPanel, got {type(hist_data)}')
         # TODO: 临时性处理方式
         # 确保cash_plan的数据类型正确
-        assert isinstance(cash_plan, CashPlan), \
-            f'TypeError: cash plan should be CashPlan object, got {type(cash_plan)}'
+        if not isinstance(cash_plan, CashPlan):
+            raise TypeError(f'cash plan should be CashPlan object, got {type(cash_plan)}')
         # 确保输入的历史数据不为空
-        assert not hist_data.is_empty, \
-            f'ValueError: history data can not be empty!'
+        if hist_data.is_empty:
+            raise ValueError(f'history data can not be empty!')
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         # debug
         # print(f'searching the first date ({cash_plan.first_day}), type {type(cash_plan.first_day)} '
@@ -704,6 +705,13 @@ class Operator:
         assert last_cash_pos < len(hist_data.hdates), \
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
+        # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
+        invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
+        if not all(invest_dates_in_hist):
+            np_dates_in_hist = np.array(invest_dates_in_hist)
+            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist == False)[0])]
+            raise ValueError(f'Cash investment should be on trading days, '
+                             f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数
         assert all([stg.has_pars for stg in self.strategies]),\
             f'One or more strategies has no parameter set properly!'
@@ -818,23 +826,24 @@ class Operator:
             op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
         else:
             # 在ls_blender为"none"的时候，代表择时多空蒙板不会进行混合，分别与sel_mask相乘后单独生成交易信号，再与ricon_mat相加
-            op_mat = ((mask_to_signal(ls_mask) * sel_mask).sum(axis=0) + ricon_mat).clip(-1, 1)
+            op_mat = (mask_to_signal(ls_mask * sel_mask).sum(axis=0) + ricon_mat).clip(-1, 1)
         # 生成DataFrame，并且填充日期数据
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # debug
         # print(f'Finally op mask has been created, shaped {op_mat.shape}')
         # print(f'length of date_list: {len(date_list)}')
-        print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
-        # 消除完全相同的行和数字全为0的行
+        # print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
         return lst_out
         # debug
         # print('operation matrix: ', '\n', lst_out)
         # 进一步找到所有相同且相邻的交易信号行，删除所有较晚的交易信号，只保留最早的信号（这样做的目的是减少重复信号，从而提高回测效率）
+        # ==================================================================
         # TODO: 上面的做法是错误的。因为上面的操作实际上把连续买入或连续卖出的操作删除了。实际上这样的操作是需要的，例如，先建仓至1/3，再
-        # TODO  建仓至2/3，可以考虑的是仅删除所有连续为1或连续-1的数据
+        # TODO: 建仓至2/3，可以考虑的是仅删除所有连续为1或连续-1的数据
+        # ==================================================================
         # keep = (lst_out - lst_out.shift(1)).any(1)
         # keep.iloc[0] = True
         # debug
