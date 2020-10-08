@@ -72,6 +72,8 @@ class Log:
 # TODO: 取消Context类，采用config字典的形式处理所有的qt.run()参数。借鉴matplotlib.finance的处理方法，将所有的参数内容都以**kwargs
 # TODO: 的形式传入qt.run()方法，使用config字典来获取所有的参数。使用_valid_qt_args()函数来保存并设置所有可用的参数以及他们的验证方法
 # TODO: 使用_validate_qt_args()方法来对所有的参数进行验证，在qt.run()中调用config字典，使用config字典中的参数来控制qt的行为。
+# TODO: 提供config参数的保存和显示功能，设置所有参数的显示级别，确保按照不同级别显示不同的config参数
+# TODO: 在run()中增加基本args确认功能，在运行之前确认不会缺乏必要的参数
 class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及参数
 
@@ -482,6 +484,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
         looped_value[share_price_column_names] = looped_history[shares]
     return looped_value
 
+
 def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame:
     """将完成的交易信号清单与现金投资计划合并：
         检查现金投资计划中的日期是否都存在于交易信号清单op_list中，如果op_list中没有相应日期时，当交易信号清单中没有相应日期时，添加空交易
@@ -540,6 +543,7 @@ def apply_loop(op_list: pd.DataFrame,
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
         :param moq: float：每次交易的最小份额单位
         :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
+        :param print_log: bool: 设置为True将打印回测详细日志
 
     output：=====
         Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单
@@ -1047,16 +1051,20 @@ def run(operator, context):
 def _get_parameter_performance(par, op, hist, history_list, context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
-    :param par:
-    :param op:
-    :param hist:
-    :param history_list:
-    :param context:
-    :return: a tuple
+    :param par:  tuple: 一组参数，包含多个策略的参数的混合体
+    :param op:  Operator: 一个operator对象，包含多个投资策略
+    :param hist:  用于生成operation List的历史数据
+    :param history_list: 用于进行回测的历史数据
+    :param context: 上下文对象，用于保存相关配置
+    :return:
+        float 一个代表该策略在使用par作为参数时的性能表现评分
     """
     op.set_opt_par(par)  # 设置需要优化的策略参数
     # 生成交易清单并进行模拟交易生成交易记录
-    looped_val = apply_loop(op_list=op.create_signal(hist),
+    op_list = op.create_signal(hist)
+    if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回0
+        return 0
+    looped_val = apply_loop(op_list=op_list,
                             history_list=history_list,
                             visual=False,
                             cash_plan=context.cash_plan,
@@ -1332,7 +1340,7 @@ def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
     raise NotImplementedError
 
 
-def _get_yearly_span(value_df: pd.DataFrame)->float:
+def _get_yearly_span(value_df: pd.DataFrame) -> float:
     """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
 
     :param value_df: pd.DataFrame, 回测结果
@@ -1431,12 +1439,12 @@ def _eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.03
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
     volatility = _eval_volatility(looped_value, logarithm=False)
     # debug
-    print(f'yearly return is: \n{final_value} / {total_invest} = \n{strategy_return}\n'
-          f'volatility is:  \n{volatility}')
+    # print(f'yearly return is: \n{final_value} / {total_invest} = \n{strategy_return}\n'
+    #       f'volatility is:  \n{volatility}')
     return (strategy_return - riskfree_interest_rate) / volatility
 
 
-def _eval_volatility(looped_value, logarithm:bool = True):
+def _eval_volatility(looped_value, logarithm: bool = True):
     """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差。可以使用logarithm参数指定是否计算对数收益率
 
     :param looped_value:
@@ -1477,7 +1485,8 @@ def _eval_info_ratio(looped_value, reference_value, reference_data):
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
     ref = reference_value[reference_data]
     ref_ret = (ref / ref.shift(1)) - 1
-    track_error = (ref_ret - ret).std(ddof=0) # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
+    track_error = (ref_ret - ret).std(
+            ddof=0) # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
     # debug
     # print(f'average return is {ret.mean()} from:\n{ret}\n'
     #       f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'

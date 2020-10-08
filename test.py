@@ -2454,6 +2454,7 @@ class TestContext(unittest.TestCase):
         self.assertEqual(cont.invest_dates, ['20060401'])
         self.assertEqual(cont.invest_amounts, [10000])
 
+
 class TestHistoryPanel(unittest.TestCase):
     def setUp(self):
         print('start testing HistoryPanel object\n')
@@ -3022,13 +3023,13 @@ class TestQT(unittest.TestCase):
                               selecting_types=['all'],
                               ricon_types=['urgent'])
         self.cont = qt.Context(moq=0)
-        print('START TO SET SELECTING STRATEGY PARAMETERS\n=======================')
+        print('  START TO TEST QT GENERAL OPERATIONS\n'
+              '=======================================')
         self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
         self.op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         self.op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         # self.op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         self.op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
-        # print('CREATE CONTEXT OBJECT\n=======================')
 
         self.cont.reference_asset = '000300.SH'
         self.cont.reference_asset_type = 'I'
@@ -3037,28 +3038,16 @@ class TestQT(unittest.TestCase):
         self.cont.output_count = 50
         self.cont.invest_start = '20020101'
         self.cont.moq = 1
-        # print(cont)
-        # print(f'TRANSACTION RATE OBJECT CREATED, RATE IS: \n==========================\n{cont.rate}')
 
         timing_pars1 = (178, 181, 17)
         timing_pars2 = {'000100': (77, 118, 144),
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        timing_pars4 = (37, 44)
-        print('START TO SET TIMING PARAMETERS TO STRATEGIES: \n===================')
-        self.op.set_blender('ls', 'avg')
+        self.op.set_blender('ls', 'combo')
         self.op.set_parameter(stg_id='t-0', pars=timing_pars1)
         self.op.set_parameter(stg_id='t-1', pars=timing_pars3)
-        # self.op.set_parameter(stg_id='t-2', pars=timing_pars1)
-        # op.set_parameter(stg_id='t-2', pars=timing_pars4, opt_tag=1, par_boes=[(90, 100), (700, 100)])
-        # op.set_parameter('t-3', pars=timing_pars1)
-        print('START TO SET RICON PARAMETERS TO STRATEGIES:\n===================')
         self.op.set_parameter('r-0', pars=(9, -0.1595))
-        # op.info()
-        # print('\nTime of creating operation list:')
-        # op.info()
-        print(f'\n START QT RUNNING\n===========================\n')
         self.cont.parallel = True
         self.cont.print_log = True
 
@@ -3070,6 +3059,8 @@ class TestQT(unittest.TestCase):
     def test_run_mode_1(self):
         """测试策略的回测模式"""
         self.cont.mode = 1
+        self.cont.visual = False
+        self.cont.print_log = False
         qt.run(self.op, self.cont)
 
     def test_run_mode_2(self):
