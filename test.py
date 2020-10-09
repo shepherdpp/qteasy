@@ -7,8 +7,9 @@ from numpy import int64
 import itertools
 import datetime
 from qteasy.tafuncs import sma
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format
 from qteasy.space import Space, Axis
+from qteasy.core import apply_loop, ResultPool, space_around_centre
 
 
 class TestCost(unittest.TestCase):
@@ -167,7 +168,7 @@ class TestSpace(unittest.TestCase):
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
             # print(p)
-            s = qt.Space(*p)
+            s = Space(*p)
             b = s.boes
             t = s.types
             # print(s, t)
@@ -182,7 +183,7 @@ class TestSpace(unittest.TestCase):
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
             # print(p)
-            s = qt.Space(*p)
+            s = Space(*p)
             b = s.boes
             t = s.types
             # print(s, t)
@@ -190,7 +191,7 @@ class TestSpace(unittest.TestCase):
             self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
 
         pars_list = [(0., 10), (0, 10)]
-        s = qt.Space(pars=pars_list, par_types=None)
+        s = Space(pars=pars_list, par_types=None)
         self.assertEqual(s.types, ['conti', 'discr'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, 110)
@@ -199,7 +200,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
 
         pars_list = [(0., 10), (0, 10)]
-        s = qt.Space(pars=pars_list, par_types='conti, enum')
+        s = Space(pars=pars_list, par_types='conti, enum')
         self.assertEqual(s.types, ['conti', 'enum'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, 20.)
@@ -208,7 +209,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
 
         pars_list = [(1, 2), (2, 3), (3, 4)]
-        s = qt.Space(pars=pars_list)
+        s = Space(pars=pars_list)
         self.assertEqual(s.types, ['discr', 'discr', 'discr'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, 8)
@@ -217,7 +218,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(1, 2), (2, 3), (3, 4)])
 
         pars_list = [(1, 2, 3), (2, 3, 4), (3, 4, 5)]
-        s = qt.Space(pars=pars_list)
+        s = Space(pars=pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, 27)
@@ -226,7 +227,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
 
         pars_list = [((1, 2, 3), (2, 3, 4), (3, 4, 5))]
-        s = qt.Space(pars=pars_list)
+        s = Space(pars=pars_list)
         self.assertEqual(s.types, ['enum'])
         self.assertEqual(s.dim, 1)
         self.assertEqual(s.size, 3)
@@ -234,7 +235,7 @@ class TestSpace(unittest.TestCase):
         self.assertEqual(s.count, 3)
 
         pars_list = ((1, 2, 3), (2, 3, 4), (3, 4, 5))
-        s = qt.Space(pars=pars_list)
+        s = Space(pars=pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, 27)
@@ -249,7 +250,7 @@ class TestSpace(unittest.TestCase):
         """
         pars_list = [(0, 10), (0, 10)]
         types_list = ['discr', 'discr']
-        s = qt.Space(pars=pars_list, par_types=types_list)
+        s = Space(pars=pars_list, par_types=types_list)
         extracted_int, count = s.extract(3, 'interval')
         extracted_int_list = list(extracted_int)
         print('extracted int\n', extracted_int_list)
@@ -270,7 +271,7 @@ class TestSpace(unittest.TestCase):
             self.assertGreaterEqual(point[1], 0)
 
         pars_list = [(0., 10), (0, 10)]
-        s = qt.Space(pars=pars_list, par_types=None)
+        s = Space(pars=pars_list, par_types=None)
         extracted_int2, count = s.extract(3, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list2 = list(extracted_int2)
@@ -295,7 +296,7 @@ class TestSpace(unittest.TestCase):
             self.assertGreaterEqual(point[1], 0)
 
         pars_list = [(0., 10), ('a', 'b')]
-        s = qt.Space(pars=pars_list, par_types='enum, enum')
+        s = Space(pars=pars_list, par_types='enum, enum')
         extracted_int3, count = s.extract(1, 'interval')
         self.assertEqual(count, 4, 'extraction count wrong!')
         extracted_int_list3 = list(extracted_int3)
@@ -317,7 +318,7 @@ class TestSpace(unittest.TestCase):
             self.assertIn(point[1], ['a', 'b'])
 
         pars_list = [((0, 10), (1, 'c'), ('a', 'b'), (1, 14))]
-        s = qt.Space(pars=pars_list, par_types='enum')
+        s = Space(pars=pars_list, par_types='enum')
         extracted_int4, count = s.extract(1, 'interval')
         self.assertEqual(count, 4, 'extraction count wrong!')
         extracted_int_list4 = list(extracted_int4)
@@ -340,7 +341,7 @@ class TestSpace(unittest.TestCase):
             self.assertIn(point, [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
         pars_list = [((0, 10), (1, 'c'), ('a', 'b'), (1, 14)), (1, 4)]
-        s = qt.Space(pars=pars_list, par_types='enum, discr')
+        s = Space(pars=pars_list, par_types='enum, discr')
         extracted_int5, count = s.extract(1, 'interval')
         self.assertEqual(count, 16, 'extraction count wrong!')
         extracted_int_list5 = list(extracted_int5)
@@ -520,7 +521,7 @@ class TestCashPlan(unittest.TestCase):
 
 class TestPool(unittest.TestCase):
     def setUp(self):
-        self.p = qt.ResultPool(5)
+        self.p = ResultPool(5)
         self.items = ['first', 'second', (1, 2, 3), 'this', 24]
         self.perfs = [1, 2, 3, 4, 5]
         self.additional_result1 = ('abc', 12)
@@ -528,7 +529,7 @@ class TestPool(unittest.TestCase):
         self.additional_result3 = (12, 5)
 
     def test_create(self):
-        self.assertIsInstance(self.p, qt.ResultPool)
+        self.assertIsInstance(self.p, ResultPool)
 
     def test_operation(self):
         self.p.in_pool(self.additional_result1[0], self.additional_result1[1])
@@ -570,41 +571,41 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertEqual(qt.utilfuncs.input_to_list(input_list, -5), ['first', 'second'])
 
     def test_point_in_space(self):
-        sp = qt.Space([(0., 10.), (0., 10.), (0., 10.)])
+        sp = Space([(0., 10.), (0., 10.), (0., 10.)])
         p1 = (5.5, 3.2, 7)
         p2 = (-1, 3, 10)
         self.assertTrue(p1 in sp)
         print(f'point {p1} is in space {sp}')
         self.assertFalse(p2 in sp)
         print(f'point {p2} is not in space {sp}')
-        sp = qt.Space([(0., 10.), (0., 10.), range(40, 3, -2)], 'conti, conti, enum')
+        sp = Space([(0., 10.), (0., 10.), range(40, 3, -2)], 'conti, conti, enum')
         p1 = (5.5, 3.2, 8)
         self.assertTrue(p1 in sp)
         print(f'point {p1} is in space {sp}')
 
     def test_space_around_centre(self):
-        sp = qt.Space([(0., 10.), (0., 10.), (0., 10.)])
+        sp = Space([(0., 10.), (0., 10.), (0., 10.)])
         p1 = (5.5, 3.2, 7)
-        ssp = qt.space_around_centre(space=sp, centre=p1, radius=1.2)
+        ssp = space_around_centre(space=sp, centre=p1, radius=1.2)
         print(ssp.boes)
         print('\ntest multiple diameters:')
         self.assertEqual(ssp.boes, [(4.3, 6.7), (2.0, 4.4), (5.8, 8.2)])
-        ssp = qt.space_around_centre(space=sp, centre=p1, radius=[1, 2, 1])
+        ssp = space_around_centre(space=sp, centre=p1, radius=[1, 2, 1])
         print(ssp.boes)
         self.assertEqual(ssp.boes, [(4.5, 6.5), (1.2000000000000002, 5.2), (6.0, 8.0)])
         print('\ntest points on edge:')
         p2 = (5.5, 3.2, 10)
-        ssp = qt.space_around_centre(space=sp, centre=p1, radius=3.9)
+        ssp = space_around_centre(space=sp, centre=p1, radius=3.9)
         print(ssp.boes)
         self.assertEqual(ssp.boes, [(1.6, 9.4), (0.0, 7.1), (3.1, 10.0)])
         print('\ntest enum spaces')
-        sp = qt.Space([(0, 100), range(40, 3, -2)], 'discr, enum')
+        sp = Space([(0, 100), range(40, 3, -2)], 'discr, enum')
         p1 = [34, 12]
-        ssp = qt.space_around_centre(space=sp, centre=p1, radius=5, ignore_enums=False)
+        ssp = space_around_centre(space=sp, centre=p1, radius=5, ignore_enums=False)
         self.assertEqual(ssp.boes, [(29, 39), (22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(ssp.boes)
         print('\ntest enum space and ignore enum axis')
-        ssp = qt.space_around_centre(space=sp, centre=p1, radius=5)
+        ssp = space_around_centre(space=sp, centre=p1, radius=5)
         self.assertEqual(ssp.boes, [(29, 39),
                                     (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(sp.boes)
@@ -612,25 +613,25 @@ class TestCoreSubFuncs(unittest.TestCase):
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')
         t = 3.14
-        self.assertEqual(qt.time_str_format(t), '3s 140.0ms')
-        self.assertEqual(qt.time_str_format(t, estimation=True), '3s ')
-        self.assertEqual(qt.time_str_format(t, short_form=True), '3"140')
-        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), '3"')
+        self.assertEqual(time_str_format(t), '3s 140.0ms')
+        self.assertEqual(time_str_format(t, estimation=True), '3s ')
+        self.assertEqual(time_str_format(t, short_form=True), '3"140')
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), '3"')
         t = 300.14
-        self.assertEqual(qt.time_str_format(t), '5min 140.0ms')
-        self.assertEqual(qt.time_str_format(t, estimation=True), '5min ')
-        self.assertEqual(qt.time_str_format(t, short_form=True), "5'140")
-        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), "5'")
+        self.assertEqual(time_str_format(t), '5min 140.0ms')
+        self.assertEqual(time_str_format(t, estimation=True), '5min ')
+        self.assertEqual(time_str_format(t, short_form=True), "5'140")
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "5'")
         t = 7435.0014
-        self.assertEqual(qt.time_str_format(t), '2hrs 3min 55s 1.4ms')
-        self.assertEqual(qt.time_str_format(t, estimation=True), '2hrs ')
-        self.assertEqual(qt.time_str_format(t, short_form=True), "2H3'55\"001")
-        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), "2H")
+        self.assertEqual(time_str_format(t), '2hrs 3min 55s 1.4ms')
+        self.assertEqual(time_str_format(t, estimation=True), '2hrs ')
+        self.assertEqual(time_str_format(t, short_form=True), "2H3'55\"001")
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "2H")
         t = 88425.0509
-        self.assertEqual(qt.time_str_format(t), '1days 33min 45s 50.9ms')
-        self.assertEqual(qt.time_str_format(t, estimation=True), '1days ')
-        self.assertEqual(qt.time_str_format(t, short_form=True), "1D33'45\"051")
-        self.assertEqual(qt.time_str_format(t, estimation=True, short_form=True), "1D")
+        self.assertEqual(time_str_format(t), '1days 33min 45s 50.9ms')
+        self.assertEqual(time_str_format(t, estimation=True), '1days ')
+        self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
 
 
 class TestEvaluations(unittest.TestCase):
@@ -1368,14 +1369,14 @@ class TestLoop(unittest.TestCase):
         self.assertAlmostEqual(value, 47413.40131, 4)
 
     def test_loop(self):
-        res = qt.apply_loop(op_list=self.op_signal_df,
-                            history_list=self.history_list,
-                            visual=False,
-                            price_visual=False,
-                            cash_plan=self.cash,
-                            cost_rate=self.rate,
-                            moq=0,
-                            inflation_rate=0)
+        res = apply_loop(op_list=self.op_signal_df,
+                         history_list=self.history_list,
+                         visual=False,
+                         price_visual=False,
+                         cash_plan=self.cash,
+                         cost_rate=self.rate,
+                         moq=0,
+                         inflation_rate=0)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res.values, self.res, 5))

@@ -10,7 +10,7 @@
 
 import pandas as pd
 import numpy as np
-from qteasy import CashPlan
+from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
 from .strategy import RollingTiming
@@ -713,7 +713,7 @@ class Operator:
             raise ValueError(f'Cash investment should be on trading days, '
                              f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数
-        assert all([stg.has_pars for stg in self.strategies]),\
+        assert all(stg.has_pars for stg in self.strategies),\
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式
         assert self.selecting_blender != ''

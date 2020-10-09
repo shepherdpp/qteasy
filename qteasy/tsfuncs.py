@@ -12,7 +12,10 @@ import tushare as ts
 
 from .utilfuncs import regulate_date_format, list_to_str_format
 
-
+# TODO: Usability improvements:
+# TODO: 1: 增加可供qt调用的高级函数，用于以下场景
+# TODO:     1   - 根据基本条件获取个股清单，如行业、规模、地域、交易所等
+# TODO:     2   - 。
 # Basic Market Data
 # ==================
 

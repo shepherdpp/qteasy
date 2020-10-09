@@ -68,12 +68,16 @@ class Log:
         raise NotImplementedError
 
 
-# TODO: 将要增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
-# TODO: 取消Context类，采用config字典的形式处理所有的qt.run()参数。借鉴matplotlib.finance的处理方法，将所有的参数内容都以**kwargs
-# TODO: 的形式传入qt.run()方法，使用config字典来获取所有的参数。使用_valid_qt_args()函数来保存并设置所有可用的参数以及他们的验证方法
+# TODO: Usability improvements:
+# TODO: 1: 增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
+# TODO: 2: 取消Context类，采用config字典的形式处理所有的qt.run()参数。借鉴
+# TODO:     matplotlib.finance的处理方法，将所有的参数内容都以**kwargs
+# TODO:     的形式传入qt.run()方法，使用config字典来获取所有的参数。使用
+# TODO:     _valid_qt_args()函数来保存并设置所有可用的参数以及他们的验证方法
 # TODO: 使用_validate_qt_args()方法来对所有的参数进行验证，在qt.run()中调用config字典，使用config字典中的参数来控制qt的行为。
 # TODO: 提供config参数的保存和显示功能，设置所有参数的显示级别，确保按照不同级别显示不同的config参数
 # TODO: 在run()中增加基本args确认功能，在运行之前确认不会缺乏必要的参数
+# TODO: 完善context对象的信息属性，使得用户可以快速了解当前配置
 class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及参数
 
@@ -215,7 +219,6 @@ class Context:
             pred_report_indicators:     str, 预测分析的报告中所涉及的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
 
     """
-    # TODO: 完善context对象的信息属性
     run_mode_text = {0: 'Real-time Running Mode',
                      1: 'Back-looping Mode',
                      2: 'Optimization Mode',
@@ -336,7 +339,6 @@ class Context:
         self.opti_output_count = 64
         self.opti_log_file_path = ''
         self.opti_perf_report = False
-        self.opti_report_indicators = 'FV, Sharp'
 
     def __str__(self):
         """定义Context类的打印样式"""
@@ -410,11 +412,11 @@ def _loop_step(pre_cash: float,
         print(f'本期交易信号{np.round(op, 2)}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 根据出售持有资产的份额数量计算获取的现金
-    a_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
-                                                               op=op,
-                                                               amounts=pre_amounts)
+    amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
+                                                                    op=op,
+                                                                    amounts=pre_amounts)
     if print_log:
-        print(f'以本期资产价格{np.round(prices, 2)}出售资产 {np.round(-a_sold, 2)}')
+        print(f'以本期资产价格{np.round(prices, 2)}出售资产 {np.round(-amount_sold, 2)}')
         print(f'获得现金:{cash_gained:.2f}, 产生交易费用 {fee_selling:.2f}, 交易后现金余额: {pre_cash + cash_gained}')
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained
@@ -429,17 +431,17 @@ def _loop_step(pre_cash: float,
             print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
             # 按比例降低分配给每个拟买入资产的现金额度
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-    a_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
-                                                                   op=op,
-                                                                   pur_values=pur_values,
-                                                                   moq=moq)
+    amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
+                                                                        op=op,
+                                                                        pur_values=pur_values,
+                                                                        moq=moq)
     if print_log:
-        print(f'以本期资产价格{np.round(prices, 2)}买入资产 {np.round(a_purchased, 2)}')
+        print(f'以本期资产价格{np.round(prices, 2)}买入资产 {np.round(amount_purchased, 2)}')
         print(f'实际花费现金 {cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
-    amounts = pre_amounts + a_purchased + a_sold
+    amounts = pre_amounts + amount_purchased + amount_sold
     # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
     cash += cash_spent.sum()
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
@@ -1051,11 +1053,12 @@ def run(operator, context):
 def _get_parameter_performance(par, op, hist, history_list, context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
-    :param par:  tuple: 一组参数，包含多个策略的参数的混合体
-    :param op:  Operator: 一个operator对象，包含多个投资策略
-    :param hist:  用于生成operation List的历史数据
-    :param history_list: 用于进行回测的历史数据
-    :param context: 上下文对象，用于保存相关配置
+    input:
+        :param par:  tuple: 一组参数，包含多个策略的参数的混合体
+        :param op:  Operator: 一个operator对象，包含多个投资策略
+        :param hist:  用于生成operation List的历史数据
+        :param history_list: 用于进行回测的历史数据
+        :param context: 上下文对象，用于保存相关配置
     :return:
         float 一个代表该策略在使用par作为参数时的性能表现评分
     """
@@ -1486,7 +1489,7 @@ def _eval_info_ratio(looped_value, reference_value, reference_data):
     ref = reference_value[reference_data]
     ref_ret = (ref / ref.shift(1)) - 1
     track_error = (ref_ret - ret).std(
-            ddof=0) # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
+            ddof=0)  # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
     # debug
     # print(f'average return is {ret.mean()} from:\n{ret}\n'
     #       f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
