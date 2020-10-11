@@ -12,3 +12,10 @@ qteasy/__pycache__/core.cpython-36.pyc
 *.xml
 .idea/workspace.xml
 .idea/workspace.xml
+qt_test_temp.ipynb
+Untitled.ipynb
+.ipynb_checkpoints/Untitled-checkpoint.ipynb
+.ipynb_checkpoints/qt_test_temp-checkpoint.ipynb
+*.pyc
+qteasy/__pycache__/__init__.cpython-36.pyc
+.idea/workspace.xml

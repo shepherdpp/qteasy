@@ -10,6 +10,10 @@ from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format
 from qteasy.space import Space, Axis
 from qteasy.core import apply_loop, ResultPool, space_around_centre
+from qteasy.built_in import SelectingFinance
+from qteasy.tsfuncs import income, indicators
+
+from qteasy.tsfuncs import stock_basic
 
 
 class TestCost(unittest.TestCase):
@@ -2434,6 +2438,11 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(sigmatrix.shape, output.shape)
         self.assertTrue(np.allclose(output, sigmatrix))
 
+    def test_sel_finance(self):
+        """Test selecting_finance strategy, test all built-in strategy parameters"""
+        stg = SelectingFinance()
+        set_pars = ()
+
 
 class TestLog(unittest.TestCase):
     def test_init(self):
@@ -2784,55 +2793,6 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(KeyError, self.hp.to_dataframe)
         self.assertRaises(KeyError, self.hp.to_dataframe, share='000100', htype='close')
 
-    def test_to_csv(self):
-        pass
-
-    def test_to_hdf(self):
-        pass
-
-    def test_fill_na(self):
-        print(self.hp)
-        new_values = self.hp.values.astype(float)
-        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
-        print(new_values)
-        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
-        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
-        temp_hp.fillna(2.3)
-        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
-        self.assertTrue(np.allclose(temp_hp.values,
-                                    new_values, equal_nan=True))
-
-
-class TestHistorySubFuncs(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def test_str_to_list(self):
-        self.assertEqual(qt.str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
-        self.assertEqual(qt.str_to_list('a, b, c '), ['a', 'b', 'c'])
-        self.assertEqual(qt.str_to_list('a, b: c', sep_char=':'), ['a,b', 'c'])
-
-    def test_list_or_slice(self):
-        str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
-        self.assertEqual(qt.list_or_slice(slice(1, 2, 1), str_dict), slice(1, 2, 1))
-        self.assertEqual(qt.list_or_slice('open', str_dict), [1])
-        self.assertEqual(list(qt.list_or_slice('close, high, low', str_dict)), [0, 2, 3])
-        self.assertEqual(list(qt.list_or_slice('close:high', str_dict)), [0, 1, 2])
-        self.assertEqual(list(qt.list_or_slice(['open'], str_dict)), [1])
-        self.assertEqual(list(qt.list_or_slice(['open', 'high'], str_dict)), [1, 2])
-        self.assertEqual(list(qt.list_or_slice(0, str_dict)), [0])
-        self.assertEqual(list(qt.list_or_slice([0, 2], str_dict)), [0, 2])
-        self.assertEqual(list(qt.list_or_slice([True, False, True, False], str_dict)), [0, 2])
-
-    def test_label_to_dict(self):
-        target_list = [0, 1, 10, 100]
-        target_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
-        target_dict2 = {'close': 0, 'open': 2, 'high': 1, 'low': 3}
-        self.assertEqual(qt.labels_to_dict('close, open, high, low', target_list), target_dict)
-        self.assertEqual(qt.labels_to_dict(['close', 'open', 'high', 'low'], target_list), target_dict)
-        self.assertEqual(qt.labels_to_dict('close, high, open, low', target_list), target_dict2)
-        self.assertEqual(qt.labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
-
     def test_stack_dataframes(self):
         print('test stack dataframes')
         df1 = pd.DataFrame({'a': [1, 2, 3, 4], 'b': [2, 3, 4, 5], 'c': [3, 4, 5, 6]})
@@ -2913,6 +2873,64 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertEqual(hp4.shares, ['a', 'b', 'c', 'd'])
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
+    def test_to_csv(self):
+        pass
+
+    def test_to_hdf(self):
+        pass
+
+    def test_fill_na(self):
+        print(self.hp)
+        new_values = self.hp.values.astype(float)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
+        print(new_values)
+        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
+        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
+        temp_hp.fillna(2.3)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
+        self.assertTrue(np.allclose(temp_hp.values,
+                                    new_values, equal_nan=True))
+
+    def test_get_history_panel(self):
+        pass
+
+    def test_get_price_type_raw_data(self):
+        pass
+
+    def test_get_financial_report_type_raw_data(self):
+        pass
+
+
+class TestHistorySubFuncs(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def test_str_to_list(self):
+        self.assertEqual(qt.str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
+        self.assertEqual(qt.str_to_list('a, b, c '), ['a', 'b', 'c'])
+        self.assertEqual(qt.str_to_list('a, b: c', sep_char=':'), ['a,b', 'c'])
+
+    def test_list_or_slice(self):
+        str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
+        self.assertEqual(qt.list_or_slice(slice(1, 2, 1), str_dict), slice(1, 2, 1))
+        self.assertEqual(qt.list_or_slice('open', str_dict), [1])
+        self.assertEqual(list(qt.list_or_slice('close, high, low', str_dict)), [0, 2, 3])
+        self.assertEqual(list(qt.list_or_slice('close:high', str_dict)), [0, 1, 2])
+        self.assertEqual(list(qt.list_or_slice(['open'], str_dict)), [1])
+        self.assertEqual(list(qt.list_or_slice(['open', 'high'], str_dict)), [1, 2])
+        self.assertEqual(list(qt.list_or_slice(0, str_dict)), [0])
+        self.assertEqual(list(qt.list_or_slice([0, 2], str_dict)), [0, 2])
+        self.assertEqual(list(qt.list_or_slice([True, False, True, False], str_dict)), [0, 2])
+
+    def test_label_to_dict(self):
+        target_list = [0, 1, 10, 100]
+        target_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
+        target_dict2 = {'close': 0, 'open': 2, 'high': 1, 'low': 3}
+        self.assertEqual(qt.labels_to_dict('close, open, high, low', target_list), target_dict)
+        self.assertEqual(qt.labels_to_dict(['close', 'open', 'high', 'low'], target_list), target_dict)
+        self.assertEqual(qt.labels_to_dict('close, high, open, low', target_list), target_dict2)
+        self.assertEqual(qt.labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
+
     def test_regulate_date_format(self):
         self.assertEqual(regulate_date_format('2019/11/06'), '20191106')
         self.assertEqual(regulate_date_format('2019-11-06'), '20191106')
@@ -2972,7 +2990,15 @@ class TestTushare(unittest.TestCase):
         pass
 
     def test_income(self):
-        pass
+        shares = '600748.SH'
+        rpt_date = '20180101'
+        start = '20180101'
+        end = '20191231'
+        df = income(shares=shares,
+                    rpt_date=rpt_date,
+                    start=start,
+                    end=end)
+        self.assertIsInstance(df, pd.DataFrame)
 
     def test_balance(self):
         pass
@@ -2981,7 +3007,15 @@ class TestTushare(unittest.TestCase):
         pass
 
     def test_indicators(self):
-        pass
+        shares = '600748.SH'
+        rpt_date = '20180101'
+        start = '20180101'
+        end = '20191231'
+        df = indicators(shares=shares,
+                        rpt_date=rpt_date,
+                        start=start,
+                        end=end)
+        self.assertIsInstance(df, pd.DataFrame)
 
     def test_top_list(self):
         pass
@@ -3075,8 +3109,32 @@ class TestQT(unittest.TestCase):
         self.cont.opti_method_incre_ratio = 2
         qt.run(self.op, self.cont)
 
-    def test_built_in_strategies(self):
+    def test_built_in_timing(self):
         pass
+
+    def test_multi_share_mode_1(self):
+        """test built-in strategy selecting finance
+        """
+        op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
+        cont = qt.Context()
+        all_shares = stock_basic()
+        shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
+        shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
+        cont.share_pool = shares_estate[-4:-1]
+        cont.asset_type = 'E'
+        cont.reference_asset = '000300.SH'
+        cont.reference_asset_type = 'I'
+        cont.output_count = 50
+        cont.invest_start = '20020101'
+        cont.moq = 1
+        cont.mode = 1
+        op.set_parameter('t-0', pars=(0, 0))
+        op.set_parameter('s-0', pars=(True, 'even', 0, 0.3))
+        op.set_parameter('r-0', pars=(0, 0))
+        op.set_blender('ls', 'avg')
+        # op.info()
+        print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
+        # qt.run(op, cont)
 
 
 class TestVisual(unittest.TestCase):

@@ -15,6 +15,7 @@ import numpy as np
 
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
 from .tsfuncs import get_bar, name_change
+from .tsfuncs import income, indicators, balance, cashflow
 
 from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
 from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
@@ -789,7 +790,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                             cashflow_type_data,
                             indicator_type_data]
     dataframes_to_stack = []
-
+    print(f'in function get_history_panel got shares: \n{shares}\nand htypes:\n{htypes}')
     result_hp = HistoryPanel()
     if len(price_type_data) > 0:
         print('Getting price type historical data...')
@@ -837,16 +838,11 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                           shares=str_to_list(shares)),
                                    same_shares=True)
 
-    # ============= 调试代码 :=============
-    '''
+    # debug
     print(f'in function get_history_panel(), history panels are generated, they are:\n')
-    if price_type_hp is not None:
-        print(f'price type history panel: \n{price_type_hp.info()}')
-    if financial_type_hp is not None:
-        print(f'financial type history panel: \n{financial_type_hp.info()}')
-    if composite_type_hp is not None:
-        print(f'composite type history panel:\n{composite_type_hp.info()}')
-    '''
+    if result_hp is not None:
+        print(f'result history panel: \n{result_hp.info()}')
+
     return result_hp
 
 
@@ -877,10 +873,13 @@ def get_price_type_raw_data(start: str,
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
+    # debug
+    # print(f'will download htype date {htypes} for share {shares}')
     for share in shares:
         raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
+        # debug
         # print('raw df before rearange\n', raw_df)
-        assert raw_df is not None, 'ValueError, something wrong downloading historical data!'
+        assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: {share}!'
         raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
         raw_df.index = range(len(raw_df))
         # print('\nraw df after rearange\n', raw_df)

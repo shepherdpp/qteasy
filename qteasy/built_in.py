@@ -535,7 +535,7 @@ class SelectingFinance(stg.Selecting):
                          data_freq='d',
                          sample_freq='y',
                          window_length=90,
-                         data_types='eps')
+                         data_types='eps，ebit, ebitda')
 
     # TODO: 因为Strategy主类代码重构，ranking table的代码结构也应该相应修改，待修改
     def _realize(self, hist_data):
@@ -554,7 +554,7 @@ class SelectingFinance(stg.Selecting):
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
         # 将历史数据片段中的eps求均值，忽略Nan值,
         indices = hist_data.mean(axis=1).squeeze()
-        print(f'in Selecting realize method got ranking vector like:\n {indices: .3f}')
+        print(f'in Selecting realize method got ranking vector like:\n {indices}')
         nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
         if largest_win:
             # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
@@ -572,11 +572,13 @@ class SelectingFinance(stg.Selecting):
         # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
         args = np.setdiff1d(arg_found, arg_nan, assume_unique=True)
         # 构造输出向量，初始值为全0
+        arg_count = len(args)
+        if arg_count == 0: arg_count = 1
         chosen = np.zeros_like(indices)
         # 根据投资组合比例分配方式，确定被选中产品的占比
         # Linear：根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，其余居中者的比例按序呈等差数列
         if distribution == 'linear':
-            dist = np.arange(1, 3, 2. / len(args))  # 生成一个线性序列，最大值为最小值的约三倍
+            dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
         # proportion：比例分配，占比与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
         elif distribution == 'proportion':
@@ -589,7 +591,8 @@ class SelectingFinance(stg.Selecting):
             chosen[args] = dist / dist.sum()
         # even：均匀分配，所有中选股票在组合中占比相同
         else:  # self.__distribution == 'even'
-            chosen[args] = 1. / len(args)
+
+            chosen[args] = 1. / arg_count
         print(f'in Selecting realize method got share selecting vector like:\n {np.round(chosen,3)}')
         return chosen
 

@@ -713,6 +713,7 @@ class Operator:
             raise ValueError(f'Cash investment should be on trading days, '
                              f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数
+        # TODO：此处有问题，某些strategy本身就不需要参数，这时候强行要求所有strategy都有参数是没有必要的
         assert all(stg.has_pars for stg in self.strategies),\
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式

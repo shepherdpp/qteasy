@@ -457,13 +457,7 @@ INDICATOR_TYPE_DATA = ['eps',
                        'equity_yoy',
                        'rd_exp',
                        'update_flag']
-FINANCE_TYPE_DATA = [item
-                     for sublist 
-                     in [INCOME_TYPE_DATA,
-                         BALANCE_TYPE_DATA,
-                         CASHFLOW_TYPE_DATA,
-                         INDICATOR_TYPE_DATA]
-                     for item in sublist]
+FINANCE_TYPE_DATA = INCOME_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA
 COMPOSIT_TYPE_DATA = []
 
 def check_and_prepare_data():

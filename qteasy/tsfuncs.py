@@ -241,7 +241,7 @@ def get_bar(shares: object,
             asset_type: object = 'E',
             adj: object = 'None',
             freq: object = 'D',
-            ma: object = None) -> object:
+            ma: object = None) -> pd.DataFrame:
     """ 获取指数或股票的复权历史价格
 
     input:
@@ -414,7 +414,7 @@ def income(shares: [str, list],
                fields='ts_code,ann_date,f_ann_date,end,report_type,comp_type,basic_eps,diluted_eps')
     """
     if fields is None:
-        fields = 'shares,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
+        fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
     if isinstance(shares, list):
         shares = list_to_str_format(shares)
     if isinstance(fields, list):
@@ -972,7 +972,7 @@ def indicators(shares: [str, list],
         4   600000.SH  20181031  1.440    1.44            4.3305      4.3305
     """
     if fields is None:
-        fields = 'shares,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
+        fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
     if isinstance(shares, list):
         shares = list_to_str_format(shares)
     if isinstance(fields, list):
