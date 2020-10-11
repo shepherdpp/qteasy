@@ -13,7 +13,7 @@ import pandas as pd
 import tushare as ts
 import numpy as np
 
-from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
+from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, list_to_str_format
 from .tsfuncs import get_bar, name_change
 from .tsfuncs import income, indicators, balance, cashflow
 
@@ -761,7 +761,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-
+# TODO: problem downloading financial type data, problems should be inspected and solved
 def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', chanel: str = 'online'):
     """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
@@ -879,7 +879,8 @@ def get_price_type_raw_data(start: str,
         raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
         # debug
         # print('raw df before rearange\n', raw_df)
-        assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: {share}!'
+        assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
+                                   f'{share}!'
         raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
         raw_df.index = range(len(raw_df))
         # print('\nraw df after rearange\n', raw_df)
@@ -906,34 +907,61 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
     """
     if isinstance(htypes, str):
         htypes = str_to_list(input_string=htypes, sep_char=',')
-    report_fields = ['ts_code', 'ann_date']
-    report_fields.extend(htypes)
-    # print('htypes',htypes, "\nreport fields: ", report_fields)
-    if htypes[0] in INCOME_TYPE_DATA:
-        raw_df = income(start=start, end=end, shares=shares, fields=report_fields)
-    elif htypes[0] in INDICATOR_TYPE_DATA:
-        raw_df = indicators(start=start, end=end, shares=shares, fields=report_fields)
-    elif htypes[0] in BALANCE_TYPE_DATA:
-        raw_df = balance(start=start, end=end, shares=shares, fields=report_fields)
-    elif htypes[0] in CASHFLOW_TYPE_DATA:
-        raw_df = cashflow(start=start, end=end, shares=shares, fields=report_fields)
-    else:
-        pass
-    # print('raw df before rearange\n', raw_df)
-    raw_df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-    raw_df.index = range(len(raw_df))
-    # print('\nraw df after rearange\n', raw_df)
-    df_per_share = []
+
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
+    report_fields = ['ts_code', 'ann_date']
+    # debug
+    # # print(f'in function get financial report type raw data, got htypes: \n{htypes}, \n'
+    # #       f'income fields will be {[htype for htype in htypes if htype in INCOME_TYPE_DATA]}')
+    # print(f'in function get financial report type raw data, got shares: \n{shares}')
+    # print(f'income fields will be {report_fields + [htype for htype in htypes if htype in INCOME_TYPE_DATA]}')
+    income_fields = list_to_str_format(report_fields + [htype for
+                                                        htype in htypes
+                                                        if htype in INCOME_TYPE_DATA])
+    indicator_fields = list_to_str_format(report_fields + [htype for
+                                                                htype in htypes
+                                                                if htype in INDICATOR_TYPE_DATA])
+    balance_fields = list_to_str_format(report_fields + [htype for
+                                                              htype in htypes
+                                                              if htype in BALANCE_TYPE_DATA])
+    cashflow_fields = list_to_str_format(report_fields + [htype for
+                                                               htype in htypes
+                                                               if htype in CASHFLOW_TYPE_DATA])
+    df_per_share = []
+    print('htypes:', htypes, "\nreport fields: ", report_fields)
     for share in shares:
-        df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
-    for df in df_per_share:
-        # print('\nsingle df of share before removal\n', df)
-        df.index = pd.to_datetime(df.ann_date)
-        df.index.name = 'date'
-        df.drop(columns=['ts_code', 'ann_date'], inplace=True)
-        # print('\nsingle df of share after removal\n', df)
+        if len(str_to_list(income_fields)) > 2:
+            df = income(start=start, end=end, share=share, fields=income_fields)
+            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index = pd.to_datetime(df.ann_date)
+            df.index.name = 'date'
+            df.drop(columns=['ann_date'], inplace=True)
+            df_per_share.append(df)
+
+        if len(str_to_list(indicator_fields)) > 2:
+            df = indicators(start=start, end=end, share=share, fields=indicator_fields)
+            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index.name = 'date'
+            df.drop(columns=['ann_date'], inplace=True)
+            df_per_share.append(df)
+
+        if len(str_to_list(balance_fields)) > 2:
+            df = balance(start=start, end=end, share=share, fields=balance_fields)
+            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index.name = 'date'
+            df.drop(columns=['ann_date'], inplace=True)
+            df_per_share.append(df)
+
+        if len(str_to_list(cashflow_fields)) > 2:
+            df = cashflow(start=start, end=end, share=share, fields=cashflow_fields)
+            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index.name = 'date'
+            df.drop(columns=['ann_date'], inplace=True)
+            df_per_share.append(df)
+            # print('raw df before rearange\n', raw_df)
+
+            # print('\nsingle df of share after removal\n', df)
     return df_per_share
 
 
@@ -949,5 +977,3 @@ def get_composite_type_raw_data(start, end, shares, htypes, chanel):
     :return:
     """
     raise NotImplementedError
-
-

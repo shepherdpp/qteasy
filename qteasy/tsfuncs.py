@@ -10,6 +10,8 @@
 import pandas as pd
 import tushare as ts
 
+VALID_STOCK_CODE_SUFFIX = ['.SZ', '.SH', '.HK']
+
 from .utilfuncs import regulate_date_format, list_to_str_format
 
 # TODO: Usability improvements:
@@ -310,7 +312,7 @@ def get_index(index: str,
 # Finance Data
 # ================
 
-def income(shares: [str, list],
+def income(share: str,
            rpt_date: str = None,
            start: str = None,
            end: str = None,
@@ -321,7 +323,7 @@ def income(shares: [str, list],
     """ 获取上市公司财务利润表数据
 
     :rtype: pd.DataFrame
-    :param shares: 股票代码
+    :param share: 股票代码，注意一次只能读取一只股票的数据
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
     :param end: optional 公告结束日期
@@ -413,16 +415,21 @@ def income(shares: [str, list],
                end='20180730',
                fields='ts_code,ann_date,f_ann_date,end,report_type,comp_type,basic_eps,diluted_eps')
     """
+    BASIC_FIELDS = 'ts_code,ann_date,report_type,comp_type,basic_eps,diluted_eps'
+    assert isinstance(share, str), f'share code should be a string, got {type(share)} instead!'
+    assert len(share) == 9 and (share[6:] in VALID_STOCK_CODE_SUFFIX), \
+        f'share code \'{share}\' not valid, please check your input'
     if fields is None:
-        fields = 'ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps'
-    if isinstance(shares, list):
-        shares = list_to_str_format(shares)
+        fields = BASIC_FIELDS
+    if isinstance(share, list):
+        share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    return pro.income(ts_code=shares,
+    # print(f'in tushare function income, got args: \nshare: {share}\nstart / end: {start}/{end} \nfields:{fields}')
+    return pro.income(ts_code=share,
                       ann_date=rpt_date,
                       start_date=start,
                       end_date=end,
@@ -432,7 +439,7 @@ def income(shares: [str, list],
                       fields=fields)
 
 
-def balance(shares: [str, list],
+def balance(share: str,
             rpt_date: str = None,
             start: str = None,
             end: str = None,
@@ -442,7 +449,7 @@ def balance(shares: [str, list],
             fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据资产负债表
 
-    :param shares: 股票代码
+    :param share: 股票代码
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
     :param end: optional 公告结束日期
@@ -611,15 +618,15 @@ def balance(shares: [str, list],
                  fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese')
     """
     if fields is None:
-        fields = 'shares,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
-    if isinstance(shares, list):
-        shares = list_to_str_format(shares)
+        fields = 'share,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
+    if isinstance(share, list):
+        share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    return pro.balancesheet(ts_code=shares,
+    return pro.balancesheet(ts_code=share,
                             ann_date=rpt_date,
                             start_date=start,
                             end_date=end,
@@ -629,7 +636,7 @@ def balance(shares: [str, list],
                             fields=fields)
 
 
-def cashflow(shares: [str, list],
+def cashflow(share: str,
              rpt_date: str = None,
              start: str = None,
              end: str = None,
@@ -639,7 +646,7 @@ def cashflow(shares: [str, list],
              fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据现金流量表
 
-    :param shares:                     股票代码
+    :param share:                     股票代码
     :param rpt_date: optional           公告日期
     :param start: optional         公告开始日期
     :param end: optional           公告结束日期
@@ -760,15 +767,15 @@ def cashflow(shares: [str, list],
                  fields = 'fa_fnc_leases, end_bal_cash, beg_bal_cash')
     """
     if fields is None:
-        fields = 'shares,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
-    if isinstance(shares, list):
-        shares = list_to_str_format(shares)
+        fields = 'share,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
+    if isinstance(share, list):
+        share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    return pro.cashflow(ts_code=shares,
+    return pro.cashflow(ts_code=share,
                         ann_date=rpt_date,
                         start_date=start,
                         end_date=end,
@@ -778,7 +785,7 @@ def cashflow(shares: [str, list],
                         fields=fields)
 
 
-def indicators(shares: [str, list],
+def indicators(share: str,
                rpt_date: str = None,
                start: str = None,
                end: str = None,
@@ -786,7 +793,7 @@ def indicators(shares: [str, list],
                fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据——财务指标
 
-    :param shares: str, TS股票代码,e.g. 600001.SH/000001.SZ
+    :param share: str, TS股票代码,e.g. 600001.SH/000001.SZ
     :param rpt_date: str, 公告日期
     :param start: str, 报告期开始日期
     :param end: str, 报告期结束日期
@@ -973,12 +980,12 @@ def indicators(shares: [str, list],
     """
     if fields is None:
         fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
-    if isinstance(shares, list):
-        shares = list_to_str_format(shares)
+    if isinstance(share, list):
+        share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
-    return pro.fina_indicator(ts_code=shares,
+    return pro.fina_indicator(ts_code=share,
                               ann_date=rpt_date,
                               start_date=start,
                               end_date=end,

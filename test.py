@@ -12,8 +12,9 @@ from qteasy.space import Space, Axis
 from qteasy.core import apply_loop, ResultPool, space_around_centre
 from qteasy.built_in import SelectingFinance
 from qteasy.tsfuncs import income, indicators
-
 from qteasy.tsfuncs import stock_basic
+
+from qteasy.history import get_financial_report_type_raw_data
 
 
 class TestCost(unittest.TestCase):
@@ -3257,7 +3258,17 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_get_financial_report_type_raw_data(self):
-        pass
+        shares = '000039.SZ, 600748.SH, 000039.SZ'
+        start = '20080101'
+        end = '20201231'
+        htypes = 'basic_eps,diluted_eps,total_revenue,revenue,total_share,cap_rese,undistr_porfit,surplus_rese'
+
+        df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes)
+        self.assertIsInstance(df_list, list)
+        self.assertEqual(len(df_list), 6)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in df_list))
+        print(f'in get financial report type raw data, got DataFrames: \n{df_list[0].info()}\n'
+              f'{df_list[0].info()}\n{df_list[3].info()}\n{df_list[4].info()}\n{df_list[5].info()}')
 
 
 class TestHistorySubFuncs(unittest.TestCase):
@@ -3353,31 +3364,49 @@ class TestTushare(unittest.TestCase):
         rpt_date = '20181231'
         start = '20180101'
         end = '20191231'
-        df = income(shares=shares,
+        df = income(share=shares,
                     rpt_date=rpt_date,
                     start=start,
                     end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
 
-        df = income(shares=shares,
+        df = income(share=shares,
                     start=start,
                     end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         print(f'Test income: extracted single share income: \n{df}')
 
-        # test multiple shares data extraction:
-        # shares = '600748.SH, 000010.SZ, 000030.SZ, 000039.SZ'
-        # df = income(shares=shares,
-        #             start=start,
-        #             end=end)
-        # self.assertIsInstance(df, pd.DataFrame)
-        # self.assertFalse(df.empty)
-        # print(f'Test income: extracted multiple share income: \n{df}')
+        # test another shares data extraction:
+        shares = '000010.SZ'
+        df = income(share=shares,
+                    start=start,
+                    end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        print(f'Test income: extracted multiple share income: \n{df}')
+        self.assertFalse(df.empty)
+
+        # test long range data extraction:
+        shares = '000039.SZ'
+        start = '20080101'
+        end = '20201231'
+        fields = 'ts_code,ann_date,report_type,comp_type,basic_eps,diluted_eps,total_revenue,revenue, ' \
+                 'int_income, prem_earned, comm_income, n_commis_income, n_oth_income, n_oth_b_income, ' \
+                 'prem_income, out_prem, une_prem_reser, reins_income, n_sec_tb_income, n_sec_uw_income, ' \
+                 'n_asset_mg_income'
+        df = income(share=shares,
+                    start=start,
+                    end=end,
+                    fields=fields)
+        self.assertIsInstance(df, pd.DataFrame)
+        print(f'Test income: extracted multiple share income: \ninfo:\n{df.info()}')
+        self.assertFalse(df.empty)
 
     def test_balance(self):
-        pass
+        fields = 'special_rese, money_cap,trad_asset,notes_receiv, accounts_receiv, oth_receiv' \
+                 'prepayment ,div_receiv, int_receiv  , inventories  , amor_exp  , nca_within_1y, sett_rsrv ' \
+                 ' , loanto_oth_bank_fi, premium_receiv, reinsur_receiv, reinsur_res_receiv,'
 
     def test_cash_flow(self):
         pass
@@ -3387,14 +3416,14 @@ class TestTushare(unittest.TestCase):
         rpt_date = '20180101'
         start = '20180101'
         end = '20191231'
-        df = indicators(shares=shares,
+        df = indicators(share=shares,
                         rpt_date=rpt_date,
                         start=start,
                         end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
 
-        df = indicators(shares=shares,
+        df = indicators(share=shares,
                         start=start,
                         end=end)
         self.assertIsInstance(df, pd.DataFrame)
@@ -3518,7 +3547,7 @@ class TestQT(unittest.TestCase):
         op.set_blender('ls', 'avg')
         # op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
-        # qt.run(op, cont)
+        qt.run(op, cont)
 
 
 class TestVisual(unittest.TestCase):
