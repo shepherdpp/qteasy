@@ -528,16 +528,16 @@ class SelectingFinance(stg.Selecting):
     def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['enum', 'enum', 'discr', 'conti'],
+                         par_types=['enum', 'enum', 'conti', 'conti'],
                          par_bounds_or_enums=[(True, False), ('even', 'linear', 'proportion'), (0, 100), (0, 1)],
                          stg_name='FINANCE SELECTING',
                          stg_text='Selecting share_pool according to financial report EPS indicator',
                          data_freq='d',
                          sample_freq='y',
                          window_length=90,
-                         data_types='eps，ebit, ebitda')
+                         data_types='eps')
 
-    # TODO: 因为Strategy主类代码重构，ranking table的代码结构也应该相应修改，待修改
+
     def _realize(self, hist_data):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
@@ -549,28 +549,44 @@ class SelectingFinance(stg.Selecting):
             pct = int(share_count * pct)
         else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
             pct = int(pct)
+        if pct < 1: pct = 1
+        # debug
+        # print(f'in selecting_finance strategy _realize(), got parameters as following:\n'
+        #       f'largest win: {largest_win}\ndistribution: {distribution}\ndrop_threshold: {drop_threshold}\n'
+        #       f'number of shares to select: {pct}')
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(hist_data, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
         # 将历史数据片段中的eps求均值，忽略Nan值,
-        indices = hist_data.mean(axis=1).squeeze()
-        print(f'in Selecting realize method got ranking vector like:\n {indices}')
+        indices = np.nanmean(hist_data, axis=1).squeeze()
+        if largest_win:
+            # 筛选出不符合要求的指标，将他们设置为nan值
+            indices[np.where(indices < drop_threshold)] = np.nan
+        else:  # 选择分数最低的部分个股
+            indices[np.where(indices > drop_threshold)] = np.nan
         nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
         if largest_win:
             # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
             pos = max(share_count - pct - nan_count, 0)
         else:  # 选择分数最低的部分个股
             pos = pct
+        # print(f'in Selecting realize method got ranking vector like:\n{indices}')
         # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
         if distribution == 'even':
             # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
-            arg_found = indices.argpartition(pos)[pos:]
+            if largest_win:
+                share_found = indices.argpartition(pos)[pos:]
+            else:
+                share_found = indices.argpartition(pos)[:pos]
         else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
-            arg_found = indices.argsort()[pos:]
+            if largest_win:
+                share_found = indices.argsort()[pos:]
+            else:
+                share_found = indices.argsort()[:pos]
         # nan值数据的序号存储在arg_nan中
-        arg_nan = np.where(np.isnan(indices))[0]
+        share_nan = np.where(np.isnan(indices))[0]
         # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
-        args = np.setdiff1d(arg_found, arg_nan, assume_unique=True)
+        args = np.setdiff1d(share_found, share_nan, assume_unique=True)
         # 构造输出向量，初始值为全0
         arg_count = len(args)
         if arg_count == 0: arg_count = 1
@@ -588,12 +604,19 @@ class SelectingFinance(stg.Selecting):
                 dist = dist - dist.min() + d / 10.
             else:
                 dist = dist.max() - dist + d / 10.
-            chosen[args] = dist / dist.sum()
+            # print(f'in Selecting realize method proportion type got distance of each item like:\n{dist}')
+            if ~np.any(dist):  # if all distances are zero
+                chosen[args] = 1 / len(dist)
+            elif dist.sum() == 0:  # if not all distances are zero but sum is zero
+                chosen[args] = dist / len(dist)
+            else:
+                chosen[args] = dist / dist.sum()
         # even：均匀分配，所有中选股票在组合中占比相同
         else:  # self.__distribution == 'even'
 
             chosen[args] = 1. / arg_count
-        print(f'in Selecting realize method got share selecting vector like:\n {np.round(chosen,3)}')
+        # debug
+        # print(f'in Selecting realize method got share selecting vector like:\n{np.round(chosen,3)}')
         return chosen
 
 

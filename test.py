@@ -1854,6 +1854,58 @@ class TestOperator(unittest.TestCase):
                       4.96, 5.45, 5.84, 5.85, 5.28, 5.42, 6.02, 6.69, 7.28, 7.64, 7.25, 7.83, 8.41, 8.66,
                       8.53, 8.54, 8.73, 8.27, 7.95, 7.67, 7.8, 7.51]
 
+        # for sel_finance test
+        shares_eps = np.array([[np.nan, np.nan, np.nan],
+                               [0.1, np.nan, np.nan],
+                               [np.nan, 0.2, np.nan],
+                               [np.nan, np.nan, 0.3],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, 0.2],
+                               [0.1, np.nan, np.nan],
+                               [np.nan, 0.3, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [0.3, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, 0.3, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, 0.3],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, 0, 0.2],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [0.1, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, 0.2],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [0.15, np.nan, np.nan],
+                               [np.nan, 0.1, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [0.1, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, 0.3],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, np.nan, np.nan],
+                               [0.2, np.nan, np.nan],
+                               [np.nan, 0.5, np.nan],
+                               [0.4, np.nan, 0.3],
+                               [np.nan, np.nan, np.nan],
+                               [np.nan, 0.3, np.nan],
+                               [0.9, np.nan, np.nan],
+                               [np.nan, np.nan, 0.1]])
+
         self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
                              '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
                              '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
@@ -1871,10 +1923,12 @@ class TestOperator(unittest.TestCase):
         self.shares = ['000010', '000030', '000039']
 
         self.types = ['close', 'open', 'high', 'low']
+        self.sel_finance_tyeps = ['eps']
 
         self.test_data_3D = np.zeros((3, data_rows, 4))
         self.test_data_2D = np.zeros((data_rows, 3))
         self.test_data_2D2 = np.zeros((data_rows, 4))
+        self.test_data_sel_finance = np.empty((3, data_rows, 1))
 
         # Build up 3D data
         self.test_data_3D[0, :, 0] = share1_close
@@ -1892,10 +1946,20 @@ class TestOperator(unittest.TestCase):
         self.test_data_3D[2, :, 2] = share3_high
         self.test_data_3D[2, :, 3] = share3_low
 
+        self.test_data_sel_finance[:, :, 0] = shares_eps.T
+
         self.hp1 = qt.HistoryPanel(values=self.test_data_3D,
                                    levels=self.shares,
                                    columns=self.types,
                                    rows=self.date_indices)
+        print(f'in test Operator, history panel is created for timing test')
+        self.hp1.info()
+        self.hp2 = qt.HistoryPanel(values=self.test_data_sel_finance,
+                                   levels=self.shares,
+                                   columns=self.sel_finance_tyeps,
+                                   rows=self.date_indices)
+        print(f'in test_Operator, history panel is created for selection finance test:')
+        self.hp2.info()
         self.op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
 
     def test_property_get(self):
@@ -2441,7 +2505,302 @@ class TestOperator(unittest.TestCase):
     def test_sel_finance(self):
         """Test selecting_finance strategy, test all built-in strategy parameters"""
         stg = SelectingFinance()
-        set_pars = ()
+        stg_pars = (True, 'even', 0, 0.67)
+        stg.set_pars(stg_pars)
+        stg.window_length = 5
+        stg.data_freq = 'd'
+        stg.sample_freq = '10d'
+        history_data = self.hp2.values
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        seg_pos, seg_length, seg_count = stg._seg_periods(dates=self.hp1.hdates, freq=stg.sample_freq)
+        self.assertEqual(list(seg_pos), [0, 5, 11, 19, 26, 33, 41, 47, 49])
+        self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
+        self.assertEqual(seg_count, 8)
+
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0]])
+        # # debug
+        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
+
+        self.assertEqual(output.shape, selmask.shape)
+        self.assertTrue(np.allclose(output, selmask))
+
+        # test single factor, get mininum factor
+        stg_pars = (False, 'even', 1, 0.67)
+        stg.set_pars(stg_pars)
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        selmask = np.array([[0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5]])
+        # # debug
+        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
+
+        self.assertEqual(output.shape, selmask.shape)
+        self.assertTrue(np.allclose(output, selmask))
+
+        # test single factor, get max factor in linear weight
+        stg_pars = (True, 'linear', 0, 0.67)
+        stg.set_pars(stg_pars)
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        selmask = np.array([[0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.66667, 0.33333],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.00000, 0.33333, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.00000, 0.66667],
+                            [0.33333, 0.66667, 0.00000],
+                            [0.33333, 0.66667, 0.00000],
+                            [0.33333, 0.66667, 0.00000]])
+        # # debug
+        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
+
+        self.assertEqual(output.shape, selmask.shape)
+        self.assertTrue(np.allclose(output, selmask))
+
+        # test single factor, get max factor in linear weight
+        stg_pars = (True, 'proportion', 0, 0.67)
+        stg.set_pars(stg_pars)
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        selmask = np.array([[0.00000, 0.08333, 0.91667],
+                            [0.00000, 0.08333, 0.91667],
+                            [0.00000, 0.08333, 0.91667],
+                            [0.00000, 0.08333, 0.91667],
+                            [0.00000, 0.08333, 0.91667],
+                            [0.00000, 0.08333, 0.91667],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.91667, 0.08333],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.00000, 0.50000, 0.50000],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.00000, 0.00000, 1.00000],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.00000, 0.91667],
+                            [0.08333, 0.91667, 0.00000],
+                            [0.08333, 0.91667, 0.00000],
+                            [0.08333, 0.91667, 0.00000]])
+        # # debug
+        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
+
+        self.assertEqual(output.shape, selmask.shape)
+        self.assertTrue(np.allclose(output, selmask, 0.001))
+
+        # test single factor, get max factor in linear weight, threshold 0.2
+        stg_pars = (True, 'even', 0.2, 0.67)
+        stg.set_pars(stg_pars)
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        selmask = np.array([[0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.0, 0.0, 1.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0],
+                            [0.5, 0.5, 0.0]])
+        # # debug
+        print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
+
+        self.assertEqual(output.shape, selmask.shape)
+        self.assertTrue(np.allclose(output, selmask, 0.001))
 
 
 class TestLog(unittest.TestCase):
@@ -2991,7 +3350,7 @@ class TestTushare(unittest.TestCase):
 
     def test_income(self):
         shares = '600748.SH'
-        rpt_date = '20180101'
+        rpt_date = '20181231'
         start = '20180101'
         end = '20191231'
         df = income(shares=shares,
@@ -2999,6 +3358,23 @@ class TestTushare(unittest.TestCase):
                     start=start,
                     end=end)
         self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+
+        df = income(shares=shares,
+                    start=start,
+                    end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'Test income: extracted single share income: \n{df}')
+
+        # test multiple shares data extraction:
+        # shares = '600748.SH, 000010.SZ, 000030.SZ, 000039.SZ'
+        # df = income(shares=shares,
+        #             start=start,
+        #             end=end)
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # print(f'Test income: extracted multiple share income: \n{df}')
 
     def test_balance(self):
         pass
@@ -3016,6 +3392,14 @@ class TestTushare(unittest.TestCase):
                         start=start,
                         end=end)
         self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+
+        df = indicators(shares=shares,
+                        start=start,
+                        end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'Test indicators: extracted indicator: \n{df}')
 
     def test_top_list(self):
         pass
