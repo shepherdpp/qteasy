@@ -744,6 +744,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     combined_index.sort()
     res_values = np.zeros(shape=(share_count, index_count, htype_count))
     res_values.fill(np.nan)
+    # debug
     # print(f'In stack dataframe function, combined index is:\n{combined_index}\nlength: {len(combined_index)}')
     for df_id in range(len(dfs)):
         extended_df = dfs[df_id].reindex(combined_index)
@@ -790,7 +791,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                             cashflow_type_data,
                             indicator_type_data]
     dataframes_to_stack = []
-    print(f'in function get_history_panel got shares: \n{shares}\nand htypes:\n{htypes}')
+    # print(f'in function get_history_panel got shares: \n{shares}\nand htypes:\n{htypes}')
     result_hp = HistoryPanel()
     if len(price_type_data) > 0:
         print('Getting price type historical data...')
@@ -814,17 +815,19 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
         print(f'Getting financial report...')
         # print(f'In get history panel() function, financial type data are \n{report_type}, \n'
         #       f'shares are\n {shares}')
-        dataframes_to_stack = get_financial_report_type_raw_data(start=start,
-                                                                 end=end,
-                                                                 shares=shares,
-                                                                 htypes=report_type,
-                                                                 chanel=chanel)
+        income_dfs, indicator_dfs, balance_dfs, cashflow_dfs = get_financial_report_type_raw_data(start=start,
+                                                                                                  end=end,
+                                                                                                  shares=shares,
+                                                                                                  htypes=report_type,
+                                                                                                  chanel=chanel)
         if isinstance(shares, str):
             shares = str_to_list(shares)
-        result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
-                                                          stack_along='shares',
-                                                          shares=shares),
-                                   same_shares=True)
+        for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):
+            if len(dfs) > 0:
+                result_hp = result_hp.join(other=stack_dataframes(dfs=dfs,
+                                                                  stack_along='shares',
+                                                                  shares=shares),
+                                           same_shares=True)
 
     if len(composite_type_data) > 0:
         print('Getting composite historical data...')
@@ -839,7 +842,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                    same_shares=True)
 
     # debug
-    print(f'in function get_history_panel(), history panels are generated, they are:\n')
+    print(f'in function get_history_panel(), history panel is generated, they are:\n')
     if result_hp is not None:
         print(f'result history panel: \n{result_hp.info()}')
 
@@ -887,7 +890,7 @@ def get_price_type_raw_data(start: str,
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     for df in df_per_share:
-        df.index = pd.to_datetime(df.trade_date)
+        df.index = pd.to_datetime(df.trade_date).sort_index()
         df.drop(columns=columns_to_remove, inplace=True)
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
@@ -920,49 +923,52 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
                                                         htype in htypes
                                                         if htype in INCOME_TYPE_DATA])
     indicator_fields = list_to_str_format(report_fields + [htype for
-                                                                htype in htypes
-                                                                if htype in INDICATOR_TYPE_DATA])
+                                                           htype in htypes
+                                                           if htype in INDICATOR_TYPE_DATA])
     balance_fields = list_to_str_format(report_fields + [htype for
-                                                              htype in htypes
-                                                              if htype in BALANCE_TYPE_DATA])
+                                                         htype in htypes
+                                                         if htype in BALANCE_TYPE_DATA])
     cashflow_fields = list_to_str_format(report_fields + [htype for
-                                                               htype in htypes
-                                                               if htype in CASHFLOW_TYPE_DATA])
-    df_per_share = []
-    print('htypes:', htypes, "\nreport fields: ", report_fields)
+                                                          htype in htypes
+                                                          if htype in CASHFLOW_TYPE_DATA])
+    income_dfs = []
+    indicator_dfs = []
+    balance_dfs = []
+    cashflow_dfs = []
+    # print('htypes:', htypes, "\nreport fields: ", report_fields)
     for share in shares:
         if len(str_to_list(income_fields)) > 2:
-            df = income(start=start, end=end, share=share, fields=income_fields)
+            df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
             df.index = pd.to_datetime(df.ann_date)
             df.index.name = 'date'
-            df.drop(columns=['ann_date'], inplace=True)
-            df_per_share.append(df)
+            df.drop(columns=['ts_code','ann_date'], inplace=True)
+            income_dfs.append(df)
 
         if len(str_to_list(indicator_fields)) > 2:
-            df = indicators(start=start, end=end, share=share, fields=indicator_fields)
+            df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
             df.index.name = 'date'
-            df.drop(columns=['ann_date'], inplace=True)
-            df_per_share.append(df)
+            df.drop(columns=['ts_code','ann_date'], inplace=True)
+            indicator_dfs.append(df)
 
         if len(str_to_list(balance_fields)) > 2:
-            df = balance(start=start, end=end, share=share, fields=balance_fields)
+            df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
             df.index.name = 'date'
-            df.drop(columns=['ann_date'], inplace=True)
-            df_per_share.append(df)
+            df.drop(columns=['ts_code','ann_date'], inplace=True)
+            balance_dfs.append(df)
 
         if len(str_to_list(cashflow_fields)) > 2:
-            df = cashflow(start=start, end=end, share=share, fields=cashflow_fields)
+            df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
             df.index.name = 'date'
-            df.drop(columns=['ann_date'], inplace=True)
-            df_per_share.append(df)
+            df.drop(columns=['ts_code','ann_date'], inplace=True)
+            cashflow_dfs.append(df)
             # print('raw df before rearange\n', raw_df)
 
             # print('\nsingle df of share after removal\n', df)
-    return df_per_share
+    return income_dfs, indicator_dfs, balance_dfs, cashflow_dfs
 
 
 # TODO: implement this function

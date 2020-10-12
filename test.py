@@ -14,7 +14,7 @@ from qteasy.built_in import SelectingFinance
 from qteasy.tsfuncs import income, indicators
 from qteasy.tsfuncs import stock_basic
 
-from qteasy.history import get_financial_report_type_raw_data
+from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
 
 class TestCost(unittest.TestCase):
@@ -3255,20 +3255,36 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_get_price_type_raw_data(self):
-        pass
+        shares = '000039.SZ, 600748.SH, 000039.SZ'
+        start = '20080101'
+        end = '20201231'
+        htypes = 'open, high, low, close'
+
+        df_list = get_price_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, freq='d')
+        self.assertIsInstance(df_list, list)
+        print(f'in get financial report type raw data, got DataFrames: \n{df_list[0].info()}\n'
+              f'{df_list[1].info()}\n{df_list[2].info()}')
 
     def test_get_financial_report_type_raw_data(self):
         shares = '000039.SZ, 600748.SH, 000039.SZ'
         start = '20080101'
         end = '20201231'
-        htypes = 'basic_eps,diluted_eps,total_revenue,revenue,total_share,cap_rese,undistr_porfit,surplus_rese'
+        htypes = 'eps,basic_eps,diluted_eps,total_revenue,revenue,total_share,' \
+                 'cap_rese,undistr_porfit,surplus_rese,net_profit'
 
         df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes)
-        self.assertIsInstance(df_list, list)
-        self.assertEqual(len(df_list), 6)
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in df_list))
+        self.assertIsInstance(df_list, tuple)
+        self.assertEqual(len(df_list), 4)
+        self.assertEqual(len(df_list[0]), 3)
+        self.assertEqual(len(df_list[1]), 3)
+        self.assertEqual(len(df_list[2]), 3)
+        self.assertEqual(len(df_list[3]), 3)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for sublist in df_list for item in sublist))
+        df_list = [item for sublist in df_list for item in sublist]
         print(f'in get financial report type raw data, got DataFrames: \n{df_list[0].info()}\n'
-              f'{df_list[0].info()}\n{df_list[3].info()}\n{df_list[4].info()}\n{df_list[5].info()}')
+              f'{df_list[1].info()}\n{df_list[2].info()}\n{df_list[3].info()}\n{df_list[4].info()}\n'
+              f'{df_list[5].info()}\n{df_list[6].info()}\n{df_list[7].info()}\n{df_list[8].info()}\n'
+              f'{df_list[9].info()}\n{df_list[10].info()}\n{df_list[11].info()}')
 
 
 class TestHistorySubFuncs(unittest.TestCase):
