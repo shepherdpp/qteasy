@@ -948,6 +948,7 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
         if len(str_to_list(indicator_fields)) > 2:
             df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index = pd.to_datetime(df.ann_date)
             df.index.name = 'date'
             df.drop(columns=['ts_code','ann_date'], inplace=True)
             indicator_dfs.append(df)
@@ -955,6 +956,7 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
         if len(str_to_list(balance_fields)) > 2:
             df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index = pd.to_datetime(df.ann_date)
             df.index.name = 'date'
             df.drop(columns=['ts_code','ann_date'], inplace=True)
             balance_dfs.append(df)
@@ -962,6 +964,7 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
         if len(str_to_list(cashflow_fields)) > 2:
             df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+            df.index = pd.to_datetime(df.ann_date)
             df.index.name = 'date'
             df.drop(columns=['ts_code','ann_date'], inplace=True)
             cashflow_dfs.append(df)

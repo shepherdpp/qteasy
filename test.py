@@ -3549,14 +3549,15 @@ class TestQT(unittest.TestCase):
         all_shares = stock_basic()
         shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
-        cont.share_pool = shares_estate[-4:-1]
+        cont.share_pool = shares_estate[-6:-1]
         cont.asset_type = 'E'
         cont.reference_asset = '000300.SH'
         cont.reference_asset_type = 'I'
         cont.output_count = 50
         cont.invest_start = '20020101'
-        cont.moq = 1
+        cont.moq = 1.
         cont.mode = 1
+        cont.print_log = True
         op.set_parameter('t-0', pars=(0, 0))
         op.set_parameter('s-0', pars=(True, 'even', 0, 0.3))
         op.set_parameter('r-0', pars=(0, 0))
