@@ -74,7 +74,7 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
 
     data = get_bar(shares=stock, start=start, end=end, asset_type=asset_type)
     if asset_type == 'E':
-        share_basic = name_change(ts_code=stock, fields='ts_code,name,start_date,end_date,change_reason')
+        share_basic = name_change(shares=stock, fields='ts_code,name,start_date,end_date,change_reason')
         if share_basic.empty:
             raise ValueError(f'stock {stock} can not be found or does not exist!')
         share_name = stock + ' - ' + share_basic.name[0]

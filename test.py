@@ -11,8 +11,8 @@ from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_
 from qteasy.space import Space, Axis
 from qteasy.core import apply_loop, ResultPool, space_around_centre
 from qteasy.built_in import SelectingFinance
-from qteasy.tsfuncs import income, indicators
-from qteasy.tsfuncs import stock_basic
+from qteasy.tsfuncs import income, indicators, name_change
+from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
@@ -3286,6 +3286,9 @@ class TestHistoryPanel(unittest.TestCase):
               f'{df_list[5].info()}\n{df_list[6].info()}\n{df_list[7].info()}\n{df_list[8].info()}\n'
               f'{df_list[9].info()}\n{df_list[10].info()}\n{df_list[11].info()}')
 
+    def test_get_composite_type_raw_data(self):
+        pass
+
 
 class TestHistorySubFuncs(unittest.TestCase):
     def setUp(self):
@@ -3341,30 +3344,45 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertRaises(AssertionError, list_to_str_format, 123)
 
 
+# TODO: realize test cases for tushare
 class TestTushare(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_get_price_type_raw_data(self):
-        pass
-
-    def test_get_financial_report_type_raw_data(self):
-        pass
-
-    def test_get_composite_type_raw_data(self):
-        pass
-
     def test_stock_basic(self):
-        pass
+        df = stock_basic()
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
 
     def test_trade_calendar(self):
-        pass
+        df = trade_calendar(exchange='SSE')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
 
     def test_name_change(self):
-        pass
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = name_change(shares=shares)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        df = name_change(shares=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
 
     def test_new_share(self):
-        pass
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = new_share()
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        df = new_share(start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
 
     def test_stock_company(self):
         pass
@@ -3470,12 +3488,18 @@ class TestTushare(unittest.TestCase):
     def test_options_daily(self):
         pass
 
-
+# TODO: realize test cases for all TA-lib functions
 class TestTAFuncs(unittest.TestCase):
     def setUp(self):
         pass
 
     def test_bbands(self):
+        pass
+
+    def test_dema(self):
+        pass
+
+    def test_ema(self):
         pass
 
 
@@ -3541,6 +3565,10 @@ class TestQT(unittest.TestCase):
     def test_built_in_timing(self):
         pass
 
+    # TODO: in next case (shares_banking[10:16 or 20]) error will be thrown out: Exception:
+    # TODO: zero-size array to reduction operation maximum which has no identity
+    # TODO: but shares_banking[:] will work,
+    # TODO: should investigate
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
@@ -3549,7 +3577,7 @@ class TestQT(unittest.TestCase):
         all_shares = stock_basic()
         shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
-        cont.share_pool = shares_estate[-6:-1]
+        cont.share_pool = shares_banking
         cont.asset_type = 'E'
         cont.reference_asset = '000300.SH'
         cont.reference_asset_type = 'I'
@@ -3559,7 +3587,7 @@ class TestQT(unittest.TestCase):
         cont.mode = 1
         cont.print_log = True
         op.set_parameter('t-0', pars=(0, 0))
-        op.set_parameter('s-0', pars=(True, 'even', 0, 0.3))
+        op.set_parameter('s-0', pars=(True, 'proportion', 0, 0.3), sample_freq='Q', data_types='basic_eps')
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
         # op.info()

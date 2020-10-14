@@ -87,14 +87,14 @@ def trade_calendar(exchange: str = 'SSE',
                          is_open=is_open)
 
 
-def name_change(ts_code: str = None,
+def name_change(shares: str = None,
                 start: str = None,
                 end: str = None,
                 fields: str = None):
     """ 历史名称变更记录
 
     :param fields:
-    :param ts_code:
+    :param shares:
     :param start:
     :param end:
     :return: pd.DataFrame
@@ -119,9 +119,9 @@ def name_change(ts_code: str = None,
         5       600848.SH   自仪股份  19940324      20010507         其他
     """
     if fields is None:
-        fields = 'ts_code,name,start,end,change_reason'
+        fields = 'ts_code,name,start_date,end_date,change_reason'
     pro = ts.pro_api()
-    return pro.namechange(ts_code=ts_code,
+    return pro.namechange(ts_code=shares,
                           start_date=start,
                           end_date=end,
                           fields=fields)
