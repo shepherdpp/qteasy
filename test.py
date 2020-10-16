@@ -13,6 +13,7 @@ from qteasy.core import apply_loop, ResultPool, space_around_centre
 from qteasy.built_in import SelectingFinance
 from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
+from qteasy.tsfuncs import balance, cashflow
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
@@ -3429,7 +3430,7 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
-        print(f'test type: two shares asset type E')
+        print(f'test type: multiple shares asset type E')
         shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
         start = '20180101'
         end = '20191231'
@@ -3439,8 +3440,36 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
+        print(f'test type: multiple shares asset type E, with adj = "qfq"')
+        shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
+        start = '20180101'
+        end = '20191231'
+        df = get_bar(shares=shares, start=start, end=end, asset_type='E', adj='qfq')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+        print(f'test type: multiple shares asset type E, with freq = "30min" -> authority issue!')
+        shares = '000620.SZ,000667.SZ'
+        start = '20180101'
+        end = '20191231'
+        # df = get_bar(shares=shares, start=start, end=end, asset_type='E', freq='30min')
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # df.info()
+        # print(df.head(30))
+
     def test_get_index(self):
-        pass
+        print(f'test tushare function: get_index')
+        index = '000300.SH'
+        start = '20180101'
+        end = '20191231'
+        df = get_index(index=index, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
     def test_income(self):
         shares = '600748.SH'
@@ -3487,12 +3516,42 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
     def test_balance(self):
-        fields = 'special_rese, money_cap,trad_asset,notes_receiv, accounts_receiv, oth_receiv' \
-                 'prepayment ,div_receiv, int_receiv  , inventories  , amor_exp  , nca_within_1y, sett_rsrv ' \
-                 ' , loanto_oth_bank_fi, premium_receiv, reinsur_receiv, reinsur_res_receiv,'
+        shares = '000039.SZ'
+        start = '20080101'
+        end = '20201231'
+        fields = 'special_rese, money_cap,trad_asset,notes_receiv,accounts_receiv,oth_receiv,' \
+                 'prepayment,div_receiv,int_receiv,inventories,amor_exp, nca_within_1y,sett_rsrv' \
+                 ',loanto_oth_bank_fi,premium_receiv,reinsur_receiv,reinsur_res_receiv'
+        df = balance(share=shares,
+                     start=start,
+                     end=end,
+                     fields=fields)
+        self.assertIsInstance(df, pd.DataFrame)
+        print(f'Test income: extracted multiple share income: \ninfo:\n{df.info()}\nhead:\n{df.head()}')
+        self.assertFalse(df.empty)
 
-    def test_cash_flow(self):
-        pass
+    def test_cashflow(self):
+        fields = ['net_profit',
+                  'finan_exp',
+                  'c_fr_sale_sg',
+                  'recp_tax_rends',
+                  'n_depos_incr_fi',
+                  'n_incr_loans_cb',
+                  'n_inc_borr_oth_fi',
+                  'prem_fr_orig_contr',
+                  'n_incr_insured_dep',
+                  'n_reinsur_prem',
+                  'n_incr_disp_tfa']
+        shares = '000039.SZ'
+        start = '20080101'
+        end = '20201231'
+        df = cashflow(share=shares,
+                     start=start,
+                     end=end,
+                     fields=fields)
+        self.assertIsInstance(df, pd.DataFrame)
+        print(f'Test income: extracted multiple share income: \ninfo:\n{df.info()}\nhead:\n{df.head()}')
+        self.assertFalse(df.empty)
 
     def test_indicators(self):
         shares = '600748.SH'
@@ -3536,6 +3595,7 @@ class TestTushare(unittest.TestCase):
 
     def test_options_daily(self):
         pass
+
 
 # TODO: realize test cases for all TA-lib functions
 class TestTAFuncs(unittest.TestCase):
@@ -3613,6 +3673,7 @@ class TestQT(unittest.TestCase):
 
     def test_built_in_timing(self):
         pass
+
     # TODO: in next case (shares_banking[10:16 or 20]) error will be thrown out: Exception:
     # TODO: zero-size array to reduction operation maximum which has no identity
     # TODO: but shares_banking[:] will work,
@@ -3665,14 +3726,34 @@ class TestBuiltIns(unittest.TestCase):
         print(f'type of class: {type(stg)}')
 
 
-def test_suite():
+def test_suite(*args):
     suite = unittest.TestSuite()
-    suite.addTest(TestCost())
-    suite.addTest(TestSpace())
-    suite.addTests(tests=[TestLog(), TestContext(), TestOperator()])
+    for arg_item in args:
+        if arg_item == 'internal':
+            suite.addTests(tests=[TestCost(),
+                                  TestSpace(),
+                                  TestLog(),
+                                  TestContext(),
+                                  TestCashPlan()])
+        elif arg_item == 'core':
+            suite.addTests(tests=[TestOperator(),
+                                  TestOperatorSubFuncs(),
+                                  TestLoop(),
+                                  TestEvaluations(),
+                                  TestBuiltIns(),
+                                  TestHistorySubFuncs()])
+        elif arg_item == 'external':
+            suite.addTests(tests=[TestQT(),
+                                  TestVisual(),
+                                  TestTushare(),
+                                  TestHistoryPanel()])
     return suite
 
 
 if __name__ == '__main__':
-    runner = unittest.TextTestRunner()
-    runner.run(test_suite())
+    # runner = unittest.TextTestRunner()
+    # suites = test_suite('internal')
+    # # suites = unittest.TestSuite()
+    # # suites.addTest(TestLoop())
+    # runner.run(suites)
+    unittest.main()
