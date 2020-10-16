@@ -559,6 +559,7 @@ class SelectingFinance(stg.Selecting):
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
         # 将历史数据片段中的eps求均值，忽略Nan值,
         indices = np.nanmean(hist_data, axis=1).squeeze()
+        chosen = np.zeros_like(indices)
         if largest_win:
             # 筛选出不符合要求的指标，将他们设置为nan值
             indices[np.where(indices < drop_threshold)] = np.nan
@@ -570,7 +571,6 @@ class SelectingFinance(stg.Selecting):
             pos = max(share_count - pct - nan_count, 0)
         else:  # 选择分数最低的部分个股
             pos = pct
-        # print(f'in Selecting realize method got ranking vector like:\n{indices}')
         # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
         if distribution == 'even':
             # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
@@ -589,8 +589,11 @@ class SelectingFinance(stg.Selecting):
         args = np.setdiff1d(share_found, share_nan, assume_unique=True)
         # 构造输出向量，初始值为全0
         arg_count = len(args)
-        if arg_count == 0: arg_count = 1
-        chosen = np.zeros_like(indices)
+        if arg_count == 0:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
+            # debug
+            # print(f'in Selecting realize method got ranking vector and share selecting vector like:\n'
+            #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
+            return chosen
         # 根据投资组合比例分配方式，确定被选中产品的占比
         # Linear：根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，其余居中者的比例按序呈等差数列
         if distribution == 'linear':
@@ -616,7 +619,8 @@ class SelectingFinance(stg.Selecting):
 
             chosen[args] = 1. / arg_count
         # debug
-        # print(f'in Selecting realize method got share selecting vector like:\n{np.round(chosen,3)}')
+        # print(f'in Selecting realize method got ranking vector and share selecting vector like:\n'
+        #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
         return chosen
 
 

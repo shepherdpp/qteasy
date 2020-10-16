@@ -185,12 +185,12 @@ def new_share(start: str = None,
     return pro.new_share(start_date=start, end_date=end)
 
 
-def stock_company(ts_code: str = None,
+def stock_company(shares: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:
     """
 
-    :param ts_code: str, 股票代码
+    :param shares: str, 股票代码
     :param exchange: str, 交易所代码 ，SSE上交所 SZSE深交所
     :param fields: str, 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
     :return: pd.DataFrame
@@ -231,7 +231,7 @@ def stock_company(ts_code: str = None,
     if fields is None:
         fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
     pro = ts.pro_api()
-    return pro.stock_comapany(ts_code=ts_code, exchange=exchange, fields=fields)
+    return pro.stock_comapany(ts_code=shares, exchange=exchange, fields=fields)
 
 
 # Bar price data

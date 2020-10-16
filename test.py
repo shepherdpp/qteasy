@@ -11,8 +11,8 @@ from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_
 from qteasy.space import Space, Axis
 from qteasy.core import apply_loop, ResultPool, space_around_centre
 from qteasy.built_in import SelectingFinance
-from qteasy.tsfuncs import income, indicators, name_change
-from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
+from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
+from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
@@ -3350,45 +3350,94 @@ class TestTushare(unittest.TestCase):
         pass
 
     def test_stock_basic(self):
+        print(f'test tushare function: stock_basic')
         df = stock_basic()
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
     def test_trade_calendar(self):
+        print(f'test tushare function: trade_calendar')
         df = trade_calendar(exchange='SSE')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
     def test_name_change(self):
+        print(f'test tushare function: name_change')
         shares = '600748.SH'
         start = '20180101'
         end = '20191231'
         df = name_change(shares=shares)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
         df = name_change(shares=shares, start=start, end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
+        df.info()
+        print(df.head(10))
 
     def test_new_share(self):
-        shares = '600748.SH'
+        print(f'test tushare function: new_share')
         start = '20180101'
         end = '20191231'
         df = new_share()
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
         df = new_share(start=start, end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-
+        df.info()
+        print(df.head(10))
 
     def test_stock_company(self):
-        pass
+        print(f'test tushare function: stock_company')
+        # shares = '600748.SH'
+        # df = stock_company(shares=shares)
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # df.info()
+        # print(df.head(10))
 
     def test_get_bar(self):
-        pass
+        print(f'test tushare function: get_bar')
+        print(f'test type: one share asset type E')
+        shares = '600748.SH'
+        start = '20180101'
+        end = '20191231'
+        df = get_bar(shares=shares, start=start, end=end)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+        print(f'test type: one share asset type I')
+        shares = '000300.SH'
+        start = '20180101'
+        end = '20191231'
+        df = get_bar(shares=shares, start=start, end=end, asset_type='I')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
+
+        print(f'test type: two shares asset type E')
+        shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
+        start = '20180101'
+        end = '20191231'
+        df = get_bar(shares=shares, start=start, end=end, asset_type='E')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
     def test_get_index(self):
         pass
@@ -3564,7 +3613,6 @@ class TestQT(unittest.TestCase):
 
     def test_built_in_timing(self):
         pass
-
     # TODO: in next case (shares_banking[10:16 or 20]) error will be thrown out: Exception:
     # TODO: zero-size array to reduction operation maximum which has no identity
     # TODO: but shares_banking[:] will work,
@@ -3577,7 +3625,7 @@ class TestQT(unittest.TestCase):
         all_shares = stock_basic()
         shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
-        cont.share_pool = shares_banking
+        cont.share_pool = shares_banking[10:19]
         cont.asset_type = 'E'
         cont.reference_asset = '000300.SH'
         cont.reference_asset_type = 'I'
@@ -3587,7 +3635,7 @@ class TestQT(unittest.TestCase):
         cont.mode = 1
         cont.print_log = True
         op.set_parameter('t-0', pars=(0, 0))
-        op.set_parameter('s-0', pars=(True, 'proportion', 0, 0.3), sample_freq='Q', data_types='basic_eps')
+        op.set_parameter('s-0', pars=(True, 'proportion', 0, 0.4), sample_freq='Q', data_types='basic_eps')
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
         # op.info()
