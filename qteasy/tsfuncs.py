@@ -997,12 +997,12 @@ def indicators(share: str,
 # =================
 
 def top_list(trade_date: str = None,
-             ts_code: str = None,
+             shares: str = None,
              fields: str = None) -> pd.DataFrame:
     """ 龙虎榜每日交易明细，2005年至今全部历史数据，单次获取数量不超过10000
 
     :param trade_date: str, 交易日期
-    :param ts_code: str, 股票代码
+    :param shares: str, 股票代码
     :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
         column                      type    default description
@@ -1033,10 +1033,10 @@ def top_list(trade_date: str = None,
         ...
     """
     if fields is None:
-        fields = 'trade_date,ts_code,name,close,l_sell,l_buy,l_amount,net_amount,net_rate,amount_rate'
+        fields = 'trade_date,ts_code,name,close,l_sell,l_buy,l_amount,float_values,reason'
     pro = ts.pro_api()
     return pro.top_list(trade_date=trade_date,
-                        ts_code=ts_code,
+                        ts_code=shares,
                         fields=fields)
 
 
@@ -1044,14 +1044,18 @@ def top_list(trade_date: str = None,
 # ==================
 
 def index_basic(trade_date: str = None,
-                ts_code: str = None,
+                index: str = None,
                 start: str = None,
                 end: str = None,
                 fields: str = None) -> pd.DataFrame:
     """ 大盘指数每日指标, 目前只提供上证综指，深证成指，上证50，中证500，中小板指，创业板指的每日指标数据
+        支持两三种数据获取方式：
+            1，给定特定的trade_date和index，获取当天的指定index的数据
+            2，给定特定的trade_date，获取当天所有index的数据
+            3，给定特定的index，并指定start和end，获取指定指数在历史区间中的每天的数据
 
     :param trade_date: str, 交易日期 （格式：YYYYMMDD，比如20181018，下同）
-    :param ts_code: str, TS代码
+    :param index: str, TS代码
     :param start: str, 开始日期
     :param end: str, 结束日期
     :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
@@ -1082,21 +1086,23 @@ def index_basic(trade_date: str = None,
         6  399016.SZ   20181018           1.06  18.86
         7  399300.SZ   20181018           0.27  11.17
     """
+    if fields is None:
+        fields = 'ts_code,trade_date,turnover_rate,pe,pe_ttm,pb'
     pro = ts.pro_api()
     return pro.index_dailybasic(trade_date=trade_date,
-                                ts_code=ts_code,
+                                ts_code=index,
                                 start_date=start,
                                 end_date=end,
                                 fields=fields)
 
 
-def composite(index_code: str = None,
+def composite(index: str = None,
               trade_date: str = None,
               start: str = None,
               end: str = None) -> pd.DataFrame:
     """ 获取各类指数成分和权重，月度数据 ，如需日度指数成分和权重，请联系 waditu@163.com
 
-    :param index_code: str, 指数代码 (二选一)
+    :param index: str, 指数代码 (二选一)
     :param trade_date: str, 交易日期 （二选一）
     :param start: str, 开始日期
     :param end: str, 结束日期
@@ -1119,7 +1125,7 @@ def composite(index_code: str = None,
         6    399300.SZ  000402.SZ   20180903  0.0816
     """
     pro = ts.pro_api()
-    return pro.index_weight(index_code=index_code,
+    return pro.index_weight(index_code=index,
                             trade_date=trade_date,
                             start_date=start,
                             end_date=end)

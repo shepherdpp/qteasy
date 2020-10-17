@@ -13,7 +13,8 @@ from qteasy.core import apply_loop, ResultPool, space_around_centre
 from qteasy.built_in import SelectingFinance
 from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
-from qteasy.tsfuncs import balance, cashflow
+from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
+from qteasy.tsfuncs import fund_net_value
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
@@ -3399,6 +3400,8 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
+    # TODO: solve this problem, error message thrown out: no such module
+    # TODO: called "stock_company"
     def test_stock_company(self):
         print(f'test tushare function: stock_company')
         # shares = '600748.SH'
@@ -3408,6 +3411,8 @@ class TestTushare(unittest.TestCase):
         # df.info()
         # print(df.head(10))
 
+    # TODO: solve this problem: for authority issue, only 5 calls of
+    # TODO: get_bar freq higher than a day can be done in one day
     def test_get_bar(self):
         print(f'test tushare function: get_bar')
         print(f'test type: one share asset type E')
@@ -3472,6 +3477,7 @@ class TestTushare(unittest.TestCase):
         print(df.head(10))
 
     def test_income(self):
+        print(f'test tushare function: income')
         shares = '600748.SH'
         rpt_date = '20181231'
         start = '20180101'
@@ -3516,6 +3522,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
     def test_balance(self):
+        print(f'test tushare function: balance')
         shares = '000039.SZ'
         start = '20080101'
         end = '20201231'
@@ -3531,6 +3538,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
     def test_cashflow(self):
+        print(f'test tushare function: cashflow')
         fields = ['net_profit',
                   'finan_exp',
                   'c_fr_sale_sg',
@@ -3554,6 +3562,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
     def test_indicators(self):
+        print(f'test tushare function: indicators')
         shares = '600748.SH'
         rpt_date = '20180101'
         start = '20180101'
@@ -3573,10 +3582,63 @@ class TestTushare(unittest.TestCase):
         print(f'Test indicators: extracted indicator: \n{df}')
 
     def test_top_list(self):
-        pass
+        shares = '000732.SZ'
+        trade_date = '20180104'
+        print(f'test tushare function: top_list')
+        print(f'test 1: test no specific shares')
+        df = top_list(trade_date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 2: test one specific share')
+        df = top_list(trade_date=trade_date, shares=shares)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 2: test multiple specific share') # tushare does not allow multiple share codes in top_list
+        shares = '000672.SZ, 000732.SZ'
+        df = top_list(trade_date=trade_date, shares=shares)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
 
     def test_index_basic(self):
-        pass
+        print(f'test tushare function: index_basic')
+        index = '000300.SH'
+        trade_date = '20180104'
+        start = '20180101'
+        end = '20180115'
+
+        print(f'test 1: test single index single date\n'
+              f'=====================================')
+        df = index_basic(trade_date=trade_date, index=index)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 2: test single index in date range\n'
+              f'=======================================')
+        df = index_basic(index=index, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 3: test multiple specific indices in single date\n'
+              f'=====================================================')
+        index = '000300.SH, 000001.SH'  # tushare does not support multiple indices in index_basic
+        df = index_basic(trade_date=trade_date, index=index)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+
+        print(f'test 4: test all indices in single date\n'
+              f'=======================================')
+        df = index_basic(trade_date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
 
     def test_composit(self):
         pass
