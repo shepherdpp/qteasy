@@ -1135,14 +1135,14 @@ def composite(index: str = None,
 # ==============
 
 
-def fund_net_value(ts_code: str = None,
+def fund_net_value(fund: str = None,
                    date: str = None,
                    market: str = None,
                    fields: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
-    :param ts_code: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
-    :param trade_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
+    :param fund: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
+    :param date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
     :param market: str, 交易市场类型: E场内 O场外
     :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
@@ -1167,8 +1167,12 @@ def fund_net_value(ts_code: str = None,
         4     165509.SZ  1.835449
         ...         ...       ...
     """
+    if fields is None:
+        fields = 'ts_code, ann_date, end_date, unit_nav, accum_nav, accum_div, net_asset, total_netasset, adj_nav'
+    if market is None:
+        market = 'E'
     pro = ts.pro_api()
-    return pro.fund_nav(ts_code=ts_code,
+    return pro.fund_nav(ts_code=fund,
                         end_date=date,
                         market=market,
                         fields=fields)
@@ -1216,6 +1220,10 @@ def future_basic(exchange: str = None,
         5      P0812.DCE   P0812   棕榈油0812  20071217    20081212
         ...
     """
+    if exchange is None:
+        exchange = 'CFFEX'
+    if fields is None:
+        fields = 'ts_code,symbol,name,list_date,delist_date,d_mode_desc'
     pro = ts.pro_api()
     return pro.fut_basic(exchange=exchange,
                          fut_type=future_type,
@@ -1261,6 +1269,10 @@ def options_basic(exchange: str = None,
         4    M1707-P-2500.DCE  豆粕期权1707认沽2500            美式  20170410    20170607
         5    M1803-C-2550.DCE  豆粕期权1803认购2550            美式  20170407    20180207
     """
+    if exchange is None:
+        exchange = 'CFFEX'
+    if fields is None:
+        fields = 'ts_code,name,opt_code,opt_type,list_date,list_price,exercise_type,exercise_price'
     pro = ts.pro_api()
     return pro.opt_basic(exchange=exchange,
                          call_put=option_type,
@@ -1268,7 +1280,7 @@ def options_basic(exchange: str = None,
 
 
 def future_daily(trade_date: str = None,
-                 ts_code: str = None,
+                 future: str = None,
                  exchange: str = None,
                  start: str = None,
                  end: str = None,
@@ -1276,7 +1288,7 @@ def future_daily(trade_date: str = None,
     """ 期货日线行情数据
 
     :param trade_date: str, 交易日期
-    :param ts_code: str, 合约代码
+    :param future: str, 合约代码
     :param exchange: str, 交易所代码
     :param start: str, 开始日期
     :param end: str, 结束日期
@@ -1310,9 +1322,13 @@ def future_daily(trade_date: str = None,
         4    CU1811.SHF   20181107    49670.0     49630.0  49640.0   ...   -170.0  26850.0  664040.10  38330.0 -4560.0
         ..          ...        ...        ...         ...      ...   ...      ...      ...        ...      ...     ...
     """
+    if future is None and trade_date is None:
+        raise ValueError(f'one of future and trade_date should be given!')
+    if fields is None:
+        fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,change1,change2,vol,amount,oi,oi_chg'
     pro = ts.pro_api()
     return pro.fut_daily(trade_date=trade_date,
-                         ts_code=ts_code,
+                         ts_code=future,
                          exchange=exchange,
                          start_date=start,
                          end_date=end,
@@ -1320,7 +1336,7 @@ def future_daily(trade_date: str = None,
 
 
 def options_daily(trade_date: str = None,
-                  ts_code: str = None,
+                  option: str = None,
                   exchange: str = None,
                   start: str = None,
                   end: str = None,
@@ -1328,7 +1344,7 @@ def options_daily(trade_date: str = None,
     """ 获取期权日线行情
 
     :param trade_date: str, 交易日期
-    :param ts_code: str, 合约代码
+    :param option: str, 合约代码
     :param exchange: str, 交易所代码
     :param start: str, 开始日期
     :param end: str, 结束日期
@@ -1367,9 +1383,13 @@ def options_daily(trade_date: str = None,
         4      0.0018    0.0012    0.0013    0.0013  0.4240     57989.19  61746.0
         5      0.0012    0.0008    0.0008    0.0008  0.2067     20700.88  37674.0
     """
+    if option is None and trade_date is None:
+        raise ValueError(f'one of future and trade_date should be given!')
+    if fields is None:
+        fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,settle,vol,amount,oi'
     pro = ts.pro_api()
     return pro.opt_daily(trade_date=trade_date,
-                         ts_code=ts_code,
+                         ts_code=option,
                          exchange=exchange,
                          start_date=start,
                          end_date=end,

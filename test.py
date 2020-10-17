@@ -7,13 +7,14 @@ from numpy import int64
 import itertools
 import datetime
 from qteasy.tafuncs import sma
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.space import Space, Axis
 from qteasy.core import apply_loop, ResultPool, space_around_centre
 from qteasy.built_in import SelectingFinance
 from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
+from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
 from qteasy.tsfuncs import fund_net_value
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
@@ -3297,9 +3298,9 @@ class TestHistorySubFuncs(unittest.TestCase):
         pass
 
     def test_str_to_list(self):
-        self.assertEqual(qt.str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
-        self.assertEqual(qt.str_to_list('a, b, c '), ['a', 'b', 'c'])
-        self.assertEqual(qt.str_to_list('a, b: c', sep_char=':'), ['a,b', 'c'])
+        self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
+        self.assertEqual(str_to_list('a, b, c '), ['a', 'b', 'c'])
+        self.assertEqual(str_to_list('a, b: c', sep_char=':'), ['a,b', 'c'])
 
     def test_list_or_slice(self):
         str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
@@ -3667,7 +3668,7 @@ class TestTushare(unittest.TestCase):
         print(f'test 2: find composit of one specific index in exact trade date\n'
               f'===============================')
         index = '000300.SH'
-        trade_date = '20201009'
+        trade_date = '20200430'
         df = composite(index=index, trade_date=trade_date)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("weight", ascending=False).head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
@@ -3692,19 +3693,132 @@ class TestTushare(unittest.TestCase):
               f'they are: \n{list(df.index_code.unique())}')
 
     def test_fund_net_value(self):
-        pass
+        print(f'test tushare function: fund_net_value\n'
+              f'===============================')
+        fund = '399300.SZ'
+        trade_date = '20180909'
+
+        print(f'test 1: find all funds in one specific date, exchanging in market\n'
+              f'===============================')
+        df = fund_net_value(date=trade_date, market='E')
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.ts_code.unique())}')
+
+        print(f'test 1: find all funds in one specific date, exchange outside market\n'
+              f'===============================')
+        df = fund_net_value(date=trade_date, market='O')
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.ts_code.unique())}')
+
+        print(f'test 2: find value of one fund in history\n'
+              f'===============================')
+        fund = '512960.SH'
+        df = fund_net_value(fund=fund)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.trade_date.unique())}')
+
+        print(f'test 3: find value of multiple funds in history\n'
+              f'===============================')
+        fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
+        trade_date = '20201009'
+        df = fund_net_value(date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        self.assertEqual(list(df.ts_code.unique()), str_to_list(fund))
+        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.trade_date.unique())}')
+
 
     def test_future_basic(self):
-        pass
+        print(f'test tushare function: future_basic')
+        print(f'test 1, load basic future information with default input\n'
+              f'========================================================')
+        df = future_basic()
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.ts_code.unique())}')
+
+        print(f'test 2, load basic future information in SHFE type == 1\n'
+              f'========================================================')
+        exchange = 'SHFE'
+        df = future_basic(exchange=exchange, future_type='1')
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.ts_code.unique())}')
 
     def test_options_basic(self):
-        pass
+        print(f'test tushare function: options_basic')
+        print(f'test 1, load basic options information with default input\n'
+              f'========================================================')
+        df = options_basic()
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.ts_code.unique())}')
 
     def test_future_daily(self):
-        pass
+        print(f'test tushare function: future_daily')
+        print(f'test 1, load basic future information at one specific date\n'
+              f'==========================================================')
+        future = 'AL1905.SHF'
+        trade_date = '20190628'
+        start = '20190101'
+        end = '20190930'
+        df = future_daily(trade_date=trade_date, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 2, load basic future information for one ts_code\n'
+              f'==========================================================')
+        df = future_daily(future=future, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 3, error raising when both future and trade_date are None\n'
+              f'==============================================================')
+        self.assertRaises(ValueError, future_daily,start=start, end=end)
+
 
     def test_options_daily(self):
-        pass
+        print(f'test tushare function: options_daily')
+        print(f'test 1, load option information at one specific date\n'
+              f'==========================================================')
+        option = '10001677.SH'
+        trade_date = '20190628'
+        start = '20190101'
+        end = '20190930'
+        df = options_daily(trade_date=trade_date, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 2, load basic future information for one ts_code\n'
+              f'==========================================================')
+        df = options_daily(option=option, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 3, error raising when both future and trade_date are None\n'
+              f'==============================================================')
+        self.assertRaises(ValueError, future_daily,start=start, end=end)
 
 
 # TODO: realize test cases for all TA-lib functions
