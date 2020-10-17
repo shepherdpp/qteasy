@@ -3640,8 +3640,56 @@ class TestTushare(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
-    def test_composit(self):
-        pass
+    def test_composite(self):
+        print(f'test tushare function: composit\n'
+              f'===============================')
+        index = '399300.SZ'
+        start = '20190101'
+        end = '20190930'
+
+        print(f'test 1: find composit of one specific index in months\n'
+              f'===============================')
+        df = composite(index=index, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.trade_date.unique())}')
+
+        index = '399001.SZ'
+        df = composite(index=index, start=start, end=end)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.trade_date.unique())}')
+
+        print(f'test 2: find composit of one specific index in exact trade date\n'
+              f'===============================')
+        index = '000300.SH'
+        trade_date = '20201009'
+        df = composite(index=index, trade_date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("weight", ascending=False).head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.trade_date.unique())}')
+
+        trade_date = '20201008'
+        df = composite(index=index, trade_date=trade_date)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertTrue(df.empty)
+
+        print(f'test 3: find composit of all indices in one specific trade date\n'
+              f'===============================')
+        index = '000300.SH'
+        trade_date = '20201009'
+        df = composite(trade_date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("index_code").head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        print(f'found in df records in {df.index_code.nunique()} unique index_codes\n'
+              f'they are: \n{list(df.index_code.unique())}')
 
     def test_fund_net_value(self):
         pass
