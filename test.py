@@ -17,6 +17,8 @@ from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
 from qteasy.tsfuncs import fund_net_value
 
+from qteasy.tafuncs import bbands, dema, ema
+
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
 
@@ -3347,7 +3349,6 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertRaises(AssertionError, list_to_str_format, 123)
 
 
-# TODO: realize test cases for tushare
 class TestTushare(unittest.TestCase):
     def setUp(self):
         pass
@@ -3555,9 +3556,9 @@ class TestTushare(unittest.TestCase):
         start = '20080101'
         end = '20201231'
         df = cashflow(share=shares,
-                     start=start,
-                     end=end,
-                     fields=fields)
+                      start=start,
+                      end=end,
+                      fields=fields)
         self.assertIsInstance(df, pd.DataFrame)
         print(f'Test income: extracted multiple share income: \ninfo:\n{df.info()}\nhead:\n{df.head()}')
         self.assertFalse(df.empty)
@@ -3598,7 +3599,7 @@ class TestTushare(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
-        print(f'test 2: test multiple specific share') # tushare does not allow multiple share codes in top_list
+        print(f'test 2: test multiple specific share')  # tushare does not allow multiple share codes in top_list
         shares = '000672.SZ, 000732.SZ'
         df = top_list(trade_date=trade_date, shares=shares)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
@@ -3738,7 +3739,6 @@ class TestTushare(unittest.TestCase):
         print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
               f'they are: \n{list(df.trade_date.unique())}')
 
-
     def test_future_basic(self):
         print(f'test tushare function: future_basic')
         print(f'test 1, load basic future information with default input\n'
@@ -3793,8 +3793,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 3, error raising when both future and trade_date are None\n'
               f'==============================================================')
-        self.assertRaises(ValueError, future_daily,start=start, end=end)
-
+        self.assertRaises(ValueError, future_daily, start=start, end=end)
 
     def test_options_daily(self):
         print(f'test tushare function: options_daily')
@@ -3818,16 +3817,38 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 3, error raising when both future and trade_date are None\n'
               f'==============================================================')
-        self.assertRaises(ValueError, future_daily,start=start, end=end)
+        self.assertRaises(ValueError, future_daily, start=start, end=end)
 
 
 # TODO: realize test cases for all TA-lib functions
 class TestTAFuncs(unittest.TestCase):
     def setUp(self):
-        pass
+        self.data_rows = 50
+
+        self.close = np.array([10.04, 10, 10, 9.99, 9.97, 9.99, 10.03, 10.03, 10.06, 10.06, 10.11,
+                               10.09, 10.07, 10.06, 10.09, 10.03, 10.03, 10.06, 10.08, 10, 9.99,
+                               10.03, 10.03, 10.06, 10.03, 9.97, 9.94, 9.83, 9.77, 9.84, 9.91, 9.93,
+                               9.96, 9.91, 9.91, 9.88, 9.91, 9.64, 9.56, 9.57, 9.55, 9.57, 9.61, 9.61,
+                               9.55, 9.57, 9.63, 9.64, 9.65, 9.62])
+        self.open = np.array([10.02, 10, 9.98, 9.97, 9.99, 10.01, 10.04, 10.06, 10.06, 10.11,
+                              10.11, 10.07, 10.06, 10.09, 10.03, 10.02, 10.06, 10.08, 9.99, 10,
+                              10.03, 10.02, 10.06, 10.03, 9.97, 9.94, 9.83, 9.78, 9.77, 9.91, 9.92,
+                              9.97, 9.91, 9.9, 9.88, 9.91, 9.63, 9.64, 9.57, 9.55, 9.58, 9.61, 9.62,
+                              9.55, 9.57, 9.61, 9.63, 9.64, 9.61, 9.56])
+        self.high = np.array([10.07, 10, 10, 10, 10.03, 10.03, 10.04, 10.09, 10.1, 10.14, 10.11, 10.1,
+                              10.09, 10.09, 10.1, 10.05, 10.07, 10.09, 10.1, 10, 10.04, 10.04, 10.06,
+                              10.09, 10.05, 9.97, 9.96, 9.86, 9.77, 9.92, 9.94, 9.97, 9.97, 9.92, 9.92,
+                              9.92, 9.93, 9.64, 9.58, 9.6, 9.58, 9.62, 9.62, 9.64, 9.59, 9.62, 9.63,
+                              9.7, 9.66, 9.64])
+        self.low = np.array([9.99, 10, 9.97, 9.97, 9.97, 9.98, 9.99, 10.03, 10.03, 10.04, 10.11, 10.07,
+                             10.05, 10.03, 10.03, 10.01, 9.99, 10.03, 9.95, 10, 9.95, 10, 10.01, 9.99,
+                             9.96, 9.89, 9.83, 9.77, 9.77, 9.8, 9.9, 9.91, 9.89, 9.89, 9.87, 9.85, 9.6,
+                             9.64, 9.53, 9.55, 9.54, 9.55, 9.58, 9.54, 9.53, 9.53, 9.63, 9.64, 9.59, 9.56])
 
     def test_bbands(self):
-        pass
+        print(f'test TA function: bbands')
+        res = bbands(self.close)
+        print(res)
 
     def test_dema(self):
         pass
