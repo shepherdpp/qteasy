@@ -3752,15 +3752,15 @@ class TestTushare(unittest.TestCase):
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
-              f'they are: \n{list(df.trade_date.unique())}')
+        print(f'found in df records in {df.ann_date.nunique()} unique trade dates\n'
+              f'first 10 items of them are: \n{list(df.ann_date.unique()[:9])}')
 
         print(f'test 3: find value of multiple funds in history\n'
               f'===============================')
         fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
         trade_date = '20201009'
-        df = fund_net_value(date=trade_date)
-        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.sort_values("ts_code").head(10)}')
+        df = fund_net_value(fund=fund, date=trade_date)
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         self.assertEqual(list(df.ts_code.unique()), str_to_list(fund))
@@ -3848,7 +3848,6 @@ class TestTushare(unittest.TestCase):
         self.assertRaises(ValueError, future_daily, start=start, end=end)
 
 
-# TODO: realize test cases for all TA-lib functions
 class TestTAFuncs(unittest.TestCase):
     def setUp(self):
         self.data_rows = 50

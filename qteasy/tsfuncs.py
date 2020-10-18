@@ -1169,8 +1169,6 @@ def fund_net_value(fund: str = None,
     """
     if fields is None:
         fields = 'ts_code, ann_date, end_date, unit_nav, accum_nav, accum_div, net_asset, total_netasset, adj_nav'
-    if market is None:
-        market = 'E'
     pro = ts.pro_api()
     return pro.fund_nav(ts_code=fund,
                         end_date=date,
