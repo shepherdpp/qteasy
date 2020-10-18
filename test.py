@@ -3967,31 +3967,31 @@ class TestTAFuncs(unittest.TestCase):
     def test_tema(self):
         print(f'test TA function: tema\n'
               f'=======================')
-        res = tema(self.close)
+        res = tema(self.close, timeperiod=5)
         print(f'result is \n{res}')
 
     def test_trima(self):
         print(f'test TA function: trima\n'
               f'========================')
-        res = trima(self.close)
+        res = trima(self.close, timeperiod=5)
         print(f'result is \n{res}')
 
     def test_wma(self):
         print(f'test TA function: wma\n'
               f'======================')
-        res = wma(self.close)
+        res = wma(self.close, timeperiod=5)
         print(f'result is \n{res}')
 
     def test_adx(self):
         print(f'test TA function: adx\n'
               f'======================')
-        res = adx(self.high, self.low, self.close)
+        res = adx(self.high, self.low, self.close, timeperiod=5)
         print(f'result is \n{res}')
 
     def test_adxr(self):
         print(f'test TA function: adxr\n'
               f'=======================')
-        res = adxr(self.high, self.low, self.close)
+        res = adxr(self.high, self.low, self.close, timeperiod=5)
         print(f'result is \n{res}')
 
     def test_apo(self):
@@ -4003,8 +4003,8 @@ class TestTAFuncs(unittest.TestCase):
     def test_aroon(self):
         print(f'test TA function: aroon\n'
               f'========================')
-        res = aroon(self.high, self.low)
-        print(f'result is \n{res}')
+        down, up = aroon(self.high, self.low)
+        print(f'results are:\naroon down:\n{down}\naroon up:\n{up}')
 
     def test_aroonosc(self):
         print(f'test TA function: aroonosc\n'
@@ -4039,20 +4039,20 @@ class TestTAFuncs(unittest.TestCase):
     def test_macd(self):
         print(f'test TA function: macd\n'
               f'=======================')
-        res = macd(self.close)
-        print(f'result is \n{res}')
+        macd_res, macdsignal, macdhist = macd(self.close)
+        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macdhist}')
 
     def test_macdext(self):
         print(f'test TA function: macdext\n'
               f'==========================')
-        res = macdext(self.close)
-        print(f'result is \n{res}')
+        macd_res, macdsignal, macdhist = macdext(self.close)
+        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macdhist}')
 
     def test_macdfix(self):
         print(f'test TA function: macdfix\n'
               f'==========================')
-        res = macdfix(self.close)
-        print(f'result is \n{res}')
+        macd_res, macdsignal, macdhist = macdfix(self.close)
+        print(f'results are:\nmacd:\n{macd_res}\nmacd signal:\n{macdsignal}\nmacd hist:\n{macdhist}')
 
     def test_mfi(self):
         print(f'test TA function: mfi\n'
@@ -4129,25 +4129,25 @@ class TestTAFuncs(unittest.TestCase):
     def test_stoch(self):
         print(f'test TA function: stoch\n'
               f'========================')
-        res = stoch(self.high, self.low, self.close)
-        print(f'result is \n{res}')
+        slowk, slowd = stoch(self.high, self.low, self.close)
+        print(f'results are\nslowk:\n{slowk}\nslowd:\n{slowd}')
 
     def test_stochf(self):
         print(f'test TA function: stochf\n'
               f'=========================')
-        res = stochf(self.high, self.low, self.close)
-        print(f'result is \n{res}')
+        fastk, fastd = stochf(self.high, self.low, self.close)
+        print(f'results are\nfastk:\n{fastk}\nfastd:\n{fastd}')
 
     def test_stochrsi(self):
         print(f'test TA function: stochrsi\n'
               f'===========================')
-        res = stochrsi(self.close)
-        print(f'result is \n{res}')
+        fastk, fastd = stochrsi(self.close)
+        print(f'results are\nfastk:\n{fastk}\nfastd:\n{fastd}')
 
     def test_trix(self):
         print(f'test TA function: trix\n'
               f'=======================')
-        res = trix(self.close)
+        res = trix(self.close, timeperiod=5)
         print(f'result is \n{res}')
 
     def test_ultosc(self):
@@ -4237,14 +4237,14 @@ class TestTAFuncs(unittest.TestCase):
     def test_ht_phasor(self):
         print(f'test TA function: ht_phasor\n'
               f'============================')
-        res = ht_phasor(self.close)
-        print(f'result is \n{res}')
+        inphase, quadrature = ht_phasor(self.close)
+        print(f'results are\ninphase:\n{inphase}\nquadrature:\n{quadrature}')
 
     def test_ht_sine(self):
         print(f'test TA function: ht_sine\n'
               f'==========================')
-        res = ht_sine(self.close)
-        print(f'result is \n{res}')
+        res_a, res_b = ht_sine(self.close / 10)
+        print(f'results are:\nres_a:\n{res_a}\nres_b:\n{res_b}')
 
     def test_ht_trendmode(self):
         print(f'test TA function: ht_trendmode\n'
@@ -4681,7 +4681,7 @@ class TestTAFuncs(unittest.TestCase):
     def test_asin(self):
         print(f'test TA function: asin\n'
               f'=======================')
-        res = asin(self.close)
+        res = asin(self.close / 10)
         print(f'result is \n{res}')
 
     def test_atan(self):
@@ -4801,14 +4801,14 @@ class TestTAFuncs(unittest.TestCase):
     def test_minmax(self):
         print(f'test TA function: minmax\n'
               f'=========================')
-        res = minmax(self.close)
-        print(f'result is \n{res}')
+        min, max = minmax(self.close)
+        print(f'results are:\nmin:\n{min}\nmax:\n{max}')
 
     def test_minmaxindex(self):
         print(f'test TA function: minmaxindex\n'
               f'==============================')
-        res = minmaxindex(self.close)
-        print(f'result is \n{res}')
+        minidx, maxidx = minmaxindex(self.close)
+        print(f'results are:\nmin index:\n{minidx}\nmax index:\n{maxidx}')
 
     def test_mult(self):
         print(f'test TA function: mult\n'
