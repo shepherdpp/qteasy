@@ -842,9 +842,9 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                    same_shares=True)
 
     # debug
-    print(f'in function get_history_panel(), history panel is generated, they are:\n')
-    if result_hp is not None:
-        print(f'result history panel: \n{result_hp.info()}')
+    # print(f'in function get_history_panel(), history panel is generated, they are:\n')
+    # if result_hp is not None:
+        # print(f'result history panel: \n{result_hp.info()}')
 
     return result_hp
 

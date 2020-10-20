@@ -3729,43 +3729,43 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchanging in market\n'
               f'===============================')
-        df = fund_net_value(date=trade_date, market='E')
-        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
-              f'they are: \n{list(df.ts_code.unique())}')
-
-        print(f'test 1: find all funds in one specific date, exchange outside market\n'
-              f'===============================')
-        df = fund_net_value(date=trade_date, market='O')
-        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
-              f'they are: \n{list(df.ts_code.unique())}')
-
-        print(f'test 2: find value of one fund in history\n'
-              f'===============================')
-        fund = '512960.SH'
-        df = fund_net_value(fund=fund)
-        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        print(f'found in df records in {df.ann_date.nunique()} unique trade dates\n'
-              f'first 10 items of them are: \n{list(df.ann_date.unique()[:9])}')
-
-        print(f'test 3: find value of multiple funds in history\n'
-              f'===============================')
-        fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
-        trade_date = '20201009'
-        df = fund_net_value(fund=fund, date=trade_date)
-        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        self.assertEqual(list(df.ts_code.unique()), str_to_list(fund))
-        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
-              f'they are: \n{list(df.trade_date.unique())}')
+        # df = fund_net_value(date=trade_date, market='E')
+        # print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+        #       f'they are: \n{list(df.ts_code.unique())}')
+        #
+        # print(f'test 1: find all funds in one specific date, exchange outside market\n'
+        #       f'===============================')
+        # df = fund_net_value(date=trade_date, market='O')
+        # print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # print(f'found in df records in {df.ts_code.nunique()} unique trade dates\n'
+        #       f'they are: \n{list(df.ts_code.unique())}')
+        #
+        # print(f'test 2: find value of one fund in history\n'
+        #       f'===============================')
+        # fund = '512960.SH'
+        # df = fund_net_value(fund=fund)
+        # print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # print(f'found in df records in {df.ann_date.nunique()} unique trade dates\n'
+        #       f'first 10 items of them are: \n{list(df.ann_date.unique()[:9])}')
+        #
+        # print(f'test 3: find value of multiple funds in history\n'
+        #       f'===============================')
+        # fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
+        # trade_date = '20201009'
+        # df = fund_net_value(fund=fund, date=trade_date)
+        # print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        # self.assertIsInstance(df, pd.DataFrame)
+        # self.assertFalse(df.empty)
+        # self.assertEqual(list(df.ts_code.unique()), str_to_list(fund))
+        # print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
+        #       f'they are: \n{list(df.trade_date.unique())}')
 
     def test_future_basic(self):
         print(f'test tushare function: future_basic')
@@ -4833,7 +4833,7 @@ class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
     def setUp(self):
-        self.op = qt.Operator(timing_types=['dma', 'dma'],
+        self.op = qt.Operator(timing_types=['dma', 'macd'],
                               selecting_types=['all'],
                               ricon_types=['urgent'])
         self.cont = qt.Context(moq=0)
@@ -4874,14 +4874,14 @@ class TestQT(unittest.TestCase):
         """测试策略的回测模式"""
         self.cont.mode = 1
         self.cont.visual = False
-        self.cont.print_log = False
+        self.cont.print_log = True
         qt.run(self.op, self.cont)
 
     def test_run_mode_2(self):
         """测试策略的优化模式"""
         self.cont.mode = 2
         self.cont.opti_method = 1
-        self.cont.opti_method_sample_size = 10
+        self.cont.opti_method_sample_size = 100
         self.cont.opti_method_step_size = 32
         self.cont.opti_method_init_step_size = 16
         self.cont.opti_method_min_step_size = 1
@@ -4891,10 +4891,6 @@ class TestQT(unittest.TestCase):
     def test_built_in_timing(self):
         pass
 
-    # TODO: in next case (shares_banking[10:16 or 20]) error will be thrown out: Exception:
-    # TODO: zero-size array to reduction operation maximum which has no identity
-    # TODO: but shares_banking[:] will work,
-    # TODO: should investigate
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """

@@ -705,9 +705,13 @@ def run(operator, context):
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
-    op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-420, unit='d')).strftime('%Y%m%d')
+    # TODO: investigate: it seems that the first signal can not be earlier than 2007-01-05
+    # TODO: even if the hist data starts from 2013, when invest start to be 2016-04-03.
+    # TODO: don't know why, but it might be related to the historical data usage in create_signal()
+    # TODO: or prepare_data(). should find out.
+    op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-300, unit='d')).strftime('%Y%m%d')
     # debug
-    # print(f'preparing historical data, \ninvestment start date: {op_start}, '
+    # print(f'preparing historical data, \ninvestment start date: {context.invest_start}, '
     #       f'\noperation generation dependency start date: {op_start}\n'
     #       f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
     #       f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
