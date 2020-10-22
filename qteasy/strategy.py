@@ -464,8 +464,8 @@ class RollingTiming(Strategy):
         :return:
             np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
-        # print(f'hist_slice got in Timing.generate_over() function is shaped {hist_slice.shape}, parameter: {pars}')
-        # print(f'first 20 rows of hist_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
+        # print(f'在Timing.generate_over()函数中取到历史数据切片hist_slice的shape为 {hist_slice.shape}, 参数为: {pars}')
+        # print(f'first 20 rows of hist_price_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用_realize()函数
         # 由于输入的历史数据来自于HistoryPanel，因此总是三维数据的切片即二维数据，因此可以简化：
         # if len(hist_slice.shape) == 2:
@@ -477,6 +477,11 @@ class RollingTiming(Strategy):
         cat = np.zeros(hist_slice.shape[0])
         hist_nonan = hist_slice[no_nan]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
+        # debug
+        # print(f'there are {len(hist_nonan)} rows of data that are not "Nan", \n'
+        #       f'thus these rows of data will be "rolled" to a 2-D '
+        #       f'shaped matrix containing in each column {self.window_length} rows of data \neach offsetting 1 row ahead'
+        #       f'the next column over the whole matrix, forming a {loop_count} X {self.window_length} matrix')
         if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
             return cat[self.window_length:]
 
@@ -495,6 +500,9 @@ class RollingTiming(Strategy):
                                 par_list)))
         # TODO: 如果在创建cat的时候就去掉最前面一段，那么这里的capping和concatenate()就都不需要了，这都是很费时的操作
         # 生成的结果缺少最前面window_length那一段，因此需要补齐
+        # debug
+        # print(f'created long/short masks with above matrix, shape is {res.shape}\n'
+        #       f'containing {np.count_nonzero(res)} non-zero signals, first signal is at {np.where(res)[0]}')
         capping = np.zeros(self._window_length - 1)
         # debug
         # print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
@@ -502,7 +510,10 @@ class RollingTiming(Strategy):
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[no_nan] = res
         # debug
-        # print(f'created long/short mask for current hist_slice is: \n{cat[self.window_length:][:100]}')
+        # print(f'first 100 items of created long/short mask for current hist_slice is '
+        #       f'(shape:{cat[self.window_length:].shape}, containing '
+        #       f'{np.count_nonzero(cat[self.window_length:])} signals): \n'
+        #       f'{cat[self.window_length:][:100]}')
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
@@ -542,7 +553,7 @@ class RollingTiming(Strategy):
                                 par_list))).T
 
         # debug
-        # print(f'the history data passed to simple rolling realization function is shaped {hist_data.shape}')
+        # print(f'the history data passed to rolling realization function is shaped {hist_data.shape}')
         # print(f'generate result of np timing generate, result shaped {res.shape}')
         # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
@@ -646,11 +657,22 @@ class Selecting(Strategy):
         """
         # assert isinstance(dates, list), \
         #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
-        bnds = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
+        temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
+        # 在这里发现一个错误：
+        # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
+        # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
+        # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
+        # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
+        # 空白。
+        # 解决办法是生成daterange之后，使用pd.Timedelta将它平移到dates[self.window_length]当天即可。
+        bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
         # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
         # debug
-        # print(f'in module selecting: function seg_perids: comparing {dates[0]} and {bnds[0]}')
+        # print(f'in module selecting: function seg_perids generated date bounds supposed to start'
+        #       f'from {dates[self.window_length]} to {dates[-1]}, actually got:\n'
+        #       f'{bnds}\n'
+        #       f'now comparing first date {dates[0]} with first bound {bnds[0]}')
         # 用searchsorted函数把输入的日期与历史数据日期匹配起来
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # 最后一个分隔位等于历史区间的总长度
@@ -721,8 +743,8 @@ class Selecting(Strategy):
         # TODO: 可以使用map函数生成分段
         # debug
         # print(f'hist data received in selecting strategy (shape: {hist_data.shape}):\n{hist_data}')
-        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\nseg_count\n{
-        # seg_count}')
+        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\n'
+        #       f'seg_count\n{seg_count}')
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
             # debug
@@ -740,10 +762,12 @@ class Selecting(Strategy):
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         # debug
-        # print(f'hist data is filled with sel value, shape is {sel_mask.shape}')
+        # print(f'hist data is filled with sel value, shape is {sel_mask.shape}\n'
+        #       f'the first 100 items of sel values are {sel_mask[:100]}')
         # print(f'but the first {self.window_length} rows will be removed from the data\n'
         #       f'only last {sel_mask.shape[0] - self.window_length} rows will be returned\n'
-        #       f'returned mask shape is {sel_mask[self.window_length:].shape}')
+        #       f'returned mask shape is {sel_mask[self.window_length:].shape}\n'
+        #       f'first 100 items are \n{sel_mask[self.window_length:][:100]}')
         return sel_mask[self.window_length:]
 
 

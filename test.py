@@ -4939,6 +4939,41 @@ class TestBuiltIns(unittest.TestCase):
         print(f'type of class: {type(stg)}')
 
 
+class TestFastExperiments(unittest.TestCase):
+    """This test case is created to have experiments done that can be quickly called from Command line"""
+    def setUp(self):
+        self.op = qt.Operator(timing_types=['dma'],
+                              selecting_types=['all'],
+                              ricon_types=['ricon_none'])
+        self.cont = qt.Context()
+
+        self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
+        self.op.set_parameter('t-0', opt_tag=0, pars=(81, 178, 17))
+        self.op.set_parameter('r-0', pars=(0, 0))
+
+        self.cont.reference_asset = '000300.SH'
+        self.cont.reference_asset_type = 'I'
+        self.cont.share_pool = '000300.SH'
+        self.cont.asset_type = 'I'
+        self.cont.output_count = 50
+        self.cont.invest_start = '20020101'
+        self.cont.invest_end = '2008-12-31'
+        self.cont.moq = 1
+
+        self.cont.parallel = True
+        self.cont.print_log = True
+
+        # self.cont.cash_plan = qt.CashPlan(dates='20060406', amounts=[10000])
+        self.cont.cash_plan = qt.CashPlan(dates='20061128', amounts=[10000])
+
+    def test_exp1(self):
+        print(f'test case fast experiment 1 is running!')
+        self.cont.mode=1
+        self.cont.print_log=False
+        self.cont.visual=False
+        qt.run(self.op, self.cont)
+
+
 def test_suite(*args):
     suite = unittest.TestSuite()
     for arg_item in args:

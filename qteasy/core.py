@@ -891,7 +891,8 @@ def run(operator, context):
         print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
         print(f'total investment amount: ¥{total_invest:11,.2f}\n'
               f'final value:             ¥{final_value:11,.2f}')
-        print(f'Total return: {ret * 100:.3f}% \nAverage Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
+        print(f'Total return: {ret * 100 - 100:.3f}% \n'
+              f'Average Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
         print(f'Total reference return: {ref_rtn * 100:.3f}% \n'
               f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
         print(f'strategy performance indicators: \n'

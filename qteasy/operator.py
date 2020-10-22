@@ -695,8 +695,13 @@ class Operator:
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # debug
-        # print(f'period start {hist_data.hdates[0]}, ends {hist_data.hdates[-1]}')
-        # print(f'first and last cash pos: {first_cash_pos}, {last_cash_pos}')
+        # print(f'loaded historical data starts {hist_data.hdates[0].date()}, ends {hist_data.hdates[-1].date()}\n'
+        #       f'in total there are {len(hist_data.hdates)} rows of data in history data set')
+        # print(f'first and last cash investment dates are \n'
+        #       f'first date:{cash_plan.first_day} at pos: {first_cash_pos}, \n'
+        #       f'last date:{cash_plan.last_day} at pos: {last_cash_pos}\n'
+        #       f'the operation matrix should contain at least {len(hist_data.hdates) - first_cash_pos} '
+        #       f'rows of data to cover the range from {first_cash_pos} to {len(hist_data.hdates)}')
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date {cash_plan.first_day}, ' \
@@ -724,13 +729,17 @@ class Operator:
         self._selecting_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                         for stg in self.selecting]
         # debug
-        # print(f'slicing historical data \n{self._selecting_history_data}')
+        # print(f'slicing historical data for selecting data\n'
+        #       f'take "s-0" strategy as example, historical data of following types\n{self.selecting[0].data_types}\n'
+        #       f'and {self._selecting_history_data[0].shape[1]} rows '
+        #       f'are taken out of total {hist_data.shape[1]} rows from row '
+        #       f'{first_cash_pos - self.selecting[0].window_length} to row {hist_data.shape[1]}')
         # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
         self._timing_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                      for stg in self.timing]
         # debug
-        # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
-        #      f'{len(hist_data.hdates) - first_cash_pos}'
+        # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos - self.timing[0].window_length} = '
+        #      f'{len(hist_data.hdates) - first_cash_pos + self.timing[0].window_length}'
         #      f' rows for timing strategies')
         self._ricon_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                     for stg in self.ricon]
@@ -794,7 +803,7 @@ class Operator:
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # # debug
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
-        # print(f'Sel-mask has been created! mask is\n{sel_mask[:100]}')
+        # print(f'first 100 items of Sel-mask has been created! mask is\n{sel_mask[:100]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
@@ -806,16 +815,15 @@ class Operator:
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # # debug
         # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
-        # print('\n long/short mask: \n', ls_mask[:100])
-        # print 'Time measurement: risk-control_mask creation'
+        # print('\n first 100 items of long/short mask: \n', ls_mask[:100])
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
         ricon_mats = np.array([ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)])
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
         # debug
         # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
-        # print('risk control matrix \n', ricon_mat[:100])
-        # print('sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
+        # print('first 100 items of risk control matrix \n', ricon_mat[:100])
+        # print('first 100 items of sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
         # print(f'sel_mask * ls_mask converted to signal matrix:\n{mask_to_signal(ls_mask * sel_mask)[:100]}')
         # print(f'created operation matrix:\n{(mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)}')
 
@@ -832,8 +840,9 @@ class Operator:
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # debug
-        # print(f'Finally op mask has been created, shaped {op_mat.shape}')
-        # print(f'length of date_list: {len(date_list)}')
+        # print(f'Finally op mask has been created, shaped {op_mat.shape}, first 20 rows are {op_mat[:20]}')
+        # print(f'length of date_list: {len(date_list)} starting from {date_list[0]} to {date_list[-1]}\n'
+        #       f'first 20 rows of operation matrix before duplication removal is:\n{lst.head(20)}')
         # print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
