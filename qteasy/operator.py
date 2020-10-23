@@ -186,10 +186,8 @@ class Operator:
     """
 
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
-    # TODO: 将三种策略的操作规范化并重新分类，不再以策略的目的分类，而以策略的形成机理不同而分类
-    # TODO: 重新考虑单品种信号生成策略，考虑是否与单品种多空策略合并，还是保留并改进为完整的单品种信号生成策略
 
-    SUPPORTED_LS_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
+    AVAILABLE_LS_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
 
     def __init__(self, selecting_types=None,
                  timing_types=None,
@@ -279,7 +277,7 @@ class Operator:
         for ricon_type in ricon_types:
             if isinstance(ricon_type, str):
                 if ricon_type.lower() not in AVAILABLE_STRATEGIES:
-                    raise KeyError(f'ricon type {ricon_type} not found!')
+                    raise KeyError(f'ricon type {ricon_type} not available!')
                 self._ricon_type.append(ricon_type)
                 self._ricon.append(BUILT_IN_STRATEGY_DICT[ricon_type]())
             elif isinstance(ricon_type, (RollingTiming, SimpleTiming)):
@@ -748,14 +746,18 @@ class Operator:
         #      f'{len(hist_data.hdates) - first_cash_pos}'
         #      f' rows for ricon strategies')
 
+    # TODO: 需要改进：
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
     # TODO: 1，Buy-开多仓，2，sell-平多仓，3，sel_short-开空仓，4，buy_to_cover-平空仓
     # TODO: 应该创建标准的交易订单模式，并且通过一个函数把交易信号转化为交易订单，以供回测或实盘交易使用
-    # TODO: 交易信号生成和回测模块需要大改：在交易信号生成模块不再仅仅生成+1/-1交易信号，而是同时生成交易信号
+
+    # TODO: 交易信号生成和回测模块需改进：
+    # TODO: 在交易信号生成模块不再仅仅生成+1/-1交易信号，而是同时生成交易信号
     # TODO: 和多空目标位置，这样至少可以避免以下问题：当MOQ存在时，在逐步减仓的情况下，每次加仓的交易信号强度可能
     # TODO: 都不足以买到一手股票，那么所有逐步加仓的信号都会失效。
     # TODO: 另外，将交易信号和仓位信号分开也能更好地支持交易信号型策略和仓位变化型策略
 
+    # TODO: 需要调查：
     # TODO: 为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
     # TODO: hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
     # TODO: 需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
@@ -784,14 +786,12 @@ class Operator:
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
-        # 计时
+        # timing
         # st = time.clock()
         # TODO: here shares and dates should NOT be passed
         # TODO: into sel.generate() function as parameters
         # TODO: for uniformity reason. it should be the same
         # TODO: as tmg.generate() and ricon.generate()
-        # TODO: the function should work with pure numpy.ndarray
-        # TODO: to gain the best performance
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，未来应该考虑消除掉这两个参数
@@ -915,7 +915,7 @@ class Operator:
             blndr = str_to_list(self._ls_blender, '-')  # 从对象的属性中读取择时混合参数
         except:
             raise TypeError(f'the timing blender converted successfully!')
-        assert isinstance(blndr[0], str) and blndr[0] in self.SUPPORTED_LS_BLENDER_TYPES, \
+        assert isinstance(blndr[0], str) and blndr[0] in self.AVAILABLE_LS_BLENDER_TYPES, \
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
             f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
         # debug

@@ -658,7 +658,7 @@ class Selecting(Strategy):
         # assert isinstance(dates, list), \
         #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
         temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
-        # 在这里发现一个错误：
+        # 在这里发现一个错误，并已经修正：
         # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
         # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
         # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
@@ -685,7 +685,7 @@ class Selecting(Strategy):
         # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
         # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
         # 第3天的位置为2，第6天的位置为5，第9天的位置为8
-        # 然而，为了确保在生成选股数据时，第一天也不会被拉下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，这样才不会漏掉第一天和第二天
+        # 然而，为了确保在生成选股数据时，第一天也不会被落下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，这样才不会漏掉第一天和第二天
         # 以上是正常情况的处理方式
         # 如果分段的界限是[1,5,10]的时候，情况就不同了
         # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成[0,0,4,9],会出现问题
