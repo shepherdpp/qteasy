@@ -19,3 +19,5 @@ Untitled.ipynb
 *.pyc
 qteasy/__pycache__/__init__.cpython-36.pyc
 .idea/workspace.xml
+test_par_in_different_periods.ipynb
+.ipynb_checkpoints/test_par_in_different_periods-checkpoint.ipynb

@@ -888,9 +888,9 @@ def run(operator, context):
               f'time consumption for operation back looping: {time_str_format(run_time_loop_full)} ms\n')
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {years} years.')
-        print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:11,.2f}')
-        print(f'total investment amount: ¥{total_invest:11,.2f}\n'
-              f'final value:             ¥{final_value:11,.2f}')
+        print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:13,.2f}')
+        print(f'total investment amount: ¥{total_invest:13,.2f}\n'
+              f'final value:             ¥{final_value:13,.2f}')
         print(f'Total return: {ret * 100 - 100:.3f}% \n'
               f'Average Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
         print(f'Total reference return: {ref_rtn * 100:.3f}% \n'
@@ -1040,8 +1040,8 @@ def run(operator, context):
         print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result')
         print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{pars[-1]}')
         print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{pars[0]}')
-        result_df = pd.DataFrame(perfs, pars)
-        print(f'complete list of performance and parameters are following, \n{result_df}')
+        # result_df = pd.DataFrame(perfs, pars)
+        # print(f'complete list of performance and parameters are following, \n{result_df}')
         print(f'==========OPTIMIZATION COMPLETE============')
         return perfs, pars
         # optimization_log = Log()

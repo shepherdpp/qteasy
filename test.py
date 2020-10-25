@@ -3580,6 +3580,7 @@ class TestTushare(unittest.TestCase):
                   'n_incr_insured_dep',
                   'n_reinsur_prem',
                   'n_incr_disp_tfa']
+        fields = list_to_str_format(fields)
         shares = '000039.SZ'
         start = '20080101'
         end = '20201231'

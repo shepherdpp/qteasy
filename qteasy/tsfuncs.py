@@ -9,6 +9,7 @@
 
 import pandas as pd
 import tushare as ts
+from functools import lru_cache
 
 VALID_STOCK_CODE_SUFFIX = ['.SZ', '.SH', '.HK']
 
@@ -21,6 +22,7 @@ from .utilfuncs import regulate_date_format, list_to_str_format
 # Basic Market Data
 # ==================
 
+@lru_cache(maxsize=16)
 def stock_basic(is_hs: str = None,
                 list_status: str = None,
                 exchange: str = None,
@@ -63,6 +65,7 @@ def stock_basic(is_hs: str = None,
                            fields=fields)
 
 
+@lru_cache(maxsize=16)
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
                    end: str = None,
@@ -87,6 +90,7 @@ def trade_calendar(exchange: str = 'SSE',
                          is_open=is_open)
 
 
+@lru_cache(maxsize=16)
 def name_change(shares: str = None,
                 start: str = None,
                 end: str = None,
@@ -127,6 +131,7 @@ def name_change(shares: str = None,
                           fields=fields)
 
 
+@lru_cache(maxsize=16)
 def new_share(start: str = None,
               end: str = None) -> pd.DataFrame:
     """
@@ -185,6 +190,7 @@ def new_share(start: str = None,
     return pro.new_share(start_date=start, end_date=end)
 
 
+@lru_cache(maxsize=16)
 def stock_company(shares: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:
@@ -236,7 +242,7 @@ def stock_company(shares: str = None,
 
 # Bar price data
 # ==================
-
+@lru_cache(maxsize=16)
 def get_bar(shares: object,
             start: object,
             end: object,
@@ -292,6 +298,7 @@ def get_bar(shares: object,
                       ma=ma)
 
 
+@lru_cache(maxsize=16)
 def get_index(index: str,
               start: str,
               end: str,
@@ -311,7 +318,7 @@ def get_index(index: str,
 
 # Finance Data
 # ================
-
+@lru_cache(maxsize=16)
 def income(share: str,
            rpt_date: str = None,
            start: str = None,
@@ -439,6 +446,7 @@ def income(share: str,
                       fields=fields)
 
 
+@lru_cache(maxsize=16)
 def balance(share: str,
             rpt_date: str = None,
             start: str = None,
@@ -636,6 +644,7 @@ def balance(share: str,
                             fields=fields)
 
 
+@lru_cache(maxsize=16)
 def cashflow(share: str,
              rpt_date: str = None,
              start: str = None,
@@ -785,6 +794,7 @@ def cashflow(share: str,
                         fields=fields)
 
 
+@lru_cache(maxsize=16)
 def indicators(share: str,
                rpt_date: str = None,
                start: str = None,
@@ -995,7 +1005,7 @@ def indicators(share: str,
 
 # Market Data
 # =================
-
+@lru_cache(maxsize=16)
 def top_list(trade_date: str = None,
              shares: str = None,
              fields: str = None) -> pd.DataFrame:
@@ -1042,7 +1052,7 @@ def top_list(trade_date: str = None,
 
 # Index Data
 # ==================
-
+@lru_cache(maxsize=16)
 def index_basic(trade_date: str = None,
                 index: str = None,
                 start: str = None,
@@ -1096,6 +1106,7 @@ def index_basic(trade_date: str = None,
                                 fields=fields)
 
 
+@lru_cache(maxsize=16)
 def composite(index: str = None,
               trade_date: str = None,
               start: str = None,
@@ -1134,7 +1145,7 @@ def composite(index: str = None,
 # Funds Data
 # ==============
 
-
+@lru_cache(maxsize=16)
 def fund_net_value(fund: str = None,
                    date: str = None,
                    market: str = None,
@@ -1179,7 +1190,7 @@ def fund_net_value(fund: str = None,
 # Futures & Options Data
 # ===============
 
-
+@lru_cache(maxsize=16)
 def future_basic(exchange: str = None,
                  future_type: str = None,
                  fields: str = None) -> pd.DataFrame:
@@ -1228,6 +1239,7 @@ def future_basic(exchange: str = None,
                          fields=fields)
 
 
+@lru_cache(maxsize=16)
 def options_basic(exchange: str = None,
                   option_type: str = None,
                   fields: str = None) -> pd.DataFrame:
@@ -1277,6 +1289,7 @@ def options_basic(exchange: str = None,
                          fields=fields)
 
 
+@lru_cache(maxsize=16)
 def future_daily(trade_date: str = None,
                  future: str = None,
                  exchange: str = None,
@@ -1333,6 +1346,7 @@ def future_daily(trade_date: str = None,
                          fields=fields)
 
 
+@lru_cache(maxsize=16)
 def options_daily(trade_date: str = None,
                   option: str = None,
                   exchange: str = None,
