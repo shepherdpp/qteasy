@@ -4900,7 +4900,7 @@ class TestQT(unittest.TestCase):
         all_shares = stock_basic()
         shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
-        cont.share_pool = shares_banking[10:19]
+        cont.share_pool = shares_banking[10:15]
         cont.asset_type = 'E'
         cont.reference_asset = '000300.SH'
         cont.reference_asset_type = 'I'

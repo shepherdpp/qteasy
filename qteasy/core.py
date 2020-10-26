@@ -20,6 +20,7 @@ from .history import get_history_panel
 from .utilfuncs import time_str_format
 from .space import Space
 from .finance import Cost, CashPlan
+from .operator import Operator
 
 PROGRESS_BAR = {0 : '----------------------------------------', 1: '#---------------------------------------',
                 2 : '##--------------------------------------', 3: '###-------------------------------------',
@@ -653,7 +654,7 @@ def get_current_holdings() -> tuple:
 
     :return: tuple:
     """
-    return NotImplementedError
+    raise NotImplementedError
 
 
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
@@ -705,32 +706,33 @@ def run(operator, context):
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
-    # TODO: investigate: it seems that the first signal can not be earlier than 2007-01-05
-    # TODO: even if the hist data starts from 2013, when invest start to be 2016-04-03.
-    # TODO: don't know why, but it might be related to the historical data usage in create_signal()
-    # TODO: or prepare_data(). should find out.
-    op_start = (pd.to_datetime(context.invest_start) + pd.Timedelta(value=-300, unit='d')).strftime('%Y%m%d')
-    # debug
-    # print(f'preparing historical data, \ninvestment start date: {context.invest_start}, '
-    #       f'\noperation generation dependency start date: {op_start}\n'
-    #       f'end date: {context.invest_end}\nshares: {context.share_pool}\n'
-    #       f'htypes: {operator.op_data_types} at frequency \'{operator.op_data_freq}\'')
-    hist_op = get_history_panel(start=op_start,
+    # 生成用于数据回测的历史数据
+    hist_op = get_history_panel(start=context.invest_start,
                                 end=context.invest_end,
                                 shares=context.share_pool,
                                 htypes=operator.op_data_types,
                                 freq=operator.op_data_freq,
                                 asset_type=context.asset_type,
                                 chanel='online')
-    hist_loop = hist_op.to_dataframe(htype='close')  # 用于数据回测的历史数据
-    # TODO: 应该根据需要生成用于优化的历史数据
-    hist_opti = None  # 用于策略优化的历史数据
+    # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
+    hist_loop = hist_op.to_dataframe(htype='close')
+    # 生成用于策略优化训练的训练历史数据集合
+    hist_opti = get_history_panel(start=context.invest_start,
+                                  end=context.invest_end,
+                                  shares=context.share_pool,
+                                  htypes=operator.op_data_types,
+                                  freq=operator.op_data_freq,
+                                  asset_type=context.asset_type,
+                                  chanel='online')
+    # 生成用于优化策略测试的测试历史数据集合
+    hist_test = get_history_panel(start=context.invest_start,
+                                  end=context.invest_end,
+                                  shares=context.share_pool,
+                                  htypes=operator.op_data_types,
+                                  freq=operator.op_data_freq,
+                                  asset_type=context.asset_type,
+                                  chanel='online')
     # 生成参考历史数据，作为参考用于回测结果的评价
-    # debug
-    # print(f'preparing reference historical data, \n '
-    #       f'\noperation generation dependency start date: {context.invest_start}\n'
-    #       f'end date: {context.invest_end}\nshares: {context.reference_asset}\n'
-    #       f'htypes: {context.reference_data_type} at frequency \'{operator.op_data_freq}\'')
     hist_reference = (get_history_panel(start=context.invest_start,
                                         end=context.invest_end,
                                         shares=context.reference_asset,
@@ -779,10 +781,12 @@ def run(operator, context):
         else:
             pass
         amounts = [0] * len(context.share_pool)
-        print(f'==================================== \n'
-              f'        OPERATION SIGNALS\n'
-              f'====================================')
-        print(f'\ntime consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
+        print(f'====================================\n'
+              f'|                                  |\n'
+              f'|       OPERATION SIGNALS          |\n'
+              f'|                                  |\n'
+              f'====================================\n')
+        print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
         print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
               f'Total signals generated: {len(op_list.index)}.')
         print(f'Operation signal for shares on {op_list.index[-1].date()}')
@@ -880,7 +884,7 @@ def run(operator, context):
         # TODO: 将回测的更详细结果及回测的每一次操作详情登记到log文件中（可选内容）
         print(f'==================================== \n'
               f'|                                  |\n'
-              f'|          LOOPING RESULT          |\n'
+              f'|       BACK TESTING RESULT        |\n'
               f'|                                  |\n'
               f'====================================')
         print(f'\nqteasy running mode: 1 - History back looping\n'
@@ -957,6 +961,7 @@ def run(operator, context):
         how = context.opti_method
         operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
         pars, perfs = 0, 0
+        # TODO: 重构这段代码，使用运行模式字典代替一连串的if判断
         if how == 0:
             """ Exhausetive Search 穷举法
             
@@ -1035,27 +1040,41 @@ def run(operator, context):
             """
             raise NotImplementedError
 
-        print(f'\n==========SEARCHING FINISHED===============')
+        print(f'====================================\n'
+              f'|                                  |\n'
+              f'|       OPTIMIZATION RESULT        |\n'
+              f'|                                  |\n'
+              f'====================================\n')
         print(f'Searching finished, {len(perfs)} best results are generated')
         print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result')
         print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{pars[-1]}')
         print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{pars[0]}')
-        # result_df = pd.DataFrame(perfs, pars)
-        # print(f'complete list of performance and parameters are following, \n{result_df}')
+        # TODO: 经过测试，发现策略结果复用优化后的结果（tuple of tuples）在生成
+        # TODO: DataFrame会出错，需要解决该问题。下面的代码是临时处理方案：当检测
+        # TODO: 到pars为tuple of tuple类型时，忽略DataFrame创建。
+        if not isinstance(pars[0], tuple):
+            result_df = pd.DataFrame(perfs, pars)
+            print(f'complete list of performance and parameters are following, \n{result_df}')
         print(f'==========OPTIMIZATION COMPLETE============')
+        # TODO: 在返回优化的pars/perfs之前，应该先将所有的pars在测试区间上进行
+        # TODO: 测试，并将打印/输出测试评价指标的统计结果。
         return perfs, pars
-        # optimization_log = Log()
-        # optimization_log.write_record(pars, perfs)
+
     elif run_mode == 3:
         """ 进入策略统计预测分析模式
         
         使用蒙特卡洛方法预测策略的未来表现。
         
         """
+        print(f'====================================\n'
+              f'|                                  |\n'
+              f'|       PREDICTIVE RESULTS         |\n'
+              f'|                                  |\n'
+              f'====================================\n')
         raise NotImplementedError
 
 
-def _get_parameter_performance(par, op, hist, history_list, context) -> float:
+def _get_parameter_performance(par: tuple, op: Operator, hist, history_list, context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
     input:
@@ -1117,8 +1136,6 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
     """
-
-    proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
@@ -1139,6 +1156,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
     best_so_far = 0
     if parallel:
         # 启用并行计算
+        proc_pool = ProcessPoolExecutor()
         futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
                    it}
         for f in as_completed(futures):
@@ -1187,7 +1205,6 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 """
-    proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
@@ -1205,6 +1222,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     best_so_far = 0
     if parallel:
         # 启用并行计算
+        proc_pool = ProcessPoolExecutor()
         futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
                    it}
         for f in as_completed(futures):
@@ -1255,7 +1273,6 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
         pool.perfs 输出的参数组的评价分数
 
 """
-    proc_pool = ProcessPoolExecutor()
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
@@ -1285,6 +1302,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
             # print(f'{total} points to be checked at step size {step_size}\n')
             if parallel:
                 # 启用并行计算
+                proc_pool = ProcessPoolExecutor()
                 futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for
                            par in it}
                 for f in as_completed(futures):
