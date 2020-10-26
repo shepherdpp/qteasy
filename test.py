@@ -4844,7 +4844,7 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         self.op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         # self.op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-        self.op.set_parameter('r-0', opt_tag=1, par_boes=[(5, 14), (-0.2, 0)])
+        self.op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
 
         self.cont.reference_asset = '000300.SH'
         self.cont.reference_asset_type = 'I'
@@ -4864,7 +4864,7 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter(stg_id='t-1', pars=timing_pars3)
         self.op.set_parameter('r-0', pars=(9, -0.1595))
         self.cont.parallel = True
-        self.cont.print_log = True
+        self.cont.print_log = False
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
@@ -4883,10 +4883,10 @@ class TestQT(unittest.TestCase):
         self.cont.mode = 2
         self.cont.opti_method = 1
         self.cont.opti_method_sample_size = 100
-        self.cont.opti_method_step_size = 32
-        self.cont.opti_method_init_step_size = 16
-        self.cont.opti_method_min_step_size = 1
-        self.cont.opti_method_incre_ratio = 2
+        self.cont.opti_start = '20040104'
+        self.cont.opti_end = '20141231'
+        self.cont.test_start = '20120604'
+        self.cont.test_end = '20201231'
         qt.run(self.op, self.cont)
 
     def test_built_in_timing(self):

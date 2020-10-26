@@ -12,39 +12,17 @@ import numpy as np
 import datetime
 import time
 import math
-import sys
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from .history import get_history_panel
-from .utilfuncs import time_str_format
+from .history import get_history_panel, HistoryPanel
+from .utilfuncs import time_str_format, progress_bar
 from .space import Space
 from .finance import Cost, CashPlan
 from .operator import Operator
 
-PROGRESS_BAR = {0 : '----------------------------------------', 1: '#---------------------------------------',
-                2 : '##--------------------------------------', 3: '###-------------------------------------',
-                4 : '####------------------------------------', 5: '#####-----------------------------------',
-                6 : '######----------------------------------', 7: '#######---------------------------------',
-                8 : '########--------------------------------', 9: '#########-------------------------------',
-                10: '##########------------------------------', 11: '###########-----------------------------',
-                12: '############----------------------------', 13: '#############---------------------------',
-                14: '##############--------------------------', 15: '###############-------------------------',
-                16: '################------------------------', 17: '#################-----------------------',
-                18: '##################----------------------', 19: '###################---------------------',
-                20: '####################--------------------', 21: '#####################-------------------',
-                22: '######################------------------', 23: '#######################-----------------',
-                24: '########################----------------', 25: '#########################---------------',
-                26: '##########################--------------', 27: '###########################-------------',
-                28: '############################------------', 29: '#############################-----------',
-                30: '##############################----------', 31: '###############################---------',
-                32: '################################--------', 33: '#################################-------',
-                34: '##################################------', 35: '###################################-----',
-                36: '####################################----', 37: '#####################################---',
-                38: '######################################--', 39: '#######################################-',
-                40: '########################################'
-                }
 
+AVAILABLE_EVALUATION_INDICATORS = []
 
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -169,10 +147,10 @@ class Context:
                                         {0: 单一优化区间，在一段历史数据区间上进行参数寻优,
                                          1: 多重优化区间，根据策略参数在几段不同的历史数据区间上的平均表现来确定最优参数}
 
-            opti_start:                 str, 优化历史区间起点
-            opti_window_span:           str, 优化历史区间跨度
-            opti_window_count:          int, 当选择多重优化区间时，优化历史区间的数量
-            opti_window_offset:         str, 当选择多重优化区间时，不同区间的开始间隔
+            opti_start:                 str, 优化历史区间起点，默认值'20050106'
+            opti_end:                   str, 优化历史区间终点，默认值'20141231'
+            opti_window_count:          int, 当选择多重优化区间时，优化历史区间的数量，默认值=1
+            opti_window_offset:         str, 当选择多重优化区间时，不同区间的开始间隔，默认值='1Y'
             opti_weighting_type:        int 当选择多重优化区间时，计算平均表现分数的方法：
                                         {0: 简单平均值,
                                          1: 线性加权平均值,
@@ -180,14 +158,16 @@ class Context:
 
             test_period_type:           int, 参数测试区间类型，在一段历史数据区间上找到最优参数后，可以在同一个区间上测试最优参数的
                                         表现，也可以在不同的历史数据区间上测试（这是更好的办法），选项有三个：
-                                        {0: 相同区间,
-                                         1: 接续区间,
+                                        {0: 相同区间, 此情况下忽略test_start与test_end参数，使用opti_start与opti_end,
+                                         1: 接续区间, 此情况下忽略test_start与test_end参数，使用
+                                                    opti_end与opti_end+opti_end-opti_start
                                          2: 自定义区间}
+                                         默认值=2
 
-            test_period_offset:         str, 如果选择自定义区间，测试区间与寻优区间之间的间隔
-            test_window_span:           str, 测试历史区间跨度
+            test_start:                 str, 如果选择自定义区间，测试区间与寻优区间之间的间隔
+            test_end:                   str, 测试历史区间跨度
             target_function:            str, 作为优化目标的评价函数
-            larger_is_better:           bool, 确定目标函数的优化方向，保留函数值最大的还是最小的结果，默认True，寻找函数值最大的结果
+            maximize_result:            bool, 确定目标函数的优化方向，保留函数值最大的还是最小的结果，默认True，寻找函数值最大的结果
 
             opti_method:                int, 不同的优化参数搜索算法：
                                         {0: Exhaustive，固定步长搜索法,
@@ -310,18 +290,20 @@ class Context:
 
         self.opti_period_type = 0
 
-        self.opti_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')
-        self.opti_window_span = '3Y'
-        self.opti_window_count = 5
+        self.opti_start = '20040506'
+        self.opti_end = '20141231'
+        self.opti_window_count = 1
         self.opti_window_offset = '1Y'
         self.opti_weighting_type = 0
+        self.opti_cash_plan = CashPlan(dates='20060403', amounts=10000)
 
-        self.test_period_type = 0
+        self.test_period_type = 2
 
-        self.test_period_offset = 180
-        self.test_window_span = '1Y'
+        self.test_start = '20120604'
+        self.test_end = '20201231'
+        self.test_cash_plan = CashPlan(dates='20140106', amounts=10000)
         self.target_function = 'FV'
-        self.larger_is_better = True
+        self.maximize_result = True
 
         self.opti_method = 0
 
@@ -702,6 +684,10 @@ def run(operator, context):
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     run_mode = context.mode
     run_mode_text = context.mode_text
+    print(f'====================================\n'
+          f'       RUNNING IN MODE {run_mode}\n'
+          f'      --{run_mode_text}--\n'
+          f'====================================\n')
 
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
@@ -717,21 +703,22 @@ def run(operator, context):
     # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
     hist_loop = hist_op.to_dataframe(htype='close')
     # 生成用于策略优化训练的训练历史数据集合
-    hist_opti = get_history_panel(start=context.invest_start,
-                                  end=context.invest_end,
+    hist_opti = get_history_panel(start=context.opti_start,
+                                  end=context.opti_end,
                                   shares=context.share_pool,
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=context.asset_type,
                                   chanel='online')
     # 生成用于优化策略测试的测试历史数据集合
-    hist_test = get_history_panel(start=context.invest_start,
-                                  end=context.invest_end,
+    hist_test = get_history_panel(start=context.test_start,
+                                  end=context.test_end,
                                   shares=context.share_pool,
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=context.asset_type,
                                   chanel='online')
+    hist_test_loop = hist_test.to_dataframe(htype='close')
     # 生成参考历史数据，作为参考用于回测结果的评价
     hist_reference = (get_history_panel(start=context.invest_start,
                                         end=context.invest_end,
@@ -741,15 +728,15 @@ def run(operator, context):
                                         asset_type=context.reference_asset_type,
                                         chanel='online')).to_dataframe(htype='close')
     # debug
-    # print(f'reference hist data downloaded, info: \n{hist_reference.info()}\n'
-    #       f'operation hist data downloaded, info: \n{hist_op.info()}')
-    # ===============
-    # 开始正式的策略运行，根据不同的运行模式，运行的程序不同
-    # ===============~~
-    print(f'====================================\n'
-          f'       RUNNING IN MODE {run_mode}\n'
-          f'      --{run_mode_text}--\n'
-          f'====================================\n')
+    # print(f'operation hist data downloaded, info: \n')
+    # hist_op.info()
+    # print(f'optimization hist data downloaded, info: \n')
+    # hist_opti.info()
+    # print(f'test hist data downloaded, info: \n')
+    # hist_test.info()
+    # print(f'reference hist data downloaded, info: \n')
+    # hist_reference.info()
+
     if run_mode == 0:
         """进入实时信号生成模式：
         
@@ -857,7 +844,6 @@ def run(operator, context):
                                    print_log=context.print_log)
         et = time.time()
         run_time_loop_full = (et - st)
-        # print('looped values result is: \n', looped_values)
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
         years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
                                                                      looped_value=looped_values,
@@ -959,7 +945,7 @@ def run(operator, context):
             的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。
         """
         how = context.opti_method
-        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_opti, cash_plan=context.opti_cash_plan)  # 在生成交易信号之前准备历史数据
         pars, perfs = 0, 0
         # TODO: 重构这段代码，使用运行模式字典代替一连串的if判断
         if how == 0:
@@ -975,9 +961,7 @@ def run(operator, context):
             """
             pars, perfs = _search_exhaustive(hist=hist_op,
                                              op=operator,
-                                             context=context,
-                                             step_size=context.opti_method_step_size,
-                                             parallel=context.parallel)
+                                             context=context)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -986,11 +970,9 @@ def run(operator, context):
                 
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
             """
-            pars, perfs = _search_montecarlo(hist=hist_op,
+            pars, perfs = _search_montecarlo(hist=hist_opti,
                                              op=operator,
-                                             context=context,
-                                             point_count=context.opti_method_sample_size,
-                                             parallel=context.parallel)
+                                             context=context)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
             
@@ -1005,13 +987,9 @@ def run(operator, context):
                 
                 关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
             """
-            pars, perfs = _search_incremental(hist=hist_op,
+            pars, perfs = _search_incremental(hist=hist_opti,
                                               op=operator,
-                                              context=context,
-                                              init_step=context.opti_method_init_step_size,
-                                              min_step=context.opti_method_min_step_size,
-                                              inc_step=context.opti_method_incre_ratio,
-                                              parallel=context.parallel)
+                                              context=context)
         elif how == 3:
             """ GA method遗传算法
             
@@ -1049,15 +1027,107 @@ def run(operator, context):
         print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result')
         print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{pars[-1]}')
         print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{pars[0]}')
-        # TODO: 经过测试，发现策略结果复用优化后的结果（tuple of tuples）在生成
-        # TODO: DataFrame会出错，需要解决该问题。下面的代码是临时处理方案：当检测
-        # TODO: 到pars为tuple of tuple类型时，忽略DataFrame创建。
-        if not isinstance(pars[0], tuple):
-            result_df = pd.DataFrame(perfs, pars)
-            print(f'complete list of performance and parameters are following, \n{result_df}')
-        print(f'==========OPTIMIZATION COMPLETE============')
+        print(f'==========VALIDATION OF OPTIMIZATION RESULTS============')
         # TODO: 在返回优化的pars/perfs之前，应该先将所有的pars在测试区间上进行
         # TODO: 测试，并将打印/输出测试评价指标的统计结果。
+        test_result_df = pd.DataFrame(columns=['par',
+                                               'sell_count',
+                                               'buy_count',
+                                               'oper_count',
+                                               'total_fee',
+                                               'final_value',
+                                               'total_return',
+                                               'annual_return',
+                                               'max_drawdown',
+                                               'volatility',
+                                               'alpha',
+                                               'beta',
+                                               'sharp',
+                                               'info'])
+        operator.prepare_data(hist_data=hist_test, cash_plan=context.test_cash_plan)
+        for par in pars:
+            operator.set_opt_par(par)  # 设置需要优化的策略参数
+            op_list = operator.create_signal(hist_test)
+            looped_values = apply_loop(op_list=op_list,
+                                       history_list=hist_test_loop,
+                                       visual=False,
+                                       cash_plan=context.test_cash_plan,
+                                       cost_rate=context.rate,
+                                       price_visual=False,
+                                       moq=context.moq)
+            years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
+                                                                         looped_value=looped_values,
+                                                                         cash_plan=context.test_cash_plan)
+            # 评价回测结果——计算回测终值
+            final_value = _eval_fv(looped_val=looped_values)
+            # 评价回测结果——计算总投资收益率
+            ret = final_value / total_invest
+            # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
+            max_drawdown, low_date = _eval_max_drawdown(looped_values)
+            # 评价回测结果——计算投资期间的波动率系数
+            volatility = _eval_volatility(looped_values)
+            # 评价回测结果——计算投资期间的beta贝塔系数
+            beta = _eval_beta(looped_values, hist_reference, reference_data)
+            # 评价回测结果——计算投资期间的夏普率
+            sharp = _eval_sharp(looped_values, total_invest, 0.015)
+            # 评价回测结果——计算投资期间的alpha阿尔法系数
+            alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+            # 评价回测结果——计算投资回报的信息比率
+            info = _eval_info_ratio(looped_values, hist_reference, reference_data)
+            # debug
+            # print(f'tested parameter {par} on period: {looped_values.index[0]} to {looped_values.index[-1]} and got:\n'
+            #       f'total final values: {final_value}, other performance indicators are:\n')
+            # print({'par'            :par,
+            #        'sell_count'     :oper_count.sell.sum(),
+            #        'buy_count'      :oper_count.buy.sum(),
+            #        'oper_count'     :oper_count.total.sum(),
+            #        'total_fee'      :total_fee,
+            #        'final_value'    :final_value,
+            #        'total_return'   :ret - 1,
+            #        'annual_return'  :ret ** (1 / years) - 1,
+            #        'max_drawdown'   :max_drawdown,
+            #        'volatility'     :volatility,
+            #        'alpha'          :alpha,
+            #        'beta'           :beta,
+            #        'sharp'          :sharp,
+            #        'info'           :info})
+            test_result_df = test_result_df.append({'par'            :par,
+                                                    'sell_count'     :oper_count.sell.sum(),
+                                                    'buy_count'      :oper_count.buy.sum(),
+                                                    'oper_count'     :oper_count.total.sum(),
+                                                    'total_fee'      :total_fee,
+                                                    'final_value'    :final_value,
+                                                    'total_return'   :ret - 1,
+                                                    'annual_return'  :ret ** (1 / years) - 1,
+                                                    'max_drawdown'   :max_drawdown,
+                                                    'volatility'     :volatility,
+                                                    'alpha'          :alpha,
+                                                    'beta'           :beta,
+                                                    'sharp'          :sharp,
+                                                    'info'           :info
+                                                    },
+                                                   ignore_index=True)
+
+        # 评价回测结果——计算参考数据收益率以及平均年化收益率
+        ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
+        print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
+              f'Total looped periods: {years} years.')
+        print(f'total investment amount: ¥{total_invest:13,.2f}')
+        print(f'Reference index type is {context.reference_asset} at {context.reference_asset_type}\n'
+              f'Total reference return: {ref_rtn * 100:.3f}% \n'
+              f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
+        print(f'statistical analysis of optimal strategy performance indicators: \n'
+              f'annual return:       {test_result_df.annual_return.mean():.3f} +-'
+              f' {test_result_df.annual_return.std():.3f}\n'
+              f'alpha:               {test_result_df.alpha.mean():.3f} +- {test_result_df.alpha.std():.3f}\n'
+              f'Beta:                {test_result_df.beta.mean():.3f} +- {test_result_df.beta.std():.3f}\n'
+              f'Sharp ratio:         {test_result_df.sharp.mean():.3f} +- {test_result_df.sharp.std():.3f}\n'
+              f'Info ratio:          {test_result_df["info"].mean():.3f} +- {test_result_df["info"].std():.3f}\n'
+              f'250 day volatility:  {test_result_df.volatility.mean():.3f} +- {test_result_df.volatility.std():.3f}\n'
+              f'other performance indicators are listed in below table\n')
+        print(test_result_df[["par","sell_count", "buy_count", "oper_count", "total_fee",
+                              "final_value", "total_return", "max_drawdown"]])
+        print(f'\n===========END OF REPORT=============\n')
         return perfs, pars
 
     elif run_mode == 3:
@@ -1074,7 +1144,11 @@ def run(operator, context):
         raise NotImplementedError
 
 
-def _get_parameter_performance(par: tuple, op: Operator, hist, history_list, context) -> float:
+def _get_parameter_performance(par: tuple,
+                               op: Operator,
+                               hist: HistoryPanel,
+                               history_list: pd.DataFrame,
+                               context: Context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
     input:
@@ -1103,23 +1177,7 @@ def _get_parameter_performance(par: tuple, op: Operator, hist, history_list, con
     return perf
 
 
-def _progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bool = False):
-    """根据输入的数字生成进度条字符串并刷新
-
-    :param prog: 当前进度，用整数表示
-    :param total:  总体进度，默认为100
-    :param comments:  需要显示在进度条中的文字信息
-    :param short_form:  显示
-    """
-    if prog > total:
-        prog = total
-    progress_str = f'\r \rOptimization progress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                   f' {prog}/{total}. {np.round(prog / total * 100, 1)}%  {comments}'
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
-
-
-def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: bool = True):
+def _search_exhaustive(hist, op, context):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1130,11 +1188,9 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
         :param context, object, 用于存储优化参数的上下文对象
-        :param step_size，int或list，搜索参数，搜索步长，在参数空间中提取参数的间隔，如果是int型，则在空间的每一个轴上
-            取同样的步长，如果是list型，则取list中的数字分别作为每个轴的步长
     return: =====tuple对象，包含两个变量
-        pool.pars 作为结果输出的参数组
-        pool.perfs 输出的参数组的评价分数
+        pars 作为结果输出的参数组
+        perfs 输出的参数组的评价分数
     """
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
@@ -1142,7 +1198,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
 
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
     i = 0
-    it, total = space.extract(step_size)
+    it, total = space.extract(context.opti_method_step_size)
     # debug
     # print('Result pool has been created, capacity of result pool: ', pool.capacity)
     # print('Searching Space has been created: ')
@@ -1154,7 +1210,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     best_so_far = 0
-    if parallel:
+    if context.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
         futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
@@ -1165,7 +1221,7 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
             if f.result() > best_so_far:
                 best_so_far = f.result()
             if i % 10 == 0:
-                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     else:
         for par in it:
             perf = _get_parameter_performance(par=par,
@@ -1178,18 +1234,18 @@ def _search_exhaustive(hist, op, context, step_size: [int, tuple], parallel: boo
             if perf > best_so_far:
                 best_so_far = perf
             if i % 10 == 0:
-                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
-    _progress_bar(i, i)
+    progress_bar(i, i)
     pool.cut(context.larger_is_better)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool = True):
+def _search_montecarlo(hist, op, context):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1210,7 +1266,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     space = Space(s_range, s_type)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
-    it, total = space.extract(point_count, how='rand')
+    it, total = space.extract(context.opti_method_sample_size, how='rand')
     # debug
     # print('Result pool has been created, capacity of result pool: ', pool.capacity)
     # print('Searching Space has been created: ')
@@ -1220,7 +1276,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     best_so_far = 0
-    if parallel:
+    if context.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
         futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
@@ -1231,7 +1287,7 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
             if f.result() > best_so_far:
                 best_so_far = f.result()
             if i % 10 == 0:
-                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     else:
         # 禁用并行计算
         for par in it:
@@ -1245,15 +1301,15 @@ def _search_montecarlo(hist, op, context, point_count: int = 50, parallel: bool 
             if perf > best_so_far:
                 best_so_far = perf
             if i % 10 == 0:
-                _progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
-    pool.cut(context.larger_is_better)
+                progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+    pool.cut(context.maximize_result)
     et = time.time()
-    _progress_bar(total, total)
+    progress_bar(total, total)
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st, short_form=True)}')
     return pool.pars, pool.perfs
 
 
-def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1, parallel: bool = True):
+def _search_incremental(hist, op, context):
     """ 最优参数搜索算法3: 递进搜索法
 
         该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
@@ -1273,6 +1329,10 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
         pool.perfs 输出的参数组的评价分数
 
 """
+    init_step = context.opti_method_init_step_size
+    min_step = context.opti_method_min_step_size
+    inc_step = context.opti_method_incre_ratio
+    parallel = context.parallel
     pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
@@ -1309,7 +1369,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
                     pool.in_pool(futures[f], f.result())
                     i += 1
                     if i % 10 == 0:
-                        _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
+                        progress_bar(i, total_calc_rounds, f'step size: {step_size}')
             else:
                 # 禁用并行计算
                 for par in it:
@@ -1323,7 +1383,7 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
                     pool.in_pool(par, perf)
                     i += 1
                     if i % 20 == 0:
-                        _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
+                        progress_bar(i, total_calc_rounds, f'step size: {step_size}')
         # debug
         # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
         pool.cut(context.larger_is_better)
@@ -1334,9 +1394,9 @@ def _search_incremental(hist, op, context, init_step=16, inc_step=2, min_step=1,
         # debug
         # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
         step_size //= inc_step
-        _progress_bar(i, total_calc_rounds, f'step size: {step_size}')
+        progress_bar(i, total_calc_rounds, f'step size: {step_size}')
     et = time.time()
-    _progress_bar(i, i, f'step size: {step_size}')
+    progress_bar(i, i, f'step size: {step_size}')
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
@@ -1529,13 +1589,15 @@ def _eval_max_drawdown(looped_value):
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
     if not looped_value.empty:
-        max_val = 0
-        max_drawdown = 0
-        max_drawdown_date = 0
+        max_val = 0.
+        drawdown = 0.
+        max_drawdown = 0.
+        max_drawdown_date = 0.
         for date, value in looped_value.value.iteritems():
             if value > max_val:
                 max_val = value
-            drawdown = 1 - value / max_val
+            if max_val != 0:
+                drawdown = 1 - value / max_val
             if drawdown > max_drawdown:
                 max_drawdown = drawdown
                 max_drawdown_date = date
