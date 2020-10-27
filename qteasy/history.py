@@ -883,7 +883,7 @@ def get_price_type_raw_data(start: str,
         # debug
         # print('raw df before rearange\n', raw_df)
         assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
-                                   f'{share}!'
+                                   f'{share} from {start} to {end} in frequency {freq}'
         raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
         raw_df.index = range(len(raw_df))
         # print('\nraw df after rearange\n', raw_df)

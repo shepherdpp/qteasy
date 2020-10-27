@@ -693,32 +693,36 @@ def run(operator, context):
     # 用于交易信号生成的历史数据
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
     # 生成用于数据回测的历史数据
-    hist_op = get_history_panel(start=context.invest_start,
-                                end=context.invest_end,
-                                shares=context.share_pool,
-                                htypes=operator.op_data_types,
-                                freq=operator.op_data_freq,
-                                asset_type=context.asset_type,
-                                chanel='online')
-    # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
-    hist_loop = hist_op.to_dataframe(htype='close')
-    # 生成用于策略优化训练的训练历史数据集合
-    hist_opti = get_history_panel(start=context.opti_start,
-                                  end=context.opti_end,
-                                  shares=context.share_pool,
-                                  htypes=operator.op_data_types,
-                                  freq=operator.op_data_freq,
-                                  asset_type=context.asset_type,
-                                  chanel='online')
-    # 生成用于优化策略测试的测试历史数据集合
-    hist_test = get_history_panel(start=context.test_start,
-                                  end=context.test_end,
-                                  shares=context.share_pool,
-                                  htypes=operator.op_data_types,
-                                  freq=operator.op_data_freq,
-                                  asset_type=context.asset_type,
-                                  chanel='online')
-    hist_test_loop = hist_test.to_dataframe(htype='close')
+    if run_mode == 1 or run_mode == 0:
+        hist_op = get_history_panel(start=context.invest_start,
+                                    end=context.invest_end,
+                                    shares=context.share_pool,
+                                    htypes=operator.op_data_types,
+                                    freq=operator.op_data_freq,
+                                    asset_type=context.asset_type,
+                                    chanel='online')
+        # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
+        hist_loop = hist_op.to_dataframe(htype='close')
+
+    if run_mode == 2:
+        # 生成用于策略优化训练的训练历史数据集合
+        hist_opti = get_history_panel(start=context.opti_start,
+                                      end=context.opti_end,
+                                      shares=context.share_pool,
+                                      htypes=operator.op_data_types,
+                                      freq=operator.op_data_freq,
+                                      asset_type=context.asset_type,
+                                      chanel='online')
+        # 生成用于优化策略测试的测试历史数据集合
+        hist_test = get_history_panel(start=context.test_start,
+                                      end=context.test_end,
+                                      shares=context.share_pool,
+                                      htypes=operator.op_data_types,
+                                      freq=operator.op_data_freq,
+                                      asset_type=context.asset_type,
+                                      chanel='online')
+        hist_test_loop = hist_test.to_dataframe(htype='close')
+
     # 生成参考历史数据，作为参考用于回测结果的评价
     hist_reference = (get_history_panel(start=context.invest_start,
                                         end=context.invest_end,
@@ -959,7 +963,7 @@ def run(operator, context):
                 
                 关于穷举法的具体参数和输出，参见self._search_exhaustive()函数的docstring
             """
-            pars, perfs = _search_exhaustive(hist=hist_op,
+            pars, perfs = _search_exhaustive(hist=hist_opti,
                                              op=operator,
                                              context=context)
         elif how == 1:
