@@ -20,6 +20,7 @@ from .utilfuncs import time_str_format, progress_bar
 from .space import Space
 from .finance import Cost, CashPlan
 from .operator import Operator
+from .visual import plot_loop_result
 
 
 AVAILABLE_EVALUATION_INDICATORS = []
@@ -590,8 +591,6 @@ def apply_loop(op_list: pd.DataFrame,
             if print_log:
                 print(f'本期新增投入现金, 本期现金: {(cash - invest_dict[i]):.2f}, 追加投资后现金增加到{cash:.2f}')
         # 调用loop_step()函数，计算下一期剩余资金、资产组合的持有份额、交易成本和下期资产总额
-        # debug
-        # print('before:', cash, amounts, op[i], price[i], cost_rate, moq)
         cash, amounts, fee, value = _loop_step(pre_cash=cash,
                                                pre_amounts=amounts,
                                                op=op[i],
@@ -600,8 +599,6 @@ def apply_loop(op_list: pd.DataFrame,
                                                moq=moq,
                                                print_log=print_log)
         # 保存计算结果
-        # debug
-        # print('after:', cash, amounts, fee)
         cashes.append(cash)
         fees.append(fee)
         values.append(value)
@@ -611,22 +608,22 @@ def apply_loop(op_list: pd.DataFrame,
                                  columns=op_list.columns)
 
     # 填充标量计算结果
+    # TODO: should add more columns that might be required in visualization, such as amount purchased/sold
     value_history['cash'] = cashes
     value_history['fee'] = fees
     value_history['value'] = values
-    # debug
-    # print(value_history)
+
     if visual:  # Visual参数为True时填充完整历史记录并
         complete_value = _get_complete_hist(looped_value=value_history,
                                             h_list=history_list,
                                             with_price=price_visual)
         # 输出相关资产价格
+        # TODO: should investigate: how to fit different shares into the plot?
         if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
             shares = history_list.columns
-            complete_value.plot(grid=True, figsize=(15, 7), legend=True,
-                                secondary_y=shares)
+            plot_loop_result(complete_value)
         else:  # 否则，仅显示总资产的历史变化情况
-            complete_value.plot(grid=True, figsize=(15, 7), legend=True)
+            plot_loop_result(complete_value)
         return complete_value
     return value_history
 
@@ -1121,19 +1118,18 @@ def run(operator, context):
               f'Total reference return: {ref_rtn * 100:.3f}% \n'
               f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
         print(f'statistical analysis of optimal strategy performance indicators: \n'
-              f'annual return:       {test_result_df.annual_return.mean():.3f} +-'
-              f' {test_result_df.annual_return.std():.3f}\n'
-              f'alpha:               {test_result_df.alpha.mean():.3f} +- {test_result_df.alpha.std():.3f}\n'
-              f'Beta:                {test_result_df.beta.mean():.3f} +- {test_result_df.beta.std():.3f}\n'
-              f'Sharp ratio:         {test_result_df.sharp.mean():.3f} +- {test_result_df.sharp.std():.3f}\n'
-              f'Info ratio:          {test_result_df["info"].mean():.3f} +- {test_result_df["info"].std():.3f}\n'
-              f'250 day volatility:  {test_result_df.volatility.mean():.3f} +- {test_result_df.volatility.std():.3f}\n'
+              f'annual return:       {test_result_df.annual_return.mean() * 100:.3f}% ±'
+              f' {test_result_df.annual_return.std() * 100:.3f}%\n'
+              f'alpha:               {test_result_df.alpha.mean():.3f} ± {test_result_df.alpha.std():.3f}\n'
+              f'Beta:                {test_result_df.beta.mean():.3f} ± {test_result_df.beta.std():.3f}\n'
+              f'Sharp ratio:         {test_result_df.sharp.mean():.3f} ± {test_result_df.sharp.std():.3f}\n'
+              f'Info ratio:          {test_result_df["info"].mean():.3f} ± {test_result_df["info"].std():.3f}\n'
+              f'250 day volatility:  {test_result_df.volatility.mean():.3f} ± {test_result_df.volatility.std():.3f}\n'
               f'other performance indicators are listed in below table\n')
         print(test_result_df[["par","sell_count", "buy_count", "oper_count", "total_fee",
                               "final_value", "total_return", "max_drawdown"]])
         print(f'\n===========END OF REPORT=============\n')
         return perfs, pars
-
     elif run_mode == 3:
         """ 进入策略统计预测分析模式
         

@@ -4874,10 +4874,17 @@ class TestQT(unittest.TestCase):
         qt.run(self.op, self.cont)
 
     def test_run_mode_1(self):
-        """测试策略的回测模式"""
+        """测试策略的回测模式,结果打印但不可视化"""
         self.cont.mode = 1
         self.cont.visual = False
         self.cont.print_log = True
+        qt.run(self.op, self.cont)
+
+    def test_run_mode_1_visual(self):
+        """测试策略的回测模式，结果可视化但不打印"""
+        self.cont.mode = 1
+        self.cont.visual = True
+        self.cont.print_log = False
         qt.run(self.op, self.cont)
 
     def test_run_mode_2(self):
