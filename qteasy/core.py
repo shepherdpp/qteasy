@@ -437,37 +437,47 @@ def _loop_step(pre_cash: float,
 
 def _get_complete_hist(looped_value: pd.DataFrame,
                        h_list: pd.DataFrame,
+                       ref_list: pd.DataFrame,
                        with_price: bool = False) -> pd.DataFrame:
-    """完成历史交易回测后，填充完整的历史资产总价值清单
+    """完成历史交易回测后，填充完整的历史资产总价值清单，
+        同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为context.reference_asset
 
     input:=====
         :param values：完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
         :param h_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
+        :param ref_list: 参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
         :param with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
     return: =====
         values，pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
     """
     # 获取价格清单中的投资产品列表
-    # print(f'looped values raw data info: {looped_value.info()}')
     shares = h_list.columns  # 获取资产清单
     start_date = looped_value.index[0]  # 开始日期
     looped_history = h_list.loc[start_date:]  # 回测历史数据区间 = [开始日期:]
-    # print(f'looped history info: \n{looped_history.info()}')
     # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
     # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值
     purchased_shares = looped_value[shares].reindex(looped_history.index, method='ffill').fillna(0)
     cashes = looped_value['cash'].reindex(looped_history.index, method='ffill').fillna(0)
     fees = looped_value['fee'].reindex(looped_history.index).fillna(0)
     looped_value = looped_value.reindex(looped_history.index)
+    # 这里采用了一种看上去貌似比较奇怪的处理方式：
+    # 先为cashes、purchased_shares两个变量赋值，
+    # 然后再将上述两个变量赋值给looped_values的列中
+    # 这样看上去好像多此一举，为什么不能直接赋值，然而
+    # 经过测试，如果直接用下面的代码直接赋值，将无法起到
+    # 填充值的作用：
+    # looped_value.cash = looped_value.cash.reindex(dates, method='ffill')
     looped_value[shares] = purchased_shares
-    looped_value.fee = fees
     looped_value.cash = cashes
+    looped_value.fee = looped_value['fee'].reindex(looped_history.index).fillna(0)
+    looped_value['reference'] = ref_list.reindex(looped_history.index).fillna(0)
     # print(f'extended looped value according to looped history: \n{looped_value.info()}')
     # 重新计算整个清单中的资产总价值，生成pandas.Series对象
     looped_value['value'] = (looped_history * looped_value[shares]).sum(axis=1) + looped_value['cash']
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
         share_price_column_names = [name + '_p' for name in shares]
         looped_value[share_price_column_names] = looped_history[shares]
+    print(looped_value.tail(10))
     return looped_value
 
 
@@ -505,10 +515,14 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: 回测主入口函数需要增加回测结果可视化和回测结果参照标准
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
+# TODO: should remove visual and plotting functions from this method,
+# TODO: visual plotting function should be realized in a different
+# TODO: method to reduce redundent variable passing, like "history_reference"
+# TODO: is passed through multiple functions without been used until plotting.
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
+               history_reference: pd.DataFrame,
                visual: bool = False,
                price_visual: bool = False,
                cash_plan: CashPlan = None,
@@ -523,6 +537,7 @@ def apply_loop(op_list: pd.DataFrame,
         :param cash_plan: float: 初始资金额，未来将被替换为CashPlan对象
         :param price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效，未来将增加reference数据
         :param history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
+        :param history_reference: object pd.DataFrame: 用于回测结果对比的参考历史数据，通常为某一指数
         :param visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
                             为True时将数据填充到整个历史区间，并用图表输出
         :param op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
@@ -608,7 +623,6 @@ def apply_loop(op_list: pd.DataFrame,
                                  columns=op_list.columns)
 
     # 填充标量计算结果
-    # TODO: should add more columns that might be required in visualization, such as amount purchased/sold
     value_history['cash'] = cashes
     value_history['fee'] = fees
     value_history['value'] = values
@@ -616,11 +630,13 @@ def apply_loop(op_list: pd.DataFrame,
     if visual:  # Visual参数为True时填充完整历史记录并
         complete_value = _get_complete_hist(looped_value=value_history,
                                             h_list=history_list,
-                                            with_price=price_visual)
+                                            ref_list=history_reference,
+                                            with_price=False)
         # 输出相关资产价格
-        # TODO: should investigate: how to fit different shares into the plot?
+        # TODO: improvement: plotting and visual should be removed from apply_loop
+        # TODO: to ensure focused.
         if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
-            shares = history_list.columns
+            # plot_loop_result(complete_value)
             plot_loop_result(complete_value)
         else:  # 否则，仅显示总资产的历史变化情况
             plot_loop_result(complete_value)
@@ -690,7 +706,7 @@ def run(operator, context):
     # 用于交易信号生成的历史数据
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
     # 生成用于数据回测的历史数据
-    if run_mode == 1 or run_mode == 0:
+    if run_mode <= 1:
         hist_op = get_history_panel(start=context.invest_start,
                                     end=context.invest_end,
                                     shares=context.share_pool,
@@ -727,7 +743,8 @@ def run(operator, context):
                                         htypes=context.reference_data_type,
                                         freq=operator.op_data_freq,
                                         asset_type=context.reference_asset_type,
-                                        chanel='online')).to_dataframe(htype='close')
+                                        chanel='online')
+                      ).to_dataframe(htype='close')
     # debug
     # print(f'operation hist data downloaded, info: \n')
     # hist_op.info()
@@ -837,6 +854,7 @@ def run(operator, context):
         st = time.time()  # 记录交易信号回测耗时
         looped_values = apply_loop(op_list=op_list,
                                    history_list=hist_loop.fillna(0),
+                                   history_reference=hist_reference,
                                    cash_plan=context.cash_plan,
                                    moq=context.moq,
                                    visual=context.visual,
@@ -961,6 +979,7 @@ def run(operator, context):
                 关于穷举法的具体参数和输出，参见self._search_exhaustive()函数的docstring
             """
             pars, perfs = _search_exhaustive(hist=hist_opti,
+                                             ref=hist_reference,
                                              op=operator,
                                              context=context)
         elif how == 1:
@@ -972,6 +991,7 @@ def run(operator, context):
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
             """
             pars, perfs = _search_montecarlo(hist=hist_opti,
+                                             ref=hist_reference,
                                              op=operator,
                                              context=context)
         elif how == 2:
@@ -989,6 +1009,7 @@ def run(operator, context):
                 关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
             """
             pars, perfs = _search_incremental(hist=hist_opti,
+                                              ref=hist_reference,
                                               op=operator,
                                               context=context)
         elif how == 3:
@@ -1051,6 +1072,7 @@ def run(operator, context):
             op_list = operator.create_signal(hist_test)
             looped_values = apply_loop(op_list=op_list,
                                        history_list=hist_test_loop,
+                                       history_reference=hist_reference,
                                        visual=False,
                                        cash_plan=context.test_cash_plan,
                                        cost_rate=context.rate,
@@ -1148,6 +1170,7 @@ def _get_parameter_performance(par: tuple,
                                op: Operator,
                                hist: HistoryPanel,
                                history_list: pd.DataFrame,
+                               ref_list: pd.DataFrame,
                                context: Context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
@@ -1167,6 +1190,7 @@ def _get_parameter_performance(par: tuple,
         return 0
     looped_val = apply_loop(op_list=op_list,
                             history_list=history_list,
+                            history_reference=ref_list,
                             visual=False,
                             cash_plan=context.cash_plan,
                             cost_rate=context.rate,
@@ -1177,7 +1201,8 @@ def _get_parameter_performance(par: tuple,
     return perf
 
 
-def _search_exhaustive(hist, op, context):
+# TODO: refactor this segment of codes: merge all _search_XXX() functions into a simpler way
+def _search_exhaustive(hist, ref, op, context):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1213,7 +1238,7 @@ def _search_exhaustive(hist, op, context):
     if context.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, ref, context): par for par in
                    it}
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
@@ -1228,6 +1253,7 @@ def _search_exhaustive(hist, op, context):
                                               op=op,
                                               hist=hist,
                                               history_list=history_list,
+                                              ref_list=ref,
                                               context=context)
             pool.in_pool(par, perf)
             i += 1
@@ -1245,7 +1271,7 @@ def _search_exhaustive(hist, op, context):
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, op, context):
+def _search_montecarlo(hist, ref, op, context):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1279,7 +1305,7 @@ def _search_montecarlo(hist, op, context):
     if context.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, ref, context): par for par in
                    it}
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
@@ -1295,6 +1321,7 @@ def _search_montecarlo(hist, op, context):
                                               op=op,
                                               hist=hist,
                                               history_list=history_list,
+                                              ref_list=ref,
                                               context=context)
             pool.in_pool(par, perf)
             i += 1
@@ -1309,7 +1336,7 @@ def _search_montecarlo(hist, op, context):
     return pool.pars, pool.perfs
 
 
-def _search_incremental(hist, op, context):
+def _search_incremental(hist, ref, op, context):
     """ 最优参数搜索算法3: 递进搜索法
 
         该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
@@ -1363,7 +1390,8 @@ def _search_incremental(hist, op, context):
             if parallel:
                 # 启用并行计算
                 proc_pool = ProcessPoolExecutor()
-                futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for
+                futures = {proc_pool.submit(_get_parameter_performance, par, op, hist,
+                                            history_list, ref, context): par for
                            par in it}
                 for f in as_completed(futures):
                     pool.in_pool(futures[f], f.result())
@@ -1379,6 +1407,7 @@ def _search_incremental(hist, op, context):
                                                       op=op,
                                                       hist=hist,
                                                       history_list=history_list,
+                                                      ref_list=ref,
                                                       context=context)
                     pool.in_pool(par, perf)
                     i += 1
@@ -1401,7 +1430,7 @@ def _search_incremental(hist, op, context):
     return pool.pars, pool.perfs
 
 
-def _search_ga(hist, op, lpr, output_count, keep_largest_perf):
+def _search_ga(hist, ref, op, context):
     """ 最优参数搜索算法4: 遗传算法
     遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
 

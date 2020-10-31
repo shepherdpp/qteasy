@@ -106,46 +106,72 @@ def plot_loop_result(result, **kwargs):
         raise TypeError('')
     if result.empty:
         raise ValueError()
-
-    result['change'] = result['000300.SH'] - result['000300.SH'].shift(1)
+    # TODO: needs to find out all the stock holding columns,
+    # TODO: and calculate change according to the change of all
+    # TODO: stocks
+    result_columns = result.columns
+    fixed_column_items = ['fee', 'cash', 'value', 'reference']
+    stock_holdings = [item for
+                      item in
+                      result_columns if
+                      item not in fixed_column_items and
+                      item[-2:] != '_p']
+    change = (result[stock_holdings] - result[stock_holdings].shift(1)).sum(1)
     start_point = result['value'].iloc[0]
-    adjust_factor = result['value'].iloc[0] / result['000300.SH_p'].iloc[0]
-    result['000300.SH_p'] = result['000300.SH_p'] * adjust_factor
-    result['return'] = result['value'] - result['value'].shift(1)
-    result['return_rate'] = (result.value - start_point) / start_point
-    result['ref_rate'] = (result['000300.SH_p'] - start_point) / start_point
+    adjust_factor = result['value'].iloc[0] / result['reference'].iloc[0]
+    reference = result['reference'] * adjust_factor
+    ret = result['value'] - result['value'].shift(1)
+    return_rate = (result.value - start_point) / start_point * 100
+    ref_rate = (reference - start_point) / start_point * 100
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
     months = mdates.MonthLocator()  # every month
     years_fmt = mdates.DateFormatter('%Y')
 
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8))
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82,0.83,0.85))
     fig.suptitle('Back Testing Result - reference: 000300.SH')
-    ax1.set_position([0.1, 0.55, 0.85, 0.45])
-    ax1.plot(result.index, result['ref_rate'], linestyle='-', color=(0.2, 0.2, 0.7), alpha=0.5, label='ref_return')
-    ax1.plot(result.index, result['return_rate'], color=(0.7, 0.2, 0.2), alpha=0.6, label='return')
-    ax1.set_ylabel('annual return')
+    ax1.set_position([0.05, 0.47, 0.85, 0.45])
+    ax1.plot(result.index, ref_rate, linestyle='-',
+             color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
+    ax1.plot(result.index, return_rate, linestyle='-',
+             color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
+    ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
-    ax1.fill_between(result.index, 0, result['ref_rate'],
-                     where=result['ref_rate'] >= 0,
-                     facecolor=(0.2, 0.6, 0.2), alpha=0.35)
-    ax1.fill_between(result.index, 0, result['ref_rate'],
-                     where=result['ref_rate'] < 0,
-                     facecolor=(0.6, 0.2, 0.2), alpha=0.35)
+    ax1.fill_between(result.index, 0, ref_rate,
+                     where=ref_rate >= 0,
+                     facecolor=(0.4, 0.6, 0.2), alpha=0.35)
+    ax1.fill_between(result.index, 0, ref_rate,
+                     where=ref_rate < 0,
+                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+    ax1.yaxis.tick_right()
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['bottom'].set_visible(False)
+    ax1.spines['left'].set_visible(False)
     ax1.legend()
 
-    ax2.set_position([0.1, 0.275, 0.85, 0.207])
-    ax2.plot(result.index, result['change'])
-    ax2.set_ylabel('amount bought / sold')
+    ax2.set_position([0.05, 0.26, 0.85, 0.21])
+    ax2.plot(result.index, change)
+    ax2.set_ylabel('Amount bought / sold')
     ax2.set_xlabel(None)
+    ax2.yaxis.tick_right()
+    ax2.spines['top'].set_visible(False)
+    ax2.spines['right'].set_visible(False)
+    ax2.spines['bottom'].set_visible(False)
+    ax2.spines['left'].set_visible(False)
     ax2.grid(True)
 
-    ax3.set_position([0.1, 0.1, 0.85, 0.207])
-    ax3.bar(result.index, result['return'])
-    ax3.set_ylabel('daily return')
+    ax3.set_position([0.05, 0.05, 0.85, 0.21])
+    ax3.bar(result.index, ret)
+    ax3.set_ylabel('Daily return')
     ax3.set_xlabel('date')
+    ax3.yaxis.tick_right()
+    ax3.spines['top'].set_visible(False)
+    ax3.spines['right'].set_visible(False)
+    ax3.spines['bottom'].set_visible(False)
+    ax3.spines['left'].set_visible(False)
     ax3.grid(True)
 
     # format the ticks

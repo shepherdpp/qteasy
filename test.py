@@ -1411,6 +1411,7 @@ class TestLoop(unittest.TestCase):
     def test_loop(self):
         res = apply_loop(op_list=self.op_signal_df,
                          history_list=self.history_list,
+                         history_reference=self.history_list,
                          visual=False,
                          price_visual=False,
                          cash_plan=self.cash,
@@ -4876,15 +4877,19 @@ class TestQT(unittest.TestCase):
     def test_run_mode_1(self):
         """测试策略的回测模式,结果打印但不可视化"""
         self.cont.mode = 1
+        self.cont.moq = 0.01
         self.cont.visual = False
         self.cont.print_log = True
+        self.cont.cash_plan = qt.CashPlan('20100104', 10000)
         qt.run(self.op, self.cont)
 
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
         self.cont.mode = 1
+        self.cont.moq = 0.01
         self.cont.visual = True
         self.cont.print_log = False
+        self.cont.cash_plan = qt.CashPlan('20100104', 10000)
         qt.run(self.op, self.cont)
 
     def test_run_mode_2(self):
@@ -4917,7 +4922,7 @@ class TestQT(unittest.TestCase):
         cont.invest_start = '20020101'
         cont.moq = 1.
         cont.mode = 1
-        cont.print_log = True
+        cont.print_log = False
         op.set_parameter('t-0', pars=(0, 0))
         op.set_parameter('s-0', pars=(True, 'proportion', 0, 0.4), sample_freq='Q', data_types='basic_eps')
         op.set_parameter('r-0', pars=(0, 0))
