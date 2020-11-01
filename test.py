@@ -1411,9 +1411,6 @@ class TestLoop(unittest.TestCase):
     def test_loop(self):
         res = apply_loop(op_list=self.op_signal_df,
                          history_list=self.history_list,
-                         history_reference=self.history_list,
-                         visual=False,
-                         price_visual=False,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq=0,

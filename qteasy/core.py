@@ -516,15 +516,8 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
-# TODO: should remove visual and plotting functions from this method,
-# TODO: visual plotting function should be realized in a different
-# TODO: method to reduce redundent variable passing, like "history_reference"
-# TODO: is passed through multiple functions without been used until plotting.
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
-               history_reference: pd.DataFrame,
-               visual: bool = False,
-               price_visual: bool = False,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
                moq: float = 100.,
@@ -535,11 +528,7 @@ def apply_loop(op_list: pd.DataFrame,
 
     input：=====
         :param cash_plan: float: 初始资金额，未来将被替换为CashPlan对象
-        :param price_visual: Bool: 选择是否在图表输出时同时输出相关资产价格变化，visual为False时无效，未来将增加reference数据
         :param history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
-        :param history_reference: object pd.DataFrame: 用于回测结果对比的参考历史数据，通常为某一指数
-        :param visual: Bool: 可选参数，默认False，仅在有交易行为的时间点上计算持仓、现金及费用，
-                            为True时将数据填充到整个历史区间，并用图表输出
         :param op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
         :param moq: float：每次交易的最小份额单位
@@ -626,21 +615,6 @@ def apply_loop(op_list: pd.DataFrame,
     value_history['cash'] = cashes
     value_history['fee'] = fees
     value_history['value'] = values
-
-    if visual:  # Visual参数为True时填充完整历史记录并
-        complete_value = _get_complete_hist(looped_value=value_history,
-                                            h_list=history_list,
-                                            ref_list=history_reference,
-                                            with_price=False)
-        # 输出相关资产价格
-        # TODO: improvement: plotting and visual should be removed from apply_loop
-        # TODO: to ensure focused.
-        if price_visual:  # 当Price_Visual参数为True时同时显示所有的成分股票的历史价格
-            # plot_loop_result(complete_value)
-            plot_loop_result(complete_value)
-        else:  # 否则，仅显示总资产的历史变化情况
-            plot_loop_result(complete_value)
-        return complete_value
     return value_history
 
 
@@ -853,13 +827,10 @@ def run(operator, context):
         run_time_prepare_data = (et - st)
         st = time.time()  # 记录交易信号回测耗时
         looped_values = apply_loop(op_list=op_list,
-                                   history_list=hist_loop.fillna(0),
-                                   history_reference=hist_reference,
+                                   history_list=hist_loop,
                                    cash_plan=context.cash_plan,
                                    moq=context.moq,
-                                   visual=context.visual,
                                    cost_rate=context.rate,
-                                   price_visual=context.visual,
                                    print_log=context.print_log)
         et = time.time()
         run_time_loop_full = (et - st)
@@ -886,7 +857,6 @@ def run(operator, context):
         # 评价回测结果——计算投资回报的信息比率
         info = _eval_info_ratio(looped_values, hist_reference, reference_data)
         # 格式化输出回测结果
-        # TODO: 将回测的更详细结果及回测的每一次操作详情登记到log文件中（可选内容）
         print(f'==================================== \n'
               f'|                                  |\n'
               f'|       BACK TESTING RESULT        |\n'
@@ -911,6 +881,15 @@ def run(operator, context):
               f'Info ratio:          {info:.3f}\n'
               f'250 day volatility:  {volatility:.3f}\n'
               f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
+        if context.visual:  # Visual参数为True时填充完整历史记录并
+            complete_value = _get_complete_hist(looped_value=looped_values,
+                                                h_list=hist_loop,
+                                                ref_list=hist_reference,
+                                                with_price=False)
+            # 图表输出投资回报历史曲线
+            # TODO: above performance indicators should be also printed on the plot,
+            # TODO: thus users can choose either plain text report or a chart report.
+            plot_loop_result(complete_value)
         print(f'\n===========END OF REPORT=============\n')
         return sharp
     elif run_mode == 2:
@@ -1072,11 +1051,8 @@ def run(operator, context):
             op_list = operator.create_signal(hist_test)
             looped_values = apply_loop(op_list=op_list,
                                        history_list=hist_test_loop,
-                                       history_reference=hist_reference,
-                                       visual=False,
                                        cash_plan=context.test_cash_plan,
                                        cost_rate=context.rate,
-                                       price_visual=False,
                                        moq=context.moq)
             years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
                                                                          looped_value=looped_values,
@@ -1170,7 +1146,6 @@ def _get_parameter_performance(par: tuple,
                                op: Operator,
                                hist: HistoryPanel,
                                history_list: pd.DataFrame,
-                               ref_list: pd.DataFrame,
                                context: Context) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
@@ -1190,11 +1165,8 @@ def _get_parameter_performance(par: tuple,
         return 0
     looped_val = apply_loop(op_list=op_list,
                             history_list=history_list,
-                            history_reference=ref_list,
-                            visual=False,
                             cash_plan=context.cash_plan,
                             cost_rate=context.rate,
-                            price_visual=False,
                             moq=context.moq)
     # 使用评价函数计算该组参数模拟交易的评价值
     perf = _eval_fv(looped_val)
@@ -1238,7 +1210,7 @@ def _search_exhaustive(hist, ref, op, context):
     if context.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, ref, context): par for par in
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
                    it}
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
@@ -1249,12 +1221,7 @@ def _search_exhaustive(hist, ref, op, context):
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     else:
         for par in it:
-            perf = _get_parameter_performance(par=par,
-                                              op=op,
-                                              hist=hist,
-                                              history_list=history_list,
-                                              ref_list=ref,
-                                              context=context)
+            perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list, context=context)
             pool.in_pool(par, perf)
             i += 1
             if perf > best_so_far:
@@ -1305,7 +1272,7 @@ def _search_montecarlo(hist, ref, op, context):
     if context.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, ref, context): par for par in
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
                    it}
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
@@ -1317,12 +1284,7 @@ def _search_montecarlo(hist, ref, op, context):
     else:
         # 禁用并行计算
         for par in it:
-            perf = _get_parameter_performance(par=par,
-                                              op=op,
-                                              hist=hist,
-                                              history_list=history_list,
-                                              ref_list=ref,
-                                              context=context)
+            perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list, context=context)
             pool.in_pool(par, perf)
             i += 1
             if perf > best_so_far:
@@ -1391,7 +1353,7 @@ def _search_incremental(hist, ref, op, context):
                 # 启用并行计算
                 proc_pool = ProcessPoolExecutor()
                 futures = {proc_pool.submit(_get_parameter_performance, par, op, hist,
-                                            history_list, ref, context): par for
+                                            history_list, context): par for
                            par in it}
                 for f in as_completed(futures):
                     pool.in_pool(futures[f], f.result())
@@ -1403,11 +1365,7 @@ def _search_incremental(hist, ref, op, context):
                 for par in it:
                     # 以下所有函数都是循环内函数，需要进行提速优化
                     # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
-                    perf = _get_parameter_performance(par=par,
-                                                      op=op,
-                                                      hist=hist,
-                                                      history_list=history_list,
-                                                      ref_list=ref,
+                    perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list,
                                                       context=context)
                     pool.in_pool(par, perf)
                     i += 1
