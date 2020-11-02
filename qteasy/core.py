@@ -477,7 +477,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
         share_price_column_names = [name + '_p' for name in shares]
         looped_value[share_price_column_names] = looped_history[shares]
-    print(looped_value.tail(10))
+    # print(looped_value.tail(10))
     return looped_value
 
 
@@ -856,41 +856,42 @@ def run(operator, context):
         alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
         # 评价回测结果——计算投资回报的信息比率
         info = _eval_info_ratio(looped_values, hist_reference, reference_data)
-        # 格式化输出回测结果
-        print(f'==================================== \n'
-              f'|                                  |\n'
-              f'|       BACK TESTING RESULT        |\n'
-              f'|                                  |\n'
-              f'====================================')
-        print(f'\nqteasy running mode: 1 - History back looping\n'
-              f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)} ms\n'
-              f'time consumption for operation back looping: {time_str_format(run_time_loop_full)} ms\n')
-        print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
-              f'Total looped periods: {years} years.')
-        print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:13,.2f}')
-        print(f'total investment amount: ¥{total_invest:13,.2f}\n'
-              f'final value:             ¥{final_value:13,.2f}')
-        print(f'Total return: {ret * 100 - 100:.3f}% \n'
-              f'Average Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
-        print(f'Total reference return: {ref_rtn * 100:.3f}% \n'
-              f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
-        print(f'strategy performance indicators: \n'
-              f'alpha:               {alpha:.3f}\n'
-              f'Beta:                {beta:.3f}\n'
-              f'Sharp ratio:         {sharp:.3f}\n'
-              f'Info ratio:          {info:.3f}\n'
-              f'250 day volatility:  {volatility:.3f}\n'
-              f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
-        if context.visual:  # Visual参数为True时填充完整历史记录并
+        if context.visual:
+            # 图表输出投资回报历史曲线
             complete_value = _get_complete_hist(looped_value=looped_values,
                                                 h_list=hist_loop,
                                                 ref_list=hist_reference,
                                                 with_price=False)
-            # 图表输出投资回报历史曲线
             # TODO: above performance indicators should be also printed on the plot,
             # TODO: thus users can choose either plain text report or a chart report.
             plot_loop_result(complete_value)
-        print(f'\n===========END OF REPORT=============\n')
+        else:
+            # 格式化输出回测结果
+            print(f'==================================== \n'
+                  f'|                                  |\n'
+                  f'|       BACK TESTING RESULT        |\n'
+                  f'|                                  |\n'
+                  f'====================================')
+            print(f'\nqteasy running mode: 1 - History back looping\n'
+                  f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)} ms\n'
+                  f'time consumption for operation back looping: {time_str_format(run_time_loop_full)} ms\n')
+            print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
+                  f'Total looped periods: {years} years.')
+            print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:13,.2f}')
+            print(f'total investment amount: ¥{total_invest:13,.2f}\n'
+                  f'final value:             ¥{final_value:13,.2f}')
+            print(f'Total return: {ret * 100 - 100:.3f}% \n'
+                  f'Average Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
+            print(f'Total reference return: {ref_rtn * 100:.3f}% \n'
+                  f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
+            print(f'strategy performance indicators: \n'
+                  f'alpha:               {alpha:.3f}\n'
+                  f'Beta:                {beta:.3f}\n'
+                  f'Sharp ratio:         {sharp:.3f}\n'
+                  f'Info ratio:          {info:.3f}\n'
+                  f'250 day volatility:  {volatility:.3f}\n'
+                  f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
+            print(f'\n===========END OF REPORT=============\n')
         return sharp
     elif run_mode == 2:
         """进入策略优化模式：
