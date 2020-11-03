@@ -864,7 +864,26 @@ def run(operator, context):
                                                 with_price=False)
             # TODO: above performance indicators should be also printed on the plot,
             # TODO: thus users can choose either plain text report or a chart report.
-            plot_loop_result(complete_value)
+            performance_dict = {'run_time_p': run_time_prepare_data,
+                                'run_time_l': run_time_loop_full,
+                                'loop_start': looped_values.index[0],
+                                'loop_end': looped_values.index[-1],
+                                'years': years,
+                                'oper_count': oper_count,
+                                'total_invest': total_invest,
+                                'total_fee': total_fee,
+                                'final_value': final_value,
+                                'rtn': ret - 1,
+                                'max_drawdown': max_drawdown,
+                                'low_date': low_date,
+                                'volatility': volatility,
+                                'ref_rtn': ref_rtn,
+                                'ref_annual_rtn': ref_annual_rtn,
+                                'beta': beta,
+                                'sharp': sharp,
+                                'alpha': alpha,
+                                'info': info}
+            plot_loop_result(complete_value, msg=performance_dict)
         else:
             # 格式化输出回测结果
             print(f'==================================== \n'

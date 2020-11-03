@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 import datetime
 from .tsfuncs import get_bar, name_change
+from .utilfuncs import time_str_format
 
 
 def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
@@ -99,7 +100,7 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     return daily, share_name
 
 
-def plot_loop_result(result, **kwargs):
+def plot_loop_result(result, msg: dict):
     """plot the loop results in a fancy way that displays all infomration more clearly"""
     # prepare result dataframe
     if not isinstance(result, pd.DataFrame):
@@ -129,9 +130,20 @@ def plot_loop_result(result, **kwargs):
     months = mdates.MonthLocator()  # every month
     years_fmt = mdates.DateFormatter('%Y')
 
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82,0.83,0.85))
+    CHART_WIDTH = 0.88
+
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle('Back Testing Result - reference: 000300.SH')
-    ax1.set_position([0.05, 0.47, 0.85, 0.45])
+
+    fig.text(0.05, 0.93, f'periods: {msg["years"]} years, '
+                         f'from: {msg["loop_start"].date()} to {msg["loop_end"].date()}   ... '
+                         f'time consumed:   signal creation: {time_str_format(msg["run_time_p"])};'
+                         f'  back test:{time_str_format(msg["run_time_l"])}')
+    fig.text(0.05, 0.90, f'operation summary: {msg["oper_count"].values.sum()} Total operation fee:     '
+                         f'¥{msg["total_fee"]:13,.2f} '
+                         f'total investment amount: ¥{msg["total_invest"]:13,.2f}'
+                         f'final value:             ¥{msg["final_value"]:13,.2f}')
+    ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
     ax1.plot(result.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
     ax1.plot(result.index, return_rate, linestyle='-',
@@ -150,9 +162,10 @@ def plot_loop_result(result, **kwargs):
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
+    ax1.axvspan(pd.Timestamp('20150101'), pd.Timestamp('20170702'), facecolor='0.15', alpha=0.15)
     ax1.legend()
 
-    ax2.set_position([0.05, 0.26, 0.85, 0.21])
+    ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])
     ax2.plot(result.index, change)
     ax2.set_ylabel('Amount bought / sold')
     ax2.set_xlabel(None)
@@ -163,7 +176,7 @@ def plot_loop_result(result, **kwargs):
     ax2.spines['left'].set_visible(False)
     ax2.grid(True)
 
-    ax3.set_position([0.05, 0.05, 0.85, 0.21])
+    ax3.set_position([0.05, 0.05, CHART_WIDTH, 0.18])
     ax3.bar(result.index, ret)
     ax3.set_ylabel('Daily return')
     ax3.set_xlabel('date')
