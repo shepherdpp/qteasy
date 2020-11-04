@@ -139,10 +139,14 @@ def plot_loop_result(result, msg: dict):
                          f'from: {msg["loop_start"].date()} to {msg["loop_end"].date()}   ... '
                          f'time consumed:   signal creation: {time_str_format(msg["run_time_p"])};'
                          f'  back test:{time_str_format(msg["run_time_l"])}')
-    fig.text(0.05, 0.90, f'operation summary: {msg["oper_count"].values.sum()} Total operation fee:     '
-                         f'¥{msg["total_fee"]:13,.2f} '
-                         f'total investment amount: ¥{msg["total_invest"]:13,.2f}'
-                         f'final value:             ¥{msg["final_value"]:13,.2f}')
+    fig.text(0.05, 0.90, f'operation summary: {msg["oper_count"].values.sum()}     Total operation fee:'
+                         f'¥{msg["total_fee"]:13,.2f}     '
+                         f'total investment amount: ¥{msg["total_invest"]:13,.2f}    '
+                         f'final value:  ¥{msg["final_value"]:13,.2f}')
+    fig.text(0.05, 0.87, f'Total return: {msg["rtn"] * 100:.3f}%    '
+                         f'Avg annual return: {((msg["rtn"] + 1) ** (1 / msg["years"]) - 1) * 100: .3f}%    '
+                         f'ref return: {msg["ref_rtn"] * 100:.3f}%    '
+                         f'Avg annual ref return: {msg["ref_annual_rtn"] * 100:.3f}%')
     ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
     ax1.plot(result.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
