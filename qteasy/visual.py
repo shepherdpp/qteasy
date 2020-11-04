@@ -147,6 +147,13 @@ def plot_loop_result(result, msg: dict):
                          f'Avg annual return: {((msg["rtn"] + 1) ** (1 / msg["years"]) - 1) * 100: .3f}%    '
                          f'ref return: {msg["ref_rtn"] * 100:.3f}%    '
                          f'Avg annual ref return: {msg["ref_annual_rtn"] * 100:.3f}%')
+    fig.text(0.05, 0.84, f'alpha: {msg["alpha"]:.3f}  '
+                         f'Beta: {msg["beta"]:.3f}  '
+                         f'Sharp ratio: {msg["sharp"]:.3f}  '
+                         f'Info ratio: {msg["info"]:.3f}  '
+                         f'250-day volatility: {msg["volatility"]:.3f}  '
+                         f'Max drawdown: {msg["max_drawdown"] * 100:.3f}% on {msg["low_date"]}')
+
     ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
     ax1.plot(result.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
@@ -167,6 +174,10 @@ def plot_loop_result(result, msg: dict):
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
     ax1.axvspan(pd.Timestamp('20150101'), pd.Timestamp('20170702'), facecolor='0.15', alpha=0.15)
+    ax1.annotate("max_drawdown",
+                 xy=(msg["low_date"], 0.5),
+                 xytext=(msg["low_date"], 0),
+                 arrowprops=dict(arrowstyle="->"))
     ax1.legend()
 
     ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])

@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/visual.py" afterPath="$PROJECT_DIR$/qteasy/visual.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -758,8 +757,8 @@
       <file leaf-file-name="core.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/core.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="786">
-              <caret line="904" column="87" lean-forward="true" selection-start-line="901" selection-start-column="12" selection-end-line="904" selection-end-column="87" />
+            <state relative-caret-position="877">
+              <caret line="911" column="81" lean-forward="false" selection-start-line="905" selection-start-column="18" selection-end-line="911" selection-end-column="81" />
               <folding>
                 <element signature="n#!!doc" expanded="false" />
                 <element signature="e#228#247#0" expanded="true" />
@@ -923,8 +922,8 @@
       <file leaf-file-name="visual.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/qteasy/visual.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="400">
-              <caret line="146" column="71" lean-forward="true" selection-start-line="146" selection-start-column="71" selection-end-line="146" selection-end-column="71" />
+            <state relative-caret-position="357">
+              <caret line="170" column="26" lean-forward="true" selection-start-line="170" selection-start-column="26" selection-end-line="170" selection-end-column="26" />
               <folding>
                 <element signature="e#256#280#0" expanded="true" />
               </folding>
@@ -1529,7 +1528,7 @@
       <scroll-view-position x="0" y="0" />
     </layout>
   </component>
-  <component name="ProjectFrameBounds" fullScreen="true">
+  <component name="ProjectFrameBounds" extendedState="6" fullScreen="true">
     <option name="width" value="1440" />
     <option name="height" value="900" />
   </component>
@@ -1998,7 +1997,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <frame x="0" y="0" width="1440" height="900" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.20243205" sideWeight="0.4917647" order="0" side_tool="false" content_ui="combo" />
@@ -3669,8 +3668,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/core.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="786">
-          <caret line="904" column="87" lean-forward="true" selection-start-line="901" selection-start-column="12" selection-end-line="904" selection-end-column="87" />
+        <state relative-caret-position="877">
+          <caret line="911" column="81" lean-forward="false" selection-start-line="905" selection-start-column="18" selection-end-line="911" selection-end-column="81" />
           <folding>
             <element signature="n#!!doc" expanded="false" />
             <element signature="e#228#247#0" expanded="true" />
@@ -3832,8 +3831,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/visual.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="400">
-          <caret line="146" column="71" lean-forward="true" selection-start-line="146" selection-start-column="71" selection-end-line="146" selection-end-column="71" />
+        <state relative-caret-position="357">
+          <caret line="170" column="26" lean-forward="true" selection-start-line="170" selection-start-column="26" selection-end-line="170" selection-end-column="26" />
           <folding>
             <element signature="e#256#280#0" expanded="true" />
           </folding>
