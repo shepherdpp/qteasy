@@ -4854,7 +4854,7 @@ class TestQT(unittest.TestCase):
         self.cont.invest_start = '20020101'
         self.cont.moq = 1
 
-        timing_pars1 = (178, 181, 17)
+        timing_pars1 = (165, 191, 23)
         timing_pars2 = {'000100': (77, 118, 144),
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
@@ -4886,7 +4886,7 @@ class TestQT(unittest.TestCase):
         self.cont.moq = 0.01
         self.cont.visual = True
         self.cont.print_log = False
-        self.cont.cash_plan = qt.CashPlan('20100104', 10000)
+        self.cont.cash_plan = qt.CashPlan('20080104', 10000)
         qt.run(self.op, self.cont)
 
     def test_run_mode_2(self):

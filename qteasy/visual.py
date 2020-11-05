@@ -122,8 +122,12 @@ def plot_loop_result(result, msg: dict):
     adjust_factor = result['value'].iloc[0] / result['reference'].iloc[0]
     reference = result['reference'] * adjust_factor
     ret = result['value'] - result['value'].shift(1)
+    position = 1 - (result['cash'] / result['value'])
     return_rate = (result.value - start_point) / start_point * 100
     ref_rate = (reference - start_point) / start_point * 100
+    position_bounds = [result.index[0]]
+    position_bounds.extend(result.loc[change != 0].index)
+    position_bounds.append(result.index[-1])
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
@@ -173,7 +177,18 @@ def plot_loop_result(result, msg: dict):
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
-    ax1.axvspan(pd.Timestamp('20150101'), pd.Timestamp('20170702'), facecolor='0.15', alpha=0.15)
+    for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
+        # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
+        if long_short > 0:
+            # fill green span if position is long
+            ax1.axvspan(first, second,
+                        facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
+                        alpha=0.2)
+        else:
+            # fill red span if position is short
+            ax1.axvspan(first, second,
+                        facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
+                        alpha=0.2)
     ax1.annotate("max_drawdown",
                  xy=(msg["low_date"], 0.5),
                  xytext=(msg["low_date"], 0),
@@ -181,7 +196,7 @@ def plot_loop_result(result, msg: dict):
     ax1.legend()
 
     ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])
-    ax2.plot(result.index, change)
+    ax2.plot(result.index, position)
     ax2.set_ylabel('Amount bought / sold')
     ax2.set_xlabel(None)
     ax2.yaxis.tick_right()
