@@ -156,7 +156,8 @@ def plot_loop_result(result, msg: dict):
                          f'Sharp ratio: {msg["sharp"]:.3f}  '
                          f'Info ratio: {msg["info"]:.3f}  '
                          f'250-day volatility: {msg["volatility"]:.3f}  '
-                         f'Max drawdown: {msg["max_drawdown"] * 100:.3f}% on {msg["low_date"]}')
+                         f'Max drawdown: {msg["mdd"] * 100:.3f}% from {msg["max_date"].date()} '
+                         f'to {msg["low_date"].date()}')
 
     ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
     ax1.plot(result.index, ref_rate, linestyle='-',
@@ -178,21 +179,26 @@ def plot_loop_result(result, msg: dict):
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
     for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
+        # fill long/short strips with grey
         # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
+        # fill long/short strips with green/red colors
         if long_short > 0:
-            # fill green span if position is long
+            # fill green strips if position is long
             ax1.axvspan(first, second,
                         facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
                         alpha=0.2)
         else:
-            # fill red span if position is short
+            # fill red strips if position is short
             ax1.axvspan(first, second,
                         facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
                         alpha=0.2)
     ax1.annotate("max_drawdown",
-                 xy=(msg["low_date"], 0.5),
-                 xytext=(msg["low_date"], 0),
-                 arrowprops=dict(arrowstyle="->"))
+                 xy=(msg["max_date"], return_rate[msg["low_date"]]),
+                 xytext=(0.7, 0.0),
+                 textcoords='axes fraction',
+                 arrowprops=dict(facecolor='black', shrink=0.3),
+                 horizontalalignment='right',
+                 verticalalignment='top')
     ax1.legend()
 
     ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])

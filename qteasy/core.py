@@ -843,7 +843,7 @@ def run(operator, context):
         # 评价回测结果——计算总投资收益率
         ret = final_value / total_invest
         # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-        max_drawdown, low_date = _eval_max_drawdown(looped_values)
+        mdd, max_date, low_date = _eval_max_drawdown(looped_values)
         # 评价回测结果——计算投资期间的波动率系数
         volatility = _eval_volatility(looped_values)
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
@@ -874,7 +874,8 @@ def run(operator, context):
                                 'total_fee': total_fee,
                                 'final_value': final_value,
                                 'rtn': ret - 1,
-                                'max_drawdown': max_drawdown,
+                                'mdd': mdd,
+                                'max_date': max_date,
                                 'low_date': low_date,
                                 'volatility': volatility,
                                 'ref_rtn': ref_rtn,
@@ -909,7 +910,7 @@ def run(operator, context):
                   f'Sharp ratio:         {sharp:.3f}\n'
                   f'Info ratio:          {info:.3f}\n'
                   f'250 day volatility:  {volatility:.3f}\n'
-                  f'Max drawdown:        {max_drawdown * 100:.3f}% on {low_date}')
+                  f'Max drawdown:        {mdd * 100:.3f}% from {max_date.date()} to {low_date.date()}')
             print(f'\n===========END OF REPORT=============\n')
         return sharp
     elif run_mode == 2:
@@ -1059,7 +1060,7 @@ def run(operator, context):
                                                'final_value',
                                                'total_return',
                                                'annual_return',
-                                               'max_drawdown',
+                                               'mdd',
                                                'volatility',
                                                'alpha',
                                                'beta',
@@ -1082,7 +1083,7 @@ def run(operator, context):
             # 评价回测结果——计算总投资收益率
             ret = final_value / total_invest
             # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-            max_drawdown, low_date = _eval_max_drawdown(looped_values)
+            mdd, max_date, low_date = _eval_max_drawdown(looped_values)
             # 评价回测结果——计算投资期间的波动率系数
             volatility = _eval_volatility(looped_values)
             # 评价回测结果——计算投资期间的beta贝塔系数
@@ -1104,7 +1105,7 @@ def run(operator, context):
             #        'final_value'    :final_value,
             #        'total_return'   :ret - 1,
             #        'annual_return'  :ret ** (1 / years) - 1,
-            #        'max_drawdown'   :max_drawdown,
+            #        'mdd'   :mdd,
             #        'volatility'     :volatility,
             #        'alpha'          :alpha,
             #        'beta'           :beta,
@@ -1118,7 +1119,7 @@ def run(operator, context):
                                                     'final_value'    :final_value,
                                                     'total_return'   :ret - 1,
                                                     'annual_return'  :ret ** (1 / years) - 1,
-                                                    'max_drawdown'   :max_drawdown,
+                                                    'mdd'   :mdd,
                                                     'volatility'     :volatility,
                                                     'alpha'          :alpha,
                                                     'beta'           :beta,
@@ -1145,7 +1146,7 @@ def run(operator, context):
               f'250 day volatility:  {test_result_df.volatility.mean():.3f} ± {test_result_df.volatility.std():.3f}\n'
               f'other performance indicators are listed in below table\n')
         print(test_result_df[["par","sell_count", "buy_count", "oper_count", "total_fee",
-                              "final_value", "total_return", "max_drawdown"]])
+                              "final_value", "total_return", "mdd"]])
         print(f'\n===========END OF REPORT=============\n')
         return perfs, pars
     elif run_mode == 3:
@@ -1599,16 +1600,20 @@ def _eval_max_drawdown(looped_value):
         max_val = 0.
         drawdown = 0.
         max_drawdown = 0.
+        current_max_date = 0.
+        max_value_date = 0.
         max_drawdown_date = 0.
         for date, value in looped_value.value.iteritems():
             if value > max_val:
                 max_val = value
+                current_max_date = date
             if max_val != 0:
                 drawdown = 1 - value / max_val
             if drawdown > max_drawdown:
                 max_drawdown = drawdown
                 max_drawdown_date = date
-        return max_drawdown, max_drawdown_date
+                max_value_date = current_max_date
+        return max_drawdown, max_value_date, max_drawdown_date
     else:
         return -np.inf
 
