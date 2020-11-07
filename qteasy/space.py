@@ -3,8 +3,9 @@
 
 # ======================================
 # This file contains Space class and
-# Axis class. both are critical classes
-# for strategy parameter optimization.
+# ResultPool class. both are critical
+# classes for strategy parameter
+# optimization.
 # ======================================
 
 import numpy as np
@@ -440,3 +441,82 @@ class Axis:
             raise ValueError(f'interval should be an integer, got {qty} instead!')
         selected = np.random.choice(self.count, size=qty)
         return [self._enum_val[i] for i in selected]
+
+
+class ResultPool:
+    """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
+
+    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序
+    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序
+    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序
+    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右
+    即使在结果池很小，总数据量很大的情况下，循环排序的速度也慢于单次排序修剪
+    """
+
+    # result pool operation:
+    def __init__(self, capacity):
+        """result pool stores all intermediate or final result of searching, the points"""
+        self.__capacity = capacity  # 池中最多可以放入的结果数量
+        self.__pool = []  # 用于存放中间结果
+        self.__perfs = []  # 用于存放每个中间结果的评价分数，老算法仍然使用列表对象
+
+    @property
+    def pars(self):
+        return self.__pool  # 只读属性，所有池中参数
+
+    @property
+    def perfs(self):
+        return self.__perfs  # 只读属性，所有池中参数的评价分
+
+    @property
+    def capacity(self):
+        return self.__capacity
+
+    @property
+    def item_count(self):
+        return len(self.pars)
+
+    @property
+    def is_empty(self):
+        return len(self.pars) == 0
+
+    def in_pool(self, item, perf):
+        """将新的结果压入池中
+
+        input:
+            :param item，object，需要放入结果池的参数对象
+            :param perf，float，放入结果池的参数评价分数
+        return: =====
+            无
+        """
+        self.__pool.append(item)  # 新元素入池
+        self.__perfs.append(perf)  # 新元素评价分记录
+
+    def cut(self, keep_largest=True):
+        """将pool内的结果排序并剪切到capacity要求的大小
+
+        直接对self对象进行操作，排序并删除不需要的结果
+        input:
+            :param keep_largest， bool，True保留评价分数最高的结果，False保留评价分数最低的结果
+        return: =====
+            无
+        """
+        poo = self.__pool  # 所有池中元素
+        per = self.__perfs  # 所有池中元素的评价分
+        cap = self.__capacity
+        if keep_largest:
+            arr = np.array(per).argsort()[-cap:]
+        else:
+            arr = np.array(per).argsort()[:cap]
+        poo2 = [poo[i] for i in arr]
+        per2 = [per[i] for i in arr]
+        self.__pool = poo2
+        self.__perfs = per2
+
+
+def space_around_centre(space, centre, radius, ignore_enums=True):
+    """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间
+
+    如果参数空间中包含枚举类型维度，可以予以忽略或其他操作
+    """
+    return space.from_point(point=centre, distance=radius, ignore_enums=ignore_enums)

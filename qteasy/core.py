@@ -17,10 +17,13 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .history import get_history_panel, HistoryPanel
 from .utilfuncs import time_str_format, progress_bar
-from .space import Space
+from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import plot_loop_result
+from .evaluate import eval_info_ratio, eval_alpha, eval_benchmark
+from .evaluate import eval_beta, eval_volatility, eval_max_drawdown
+from .evaluate import eval_fv, eval_sharp, eval_operation
 
 
 AVAILABLE_EVALUATION_INDICATORS = []
@@ -835,27 +838,27 @@ def run(operator, context):
         et = time.time()
         run_time_loop_full = (et - st)
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
-        years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
-                                                                     looped_value=looped_values,
-                                                                     cash_plan=context.cash_plan)
+        years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
+                                                                    looped_value=looped_values,
+                                                                    cash_plan=context.cash_plan)
         # 评价回测结果——计算回测终值
-        final_value = _eval_fv(looped_val=looped_values)
+        final_value = eval_fv(looped_val=looped_values)
         # 评价回测结果——计算总投资收益率
         ret = final_value / total_invest
         # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-        mdd, max_date, low_date = _eval_max_drawdown(looped_values)
+        mdd, max_date, low_date = eval_max_drawdown(looped_values)
         # 评价回测结果——计算投资期间的波动率系数
-        volatility = _eval_volatility(looped_values)
+        volatility = eval_volatility(looped_values)
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
+        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_reference, reference_data)
         # 评价回测结果——计算投资期间的beta贝塔系数
-        beta = _eval_beta(looped_values, hist_reference, reference_data)
+        beta = eval_beta(looped_values, hist_reference, reference_data)
         # 评价回测结果——计算投资期间的夏普率
-        sharp = _eval_sharp(looped_values, total_invest, 0.035)
+        sharp = eval_sharp(looped_values, total_invest, 0.035)
         # 评价回测结果——计算投资期间的alpha阿尔法系数
-        alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+        alpha = eval_alpha(looped_values, total_invest, hist_reference, reference_data)
         # 评价回测结果——计算投资回报的信息比率
-        info = _eval_info_ratio(looped_values, hist_reference, reference_data)
+        info = eval_info_ratio(looped_values, hist_reference, reference_data)
         if context.visual:
             # 图表输出投资回报历史曲线
             complete_value = _get_complete_hist(looped_value=looped_values,
@@ -1066,25 +1069,25 @@ def run(operator, context):
                                        cash_plan=context.test_cash_plan,
                                        cost_rate=context.rate,
                                        moq=context.moq)
-            years, oper_count, total_invest, total_fee = _eval_operation(op_list=op_list,
-                                                                         looped_value=looped_values,
-                                                                         cash_plan=context.test_cash_plan)
+            years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
+                                                                        looped_value=looped_values,
+                                                                        cash_plan=context.test_cash_plan)
             # 评价回测结果——计算回测终值
-            final_value = _eval_fv(looped_val=looped_values)
+            final_value = eval_fv(looped_val=looped_values)
             # 评价回测结果——计算总投资收益率
             ret = final_value / total_invest
             # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-            mdd, max_date, low_date = _eval_max_drawdown(looped_values)
+            mdd, max_date, low_date = eval_max_drawdown(looped_values)
             # 评价回测结果——计算投资期间的波动率系数
-            volatility = _eval_volatility(looped_values)
+            volatility = eval_volatility(looped_values)
             # 评价回测结果——计算投资期间的beta贝塔系数
-            beta = _eval_beta(looped_values, hist_reference, reference_data)
+            beta = eval_beta(looped_values, hist_reference, reference_data)
             # 评价回测结果——计算投资期间的夏普率
-            sharp = _eval_sharp(looped_values, total_invest, 0.015)
+            sharp = eval_sharp(looped_values, total_invest, 0.015)
             # 评价回测结果——计算投资期间的alpha阿尔法系数
-            alpha = _eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+            alpha = eval_alpha(looped_values, total_invest, hist_reference, reference_data)
             # 评价回测结果——计算投资回报的信息比率
-            info = _eval_info_ratio(looped_values, hist_reference, reference_data)
+            info = eval_info_ratio(looped_values, hist_reference, reference_data)
             # debug
             # print(f'tested parameter {par} on period: {looped_values.index[0]} to {looped_values.index[-1]} and got:\n'
             #       f'total final values: {final_value}, other performance indicators are:\n')
@@ -1120,7 +1123,7 @@ def run(operator, context):
                                                    ignore_index=True)
 
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        ref_rtn, ref_annual_rtn = _eval_benchmark(looped_values, hist_reference, reference_data)
+        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_reference, reference_data)
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {years} years.')
         print(f'total investment amount: ¥{total_invest:13,.2f}')
@@ -1181,7 +1184,7 @@ def _get_parameter_performance(par: tuple,
                             cost_rate=context.rate,
                             moq=context.moq)
     # 使用评价函数计算该组参数模拟交易的评价值
-    perf = _eval_fv(looped_val)
+    perf = eval_fv(looped_val)
     return perf
 
 
@@ -1423,339 +1426,3 @@ def _search_ga(hist, op, context):
 
 """
     raise NotImplementedError
-
-
-def _get_yearly_span(value_df: pd.DataFrame) -> float:
-    """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
-
-    :param value_df: pd.DataFrame, 回测结果
-    :return:
-    """
-    if not isinstance(value_df, pd.DataFrame):
-        raise TypeError(f'Looped value should be a pandas DataFrame, got {type(value_df)} instead!')
-    first_day = value_df.index[0]
-    last_day = value_df.index[-1]
-    if isinstance(last_day, (int, float)) and isinstance(first_day, (int, float)):
-        total_year = (last_day - first_day) / 365.
-    else:
-        try:
-            total_year = (last_day - first_day).days / 365.
-        except:
-            raise ValueError(f'The yearly time span of the looped value can not be calculated, '
-                             f'DataFrame index should be time or number format!, '
-                             f'got {type(first_day)} and {type(last_day)}')
-    return total_year
-
-
-def _eval_benchmark(looped_value, reference_value, reference_data):
-    """ 参考标准年化收益率。具体计算方式为 （(参考标准最终指数 / 参考标准初始指数) ** 1 / 回测交易年数 - 1）
-
-        :param looped_value:
-        :param reference_value:
-        :param reference_data:
-        :return:
-    """
-    total_year = _get_yearly_span(looped_value)
-
-    rtn_data = reference_value[reference_data]
-    rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
-    # # debug
-    # print(f'total year is \n{total_year}')
-    # print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
-    # print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
-    return rtn - 1, rtn ** (1 / total_year) - 1.
-
-
-def _eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.035):
-    """ 回测结果评价函数：alpha率
-
-    阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
-    这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
-    :param looped_value:
-    :param total_invest:
-    :param reference_value:
-    :param reference_data:
-    :return:
-    """
-    total_year = _get_yearly_span(looped_value)
-    final_value = _eval_fv(looped_value)
-    strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    reference_return, reference_yearly_return = _eval_benchmark(looped_value, reference_value, reference_data)
-    b = _eval_beta(looped_value, reference_value, reference_data)
-    return (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
-
-
-def _eval_beta(looped_value, reference_value, reference_data):
-    """ 贝塔。具体计算方法为 策略每日收益与参考标准每日收益的协方差 / 参考标准每日收益的方差 。
-
-    :param looped_value: pandas.DataFrame, 回测结果，需要计算Beta的股票价格或投资收益历史价格
-    :param reference_value: pandas.DataFrame, 参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
-    :param reference_data: str: 参考结果的数据类型，如close, open, low 等
-    :return:
-    """
-    if not isinstance(reference_value, pd.DataFrame):
-        raise TypeError(f'reference value should be pandas DataFrame, got {type(reference_value)} instead!')
-    if not isinstance(looped_value, pd.DataFrame):
-        raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
-    if not reference_data in reference_value.columns:
-        raise KeyError(f'reference data should \'{reference_data}\' can not be found in reference data')
-    ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ret_dev = ret.var()
-    ref = reference_value[reference_data]
-    ref_ret = (ref / ref.shift(1)) - 1
-    looped_value['ref'] = ref_ret
-    looped_value['ret'] = ret
-    # debug
-    # print(f'return is:\n{looped_value.ret.values}')
-    # print(f'reference value is:\n{looped_value.ref.values}')
-    return looped_value.ref.cov(looped_value.ret) / ret_dev
-
-
-def _eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035):
-    """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
-
-    具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
-
-    :param looped_value:
-    :return:
-    """
-    total_year = _get_yearly_span(looped_value)
-    final_value = _eval_fv(looped_value)
-    strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    volatility = _eval_volatility(looped_value, logarithm=False)
-    # debug
-    # print(f'yearly return is: \n{final_value} / {total_invest} = \n{strategy_return}\n'
-    #       f'volatility is:  \n{volatility}')
-    return (strategy_return - riskfree_interest_rate) / volatility
-
-
-def _eval_volatility(looped_value, logarithm: bool = True):
-    """ 策略收益波动率。用来测量资产的风险性。具体计算方法为 策略每日收益的年化标准差。可以使用logarithm参数指定是否计算对数收益率
-
-    :param looped_value:
-    :parma logarithm: 是否计算指数收益率，默认为True，计算对数收益率，为False时计算常规收益率
-    :return:
-    """
-    assert isinstance(looped_value, pd.DataFrame), \
-        f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
-    if not looped_value.empty:
-        if logarithm:
-            ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
-        else:
-            ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-        # debug
-        # looped_value['ret'] = ret
-        # print(f'return is \n {looped_value}')
-        if len(ret) > 250:
-            volatility = ret.rolling(250).std() * np.sqrt(250)
-            # debug
-            # print(f'standard deviations (a list rolling calculated) are {ret.rolling(250).std()}')
-            return volatility.iloc[-1]
-        else:
-            volatility = ret.std() * np.sqrt(250)
-            # debug
-            # print(f'standard deviation (a single number with all data) is {ret.std()}')
-            return volatility
-    else:
-        return -np.inf
-
-
-def _eval_info_ratio(looped_value, reference_value, reference_data):
-    """ 信息比率。衡量超额风险带来的超额收益。具体计算方法为 (策略每日收益 - 参考标准每日收益)的年化均值 / 年化标准差 。
-        information ratio = (portfolio return - reference return) / tracking error
-
-    :param looped_value:
-    :return:
-    """
-    ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ref = reference_value[reference_data]
-    ref_ret = (ref / ref.shift(1)) - 1
-    track_error = (ref_ret - ret).std(
-            ddof=0)  # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
-    # debug
-    # print(f'average return is {ret.mean()} from:\n{ret}\n'
-    #       f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
-    #       f'tracking error is {track_error} from difference of return:\n{ref_ret - ret}')
-    return (ret.mean() - ref_ret.mean()) / track_error
-
-
-def _eval_max_drawdown(looped_value):
-    """ 最大回撤。描述策略可能出现的最糟糕的情况。具体计算方法为 max(1 - 策略当日价值 / 当日之前虚拟账户最高价值)
-
-    :param looped_value:
-    :return:
-    """
-    assert isinstance(looped_value, pd.DataFrame), \
-        f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
-    if not looped_value.empty:
-        max_val = 0.
-        drawdown = 0.
-        max_drawdown = 0.
-        current_max_date = 0.
-        max_value_date = 0.
-        max_drawdown_date = 0.
-        for date, value in looped_value.value.iteritems():
-            if value > max_val:
-                max_val = value
-                current_max_date = date
-            if max_val != 0:
-                drawdown = 1 - value / max_val
-            if drawdown > max_drawdown:
-                max_drawdown = drawdown
-                max_drawdown_date = date
-                max_value_date = current_max_date
-        return max_drawdown, max_value_date, max_drawdown_date
-    else:
-        return -np.inf
-
-
-def _eval_fv(looped_val):
-    """评价函数 Future Value 终值评价
-
-    '投资模拟期最后一个交易日的资产总值
-
-    input:
-        :param looped_val，ndarray，回测器生成输出的交易模拟记录
-    return:
-        perf: float，应用该评价方法对回测模拟结果的评价分数
-
-"""
-    assert isinstance(looped_val, pd.DataFrame), \
-        f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
-    # debug
-    # print(f'======================================\n'
-    #       f'=                                    =\n'
-    #       f'=   Start Evaluation of final value  =\n'
-    #       f'=                                    =\n'
-    #       f'======================================\n'
-    #       f'IN EVAL_FV:\n'
-    #       f'got DataFrame as following: \n{looped_val.info()}')
-    if not looped_val.empty:
-        try:
-            perf = looped_val['value'].iloc[-1]
-            return perf
-        except:
-            raise KeyError(f'the key \'value\' can not be found in given looped value!')
-    else:
-        return -np.inf
-
-
-def _eval_operation(op_list, looped_value, cash_plan):
-    """ 评价函数，统计操作过程中的基本信息:
-
-    对回测过程进行统计，输出以下内容：
-    1，总交易次数：买入操作次数、卖出操作次数
-    2，总投资额
-    3，总交易费用
-    4，回测时间长度
-
-    :param looped_value:
-    :param cash_plan:
-    :return:
-    """
-    total_year = np.round((looped_value.index[-1] - looped_value.index[0]).days / 365., 1)
-    sell_counts = []
-    buy_counts = []
-    # 循环统计op_list交易清单中每个个股
-    for share, ser in op_list.iteritems():
-        # 初始化计数变量
-        sell_count = 0
-        buy_count = 0
-        current_pos = -1
-        # 循环统计个股交易清单中的每条交易信号
-        for i, value in ser.iteritems():
-            if np.sign(value) != current_pos:
-                current_pos = np.sign(value)
-                if current_pos == 1:
-                    buy_count += 1
-                else:
-                    sell_count += 1
-        sell_counts.append(sell_count)
-        buy_counts.append(buy_count)
-    # 所有统计数字组装成一个DataFrame对象
-    op_counts = pd.DataFrame(sell_counts, index=op_list.columns, columns=['sell'])
-    op_counts['buy'] = buy_counts
-    op_counts['total'] = op_counts.buy + op_counts.sell
-    total_op_fee = looped_value.fee.sum()
-    total_investment = cash_plan.total
-    # 返回所有输出变量
-    return total_year, op_counts, total_investment, total_op_fee
-
-
-def space_around_centre(space, centre, radius, ignore_enums=True):
-    """在给定的参数空间中指定一个参数点，并且创建一个以该点为中心且包含于给定参数空间的子空间
-
-    如果参数空间中包含枚举类型维度，可以予以忽略或其他操作
-    """
-    return space.from_point(point=centre, distance=radius, ignore_enums=ignore_enums)
-
-
-class ResultPool:
-    """结果池类，用于保存限定数量的中间结果，当压入的结果数量超过最大值时，去掉perf最差的结果.
-
-    最初的算法是在每次新元素入池的时候都进行排序并去掉最差结果，这样要求每次都在结果池深度范围内进行排序
-    第一步的改进是记录结果池中最差结果，新元素入池之前与最差结果比较，只有优于最差结果的才入池，避免了部分情况下的排序
-    新算法在结果入池的循环内函数中避免了耗时的排序算法，将排序和修剪不合格数据的工作放到单独的cut函数中进行，这样只进行一次排序
-    新算法将一百万次1000深度级别的排序简化为一次百万级别排序，实测能提速一半左右
-    即使在结果池很小，总数据量很大的情况下，循环排序的速度也慢于单次排序修剪
-    """
-
-    # result pool operation:
-    def __init__(self, capacity):
-        """result pool stores all intermediate or final result of searching, the points"""
-        self.__capacity = capacity  # 池中最多可以放入的结果数量
-        self.__pool = []  # 用于存放中间结果
-        self.__perfs = []  # 用于存放每个中间结果的评价分数，老算法仍然使用列表对象
-
-    @property
-    def pars(self):
-        return self.__pool  # 只读属性，所有池中参数
-
-    @property
-    def perfs(self):
-        return self.__perfs  # 只读属性，所有池中参数的评价分
-
-    @property
-    def capacity(self):
-        return self.__capacity
-
-    @property
-    def item_count(self):
-        return len(self.pars)
-
-    @property
-    def is_empty(self):
-        return len(self.pars) == 0
-
-    def in_pool(self, item, perf):
-        """将新的结果压入池中
-
-        input:
-            :param item，object，需要放入结果池的参数对象
-            :param perf，float，放入结果池的参数评价分数
-        return: =====
-            无
-        """
-        self.__pool.append(item)  # 新元素入池
-        self.__perfs.append(perf)  # 新元素评价分记录
-
-    def cut(self, keep_largest=True):
-        """将pool内的结果排序并剪切到capacity要求的大小
-
-        直接对self对象进行操作，排序并删除不需要的结果
-        input:
-            :param keep_largest， bool，True保留评价分数最高的结果，False保留评价分数最低的结果
-        return: =====
-            无
-        """
-        poo = self.__pool  # 所有池中元素
-        per = self.__perfs  # 所有池中元素的评价分
-        cap = self.__capacity
-        if keep_largest:
-            arr = np.array(per).argsort()[-cap:]
-        else:
-            arr = np.array(per).argsort()[:cap]
-        poo2 = [poo[i] for i in arr]
-        per2 = [per[i] for i in arr]
-        self.__pool = poo2
-        self.__perfs = per2
