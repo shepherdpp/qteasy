@@ -391,7 +391,7 @@ class RollingTiming(Strategy):
         _realize()方法确定了策略的具体实现方式，要注意_realize()方法需要有两个参数：
 
             hist_data: ndarray
-            parames: tuple
+            params: tuple
 
         在_realize()方法中用户可以以任何可能的方法使用hist_data，但必须知道hist_data的结构，同时确保返回值为一个浮点数，且返回值在-1～1
         之间（包括-1和+1）。
@@ -468,10 +468,6 @@ class RollingTiming(Strategy):
         # print(f'first 20 rows of hist_price_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用_realize()函数
         # 由于输入的历史数据来自于HistoryPanel，因此总是三维数据的切片即二维数据，因此可以简化：
-        # if len(hist_slice.shape) == 2:
-        #     no_nan = ~np.isnan(hist_slice[:, 0])
-        # else:
-        #     no_nan = ~np.isnan(hist_slice)
         no_nan = ~np.isnan(hist_slice[:, 0])
         # 生成输出值一维向量
         cat = np.zeros(hist_slice.shape[0])
@@ -855,7 +851,7 @@ class SimpleTiming(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_data: np.ndarray, params: tuple):
+    def _realize(self, hist_data: np.ndarray):
         """抽象方法，在实际实现SimpleTiming对象的时候必须实现这个方法，以实现策略的计算"""
         raise NotImplementedError
 

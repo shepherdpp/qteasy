@@ -511,25 +511,57 @@ class SelectingRandom(stg.Selecting):
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
 
-class SelectingFinance(stg.Selecting):
-    """ 根据所有股票的上期财报或过去多期财报中的某个指标选股，按照指标数值分配选股权重
+# TODO: make conditional selection and sort selecting features in this strategy standard to Selecting
+# TODO: the differences between concrete strategies will be how the indicator vectors are generated.
+class SelectingFinanceRanking(stg.Selecting):
+    """ 根据所有股票某个指标选股，并分配选股权重
+
+        股票的选择取决于一批股票的某一个指标，这个指标可以是财务指标、量价指标，或者是其他的指标，这些指标形成一个一维向量，即指标向量
+        指标向量首先被用来执行条件选股：当某个股票的指标符合某条件时，股票被选中，
+            这些条件包括：大于某数、小于某数、介于某两数之间，或不在两数之间
+        对于被选中的股票，还可以根据其指标在所有股票中的大小排序执行选股：例如，从大到小排列的前30%或前10个
+        条件选股和排序选股可以兼而有之
 
         数据类型：由data_types指定的财报指标财报数据，单数据输入，默认数据为EPS
         数据分析频率：季度
         数据窗口长度：90
-        策略使用3个参数:
-            largest_win:    bool,   为真时选出EPS最高的股票，否则选出EPS最低的股票
-            distribution:   str ,   确定如何分配选中股票的权重,
-            drop_threshold: float,  确定丢弃值，丢弃当期EPS低于该值的股票
-            pct:            float,  确定从股票池中选出的投资组合的数量或比例，当0<pct<1时，选出pct%的股票，当pct>=1时，选出pct只股票
-        参数输入数据范围：[(True, False), ('even', 'linear', 'proportion'), (0, 100)]
+        策略使用6个参数:
+            sort_ascending:     bool,   排序方法，对选中的股票进行排序以选择或分配权重：
+                                        True         :对选股指标从小到大排列，优先选择指标最小的股票
+                                        False        :对选股指标从大到小排泄，优先选择指标最大的股票
+            weighting:          str ,   确定如何分配选中股票的权重
+                                        'even'       :所有被选中的股票都获得同样的权重
+                                        'linear'     :权重根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，
+                                                      其余居中者的比例按序呈等差数列
+                                        'proportion' :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
+                                                      指标之间的差值成比例
+            condition:          str ,   确定如何根据条件选择股票，可用值包括：
+                                        'any'        :选择所有可用股票
+                                        'greater'    :选择指标大于ubound的股票
+                                        'less'       :选择指标小于lbound的股票
+                                        'between'    :选择指标介于lbound与ubound之间的股票
+                                        'not_between':选择指标不在lbound与ubound之间的股票
+            lbound:             float,  执行条件选股时的指标下界
+            ubound:             float,  执行条件选股时的指标上界
+            pct:                float,  最多从股票池中选出的投资组合的数量或比例，当0<pct<1时，选出pct%的股票，当pct>=1时，选出pct只股票
+        参数输入数据范围：[(True, False),
+                       ('even', 'linear', 'proportion'),
+                       ('any', 'greater', 'less', 'between', 'not_between'),
+                       (-inf, inf),
+                       (-inf, inf),
+                       (0, 1.)]
     """
 
     def __init__(self, pars=None):
         super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['enum', 'enum', 'conti', 'conti'],
-                         par_bounds_or_enums=[(True, False), ('even', 'linear', 'proportion'), (0, 100), (0, 1)],
+                         par_count=6,
+                         par_types=['enum', 'enum', 'enum', 'conti', 'conti', 'conti'],
+                         par_bounds_or_enums=[(True, False),
+                                              ('even', 'linear', 'proportion'),
+                                              ('any', 'greater', 'less', 'between', 'not_between'),
+                                              (-np.inf, np.inf),
+                                              (-np.inf, np.inf),
+                                              (0, 1.)],
                          stg_name='FINANCE SELECTING',
                          stg_text='Selecting share_pool according to financial report EPS indicator',
                          data_freq='d',
@@ -537,12 +569,11 @@ class SelectingFinance(stg.Selecting):
                          window_length=90,
                          data_types='eps')
 
-
     def _realize(self, hist_data):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
-        largest_win, distribution, drop_threshold, pct = self.pars
+        sort_ascending, weighting, condition, lbound, ubound, pct = self.pars
         share_count = hist_data.shape[0]
         if pct < 1:
             # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
@@ -552,7 +583,7 @@ class SelectingFinance(stg.Selecting):
         if pct < 1: pct = 1
         # debug
         # print(f'in selecting_finance strategy _realize(), got parameters as following:\n'
-        #       f'largest win: {largest_win}\ndistribution: {distribution}\ndrop_threshold: {drop_threshold}\n'
+        #       f'largest win: {sort_ascending}\nweighting: {weighting}\nlbound: {lbound}\n'
         #       f'number of shares to select: {pct}')
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(hist_data, np.ndarray), \
@@ -560,26 +591,34 @@ class SelectingFinance(stg.Selecting):
         # 将历史数据片段中的eps求均值，忽略Nan值,
         indices = np.nanmean(hist_data, axis=1).squeeze()
         chosen = np.zeros_like(indices)
-        if largest_win:
-            # 筛选出不符合要求的指标，将他们设置为nan值
-            indices[np.where(indices < drop_threshold)] = np.nan
-        else:  # 选择分数最低的部分个股
-            indices[np.where(indices > drop_threshold)] = np.nan
+        # 筛选出不符合要求的指标，将他们设置为nan值
+        if condition == 'any':
+            pass
+        elif condition == 'greater':
+            indices[np.where(indices < ubound)] = np.nan
+        elif condition == 'less':
+            indices[np.where(indices > lbound)] = np.nan
+        elif condition == 'between':
+            indices[np.where((indices < lbound) & (indices > ubound))] = np.nan
+        elif condition == 'not_between':
+            indices[np.where(np.logical_and(indices > lbound, indices < ubound))] = np.nan
+        else:
+            raise ValueError(f'indication selection condition \'{condition}\' not supported!')
         nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
-        if largest_win:
+        if not sort_ascending:
             # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
             pos = max(share_count - pct - nan_count, 0)
         else:  # 选择分数最低的部分个股
             pos = pct
         # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
-        if distribution == 'even':
+        if weighting == 'even':
             # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
-            if largest_win:
+            if not sort_ascending:
                 share_found = indices.argpartition(pos)[pos:]
             else:
                 share_found = indices.argpartition(pos)[:pos]
         else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
-            if largest_win:
+            if not sort_ascending:
                 share_found = indices.argsort()[pos:]
             else:
                 share_found = indices.argsort()[:pos]
@@ -594,16 +633,16 @@ class SelectingFinance(stg.Selecting):
             # print(f'in Selecting realize method got ranking vector and share selecting vector like:\n'
             #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
             return chosen
-        # 根据投资组合比例分配方式，确定被选中产品的占比
-        # Linear：根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，其余居中者的比例按序呈等差数列
-        if distribution == 'linear':
+        # 根据投资组合比例分配方式，确定被选中产品的权重
+        #
+        if weighting == 'linear':
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
-        # proportion：比例分配，占比与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
-        elif distribution == 'proportion':
+        # proportion：比例分配，权重与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
+        elif weighting == 'proportion':
             dist = indices[args]
             d = dist.max() - dist.min()
-            if largest_win:
+            if not sort_ascending:
                 dist = dist - dist.min() + d / 10.
             else:
                 dist = dist.max() - dist + d / 10.
@@ -614,7 +653,7 @@ class SelectingFinance(stg.Selecting):
                 chosen[args] = dist / len(dist)
             else:
                 chosen[args] = dist / dist.sum()
-        # even：均匀分配，所有中选股票在组合中占比相同
+        # even：均匀分配，所有中选股票在组合中权重相同
         else:  # self.__distribution == 'even'
 
             chosen[args] = 1. / arg_count
@@ -639,6 +678,6 @@ BUILT_IN_STRATEGY_DICT = {'test':               TestTimingClass,
                           's_dma':              SimpleDMA,
                           'all':                SelectingSimple,
                           'random':             SelectingRandom,
-                          'finance':            SelectingFinance}
+                          'finance':            SelectingFinanceRanking}
 
 AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()

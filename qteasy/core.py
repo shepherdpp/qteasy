@@ -978,10 +978,7 @@ def run(operator, context):
                 
                 关于穷举法的具体参数和输出，参见self._search_exhaustive()函数的docstring
             """
-            pars, perfs = _search_exhaustive(hist=hist_opti,
-                                             ref=hist_reference,
-                                             op=operator,
-                                             context=context)
+            pars, perfs = _search_exhaustive(hist=hist_opti, op=operator, context=context)
         elif how == 1:
             """ Montecarlo蒙特卡洛方法
             
@@ -990,10 +987,7 @@ def run(operator, context):
                 
                 关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
             """
-            pars, perfs = _search_montecarlo(hist=hist_opti,
-                                             ref=hist_reference,
-                                             op=operator,
-                                             context=context)
+            pars, perfs = _search_montecarlo(hist=hist_opti, op=operator, context=context)
         elif how == 2:
             """ Incremental Stepped Search 递进步长法
             
@@ -1008,10 +1002,7 @@ def run(operator, context):
                 
                 关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
             """
-            pars, perfs = _search_incremental(hist=hist_opti,
-                                              ref=hist_reference,
-                                              op=operator,
-                                              context=context)
+            pars, perfs = _search_incremental(hist=hist_opti, op=operator, context=context)
         elif how == 3:
             """ GA method遗传算法
             
@@ -1195,7 +1186,7 @@ def _get_parameter_performance(par: tuple,
 
 
 # TODO: refactor this segment of codes: merge all _search_XXX() functions into a simpler way
-def _search_exhaustive(hist, ref, op, context):
+def _search_exhaustive(hist, op, context):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1259,7 +1250,7 @@ def _search_exhaustive(hist, ref, op, context):
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, ref, op, context):
+def _search_montecarlo(hist, op, context):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1319,7 +1310,7 @@ def _search_montecarlo(hist, ref, op, context):
     return pool.pars, pool.perfs
 
 
-def _search_incremental(hist, ref, op, context):
+def _search_incremental(hist, op, context):
     """ 最优参数搜索算法3: 递进搜索法
 
         该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
@@ -1409,7 +1400,7 @@ def _search_incremental(hist, ref, op, context):
     return pool.pars, pool.perfs
 
 
-def _search_ga(hist, ref, op, context):
+def _search_ga(hist, op, context):
     """ 最优参数搜索算法4: 遗传算法
     遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
 

@@ -10,7 +10,7 @@ from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.space import Space, Axis
 from qteasy.core import apply_loop, ResultPool, space_around_centre
-from qteasy.built_in import SelectingFinance
+from qteasy.built_in import SelectingFinanceRanking
 from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
@@ -850,19 +850,26 @@ class TestEvaluations(unittest.TestCase):
     def test_max_drawdown(self):
         print(f'test with test data and empty DataFrame')
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data1)[0], 0.264274308)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data1)[1], 86)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data1)[1], 53)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data1)[2], 86)
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data2)[0], 0.334690849)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data2)[1], 10)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data2)[1], 0)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data2)[2], 10)
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data3)[0], 0.244452899)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data3)[1], 99)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data3)[1], 90)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data3)[2], 99)
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data4)[0], 0.201849684)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data4)[1], 50)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data4)[1], 14)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data4)[2], 50)
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data5)[0], 0.534206456)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data5)[1], 60)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data5)[1], 21)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data5)[2], 60)
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data6)[0], 0.670062689)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data6)[1], 70)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data6)[1], 0)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data6)[2], 70)
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data7)[0], 0.783577449)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data7)[1], 51)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data7)[1], 17)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data7)[2], 51)
         self.assertEqual(qt.core._eval_max_drawdown(pd.DataFrame()), -np.inf)
         print(f'Error testing')
         self.assertRaises(AssertionError, qt.core._eval_fv, 15)
@@ -872,7 +879,8 @@ class TestEvaluations(unittest.TestCase):
         # test max drawdown == 0:
         # TODO: investigate: how does divide by zero change?
         self.assertAlmostEqual(qt.core._eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
-        self.assertEqual(qt.core._eval_max_drawdown(self.test_data4 - 5)[1], 50)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data4 - 5)[1], 14)
+        self.assertEqual(qt.core._eval_max_drawdown(self.test_data4 - 5)[2], 50)
 
     def test_info_ratio(self):
         reference = self.test_data1
@@ -2538,8 +2546,8 @@ class TestOperator(unittest.TestCase):
 
     def test_sel_finance(self):
         """Test selecting_finance strategy, test all built-in strategy parameters"""
-        stg = SelectingFinance()
-        stg_pars = (True, 'even', 0, 0.67)
+        stg = SelectingFinanceRanking()
+        stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         stg.window_length = 5
         stg.data_freq = 'd'
@@ -2609,7 +2617,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, selmask))
 
         # test single factor, get mininum factor
-        stg_pars = (False, 'even', 1, 0.67)
+        stg_pars = (True, 'even', 'less', 1, 1, 0.67)
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2666,7 +2674,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, selmask))
 
         # test single factor, get max factor in linear weight
-        stg_pars = (True, 'linear', 0, 0.67)
+        stg_pars = (False, 'linear', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2723,7 +2731,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, selmask))
 
         # test single factor, get max factor in linear weight
-        stg_pars = (True, 'proportion', 0, 0.67)
+        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2780,7 +2788,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, selmask, 0.001))
 
         # test single factor, get max factor in linear weight, threshold 0.2
-        stg_pars = (True, 'even', 0.2, 0.67)
+        stg_pars = (False, 'even', 'greater', 0.2, 0.2, 0.67)
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2831,7 +2839,7 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0]])
         # # debug
-        print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
+        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask, 0.001))
@@ -4921,7 +4929,9 @@ class TestQT(unittest.TestCase):
         cont.mode = 1
         cont.print_log = False
         op.set_parameter('t-0', pars=(0, 0))
-        op.set_parameter('s-0', pars=(True, 'proportion', 0, 0.4), sample_freq='Q', data_types='basic_eps')
+        op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
+                         sample_freq='Q',
+                         data_types='basic_eps')
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
         # op.info()
