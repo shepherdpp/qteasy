@@ -21,6 +21,7 @@ from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import plot_loop_result
+from .evaluate import evaluate
 from .evaluate import eval_info_ratio, eval_alpha, eval_benchmark
 from .evaluate import eval_beta, eval_volatility, eval_max_drawdown
 from .evaluate import eval_fv, eval_sharp, eval_operation
@@ -933,58 +934,27 @@ def run(operator, context):
         run_time_loop_full = (et - st)
         # TODO: refract following codes, merge all evaluations into function evaluate(),
         # TODO: by giving name of indicators as argument to the function a dict
-        # TODO: containing all result is returned. 
+        # TODO: containing all result is returned.
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
-        years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
-                                                                    looped_value=looped_values,
-                                                                    cash_plan=context.cash_plan)
-        # 评价回测结果——计算回测终值
-        final_value = eval_fv(looped_val=looped_values)
-        # 评价回测结果——计算总投资收益率
-        ret = final_value / total_invest
-        # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-        mdd, max_date, low_date = eval_max_drawdown(looped_values)
-        # 评价回测结果——计算投资期间的波动率系数
-        volatility = eval_volatility(looped_values)
-        # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_reference, reference_data)
-        # 评价回测结果——计算投资期间的beta贝塔系数
-        beta = eval_beta(looped_values, hist_reference, reference_data)
-        # 评价回测结果——计算投资期间的夏普率
-        sharp = eval_sharp(looped_values, total_invest, 0.035)
-        # 评价回测结果——计算投资期间的alpha阿尔法系数
-        alpha = eval_alpha(looped_values, total_invest, hist_reference, reference_data)
-        # 评价回测结果——计算投资回报的信息比率
-        info = eval_info_ratio(looped_values, hist_reference, reference_data)
+        eval_res = evaluate(op_list=op_list,
+                            looped_values=looped_values,
+                            hist_reference=hist_reference,
+                            reference_data=reference_data,
+                            cash_plan=context.cash_plan,
+                            indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
         if context.visual:
             # 图表输出投资回报历史曲线
             complete_value = _get_complete_hist(looped_value=looped_values,
                                                 h_list=hist_loop,
                                                 ref_list=hist_reference,
                                                 with_price=False)
-            # TODO: above performance indicators should be also printed on the plot,
+            # TODO: above eval_res indicators should be also printed on the plot,
             # TODO: thus users can choose either plain text report or a chart report.
-            performance_dict = {'run_time_p': run_time_prepare_data,
-                                'run_time_l': run_time_loop_full,
-                                'loop_start': looped_values.index[0],
-                                'loop_end': looped_values.index[-1],
-                                'years': years,
-                                'oper_count': oper_count,
-                                'total_invest': total_invest,
-                                'total_fee': total_fee,
-                                'final_value': final_value,
-                                'rtn': ret - 1,
-                                'mdd': mdd,
-                                'max_date': max_date,
-                                'low_date': low_date,
-                                'volatility': volatility,
-                                'ref_rtn': ref_rtn,
-                                'ref_annual_rtn': ref_annual_rtn,
-                                'beta': beta,
-                                'sharp': sharp,
-                                'alpha': alpha,
-                                'info': info}
-            plot_loop_result(complete_value, msg=performance_dict)
+            eval_res['run_time_p'] = run_time_prepare_data
+            eval_res['run_time_l'] = run_time_loop_full
+            eval_res['loop_start'] = looped_values.index[0]
+            eval_res['loop_end'] = looped_values.index[-1]
+            plot_loop_result(complete_value, msg=eval_res)
         else:
             # 格式化输出回测结果
             print(f'==================================== \n'
@@ -996,23 +966,25 @@ def run(operator, context):
                   f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)} ms\n'
                   f'time consumption for operation back looping: {time_str_format(run_time_loop_full)} ms\n')
             print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
-                  f'Total looped periods: {years} years.')
-            print(f'operation summary:\n {oper_count}\nTotal operation fee:     ¥{total_fee:13,.2f}')
-            print(f'total investment amount: ¥{total_invest:13,.2f}\n'
-                  f'final value:             ¥{final_value:13,.2f}')
-            print(f'Total return: {ret * 100 - 100:.3f}% \n'
-                  f'Average Yearly return rate: {(ret ** (1 / years) - 1) * 100: .3f}%')
-            print(f'Total reference return: {ref_rtn * 100:.3f}% \n'
-                  f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
-            print(f'strategy performance indicators: \n'
-                  f'alpha:               {alpha:.3f}\n'
-                  f'Beta:                {beta:.3f}\n'
-                  f'Sharp ratio:         {sharp:.3f}\n'
-                  f'Info ratio:          {info:.3f}\n'
-                  f'250 day volatility:  {volatility:.3f}\n'
-                  f'Max drawdown:        {mdd * 100:.3f}% from {max_date.date()} to {low_date.date()}')
+                  f'Total looped periods: {eval_res["years"]} years.')
+            print(f'operation summary:\n {eval_res["oper_count"]}\n'
+                  f'Total operation fee:     ¥{eval_res["total_fee"]:13,.2f}')
+            print(f'total investment amount: ¥{eval_res["total_invest"]:13,.2f}\n'
+                  f'final value:             ¥{eval_res["final_value"]:13,.2f}')
+            print(f'Total return: {eval_res["rtn"] * 100 - 100:.3f}% \n'
+                  f'Average Yearly return rate: {(eval_res["rtn"] ** (1 / eval_res["years"]) - 1) * 100: .3f}%')
+            print(f'Total reference return: {eval_res["ref_rtn"] * 100:.3f}% \n'
+                  f'Average Yearly reference return rate: {eval_res["ref_annual_rtn"] * 100:.3f}%')
+            print(f'strategy eval_res indicators: \n'
+                  f'alpha:               {eval_res["alpha"]:.3f}\n'
+                  f'Beta:                {eval_res["beta"]:.3f}\n'
+                  f'Sharp ratio:         {eval_res["sharp"]:.3f}\n'
+                  f'Info ratio:          {eval_res["info"]:.3f}\n'
+                  f'250 day volatility:  {eval_res["volatility"]:.3f}\n'
+                  f'Max drawdown:        {eval_res["mdd"] * 100:.3f}% '
+                  f'from {eval_res["max_date"].date()} to {eval_res["low_date"].date()}')
             print(f'\n===========END OF REPORT=============\n')
-        return sharp
+        return None
     elif run_mode == 2:
         how = context.opti_method
         operator.prepare_data(hist_data=hist_opti, cash_plan=context.opti_cash_plan)  # 在生成交易信号之前准备历史数据
@@ -1054,68 +1026,34 @@ def run(operator, context):
                                        cash_plan=context.test_cash_plan,
                                        cost_rate=context.rate,
                                        moq=context.moq)
-            years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
-                                                                        looped_value=looped_values,
-                                                                        cash_plan=context.test_cash_plan)
-            # 评价回测结果——计算回测终值
-            final_value = eval_fv(looped_val=looped_values)
-            # 评价回测结果——计算总投资收益率
-            ret = final_value / total_invest
-            # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
-            mdd, max_date, low_date = eval_max_drawdown(looped_values)
-            # 评价回测结果——计算投资期间的波动率系数
-            volatility = eval_volatility(looped_values)
-            # 评价回测结果——计算投资期间的beta贝塔系数
-            beta = eval_beta(looped_values, hist_reference, reference_data)
-            # 评价回测结果——计算投资期间的夏普率
-            sharp = eval_sharp(looped_values, total_invest, 0.015)
-            # 评价回测结果——计算投资期间的alpha阿尔法系数
-            alpha = eval_alpha(looped_values, total_invest, hist_reference, reference_data)
-            # 评价回测结果——计算投资回报的信息比率
-            info = eval_info_ratio(looped_values, hist_reference, reference_data)
-            # debug
-            # print(f'tested parameter {par} on period: {looped_values.index[0]} to {looped_values.index[-1]} and got:\n'
-            #       f'total final values: {final_value}, other performance indicators are:\n')
-            # print({'par'            :par,
-            #        'sell_count'     :oper_count.sell.sum(),
-            #        'buy_count'      :oper_count.buy.sum(),
-            #        'oper_count'     :oper_count.total.sum(),
-            #        'total_fee'      :total_fee,
-            #        'final_value'    :final_value,
-            #        'total_return'   :ret - 1,
-            #        'annual_return'  :ret ** (1 / years) - 1,
-            #        'mdd'   :mdd,
-            #        'volatility'     :volatility,
-            #        'alpha'          :alpha,
-            #        'beta'           :beta,
-            #        'sharp'          :sharp,
-            #        'info'           :info})
-            test_result_df = test_result_df.append({'par'            :par,
-                                                    'sell_count'     :oper_count.sell.sum(),
-                                                    'buy_count'      :oper_count.buy.sum(),
-                                                    'oper_count'     :oper_count.total.sum(),
-                                                    'total_fee'      :total_fee,
-                                                    'final_value'    :final_value,
-                                                    'total_return'   :ret - 1,
-                                                    'annual_return'  :ret ** (1 / years) - 1,
-                                                    'mdd'            :mdd,
-                                                    'volatility'     :volatility,
-                                                    'alpha'          :alpha,
-                                                    'beta'           :beta,
-                                                    'sharp'          :sharp,
-                                                    'info'           :info
-                                                    },
+
+            eval_res = evaluate(op_list=op_list,
+                                looped_values=looped_values,
+                                hist_reference=hist_reference,
+                                reference_data=reference_data,
+                                cash_plan=context.cash_plan,
+                                indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
+
+            eval_res['par'] = par
+            eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
+            eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
+            eval_res['oper_count'] = eval_res['oper_count'].total.sum()
+            eval_res['total_return'] = eval_res['rtn'] - 1
+            eval_res['annual_return'] = eval_res['rtn'] ** 1 / eval_res['years'] - 1
+            test_result_df = test_result_df.append(eval_res,
                                                    ignore_index=True)
 
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_reference, reference_data)
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
-              f'Total looped periods: {years} years.')
-        print(f'total investment amount: ¥{total_invest:13,.2f}')
+              f'Total looped periods: {test_result_df.years[0]} years.')
+        print(f'total investment amount: ¥{test_result_df.total_invest[0]:13,.2f}')
         print(f'Reference index type is {context.reference_asset} at {context.reference_asset_type}\n'
               f'Total reference return: {ref_rtn * 100:.3f}% \n'
               f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
-        print(f'statistical analysis of optimal strategy performance indicators: \n'
+        print(f'statistical analysis of optimal strategy eval_res indicators: \n'
+              f'total return:        {test_result_df.total_return.mean() * 100:.3f}% ±'
+              f' {test_result_df.total_return.std() * 100:.3f}%\n'
               f'annual return:       {test_result_df.annual_return.mean() * 100:.3f}% ±'
               f' {test_result_df.annual_return.std() * 100:.3f}%\n'
               f'alpha:               {test_result_df.alpha.mean():.3f} ± {test_result_df.alpha.std():.3f}\n'
@@ -1123,7 +1061,7 @@ def run(operator, context):
               f'Sharp ratio:         {test_result_df.sharp.mean():.3f} ± {test_result_df.sharp.std():.3f}\n'
               f'Info ratio:          {test_result_df["info"].mean():.3f} ± {test_result_df["info"].std():.3f}\n'
               f'250 day volatility:  {test_result_df.volatility.mean():.3f} ± {test_result_df.volatility.std():.3f}\n'
-              f'other performance indicators are listed in below table\n')
+              f'other eval_res indicators are listed in below table\n')
         print(test_result_df[["par","sell_count", "buy_count", "oper_count", "total_fee",
                               "final_value", "total_return", "mdd"]])
         print(f'\n===========END OF REPORT=============\n')

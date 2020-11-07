@@ -9,6 +9,58 @@
 import numpy as np
 import pandas as pd
 
+from .utilfuncs import str_to_list
+
+
+def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, indicators: str = 'final_value'):
+    """根据args获取相应的性能指标"""
+    indicator_list = str_to_list(indicators)
+    performance_dict = {}
+    if any(indicator in indicator_list for indicator in ['years', 'oper_count', 'total_invest', 'total_fee', 'return']):
+        years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
+                                                                    looped_value=looped_values,
+                                                                    cash_plan=cash_plan)
+        performance_dict['years'] = years
+        performance_dict['oper_count'] = oper_count
+        performance_dict['total_invest'] = total_invest
+        performance_dict['total_fee'] = total_fee
+    # 评价回测结果——计算回测终值
+    if any(indicator in indicator_list for indicator in ['fv', 'final_value']):
+        performance_dict['final_value'] = eval_fv(looped_val=looped_values)
+    # 评价回测结果——计算总投资收益率
+    if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
+        performance_dict['rtn'] = performance_dict['final_value'] / performance_dict['total_invest']
+    # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
+    if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
+        mdd, max_date, low_date = eval_max_drawdown(looped_values)
+        performance_dict['mdd'] = mdd
+        performance_dict['max_date'] = max_date
+        performance_dict['low_date'] = low_date
+    # 评价回测结果——计算投资期间的波动率系数
+    if any(indicator in indicator_list for indicator in ['volatility', 'v']):
+        performance_dict['volatility'] = eval_volatility(looped_values)
+    # 评价回测结果——计算参考数据收益率以及平均年化收益率
+    if any(indicator in indicator_list for indicator in ['ref', 'ref_rtn', 'reference', 'ref_annual_rtn']):
+        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_reference, reference_data)
+        performance_dict['ref_rtn'] = ref_rtn
+        performance_dict['ref_annual_rtn'] = ref_annual_rtn
+    # 评价回测结果——计算投资期间的beta贝塔系数
+    if 'beta' in indicator_list:
+        performance_dict['beta'] = eval_beta(looped_values, hist_reference, reference_data)
+    # 评价回测结果——计算投资期间的夏普率
+    if 'sharp' in indicator_list:
+        performance_dict['sharp'] = eval_sharp(looped_values, total_invest, 0.035)
+    # 评价回测结果——计算投资期间的alpha阿尔法系数
+    if 'alpha' in indicator_list:
+        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+    # 评价回测结果——计算投资回报的信息比率
+    if 'info' in indicator_list:
+        performance_dict['info'] = eval_info_ratio(looped_values, hist_reference, reference_data)
+    if bool(performance_dict):
+        return performance_dict
+    else:
+        return performance_dict
+
 def _get_yearly_span(value_df: pd.DataFrame) -> float:
     """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
 
