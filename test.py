@@ -2007,17 +2007,17 @@ class TestOperator(unittest.TestCase):
     def test_property_get(self):
         self.assertIsInstance(self.op, qt.Operator)
         self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
-        self.assertIsInstance(self.op.selecting[0], qt.SelectingSimple)
+        self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
         self.assertIsInstance(self.op.ricon[0], qt.RiconUrgent)
         self.assertEqual(self.op.selecting_count, 1)
         self.assertEqual(self.op.strategy_count, 3)
         self.assertEqual(self.op.ricon_count, 1)
         self.assertEqual(self.op.timing_count, 1)
-        print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingSimple, qt.RiconUrgent])
+        print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
         print(f'info of Timing strategy: \n{self.op.strategies[0].info()}')
         self.assertEqual(len(self.op.strategies), 3)
         self.assertIsInstance(self.op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(self.op.strategies[1], qt.SelectingSimple)
+        self.assertIsInstance(self.op.strategies[1], qt.SelectingAll)
         self.assertIsInstance(self.op.strategies[2], qt.RiconUrgent)
         self.assertEqual(self.op.strategy_count, 3)
         self.assertEqual(self.op.op_data_freq, 'd')
@@ -2209,7 +2209,7 @@ class TestOperator(unittest.TestCase):
         :return:
         """
         new_op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
-        print(new_op.strategies, '\n', [qt.TimingDMA, qt.SelectingSimple, qt.RiconUrgent])
+        print(new_op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
         print(f'info of Timing strategy in new op: \n{new_op.strategies[0].info()}')
         self.op.set_parameter('t-0',
                               pars=(5, 10, 5),

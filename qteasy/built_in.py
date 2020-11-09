@@ -415,7 +415,7 @@ class RiconUrgent(stg.SimpleTiming):
 
 # Built in SimpleSelecting strategies:
 
-class SelectingSimple(stg.SimpleSelecting):
+class SelectingAll(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
     def __init__(self, pars=None):
@@ -427,6 +427,20 @@ class SelectingSimple(stg.SimpleSelecting):
         # 所有股票全部被选中，投资比例平均分配
         share_count = hist_data.shape[0]
         return [1. / share_count] * share_count
+
+
+class SelectingNone(stg.SimpleSelecting):
+    """基础选股策略：保持历史股票池中的所有股票都不被选中，投资比例平均分配"""
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         stg_name='SIMPLE SELECTING',
+                         stg_text='SimpleSelecting all share and distribute weights evenly')
+
+    def _realize(self, hist_data):
+        # 所有股票全部被选中，投资比例平均分配
+        share_count = hist_data.shape[0]
+        return [0.] * share_count
 
 
 class SelectingRandom(stg.SimpleSelecting):
@@ -482,7 +496,7 @@ class SelectingFinanceIndicator(stg.FactoralSelecting):
 
 
 class SelectingLastOpen(stg.FactoralSelecting):
-    """ 根据股票昨天的收盘价确定选股权重
+    """ 根据股票昨天的开盘价确定选股权重
 
     """
 
@@ -492,7 +506,7 @@ class SelectingLastOpen(stg.FactoralSelecting):
                          par_types=[],
                          par_bounds_or_enums=[],
                          stg_name='SELECTING LAST OPEN',
-                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         stg_text='Select stocks according their last open price',
                          data_freq='d',
                          sample_freq='y',
                          window_length=2,
@@ -517,8 +531,8 @@ class SelectingLastClose(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST OPEN',
-                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         stg_name='SELECTING LAST CLOSE',
+                         stg_text='Select stocks according their last close price',
                          data_freq='d',
                          sample_freq='y',
                          window_length=2,
@@ -534,7 +548,7 @@ class SelectingLastClose(stg.FactoralSelecting):
 
 
 class SelectingLastHigh(stg.FactoralSelecting):
-    """ 根据股票昨天的收盘价确定选股权重
+    """ 根据股票昨天的最高价确定选股权重
 
     """
 
@@ -543,8 +557,8 @@ class SelectingLastHigh(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST OPEN',
-                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         stg_name='SELECTING LAST HIGH',
+                         stg_text='Select stocks according their last high price',
                          data_freq='d',
                          sample_freq='y',
                          window_length=2,
@@ -560,7 +574,7 @@ class SelectingLastHigh(stg.FactoralSelecting):
 
 
 class SelectingLastLow(stg.FactoralSelecting):
-    """ 根据股票昨天的收盘价确定选股权重
+    """ 根据股票昨天的最低价确定选股权重
 
     """
 
@@ -569,8 +583,8 @@ class SelectingLastLow(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST OPEN',
-                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         stg_name='SELECTING LAST LOW',
+                         stg_text='Select stocks according their last low price',
                          data_freq='d',
                          sample_freq='y',
                          window_length=2,
@@ -581,6 +595,122 @@ class SelectingLastLow(stg.FactoralSelecting):
 
         """
         factors = hist_data[:, 0]
+
+        return factors
+
+
+class SelectingAvgOpen(stg.FactoralSelecting):
+    """ 根据股票以前n天的平均开盘价选股
+
+        策略参数为n，一个大于2小于150的正整数
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_bounds_or_enums=[(2, 150)],
+                         stg_name='SELECTING AVG OPEN',
+                         stg_text='Select stocks by its N day average open price',
+                         data_freq='d',
+                         sample_freq='M',
+                         window_length=150,
+                         data_types='open')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        n, = self.pars
+        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
+
+        return factors
+
+
+class SelectingAvgClose(stg.FactoralSelecting):
+    """ 根据股票以前n天的平均最低价选股
+
+        策略参数为n，一个大于2小于150的正整数
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_bounds_or_enums=[(2, 150)],
+                         stg_name='SELECTING AVG CLOSE',
+                         stg_text='Select stocks by its N day average close price',
+                         data_freq='d',
+                         sample_freq='M',
+                         window_length=150,
+                         data_types='close')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        n, = self.pars
+        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
+
+        return factors
+
+
+class SelectingAvgLow(stg.FactoralSelecting):
+    """ 根据股票以前n天的平均最低价选股
+
+        策略参数为n，一个大于2小于150的正整数
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_bounds_or_enums=[(2, 150)],
+                         stg_name='SELECTING AVG LOW',
+                         stg_text='Select stocks by its N day average low price',
+                         data_freq='d',
+                         sample_freq='M',
+                         window_length=150,
+                         data_types='low')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        n, = self.pars
+        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
+
+        return factors
+
+
+class SelectingAvghigh(stg.FactoralSelecting):
+    """ 根据股票以前n天的平均最高价选股
+
+        策略参数为n，一个大于2小于150的正整数
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_bounds_or_enums=[(2, 150)],
+                         stg_name='SELECTING AVG HIGH',
+                         stg_text='Select stocks by its N day average high price',
+                         data_freq='d',
+                         sample_freq='M',
+                         window_length=150,
+                         data_types='high')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        n, = self.pars
+        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
 
         return factors
 
@@ -596,12 +726,17 @@ BUILT_IN_STRATEGY_DICT = {'crossline':          TimingCrossline,
                           'long':               TimingLong,
                           'short':              TimingShort,
                           'zero':               TimingZero,
-                          'all':                SelectingSimple,
+                          'all':                SelectingAll,
+                          'none':               SelectingNone,
                           'random':             SelectingRandom,
                           'finance':            SelectingFinanceIndicator,
                           'last_open':          SelectingLastOpen,
                           'last_close':         SelectingLastClose,
                           'last_high':          SelectingLastHigh,
-                          'last_low':           SelectingLastLow}
+                          'last_low':           SelectingLastLow,
+                          'avg_open':           SelectingAvgOpen,
+                          'avg_close':          SelectingAvgClose,
+                          'avg_high':           SelectingAvghigh,
+                          'avg_low':            SelectingAvgLow}
 
 AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()
