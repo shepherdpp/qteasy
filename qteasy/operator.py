@@ -14,7 +14,7 @@ from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
 from .strategy import RollingTiming
-from .strategy import Selecting
+from .strategy import SimpleSelecting
 from .strategy import SimpleTiming
 from .built_in import AVAILABLE_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
@@ -48,20 +48,20 @@ class Operator:
 
         在同一个Operator对象中，不同生成类型的策略可以被用于不同的用途，具体如下：
 
-            usage \ generator |  Rolling_Timing  |  Selecting  |  Simple_Timing
-            ==================|==================|=============|=================
-            long/short mask   |       Yes        |     Yes     |       Yes
-            ------------------|------------------|-------------|-----------------
-            Portfolio mask    |       No         |     Yes     |       No
-            ------------------|------------------|-------------|-----------------
-            signal matrix     |       Yes        |     No      |       Yes
+         usage \ generator | RollingTiming | SimpleSelecting | Simple_Timing | FactoralSelecting | ReferenceTiming |
+         ==================|===============|=================|===============|===================|=================|
+         long/short mask   |       Yes     |        Yes      |       Yes     |        Yes        |       Yes       |
+         ------------------|---------------|-----------------|---------------|-------------------|-----------------|
+         Portfolio mask    |       No      |        Yes      |       No      |        Yes        |       Yes       |
+         ------------------|---------------|-----------------|---------------|-------------------|-----------------|
+         signal matrix     |       Yes     |        No       |       Yes     |        No         |       Yes       |
 
-        ==三种策略信号生成器==
+        ==五种策略信号生成器==
 
-        目前Operator支持三种不同生成类型的策略，它们并不仅局限于某一种用途，不同生成器之间的区别在于策略利用历史数据并生成最终结果的
-        方法不一样。三种生成类型的策略分别如下：
+        目前Operator支持五种不同生成类型的策略，它们并不仅局限于某一种用途，不同生成器之间的区别在于策略利用历史数据并生成最终结果的
+        方法不一样。五种生成类型的策略分别如下：
 
-            1,  逐品种滚动时序信号生成器，用于生成择时信号的策略
+            1,  RollingTiming 逐品种滚动时序信号生成器，用于生成择时信号的策略
 
                 这类策略的共同特征是对投资组合中的所有投资产品逐个考察其历史数据，根据其历史数据，在历史数据的粒度上生成整个时间段上的
                 时间序列信号。时间序列信号可以为多空信号，即用>0的数字表示多头头寸，<0的数字代表空头头寸，0代表中性头寸。也可以表示交
@@ -79,7 +79,7 @@ class Operator:
                 的乘积M*N成正比，效率显著低于简单时序信号生成策略，因此，在可能的情况下（例如，简单移动平均值相关策略不受未来价格影响）
                 应该尽量使用简单时序信号生成策略，以提升执行速度。
 
-            2,  周期运行投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
+            2,  SimpleSelecting 简单投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
 
                 这类策略的共同特征是周期性运行，且运行的周期与其历史数据的粒度不同。在每次运行时，根据其历史数据，为潜在投资组合中的每
                 一个投资产品分配一个权重，并最终确保所有的权重值归一化。权重为0时表示该投资产品被从组合中剔除，而权重的大小则代表投资
@@ -90,7 +90,7 @@ class Operator:
                 这种生成方式的策略是针对历史数据区间运行的，是运算复杂度最低的一类生成方式，对于数量超大的投资组合，可以采用这种方式生
                 成投资策略。但仅仅局限于部分周期性运行的策略。
 
-            3,  逐品种简单时序信号生成器，用于生成择时信号的策略
+            3,  SimpleTiming 逐品种简单时序信号生成器，用于生成择时信号的策略
 
                 这类策略的共同特征是对投资组合中的所有投资产品逐个考察其历史数据，并在历史数据的粒度上生成整个时间段上的时间序列信号。
                 这种策略生成方法与逐品种滚动时序信号生成策略的信号产生方法类似，只是缺少了"滚动"的操作，时序信号是一次性在整个历史区间
@@ -105,6 +105,25 @@ class Operator:
                 简单时序生成器能得到相同的结果，而简单时序生成器的计算耗时大大低于滚动时序生成器，因此应该采用简单滚动生成器。又例如，
                 基于指数平滑均线或加权平均线的策略，或基于波形降噪分析的策略，其输出信号受未来信息的影响，如果使用简单滚动生成器将会
                 导致未来价格信息对回测信号产生影响，因此不应该使用简单时序信号生成器。
+
+            4,  FactoralSelecting 因子选股投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
+
+                这类策略的共同特征是周期性运行，且运行的周期与其历史数据的粒度不同。在每次运行时，根据其历史数据，为每一个股票计算一个
+                选股因子，这个选股因子可以根据任意选定的数据根据任意可能的逻辑生成。生成选股因子后，可以通过对选股因子的条件筛选和
+                排序执行选股操作。用户可以在策略属性层面定义筛选条件和排序方法，同时可以选择不同的选股权重分配方式
+
+                这种方式生成的策略可以用于生成周期性选股蒙板，也可以用于生成周期性的多空信号模板。
+
+                这种生成方式的策略是针对历史数据区间运行的，是运算复杂度最低的一类生成方式，对于数量超大的投资组合，可以采用这种方式生
+                成投资策略。但仅仅局限于部分周期性运行的策略。
+
+            5,  ReferenceTiming 参考数据信号生成器
+
+                这类策略并不需要所选择股票本身的数据计算策略输出，而是利用参考数据例如大盘、宏观经济数据或其他数据来生成统一的股票多空
+                或选股信号模版。其计算的基本方法与Timing类型生成器基本一致，但是同时针对所有的投资组合进行计算，因此信号可以用于多空
+                蒙板和选股信号蒙本，计算的基础为参考信号
+
+                这种方式生成的策略可以用于生成周期性选股蒙板，也可以用于生成周期性的多空信号模板，同时也可以用于直接生成交易信号。
 
         ==策略的三种用途==
 
@@ -260,7 +279,7 @@ class Operator:
                     raise KeyError(f'KeyError: built-in selecting type \'{selecting_type}\' not found!')
                 self._selecting_type.append(selecting_type)
                 self._selecting.append(BUILT_IN_STRATEGY_DICT[selecting_type]())
-            elif isinstance(selecting_type, (Selecting, SimpleTiming)):
+            elif isinstance(selecting_type, (SimpleSelecting, SimpleTiming)):
                 self._selecting_type.append(selecting_type.stg_type)
                 self._selecting.append(selecting_type)
             else:
@@ -636,9 +655,9 @@ class Operator:
         print('=' * 25)
         # 打印各个子模块的信息：
         # 首先打印Selecting模块的信息
-        print('Total count of Selecting strategies:', len(self._selecting))
+        print('Total count of SimpleSelecting strategies:', len(self._selecting))
         print('the blend type of selecting strategies is', self._selecting_blender_string)
-        print('Parameters of Selecting Strategies:')
+        print('Parameters of SimpleSelecting Strategies:')
         for sel in self.selecting:
             sel.info()
         print('=' * 25)
@@ -896,7 +915,7 @@ class Operator:
             try:
                 self._selecting_blender = self._exp_to_blender
             except:
-                raise ValueError(f'Selecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
+                raise ValueError(f'SimpleSelecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
                                  f', all elements should be separated by blank space, for example: '
                                  f'\' 0 and ( 1 or 2 )\'')
 

@@ -334,6 +334,61 @@ class Strategy:
                 f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
 
+    # TODO：Selecting的分段与Timing的Rolling Expansion滚动展开其实是同一个过程，未来可以尝试合并并一同优化
+    def _seg_periods(self, dates, freq):
+        """ 对输入的价格序列数据进行分段，用于所有与选股相关的派生类中
+
+        对输入的价格序列日期进行分析，生成每个历史分段的起止日期所在行号，并返回行号和分段长度（数据行数）
+        input:
+            dates ndarray，日期序列，
+            freq：str 分段频率，取值为‘Q'：季度， ’Y'，年度； ‘M'，月度
+        return: =====
+            seg_pos: 每一个历史分段的开始日期;
+            seg_lens：每一个历史分段中含有的历史数据数量，
+            len(seg_lens): 分段的数量
+            生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
+        """
+        # assert isinstance(dates, list), \
+        #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
+        temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
+        # 在这里发现一个错误，并已经修正：
+        # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
+        # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
+        # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
+        # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
+        # 空白。
+        # 解决办法是生成daterange之后，使用pd.Timedelta将它平移到dates[self.window_length]当天即可。
+        bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
+        # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
+        seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
+        # debug
+        # print(f'in module selecting: function seg_perids generated date bounds supposed to start'
+        #       f'from {dates[self.window_length]} to {dates[-1]}, actually got:\n'
+        #       f'{bnds}\n'
+        #       f'now comparing first date {dates[0]} with first bound {bnds[0]}')
+        # 用searchsorted函数把输入的日期与历史数据日期匹配起来
+        seg_pos[1:-1] = np.searchsorted(dates, bnds)
+        # 最后一个分隔位等于历史区间的总长度
+        seg_pos[-1] = len(dates) - 1
+        # print('Results check, selecting - segment creation, segments:', seg_pos)
+        # 计算每个分段的长度
+        seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
+        # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一个分割位，因为这样会有两个
+        # [0]了，例子如下（为简单起见，例子中的日期都用整数代替）：
+        # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
+        # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
+        # 第3天的位置为2，第6天的位置为5，第9天的位置为8
+        # 然而，为了确保在生成选股数据时，第一天也不会被落下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，这样才不会漏掉第一天和第二天
+        # 以上是正常情况的处理方式
+        # 如果分段的界限是[1,5,10]的时候，情况就不同了
+        # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成[0,0,4,9],会出现问题
+        # 因为系统会判断第一个分段起点为0，终点也为0，因此会传递一个空的ndarray到_realize()函数中，引发难以预料的错误
+        # 因此，出现这种情况时，要忽略最前面一位，返回时忽略第一位即可
+        if seg_pos[1] == 0:
+            return seg_pos[1:], seg_lens[1:], len(seg_pos) - 2
+        else:
+            return seg_pos, seg_lens, len(seg_pos) - 1
+
     @abstractmethod
     def generate(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
@@ -556,7 +611,7 @@ class RollingTiming(Strategy):
         return res
 
 
-class Selecting(Strategy):
+class SimpleSelecting(Strategy):
     """选股策略类的抽象基类，所有选股策略类都继承该类。该类定义的策略生成方法是历史数据分段处理，根据历史数据的分段生成横向投资组合分配比例。
 
         Selecting选股策略的生成方式与投资产品的组合方式有关。与择时类策略相比，选股策略与之的区别在于对历史数据的运用方式不同。择时类策略逐一
@@ -627,7 +682,7 @@ class Selecting(Strategy):
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray):
-        """" Selecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
+        """" SimpleSelecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
             :param hist_data: type: numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史
@@ -637,62 +692,7 @@ class Selecting(Strategy):
         """
         raise NotImplementedError
 
-    # TODO：Selecting的分段与Timing的Rolling Expansion滚动展开其实是同一个过程，未来可以尝试合并并一同优化
-    def _seg_periods(self, dates, freq):
-        """ 对输入的价格序列数据进行分段，Selection类会对每个分段应用不同的股票组合
-
-        对输入的价格序列日期进行分析，生成每个历史分段的起止日期所在行号，并返回行号和分段长度（数据行数）
-        input:
-            dates ndarray，日期序列，
-            freq：str 分段频率，取值为‘Q'：季度， ’Y'，年度； ‘M'，月度
-        return: =====
-            seg_pos: 每一个历史分段的开始日期;
-            seg_lens：每一个历史分段中含有的历史数据数量，
-            len(seg_lens): 分段的数量
-            生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
-        """
-        # assert isinstance(dates, list), \
-        #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
-        temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
-        # 在这里发现一个错误，并已经修正：
-        # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
-        # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
-        # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
-        # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
-        # 空白。
-        # 解决办法是生成daterange之后，使用pd.Timedelta将它平移到dates[self.window_length]当天即可。
-        bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
-        # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
-        seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
-        # debug
-        # print(f'in module selecting: function seg_perids generated date bounds supposed to start'
-        #       f'from {dates[self.window_length]} to {dates[-1]}, actually got:\n'
-        #       f'{bnds}\n'
-        #       f'now comparing first date {dates[0]} with first bound {bnds[0]}')
-        # 用searchsorted函数把输入的日期与历史数据日期匹配起来
-        seg_pos[1:-1] = np.searchsorted(dates, bnds)
-        # 最后一个分隔位等于历史区间的总长度
-        seg_pos[-1] = len(dates) - 1
-        # print('Results check, selecting - segment creation, segments:', seg_pos)
-        # 计算每个分段的长度
-        seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
-        # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一个分割位，因为这样会有两个
-        # [0]了，例子如下（为简单起见，例子中的日期都用整数代替）：
-        # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
-        # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
-        # 第3天的位置为2，第6天的位置为5，第9天的位置为8
-        # 然而，为了确保在生成选股数据时，第一天也不会被落下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，这样才不会漏掉第一天和第二天
-        # 以上是正常情况的处理方式
-        # 如果分段的界限是[1,5,10]的时候，情况就不同了
-        # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成[0,0,4,9],会出现问题
-        # 因为系统会判断第一个分段起点为0，终点也为0，因此会传递一个空的ndarray到_realize()函数中，引发难以预料的错误
-        # 因此，出现这种情况时，要忽略最前面一位，返回时忽略第一位即可
-        if seg_pos[1] == 0:
-            return seg_pos[1:], seg_lens[1:], len(seg_pos) - 2
-        else:
-            return seg_pos, seg_lens, len(seg_pos) - 1
-
-    # TODO：需要重新定义Selecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
+    # TODO：需要重新定义SimpleSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
     # TODO: 使函数的定义符合继承类的抽象方法定义规则
     def generate(self, hist_data: np.ndarray, shares, dates):
         """
@@ -915,3 +915,241 @@ class SimpleTiming(Strategy):
         # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res[self.window_length:, :]
+
+
+class FactoralSelecting(Strategy):
+    """ 因子选股，根据用户定义获选择的因子
+
+    """
+    __metaclass__ = ABCMeta
+
+    # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
+    def __init__(self,
+                 pars: tuple = None,
+                 opt_tag: int = 0,
+                 stg_name: str = 'NONE',
+                 stg_text: str = 'intro text of selecting strategy',
+                 par_count: int = 1,
+                 par_types: [list, str] = None,
+                 par_bounds_or_enums: [list, tuple] = None,
+                 data_freq: str = 'd',
+                 sample_freq: str = 'y',
+                 proportion_or_quantity: float = 0.5,
+                 window_length: int = 270,
+                 data_types: [list, str] = 'close',
+                 condition: str = 'any',
+                 lbound: float = -np.inf,
+                 ubound: float = np.inf,
+                 sort_ascending: bool = True,
+                 weighting: str = 'even'):
+        if par_types is None:
+            par_types = ['conti']
+        if par_bounds_or_enums is None:
+            par_bounds_or_enums = [(0, 1)]
+        super().__init__(pars=pars,
+                         opt_tag=opt_tag,
+                         stg_type='SELECTING',
+                         stg_name=stg_name,
+                         stg_text=stg_text,
+                         par_count=par_count,
+                         par_types=par_types,
+                         par_bounds_or_enums=par_bounds_or_enums,
+                         data_freq=data_freq,
+                         sample_freq=sample_freq,
+                         window_length=window_length,
+                         data_types=data_types)
+        self._poq = proportion_or_quantity
+        self.condition = condition
+        self.lbound = lbound
+        self.ubound = ubound
+        self.sort_ascending = sort_ascending
+        self.weighting = weighting
+
+    @abstractmethod
+    def _realize(self, hist_data: np.ndarray):
+        """" SimpleSelecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
+
+        input:
+            :param hist_data: type: numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史
+            数据片段
+        :return
+            numpy.ndarray, 一个一维向量，代表一个周期内股票的选股因子，选股因子向量的元素数量必须与股票池中的股票数量相同
+        """
+        raise NotImplementedError
+
+    def _process_factors(self, hist_data: np.ndarray):
+        """处理从_realize()方法传递过来的选股因子
+
+        选出符合condition的因子，并将这些因子排序，根据次序确定所有因子相应股票的选股权重
+        将选股权重传递到generate()方法中，生成最终的选股蒙板
+
+        input:
+            :type hist_data: np.ndarray
+        :return
+            numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
+        """
+        pct = self._poq
+        condition = self.condition
+        lbound = self.lbound
+        ubound = self.ubound
+        sort_ascending = self.sort_ascending
+        weighting = self.weighting
+
+        share_count = hist_data.shape[0]
+        if pct < 1:
+            # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
+            pct = int(share_count * pct)
+        else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
+            pct = int(pct)
+        if pct < 1:
+            pct = 1
+        # 历史数据片段必须是ndarray对象，否则无法进行
+        assert isinstance(hist_data, np.ndarray), \
+            f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
+
+        factors = self._realize(hist_data=hist_data)
+        chosen = np.zeros_like(factors)
+        # 筛选出不符合要求的指标，将他们设置为nan值
+        if condition == 'any':
+            pass
+        elif condition == 'greater':
+            factors[np.where(factors < ubound)] = np.nan
+        elif condition == 'less':
+            factors[np.where(factors > lbound)] = np.nan
+        elif condition == 'between':
+            factors[np.where((factors < lbound) & (factors > ubound))] = np.nan
+        elif condition == 'not_between':
+            factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
+        else:
+            raise ValueError(f'indication selection condition \'{condition}\' not supported!')
+        nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
+        if not sort_ascending:
+            # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
+            pos = max(share_count - pct - nan_count, 0)
+        else:  # 选择分数最低的部分个股
+            pos = pct
+        # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
+        if weighting == 'even':
+            # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
+            if not sort_ascending:
+                share_found = factors.argpartition(pos)[pos:]
+            else:
+                share_found = factors.argpartition(pos)[:pos]
+        else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
+            if not sort_ascending:
+                share_found = factors.argsort()[pos:]
+            else:
+                share_found = factors.argsort()[:pos]
+        # nan值数据的序号存储在arg_nan中
+        share_nan = np.where(np.isnan(factors))[0]
+        # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
+        args = np.setdiff1d(share_found, share_nan, assume_unique=True)
+        # 构造输出向量，初始值为全0
+        arg_count = len(args)
+        if arg_count == 0:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
+            # debug
+            # print(f'in SimpleSelecting realize method got ranking vector and share selecting vector like:\n'
+            #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
+            return chosen
+        # 根据投资组合比例分配方式，确定被选中产品的权重
+        #
+        if weighting == 'linear':
+            dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
+            chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
+        # proportion：比例分配，权重与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
+        elif weighting == 'proportion':
+            dist = factors[args]
+            d = dist.max() - dist.min()
+            if not sort_ascending:
+                dist = dist - dist.min() + d / 10.
+            else:
+                dist = dist.max() - dist + d / 10.
+            # print(f'in SimpleSelecting realize method proportion type got distance of each item like:\n{dist}')
+            if ~np.any(dist):  # if all distances are zero
+                chosen[args] = 1 / len(dist)
+            elif dist.sum() == 0:  # if not all distances are zero but sum is zero
+                chosen[args] = dist / len(dist)
+            else:
+                chosen[args] = dist / dist.sum()
+        # even：均匀分配，所有中选股票在组合中权重相同
+        else:  # self.__distribution == 'even'
+
+            chosen[args] = 1. / arg_count
+        # debug
+        # print(f'in SimpleSelecting realize method got ranking vector and share selecting vector like:\n'
+        #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
+        return chosen
+
+    # TODO：需要重新定义FactoralSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
+    # TODO: 使函数的定义符合继承类的抽象方法定义规则
+    def generate(self, hist_data: np.ndarray, shares, dates):
+        """
+        生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
+        建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
+
+        input:
+            :param hist_data: type: HistoryPanel, 历史数据
+            :param shares: type:
+            :param dates
+        :return:=====
+            sel_mask：选股蒙版，是一个与输入历史数据尺寸相同的ndarray，dtype为浮点数，取值范围在0～1之间
+            矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
+        """
+        # 提取策略参数
+        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
+        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
+        assert len(self.pars) == self.par_count, \
+            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+        assert isinstance(hist_data, np.ndarray), \
+            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
+        assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
+        assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
+        assert all([isinstance(share, str) for share in shares]), \
+            f'TypeError, all elements in shares should be str, got otherwise'
+        assert all([isinstance(date, pd.Timestamp) for date in dates]), \
+            f'TYpeError, all elements in dates should be Timestamp, got otherwise'
+        freq = self.sample_freq
+        # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
+        # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
+        seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
+        # 一个空的ndarray对象用于存储生成的选股蒙版
+        sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
+        # 原来的函数实际上使用未来的数据生成今天的结果，这样是错误的
+        # 例如，对于seg_start = 0，seg_lengt = 6的时候，使用seg_start:seg_start + seg_length的数据生成seg_start的数据，
+        # 也就是说，用第0:6天的数据，生成了第0天的信号
+        # 因此，seg_start不应该是seg_pos[0]，而是seg_pos[1]的数，因为这才是真正应该开始计算的第一条信号
+        # 正确的方法是用seg_start:seg_length的数据生成seg_start+seg_length那天的信号，即
+        # 使用0:6天的数据（不含第6天）生成第6天的信号
+        # 不过这样会带来一个变化，即生成全部操作信号需要更多的历史数据，包括第一个信号所在日期之前window_length日的数据
+        # 因此在输出数据的时候需要将前window_length个数据截取掉
+        seg_start = seg_pos[1]
+        # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
+        # TODO: 可以使用map函数生成分段
+        # debug
+        # print(f'hist data received in selecting strategy (shape: {hist_data.shape}):\n{hist_data}')
+        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\n'
+        #       f'seg_count\n{seg_count}')
+        for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
+            # share_sel向量代表当前区间内的投资组合比例
+            # debug
+            # print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
+            #       f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
+            share_sel = self._process_factors(hist_data[:, sp - sl:sp, :])
+            # assert isinstance(share_sel, np.ndarray)
+            # assert len(share_sel) == len(shares)
+            seg_end = seg_start + fill_len
+            # 填充相同的投资组合到当前区间内的所有交易时间点
+            sel_mask[seg_start:seg_end + 1, :] = share_sel
+            # debug
+            # print(f'filling data into the sel_mask, now filling \n{share_sel}\nin she sell mask '
+            #       f'from row {seg_start} to {seg_end} (not included)\n')
+            seg_start = seg_end
+        # 将所有分段组合成完整的ndarray
+        # debug
+        # print(f'hist data is filled with sel value, shape is {sel_mask.shape}\n'
+        #       f'the first 100 items of sel values are {sel_mask[:100]}')
+        # print(f'but the first {self.window_length} rows will be removed from the data\n'
+        #       f'only last {sel_mask.shape[0] - self.window_length} rows will be returned\n'
+        #       f'returned mask shape is {sel_mask[self.window_length:].shape}\n'
+        #       f'first 100 items are \n{sel_mask[self.window_length:][:100]}')
+        return sel_mask[self.window_length:]

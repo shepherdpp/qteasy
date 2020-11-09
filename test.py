@@ -1712,7 +1712,7 @@ class TestLSStrategy(qt.RollingTiming):
             return 1
 
 
-class TestSelStrategy(qt.Selecting):
+class TestSelStrategy(qt.SimpleSelecting):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -1750,7 +1750,7 @@ class TestSelStrategy(qt.Selecting):
         return chosen
 
 
-class TestSelStrategyDiffTime(qt.Selecting):
+class TestSelStrategyDiffTime(qt.SimpleSelecting):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -2552,6 +2552,11 @@ class TestOperator(unittest.TestCase):
         stg.window_length = 5
         stg.data_freq = 'd'
         stg.sample_freq = '10d'
+        stg.sort_ascending = False
+        stg.condition = 'greater'
+        stg.lbound = 0
+        stg.ubound = 0
+        stg._poq = 0.67
         history_data = self.hp2.values
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2618,6 +2623,10 @@ class TestOperator(unittest.TestCase):
 
         # test single factor, get mininum factor
         stg_pars = (True, 'even', 'less', 1, 1, 0.67)
+        stg.sort_ascending = True
+        stg.condition = 'less'
+        stg.lbound = 1
+        stg.ubound = 1
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2675,6 +2684,11 @@ class TestOperator(unittest.TestCase):
 
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'linear', 'greater', 0, 0, 0.67)
+        stg.sort_ascending = False
+        stg.weighting = 'linear'
+        stg.condition = 'greater'
+        stg.lbound = 0
+        stg.ubound = 0
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2732,6 +2746,11 @@ class TestOperator(unittest.TestCase):
 
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
+        stg.sort_ascending = False
+        stg.weighting = 'proportion'
+        stg.condition = 'greater'
+        stg.lbound = 0
+        stg.ubound = 0
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -2789,6 +2808,11 @@ class TestOperator(unittest.TestCase):
 
         # test single factor, get max factor in linear weight, threshold 0.2
         stg_pars = (False, 'even', 'greater', 0.2, 0.2, 0.67)
+        stg.sort_ascending = False
+        stg.weighting = 'even'
+        stg.condition = 'greater'
+        stg.lbound = 0.2
+        stg.ubound = 0.2
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 

@@ -459,15 +459,15 @@ class RiconUrgent(stg.SimpleTiming):
         return np.where(diff < drop, -1, 0).squeeze()
 
 
-# Built in Selecting strategies:
+# Built in SimpleSelecting strategies:
 
-class SelectingSimple(stg.Selecting):
+class SelectingSimple(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
     def __init__(self, pars=None):
         super().__init__(pars=pars,
                          stg_name='SIMPLE SELECTING',
-                         stg_text='Selecting all share and distribute weights evenly')
+                         stg_text='SimpleSelecting all share and distribute weights evenly')
 
     def _realize(self, hist_data):
         # 所有股票全部被选中，投资比例平均分配
@@ -475,13 +475,13 @@ class SelectingSimple(stg.Selecting):
         return [1. / share_count] * share_count
 
 
-class SelectingRandom(stg.Selecting):
+class SelectingRandom(stg.SimpleSelecting):
     """基础选股策略：在每个历史分段中，按照指定的概率（p<1时）随机抽取若干股票，或随机抽取指定数量（p>1）的股票进入投资组合，投资比例平均分配"""
 
     def __init__(self, pars=None):
         super().__init__(pars=pars,
                          stg_name='RANDOM SELECTING',
-                         stg_text='Selecting share Randomly and distribute weights evenly')
+                         stg_text='SimpleSelecting share Randomly and distribute weights evenly')
 
     def _realize(self, hist_data):
         pct = self.pars[0]
@@ -496,9 +496,9 @@ class SelectingRandom(stg.Selecting):
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
 
-# TODO: make conditional selection and sort selecting features in this strategy standard to Selecting
+# TODO: make conditional selection and sort selecting features in this strategy standard to SimpleSelecting
 # TODO: the differences between concrete strategies will be how the indicator vectors are generated.
-class SelectingFinanceRanking(stg.Selecting):
+class SelectingFinanceRanking(stg.FactoralSelecting):
     """ 根据所有股票某个指标选股，并分配选股权重
 
         股票的选择取决于一批股票的某一个指标，这个指标可以是财务指标、量价指标，或者是其他的指标，这些指标形成一个一维向量，即指标向量
@@ -548,7 +548,7 @@ class SelectingFinanceRanking(stg.Selecting):
                                               (-np.inf, np.inf),
                                               (0, 1.)],
                          stg_name='FINANCE SELECTING',
-                         stg_text='Selecting share_pool according to financial report EPS indicator',
+                         stg_text='SimpleSelecting share_pool according to financial report EPS indicator',
                          data_freq='d',
                          sample_freq='y',
                          window_length=90,
@@ -558,98 +558,12 @@ class SelectingFinanceRanking(stg.Selecting):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
-        sort_ascending, weighting, condition, lbound, ubound, pct = self.pars
-        share_count = hist_data.shape[0]
-        if pct < 1:
-            # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
-            pct = int(share_count * pct)
-        else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
-            pct = int(pct)
-        if pct < 1: pct = 1
-        # debug
-        # print(f'in selecting_finance strategy _realize(), got parameters as following:\n'
-        #       f'largest win: {sort_ascending}\nweighting: {weighting}\nlbound: {lbound}\n'
-        #       f'number of shares to select: {pct}')
-        # 历史数据片段必须是ndarray对象，否则无法进行
-        assert isinstance(hist_data, np.ndarray), \
-            f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
-        # 将历史数据片段中的eps求均值，忽略Nan值,
-        indices = np.nanmean(hist_data, axis=1).squeeze()
-        chosen = np.zeros_like(indices)
-        # 筛选出不符合要求的指标，将他们设置为nan值
-        if condition == 'any':
-            pass
-        elif condition == 'greater':
-            indices[np.where(indices < ubound)] = np.nan
-        elif condition == 'less':
-            indices[np.where(indices > lbound)] = np.nan
-        elif condition == 'between':
-            indices[np.where((indices < lbound) & (indices > ubound))] = np.nan
-        elif condition == 'not_between':
-            indices[np.where(np.logical_and(indices > lbound, indices < ubound))] = np.nan
-        else:
-            raise ValueError(f'indication selection condition \'{condition}\' not supported!')
-        nan_count = np.isnan(indices).astype('int').sum()  # 清点数据，获取nan值的数量
-        if not sort_ascending:
-            # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
-            pos = max(share_count - pct - nan_count, 0)
-        else:  # 选择分数最低的部分个股
-            pos = pct
-        # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
-        if weighting == 'even':
-            # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
-            if not sort_ascending:
-                share_found = indices.argpartition(pos)[pos:]
-            else:
-                share_found = indices.argpartition(pos)[:pos]
-        else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
-            if not sort_ascending:
-                share_found = indices.argsort()[pos:]
-            else:
-                share_found = indices.argsort()[:pos]
-        # nan值数据的序号存储在arg_nan中
-        share_nan = np.where(np.isnan(indices))[0]
-        # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
-        args = np.setdiff1d(share_found, share_nan, assume_unique=True)
-        # 构造输出向量，初始值为全0
-        arg_count = len(args)
-        if arg_count == 0:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
-            # debug
-            # print(f'in Selecting realize method got ranking vector and share selecting vector like:\n'
-            #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
-            return chosen
-        # 根据投资组合比例分配方式，确定被选中产品的权重
-        #
-        if weighting == 'linear':
-            dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
-            chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
-        # proportion：比例分配，权重与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
-        elif weighting == 'proportion':
-            dist = indices[args]
-            d = dist.max() - dist.min()
-            if not sort_ascending:
-                dist = dist - dist.min() + d / 10.
-            else:
-                dist = dist.max() - dist + d / 10.
-            # print(f'in Selecting realize method proportion type got distance of each item like:\n{dist}')
-            if ~np.any(dist):  # if all distances are zero
-                chosen[args] = 1 / len(dist)
-            elif dist.sum() == 0:  # if not all distances are zero but sum is zero
-                chosen[args] = dist / len(dist)
-            else:
-                chosen[args] = dist / dist.sum()
-        # even：均匀分配，所有中选股票在组合中权重相同
-        else:  # self.__distribution == 'even'
+        factors = np.nanmean(hist_data, axis=1).squeeze()
 
-            chosen[args] = 1. / arg_count
-        # debug
-        # print(f'in Selecting realize method got ranking vector and share selecting vector like:\n'
-        #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
-        return chosen
+        return factors
 
 
-BUILT_IN_STRATEGY_DICT = {'test':               TestTimingClass,
-                          'crossline':          TimingCrossline,
+BUILT_IN_STRATEGY_DICT = {'crossline':          TimingCrossline,
                           'macd':               TimingMACD,
                           'dma':                TimingDMA,
                           'trix':               TimingTRIX,
