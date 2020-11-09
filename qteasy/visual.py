@@ -13,8 +13,6 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.cbook as cbook
 import matplotlib.ticker as mtick
-import pandas as pd
-import numpy as np
 
 import pandas as pd
 import datetime

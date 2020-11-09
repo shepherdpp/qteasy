@@ -273,7 +273,7 @@ class Strategy:
         if len(pars) == self.par_count or isinstance(pars, dict):
             self._pars = pars
             return 1
-        raise ValueError(f'parameter setting error in set_pars() method of \n{self}expected par count: '
+        raise ValueError(f'parameter setting error in set_pars() method of \n{self}\nexpected par count: '
                          f'{self.par_count}, got {len(pars)}')
 
     def set_opt_tag(self, opt_tag: int) -> int:
@@ -423,7 +423,7 @@ class RollingTiming(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> int:
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
         """ 策略的具体实现方法，在具体类中需要重写，是整个类的择时信号基本生成方法，针对单个个股的价格序列生成多空状态信号
 
             同时，params是一个元组，包含了应用于这一个投资产品的策略参数（由于同一个策略允许对不同的投资产品应用不同的策略参数，
@@ -446,7 +446,7 @@ class RollingTiming(Strategy):
             :param hist_data: ndarray，历史数据，策略的计算在历史数据基础上进行
             :param params: tuple, 策略参数，具体的策略输出结果依靠参数给出
         return:
-            :stg_output: int, 一个代表策略输出的数字，可以代表头寸位置，1代表多头，-1代表空头，0代表空仓，策略输出同样可以代表操作
+            :stg_output: float, 一个代表策略输出的数字，可以代表头寸位置，1代表多头，-1代表空头，0代表空仓，策略输出同样可以代表操作
             信号，1代表开多仓或平空仓，-1代表开空仓或平多仓，0代表不操作
         """
         raise NotImplementedError

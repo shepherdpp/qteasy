@@ -17,21 +17,6 @@ from .tafuncs import sma, ema, trix, cdldoji, bbands
 # All following strategies can be used to create strategies by referring to its name
 # Built-in Rolling timing strategies:
 
-class TestTimingClass(stg.RollingTiming):
-    """Test strategy that uses abstract class from another file
-    """
-    def __init__(self):
-        """
-
-        """
-        super().__init__()
-        pass
-
-    def _realize(self, hist_data, params):
-        print(f'test strategy with imported abc done!\n'
-              f'got parameters: {params}\n'
-              f'got hist data shaped: {hist_data.shape}')
-
 
 class TimingCrossline(stg.RollingTiming):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
