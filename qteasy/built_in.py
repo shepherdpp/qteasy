@@ -119,52 +119,6 @@ class TimingMACD(stg.RollingTiming):
             return 0
 
 
-class TimingDMA(stg.RollingTiming):
-    """DMA择时策略
-    生成DMA多空判断：
-        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
-        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
-        3， DMA与股价发生背离时的交叉信号，可信度较高
-
-    数据类型：close 收盘价，单数据输入
-    数据分析频率：天
-    数据窗口长度：270
-    策略使用3个参数，
-        s: int,
-        l: int,
-        d: int,
-    参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
-    """
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
-                         par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
-                         stg_name='DMA STRATEGY',
-                         stg_text='DMA strategy, determin long/short position according to differences of moving '
-                                  'average prices',
-                         data_types='close')
-
-    def _realize(self, hist_data, params):
-        # 使用基于np的移动平均计算函数的快速DMA择时方法
-        s, l, d = params
-        # print 'Generating Quick dma Long short Mask with parameters', params
-
-        # 计算指数的移动平均价格
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
-        dma = sma(h[0], s) - sma(h[0], l)
-        ama = dma.copy()
-        ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
-        # print('qDMA generated DMA and ama signal:', dma.size, dma, '\n', ama.size, ama)
-
-        if dma[-1] > ama[-1]:
-            return 1
-        else:
-            return 0
-
-
 class TimingTRIX(stg.RollingTiming):
     """TRIX择时策略，运用TRIX均线策略，利用历史序列上生成交易信号
 
@@ -496,45 +450,9 @@ class SelectingRandom(stg.SimpleSelecting):
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
 
-# TODO: make conditional selection and sort selecting features in this strategy standard to SimpleSelecting
-# TODO: the differences between concrete strategies will be how the indicator vectors are generated.
-class SelectingFinanceRanking(stg.FactoralSelecting):
-    """ 根据所有股票某个指标选股，并分配选股权重
+class SelectingFinanceIndicator(stg.FactoralSelecting):
+    """ 以股票过去一段时间内的财务指标的平均值作为选股因子选股
 
-        股票的选择取决于一批股票的某一个指标，这个指标可以是财务指标、量价指标，或者是其他的指标，这些指标形成一个一维向量，即指标向量
-        指标向量首先被用来执行条件选股：当某个股票的指标符合某条件时，股票被选中，
-            这些条件包括：大于某数、小于某数、介于某两数之间，或不在两数之间
-        对于被选中的股票，还可以根据其指标在所有股票中的大小排序执行选股：例如，从大到小排列的前30%或前10个
-        条件选股和排序选股可以兼而有之
-
-        数据类型：由data_types指定的财报指标财报数据，单数据输入，默认数据为EPS
-        数据分析频率：季度
-        数据窗口长度：90
-        策略使用6个参数:
-            sort_ascending:     bool,   排序方法，对选中的股票进行排序以选择或分配权重：
-                                        True         :对选股指标从小到大排列，优先选择指标最小的股票
-                                        False        :对选股指标从大到小排泄，优先选择指标最大的股票
-            weighting:          str ,   确定如何分配选中股票的权重
-                                        'even'       :所有被选中的股票都获得同样的权重
-                                        'linear'     :权重根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，
-                                                      其余居中者的比例按序呈等差数列
-                                        'proportion' :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
-                                                      指标之间的差值成比例
-            condition:          str ,   确定如何根据条件选择股票，可用值包括：
-                                        'any'        :选择所有可用股票
-                                        'greater'    :选择指标大于ubound的股票
-                                        'less'       :选择指标小于lbound的股票
-                                        'between'    :选择指标介于lbound与ubound之间的股票
-                                        'not_between':选择指标不在lbound与ubound之间的股票
-            lbound:             float,  执行条件选股时的指标下界
-            ubound:             float,  执行条件选股时的指标上界
-            pct:                float,  最多从股票池中选出的投资组合的数量或比例，当0<pct<1时，选出pct%的股票，当pct>=1时，选出pct只股票
-        参数输入数据范围：[(True, False),
-                       ('even', 'linear', 'proportion'),
-                       ('any', 'greater', 'less', 'between', 'not_between'),
-                       (-inf, inf),
-                       (-inf, inf),
-                       (0, 1.)]
     """
 
     def __init__(self, pars=None):
@@ -563,9 +481,113 @@ class SelectingFinanceRanking(stg.FactoralSelecting):
         return factors
 
 
+class SelectingLastOpen(stg.FactoralSelecting):
+    """ 根据股票昨天的收盘价确定选股权重
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
+                         stg_name='SELECTING LAST OPEN',
+                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         data_freq='d',
+                         sample_freq='y',
+                         window_length=2,
+                         data_types='open')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        factors = hist_data[:, 0]
+
+        return factors
+
+
+class SelectingLastClose(stg.FactoralSelecting):
+    """ 根据股票昨天的收盘价确定选股权重
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
+                         stg_name='SELECTING LAST OPEN',
+                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         data_freq='d',
+                         sample_freq='y',
+                         window_length=2,
+                         data_types='close')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        factors = hist_data[:, 0]
+
+        return factors
+
+
+class SelectingLastHigh(stg.FactoralSelecting):
+    """ 根据股票昨天的收盘价确定选股权重
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
+                         stg_name='SELECTING LAST OPEN',
+                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         data_freq='d',
+                         sample_freq='y',
+                         window_length=2,
+                         data_types='high')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        factors = hist_data[:, 0]
+
+        return factors
+
+
+class SelectingLastLow(stg.FactoralSelecting):
+    """ 根据股票昨天的收盘价确定选股权重
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
+                         stg_name='SELECTING LAST OPEN',
+                         stg_text='Factoral Selecting Strategy that Selects by Last Open Price',
+                         data_freq='d',
+                         sample_freq='y',
+                         window_length=2,
+                         data_types='low')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        factors = hist_data[:, 0]
+
+        return factors
+
+
 BUILT_IN_STRATEGY_DICT = {'crossline':          TimingCrossline,
                           'macd':               TimingMACD,
-                          'dma':                TimingDMA,
+                          'dma':                SimpleDMA,
                           'trix':               TimingTRIX,
                           'cdl':                TimingCDL,
                           'bband':              TimingBBand,
@@ -574,9 +596,12 @@ BUILT_IN_STRATEGY_DICT = {'crossline':          TimingCrossline,
                           'long':               TimingLong,
                           'short':              TimingShort,
                           'zero':               TimingZero,
-                          's_dma':              SimpleDMA,
                           'all':                SelectingSimple,
                           'random':             SelectingRandom,
-                          'finance':            SelectingFinanceRanking}
+                          'finance':            SelectingFinanceIndicator,
+                          'last_open':          SelectingLastOpen,
+                          'last_close':         SelectingLastClose,
+                          'last_high':          SelectingLastHigh,
+                          'last_low':           SelectingLastLow}
 
 AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()

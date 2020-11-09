@@ -10,7 +10,7 @@ from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
-from qteasy.built_in import SelectingFinanceRanking
+from qteasy.built_in import SelectingFinanceIndicator
 from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
@@ -2546,7 +2546,7 @@ class TestOperator(unittest.TestCase):
 
     def test_sel_finance(self):
         """Test selecting_finance strategy, test all built-in strategy parameters"""
-        stg = SelectingFinanceRanking()
+        stg = SelectingFinanceIndicator()
         stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         stg.window_length = 5
@@ -4980,8 +4980,8 @@ class TestVisual(unittest.TestCase):
 
 class TestBuiltIns(unittest.TestCase):
     def test_first(self):
-        stg = qt.TestTimingClass()
-        self.assertIsInstance(stg, qt.built_in.TestTimingClass)
+        stg = qt.TimingCrossline()
+        self.assertIsInstance(stg, qt.built_in.TimingCrossline)
         print(f'type of class: {type(stg)}')
 
 

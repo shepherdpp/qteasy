@@ -920,6 +920,40 @@ class SimpleTiming(Strategy):
 class FactoralSelecting(Strategy):
     """ 因子选股，根据用户定义获选择的因子
 
+        股票的选择取决于一批股票的某一个选股因子，这个指标可以是财务指标、量价指标，或者是其他的指标，这些指标形成一个一维向量，即指标向量
+        指标向量首先被用来执行条件选股：当某个股票的指标符合某条件时，股票被选中，
+            这些条件包括：大于某数、小于某数、介于某两数之间，或不在两数之间
+        对于被选中的股票，还可以根据其指标在所有股票中的大小排序执行选股：例如，从大到小排列的前30%或前10个
+        条件选股和排序选股可以兼而有之
+
+        数据类型：由data_types指定的财报指标财报数据，单数据输入，默认数据为EPS
+        数据分析频率：季度
+        数据窗口长度：90
+        策略使用6个参数:
+            sort_ascending:     bool,   排序方法，对选中的股票进行排序以选择或分配权重：
+                                        True         :对选股指标从小到大排列，优先选择指标最小的股票
+                                        False        :对选股指标从大到小排泄，优先选择指标最大的股票
+            weighting:          str ,   确定如何分配选中股票的权重
+                                        'even'       :所有被选中的股票都获得同样的权重
+                                        'linear'     :权重根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，
+                                                      其余居中者的比例按序呈等差数列
+                                        'proportion' :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
+                                                      指标之间的差值成比例
+            condition:          str ,   确定如何根据条件选择股票，可用值包括：
+                                        'any'        :选择所有可用股票
+                                        'greater'    :选择指标大于ubound的股票
+                                        'less'       :选择指标小于lbound的股票
+                                        'between'    :选择指标介于lbound与ubound之间的股票
+                                        'not_between':选择指标不在lbound与ubound之间的股票
+            lbound:             float,  执行条件选股时的指标下界
+            ubound:             float,  执行条件选股时的指标上界
+            pct:                float,  最多从股票池中选出的投资组合的数量或比例，当0<pct<1时，选出pct%的股票，当pct>=1时，选出pct只股票
+        参数输入数据范围：[(True, False),
+                       ('even', 'linear', 'proportion'),
+                       ('any', 'greater', 'less', 'between', 'not_between'),
+                       (-inf, inf),
+                       (-inf, inf),
+                       (0, 1.)]
     """
     __metaclass__ = ABCMeta
 
@@ -1153,3 +1187,14 @@ class FactoralSelecting(Strategy):
         #       f'returned mask shape is {sel_mask[self.window_length:].shape}\n'
         #       f'first 100 items are \n{sel_mask[self.window_length:][:100]}')
         return sel_mask[self.window_length:]
+
+
+class ReferenceTiming(Strategy):
+    """ 根据参考数据对一批股票进行集合择时操作，生成操作模版
+
+    """
+    def __init__(self):
+        super().__init__()
+
+    def generate(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
+        raise NotImplementedError
