@@ -145,8 +145,8 @@ def plot_loop_result(result, msg: dict):
                          f'¥{msg["total_fee"]:13,.2f}     '
                          f'total investment amount: ¥{msg["total_invest"]:13,.2f}    '
                          f'final value:  ¥{msg["final_value"]:13,.2f}')
-    fig.text(0.05, 0.87, f'Total return: {msg["rtn"] * 100:.3f}%    '
-                         f'Avg annual return: {((msg["rtn"] + 1) ** (1 / msg["years"]) - 1) * 100: .3f}%    '
+    fig.text(0.05, 0.87, f'Total return: {msg["rtn"] * 100 - 100:.3f}%    '
+                         f'Avg annual return: {((msg["rtn"]) ** (1 / msg["years"]) - 1) * 100: .3f}%    '
                          f'ref return: {msg["ref_rtn"] * 100:.3f}%    '
                          f'Avg annual ref return: {msg["ref_annual_rtn"] * 100:.3f}%')
     fig.text(0.05, 0.84, f'alpha: {msg["alpha"]:.3f}  '
