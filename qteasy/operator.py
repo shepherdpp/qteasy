@@ -28,6 +28,10 @@ from .utilfuncs import unify, mask_to_signal
 # TODO：两种不同的头寸位置配合开仓（signal>0）或平仓（signal<0）才能完整地表示所有的交易方式
 # TODO：另外，还需要加入更多交易相关信息，如限价单、市价单、交易数量等等，总之，之前仅用singal表示交易信号的方式太过于简单了
 
+#TODO: A reference data type should affiliated to strategies,
+#TODO: which is useful when a reference data is needed. for
+#TODO: example, a relative change rate is based on the difference
+#TODO: between the stock prices and reference prices.
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
 

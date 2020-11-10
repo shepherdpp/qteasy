@@ -11,12 +11,12 @@
 
 import numpy as np
 import qteasy.strategy as stg
-from .tafuncs import sma, ema, trix, cdldoji, bbands
+from .tafuncs import sma, ema, trix, cdldoji, bbands, atr
 
 
-# All following strategies can be used to create strategies by referring to its name
+# All following strategies can be used to create strategies by referring to its stragety ID
+
 # Built-in Rolling timing strategies:
-
 
 class TimingCrossline(stg.RollingTiming):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
@@ -176,52 +176,6 @@ class TimingTRIX(stg.RollingTiming):
             return 0
 
 
-class TimingBBand(stg.SimpleTiming):
-    """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
-
-        数据类型：close 收盘价，单数据输入
-        数据分析频率：天
-        数据窗口长度：270天
-        策略使用2个参数，
-            span: int, 移动平均计算窗口宽度，单位为日
-            upper: float, 布林带的上边缘所处的标准差倍数
-            lower: float, 布林带的下边缘所处的标准差倍数
-        参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
-        """
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['discr', 'conti', 'conti'],
-                         par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
-                         stg_name='BBand STRATEGY',
-                         stg_text='BBand strategy, determine long/short position according to Bollinger bands',
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=270,
-                         data_types=['close', 'high', 'low'])
-
-    def _realize(self, hist_data, params):
-
-        span, upper, lower = params
-        # 计算指数的指数移动平均价格
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
-        avg_price = np.mean(h[0], 1)
-        upper, middle, lower = bbands(close=avg_price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
-
-        # 生成BBANDS操作信号判断：
-        # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
-        # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
-        # 3, 其余时刻不产生任何信号
-        if avg_price[-2] >= upper[-2] and avg_price[-1] < upper[-1]:
-            return -1
-        elif avg_price[-2] <= lower[-2] and avg_price[-1] > lower[-1]:
-            return +1
-        else:
-            return 0
-
-
 class TimingCDL(stg.RollingTiming):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
@@ -253,7 +207,8 @@ class TimingCDL(stg.RollingTiming):
 
         return float(cat[-1])
 
-# Built in Simple timing strategies:
+
+# Built-in Simple timing strategies:
 
 class RiconNone(stg.SimpleTiming):
     """无风险控制策略，不对任何风险进行控制"""
@@ -371,6 +326,52 @@ class SimpleDMA(stg.SimpleTiming):
         return cat
 
 
+class TimingBBand(stg.SimpleTiming):
+    """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
+
+        数据类型：close 收盘价，单数据输入
+        数据分析频率：天
+        数据窗口长度：270天
+        策略使用2个参数，
+            span: int, 移动平均计算窗口宽度，单位为日
+            upper: float, 布林带的上边缘所处的标准差倍数
+            lower: float, 布林带的下边缘所处的标准差倍数
+        参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
+        """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'conti', 'conti'],
+                         par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
+                         stg_name='BBand STRATEGY',
+                         stg_text='BBand strategy, determine long/short position according to Bollinger bands',
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=270,
+                         data_types=['close', 'high', 'low'])
+
+    def _realize(self, hist_data, params):
+
+        span, upper, lower = params
+        # 计算指数的指数移动平均价格
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_data.T
+        avg_price = np.mean(h[0], 1)
+        upper, middle, lower = bbands(close=avg_price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
+
+        # 生成BBANDS操作信号判断：
+        # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
+        # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
+        # 3, 其余时刻不产生任何信号
+        if avg_price[-2] >= upper[-2] and avg_price[-1] < upper[-1]:
+            return -1
+        elif avg_price[-2] <= lower[-2] and avg_price[-1] > lower[-1]:
+            return +1
+        else:
+            return 0
+
+
 class RiconUrgent(stg.SimpleTiming):
     """urgent风控类，继承自Ricon类，重写_realize方法"""
 
@@ -413,7 +414,7 @@ class RiconUrgent(stg.SimpleTiming):
         return np.where(diff < drop, -1, 0).squeeze()
 
 
-# Built in SimpleSelecting strategies:
+# Built-in SimpleSelecting strategies:
 
 class SelectingAll(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
@@ -463,6 +464,8 @@ class SelectingRandom(stg.SimpleSelecting):
             chosen[choose_at] = 1
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
+
+# Built-in FactoralSelecting strategies:
 
 class SelectingFinanceIndicator(stg.FactoralSelecting):
     """ 以股票过去一段时间内的财务指标的平均值作为选股因子选股
@@ -711,6 +714,65 @@ class SelectingAvghigh(stg.FactoralSelecting):
         """
         n, = self.pars
         factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
+
+        return factors
+
+
+class SelectingNDayChange(stg.FactoralSelecting):
+    """ 根据股票以前n天的股价变动幅度作为选股因子
+
+        策略参数为n，一个大于2小于150的正整数
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_bounds_or_enums=[(2, 150)],
+                         stg_name='SELECTING N-DAY CHANGE',
+                         stg_text='Select stocks by its N day price change',
+                         data_freq='d',
+                         sample_freq='M',
+                         window_length=150,
+                         data_types='close')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        n, = self.pars
+        factors = (hist_data - np.roll(hist_data, n, axis=1))[:, -1]
+
+        return factors
+
+
+class SelectingNDayVolatility(stg.FactoralSelecting):
+    """ 根据股票以前n天的股价变动幅度作为选股因子
+
+        策略参数为n，一个大于2小于150的正整数
+
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['int'],
+                         par_bounds_or_enums=[(2, 150)],
+                         stg_name='SELECTING N-DAY CHANGE',
+                         stg_text='Select stocks by its N day price change',
+                         data_freq='d',
+                         sample_freq='M',
+                         window_length=150,
+                         data_types='high,low,close')
+
+    def _realize(self, hist_data):
+        """ 获取的数据为昨天的开盘价
+
+        """
+        n, = self.pars
+        #TODO: not Implemented!
+        factors = atr(hist_data)
 
         return factors
 
