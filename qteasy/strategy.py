@@ -334,6 +334,14 @@ class Strategy:
                 f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
 
+    def set_custom_pars(self, **kwargs):
+        """如果还有其他策略参数或用户自定义参数，在这里设置"""
+        for k, v in zip(kwargs.keys(), kwargs.values()):
+            if k in self.__dict__:
+                setattr(self, k, v)
+            else:
+                raise KeyError(f'The strategy does not have property \'{k}\'')
+
     # TODO：Selecting的分段与Timing的Rolling Expansion滚动展开其实是同一个过程，未来可以尝试合并并一同优化
     def _seg_periods(self, dates, freq):
         """ 对输入的价格序列数据进行分段，用于所有与选股相关的派生类中

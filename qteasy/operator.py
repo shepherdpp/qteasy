@@ -586,7 +586,8 @@ class Operator:
                       par_types: [list, str] = None,
                       sample_freq: str = None,
                       window_length: int = None,
-                      data_types: [str, list] = None):
+                      data_types: [str, list] = None,
+                      **kwargs):
         """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
 
@@ -645,6 +646,9 @@ class Operator:
                                    data_types=data_types)
             # print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
             #       f'window length: {window_length} \ndata types: {data_types}')
+        # set up additional properties of the class if they do exist:
+        # debug
+        strategy.set_custom_pars(**kwargs)
 
     # =================================================
     # 下面是Operation模块的公有方法：

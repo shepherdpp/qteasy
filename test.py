@@ -4955,7 +4955,13 @@ class TestQT(unittest.TestCase):
         op.set_parameter('t-0', pars=(0, 0))
         op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
                          sample_freq='Q',
-                         data_types='basic_eps')
+                         data_types='basic_eps',
+                         sort_ascending=True,
+                         weighting='proportion',
+                         condition='greater',
+                         ubound=0,
+                         lbound=0,
+                         _poq=0.4)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
         # op.info()
