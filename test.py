@@ -671,6 +671,28 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
         self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
 
+    def test_get_stock_pool(self):
+        print(f'start test building stock pool function')
+        qt.get_stock_pool(area='上海')
+        qt.get_stock_pool(area='上海,贵州,北京,天津')
+        qt.get_stock_pool(area='四川', industry='银行, 金融')
+        qt.get_stock_pool(industry='银行, 金融')
+        qt.get_stock_pool(market='主板')
+        qt.get_stock_pool(date='2000-01-01', market='主板')
+        qt.get_stock_pool(date='1999-01-01')
+        qt.get_stock_pool(exchange='SSE')
+        qt.get_stock_pool(date='19980101',
+                          industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
+                                    '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
+                                    '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
+                                    '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                    '广告包装', '轻工机械', '新型电力', '多元金融', '饲料'],
+                          area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
+                                '安徽', '四川', '浙江', '湖南', '河北', '新疆',
+                                '山东', '河南', '山西', '江西', '青海', '湖北',
+                                '内蒙', '海南', '重庆', '陕西', '福建', '广西',
+                                '上海'])
+        self.assertRaises(ValueError, qt.get_stock_pool, {'industry': 25})
 
 class TestEvaluations(unittest.TestCase):
     """Test all evaluation functions in core.py"""
@@ -4966,6 +4988,46 @@ class TestQT(unittest.TestCase):
         op.set_blender('ls', 'avg')
         # op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
+        qt.run(op, cont)
+
+    def test_many_share_mode_1(self):
+        """test built-in strategy selecting finance
+        """
+        print(f'test portfolio selection from large quantities of shares')
+        op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
+        cont = qt.Context()
+        cont.share_pool = qt.get_stock_pool(date='19980101',
+                                            industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
+                                                      '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
+                                                      '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
+                                                      '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                                      '广告包装', '轻工机械', '新型电力', '多元金融', '饲料'],
+                                            area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
+                                                  '安徽', '四川', '浙江', '湖南', '河北', '新疆',
+                                                  '山东', '河南', '山西', '江西', '青海', '湖北',
+                                                  '内蒙', '海南', '重庆', '陕西', '福建', '广西',
+                                                  '上海'])
+        print(f'in total a number of {len(cont.share_pool)} shares are selected!')
+        cont.asset_type = 'E'
+        cont.reference_asset = '000300.SH'
+        cont.reference_asset_type = 'I'
+        cont.output_count = 50
+        cont.invest_start = '20020101'
+        cont.moq = 1.
+        cont.mode = 1
+        cont.print_log = False
+        op.set_parameter('t-0', pars=(0, 0))
+        op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
+                         sample_freq='Q',
+                         data_types='basic_eps',
+                         sort_ascending=True,
+                         weighting='proportion',
+                         condition='greater',
+                         ubound=0,
+                         lbound=0,
+                         _poq=0.4)
+        op.set_parameter('r-0', pars=(0, 0))
+        op.set_blender('ls', 'avg')
         qt.run(op, cont)
 
 

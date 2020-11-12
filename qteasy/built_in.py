@@ -753,7 +753,6 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
         策略参数为n，一个大于2小于150的正整数
 
     """
-
     def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,

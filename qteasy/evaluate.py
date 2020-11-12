@@ -61,6 +61,7 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
     else:
         return performance_dict
 
+# TODO: move all variable validations from evaluation sub functions to evaluate() function -> 2020/11/11
 def _get_yearly_span(value_df: pd.DataFrame) -> float:
     """ 计算回测结果的时间跨度，单位为年。一年按照365天计算
 

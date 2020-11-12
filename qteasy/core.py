@@ -16,7 +16,7 @@ import math
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .history import get_history_panel, HistoryPanel
-from .utilfuncs import time_str_format, progress_bar
+from .utilfuncs import time_str_format, progress_bar, str_to_list
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -25,9 +25,39 @@ from .evaluate import evaluate
 from .evaluate import eval_info_ratio, eval_alpha, eval_benchmark
 from .evaluate import eval_beta, eval_volatility, eval_max_drawdown
 from .evaluate import eval_fv, eval_sharp, eval_operation
+from .tsfuncs import stock_basic
 
 
 AVAILABLE_EVALUATION_INDICATORS = []
+AVAILABLE_SHARE_INDUSTRIES = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
+                              '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
+                              '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
+                              '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                              '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
+                              '电气设备', '房产服务', '石油加工', '铅锌', '农业综合',
+                              '批发业', '通信设备', '旅游景点', '港口', '机场',
+                              '石油贸易', '空运', '医疗保健', '商贸代理', '化学制药',
+                              '影视音像', '工程机械', '软件服务', '证券', '化纤', '水泥',
+                              '生物制药', '专用机械', '供气供热', '农药化肥', '机床制造',
+                              '百货', '中成药', '路桥', '造纸', '食品', '黄金',
+                              '化工原料', '矿物制品', '水运', '日用化工', '机械基件',
+                              '汽车整车', '煤炭开采', '铁路', '染料涂料', '白酒', '林业',
+                              '水务', '水力发电', '旅游服务', '纺织', '铝', '保险',
+                              '园区开发', '小金属', '铜', '普钢', '航空', '特种钢',
+                              '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
+                              '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
+                              '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
+                              '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                              '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
+                              '陶瓷', '船舶']
+AVAILABLE_SHARE_AREA = ['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
+                        '安徽', '四川', '浙江', '湖南', '河北', '新疆',
+                        '山东', '河南', '山西', '江西', '青海', '湖北',
+                        '内蒙', '海南', '重庆', '陕西', '福建', '广西',
+                        '天津', '云南', '贵州', '甘肃', '宁夏', '黑龙江',
+                        '上海', '西藏']
+AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR']
+AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -628,6 +658,51 @@ def get_current_holdings() -> tuple:
     :return: tuple:
     """
     raise NotImplementedError
+
+
+def get_stock_pool(date: str = None, **kwargs) -> list:
+    """根据输入的参数筛选出合适的初始股票清单
+
+        可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
+            date:       根据上市日期选择，在改日期以前上市的股票将会被剔除：
+            index:      根据指数筛选，不含在指定的指数内的股票将会被剔除
+            industry:   公司所处行业，只有列举出来的行业会被选中
+            area:       公司所处省份，只有列举出来的省份的股票才会被选中
+            market:     市场，分为主板、创业板等
+            exchange:   交易所，包括上海证券交易所和深圳股票交易所
+
+    input:
+    :param date:
+    return:
+    a list that contains ts_codes of all selected shares
+
+    """
+    if date is None:
+        date = '1970-01-01'
+    try:
+        date = pd.to_datetime(date)
+    except:
+        date = pd.to_datetime('1970-01-01')
+    print(f'date is {date}')
+    # validate all input args:
+    if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()): raise KeyError
+    if not all(isinstance(val, (str, list)) for val in kwargs.values()): raise KeyError()
+
+    #
+    share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
+    share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
+    share_basics = share_basics.loc[share_basics.list_date >= date]
+
+    for column, targets in zip(kwargs.keys(), kwargs.values()):
+        if column == 'index':
+            pass
+        if isinstance(targets, str):
+            targets = str_to_list(targets)
+        if not all(isinstance(target, str) for target in targets):
+            raise KeyError(f'the list should contain only strings')
+        share_basics = share_basics.loc[share_basics[column].isin(targets)]
+
+    return list(share_basics['ts_code'].values)
 
 
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
