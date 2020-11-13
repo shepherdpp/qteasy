@@ -330,7 +330,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bo
     """
     if prog > total:
         prog = total
-    progress_str = f'\r \rOptimization progress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
+    progress_str = f'\r \rProgress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
                    f' {prog}/{total}. {np.round(prog / total * 100, 1)}%  {comments}'
     sys.stdout.write(progress_str)
     sys.stdout.flush()

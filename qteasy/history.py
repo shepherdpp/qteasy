@@ -12,8 +12,10 @@
 import pandas as pd
 import tushare as ts
 import numpy as np
+from time import sleep
 
-from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, list_to_str_format
+from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
+from .utilfuncs import list_to_str_format, progress_bar
 from .tsfuncs import get_bar, name_change
 from .tsfuncs import income, indicators, balance, cashflow
 
@@ -849,12 +851,16 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
     return result_hp
 
 
+# TODO: apply parallel downloading,
+# TODO: and dynamically group shares thus data downloading can be less repetitive.
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
                             shares: [str, list],
                             htypes: [str, list],
                             asset_type: str = 'E',
+                            parallel = False,
+                            delay = 0,
                             chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
@@ -863,6 +869,8 @@ def get_price_type_raw_data(start: str,
     :param freq:
     :param shares:
     :param asset_type: type:string: one of {'E':股票, 'I':指数, 'F':期货, 'FD':基金}
+    :param parallel: 默认False，是否开启多线程
+    :param delay:   默认0，在两次请求网络数据之间需要延迟的时间长短，单位为秒
     :param htypes:
     :param chanel: str: {'online', 'local'}
                     chanel == 'online' 从网络获取历史数据
@@ -876,9 +884,13 @@ def get_price_type_raw_data(start: str,
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
+    total_share_count = len(shares)
     # debug
-    # print(f'will download htype date {htypes} for share {shares}')
+    # print(f'will download htype date {htypes} for share {shares}'
+    i = 0
     for share in shares:
+        if delay > 0:
+            sleep(delay)
         raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
         # debug
         # print('raw df before rearange\n', raw_df)
@@ -888,6 +900,8 @@ def get_price_type_raw_data(start: str,
         raw_df.index = range(len(raw_df))
         # print('\nraw df after rearange\n', raw_df)
         df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+        i += 1
+        progress_bar(i, total_share_count)
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date).sort_index()
@@ -896,7 +910,15 @@ def get_price_type_raw_data(start: str,
     return df_per_share
 
 
-def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str = 'online'):
+# TODO: apply parallel downloading,
+# TODO: and dynamically group shares thus data downloading can be less repetitive.
+def get_financial_report_type_raw_data(start: str,
+                                       end: str,
+                                       shares: str,
+                                       htypes: str,
+                                       parallel = False,
+                                       delay = 1.25,
+                                       chanel: str = 'online'):
     """ 在线获取财报类历史数据
 
     :param report_type:
@@ -913,12 +935,13 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
 
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
+    total_share_count = len(shares)
     report_fields = ['ts_code', 'ann_date']
     # debug
     # # print(f'in function get financial report type raw data, got htypes: \n{htypes}, \n'
     # #       f'income fields will be {[htype for htype in htypes if htype in INCOME_TYPE_DATA]}')
     # print(f'in function get financial report type raw data, got shares: \n{shares}')
-    # print(f'income fields will be {report_fields + [htype for htype in htypes if htype in INCOME_TYPE_DATA]}')
+    # print(f'income fields will be {report_fields + [htype for htype in htypes if htype in INCOME_TYPE_DATA]}
     income_fields = list_to_str_format(report_fields + [htype for
                                                         htype in htypes
                                                         if htype in INCOME_TYPE_DATA])
@@ -936,7 +959,10 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
     balance_dfs = []
     cashflow_dfs = []
     # print('htypes:', htypes, "\nreport fields: ", report_fields)
+    i = 0
     for share in shares:
+        if delay > 0:
+            sleep(delay)
         if len(str_to_list(income_fields)) > 2:
             df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
@@ -971,6 +997,9 @@ def get_financial_report_type_raw_data(start, end, shares, htypes, chanel: str =
             # print('raw df before rearange\n', raw_df)
 
             # print('\nsingle df of share after removal\n', df)
+
+        i += 1
+        progress_bar(i, total_share_count)
     return income_dfs, indicator_dfs, balance_dfs, cashflow_dfs
 
 

@@ -683,7 +683,6 @@ def get_stock_pool(date: str = None, **kwargs) -> list:
         date = pd.to_datetime(date)
     except:
         date = pd.to_datetime('1970-01-01')
-    print(f'date is {date}')
     # validate all input args:
     if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()): raise KeyError
     if not all(isinstance(val, (str, list)) for val in kwargs.values()): raise KeyError()
