@@ -660,7 +660,7 @@ def get_current_holdings() -> tuple:
     raise NotImplementedError
 
 
-def get_stock_pool(date: str = None, **kwargs) -> list:
+def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     """根据输入的参数筛选出合适的初始股票清单
 
         可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
@@ -677,8 +677,6 @@ def get_stock_pool(date: str = None, **kwargs) -> list:
     a list that contains ts_codes of all selected shares
 
     """
-    if date is None:
-        date = '1970-01-01'
     try:
         date = pd.to_datetime(date)
     except:

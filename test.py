@@ -692,7 +692,8 @@ class TestCoreSubFuncs(unittest.TestCase):
                                 '山东', '河南', '山西', '江西', '青海', '湖北',
                                 '内蒙', '海南', '重庆', '陕西', '福建', '广西',
                                 '上海'])
-        self.assertRaises(ValueError, qt.get_stock_pool, {'industry': 25})
+        self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
+        self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
 
 class TestEvaluations(unittest.TestCase):
     """Test all evaluation functions in core.py"""
@@ -4986,7 +4987,7 @@ class TestQT(unittest.TestCase):
                          _poq=0.4)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
-        # op.info()
+        op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.run(op, cont)
 

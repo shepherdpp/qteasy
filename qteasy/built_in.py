@@ -282,7 +282,7 @@ class TimingZero(stg.SimpleTiming):
         return np.zeros_like(hist_data.squeeze())
 
 
-class SimpleDMA(stg.SimpleTiming):
+class TimingDMA(stg.SimpleTiming):
     """DMA择时策略
     生成DMA多空判断：
         1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
@@ -778,7 +778,7 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
 
 BUILT_IN_STRATEGY_DICT = {'crossline':          TimingCrossline,
                           'macd':               TimingMACD,
-                          'dma':                SimpleDMA,
+                          'dma':                TimingDMA,
                           'trix':               TimingTRIX,
                           'cdl':                TimingCDL,
                           'bband':              TimingBBand,

@@ -28,7 +28,6 @@ TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
 
 
-# TODO: 将History类改为MySQL数据库模块，管理本地历史数据
 class HistoryPanel():
     """qteasy 量化投资系统使用的主要历史数据的数据类型.
 
@@ -888,6 +887,7 @@ def get_price_type_raw_data(start: str,
     # debug
     # print(f'will download htype date {htypes} for share {shares}'
     i = 0
+    progress_bar(i, total_share_count)
     for share in shares:
         if delay > 0:
             sleep(delay)
@@ -960,9 +960,11 @@ def get_financial_report_type_raw_data(start: str,
     cashflow_dfs = []
     # print('htypes:', htypes, "\nreport fields: ", report_fields)
     i = 0
+    progress_bar(i, total_share_count)
     for share in shares:
         if delay > 0:
             sleep(delay)
+        # TODO: refract these codes, combine and simplify similar codes
         if len(str_to_list(income_fields)) > 2:
             df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
             df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
