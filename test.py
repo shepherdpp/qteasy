@@ -2089,7 +2089,6 @@ class TestOperator(unittest.TestCase):
         print('selecting history data:\n', sel_hist_data)
         print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
-        # TODO: 为什么生成的数据的行数都这么奇怪？为什么不是把所有的数据带入计算？尤其是RollingTiming，第一条结果也需要利用之前的数据生成的
         self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
         self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))

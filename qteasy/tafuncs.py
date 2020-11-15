@@ -33,6 +33,18 @@ from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOIN
 def bbands(close, timeperiod: int = 5, nbdevup: int = 2, nbdevdn: int = 2, matype: int = 0):
     """Bollinger Bands 布林带线
 
+        Bollinger Bands® are a technical analysis tool developed by John Bollinger
+        for generating oversold or overbought signals.
+        There are three lines that compose Bollinger Bands: A simple moving average
+        (middle band) and an upper and lower band.
+        The upper and lower bands are typically 2 standard deviations ± from a
+        20-day simple moving average, but can be modified.
+
+        The Bollinger bands are calculated as following:
+
+        BOLU=MA(TP,n)+m∗σ[TP,n]
+        BOLD=MA(TP,n)−m∗σ[TP,n]
+
     input:
         :param close:
         :param timeperiod:
@@ -50,6 +62,16 @@ def bbands(close, timeperiod: int = 5, nbdevup: int = 2, nbdevdn: int = 2, matyp
 def dema(close, period: int = 30):
     """Double Exponential Moving Average 双重指数平滑移动平均
 
+        The DEMA uses two exponential moving averages (EMAs) to eliminate lag,
+        as some traders view lag as a problem. The DEMA is used in a similar way
+        to traditional moving averages (MA). The average helps confirm up-trends
+        when the price is above the average, and helps confirm downtrends when
+        the price is below the average.
+
+        formula used for calculating DEMA is like following:
+
+        DEMA=2×EMA_N − EMA of EMA_N
+
     :param close:
     :param period:
     :return:
@@ -59,6 +81,16 @@ def dema(close, period: int = 30):
 
 def ema(close, span: int = 30):
     """Exponential Moving Average指数移动平均值
+
+        The EMA is a type of weighted moving average (WMA) that gives
+        more weighting or importance to recent price data. Like the
+        simple moving average, the exponential moving average is used
+        to see price trends over time, and watching several EMAs at
+        the same time is easy to do with moving average ribbons.
+
+        EMA is calculated with following formula:
+
+        EMA=Price(t)×k+EMA(y)×(1−k)
 
     input：
         :param close: 1-D ndarray, 输入数据，一维矩阵
@@ -72,6 +104,12 @@ def ema(close, span: int = 30):
 def ht(close):
     """Hilbert Transform - Instantaneous Trendline 希尔伯特变换-瞬时趋势线
 
+    In mathematics and in signal processing, the Hilbert transform is a
+    specific linear operator that takes a function, u(t) of a real
+    variable and produces another function of a real variable H(u)(t).
+    This linear operator is given by convolution with the function
+    1/(πt):
+
     :param close:
     :return:
     """
@@ -80,6 +118,38 @@ def ht(close):
 
 def kama(close, timeperiod: int = 30):
     """Kaufman Adaptive Moving Average 考夫曼自适应移动平均线
+
+    Kaufman's Adaptive Moving Average (KAMA) is a moving average designed
+    to account for market noise or volatility. KAMA will closely follow
+    prices when the price swings are relatively small and the noise is
+    low. KAMA will adjust when the price swings widen and follow prices
+    from a greater distance. This trend-following indicator can be used to
+    identify the overall trend, time turning points and filter price
+    movements.
+
+    Calculation:
+
+    Before calculating KAMA, we need to calculate the Efficiency Ratio
+    (ER) and the Smoothing Constant (SC). Thus calculation of KAMA takes
+    following steps:
+
+    step1, Efficiency Ratio (ER):
+
+    ER = Change/Volatility
+    Change = ABS(Close - Close (10 periods ago))
+    Volatility = Sum10(ABS(Close - Prior Close))
+
+    Volatility is the sum of the absolute value of the last ten price
+    changes (Close - Prior Close).
+
+    step2, Smoothing Constant (SC)
+
+    SC = [ER x (fastest SC - slowest SC) + slowest SC]2
+    SC = [ER x (2/(2+1) - 2/(30+1)) + 2/(30+1)]2
+
+    step3. Kama:
+
+    Current KAMA = Prior KAMA + SC x (Price - Prior KAMA)
 
     input:
     :param close:
@@ -93,6 +163,9 @@ def kama(close, timeperiod: int = 30):
 def ma(close, timeperiod: int = 30, matype: int = 0):
     """Moving Average移动平均值
 
+    For a simple moving average, the formula is the sum of the data
+    points over a given period divided by the number of periods.
+
     input：
         :param close: type: 1-D np.ndarray 输入数据，一维矩阵
         :param timeperiod: type: int, 1 < window, 时间滑动窗口
@@ -105,6 +178,16 @@ def ma(close, timeperiod: int = 30, matype: int = 0):
 
 def mama(close, fastlimit=0, slowlimit=0):
     """MESA Adaptive Moving Average MESA自适应移动平均线
+
+    the MESA Adaptive Moving Average is a technical trend-following
+    indicator which, according to its creator, adapts to price movement
+    “based on the rate change of phase as measured by the Hilbert
+    Transform Discriminator”. This method of adaptation features a fast
+    and a slow moving average so that the composite moving average swiftly
+    responds to price changes and holds the average value until the next
+    bars close.
+
+
 
     input:
     :param close:
@@ -154,6 +237,18 @@ def mid_price(high, low, timeperiod: int = 14):
 def sar(high, low, acceleration=0, maximum=0):
     """Parabolic SAR 抛物线SAR
 
+    The parabolic SAR is a technical indicator used to determine the
+    price direction of an asset, as well as draw attention to when
+    the price direction is changing. Sometimes known as the "stop
+    and reversal system".
+    The parabolic SAR indicator appears on a chart as a series of
+    dots, either above or below an asset's price, depending on the
+    direction the price is moving.
+    A dot is placed below the price when it is trending upward, and
+    above the price when it is trending downward.
+
+
+
     :param high:
     :param low:
     :param acceleration:
@@ -166,6 +261,18 @@ def sar(high, low, acceleration=0, maximum=0):
 def sarext(high, low, acceleration=0, maximum=0):
     """Parabolic SAR Extended 扩展抛物线SAR
 
+    he Parabolic SAR Extended is an indicator developed by PlayOptions
+    that derives from the classic Parabolic SAR. The interpretation is
+    very simple.
+    It is an indicator designed for optionists as it is reactive in
+    the beginning of the trend, but then remains little influenced by
+    the movements, although significant, but which do not change the
+    current trend.
+
+    Operation:
+        BUY signals are generated when the indicator is above 0;
+        SELL signals are generated when the indicator is below 0.
+
     :param high:
     :param low:
     :param acceleration:
@@ -177,6 +284,9 @@ def sarext(high, low, acceleration=0, maximum=0):
 
 def sma(close, timeperiod=30):
     """Simple Moving Average 简单移动平均
+
+    For a simple moving average, the formula is the sum of the data
+    points over a given period divided by the number of periods.
 
     :param close:
     :param timeperiod:
