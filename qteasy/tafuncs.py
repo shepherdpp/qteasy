@@ -309,6 +309,13 @@ def t3(close, timeperiod=5, vfactor=0):
 def tema(close, timeperiod=30):
     """Triple Exponential Moving Average 三重指数移动平均线
 
+    The triple exponential moving average was designed to smooth
+    price fluctuations, thereby making it easier to identify trends
+    without the lag associated with traditional moving averages (MA).
+    It does this by taking multiple exponential moving averages (EMA)
+    of the original EMA and subtracting out some of the lag.
+
+
     :param close:
     :param timeperiod:
     :return:
@@ -319,6 +326,17 @@ def tema(close, timeperiod=30):
 def trima(close, timeperiod=30):
     """Triangular Moving Average 三角移动平均线
 
+    the triangular moving average (TMA) is a technical indicator that
+    is similar to other moving averages. The TMA shows the average
+    (or mean) price of an asset over a specified number of data
+    points—usually a number of price bars. However, the triangular
+    moving average differs in that it is double smoothed—which also
+    means averaged twice.
+
+    The TMA can also be expressed as:
+    TMA = SUM (SMA values) / N
+    SMA = (P1 + P2 + P3 + P4 + ... + PN) / N
+
     :param close:
     :param timeperiod:
     :return:
@@ -328,6 +346,17 @@ def trima(close, timeperiod=30):
 
 def wma(close, timeperiod=30):
     """Weighted Moving Average 加权移动平均线
+
+    The weighted moving average (WMA) is a technical indicator
+    that traders use to generate trade direction and make a buy
+    or sell decision. It assigns greater weighting to recent data
+    points and less weighting on past data points. The weighted
+    moving average is calculated by multiplying each observation
+    in the data set by a predetermined weighting factor.
+
+    WMA can be calculated with following formula:
+
+    WMA = (P1 * N + P2 * (N-1) + ... + PN) / (N * (N + 1))/2
 
     :param close:
     :param timeperiod:
@@ -343,6 +372,37 @@ def wma(close, timeperiod=30):
 def adx(high, low, close, timeperiod=14):
     """Average Directional Movement Index 平均定向运动指数
 
+    ADX stands for Average Directional Movement Index and can be
+    used to help measure the overall strength of a trend. The ADX
+    indicator is an average of expanding price range values. The
+    ADX is a component of the Directional Movement System developed
+    by Welles Wilder. This system attempts to measure the strength
+    of price movement in positive and negative direction using the
+    DMI+ and DMI- indicators along with the ADX.
+
+    the ADX indicates movements of prices as following:
+
+    - Wilder suggests that a strong trend is present when ADX is above
+    25 and no trend is present when below 20.
+
+    - When the ADX turns down from high values, then the trend may be
+    ending. You may want to do additional research to determine if
+    closing open positions is appropriate for you.
+
+    - If the ADX is declining, it could be an indication that the market
+    is becoming less directional, and the current trend is weakening. You
+    may want to avoid trading trend systems as the trend changes.
+
+    - If after staying low for a lengthy time, the ADX rises by 4 or 5
+    units, (for example, from 15 to 20), it may be giving a signal to
+    trade the current trend.
+
+    - If the ADX is rising then the market is showing a strengthening trend.
+    The value of the ADX is proportional to the slope of the trend. The
+    slope of the ADX line is proportional to the acceleration of the price
+    movement (changing trend slope). If the trend is a constant slope then
+    the ADX value tends to flatten out.
+
     :param high:
     :param low:
     :param close:
@@ -354,6 +414,13 @@ def adx(high, low, close, timeperiod=14):
 
 def adxr(high, low, close, timeperiod=14):
     """Average Directional Movement Index Rating 平均定向运动指数评级
+
+    The Average Directional Movement Index Rating (ADXR) measures the strength
+    of the Average Directional Movement Index (ADX). It's calculated by taking
+    the average of the current ADX and the ADX from one time period before
+    (time periods can vary, but the most typical period used is 14 days).
+
+    ADXR = (ADX + ADX n-periods ago) / 2
 
     :param high:
     :param low:
@@ -367,6 +434,24 @@ def adxr(high, low, close, timeperiod=14):
 def apo(close, fastperiod=12, slowperiod=26, matype=0):
     """Absolute Price Oscillator 绝对价格震荡指标
 
+    The Absolute Price Oscillator displays the difference between two exponential
+    moving averages of a security's price and is expressed as an absolute value.
+
+    - APO crossing above zero is considered bullish, while crossing below zero is
+    bearish.
+
+    - A positive indicator value indicates an upward movement, while negative readings
+    signal a downward trend.
+
+    - Divergences form when a new high or low in price is not confirmed by the
+    Absolute Price Oscillator (APO). A bullish divergence forms when price make a
+    lower low, but the APO forms a higher low. This indicates less downward momentum
+    that could foreshadow a bullish reversal. A bearish divergence forms when price
+    makes a higher high, but the APO forms a lower high. This shows less upward momentum
+    that could foreshadow a bearish reversal.
+
+    APO = Shorter Period EMA – Longer Period EMA
+
     :param close:
     :param fastperiod:
     :param slowperiod:
@@ -378,6 +463,29 @@ def apo(close, fastperiod=12, slowperiod=26, matype=0):
 
 def aroon(high, low, timeperiod=14):
     """Aroon
+
+    The Aroon indicator, developed by Tushar Chande, indicates if a price is
+    trending or is in a trading range. It can also reveal the beginning of a
+    new trend, its strength and can help anticipate changes from trading
+    ranges to trends. AroonDown and the AroonUp indicators are used together
+    and combined are called the Aroon indicator.
+
+    - If the Aroon-Up crosses above the Aroon-Down, then a new uptrend may
+    start soon. Conversely, if Aroon-Down crosses above the Aroon-Up, then
+    a new downtrend may start soon.
+
+    - When Aroon-Up reaches 100, a new uptrend may have begun. If it remains
+    persistently between 70 and 100, and the Aroon-Down remains between 0 and
+    30, then a new uptrend is underway.
+
+    - When Aroon-Down reaches 100, a new downtrend may have begun. If it remains
+    persistently between 70 and 100, and the Aroon-Up remains between 0 and
+    30, then a new downtrend is underway. When Aroon-Up and Aroon-Down move
+    in parallel (horizontal, sloping up or down) with each other at roughly
+    the same level, then price is range trading or consolidating.
+
+    Aroon-Up = [(Period Specified – Periods Since the Highest High within Period Specified) / Period Specified] x 100
+    Aroon-Down = [(Period Specified – Periods Since the Lowest Low for Period Specified) / Period Specified] x 100
 
     :param high:
     :param low:
@@ -391,6 +499,17 @@ def aroon(high, low, timeperiod=14):
 
 def aroonosc(high, low, timeperiod=14):
     """Aroon Oscillator
+
+    The Aroon Oscillator is a trend-following indicator that uses
+    aspects of the Aroon Indicator (Aroon Up and Aroon Down) to
+    gauge the strength of a current trend and the likelihood that
+    it will continue. Readings above zero indicate that an uptrend
+    is present, while readings below zero indicate that a downtrend
+    is present. Traders watch for zero line crossovers to signal
+    potential trend changes. They also watch for big moves, above
+    50 or below -50 to signal strong price moves.
+
+    
 
     :param high:
     :param low:
