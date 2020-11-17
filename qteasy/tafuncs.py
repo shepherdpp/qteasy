@@ -509,7 +509,7 @@ def aroonosc(high, low, timeperiod=14):
     potential trend changes. They also watch for big moves, above
     50 or below -50 to signal strong price moves.
 
-    
+
 
     :param high:
     :param low:
@@ -520,7 +520,7 @@ def aroonosc(high, low, timeperiod=14):
 
 
 def bop(opn, high, low, close):
-    """Balance Of Power
+    """Balance Of Power:
 
     :param opn:
     :param high:
@@ -532,7 +532,16 @@ def bop(opn, high, low, close):
 
 
 def cci(high, low, close, timeperiod=14):
-    """Commodity Channel Index
+    """Commodity Channel Index:
+
+    Developed by Donald Lambert, the Commodity Channel Index​ (CCI)
+    is a momentum-based oscillator used to help determine when an
+    investment vehicle is reaching a condition of being overbought
+    or oversold. It is also used to assess price trend direction
+    and strength. This information allows traders to determine if
+    they want to enter or exit a trade, refrain from taking a trade,
+    or add to an existing position. In this way, the indicator can
+    be used to provide trade signals when it acts in a certain way.
 
     :param high:
     :param low:
@@ -546,6 +555,43 @@ def cci(high, low, close, timeperiod=14):
 def cmo(close, timeperiod=14):
     """Chande Momentum Oscillator 钱德动量振荡器
 
+    The Chande Momentum Oscillator (CMO) is a technical momentum
+    indicator developed by Tushar Chande. The CMO indicator is
+    created by calculating the difference between the sum of all
+    recent higher closes and the sum of all recent lower closes and
+    then dividing the result by the sum of all price movement over
+    a given time period. The result is multiplied by 100 to give
+    the -100 to +100 range. The defined time period is usually 20
+    periods.
+
+    - CMO indicates overbought conditions when it reaches the 50
+    level and oversold conditions when it reaches −50. You can
+    also look for signals based on the CMO crossing above and
+    below a signal line composed of a 9-period moving average of
+    the 20 period CMO.
+
+    - CMO measures the trend strength. The higher the absolute
+    value of the CMO, the stronger the trend. Lower absolute
+    values of the CMO indicate sideways trading ranges.
+
+    - CMO often forms chart patterns which may not show on the
+    underlying price chart, such as double tops and bottoms and
+    trend lines. Also look for support or resistance on the CMO.
+
+    - If underlying prices make a new high or low that is not
+    confirmed by the CMO, the divergence can signal a price reversal.
+
+    Calculation:
+    CMO = 100 * ((Su - Sd)/ ( Su + Sd ) )
+    Where:
+    Su = Sum of the difference between the current close and previous
+    close on up days for the specified period. Up days are days when
+    the current close is greater than the previous close.
+    Sd = Sum of the absolute value of the difference between the
+    current close and the previous close on down days for the specified
+    period. Down days are days when the current close is less than the
+    previous close.
+
     :param close:
     :param timeperiod:
     :return:
@@ -554,7 +600,77 @@ def cmo(close, timeperiod=14):
 
 
 def dx(high, low, close, timeperiod=14):
-    """Directional Movement Index 方向运动指数
+    """Directional Movement Index 方向运动指数:
+
+    The Directional Movement Index (DMI) assists in determining if a security
+    is trending and attempts to measure the strength of the trend. The DMI
+    disregards the direction of the security. It only attempts to determine
+    if there is a trend and that trends strength.
+    The indicator is made up of four indicator lines:
+
+    - Positive Directional Indicator (+DMI) shows the difference between today’s
+    high price and yesterday’s high price. These values are then added up from
+    the past 14 periods and then plotted.
+    - Negative Directional Indicator (–DMI) shows the difference between today’s
+    low price and yesterday’s low price. These values are then summed up from
+    the past 14 periods and plotted.
+    - Average Directional Movement Index (ADX). ADX is a smoothing of the DX.
+    - Average Directional Movement Index Rating (ADXR) is a simple average of
+    today’s ADX value and the ADX from 14 periods ago.
+
+    How to use:
+
+    - High and rising levels of the ADX and ADXR indicate a strong trend, either
+    up or down, signifying a trend following system may be appropriate. Typically
+    if the ADX is above 25 it indicates a strong trend.
+
+    - Low and falling levels of the ADX and ADXR indicate a trendless market.
+    Typically if the ADX is below 20 it indicates a trendless market.
+
+    - A buy signal is given when DMI+ crosses above DMI-. A sell signal is given
+    when DMI- crosses above DMI+. The ADX and ADXR lines are then used to measure
+    the strength of these signals.
+
+    Calculation
+    Calculate the True Range, +DI, and –DI for each period:
+    True Range is the greater of:
+    Current High – Current Low
+    Absolute value of Current High – Previous Close
+    Absolute value of Current Low – Previous Close
+
+    +DI
+    IF Current High – Previous High > Previous Low – Current Low
+        THEN +DI = the greater of Current High – Previous High OR 0
+
+    -DI
+    IF Previous Low – Current Low > Current High – Previous High
+        THEN –DI = the greater of Previous Low – Current Low OR 0
+
+    IF +DI AND -DI are both negative
+        THEN both +DI and –DI = 0
+
+    IF +DI AND -DI are both positive AND +DI > -DI
+        THEN +DI = Current High – Previous High AND –DI = 0
+    Else IF +DI < -DI
+        THEN +DI = 0 AND –DI = Previous Low – Current Low
+        Smooth the True Range, +DI, and –DI using Wilder’s smoothing technique.
+        Divide the smoothed +DI by the smoothed True Range and multiply by 100 (this is
+        the +DI that is plotted for the specified period).
+
+    Divide the smoothed –DI by the smooth True Range and multiply by 100 (this is the
+    –DI that is plotted for the specified period).
+
+    Next calculate the Directional Movement Index (DX) which equals the (absolute
+    value of the smoothed +DI – the smoothed –DI) /( the sum of the smoothed +DI and
+    smoothed –DI )and multiply by 100.
+
+    Next calculate the Average Directional Index (ADX). The first value for ADX is an
+    average of the DX over the specified period. The following values are smoothed by
+    multiplying the previous ADX value by the specified period – 1, adding the current
+    DX value, and dividing this total by the period specified.
+
+    Finally the Directional Movement Rating (ADXR) is calculated by the averaging the
+    current ADX and the ADX value n-periods ago.
 
     :param high:
     :param low:
@@ -566,7 +682,37 @@ def dx(high, low, close, timeperiod=14):
 
 
 def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
-    """Moving Average Convergence/Divergence
+    """Moving Average Convergence/Divergence:
+
+    The Moving Average Convergence/Divergence indicator is a momentum oscillator
+    primarily used to trade trends. Although it is an oscillator, it is not
+    typically used to identify over bought or oversold conditions. It appears on
+    the chart as two lines which oscillate without boundaries. The crossover of
+    the two lines give trading signals similar to a two moving average system.
+
+    - MACD crossing above zero is considered bullish, while crossing below zero
+    is bearish. Secondly, when MACD turns up from below zero it is considered
+    bullish. When it turns down from above zero it is considered bearish.
+
+    - When the MACD line crosses from below to above the signal line, the indicator
+    is considered bullish. The further below the zero line the stronger the signal.
+
+    - When the MACD line crosses from above to below the signal line, the indicator
+    is considered bearish. The further above the zero line the stronger the signal.
+
+    - During trading ranges the MACD will whipsaw, with the fast line crossing back
+    and forth across the signal line. Users of the MACD generally avoid trading in
+    this situation or close positions to reduce volatility within the portfolio.
+
+    - Divergence between the MACD and the price action is a stronger signal when it
+    confirms the crossover signals.
+
+    Calculation
+    An approximated MACD can be calculated by subtracting the value of a 26 period
+    Exponential Moving Average (EMA) from a 12 period EMA. The shorter EMA is
+    constantly converging toward, and diverging away from, the longer EMA. This
+    causes MACD to oscillate around the zero level. A signal line is created with
+    a 9 period EMA of the MACD line.
 
     input
         :param close:
@@ -583,6 +729,8 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
 
 def macdext(close, fastperiod=12, fastmatype=0, slowperiod=26, slowmatype=0, signalperiod=9, signalmatype=0):
     """MACD with controllable MA type
+
+    MACD extention: different ma types can be applied.
 
     input:
         :param close:
@@ -615,7 +763,45 @@ def macdfix(close, signalperiod=9):
 
 
 def mfi(high, low, close, volume, timeperiod=14):
-    """Money Flow Index
+    """Money Flow Index:
+
+    The Money Flow Index (MFI) is a momentum indicator that measures the
+    flow of money into and out of a security over a specified period of time.
+    It is related to the Relative Strength Index (RSI) but incorporates volume,
+    whereas the RSI only considers price. The MFI is calculated by accumulating
+    positive and negative Money Flow values (see Money Flow), then creating a
+    Money Ratio. The Money Ratio is then normalized into the MFI oscillator
+    form.
+
+    - Oversold levels typically occur below 20 and overbought levels typically
+    occur above 80. These levels may change depending on market conditions.
+    Level lines should cut across the highest peaks and the lowest troughs.
+    Oversold/Overbought levels are generally not reason enough to buy/sell; and
+    traders should consider additional technical analysis or research to confirm
+    the security's turning point. Keep in mind, during strong trends, the MFI
+    may remain overbought or oversold for extended periods.
+
+    - If the underlying price makes a new high or low that isn't confirmed by
+    the MFI, this divergence can signal a price reversal.
+
+    Calculation
+    The Money Flow Index requires a series of calculations.
+    - First, the period's Typical Price is calculated.
+    - Typical Price = (High + Low + Close)/3
+    - Next, Money Flow (not the Money Flow Index) is calculated by multiplying
+    the period's Typical Price by the volume.
+    - Money Flow = Typical Price * Volume
+    - If today's Typical Price is greater than yesterday's Typical Price, it is
+    considered Positive Money Flow. If today's price is less, it is considered
+    Negative Money Flow.
+    - Positive Money Flow is the sum of the Positive Money over the specified
+    number of periods.
+    - Negative Money Flow is the sum of the Negative Money over the specified
+    number of periods.
+    - The Money Ratio is then calculated by dividing the Positive Money Flow by
+    the Negative Money Flow.
+    - Money Ratio = Positive Money Flow / Negative Money Flow
+    - Finally, the Money Flow Index is calculated using the Money Ratio.
 
     input:
         :param high:
@@ -629,7 +815,39 @@ def mfi(high, low, close, volume, timeperiod=14):
 
 
 def minus_di(high, low, close, timeperiod=14):
-    """Minus Directional Indicator
+    """Minus Directional Indicator / Negative Directional Indicator:
+
+    The Negative Directional Indicator (-DI) measures the presence of a downtrend
+    and is part of the Average Directional Index (ADX). If -DI is sloping upward,
+    it's a sign that the price downtrend is getting stronger. This indicator is
+    nearly always plotted along with the Positive Directional Indicator (+DI).
+
+    - When the Negative Directional Indicator (-DI) moves up, and is above the
+    Postive Directional Indicator (+DI), then the price downtrend is getting
+    stronger.
+
+    - When -DI is moving down, and below the +DI, then the price uptrend is
+    strengthening.
+
+    - When +DI and -DI crossover, it indicates the possibility of a new trend.
+    If -DI crosses above the +DI then a new downtrend could be starting.
+
+    Calculate the Negative Directional Indicator (+DI)
+    - Calculate -DI by finding -DM and True Range (TR).
+    - -DM = Prior Low - Current Low
+    - Any period is counted as a -DM if the Previous Low - Current Low >
+    Current High - Previous High. Use +DM when Current High - Previous High
+    > Previous Low - Current Low.
+    - TR is the greater of the Current High - Current Low, Current High -
+    Previous Close, or Current Low - Previous Close.
+    - Smooth the 14-periods of -DM and TR using the formula below. Substitute
+    TR for -DM to calculate ATR. [The calculation below shows a smoothed TR
+    formula, which is slightly different than the official ATR formula. Either
+    formula can be used, but use one consistently].
+    - First 14-period -DM = Sum of first 14 -DM readings.
+    - Next 14-period -DM value = First 14 -DM value - (Prior 14 DM/14) + Current -DM
+    - Next, divide the smoothed -DM value by the smoothed TR (or ATR) value
+    to get -DI. Multiply by 100.
 
     input:
         :param high:
@@ -642,7 +860,46 @@ def minus_di(high, low, close, timeperiod=14):
 
 
 def minus_dm(high, low, timeperiod=14):
-    """Minus Directional Movement
+    """Minus Directional Movement / Directional Movement Index:
+
+    The Directional Movement Index, or DMI, is an indicator developed by J. Welles
+    Wilder in 1978 that identifies in which direction the price of an asset is moving.
+    The indicator does this by comparing prior highs and lows and drawing two lines: a
+    positive directional movement line (+DI) and a negative directional movement line
+    (-DI). An optional third line, called directional movement (DX) shows the
+    difference between the lines. When +DI is above -DI, there is more upward pressure
+    than downward pressure in the price. If -DI is above +DI, then there is more
+    downward pressure in the price. This indicator may help traders assess the trend
+    direction. Crossovers between the lines are also sometimes used as trade signals
+    to buy or sell.
+
+    - A +DI line above the -DI line means there is more upward movement than downward movement.
+
+    - A -DI line above the +DI line means there is more downward movement than upward movement.
+
+    - Crossovers can be used to signal emerging trends. For example, the +DI crossing above
+    the -DI may signal the start of an uptrend in price.
+
+    - The larger the spread between the two lines, the stronger the price trend. If +DI is way
+    above -DI the price trend is strongly up. If -DI is way above +DI then the price trend is
+    strongly down.
+
+    Calculating the Directional Movement Index (DMI)
+    - Calculate +DM, -DM, and True Range (TR) for each period. Typically 14 periods are used.
+    - +DM is the Current High - Previous High.
+    - -DM is the Previous Low - Current Low.
+    - Use +DM when Current High - Previous High is greater than Previous Low - Current Low.
+    Use -DM when Previous Low - Current Low is greater than Current High - Previous High.
+    - TR is the greater of the Current High - Current Low, Current High - Previous Close, or
+    Current Low - Previous Close.
+    - Smooth the 14-period averages of +DM, -DM, and TR. Below is the formula for TR. Insert
+    the -DM and +DM values to calculate the smoothed averages of those as well.
+    - First 14TR = Sum of first 14 TR readings.
+    - Next 14TR value = First 14TR - (Prior 14TR/14) + Current TR
+    - Next, divide the smoothed +DM value by the smoothed TR value to get +DI. Multiply by 100.
+    - Divide the smoothed -DM value by the smoothed TR value to get-DI. Multiply by 100.
+    - The optional Directional Movement Index (DX) is +DI minus -DI, divided by the sum of +DI
+    and -DI (all absolute values). Multiply by 100.
 
     :param high:
     :param low:
@@ -653,7 +910,20 @@ def minus_dm(high, low, timeperiod=14):
 
 
 def mom(close, timeperiod=10):
-    """Momentum
+    """Momentum:
+
+    The momentum indicator identifies when the price is moving upward or downward and
+    how strongly. When the first version of the momentum indicator is a positive number,
+    the price is above the price "n" periods ago. When it's a negative number, the price
+    is below the price "n" periods ago.
+
+    The momentum of a price is very easy to calculate. There are couple different versions
+    of the formula, but whichever one is used, the momentum (M) is a comparison between the
+    current closing price (CP) and a closing price "n" periods ago (CPn).1
+﻿    You determine the value of "n."
+    M = CP – CPn
+    or
+    M = (CP / CPn) * 100
 
     :param close:
     :param timeperiod:
@@ -663,7 +933,38 @@ def mom(close, timeperiod=10):
 
 
 def plus_di(high, low, close, timeperiod=14):
-    """Plus Directional Indicator
+    """Plus Directional Indicator / Positive Directional Indicator
+
+    The Positive Directional Indicator (+DI) is a component of the Average
+    Directional Index (ADX) and is used to measure the presence of an uptrend.
+    When the +DI is sloping upward, it is a signal that the uptrend is getting
+    stronger. This indicator is nearly always plotted along with the Negative
+    Directional Indicator (-DI).
+
+    - When the Positive Directional Indicator (+DI) is moving up, and above the
+    Negative Directional Indicator (-DI), then the price uptrend is strengthening.
+
+    - When the +DI is moving down, and below the -DI, then the price downtrend
+    is strengthening.
+
+    - When +DI and -DI crossover, it indicates the possibility of a new trend.
+    If -DI crosses above the +DI then a new downtrend could be starting.
+
+    Calculate the Negative Directional Indicator (+DI)
+    - Calculate +DI by finding +DM and True Range (TR).
+    - +DM = Current High - Previous High.
+    - Any period is counted as a +DM if the Current High - Previous High > Previous
+    Low - Current Low. Use -DM when Previous Low - Current Low > Current High -
+    Previous High.
+    - TR is the greater of the Current High - Current Low, Current High - Previous
+    Close, or Current Low - Previous Close.
+    - Smooth the 14-periods of +DM and TR using the formula below. Substitute TR
+    for +DM to calculate ATR. [The calculation below shows a smoothed TR formula,
+    which is slightly different than the official ATR formula. Either formula can
+    be used, but use one consistently].
+    - First 14-period +DM = Sum of first 14 +DM readings.
+    - Next 14-period +DM value = First 14 +DM value - (Prior 14 DM/14) + Current +DM
+    - Next, divide the smoothed +DM value by the ATR value to get +DI. Multiply by 100.
 
     :param high:
     :param low:
@@ -675,7 +976,38 @@ def plus_di(high, low, close, timeperiod=14):
 
 
 def plus_dm(high, low, timeperiod=14):
-    """Plus Directional Movement
+    """Plus Directional Movement / Positive Directional Movement:
+
+    The Positive Directional Indicator (+DI) is a component of the Average Directional
+    Index (ADX) and is used to measure the presence of an uptrend. When the +DI is
+    sloping upward, it is a signal that the uptrend is getting stronger. This indicator
+    is nearly always plotted along with the Negative Directional Indicator (-DI).
+
+    - When the Positive Directional Indicator (+DI) is moving up, and above the Negative
+    Directional Indicator (-DI), then the price uptrend is strengthening.
+
+    - When the +DI is moving down, and below the -DI, then the price downtrend is
+    strengthening.
+
+    - Crossovers between the +DI and -DI are sometimes used as trade signals as the
+    crossover indicates the possibility of a new trend emerging. For example, the +DI
+    crossing above the -DI signals the possibility of a new uptrend and a potential long
+    position.
+
+    How to Calculate the Positive Directional Indicator (+DI)
+    - Calculate +DI by finding +DM and True Range (TR).
+    - +DM = Current High - Previous High.
+    - Any period is counted as a +DM if the Current High - Previous High > Previous Low -
+    Current Low. Use -DM when Previous Low - Current Low > Current High - Previous High.
+    - TR is the greater of the Current High - Current Low, Current High - Previous Close,
+    or Current Low - Previous Close.
+    - Smooth the 14-periods of +DM and TR using the formula below. Substitute TR for +DM
+    to calculate ATR. [The calculation below shows a smoothed TR formula, which is
+    slightly different than the official ATR formula. Either formula can be used, but use
+    one consistently].
+    - First 14-period +DM = Sum of first 14 +DM readings.
+    - Next 14-period +DM value = First 14 +DM value - (Prior 14 DM/14) + Current +DM
+    - Next, divide the smoothed +DM value by the ATR value to get +DI. Multiply by 100.
 
     :param high:
     :param low:
@@ -687,6 +1019,39 @@ def plus_dm(high, low, timeperiod=14):
 
 def ppo(close, fastperiod=12, slowperiod=26, matype=0):
     """Percentage Price Oscillator
+
+    The percentage price oscillator (PPO) is a technical momentum indicator that shows
+    the relationship between two moving averages in percentage terms. The moving averages
+    are a 26-period and 12-period exponential moving average (EMA).
+
+    The PPO is used to compare asset performance and volatility, spot divergence which
+    could lead to price reversals, generate trade signals, and help confirm trend direction.
+    The PPO is identical to the moving average convergence divergence (MACD) indicator,
+    except the PPO measures percentage difference between two EMAs, while the MACD measures
+    absolute (dollar) difference. Some traders prefer the PPO because readings are
+    comparable between assets with different prices, whereas MACD readings are not comparable.
+
+    - The PPO typical contains two lines, the PPO line, and the signal line. The signal line
+    is an EMA of PPO, so it moves slower than the PPO.
+
+    - The PPO crossing the signal line is used by some traders as a trade signal. When it
+    crosses above from below, that is a buy, when it crosses below from above that is a sell.
+
+    - When the PPO is above zero that helps indicate an uptrend, as the short-term EMA is
+    above the longer-term EMA.
+
+    - When the PPO is below zero, the short-term average is below the longer-term average,
+    which helps indicate a downtrend.
+
+    Calculation:
+    - Calculate the 12-period EMA of the asset's price.
+    - Calculate the 26-period EMA of the asset's price.
+    - Apply these to the PPO formula to get the current PPO value.
+    - Once there are at least nine PPO values, generate the signal line by calculating the
+    nine-period EMA of the PPO.
+    - To generate a histogram reading, subtract the current PPO value from the current signal
+    line value. The histogram is an optional visual representation of the distance between
+    these two lines.
 
     :param close:
     :param fastperiod:
@@ -738,7 +1103,19 @@ def rocr100(close, timeperiod=10):
 
 
 def rsi(close, timeperiod=14):
-    """Relative Strength Index
+    """Relative Strength Index:
+
+    The relative strength index (RSI) is a momentum indicator used in technical analysis
+    that measures the magnitude of recent price changes to evaluate overbought or oversold
+    conditions in the price of a stock or other asset. The RSI is displayed as an
+    oscillator (a line graph that moves between two extremes) and can have a reading from
+    0 to 100. The indicator was originally developed by J. Welles Wilder Jr. and introduced
+    in his seminal 1978 book, "New Concepts in Technical Trading Systems."
+
+    - An asset is usually considered overbought when the RSI is above 70% and oversold
+    when it is below 30%.
+
+    
 
     :param close:
     :param timeperiod:
