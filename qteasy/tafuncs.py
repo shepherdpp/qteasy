@@ -1125,7 +1125,38 @@ def rsi(close, timeperiod=14):
 
 
 def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slowd_period=3, slowd_matype=0):
-    """Stochastic
+    """Stochastic:
+
+    The stochastic indicator is a momentum indicator developed by George C. Lane in the 1950s,
+    which shows the position of the most recent closing price relative to the previous high-low
+    range. The indicator measures momentum by comparing the closing price with the previous
+    trading range over a specific period of time.
+
+    The stochastic indicator is widely used in the Forex community. It consists of two lines:
+    the indicator line %K, and the signal or trigger line %D. The stochastic indicator can be
+    used to identify oversold and overbought conditions, as well as to spot divergences between
+    the price and the indicator.
+
+    - A reading above 80 is usually considered as overbought, while a reading below 20 is
+    considered oversold. However, the price can remain in overbought and oversold conditions
+    for a long period of time, especially during strong up- and downtrends.
+
+    - A divergence occurs when the price “diverges” from the indicator, i.e. the price makes
+    lower lows while the indicator makes higher lows, or the price makes higher highs while the
+    indicator makes lower highs.
+
+    - As with any momentum indicator, traders should wait for additional confirmation signals
+    to enter a trade, as these types of indicators can occasionally give false signals.
+
+    The stochastic indicator is calculated using the following formula:
+
+    %K = (Most Recent Closing Price - Lowest Low) / (Highest High - Lowest Low) × 100
+
+    %D = 3-day SMA of %K
+
+    Lowest Low = lowest low of the specified time period
+
+    Highest High = highest high of the specified time period
 
     :param high:
     :param low:
@@ -1143,7 +1174,14 @@ def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slow
 
 
 def stochf(high, low, close, fastk_period=5, fastd_period=3, fastd_matype=0):
-    """Stochastic Fast
+    """Stochastic Fast:
+
+    The "fast" stochastic indicator is taken as %D = 3-period moving average of %K. The
+    general theory serving as the foundation for this indicator is that in a market
+    trending upward, prices will close near the high, and in a market trending downward,
+    prices close near the low.
+
+
 
     :param high:
     :param low:
@@ -1159,7 +1197,46 @@ def stochf(high, low, close, fastk_period=5, fastd_period=3, fastd_matype=0):
 
 
 def stochrsi(close, timeperiod=14, fastk_period=5, fastd_period=3, fastd_matype=0):
-    """Stochastic Relative Strength Index
+    """Stochastic Relative Strength Index:
+
+    The Stochastic RSI (StochRSI) is an indicator used in technical analysis that ranges
+    between zero and one (or zero and 100 on some charting platforms) and is created by
+    applying the Stochastic oscillator formula to a set of relative strength index (RSI)
+    values rather than to standard price data. Using RSI values within the Stochastic
+    formula gives traders an idea of whether the current RSI value is overbought or
+    oversold.
+
+    - A StochRSI reading above 0.8 is considered overbought, while a reading below 0.2
+    is considered oversold. On the zero to 100 scale, above 80 is overbought, and below
+    20 is oversold.
+
+    - Overbought doesn't necessarily mean the price will reverse lower, just like
+    oversold doesn't mean the price will reverse higher. Rather the overbought and
+    oversold conditions simply alert traders that the RSI is near the extremes of its
+    recent readings.
+
+    - A reading of zero means the RSI is at its lowest level in 14 periods (or whatever
+    lookback period is chosen). A reading of 1 (or 100) means the RSI is at the highest
+    level in the last 14 periods.
+
+    - Other StochRSI values show where the RSI is relative to a high or low
+
+    How to Calculate the Stochastic RSI
+    The StochRSI is based on RSI readings. The RSI has an input value, typically 14,
+    which tells the indicator how many periods of data it is using in its calculation.
+    These RSI levels are then used in the StochRSI formula.
+
+    - Record RSI levels for 14 periods.
+
+    - On the 14th period, note the current RSI reading, the highest RSI reading, and
+    lowest RSI reading. It is now possible to fill in all the formula variables for
+    StochRSI.
+
+    - On the 15th period, note the current RSI reading, highest RSI reading, and lowest
+    reading, but only for the last 14 period (not the last 15). Compute the new StochRSI.
+
+    - As each period ends compute the new StochRSI value, only using the last 14 RSI
+    values.
 
     :param close:
     :param timeperiod:
@@ -1184,7 +1261,47 @@ def trix(close, timeperiod=30):
 
 
 def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):
-    """Ultimate Oscillator
+    """Ultimate Oscillator:
+
+    The Ultimate Oscillator is a technical indicator that was developed by Larry Williams
+    in 1976 to measure the price momentum of an asset across multiple timeframes. By using
+    the weighted average of three different timeframes the indicator has less volatility
+    and fewer trade signals compared to other oscillators that rely on a single timeframe.
+    Buy and sell signals are generated following divergences. The Ultimately Oscillator
+    generates fewer divergence signals than other oscillators due to its multi-timeframe
+    construction.
+
+    - The indicator uses three timeframes in its calculation: seven, 14, and 28 periods.
+
+    - The shorter timeframe has the most weight in the calculation, while the longer
+    timeframe has the least weight.
+
+    - Buy signals occur when there is bullish divergence, the divergence low is below 30
+    on the indicator, and the oscillator then rises above the divergence high.
+
+    - A sell signal occurs when there is bearish divergence, the divergence high is above
+    70, and the oscillator then falls below the divergence low.
+
+    How to Calculate the Ultimate Oscillator
+
+    - Calculate the Buying Pressure (BP) which is the close price of the period less the
+    low of that period or prior close, whichever is lower. Record these values for each
+    period as they will be summed up over the last seven, 14, and 28 periods to create
+    BP Sum.
+
+    - Calculate the True Range (TR) which is the current period's high or the prior close,
+    whichever is higher, minus the lowest value of the current period's low or the prior
+    close. Record these values for each period as they will be summed up over the last
+    seven, 14, and 28 periods to create TR Sum.
+
+    - Calculate Average7, 14, and 28 using the BP and TR Sums calculations from steps one
+    and two. For example, the Average7 BP Sum is the calculated BP values added together
+    for the last seven periods.
+
+    - Calculate the Ultimate Oscillator using the Average7, 14, and 28 values. Average7
+    has a weight of four, Average14 has a weight of two, and Average28 has a weight of
+    one. Sum the weights in the denominator (in this case, the sum is seven, or 4+2+1).
+    Multiply by 100 when other calculations are complete.
 
     :param high:
     :param low:
@@ -1198,7 +1315,41 @@ def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):
 
 
 def willr(high, low, close, timeperiod=14):
-    """Williams' %R
+    """Williams' %R:
+
+    Williams %R, also known as the Williams Percent Range, is a type of momentum
+    indicator that moves between 0 and -100 and measures overbought and oversold levels.
+    The Williams %R may be used to find entry and exit points in the market. The
+    indicator is very similar to the Stochastic oscillator and is used in the same way.
+    It was developed by Larry Williams and it compares a stock’s closing price to the
+    high-low range over a specific period, typically 14 days or periods.
+
+    Williams %R moves between zero and -100.
+    - A reading above -20 is overbought.
+
+    - A reading below -80 is oversold.
+
+    - An overbought or oversold reading doesn't mean the price will reverse. Overbought
+    simply means the price is near the highs of its recent range, and oversold means the
+    price is in the lower end of its recent range.
+
+    - Can be used to generate trade signals when the price and the indicator move out of
+    overbought or oversold territory.
+
+    How to Calculate the Williams %R
+
+    The Williams %R is calculated based on price, typically over the last 14 periods.
+
+    - Record the high and low for each period over 14 periods.
+
+    - On the 14th period, note the current price, the highest price, and lowest price.
+    It is now possible to fill in all the formula variables for Williams %R.
+
+    - On the 15th period, note the current price, highest price, and lowest price, but
+    only for the last 14 periods (not the last 15). Compute the new Williams %R value.
+
+    - As each period ends compute the new Williams %R, only using the last 14 periods
+    of data.
 
     :param high:
     :param low:
@@ -1214,7 +1365,22 @@ def willr(high, low, close, timeperiod=14):
 
 
 def ad(high, low, close, volume):
-    """Chaikin A/D Line
+    """Chaikin A/D Line:
+
+    Developed by Marc Chaikin, the Accumulation Distribution Line is a volume-based
+    indicator designed to measure the cumulative flow of money into and out of a security.
+    Chaikin originally referred to the indicator as the Cumulative Money Flow Line. As
+    with cumulative indicators, the Accumulation Distribution Line is a running total of
+    each period's Money Flow Volume. First, a multiplier is calculated based on the
+    relationship of the close to the high-low range. Second, the Money Flow Multiplier is
+    multiplied by the period's volume to come up with a Money Flow Volume. A running total
+    of the Money Flow Volume forms the Accumulation Distribution Line. Chartists can use
+    this indicator to affirm a security's underlying trend or anticipate reversals when
+    the indicator diverges from the security price.
+
+    Chaikin A/D Line measures the Advance/Decline of the market. This script takes that
+    data to calculate a user-defined Moving Average and uses the direction of the MA to
+    signal buys and sells.
 
     :param high:
     :param low:
