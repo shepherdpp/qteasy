@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/tafuncs.py" afterPath="$PROJECT_DIR$/qteasy/tafuncs.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -1038,8 +1037,8 @@
       <file leaf-file-name="tafuncs.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/qteasy/tafuncs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-30">
-              <caret line="1379" column="0" lean-forward="true" selection-start-line="1379" selection-start-column="0" selection-end-line="1379" selection-end-column="0" />
+            <state relative-caret-position="370">
+              <caret line="2223" column="16" lean-forward="true" selection-start-line="2223" selection-start-column="16" selection-end-line="2223" selection-end-column="16" />
               <folding />
             </state>
           </provider>
@@ -1373,7 +1372,7 @@
       <scroll-view-position x="0" y="0" />
     </layout>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" fullScreen="true">
     <option name="y" value="25" />
     <option name="width" value="1440" />
     <option name="height" value="825" />
@@ -1418,13 +1417,13 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
-      <pane id="Scope" />
       <pane id="ProjectPane" />
+      <pane id="Scope" />
+      <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="full.screen.before.presentation.mode" value="true" />
     <property name="SearchEverywhereHistoryKey" value="utility&#9;null&#9;null" />
@@ -1847,7 +1846,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="25" width="1440" height="825" extended-state="0" />
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -3492,8 +3491,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/tafuncs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-30">
-          <caret line="1379" column="0" lean-forward="true" selection-start-line="1379" selection-start-column="0" selection-end-line="1379" selection-end-column="0" />
+        <state relative-caret-position="370">
+          <caret line="2223" column="16" lean-forward="true" selection-start-line="2223" selection-start-column="16" selection-end-line="2223" selection-end-column="16" />
           <folding />
         </state>
       </provider>

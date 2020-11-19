@@ -1392,7 +1392,33 @@ def ad(high, low, close, volume):
 
 
 def adosc(high, low, close, volume, fastperiod=3, slowperiod=10):
-    """Chaikin A/D Oscillator
+    """Chaikin A/D Oscillator:
+
+    The Chaikin oscillator is named for its creator Marc Chaikin. The oscillator measures
+    the accumulation-distribution line of moving average convergence-divergence (MACD).
+    To calculate the Chaikin oscillator, subtract a 10-day exponential moving average
+    (EMA) of the accumulation-distribution line from a 3-day EMA of the
+    accumulation-distribution line. This measures momentum predicted by oscillations
+    around the accumulation-distribution line.
+
+    - The Chaikin Indicator applies MACD to the accumulation-distribution line rather
+    than closing price.
+
+    - A cross above the accumulation-distribution line indicates that market players are
+    accumulating shares, securities or contracts, which is typically bullish.
+
+    How to Calculate the Chaikin Oscillator?
+    Calculate the accumulation-distribution line (ADL) in three steps. The fourth step
+    yields the Chaikin Oscillator.
+
+    - Calculate the Money Flow Multiplier (N).
+
+    - Multiply the Money Flow Multiplier (N) by volume to calculate Money Flow Volume (N).
+
+    - List a running total of N to draw the accumulation-distribution line (ADL).
+
+    - Compute the difference between 10 period and 3 period exponential moving averages
+    to calculate the Chaikin oscillator.
 
     :param high:
     :param low:
@@ -1406,7 +1432,32 @@ def adosc(high, low, close, volume, fastperiod=3, slowperiod=10):
 
 
 def obv(close, volume):
-    """
+    """On-Balance Volume:
+
+    On-balance volume (OBV) is a technical trading momentum indicator that uses volume
+    flow to predict changes in stock price. Joseph Granville first developed the OBV metric
+    in the 1963 book Granville's New Key to Stock Market Profits.
+
+    - On-balance volume (OBV) is a technical indicator of momentum, using volume changes to
+    make price predictions.
+    - OBV shows crowd sentiment that can predict a bullish or bearish outcome.
+    - Comparing relative action between price bars and OBV generates more actionable signals
+    than the green or red volume histograms commonly found at the bottom of price charts.
+
+    Calculating OBV
+    On-balance volume provides a running total of an asset's trading volume and indicates
+    whether this volume is flowing in or out of a given security or currency pair. The OBV
+    is a cumulative total of volume (positive and negative). There are three rules
+    implemented when calculating the OBV. They are:
+
+    - If today's closing price is higher than yesterday's closing price, then:
+    Current OBV = Previous OBV + today's volume
+
+    - If today's closing price is lower than yesterday's closing price, then:
+    Current OBV = Previous OBV - today's volume
+
+    - If today's closing price equals yesterday's closing price, then:
+    Current OBV = Previous OBV
 
     :param close:
     :param volume:
@@ -1420,7 +1471,41 @@ def obv(close, volume):
 
 
 def atr(high, low, close, timeperiod=14):
-    """Average True Range
+    """Average True Range:
+
+    Average True Range (ATR) is the average of true ranges over the specified period. ATR
+    measures volatility, taking into account any gaps in the price movement. Typically,
+    the ATR calculation is based on 14 periods, which can be intraday, daily, weekly, or
+    monthly. To measure recent volatility, use a shorter average, such as 2 to 10 periods.
+    For longer-term volatility, use 20 to 50 periods.
+
+    - An expanding ATR indicates increased volatility in the market, with the range of each
+    bar getting larger. A reversal in price with an increase in ATR would indicate strength
+    behind that move. ATR is not directional so an expanding ATR can indicate selling
+    pressure or buying pressure. High ATR values usually result from a sharp advance or
+    decline and are unlikely to be sustained for extended periods.
+
+    - A low ATR value indicates a series of periods with small ranges (quiet days). These
+    low ATR values are found during extended sideways price action, thus the lower
+    volatility. A prolonged period of low ATR values may indicate a consolidation area and
+    the possibility of a continuation move or reversal.
+
+    - ATR is very useful for stops or entry triggers, signaling changes in volatility.
+    Whereas fixed dollar- point or percentage stops will not allow for volatility, the ATR
+    stop will adapt to sharp price moves or consolidation areas, which can trigger an
+    abnormal price movement in either direction. Use a multiple of ATR, such as 1.5 x ATR,
+    to catch these abnormal price moves.
+
+    Calculation
+    ATR = (Previous ATR * (n - 1) + TR) / n
+    Where:
+    ATR = Average True Range
+    n = number of periods or bars
+    TR = True Range
+    The True Range for today is the greatest of the following:
+        - Today's high minus today's low
+        - The absolute value of today's high minus yesterday's close
+        - The absolute value of today's low minus yesterday's close
 
     :param high:
     :param low:
@@ -1432,7 +1517,18 @@ def atr(high, low, close, timeperiod=14):
 
 
 def natr(high, low, close, timeperiod=14):
-    """Normalized Average True Range
+    """Normalized Average True Range:
+
+    Normalized Average True Range (NATR) attempts to normalize the average true range values
+    across instruments by using the formula below:
+
+    Formula
+
+    - NATR = ATR(n) / Close * 100
+
+    Where: ATR(n) = Average True Range over ‘n’
+
+ periods.
 
     :param high:
     :param low:
@@ -1444,7 +1540,18 @@ def natr(high, low, close, timeperiod=14):
 
 
 def trange(high, low, close):
-    """True Range
+    """True Range:
+
+    Welles Wilder described these calculations to determine the trading range for a stock or
+    commodity. True Range is defined as the largest of the following:
+
+    - The distance from today's high to today's low.
+    - The distance from yesterday's close to today's high.
+    - The distance from yesterday's close to today's low.
+
+    The raw True Range is then smoothed (a 14-period smoothing is common) to give an Average
+    True Range (ATR). The True Range can be smoothed using a variety of moving average types,
+    including Simple, Exponential, Welles Wilder, etc.
 
     :param high:
     :param low:
@@ -1459,7 +1566,12 @@ def trange(high, low, close):
 
 
 def avgprice(opn, high, low, close):
-    """Average Price
+    """Average Price:
+
+    *To be tested*
+    In basic mathematics, an average price is a representative measure of a range of prices
+    that is calculated by taking the sum of the values and dividing it by the number of
+    prices being examined.
 
     :param opn:
     :param high:
@@ -1471,7 +1583,13 @@ def avgprice(opn, high, low, close):
 
 
 def medprice(high, low):
-    """Median Price
+    """Median Price:
+
+    *To be tested*
+    The Median Price indicator is simply the midpoint of each day's price. The Typical Price
+    and Weighted Close are similar indicators. The Median Price indicator provides a simple,
+    single-line chart of the day's "average price." This average price is useful when you
+    want a simpler view of prices.
 
     :param high:
     :param low:
@@ -1481,7 +1599,14 @@ def medprice(high, low):
 
 
 def typprice(high, low, close):
-    """Typical Price
+    """Typical Price:
+
+    The Typical Price indicates an average of each day’s price.
+
+    Typical Price is calculated by adding the high, low, and closing prices together, and
+    then dividing by three. The result is the average, or typical price.
+
+    - Typical Price = ( High + Low + Close ) / 3
 
     :param high:
     :param low:
@@ -1492,7 +1617,12 @@ def typprice(high, low, close):
 
 
 def wclprice(high, low, close):
-    """Weighted Close Price
+    """Weighted Close Price:
+
+    The Weighted Close indicator is simply an average of each day's price. It gets its name
+    from the fact that extra weight is given to the closing price. The Median Price and
+    Typical Price are similar indicators. ... The result is the average price with extra
+    weight given to the closing price.
 
     :param high:
     :param low:
@@ -1507,7 +1637,37 @@ def wclprice(high, low, close):
 
 
 def ht_dcperiod(close):
-    """Hilbert Transform - Dominant Cycle Period
+    """Hilbert Transform - Dominant Cycle Period:
+
+    The Hilbert Transform is a technique used to generate inphase and quadrature components
+    of a de-trended real-valued "analytic-like" signal (such as a Price Series) in order to
+    analyze variations of the instantaneous phase and amplitude. HTPeriod (or MESA
+    Instantaneous Period) returns the period of the Dominant Cycle of the analytic signal as
+    generated by the Hilbert Transform. The Dominant Cycle can be thought of as being the
+    "most likely" period (in the range of 10 to 40) of a sine function of the Price Series.
+
+    The HTPeriod at a specific bar gives the current Hilbert Transform Period as
+    instantaneously measured at that bar in the range of 10 to 40. It is meaningful only
+    during a cyclic period of the analytic signal waveform (price series) being measured.
+    The HTPeriod, or one of its sub-periods, is often used to adjust other indicators; for
+    example, Stochastics and RSIs work best when using a half cycle period to peak their
+    performance. Similarly other indicators can be made to be adaptive by using the HTPeriod,
+    or one of its sub-periods, as the period of the indicator.
+
+    The basic flow and simplified pseudo code for the computation for the Dominant Cycle Period is:
+
+    Compute the Hilbert Transform
+    {Detrend Price}
+    {Compute InPhase and Quadrature components}
+
+    Compute the Period of the Dominant Cycle
+    {Use ArcTangent to compute the current phase}
+    {Resolve the ArcTangent ambiguity}
+    {Compute a differential phase, resolve phase wraparound, and limit delta phase errors}
+    {Sum DeltaPhases to reach 360 degrees. The sum is the instantaneous period.}
+    {Resolve Instantaneous Period errors and smooth}
+
+    Return the Hilbert Transform Period measured at the current bar
 
     :param close:
     :return:
@@ -1516,7 +1676,51 @@ def ht_dcperiod(close):
 
 
 def ht_dcphase(close):
-    """Hilbert Transform - Dominant Cycle Phase
+    """Hilbert Transform - Dominant Cycle Phase:
+
+    The Hilbert Transform is a technique used to generate inphase and quadrature components
+    of a de-trended real-valued "analytic-like" signal (such as a Price Series) in order to
+    analyze variations of the instantaneous phase and amplitude.. HTDCPhase returns the
+    Hilbert Transform Phase of the Dominant Cycle. The Dominant Cycle Phase lies in the
+    range of 0 to 360 degrees. The Hilbert Transform Sine is just the sine of the DC Phase.
+
+    The DC Phase at a specific bar gives the phase position from 0 to 360 degrees within the
+    current Hilbert Transform Period instantaneously measured at that bar. The HTSin is the
+    sine of the DC Phase at a specific bar. The HTLeadSin is the sine of the DC Phase at a
+    specific bar. They are most often used together to identify cyclic turning points.
+
+    The basic flow and simplified pseudo code for the computation for the Dominant Cycle
+    Phase as part of the computation of the Dominant Cycle is:
+
+    Compute the Hilbert Transform
+        {Detrend Price}
+        {Compute InPhase and Quadrature components}
+    Compute the Period of the Dominant Cycle
+        {Use ArcTangent to compute the current phase}
+        {Resolve the ArcTangent ambiguity}
+        {Compute a differential phase, resolve phase wraparound, and limit delta phase errors}
+        {Sum DeltaPhases to reach 360 degrees.  The sum is the instantaneous period.}
+        {Resolve Instantaneous Period errors and smooth}
+    Compute Dominant Cycle Phase
+    Compute the Sine of the Dominant Cycle Phase
+    Return the Sine of the Dominant Cycle Phase at the current bar of the Hilbert Transform
+    Period measured at that bar
+
+    The basic flow and simplified pseudo code for the computation for the HTLeadSin is:
+
+    Compute the Hilbert Transform
+        {Detrend Price}
+        {Compute InPhase and Quadrature components}
+    Compute the Period of the Dominant Cycle
+        {Use ArcTangent to compute the current phase}
+        {Resolve the ArcTangent ambiguity}
+        {Compute a differential phase, resolve phase wraparound, and limit delta phase errors}
+        {Sum DeltaPhases to reach 360 degrees.  The sum is the instantaneous period.}
+        {Resolve Instantaneous Period errors and smooth}
+    Compute Dominant Cycle Phase
+    Compute the Sine of the Dominant Cycle Phase
+    Advance the Sine by 45 degrees to compute the HT Lead Sine
+    Return the Lead Sine of the Dominant Cycle Phase at the current bar of the Hilbert Transform Period measured at that bar
 
     :param close:
     :return:
@@ -1558,7 +1762,30 @@ def ht_trendmode(close):
 
 
 def cdl2crows(opn, high, low, close):
-    """Two Crows
+    """Two Crows:
+
+    The Two Crows is a three-line bearish reversal candlestick pattern. The pattern requires
+    confirmation, that is, the following candles should break a trendline or the nearest
+    support area which may be formed by the first candle's line. If the pattern is not
+    confirmed it may act only as a temporary pause within an uptrend.
+
+    Forecast: bearish reversal
+    Trend prior to the pattern: uptrend
+    Opposite pattern: none
+    See Also: Upside Gap Two Crows
+
+    Construction:
+
+    First candle
+    - a candle in an uptrend
+    - white body
+    Second candle
+    - black body
+    - the closing price above the prior closing price (gap between bodies)
+    Third candle
+    - black body
+    - the opening price within the prior body
+    - the closing price within the body of the first line (gap close)
 
     :param opn:
     :param high:
@@ -1570,7 +1797,21 @@ def cdl2crows(opn, high, low, close):
 
 
 def cdl3blackcrows(opn, high, low, close):
-    """Three Black Crows
+    """Three Black Crows:
+
+    Three black crows indicate a bearish candlestick pattern that predicts the reversal of
+    an uptrend. Candlestick charts show the opening, high, low, and the closing price on a
+    particular security. For stocks moving higher the candlestick is white or green. When
+    moving lower, they are black or red.
+
+    - Three black crows are a reliable reversal pattern when confirmed by other technical
+    indicators like the relative strength index (RSI).
+
+    - The size of the three black crows and the shadow can be used to judge whether the
+    reversal is at risk of a retracement.
+
+    - The opposite pattern of three black crows is three white soldiers indicating a
+    reversal of a downtrend.
 
     :param opn:
     :param high:
@@ -1582,7 +1823,26 @@ def cdl3blackcrows(opn, high, low, close):
 
 
 def cdl3inside(opn, high, low, close):
-    """Three Inside Up/Down
+    """Three Inside Up/Down:
+
+    Three inside up and three inside down are three-candle reversal patterns that appear
+    on candlestick charts. The pattern requires three candles to form in a specific sequence,
+    showing that the current trend has lost momentum and a move in the other direction might
+    be starting.
+
+    - The three inside up pattern is a bullish reversal composed of a large down candle,
+    a smaller up candle contained within the prior candle, and then another up candle
+    that closes above the close of the second candle.
+
+    - The three inside down pattern is a bearish reversal composed of a large up candle,
+    a smaller down candle contained within the prior candle, then another down candle
+    that closes below the close of the second candle.
+
+    - The pattern is short-term in nature, and may not always result in a significant or
+    even minor trend change.
+
+    - Consider using the pattern within the context of an overall trend. For example, use
+    the three inside up during a pullback in an overall uptrend
 
     :param opn:
     :param high:
@@ -1594,7 +1854,14 @@ def cdl3inside(opn, high, low, close):
 
 
 def cdl3linestrike(opn, high, low, close):
-    """Three-Line Strike
+    """Three-Line Strike:
+
+    The bullish three line strike reversal pattern carves out three black candles within a
+    downtrend. Each bar posts a lower low and closes near the intrabar low. The fourth bar
+    opens even lower but reverses in a wide-range outside bar that closes above the high
+    of the first candle in the series. The opening print also marks the low of the fourth
+    bar. According to Bulkowski, this reversal predicts higher prices with an 83% accuracy
+    rate.
 
     :param opn:
     :param high:
@@ -1606,7 +1873,19 @@ def cdl3linestrike(opn, high, low, close):
 
 
 def cdl3outside(opn, high, low, close):
-    """Three Outside Up/Down
+    """Three Outside Up/Down:
+
+    The three outside up and three outside down describe a pair of three-candle reversal
+    patterns that appear on candlestick charts. In either, a dark candlestick is followed
+    by two white ones, or vice-versa.
+
+    - Three outside up/down are patterns of three candlesticks that often signal a reversal
+    in trend.
+
+    - The three outside up and three outside down patterns are characterized by one
+    candlestick immediately followed by two candlesticks of opposite shading.
+
+    - Each tries to leverage market psychology in order to read near-term changes in sentiment.
 
     :param opn:
     :param high:
@@ -1618,7 +1897,31 @@ def cdl3outside(opn, high, low, close):
 
 
 def cdl3starsinsouth(opn, high, low, close):
-    """Three Stars In The South
+    """Three Stars In The South:
+
+    Forecast: bullish reversal
+    Trend prior to the pattern: downtrend
+    Opposite pattern: none
+
+    Construction:
+
+    First candle
+    a candle in a downtrend
+    black body
+    long lower shadow
+    Second candle
+    black body
+    the opening below the prior opening
+    the closing below or at the prior closing
+    the low above the prior low
+    Third candle
+    a marubozu candle with black body
+    appears as a short line
+    a candle is located within the prior candle
+
+    The three stars in the south is a three-candle bullish reversal pattern that appears on
+    candlestick charts. It may appear after a decline, and it signals that the bearishness is
+    fading. The pattern is very rare.
 
     :param opn:
     :param high:
@@ -1630,7 +1933,23 @@ def cdl3starsinsouth(opn, high, low, close):
 
 
 def cdl3whitesoldiers(opn, high, low, close):
-    """Three Advancing White Soldiers
+    """Three Advancing White Soldiers:
+
+    Three white soldiers is a bullish candlestick pattern that is used to predict the
+    reversal of the current downtrend in a pricing chart. The pattern consists of three
+    consecutive long-bodied candlesticks that open within the previous candle's real
+    body and a close that exceeds the previous candle's high. These candlesticks should
+    not have very long shadows and ideally open within the real body of the preceding
+    candle in the pattern.
+
+    - Three white soldiers are considered a reliable reversal pattern when confirmed by
+    other technical indicators like the relative strength index (RSI).
+
+    - The size of the candles and the length of the shadow is used to judge whether there
+    is a risk of retracement.
+
+    - The opposite pattern of three white soldiers is three black crows, which indicates
+    a reversal of an uptrend.
 
     :param opn:
     :param high:
@@ -1642,7 +1961,24 @@ def cdl3whitesoldiers(opn, high, low, close):
 
 
 def cdlabandonedbaby(opn, high, low, close):
-    """Abandoned Baby
+    """Abandoned Baby:
+
+    The bullish abandoned baby is a type of candlestick pattern that is used by traders
+    to signal a reversal of a downtrend. It forms in a downtrend and is composed of three
+    price bars. The first is a large down candle, followed by a doji candle that gaps
+    below the first candle. The next candle opens higher than the doji and moves
+    aggressively to the upside.
+
+    - The bullish abandoned baby is a three-bar pattern following a downtrend. It consists
+    of a strong down candle, a gapped down doji, and then a strong bullish candle that
+    gaps up.
+
+    - The pattern signals the potential end of a downtrend and the start of a price move
+    higher.
+
+    - Some traders allow for slight variation. There may be more than one doji, or gaps
+    may not be present after the first or second candle. But the overall psychology of
+    the pattern should still be
 
     :param opn:
     :param high:
@@ -1654,7 +1990,20 @@ def cdlabandonedbaby(opn, high, low, close):
 
 
 def cdladvanceblock(opn, high, low, close):
-    """Advance Block
+    """Advance Block:
+
+    Advance block is the name given to a candlestick trading pattern. The pattern is a
+    three-candle bearish setup that is considered to be a reversal pattern—a suggestion
+    that price action is about to change from what had been an upward trend to a downward
+    trend in relatively short time frames. Some authors suggest that in practice the
+    formation often leads to a bullish continuation instead of a reversal.
+
+    - An advance block is a three-period candlestick pattern considered to forecast a
+    reversal.
+
+    - The pattern's success at predicting reversal is barely above random.
+
+    - Reversals are more prevalent when this pattern occurs in a larger downward trend.
 
     :param opn:
     :param high:
@@ -1666,7 +2015,28 @@ def cdladvanceblock(opn, high, low, close):
 
 
 def cdlbelthold(opn, high, low, close):
-    """Belt-hold
+    """Belt-hold:
+
+    A bullish belt hold is a single bar Japanese candlestick pattern that suggests a
+    possible reversal of the prevailing downtrend.
+
+    - A bullish belt hold is a single bar Japanese candlestick pattern that suggests a
+    possible reversal of the prevailing downtrend.
+    - Bullish belt hold's potency is enhanced if it forms near a support level, such a
+    trend line, a moving average, or at market pivot points.
+    - The bullish belt hold can be found across all time frames, but is more reliable
+    on the daily and weekly charts.
+
+    A bearish belt hold is a candlestick pattern that forms during an upward trend.
+    This is what happens in the pattern:
+
+    - Following a stretch of bullish trades, a bearish or black candlestick occurs.
+
+    - The opening price, which becomes the high for the day, is higher than the close
+    of the previous day.
+
+    - The stock price declines throughout the day, resulting in a long black candlestick
+    with a short lower shadow and no upper shadow.
 
     :param opn:
     :param high:
@@ -1678,7 +2048,31 @@ def cdlbelthold(opn, high, low, close):
 
 
 def cdlbreakaway(opn, high, low, close):
-    """Breakaway
+    """Breakaway:
+
+    Forecast: bearish reversal
+    Trend prior to the pattern: uptrend
+    Opposite pattern: Bullish Breakaway
+    Number of candle lines: 5
+
+    Construction:
+
+    First candle
+    - a tall white candle
+    Second candle
+    - a white candle
+    - candle opens above the previous closing price (upward price gap, shadows can overlap)
+    Third candle
+    - a white or black candle
+    - candle opens above the previous opening price
+    Fourth candle
+    - a white candle
+    - candle closes above the previous closing price
+    Fifth candle
+    - a tall black candle
+    - candle opens below the previous closing price
+    - candle closes below the second line's opening price and above the first line's closing price
+    - the price gap formed between the first and the second line is not closed
 
     :param opn:
     :param high:
@@ -1690,7 +2084,18 @@ def cdlbreakaway(opn, high, low, close):
 
 
 def cdlclosingmarubozu(opn, high, low, close):
-    """Closing Marubozu
+    """Closing Marubozu:
+
+    Forecast: reversal or continuation of the trend
+    Trend prior to the pattern: n/a
+    Opposite candlestick: Closing White Marubozu
+
+    Construction:
+
+    black body
+    no upper shadow
+    upper shadow smaller than the body
+    appears as a short or long line
 
     :param opn:
     :param high:
@@ -1702,7 +2107,28 @@ def cdlclosingmarubozu(opn, high, low, close):
 
 
 def cdlconcealbabyswall(opn, high, low, close):
-    """Concealing Baby Swallow
+    """Concealing Baby Swallow:
+
+    Forecast: bullish reversal
+    Trend prior to the pattern: downtrend
+    Opposite pattern: none
+    Number of candle lines: 4
+
+    Construction:
+
+    First candle
+    - a Black Marubozu candle in a downtrend
+    Second candle
+    - a Black Marubozu candle
+    - candle opens within the prior candle's body
+    - candle closes below the prior closing price
+    Third candle
+    - a High Wave basic candle with no lower shadow
+    - candle opens below the prior closing price
+    - upper shadow enters the prior candle's body
+    Fourth candle
+    - black body
+    - candle’s body engulfs the prior candle’s body including the shadows
 
     :param opn:
     :param high:
@@ -1714,7 +2140,19 @@ def cdlconcealbabyswall(opn, high, low, close):
 
 
 def cdlcounterattack(opn, high, low, close):
-    """Counterattack
+    """Counterattack:
+
+    The counterattack lines pattern is a two-candle reversal pattern that appears on
+    candlestick charts. It can occur during an uptrend or downtrend.
+
+    - For a bullish reversal during a downtrend, the first candle is a long black (down)
+    candle, and the second candle gaps down but then closes higher, near the close of
+    the first candle. It shows that sellers were in control, but they may be losing
+    that control as the buyers were able to close the gap down.
+
+    - For a bearish reversal during an uptrend, the first candle is a long white (up)
+    candle, and the second candle gaps higher but then closes lower, near the close of
+    the first candle.
 
     :param opn:
     :param high:
@@ -1726,7 +2164,27 @@ def cdlcounterattack(opn, high, low, close):
 
 
 def cdldarkcloudcover(opn, high, low, close):
-    """Dark Cloud Cover
+    """Dark Cloud Cover:
+
+    Dark Cloud Cover is a bearish reversal candlestick pattern where a down candle
+    (typically black or red) opens above the close of the prior up candle (typically white
+    or green), and then closes below the midpoint of the up candle.
+
+    The pattern is significant as it shows a shift in the momentum from the upside to the
+    downside. The pattern is created by an up candle followed by a down candle. Traders look
+    for the price to continue lower on the next (third) candle. This is called confirmation.
+
+    - Dark Cloud Cover is a candlestick pattern that shows a shift in momentum to the downside
+    following a price rise.
+
+    - The pattern is composed of a bearish candle that opens above but then closes below the
+    midpoint of the prior bullish candle.
+
+    - Both candles should be relatively large, showing strong participation by traders and
+    investors. When the pattern occurs with small candles it is typically less significant.
+
+    - Traders typically see if the candle following the bearish candle also shows declining
+    prices. A further price decline following the bearish candle is called confirmation.
 
     :param opn:
     :param high:
@@ -1738,7 +2196,12 @@ def cdldarkcloudcover(opn, high, low, close):
 
 
 def cdldoji(opn, high, low, close):
-    """Doji
+    """Doji:
+
+    A doji—or more accurately, "dо̄ji"—is a name for a session in which the candlestick for a
+    security has an open and close that are virtually equal and are often components in
+    patterns. Doji candlesticks look like a cross, inverted cross or plus sign. Alone, doji
+    are neutral patterns that are also featured in a number of important patterns.
 
     :param opn:
     :param high:
@@ -1750,7 +2213,20 @@ def cdldoji(opn, high, low, close):
 
 
 def cdldojistar(opn, high, low, close):
-    """Doji Star
+    """Doji Star:
+
+    Forecast: bullish reversal
+    Trend prior to the pattern: downtrend
+    Opposite pattern: Bearish Doji Star
+
+    Construction:
+
+    First candle
+    - a candle in a downtrend
+    - black body
+    Second candle
+    - a doji candle
+    - a body below the first candle's body
 
     :param opn:
     :param high:
