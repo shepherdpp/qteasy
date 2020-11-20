@@ -2238,7 +2238,28 @@ def cdldojistar(opn, high, low, close):
 
 
 def cdldragonflydoji(opn, high, low, close):
-    """Dragonfly Doji
+    """Dragonfly Doji:
+
+    A Dragonfly Doji is a type of candlestick pattern that can signal a potential reversal
+    in price to the downside or upside, depending on past price action. It's formed when the
+    asset's high, open, and close prices are the same. The long lower shadow suggests that
+    there was aggressive selling during the period of the candle, but since the price closed
+    near the open it shows that buyers were able to absorb the selling and push the price
+    back up.
+
+    - A dragonfly doji can occur after a price rise or a price decline.
+
+    - The open, high, and close prices match each other, and the low of the period is
+    significantly lower than the former three. This creates a "T" shape.
+
+    - The appearance of a dragonfly doji after a price advance warns of a potential price
+    decline. A move lower on the next candle provides confirmation.
+
+    - A dragonfly doji after a price decline warns the price may rise. If the next candle
+    rises that provides confirmation.
+
+    - Candlestick traders typically wait for the confirmation candle before acting on the
+    dragonfly doji.
 
     :param opn:
     :param high:
@@ -2250,7 +2271,49 @@ def cdldragonflydoji(opn, high, low, close):
 
 
 def cdlengulfing(opn, high, low, close):
-    """Engulfing Pattern
+    """Engulfing Pattern:
+
+    Bullish engulfing pattern:
+    The bullish engulfing pattern is a two-candle reversal pattern. The second candle
+    completely ‘engulfs’ the real body of the first one, without regard to the length of
+    the tail shadows. The Bullish Engulfing pattern appears in a downtrend and is a
+    combination of one dark candle followed by a larger hollow candle. On the second day
+    of the pattern, price opens lower than the previous low, yet buying pressure pushes
+    the price up to a higher level than the previous high, culminating in an obvious win
+    for the buyers. It is advisable to enter a long position when the price moves higher
+    than the high of the second engulfing candle—in other words when the downtrend
+    reversal is confirmed.
+
+    - A bullish engulfing pattern is a candlestick chart pattern that forms when a small
+    black candlestick is followed the next day by a large white candlestick, the body of
+    which completely overlaps or engulfs the body of the previous day’s candlestick.
+
+    - Bullish engulfing patterns are more likely to signal reversals when they are preceded
+    by four or more black candlesticks.
+
+    - Investors should look not only to the two candlesticks which form the bullish
+    engulfing pattern but also to the preceding candlesticks
+
+    Bearish engulfing pattern:
+    A bearish engulfing pattern is a technical chart pattern that signals lower prices to
+    come. The pattern consists of an up (white or green) candlestick followed by a large
+    down (black or red) candlestick that eclipses or "engulfs" the smaller up candle. The
+    pattern can be important because it shows sellers have overtaken the buyers and are
+    pushing the price more aggressively down (down candle) than the buyers were able to
+    push it up (up candle).
+
+    - A bearish engulfing pattern can occur anywhere, but it is more significant if it
+    occurs after a price advance. This could be an uptrend or a pullback to the upside
+    with a larger downtrend.
+
+    - Ideally, both candles are of substantial size relative to the price bars around them.
+    Two very small bars may create an engulfing pattern, but it is far less significant
+    than if both candles are large.
+
+    - The real body—the difference between the open and close price—of the candlesticks is
+    what matters. The real body of the down candle must engulf the up candle.
+
+    - The pattern has far less significance in choppy markets.
 
     :param opn:
     :param high:
@@ -2262,7 +2325,30 @@ def cdlengulfing(opn, high, low, close):
 
 
 def cdleveningdojistar(opn, high, low, close):
-    """Evening Doji Star
+    """Evening Doji Star:
+
+    The Evening Doji Star is a bearish reversal pattern, being very similar to the Evening
+    Star. The only difference is that the Evening Doji Star needs to have a doji candle
+    (except the Four-Price Doji) on the second line. The doji candle (second line) should
+    not be preceded by or followed by a price gap.
+
+    Forecast: bearish reversal
+    Trend prior to the pattern: uptrend
+    Opposite pattern: Morning Doji Star
+
+    Construction:
+
+    First candle
+    - a candle in an uptrend
+    - white body
+    Second candle
+    - a doji candle
+    - a doji body above the previous candle body
+    - the low price below the previous candle high price
+    Third candle
+    - black body
+    - candle body below the previous candle body
+    - the closing price below the midpoint of the first candle body
 
     :param opn:
     :param high:
@@ -2274,7 +2360,24 @@ def cdleveningdojistar(opn, high, low, close):
 
 
 def cdleveningstar(opn, high, low, close):
-    """Evening Star
+    """Evening Star:
+
+    An Evening Star is a stock-price chart pattern used by technical analysts to detect when
+    a trend is about to reverse. It is a bearish candlestick pattern consisting of three
+    candles: a large white candlestick, a small-bodied candle, and a red candle.
+
+    Evening Star patterns are associated with the top of a price uptrend, signifying that
+    the uptrend is nearing its end. The opposite of the Evening Star is the Morning Star
+    pattern, which is viewed as a bullish indicator.
+
+    - An Evening Star is a pattern used by technical analysts to predict future price
+    declines.
+
+    - Although it is rare, the Evening Star pattern is considered a reliable technical
+    indicator.
+
+    - The Evening Star is the opposite of the Morning Star pattern. The two are bearish
+    and bullish indicators, respectively.
 
     :param opn:
     :param high:
@@ -2286,7 +2389,25 @@ def cdleveningstar(opn, high, low, close):
 
 
 def cdlgapsidesidewhite(opn, high, low, close):
-    """Up/Down-gap side-by-side white lines
+    """Up/Down-gap side-by-side white lines:
+
+    The side-by-side white lines pattern is a three-candle continuation pattern that
+    occurs on candlestick charts. The up version is a large up (white or green) candle
+    followed by a gap and then two more white candles of similar size to each other. The
+    down version is a large down (black or red) candle followed by two white candles of
+    similar size. When the pattern occurs, which is rare, it is expected that the price
+    will continue moving in the current trend direction, down or up, as the case may be.
+
+    - There is an up and down version of the pattern. The up version is a white candle
+    followed by a gap up and two white candles of similar size. The down version is a
+    black candle followed by a gap down and two white candles of similar size.
+
+    - The pattern is a continuation pattern, meaning the price is expected to move in
+    the direction of the trend (first candle) following the pattern.
+
+    - The pattern has moderate reliability in terms of the trend continuing after the
+    pattern, but quite often the price move after the pattern will be muted, indicating
+    it is not a highly significant pattern.
 
     :param opn:
     :param high:
@@ -2298,7 +2419,21 @@ def cdlgapsidesidewhite(opn, high, low, close):
 
 
 def cdlgravestonedoji(opn, high, low, close):
-    """Gravestone Doji
+    """Gravestone Doji:
+
+    A gravestone doji is a bearish reversal candlestick pattern that is formed when the
+    open, low, and closing prices are all near each other with a long upper shadow. The
+    long upper shadow suggests that the bullish advance in the beginning of the session
+    was overcome by bears by the end of the session, which often comes just before a
+    longer term bearish downtrend.
+
+    - A gravestone doji is a bearish pattern that suggests a reversal followed by a
+    downtrend in the price action.
+
+    - A gravestone pattern can be used as a sign to take profits on a bullish position
+    or enter a bearish trade.
+
+    - The opposite of a gravestone doji is a dragonfly doji
 
     :param opn:
     :param high:
@@ -2310,7 +2445,30 @@ def cdlgravestonedoji(opn, high, low, close):
 
 
 def cdlhammer(opn, high, low, close):
-    """Hammer
+    """Hammer:
+
+    A hammer is a price pattern in candlestick charting that occurs when a security trades
+    significantly lower than its opening, but rallies within the period to close near
+    opening price. This pattern forms a hammer-shaped candlestick, in which the lower
+    shadow is at least twice the size of the real body. The body of the candlestick
+    represents the difference between the open and closing prices, while the shadow shows
+    the high and low prices for the period.
+
+    - Hammers have a small real body and a long lower shadow.
+
+    - Hammers occur after a price decline.
+
+    - The hammer candlestick shows sellers came into the market during the period but by
+    the close the selling had been absorbed and buyers had pushed the price back to near
+    the open.
+
+    - The close can be above or below the open, although the close should be near the open
+    in order for the real body to remain small.
+
+    - The lower shadow should be at least two times the height of the real body.
+
+    - Hammer candlesticks indicate a potential price reversal to the upside. The price
+    must start moving up following the hammer; this is called confirmation.
 
     :param opn:
     :param high:
@@ -2322,7 +2480,32 @@ def cdlhammer(opn, high, low, close):
 
 
 def cdlhangingman(opn, high, low, close):
-    """Hanging Man
+    """Hanging Man:
+
+    A hanging man candlestick occurs during an uptrend and warns that prices may start
+    falling. The candle is composed of a small real body, a long lower shadow, and little or
+    no upper shadow. The hanging man shows that selling interest is starting to increase. In
+    order for the pattern to be valid, the candle following the hanging man must see the
+    price of the asset decline.
+
+    - A hanging man is a bearish reversal candlestick pattern that occurs after a price
+    advance. The advance can be small or large, but should be composed of at least a few
+    price bars moving higher overall.
+
+    - The candle must have a small real body and a long lower shadow that is at least twice
+    the size as the real body. There is little or no upper shadow.
+
+    - The close of the hanging man can be above or below open, it just needs to be near the
+    open so the real body is small.
+
+    - The long lower shadow of the hanging man shows that sellers were able to take control
+    for part of the trading period.
+
+    - The hanging man pattern is just a warning. The price must move lower on the next candle
+    in order for the hanging man to be a valid reversal pattern. This is called confirmation.
+
+    - Traders typically exit long trades or enter short trades during or after the
+    confirmation candle, not before.
 
     :param opn:
     :param high:
@@ -2334,7 +2517,33 @@ def cdlhangingman(opn, high, low, close):
 
 
 def cdlharami(opn, high, low, close):
-    """Harami Pattern
+    """Harami Pattern:
+
+    Bullish Harami:
+    A bullish harami is a candlestick chart indicator suggesting that a bearish trend may be
+    coming to end. Some investors may look at a bullish harami as a good sign that they should
+    enter a long position on an asset.
+
+    - A bullish harami is a candlestick chart indicator for reversal in a bear price movement.
+
+    - It is generally indicated by a small increase in price (signified by a white candle) that
+    can be contained within the given equity's downward price movement (signified by black
+    candles) from the past couple of days
+
+    Bearish Harami:
+    A bearish harami is a two bar Japanese candlestick pattern that suggests prices may soon
+    reverse to the downside. The pattern consists of a long white candle followed by a small
+    black candle. The opening and closing prices of the second candle must be contained within
+    the body of the first candle. An uptrend precedes the formation of a bearish harami.
+
+    - A bearish harami is a candlestick chart indicator for reversal in a bull price movement.
+
+    - It is generally indicated by a small decrease in price (signified by a black candle) that
+    can be contained within the given equity's upward price movement (signified by white
+    candles) from the past day or two.
+
+    - Traders can use technical indicators, such as the relative strength index (RSI) and the
+    stochastic oscillator with a bearish harami to increase the chance of a successful trade.
 
     :param opn:
     :param high:
@@ -2346,7 +2555,22 @@ def cdlharami(opn, high, low, close):
 
 
 def cdlharamicross(opn, high, low, close):
-    """Harami Cross Pattern
+    """Harami Cross Pattern:
+
+    A harami cross is a Japanese candlestick pattern that consists of a large candlestick that
+    moves in the direction of the trend, followed by a small doji candlestick. The doji is
+    completely contained within the prior candlestick’s body. The harami cross pattern suggests
+    that the previous trend may be about to reverse. The pattern can be either bullish or
+    bearish. The bullish pattern signals a possible price reversal to the upside, while the
+    bearish pattern signals a possible price reversal to the downside.
+
+    - A bullish harami cross is a large down candle followed by a doji. It occurs during a downtrend.
+
+    - The bullish harami cross is confirmed by a price move higher following the pattern.
+
+    - A bearish harami cross is a large up candle followed by a doji. It occurs during an uptrend.
+
+    - The bearish pattern is confirmed by a price move lower following the pattern.
 
     :param opn:
     :param high:
@@ -2358,7 +2582,23 @@ def cdlharamicross(opn, high, low, close):
 
 
 def cdlhighwave(opn, high, low, close):
-    """High-Wave Candle
+    """High-Wave Candle:
+
+    The High Wave is a special kind of spinning top basic candle with one or two very long shadows.
+    The opening and closing price are not equal, but slightly different from each other. In this
+    case, body color does not matter. The High Wave is similar to the Long-Legged Doji
+
+    Forecast: lack of determination
+    Trend prior to the pattern: n/a
+    Opposite candlestick: none
+
+    Construction:
+
+    - a black or white body
+    - very small body
+    - at least one shadow required
+    - appears on as a long line
+    - the length of at least one shadows is at least 3 times larger than the body
 
     :param opn:
     :param high:
@@ -2370,7 +2610,22 @@ def cdlhighwave(opn, high, low, close):
 
 
 def cdlhikkake(opn, high, low, close):
-    """Hikkake Pattern
+    """Hikkake Pattern:
+
+    The hikkake pattern is a price pattern used by technical analysts and traders hoping to
+    identify a short-term move in the market's direction. The pattern has two different setups,
+    one implying a short-term downward movement in price action, and a second setup implying a
+    short-term upward trend in price.
+
+    - Complex chart pattern consisting of an inside day, a fake-out move and then a
+    reversal-and-breakout move.
+
+    - The pattern appears to work based on traders expectations of price moving one way, and then
+    collectively bailing out as price reverses.
+
+    - The pattern has two variations, a bullish and a bearish setup.
+
+    - The bullish variation is more frequently observed
 
     :param opn:
     :param high:
@@ -2382,7 +2637,24 @@ def cdlhikkake(opn, high, low, close):
 
 
 def cdlhikkakemod(opn, high, low, close):
-    """Modified Hikkake Pattern
+    """Modified Hikkake Pattern:
+
+    The modified hikkake pattern is a less frequent variant of the basic hikkake pattern and is
+    viewed as a reversal pattern. The concept of the modified version is similar to the basic
+    version, except that a "context bar" is used prior to the inside price bar/candle. Therefore,
+    the modified version consists of a context bar, an inside bar, a fake move, followed by a
+    move above (bullish) or below (bearish) the inside bar high or low, respectively.
+
+    - The modified hikkake adds a context bar to the basic hikkake pattern. There is a bullish
+    and bearish version of the modified hikkake.
+
+    - The bearish version consists of a context bar that closes near the high but has a smaller
+    range than the prior candle. This followed by an inside bar, then a candle with a higher high
+    and higher low. The pattern completes when the price drops below the inside bar low.
+
+    - The bullish version consists of a context bar that closes near the low but has a smaller
+    range than the prior candle. This followed by an inside bar, then a candle with a lower high
+    and lower low. The pattern completes when the price rises above the inside bar high.
 
     :param opn:
     :param high:
@@ -2394,7 +2666,24 @@ def cdlhikkakemod(opn, high, low, close):
 
 
 def cdlhomingpigeon(opn, high, low, close):
-    """Homing Pigeon
+    """Homing Pigeon:
+
+    The bullish homing pigeon is a candlestick pattern where one large candle is followed by a
+    smaller candle with a body is located within the range of the larger candle's body. Both
+    candles in the pattern must be black, or filled, indicating that the closing price was lower
+    than the opening price. The pattern may indicate that there is a weakening of the current
+    downward trend, which increases the likelihood of an upward reversal.
+
+    - A bullish homing pigeon is an upside reversal pattern. Although, it can also be a bearish
+    continuation pattern.
+
+    - The pattern occurs during downtrends, or during pullbacks within an uptrend.
+
+    - The pattern is composed of a large real body followed by a smaller real body, and both
+    candles are black (filled) or red indicating the close is below the open.
+
+    - Bullish homing pigeon patterns don't provide profit targets, and a stop loss is typically
+    placed below the bottom of the pattern after an upside move is confirmed.
 
     :param opn:
     :param high:
@@ -2406,7 +2695,26 @@ def cdlhomingpigeon(opn, high, low, close):
 
 
 def cdlidentical3crows(opn, high, low, close):
-    """Identical Three Crows
+    """Identical Three Crows:
+
+    The Identical Three Crows is a three-line bearish reversal candlestick pattern. Every candle appears as a long line having a black body.
+
+    Forecast: bearish reversal
+    Trend prior to the pattern: uptrend
+    Opposite pattern: none
+    See Also: Three Black Crows
+
+    Construction:
+
+    First candle
+    - a candle in an uptrend
+    - black body
+    Second candle
+    - black body
+    - the opening price at or near the prior close
+    Third candle
+    - black body
+    - the opening price at or near the prior close
 
     :param opn:
     :param high:
@@ -2418,7 +2726,28 @@ def cdlidentical3crows(opn, high, low, close):
 
 
 def cdlinneck(opn, high, low, close):
-    """In-Neck Pattern
+    """In-Neck Pattern:
+
+    The In Neck pattern is a two-line bearish continuation pattern what implies that the pattern
+     appears in a downtrend. The first line is a black candle appearing in a downtrend. The second
+     line is a white candle, and the lower and upper shadow length cannot exceed more than twice
+     the body length. Additionally the second candle's closing price needs to be slightly above
+     the previous closing price (up to 15% of the first line body).
+
+    Forecast: bearish continuation
+    Trend prior to the pattern: downtrend
+    Opposite pattern: none
+
+    Construction:
+
+    First candle
+    - a candle in a downtrend
+    - black body
+    - appears on as a long line
+    Second candle
+    - white body
+    - the opening price below the previous closing price
+    - the closing price is slightly above the previous closing price (up to 15% of the first line body)
 
     :param opn:
     :param high:
@@ -2430,7 +2759,13 @@ def cdlinneck(opn, high, low, close):
 
 
 def cdlinvertedhammer(opn, high, low, close):
-    """Inverted Hammer
+    """Inverted Hammer:
+
+    The hammer pattern is a single-candle bullish reversal pattern that can be spotted at the end
+    of a downtrend. The opening price, close, and top are approximately at the same price, while
+    there is a long wick that extends lower, twice as big as the short body.
+
+
 
     :param opn:
     :param high:
@@ -2442,7 +2777,24 @@ def cdlinvertedhammer(opn, high, low, close):
 
 
 def cdlkicking(opn, high, low, close):
-    """Kicking
+    """Kicking:
+
+    The kicking candlestick pattern is a two candlestick reversal pattern that begins a new trend
+    opposite to the trend previous.
+
+    A bullish kicking pattern occurs after a downtrend. The first day candlestick is a bearish
+    marabozu candlestick (a bearish candlestick with little to no upper or lower shadow, where the
+    price opens at the high of the day and closes at the low of the day). The second day gaps up
+    massively and opens above the previous day’s opening price. This second day candlestick is a
+    bullish marabozu (a bullish candlestick with little to no upper or lower shadow, where the price
+    opens at the low of the day and closes at the high of the day). There is a gap or, as the
+    Japanese refer to it, a window between day one’s bearish candlestick and day two’s bullish
+    candlestick.
+
+    A bearish kicking pattern occurs after an uptrend and signals a reversal for a new downtrend.
+    The first day candlestick is a bullish marabozu candlestick. The second day gaps down massively
+    and opens below the previous day’s opening price. This second day candlestick is a bearish
+    marabozu. There is a gap between day one’s bearish candlestick and day two’s bullish candlestick.
 
     :param opn:
     :param high:
