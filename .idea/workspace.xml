@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/tafuncs.py" afterPath="$PROJECT_DIR$/qteasy/tafuncs.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -1038,8 +1037,8 @@
       <file leaf-file-name="tafuncs.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/qteasy/tafuncs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="394">
-              <caret line="2811" column="16" lean-forward="true" selection-start-line="2811" selection-start-column="16" selection-end-line="2811" selection-end-column="16" />
+            <state relative-caret-position="515">
+              <caret line="3021" column="4" lean-forward="false" selection-start-line="3021" selection-start-column="4" selection-end-line="3021" selection-end-column="4" />
               <folding />
             </state>
           </provider>
@@ -3488,8 +3487,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/tafuncs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="394">
-          <caret line="2811" column="16" lean-forward="true" selection-start-line="2811" selection-start-column="16" selection-end-line="2811" selection-end-column="16" />
+        <state relative-caret-position="515">
+          <caret line="3021" column="4" lean-forward="false" selection-start-line="3021" selection-start-column="4" selection-end-line="3021" selection-end-column="4" />
           <folding />
         </state>
       </provider>

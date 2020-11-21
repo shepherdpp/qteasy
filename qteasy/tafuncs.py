@@ -2818,7 +2818,27 @@ def cdlkickingbylength(opn, high, low, close):
 
 
 def cdlladderbottom(opn, high, low, close):
-    """Ladder Bottom
+    """Ladder Bottom:
+
+    Ladder Bottom
+    The ladder bottom is a five candle reversal pattern, indicating a rise is commencing
+    following a decline. The chart pattern is created by a series of lower closes,
+    followed by a sharp price increase.
+
+    Ladder Top
+    The ladder top is a five candle reversal pattern, pointing to a fall in price following
+    a rise. The pattern is composed of a series of higher closes, followed by a sharp price
+    drop.
+
+    - In theory, the ladder bottom indicates a price reversal to the upside following a
+    downtrend.
+
+    - In theory, the ladder top indicates a price reversal to the downside following an
+    uptrend.
+
+    - In reality, the pattern acts as a reversal pattern a little more than 50% of the time.
+
+    - The pattern is quite rare, so opportunities for trading the pattern are limited.
 
     :param opn:
     :param high:
@@ -2830,7 +2850,27 @@ def cdlladderbottom(opn, high, low, close):
 
 
 def cdllongleggeddoji(opn, high, low, close):
-    """Long Legged Doji
+    """Long Legged Doji:
+
+    The long-legged doji is a candlestick that consists of long upper and lower shadows and
+    has approximately the same opening and closing price. The candlestick signals indecision
+    about the future direction of the underlying security.
+
+    It is used by some traders to warn that indecision is entering the market after a strong
+    advance. It may also warn that a strong downtrend may be experiencing indecision before
+    making a move to the upside.
+
+    - The long-legged doji has long upper and lower shadows and a small real body.
+
+    - The pattern shows indecision and is most significant when it occurs after a strong
+    advance or decline.
+
+    - While some traders may act on the one-candle pattern, others want to see what the price
+    does after the long-legged doji.
+
+    - The pattern is not always significant, and won't always mark the end of a trend. It
+    could mark the start of a consolidation period, or it may just end up being an
+    insignificant blip in the current trend
 
     :param opn:
     :param high:
@@ -2854,7 +2894,23 @@ def cdllongline(opn, high, low, close):
 
 
 def cdlmarubozu(opn, high, low, close):
-    """Marubozu
+    """Marubozu:
+
+    The word marubozu means "bald head" or "shaved head" in Japanese, and this is
+    reflected in the candlestick's lack of wicks. When you see a Marubozu candlestick,
+    the fact that there are no wicks tells you that the session opened at the high
+    price of the day and closed at the low price of the day. In a bullish Marubozu,
+    the buyers maintained control of the price throughout the day, from the opening
+    bell to the close. In a bearish Marubozu, the sellers controlled the price from
+    the opening bell to the close.
+
+    Depending on where a Marubozu is located and what color it is, you can make
+    predictions:
+
+    - If a White Marubozu occurs at the end of an uptrend, a continuation is likely.
+    - If a White Marubozu occurs at the end of a downtrend, a reversal is likely.
+    - If a Black Marubozu occurs at the end of a downtrend, a continuation is likely.
+    - If a Black Marubozu occurs at the end of an uptrend, a reversal is likely.
 
     :param opn:
     :param high:
@@ -2866,7 +2922,23 @@ def cdlmarubozu(opn, high, low, close):
 
 
 def cdlmatchinglow(opn, high, low, close):
-    """Matching Low
+    """Matching Low:
+
+    A matching low is a two-candle bullish reversal pattern that appears on candlestick
+    charts. It occurs after a downtrend and, in theory, signals a potential end to the
+    selling via two long down (black or red) candlesticks with matching closes. It is
+    confirmed by a price move higher following the pattern.
+
+    In reality, the matching low more often acts as a continuation pattern to the downside.
+
+    - The matching low pattern is created by two down candlesticks with similar or
+    matching closing prices.
+
+    - The pattern occurs following a price decline and signals a potential bottom or
+    that price has reached a support level.
+
+    - In reality, the price could go either direction following the pattern, and more
+    often it continues to the downside.
 
     :param opn:
     :param high:
@@ -2878,7 +2950,16 @@ def cdlmatchinglow(opn, high, low, close):
 
 
 def cdlmathold(opn, high, low, close):
-    """Mat Hold
+    """Mat Hold:
+
+    A mat hold pattern is a pattern found in the technical analysis of stocks that
+    ultimately indicates the stock will continue its previous directional trend,
+    meaning bullish or bearish.
+
+    This type of pattern is initially indicated by a significant trading day in one
+    direction or another, followed by three small opposite trending days. The fifth
+    day then continues the first day's trend, pushing higher or lower, in the same
+    direction as the first day's movement.
 
     :param opn:
     :param high:
@@ -2890,7 +2971,27 @@ def cdlmathold(opn, high, low, close):
 
 
 def cdlmorningdojistar(opn, high, low, close):
-    """Morning Doji Star
+    """Morning Doji Star:
+
+    The Morning Doji Star is a bullish reversal pattern, being very similar to the Morning Star. The only difference is that the Morning Doji Star needs to have a doji candle (except the Four-Price Doji) on the second line. The doji candle (second line) should not be preceded by or followed by a price gap.
+
+    Forecast: bullish reversal
+    Trend prior to the pattern: downtrend
+    Opposite pattern: Evening Doji Star
+
+    Construction:
+
+    First candle
+    - a candle in a downtrend
+    - black body
+    Second candle
+    - a doji candle
+    - a doji body below the previous candle body
+    - the high price above the previous candle low price
+    Third candle
+    - white body
+    - candle body above the previous candle body
+    - the closing price above the midpoint of the first candle body
 
     :param opn:
     :param high:
@@ -2902,7 +3003,23 @@ def cdlmorningdojistar(opn, high, low, close):
 
 
 def cdlmorningstar(opn, high, low, close):
-    """Morning Star
+    """Morning Star:
+
+    A morning star is a visual pattern consisting of three candlesticks that is interpreted
+    as a bullish sign by technical analysts. A morning star forms following a downward trend
+    and it indicates the start of an upward climb. It is a sign of a reversal in the
+    revious price trend. Traders watch for the formation of a morning star and then seek
+    confirmation that a reversal is indeed occurring using additional indicators.
+
+    - A morning star is a visual pattern made up of a tall black candlestick, a smaller black
+    or white candlestick with a short body and long wicks, and a third tall white candlestick.
+
+    - The middle candle of the morning star captures a moment of market indecision where the
+    bears begin to give way to bulls. The third candle confirms the reversal and can mark a
+    new uptrend.
+
+    - The opposite pattern to a morning star is the evening star, which signals a reversal of
+    an uptrend into a downtrend.
 
     :param opn:
     :param high:
