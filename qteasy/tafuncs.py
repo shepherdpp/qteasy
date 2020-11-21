@@ -3031,7 +3031,24 @@ def cdlmorningstar(opn, high, low, close):
 
 
 def cdlonneck(opn, high, low, close):
-    """On-Neck Pattern
+    """On-Neck Pattern:
+
+    The on neck pattern occurs when a long real bodied down candle is followed by a smaller
+    real bodied up candle that gaps down on the open but then closes near the prior candle's
+    close. The pattern is called a neckline because the two closing prices are the same (or
+    almost the same) across the two candles, forming a horizontal neckline.
+
+    The pattern is theoretically considered a continuation pattern, indicating that the price
+    will continue lower following the pattern. In reality, that only occurs about half the
+    time. Therefore, the pattern also often indicates at least a short-term reversal higher.
+
+    - The pattern is created by a long real bodied down candle, followed by a smaller real
+    bodied up candle with the same close as the prior candle.
+
+    - In theory, the pattern is a continuation pattern to the downside, but in reality, it
+    acts as a continuation pattern and a reversal pattern with nearly the same frequency.
+
+    - Trading on the pattern could result in any number of variations.
 
     :param opn:
     :param high:
@@ -3043,7 +3060,22 @@ def cdlonneck(opn, high, low, close):
 
 
 def cdlpiercing(opn, high, low, close):
-    """Piercing Pattern
+    """Piercing Pattern:
+
+    A piercing pattern is a two-day, candlestick price pattern that marks a potential short-term
+    reversal from a downward trend to an upward trend. The pattern includes the first day opening
+    near the high and closing near the low with an average or larger-sized trading range. It also
+    includes a gap down after the first day where the second day begins trading, opening near the
+    low and closing near the high. The close should also be a candlestick that covers at least
+    half of the upward length of the previous day's red candlestick body.
+
+    - The piercing pattern is a two-day candle pattern that implies a potential reversal from a
+    downward trend to an upward trend.
+
+    - This candle pattern typically only forecasts about five days out.
+
+    - Three characteristics of this pattern include a downward trend before the pattern, a gap
+    after the first day, and a strong reversal as the second candle in the pattern.
 
     :param opn:
     :param high:
@@ -3055,7 +3087,22 @@ def cdlpiercing(opn, high, low, close):
 
 
 def cdlrickshawman(opn, high, low, close):
-    """Rickshaw Man
+    """Rickshaw Man:
+
+    The rickshaw man is a type of long-legged doji candlestick where the body can be found at or
+    very near the middle of the candle. The candlestick shows the high, low, open, and close
+    prices. The open and close are at or very close to the same price level, creating the doji.
+    The high and low are far apart, creating long shadows on the candlestick. The rickshaw man
+    shows indecision on the part of participants in a market.
+
+    - The rickshaw man signals indecision in the marketplace. When used on its own, it is not a
+    highly reliable candlestick pattern for trading.
+
+    - The rickshaw man should be used in conjunction with other technical indicators, price action
+    analysis, or chart patterns to signal a potential trend change or continuation.
+
+    - The rickshaw man has long upper and lower shadows, with a small real body near the center
+    of the candle.
 
     :param opn:
     :param high:
@@ -3067,7 +3114,39 @@ def cdlrickshawman(opn, high, low, close):
 
 
 def cdlrisefall3methods(opn, high, low, close):
-    """Rising/Falling Three Methods
+    """Rising/Falling Three Methods:
+
+    Rising Three Methods:
+    "Rising three methods" is a bullish continuation candlestick pattern that occurs in an uptrend
+    and whose conclusion sees a resumption of that trend.This can be contrasted with a falling
+    three method.
+
+    - Rising three methods is a bullish continuation candlestick pattern that occurs in an uptrend
+    and whose conclusion sees a resumption of that trend.
+
+    - The decisive (fifth) strongly bullish candle is proof that sellers did not have enough
+    conviction to reverse the prior uptrend and that buyers have regained control of the market.
+
+    - The rising three methods may be more effective if the initial bullish candlestick's wicks,
+    denoting the high and low traded price for that period, are shallow.
+
+    Falling Three Methods:
+    The "falling three methods" is a bearish, five candle continuation pattern that signals an
+    interruption, but not a reversal, of the current downtrend. The pattern is characterized by
+    two long candlesticks in the direction of the trend, in this case down, at the beginning and
+    end, with three shorter counter-trend candlesticks in the middle.
+    This can be contrasted with a rising three method.
+
+    - The "falling three methods" is a bearish, five candle continuation pattern that signals an
+    interruption, but not a reversal, of the current downtrend.
+
+    - A falling three methods pattern is characterized by two long candlesticks in the direction
+    of the trend, in this case down, at the beginning and end, with three shorter counter-trend
+    candlesticks in the middle.
+
+    - The falling three methods pattern is important because it shows traders that the bulls still
+    do not have enough conviction to reverse the trend and it is used by some active traders as a
+    signal to initiate new, or add to their existing, short positions.
 
     :param opn:
     :param high:
@@ -3079,7 +3158,26 @@ def cdlrisefall3methods(opn, high, low, close):
 
 
 def cdlseparatinglines(opn, high, low, close):
-    """Separating Lines
+    """Separating Lines:
+
+    Bullish Separating Lines Pattern:
+    With just two candles – one black (or red) and one white (or green) – the Bullish Separating
+    Lines pattern is easy to learn and spot. To confirm its presence, seek out the following
+    criteria:
+    First, the pattern must begin with a clear and defined uptrend. Second, a long bearish candle
+    (black or red) must appear. Third, the next day must be defined by a long bullish candle (white
+    or green), which will open at the same place the first day opened.The white candle should not
+    have a lower wick, which means that the price can not drop below the opening price throughout
+    the course of the session.
+
+    Bearish Separating Lines Pattern:
+    The Bearish Separating Lines pattern encompasses just two candles. To spot it, look for the
+    following criteria:
+    First, the pattern must begin with a clear and defined downtrend. Second, a long bullish candle
+    (white or green) must appear. Third, the next day must be defined by a long bearish candle (black
+    or red), which will open at the same place as the first day opened. Ideally, the second candle
+    will not have an upper wick.
+
 
     :param opn:
     :param high:
@@ -3091,7 +3189,28 @@ def cdlseparatinglines(opn, high, low, close):
 
 
 def cdlshootingstar(opn, high, low, close):
-    """Shooting Star
+    """Shooting Star：
+
+    A shooting star is a bearish candlestick with a long upper shadow, little or no lower shadow,
+    and a small real body near the low of the day. It appears after an uptrend. Said differently,
+    a shooting star is a type of candlestick that forms when a security opens, advances
+    significantly, but then closes the day near the open again.
+
+    For a candlestick to be considered a shooting star, the formation must appear during a price
+    advance. Also, the distance between the highest price of the day and the opening price must
+    be more than twice as large as the shooting star's body. There should be little to no shadow
+    below the real body.
+
+    - A shooting star occurs after an advance and indicates the price could start falling.
+
+    - The formation is bearish because the price tried to rise significantly during the day, but
+    then the sellers took over and pushed the price back down toward the open.
+
+    - Traders typically wait to see what the next candle (period) does following a shooting star.
+    If the price declines during the next period they may sell or short.
+
+    - If the price rises after a shooting star, the formation may have been a false signal or the
+    candle is marking a potential resistance area around the price range of the candle.
 
     :param opn:
     :param high:
@@ -3103,7 +3222,24 @@ def cdlshootingstar(opn, high, low, close):
 
 
 def cdlshortline(opn, high, low, close):
-    """Short Line Candle
+    """Short Line Candle：
+
+    Short line candles—also known as short candles—are candles on a candlestick chart that have
+    a short real body. This one-bar pattern occurs when there is only a small difference between
+    the opening price and the closing price over a given period. The length of the upper and
+    lower shadows—representing the high and low for the period—do not make a difference in
+    defining a short line candle.
+
+    In other words, a short line candle may have a wide or narrow high and low range for the
+    period but will always have a narrow open and close range.
+
+    - A short-line, or short candles are candlesticks that have short bodies.
+
+    - This short-body shape indicates that the open and close prices of the security were quite
+    close to another.
+
+    - Short-body candles may indicate a period of consolidation in a stock or other asset, but
+    their interpretation will vary based on what other price action has preceded and follows it.
 
     :param opn:
     :param high:
@@ -3115,7 +3251,33 @@ def cdlshortline(opn, high, low, close):
 
 
 def cdlspinningtop(opn, high, low, close):
-    """Spinning Top
+    """Spinning Top：
+
+    A spinning top is a candlestick pattern with a short real body that's vertically centered
+    between long upper and lower shadows. The candlestick pattern represents indecision about
+    the future direction of the asset. Neither the buyers nor the sellers could gain the upper
+    hand. The buyers pushed the price up during the period, and the sellers pushed the price
+    down during the period, but ultimately the closing price ended up very close to the open.
+    After a strong price advance or decline, spinning tops can signal a potential price
+    reversal, if the candle that follows confirms.
+
+    A spinning top can have a close above or below the open, but the two prices need to be
+    close together.
+
+    - Spinning tops are symmetrical, with upper and lower shadows of approximately equal length.
+
+    - The real body should be small, showing little difference between the open and close prices.
+
+    - Since buyers and sellers both pushed the price, but couldn't maintain it, the pattern
+    shows indecision and that more sideways movement could follow.
+
+    - Following a strong move higher or lower, a spinning top shows that the trend traders may
+    be losing conviction. For example, following a strong up move, a spinning top shows buyers
+    may be losing some of their control and a reversal to the downside could be near.
+
+    - Spinning tops, and nearly all candlestick patterns, require confirmation. If a spinning
+    top could be the start of a reversal, the next candle should confirm. If the spinning top is
+    showing indecision, then the next candle should also move sideways within the range.
 
     :param opn:
     :param high:
@@ -3127,7 +3289,22 @@ def cdlspinningtop(opn, high, low, close):
 
 
 def cdlstalledpattern(opn, high, low, close):
-    """Stalled Pattern
+    """Stalled Pattern：
+
+    A stalled pattern is a candlestick chart pattern that occurs during an uptrend, but
+    indicates a likely bearish reversal. It is also known as a deliberation pattern.
+
+    Candlestick charts are price charts that show the open and closing prices of a security, as
+    well as their highs and lows for a specific period. They get their name from the way the
+    illustrations in the chart resemble candles and their wicks.
+
+    A stalled pattern indicates indecision in the market. It may suggest a limited ability for
+    traders turn a quick profit through short-term trades.
+    A stalled pattern chart consists of three white candles and must meet a specific set of
+    criteria. First, each candle’s open and close must be higher than that of the previous candle
+    in the pattern. Second, the third candle must have a shorter real body than the other two
+    candles. Finally, the third candle must have a tall upper shadow, and an open that is near
+    the close of the second candle.
 
     :param opn:
     :param high:
@@ -3139,7 +3316,23 @@ def cdlstalledpattern(opn, high, low, close):
 
 
 def cdlsticksandwich(opn, high, low, close):
-    """Stick Sandwich
+    """Stick Sandwich：
+
+    A stick sandwich is a technical trading pattern in which three candlesticks form what appears
+    to resemble a sandwich on a trader's screen. Stick sandwiches will have the middle candlestick
+    oppositely colored of the candlesticks on either side of it, both of which will have a larger
+    trading range than the middle candlestick. Stick sandwich patterns can occur in both bearish
+    and bullish indications.
+
+    - Candlestick charts are used by traders to determine possible price movement based on past
+    patterns.
+
+    - One candlestick pattern is the stick sandwich because it resembles a sandwich when plotted on
+    a price chart - they will have the middle candlestick oppositely colored vs. the candlesticks
+    on either side of it, both of which will have a larger trading range than the middle candlestick.
+
+    - These patterns may indicate either bullish or bearish trends, and so should be used in
+    conjunction with other methods of signals
 
     :param opn:
     :param high:
@@ -3151,7 +3344,29 @@ def cdlsticksandwich(opn, high, low, close):
 
 
 def cdltakuri(opn, high, low, close):
-    """Takuri (Dragonfly Doji with very long lower shadow)
+    """Takuri (Dragonfly Doji with very long lower shadow):
+
+    The Takuri Line pattern is very similar to Hammer. The only difference is that Hammer's lower
+    shadow length cannot exceed more than twice its body length, whereas Takuri Line's lower shadow
+    cannot be shorter than at least three times its body.
+
+    The Takuri Line is more reliable when is formed in a clear downtrend, or within a support zone.
+    An occurrence of Takuri Line pattern after the short-term declines usually does not matter. Very
+    important is its market context. In the algorithm implemented within CandleScanner, we used some
+    constraint in which the candle is recognized as a valid pattern only when the body is fully
+    located under the trend line.
+
+    Forecast: bullish reversal
+    Trend prior to the pattern: downtrend
+    Opposite pattern: Hanging Man
+
+    Construction:
+
+    - white or black candle with a small body
+    - no upper shadow or the shadow cannot be longer than the body
+    - lower shadow at least three times longer than the body
+    - if the gap is created at the opening or at the closing, it makes the signal stronger
+    - appears as a long line
 
     :param opn:
     :param high:
@@ -3163,7 +3378,36 @@ def cdltakuri(opn, high, low, close):
 
 
 def cdltasukigap(opn, high, low, close):
-    """Tasuki Gap
+    """Tasuki Gap:
+
+    Upside Tasuki Gap:
+    An Upside Tasuki Gap is a three-bar candlestick formation that is commonly used to signal the
+    continuation of the current trend.
+
+    1. The first bar is a large white/green candlestick within a defined uptrend.
+    2. The second bar is another white/green candlestick with an opening price that has gapped above
+    the close of the previous bar.
+    3. The third bar is a black/red candlestick that partially closes the gap between the first two
+    bars.
+
+    - The Upside Tasuki Gap is a three-bar candlestick formation that signals the continuation of
+    the current uptrend.
+
+    - The Upside Tasuki Gap’s third candle partially closes the gap between the first two bars.
+
+    - Traders often use other gap patterns in conjunction with the Upside Tasuki gap to confirm
+    bullish price action.
+
+    Downside Tasuki Gap:
+    A Downside Tasuki Gap is a candlestick formation that is commonly used to signal the continuation
+    of the current downtrend. The pattern is formed when a series of candlesticks have demonstrated
+    the following characteristics:
+
+    1. The first bar is a red candlestick within a defined downtrend.
+    2. The second bar is another red candlestick that has gapped below the close of the previous bar.
+    3. The last bar is a white candlestick that closes within the gap of the first two bars. It is
+    important to note that the white candle does not need to fully close the gap.
+
 
     :param opn:
     :param high:
@@ -3175,7 +3419,24 @@ def cdltasukigap(opn, high, low, close):
 
 
 def cdlthrusting(opn, high, low, close):
-    """Thrusting Pattern
+    """Thrusting Pattern:
+
+    A thrusting pattern is a type of price chart pattern used by technical analysts. It is formed
+    when a long black (down) candle is followed by a white (up) candle. The white candle closes above
+    the black candle's close, but it doesn't close above the midpoint of the black candle's real body.
+
+    Thrusting patterns are generally considered to be a bearish continuation pattern. However,
+    evidence suggests that they can also signal a bullish reversal. Therefore, the thrusting pattern
+    is best used in combination with other trading signals.
+
+    - A thrusting pattern is a long black candle followed by a white candle that closes near the
+    midpoint of the black candle's real body.
+
+    - The pattern is thought to act as a continuation pattern, but in reality, it acts as a reversal
+    pattern about half the time.
+
+    - Thrusting patterns are fairly common, don't necessarily result in large price moves, and are
+    most useful when combined with other types of evidence.
 
     :param opn:
     :param high:
@@ -3187,7 +3448,19 @@ def cdlthrusting(opn, high, low, close):
 
 
 def cdltristar(opn, high, low, close):
-    """Tristar Pattern
+    """Tristar Pattern:
+
+    A tri-star is a three line candlestick pattern that can signal a possible reversal in the current
+    trend, be it bullish or bearish.
+
+    - A tri-star is a three line candlestick pattern that can signal a possible reversal in the current
+    trend, be it bullish or bearish.
+
+    - Tri-star patterns form when three consecutive doji candlesticks appear at the end of a prolonged
+    trend.
+
+    - A tri-star pattern near a significant support or resistance level increases the probability of a
+    successful trade.
 
     :param opn:
     :param high:
@@ -3199,7 +3472,23 @@ def cdltristar(opn, high, low, close):
 
 
 def cdlunique3river(opn, high, low, close):
-    """Unique 3 River
+    """Unique 3 River:
+
+    The unique three river is a candlestick chart pattern that predicts a bullish reversal,
+    although there is some evidence that it could act as a bearish continuation pattern. The
+    unique three river pattern is composed of three price candles. If the price moves higher
+    after the pattern, then it is considered a bullish reversal. If the price moves lower after
+    the pattern, then it is a bearish continuation pattern.
+
+    - The unique three river pattern is composed of three candlesticks, in a specific sequence:
+    a long downward real body, a hammer that makes a new low, and a third candle with a small
+    upward real body that stays within the range of the hammer.
+
+    - Traditionally, the pattern indicates a bullish reversal but the price can actually move
+    either direction after the pattern occurs.
+
+    - Traders often use the direction of a confirmation candle, which is the fourth candle, to
+    signal which direction the price is likely to move following the pattern.
 
     :param opn:
     :param high:
@@ -3211,7 +3500,22 @@ def cdlunique3river(opn, high, low, close):
 
 
 def cdlupsidegap2crows(opn, high, low, close):
-    """Upside Gap Two Crows
+    """Upside Gap Two Crows:
+
+    The upside gap two crows pattern is a three-day formation on candlestick charts that typically
+    develops in the following manner: Day 1 - A bullish day that continues the uptrend, represented
+    by a long white candlestick, which indicates that the closing price of the index or security is
+    well above the opening price.
+    The upside gap two crows is viewed by chartists as a somewhat ominous pattern, since it
+    potentially signals that the index or security may be rolling over as its upward move ends and
+    a downtrend begins. The rationale for this interpretation is that despite two stronger opens
+    (on Days 2 and 3), the bulls have been unable to maintain upward momentum, suggesting that
+    sentiment is turning from bullish to bearish.
+    Although fairly rare, the upside gap two crows pattern certainly can certainly be foreboding.
+    The high opens fail to hold, the market continues to close lower than it opens, and the crows
+    are "circling overhead." So, if a trader spots these two crows, they should watch until they
+    receive confirmation that provides enough confidence to step forward and make a successful
+    trade. Without confirmation, the upside gap two crows is simply a small pause in an uptrend.
 
     :param opn:
     :param high:
@@ -3223,7 +3527,37 @@ def cdlupsidegap2crows(opn, high, low, close):
 
 
 def cdlxsidegap3methods(opn, high, low, close):
-    """Upside/Downside Gap Three Methods
+    """Upside/Downside Gap Three Methods:
+
+    The Gap Three Methods is a three-bar Japanese candlestick pattern that indicates a continuation
+    of the current trend. It is a variant of the Upside Tasuki Gap pattern, but the third candle
+    completely closes the gap between the first two candles.
+
+    - The Upside/Downside Gap Three Methods is a three-bar candlestick pattern.
+
+    - The Upside Gap Three Methods pattern suggests a bullish continuation of the trend.
+
+    - The Downside Gap Three Methods pattern suggests a bearish continuation of the trend.
+
+    UPSIDE GAP THREE METHODS:
+    The Upside Gap Three methods is a bullish continuation pattern with the following characteristics:
+
+    - The market is in an uptrend.
+    - The first bar is a white candle with a long real body.
+    - The second bar is a white candle with a long real body where the shadows over both candles
+    don’t overlap.
+    - The third bar is a black candle that has an open within the real body of the first candle and
+    a close within the real body of the second candle.
+
+    DOWNSIDE GAP THREE METHODS:
+    The Downside Gap Three Methods is a bearish continuation pattern with the following characteristics:
+
+    - The market is in a downtrend.
+    - The first bar is a black candle with a long real body.
+    - The second bar is a black candle with a long real body where the shadows over both candles don’t
+    overlap.
+    - The third bar is a white candle that has an open within the real body of the second candle and a
+    close within the real body of the first candle.
 
     :param opn:
     :param high:
@@ -3493,10 +3827,6 @@ def tanh(close):
         :real:
     """
     return TANH(close)
-
-
-# ===========================
-# Math Operator Functions
 
 
 def add(high, low):
