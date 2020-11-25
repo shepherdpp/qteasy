@@ -30,7 +30,7 @@ from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOIN
 # ========================
 # Overlap Studies Functions 滚动窗口叠加算例函数
 
-def bbands(close, timeperiod: int = 5, nbdevup: int = 2, nbdevdn: int = 2, matype: int = 0):
+def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, matype: int = 0):
     """Bollinger Bands 布林带线
 
         Bollinger Bands® are a technical analysis tool developed by John Bollinger
