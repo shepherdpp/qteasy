@@ -412,6 +412,7 @@ class SCRSMAVP(stg.RollingTiming):
         else:
             return 0
 
+
 class SCRST3(stg.RollingTiming):
     """ Single cross line strategy with T3 line
 
@@ -438,6 +439,7 @@ class SCRST3(stg.RollingTiming):
             return 1
         else:
             return 0
+
 
 class SCRSTEMA(stg.RollingTiming):
     """ Single cross line strategy with T3 line
@@ -520,6 +522,41 @@ class SCRSWMA(stg.RollingTiming):
             return 0
 
 
+# Built-in Double-cross-line strategies:
+# these strateges are basically adopting same philosaphy:
+# they track a long term moving average vs short term MA
+# and trigger trading signals while the two lines cross
+# differences between these strategies are the types of
+# moving averages.
+
+
+class DCRSSMA(stg.RollingTiming):
+    """ Double cross line strategy with simple moving average
+
+    two parameters:
+    - fast
+    - slow
+    """
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'conti'],
+                         par_bounds_or_enums=[(3, 250), (-10., 10.)],
+                         stg_name='SINGLE CROSSLINE - SMA',
+                         stg_text='Single moving average strategy that uses simple moving average as the trade line ',
+                         data_types='close')
+
+
+    def _realize(self, hist_data, params):
+        f, s = params
+        h = hist_data.T
+        diff = sma(h[0], f) - sma(h[0], s)
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
 class DCRSDEMA(stg.RollingTiming):
     """ Double cross line strategy with DEMA
 
@@ -572,7 +609,7 @@ class DCRSEMA(stg.RollingTiming):
             return 1
         else:
             return 0
-        
+
 
 class DCRSHT(stg.RollingTiming):
     """ Double cross line strategy with ht line
@@ -793,41 +830,6 @@ class DCRSWMA(stg.RollingTiming):
             return 0
 
 
-# Built-in Double-cross-line strategies:
-# these strateges are basically adopting same philosaphy:
-# they track a long term moving average vs short term MA
-# and trigger trading signals while the two lines cross
-# differences between these strategies are the types of
-# moving averages.
-
-
-class DCRSSMA(stg.RollingTiming):
-    """ Double cross line strategy with simple moving average
-
-    two parameters:
-    - fast
-    - slow
-    """
-    def __init__(self, pars):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['discr', 'conti'],
-                         par_bounds_or_enums=[(3, 250), (-10., 10.)],
-                         stg_name='SINGLE CROSSLINE - SMA',
-                         stg_text='Single moving average strategy that uses simple moving average as the trade line ',
-                         data_types='close')
-
-
-    def _realize(self, hist_data, params):
-        f, s = params
-        h = hist_data.T
-        diff = sma(h[0], f) - sma(h[0], s)
-        if diff < 0:
-            return 1
-        else:
-            return 0
-
-
 # Built-in Sloping strategies:
 # these strateges are basically adopting same philosaphy:
 # Their moving average values are calculated and slop is
@@ -840,6 +842,279 @@ class SLPSMA(stg.RollingTiming):
     """ Double cross line strategy with simple moving average
 
     """
+
+
+class SLPDEMA(stg.RollingTiming):
+    """ Curve Slope  strategy with DEMA
+
+        two parameters:
+        - range - range of DEMA
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(3, 250)],
+                         stg_name='SLOPE - DEMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses DEMA as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = dema(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPEMA(stg.RollingTiming):
+    """ Curve Slope  strategy with EMA
+
+        two parameters:
+        - range - range of EMA
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(3, 250)],
+                         stg_name='SLOPE - EMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses EMA as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = ema(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPHT(stg.RollingTiming):
+    """ Curve Slope  strategy with ht line
+
+        zero parameters:
+        - range - range of ht
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(3, 250)],
+                         stg_name='SLOPE - HT',
+                         stg_text='Smoothed Curve Slope Strategy that uses HT line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = ht(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPKAMA(stg.RollingTiming):
+    """ Curve Slope  strategy with KAMA line
+
+        one parameters:
+        - range - range of KAMA
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(3, 250)],
+                         stg_name='SLOPE - HT',
+                         stg_text='Smoothed Curve Slope Strategy that uses KAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = kama(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPMAMA(stg.RollingTiming):
+    """ Curve Slope  strategy with MAMA line
+
+        two parameters:
+        - fastlimit - fastlimit
+        - slowlimit = slowlimit
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['conti', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         stg_name='SLOPE - MAMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        f, s = params
+        h = hist_data.T
+        diff = mama(h[0], f, s) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPMAVP(stg.RollingTiming):
+    """ Curve Slope  strategy with MAVP line
+
+        two parameters:
+        - fastlimit - fastlimit
+        - slowlimit = slowlimit
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['conti', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         stg_name='SLOPE - MAMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        f, s = params
+        h = hist_data.T
+        diff = mavp(h[0], f, s) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPT3(stg.RollingTiming):
+    """ Curve Slope  strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+        - vfactor = vfactor
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['conti', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         stg_name='SLOPE - MAMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        f, s = params
+        h = hist_data.T
+        diff = t3(h[0], f, s) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPTEMA(stg.RollingTiming):
+    """ Curve Slope  strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='SLOPE - TEMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses TEMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = tema(h[0], p) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPTRIMA(stg.RollingTiming):
+    """ Curve Slope  strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='SLOPE - TRIMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses TRIMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = trima(h[0], p) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class SLPWMA(stg.RollingTiming):
+    """ Curve Slope  strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='SLOPE - MAMA',
+                         stg_text='Smoothed Curve Slope Strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = wma(h[0], p) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
 
 
 # Built-in Simple timing strategies:
