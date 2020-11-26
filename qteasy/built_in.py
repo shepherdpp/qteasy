@@ -358,7 +358,7 @@ class SCRSKAMA(stg.RollingTiming):
 
 
 class SCRSMAMA(stg.RollingTiming):
-    """ Single cross line strategy with ht line
+    """ Single cross line strategy with MAMA line
 
         two parameters:
         - fastlimit - fastlimit
@@ -386,7 +386,7 @@ class SCRSMAMA(stg.RollingTiming):
 
 
 class SCRSMAVP(stg.RollingTiming):
-    """ Single cross line strategy with ht line
+    """ Single cross line strategy with MAVP line
 
         two parameters:
         - fastlimit - fastlimit
@@ -444,23 +444,22 @@ class SCRSTEMA(stg.RollingTiming):
 
         two parameters:
         - timeperiod - timeperiod
-        - vfactor = vfactor
     """
 
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 20), (0, 20)],
-                         stg_name='SINGLE CROSSLINE - MAMA',
-                         stg_text='Single moving average strategy that uses MAMA line as the '
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='SINGLE CROSSLINE - TEMA',
+                         stg_text='Single moving average strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f, s = params
+        p = params
         h = hist_data.T
-        diff = tema(h[0], f, s) - h[0]
+        diff = tema(h[0], p) - h[0]
         if diff < 0:
             return 1
         else:
@@ -472,23 +471,22 @@ class SCRSTRIMA(stg.RollingTiming):
 
         two parameters:
         - timeperiod - timeperiod
-        - vfactor = vfactor
     """
 
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 20), (0, 20)],
-                         stg_name='SINGLE CROSSLINE - MAMA',
-                         stg_text='Single moving average strategy that uses MAMA line as the '
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='SINGLE CROSSLINE - TRIMA',
+                         stg_text='Single moving average strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f, s = params
+        p = params
         h = hist_data.T
-        diff = trima(h[0], f, s) - h[0]
+        diff = trima(h[0], p) - h[0]
         if diff < 0:
             return 1
         else:
@@ -500,23 +498,295 @@ class SCRSWMA(stg.RollingTiming):
 
         two parameters:
         - timeperiod - timeperiod
-        - vfactor = vfactor
     """
 
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
                          stg_name='SINGLE CROSSLINE - MAMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = wma(h[0], p) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSDEMA(stg.RollingTiming):
+    """ Double cross line strategy with DEMA
+
+        two parameters:
+        - range - range of DEMA
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(3, 250), (3, 250)],
+                         stg_name='DOUBLE CROSSLINE - DEMA',
+                         stg_text='Double moving average strategy that uses DEMA as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = dema(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSEMA(stg.RollingTiming):
+    """ Double cross line strategy with EMA
+
+        two parameters:
+        - range - range of EMA
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(3, 250), (3, 250)],
+                         stg_name='DOUBLE CROSSLINE - EMA',
+                         stg_text='Double moving average strategy that uses EMA as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = ema(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+        
+
+class DCRSHT(stg.RollingTiming):
+    """ Double cross line strategy with ht line
+
+        zero parameters:
+        - range - range of ht
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(3, 250), (3, 250)],
+                         stg_name='DOUBLE CROSSLINE - HT',
+                         stg_text='Double moving average strategy that uses HT line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = ht(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSKAMA(stg.RollingTiming):
+    """ Double cross line strategy with KAMA line
+
+        one parameters:
+        - range - range of KAMA
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(3, 250), (3, 250)],
+                         stg_name='DOUBLE CROSSLINE - HT',
+                         stg_text='Double moving average strategy that uses KAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        r, = params
+        h = hist_data.T
+        diff = kama(h[0], r) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSMAMA(stg.RollingTiming):
+    """ Double cross line strategy with MAMA line
+
+        two parameters:
+        - fastlimit - fastlimit
+        - slowlimit = slowlimit
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['conti', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         stg_name='DOUBLE CROSSLINE - MAMA',
+                         stg_text='Double moving average strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
         f, s = params
         h = hist_data.T
-        diff = wma(h[0], f, s) - h[0]
+        diff = mama(h[0], f, s) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSMAVP(stg.RollingTiming):
+    """ Double cross line strategy with MAVP line
+
+        two parameters:
+        - fastlimit - fastlimit
+        - slowlimit = slowlimit
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['conti', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         stg_name='DOUBLE CROSSLINE - MAMA',
+                         stg_text='Double moving average strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        f, s = params
+        h = hist_data.T
+        diff = mavp(h[0], f, s) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRST3(stg.RollingTiming):
+    """ Double cross line strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+        - vfactor = vfactor
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['conti', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 20)],
+                         stg_name='DOUBLE CROSSLINE - MAMA',
+                         stg_text='Double moving average strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        f, s = params
+        h = hist_data.T
+        diff = t3(h[0], f, s) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSTEMA(stg.RollingTiming):
+    """ Double cross line strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='DOUBLE CROSSLINE - TEMA',
+                         stg_text='Double moving average strategy that uses TEMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = tema(h[0], p) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSTRIMA(stg.RollingTiming):
+    """ Double cross line strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='DOUBLE CROSSLINE - TRIMA',
+                         stg_text='Double moving average strategy that uses TRIMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = trima(h[0], p) - h[0]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSWMA(stg.RollingTiming):
+    """ Double cross line strategy with T3 line
+
+        two parameters:
+        - timeperiod - timeperiod
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['descr'],
+                         par_bounds_or_enums=[(3, 200)],
+                         stg_name='DOUBLE CROSSLINE - MAMA',
+                         stg_text='Double moving average strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        p = params
+        h = hist_data.T
+        diff = wma(h[0], p) - h[0]
         if diff < 0:
             return 1
         else:
