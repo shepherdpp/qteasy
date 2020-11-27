@@ -842,6 +842,25 @@ class SLPSMA(stg.RollingTiming):
     """ Double cross line strategy with simple moving average
 
     """
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(3, 250)],
+                         stg_name='SLOPE - SMA',
+                         stg_text='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
+                         data_types='close')
+
+
+    def _realize(self, hist_data, params):
+        f,  = params
+        h = hist_data.T
+        curve = sma(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
+            return 1
+        else:
+            return 0
 
 
 class SLPDEMA(stg.RollingTiming):
