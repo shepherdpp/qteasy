@@ -312,18 +312,17 @@ class SCRSHT(stg.RollingTiming):
 
     def __init__(self, pars):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['discr'],
-                         par_bounds_or_enums=[(3, 250)],
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
                          stg_name='SINGLE CROSSLINE - HT',
                          stg_text='Single moving average strategy that uses HT line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
         h = hist_data.T
-        diff = ht(h[0], r) - h[0]
+        diff = ht(h[0]) - h[0]
         if diff < 0:
             return 1
         else:
@@ -620,9 +619,9 @@ class DCRSHT(stg.RollingTiming):
 
     def __init__(self, pars):
         super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['discr', 'discr'],
-                         par_bounds_or_enums=[(3, 250), (3, 250)],
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
                          stg_name='DOUBLE CROSSLINE - HT',
                          stg_text='Double moving average strategy that uses HT line as the '
                                   'trade line ',
@@ -631,7 +630,7 @@ class DCRSHT(stg.RollingTiming):
     def _realize(self, hist_data, params):
         r, = params
         h = hist_data.T
-        diff = ht(h[0], r) - h[0]
+        diff = ht(h[0]) - h[0]
         if diff < 0:
             return 1
         else:
@@ -881,10 +880,11 @@ class SLPDEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
+        f,  = params
         h = hist_data.T
-        diff = dema(h[0], r) - h[0]
-        if diff < 0:
+        curve = dema(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -908,10 +908,11 @@ class SLPEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
+        f,  = params
         h = hist_data.T
-        diff = ema(h[0], r) - h[0]
-        if diff < 0:
+        curve = ema(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -926,19 +927,19 @@ class SLPHT(stg.RollingTiming):
 
     def __init__(self, pars):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['discr'],
-                         par_bounds_or_enums=[(3, 250)],
+                         par_count=0,
+                         par_types=[],
+                         par_bounds_or_enums=[],
                          stg_name='SLOPE - HT',
                          stg_text='Smoothed Curve Slope Strategy that uses HT line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
         h = hist_data.T
-        diff = ht(h[0], r) - h[0]
-        if diff < 0:
+        curve = ht(h[0])
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -962,10 +963,11 @@ class SLPKAMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
+        f,  = params
         h = hist_data.T
-        diff = kama(h[0], r) - h[0]
-        if diff < 0:
+        curve = kama(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -992,8 +994,9 @@ class SLPMAMA(stg.RollingTiming):
     def _realize(self, hist_data, params):
         f, s = params
         h = hist_data.T
-        diff = mama(h[0], f, s) - h[0]
-        if diff < 0:
+        curve = mama(h[0], f, s)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -1018,10 +1021,11 @@ class SLPMAVP(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f, s = params
+        min, max = params
         h = hist_data.T
-        diff = mavp(h[0], f, s) - h[0]
-        if diff < 0:
+        curve = mavp(h[0], min, max)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -1046,10 +1050,11 @@ class SLPT3(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f, s = params
+        p, v = params
         h = hist_data.T
-        diff = t3(h[0], f, s) - h[0]
-        if diff < 0:
+        curve = t3(h[0], p, v)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -1073,10 +1078,11 @@ class SLPTEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        p = params
+        f,  = params
         h = hist_data.T
-        diff = tema(h[0], p) - h[0]
-        if diff < 0:
+        curve = ema(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -1100,10 +1106,11 @@ class SLPTRIMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        p = params
+        f,  = params
         h = hist_data.T
-        diff = trima(h[0], p) - h[0]
-        if diff < 0:
+        curve = trima(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
@@ -1127,10 +1134,11 @@ class SLPWMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        p = params
+        f,  = params
         h = hist_data.T
-        diff = wma(h[0], p) - h[0]
-        if diff < 0:
+        curve = wma(h[0], f)
+        slope = curve[-1] - curve[-2]
+        if slope < 0:
             return 1
         else:
             return 0
