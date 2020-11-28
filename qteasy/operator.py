@@ -489,6 +489,29 @@ class Operator:
         s2.reverse()  # 表达式解析完成，生成前缀表达式
         return s2
 
+    @property
+    def ready(self):
+        """ assess if the operator is ready to generate
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def add_strategy(self, stg):
+        """add strategy"""
+        raise NotImplementedError
+
+    def remove_strategy(self, stg):
+        """remove strategy"""
+        raise NotImplementedError
+
+    def clear(self):
+        """clear all strategies
+
+        :return:
+        """
+        raise NotImplementedError
+
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
 
