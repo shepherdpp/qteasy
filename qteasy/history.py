@@ -14,6 +14,8 @@ import tushare as ts
 import numpy as np
 from time import sleep
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
 from .utilfuncs import list_to_str_format, progress_bar
 from .tsfuncs import get_bar, name_change
@@ -813,7 +815,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                    same_shares=True)
 
     for report_type in [t for t in finance_report_types if len(t) > 0]:
-        print(f'Getting financial report...')
+        print('Getting finance report type historical data...')
         # print(f'In get history panel() function, financial type data are \n{report_type}, \n'
         #       f'shares are\n {shares}')
         income_dfs, indicator_dfs, balance_dfs, cashflow_dfs = get_financial_report_type_raw_data(start=start,
@@ -858,7 +860,7 @@ def get_price_type_raw_data(start: str,
                             shares: [str, list],
                             htypes: [str, list],
                             asset_type: str = 'E',
-                            parallel = False,
+                            parallel = True,
                             delay = 0,
                             chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
@@ -884,24 +886,42 @@ def get_price_type_raw_data(start: str,
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
     total_share_count = len(shares)
+    print()
     # debug
     # print(f'will download htype date {htypes} for share {shares}'
     i = 0
     progress_bar(i, total_share_count)
-    for share in shares:
-        if delay > 0:
-            sleep(delay)
-        raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
-        # debug
-        # print('raw df before rearange\n', raw_df)
-        assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
-                                   f'{share} from {start} to {end} in frequency {freq}'
-        raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
-        raw_df.index = range(len(raw_df))
-        # print('\nraw df after rearange\n', raw_df)
-        df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
-        i += 1
-        progress_bar(i, total_share_count)
+
+    if parallel:
+        proc_pool = ProcessPoolExecutor()
+        futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
+                   shares}
+        for f in as_completed(futures):
+            raw_df = f.result()
+
+            assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
+                                       f'{futures[f]} from {start} to {end} in frequency {freq}'
+            raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
+            raw_df.index = range(len(raw_df))
+            # print('\nraw df after rearange\n', raw_df)
+            df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
+            i += 1
+            progress_bar(i, total_share_count)
+    else:
+        for share in shares:
+            if delay > 0:
+                sleep(delay)
+            raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
+            # debug
+            # print('raw df before rearange\n', raw_df)
+            assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
+                                       f'{share} from {start} to {end} in frequency {freq}'
+            raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
+            raw_df.index = range(len(raw_df))
+            # print('\nraw df after rearange\n', raw_df)
+            df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+            i += 1
+            progress_bar(i, total_share_count)
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date).sort_index()
@@ -915,7 +935,7 @@ def get_price_type_raw_data(start: str,
 def get_financial_report_type_raw_data(start: str,
                                        end: str,
                                        shares: str,
-                                       htypes: str,
+                                       htypes: [str, list],
                                        parallel = False,
                                        delay = 1.25,
                                        chanel: str = 'online'):
@@ -961,47 +981,102 @@ def get_financial_report_type_raw_data(start: str,
     # print('htypes:', htypes, "\nreport fields: ", report_fields)
     i = 0
     progress_bar(i, total_share_count)
-    for share in shares:
-        if delay > 0:
-            sleep(delay)
-        # TODO: refract these codes, combine and simplify similar codes
+    if parallel: # only works when number of shares < 50 because currently only 50 downloads per min is allowed
+        proc_pool = ProcessPoolExecutor()
         if len(str_to_list(income_fields)) > 2:
-            df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
-            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-            df.index = pd.to_datetime(df.ann_date)
-            df.index.name = 'date'
-            df.drop(columns=['ts_code','ann_date'], inplace=True)
-            income_dfs.append(df)
+            futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for
+                       share in shares}
+            for f in as_completed(futures):
+                df = f.result()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
+                income_dfs.append(df)
+                i += 1
+                progress_bar(i, total_share_count)
 
         if len(str_to_list(indicator_fields)) > 2:
-            df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
-            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-            df.index = pd.to_datetime(df.ann_date)
-            df.index.name = 'date'
-            df.drop(columns=['ts_code','ann_date'], inplace=True)
-            indicator_dfs.append(df)
+            futures = {proc_pool.submit(indicators, share, None, start, end, None, indicator_fields): share for
+                       share in shares}
+            for f in as_completed(futures):
+                df = f.result()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
+                indicator_dfs.append(df)
+                i += 1
+                progress_bar(i, total_share_count)
 
         if len(str_to_list(balance_fields)) > 2:
-            df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
-            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-            df.index = pd.to_datetime(df.ann_date)
-            df.index.name = 'date'
-            df.drop(columns=['ts_code','ann_date'], inplace=True)
-            balance_dfs.append(df)
+            futures = {proc_pool.submit(balance, share, None, start, end, None, None, None, balance_fields): share for
+                       share in shares}
+            for f in as_completed(futures):
+                df = f.result()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
+                balance_dfs.append(df)
+                i += 1
+                progress_bar(i, total_share_count)
 
         if len(str_to_list(cashflow_fields)) > 2:
-            df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
-            df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-            df.index = pd.to_datetime(df.ann_date)
-            df.index.name = 'date'
-            df.drop(columns=['ts_code','ann_date'], inplace=True)
-            cashflow_dfs.append(df)
-            # print('raw df before rearange\n', raw_df)
+            futures = {proc_pool.submit(cashflow, share, None, start, end, None, None, None, cashflow_fields): share for
+                       share in shares}
+            for f in as_completed(futures):
+                df = f.result()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
+                cashflow_dfs.append(df)
+                i += 1
+                progress_bar(i, total_share_count)
 
-            # print('\nsingle df of share after removal\n', df)
+    else:
+        for share in shares:
+            if delay > 0:
+                sleep(delay)
+            # TODO: refract these codes, combine and simplify similar codes
+            if len(str_to_list(income_fields)) > 2:
+                df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code','ann_date'], inplace=True)
+                income_dfs.append(df)
 
-        i += 1
-        progress_bar(i, total_share_count)
+            if len(str_to_list(indicator_fields)) > 2:
+                df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code','ann_date'], inplace=True)
+                indicator_dfs.append(df)
+
+            if len(str_to_list(balance_fields)) > 2:
+                df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code','ann_date'], inplace=True)
+                balance_dfs.append(df)
+
+            if len(str_to_list(cashflow_fields)) > 2:
+                df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
+                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+                df.index = pd.to_datetime(df.ann_date)
+                df.index.name = 'date'
+                df.drop(columns=['ts_code','ann_date'], inplace=True)
+                cashflow_dfs.append(df)
+                # print('raw df before rearange\n', raw_df)
+
+                # print('\nsingle df of share after removal\n', df)
+
+            i += 1
+            progress_bar(i, total_share_count)
     return income_dfs, indicator_dfs, balance_dfs, cashflow_dfs
 
 
