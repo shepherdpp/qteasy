@@ -761,7 +761,6 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
                         rows=combined_index,
                         columns=combined_htypes)
 
-
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
@@ -851,7 +850,6 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
 
     return result_hp
 
-
 # TODO: apply parallel downloading,
 # TODO: and dynamically group shares thus data downloading can be less repetitive.
 def get_price_type_raw_data(start: str,
@@ -928,7 +926,6 @@ def get_price_type_raw_data(start: str,
         df.drop(columns=columns_to_remove, inplace=True)
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
-
 
 # TODO: apply parallel downloading,
 # TODO: and dynamically group shares thus data downloading can be less repetitive.
