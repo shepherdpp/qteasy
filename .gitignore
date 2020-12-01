@@ -28,3 +28,5 @@ Multi_DMA_test.ipynb
 .ipynb_checkpoints/Backtest_plotting-checkpoint.ipynb
 All_timing_test_separately.ipynb
 Backtest_plotting.ipynb
+*.csv
+*.pyc

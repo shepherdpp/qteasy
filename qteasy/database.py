@@ -11,8 +11,10 @@
 
 import numpy as np
 import pandas as pd
+import os
+from os import path
 
-LOCAL_DATA_FOLDER = '/data'
+LOCAL_DATA_FOLDER = 'qteasy/data/'
 
 class DataSource():
     """ The DataSource object manages data sources in a specific location that
@@ -119,6 +121,80 @@ class DataSource():
         :return:
         """
         raise NotImplementedError
+
+    def file_exists(self, file_name):
+        """ returns whether a file exists or not
+
+        :param file_name:
+        :return:
+        """
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        return path.exists(file_name)
+
+    def new_file(self, file_name, dataframe):
+        """ create given dataframe into a new file with file_name
+
+        :param dataframe:
+        :param file_name:
+        :return:
+        """
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        if not isinstance(dataframe, pd.DataFrame):
+            raise TypeError(f'data should be a pandas dataframe, the input is not in valid format!')
+        if not isinstance(dataframe.index[0], pd.Timestamp):
+            raise TypeError(f'input data should be indexed by timestamp!')
+
+        if self.file_exists(file_name):
+            raise FileExistsError(f'the file with name {file_name} already exists!')
+        dataframe.to_csv(file_name)
+        return file_name
+
+    def del_file(self, file_name):
+        """ delete file
+
+        :param file_name:
+        :return:
+        """
+        raise NotImplementedError
+
+    def open_file(self, file_name):
+        """ open the file with name file_name and return the df
+
+        :param file_name:
+        :return:
+        """
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        if self.file_exists(file_name):
+            df = pd.read_csv(file_name)
+            return df
+        else:
+            raise FileNotFoundError(f'File {file_name} not found!')
+
+    def append_file(self, file_name, df):
+        """ append the contents to the existing file with the name file_name
+
+        :param file_name:
+        :param df:
+        :return:
+        """
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError(f'data should be a pandas df, the input is not in valid format!')
+        if not isinstance(df.index[0], pd.Timestamp):
+            raise TypeError(f'input data should be indexed by timestamp!')
+
+        if not self.file_exists(file_name):
+            self.new_file(file_name, df)
+            return df
+        else:
+            original_df = self.open_file(file_name)
+            
+            return df
+
 
     def update(self):
         """ download the latest data in order to make local data set up-to-date.
