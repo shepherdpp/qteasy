@@ -143,8 +143,12 @@ class DataSource():
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         if not isinstance(dataframe, pd.DataFrame):
             raise TypeError(f'data should be a pandas dataframe, the input is not in valid format!')
-        if not isinstance(dataframe.index[0], pd.Timestamp):
-            raise TypeError(f'input data should be indexed by timestamp!')
+        try:
+            dataframe.rename(index=pd.to_datetime)
+            dataframe.drop_duplicates(inplace=True)
+            dataframe.sort_index()
+        except:
+            raise RuntimeError(f'Can not convert index of input data to datetime format!')
 
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
@@ -167,14 +171,39 @@ class DataSource():
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        if self.file_exists(file_name):
-            df = pd.read_csv(file_name)
-            return df
-        else:
+        if not self.file_exists(file_name):
             raise FileNotFoundError(f'File {file_name} not found!')
 
-    def append_file(self, file_name, df):
-        """ append the contents to the existing file with the name file_name
+        df = pd.read_csv(file_name, index_col=0)
+        return df
+
+    def overwrite_file(self, file_name, df):
+        """ save df as file name or overwrite file name if file_name already exists
+
+        :param file_name:
+        :param df:
+        :return:
+        """
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError(f'data should be a pandas dataframe, the input is not in valid format!')
+        try:
+            df.rename(index=pd.to_datetime)
+            df.drop_duplicates(inplace=True)
+            df.sort_index()
+        except:
+            raise RuntimeError(f'Can not convert index of input data to datetime format!')
+
+        if self.file_exists(file_name):
+            df.to_csv(file_name)
+            return file_name
+        else:
+            df.to_csv(file_name)
+            return file_name
+
+    def expand_file(self, file_name, df):
+        """ expand the file by adding more columns to the file with the name file_name
 
         :param file_name:
         :param df:
@@ -184,17 +213,31 @@ class DataSource():
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         if not isinstance(df, pd.DataFrame):
             raise TypeError(f'data should be a pandas df, the input is not in valid format!')
-        if not isinstance(df.index[0], pd.Timestamp):
-            raise TypeError(f'input data should be indexed by timestamp!')
+        try:
+            df.rename(index=pd.to_datetime)
+            df.drop_duplicates(inplace=True)
+            df.sort_index()
+        except:
+            raise RuntimeError(f'Can not convert index of input data to datetime format!')
 
         if not self.file_exists(file_name):
             self.new_file(file_name, df)
             return df
         else:
             original_df = self.open_file(file_name)
-            
-            return df
+            if any(column in original_df.columns for column in df.columns):
+                raise KeyError(f'one or more column in df already exists in file, use self.append instead!')
+            new_df = original_df.join(df, how='outer')
+            self.overwrite_file(file_name, new_df)
+            return new_df
 
+    def append_file(self, file_name, df):
+        """ extend or append the file by adding more rows of data to it
+
+        :param file_name:
+        :param df:
+        :return:
+        """
 
     def update(self):
         """ download the latest data in order to make local data set up-to-date.
