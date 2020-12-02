@@ -116,7 +116,7 @@ class DataSource():
 
     def regenerate(self):
         """ refresh some data or all data in local files, meaning re-download
-        all data online to keep local data
+        all data online to keep local data up-to-date
 
         :return:
         """
@@ -141,14 +141,7 @@ class DataSource():
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        if not isinstance(dataframe, pd.DataFrame):
-            raise TypeError(f'data should be a pandas dataframe, the input is not in valid format!')
-        try:
-            dataframe.rename(index=pd.to_datetime)
-            dataframe.drop_duplicates(inplace=True)
-            dataframe.sort_index()
-        except:
-            raise RuntimeError(f'Can not convert index of input data to datetime format!')
+        df = self.validated_dataframe(dataframe)
 
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
@@ -186,14 +179,7 @@ class DataSource():
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        if not isinstance(df, pd.DataFrame):
-            raise TypeError(f'data should be a pandas dataframe, the input is not in valid format!')
-        try:
-            df.rename(index=pd.to_datetime)
-            df.drop_duplicates(inplace=True)
-            df.sort_index()
-        except:
-            raise RuntimeError(f'Can not convert index of input data to datetime format!')
+        df = self.validated_dataframe(df)
 
         if self.file_exists(file_name):
             df.to_csv(file_name)
@@ -205,20 +191,16 @@ class DataSource():
     def expand_file(self, file_name, df):
         """ expand the file by adding more columns to the file with the name file_name
 
+        in this case the datetime range of the file does not change, data that are out of
+        original datetime range will be discarded.
+
         :param file_name:
         :param df:
         :return:
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        if not isinstance(df, pd.DataFrame):
-            raise TypeError(f'data should be a pandas df, the input is not in valid format!')
-        try:
-            df.rename(index=pd.to_datetime)
-            df.drop_duplicates(inplace=True)
-            df.sort_index()
-        except:
-            raise RuntimeError(f'Can not convert index of input data to datetime format!')
+        df = self.validated_dataframe(df)
 
         if not self.file_exists(file_name):
             self.new_file(file_name, df)
@@ -232,12 +214,43 @@ class DataSource():
             return new_df
 
     def append_file(self, file_name, df):
-        """ extend or append the file by adding more rows of data to it
+        """ append more rows to the data thus datetime range is expended,
+        in this case the datetime range of df should not overlap with that
+        of the file
 
         :param file_name:
         :param df:
         :return:
         """
+        original_df = self.open_file(file_name)
+        return df
+
+    def merge_file(self, file_name, df):
+        """ merge some data stored in df into file_name,
+
+        the idea is that this method deals with the data frame whose index
+        is covered in file name, but data are not downloaded
+
+        :param file_name:
+        :param df:
+        :return:
+        """
+
+    def validated_dataframe(self, df):
+        """ checks the df input, and validate its index and prepare sorting
+
+        :param df:
+        :return:
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError(f'data should be a pandas df, the input is not in valid format!')
+        try:
+            df.rename(index=pd.to_datetime)
+            df.drop_duplicates(inplace=True)
+            df.sort_index()
+        except:
+            raise RuntimeError(f'Can not convert index of input data to datetime format!')
+        return df
 
     def update(self):
         """ download the latest data in order to make local data set up-to-date.
@@ -245,6 +258,34 @@ class DataSource():
         :return:
         """
         raise NotImplementedError
+
+    def file_datetime_range(self, file_name):
+        """ get the datetime range start and end of the file
+
+        :param file_name:
+        :return:
+        """
+        df = self.open_file(file_name)
+        return df.index[0], df.index[-1]
+
+    def file_columns(self, file_name):
+        """ get the list of shares in the file
+
+        :param file_name:
+        :return:
+        """
+        df = self.open_file(file_name)
+        return df.columns
+
+    # following methods are secondary tier 
+
+    def share_datetime_range(self, dtype, share):
+        """
+
+        :param dtype:
+        :param share:
+        :return:
+        """
 
     def get_data(self, kwargs):
         """ the major work method of DataSource object, extracts data directly from local
