@@ -858,7 +858,7 @@ def get_price_type_raw_data(start: str,
                             shares: [str, list],
                             htypes: [str, list],
                             asset_type: str = 'E',
-                            parallel = True,
+                            parallel: int = 16,
                             delay = 0,
                             chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
@@ -868,7 +868,7 @@ def get_price_type_raw_data(start: str,
     :param freq:
     :param shares:
     :param asset_type: type:string: one of {'E':股票, 'I':指数, 'F':期货, 'FD':基金}
-    :param parallel: 默认False，是否开启多线程
+    :param parallel: int, 默认16，同时开启的线程数量，为0或1时为单线程
     :param delay:   默认0，在两次请求网络数据之间需要延迟的时间长短，单位为秒
     :param htypes:
     :param chanel: str: {'online', 'local'}
@@ -890,8 +890,8 @@ def get_price_type_raw_data(start: str,
     i = 0
     progress_bar(i, total_share_count)
 
-    if parallel:
-        proc_pool = ProcessPoolExecutor()
+    if parallel > 1: # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
+        proc_pool = ProcessPoolExecutor(16)
         futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
                    shares}
         for f in as_completed(futures):
@@ -933,7 +933,7 @@ def get_financial_report_type_raw_data(start: str,
                                        end: str,
                                        shares: str,
                                        htypes: [str, list],
-                                       parallel = False,
+                                       parallel: int = 0,
                                        delay = 1.25,
                                        chanel: str = 'online'):
     """ 在线获取财报类历史数据
@@ -944,6 +944,8 @@ def get_financial_report_type_raw_data(start: str,
     :param end:
     :param shares:
     :param htypes:
+    :param parallel: int, 默认0，数字大于1时开启多线程并行下载，数字为并行线程数量
+    :param delay: float, 为了防止网络限制，两次下载之间的间隔时间
     :param chanel:
     :return:
     """
@@ -978,7 +980,7 @@ def get_financial_report_type_raw_data(start: str,
     # print('htypes:', htypes, "\nreport fields: ", report_fields)
     i = 0
     progress_bar(i, total_share_count)
-    if parallel: # only works when number of shares < 50 because currently only 50 downloads per min is allowed
+    if parallel > 1: # only works when number of shares < 50 because currently only 50 downloads per min is allowed
         proc_pool = ProcessPoolExecutor()
         if len(str_to_list(income_fields)) > 2:
             futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for

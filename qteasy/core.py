@@ -1111,7 +1111,7 @@ def run(operator, context):
             eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
             eval_res['oper_count'] = eval_res['oper_count'].total.sum()
             eval_res['total_return'] = eval_res['rtn'] - 1
-            eval_res['annual_return'] = eval_res['rtn'] ** 1 / eval_res['years'] - 1
+            eval_res['annual_return'] = (eval_res['rtn'] + 1) ** (1 / eval_res['years']) - 1
             test_result_df = test_result_df.append(eval_res,
                                                    ignore_index=True)
 

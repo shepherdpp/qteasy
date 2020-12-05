@@ -1065,6 +1065,11 @@ class FactoralSelecting(Strategy):
         else:
             raise ValueError(f'indication selection condition \'{condition}\' not supported!')
         nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
+        if nan_count == share_count:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
+            # debug
+            # print(f'in SimpleSelecting realize method got ranking vector and share selecting vector like:\n'
+            #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
+            return chosen
         if not sort_ascending:
             # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
             pos = max(share_count - pct - nan_count, 0)
@@ -1088,11 +1093,6 @@ class FactoralSelecting(Strategy):
         args = np.setdiff1d(share_found, share_nan, assume_unique=True)
         # 构造输出向量，初始值为全0
         arg_count = len(args)
-        if arg_count == 0:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
-            # debug
-            # print(f'in SimpleSelecting realize method got ranking vector and share selecting vector like:\n'
-            #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
-            return chosen
         # 根据投资组合比例分配方式，确定被选中产品的权重
         #
         if weighting == 'linear':
