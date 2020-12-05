@@ -181,12 +181,8 @@ class DataSource():
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         df = self.validated_dataframe(df)
 
-        if self.file_exists(file_name):
-            df.to_csv(file_name)
-            return file_name
-        else:
-            df.to_csv(file_name)
-            return file_name
+        df.to_csv(file_name)
+        return file_name
 
     def expand_file(self, file_name, df):
         """ expand the file by adding more columns to the file with the name file_name
@@ -277,7 +273,7 @@ class DataSource():
         df = self.open_file(file_name)
         return df.columns
 
-    # following methods are secondary tier 
+    # following methods are secondary tier
 
     def share_datetime_range(self, dtype, share):
         """
