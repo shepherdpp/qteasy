@@ -231,6 +231,11 @@ class DataSource():
         :param df:
         :return:
         """
+        raise NotImplementedError
+
+    def extract_data(self, file_name, shares, start, end):
+        df = self.open_file(file_name)
+
 
     def validated_dataframe(self, df):
         """ checks the df input, and validate its index and prepare sorting
@@ -283,20 +288,23 @@ class DataSource():
         :return:
         """
 
-    def get_data(self, kwargs):
-        """ the major work method of DataSource object, extracts data directly from local
-        files when all requested records exists locally. extract data online if they don't.
+    def get_and_update_data(self, start, end, freq, shares, htypes, asset_type: str = 'E'):
+        """ the major work interface of DataSource object, extracts data directly from local
+        files when all requested records exists locally. extract data online if they don't
+        and merges online data back to local files.
 
-        merge data downloaded from online.
-
-        :param kwargs:
+        :param start:
+        :param end:
+        :param freq:
+        :param shares:
+        :param htypes:
+        :param asset_type:
         :return:
         """
-        raise NotImplementedError
-
-    def merge_data(self, data):
-        """ merge given data with existing data
-
-        :param data:
-        :return:
-        """
+        for type in htypes:
+            file_name = type
+            if self.file_exists(file_name):
+                df = self.extract_data(file_name, shares=shares, start=start, end=end)
+            else:
+                df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
+                
