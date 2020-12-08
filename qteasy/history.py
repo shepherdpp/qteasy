@@ -685,13 +685,13 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
 
     组合的方式有两种，根据stack_along参数的值来确定采用哪一种组合方式：
     stack_along == 'shares'，
-    表示把数据框按照股票方式组合，假定每个数据框代表一个share的数据，每一列代表一个htype。组合后的HP对象
-    层数与数据框的数量相同，而列数等于所有数据框的列的并集，行标签也为所有数据框的行标签的并集
-    在这种模式下，shares参数必须给出，且shares的数量必须与数据框的数量相同
+    表示把DataFrame按照股票方式组合，假定每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
+    层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
+    在这种模式下，shares参数必须给出，且shares的数量必须与DataFrame的数量相同
     stack_along == 'htypes'，
-    表示把数据框按照股票方式组合，假定每个数据框代表一个htype的数据，每一列代表一个share。组合后的HP对象
-    列数与数据框的数量相同，而层数等于所有数据框的列的并集，行标签也为所有数据框的行标签的并集
-    在这种模式下，htypes参数必须给出，且htypes的数量必须与数据框的数量相同
+    表示把DataFrame按照数据类型方式组合，假定每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象
+    列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
+    在这种模式下，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同
 
     :param dfs: type list, containing multiple dataframes
     :param stack_along: type str, 'shares' 或 'htypes'
@@ -884,7 +884,6 @@ def get_price_type_raw_data(start: str,
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
     total_share_count = len(shares)
-    print()
     # debug
     # print(f'will download htype date {htypes} for share {shares}'
     i = 0
@@ -921,6 +920,9 @@ def get_price_type_raw_data(start: str,
             i += 1
             progress_bar(i, total_share_count)
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
+    # TODO: Investigate: following usage of ".sort_index()" might leads to wrong index:
+    # TODO: Investigate: seems like only index of df gets sorted and data are NOT, this
+    # TODO: Investigate: could be a big mistake!
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date).sort_index()
         df.drop(columns=columns_to_remove, inplace=True)

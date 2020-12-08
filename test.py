@@ -49,6 +49,8 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
+from qteasy.database import DataSource
+
 
 class TestCost(unittest.TestCase):
     def setUp(self):
@@ -694,6 +696,7 @@ class TestCoreSubFuncs(unittest.TestCase):
                                 '上海'])
         self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
         self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
+
 
 class TestEvaluations(unittest.TestCase):
     """Test all evaluation functions in core.py"""
@@ -5055,6 +5058,7 @@ class TestBuiltIns(unittest.TestCase):
 
 class TestFastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
+
     def setUp(self):
         self.op = qt.Operator(timing_types=['dma'],
                               selecting_types=['all'],
@@ -5082,10 +5086,25 @@ class TestFastExperiments(unittest.TestCase):
 
     def test_exp1(self):
         print(f'test case fast experiment 1 is running!')
-        self.cont.mode=1
-        self.cont.print_log=False
-        self.cont.visual=False
+        self.cont.mode = 1
+        self.cont.print_log = False
+        self.cont.visual = False
         qt.run(self.op, self.cont)
+
+
+class TestDataBase(unittest.TestCase):
+    """test local historical file database management methods"""
+
+    def setUp(self):
+        self.data_source = DataSource()
+
+    def test_get_and_update_data(self):
+        hp = self.data_source.get_and_update_data(start='20200101',
+                                                  end='20200801',
+                                                  freq='d',
+                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ', '000001.SZ'],
+                                                  htypes=['close', 'open'])
+        hp.info()
 
 
 def test_suite(*args):

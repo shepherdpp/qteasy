@@ -11,10 +11,14 @@
 
 import numpy as np
 import pandas as pd
-import os
 from os import path
 
+from .tsfuncs import get_bar
+from .history import stack_dataframes, get_price_type_raw_data
+from .utilfuncs import regulate_date_format
+
 LOCAL_DATA_FOLDER = 'qteasy/data/'
+LOCAL_DATA_FILE_EXT = '.csv'
 
 class DataSource():
     """ The DataSource object manages data sources in a specific location that
@@ -32,12 +36,12 @@ class DataSource():
     DB can be used for large data management.
 
     """
-    def __init__(self, kwargs):
+    def __init__(self, **kwargs):
         """
 
         :param kwargs: the args can be improved in the future
         """
-        raise NotImplementedError
+        pass
 
     def __str__(self):
         raise NotImplementedError
@@ -130,7 +134,7 @@ class DataSource():
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        return path.exists(file_name)
+        return path.exists(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
 
     def new_file(self, file_name, dataframe):
         """ create given dataframe into a new file with file_name
@@ -145,7 +149,8 @@ class DataSource():
 
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
-        dataframe.to_csv(file_name)
+        dataframe.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        print()
         return file_name
 
     def del_file(self, file_name):
@@ -165,9 +170,9 @@ class DataSource():
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         if not self.file_exists(file_name):
-            raise FileNotFoundError(f'File {file_name} not found!')
+            raise FileNotFoundError(f'File {LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT} not found!')
 
-        df = pd.read_csv(file_name, index_col=0)
+        df = pd.read_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
         return df
 
     def overwrite_file(self, file_name, df):
@@ -181,7 +186,7 @@ class DataSource():
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         df = self.validated_dataframe(df)
 
-        df.to_csv(file_name)
+        df.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
     def expand_file(self, file_name, df):
@@ -235,6 +240,7 @@ class DataSource():
 
     def extract_data(self, file_name, shares, start, end):
         df = self.open_file(file_name)
+        return df
 
 
     def validated_dataframe(self, df):
@@ -301,10 +307,40 @@ class DataSource():
         :param asset_type:
         :return:
         """
-        for type in htypes:
-            file_name = type
+        all_dfs = []
+        for htype in htypes:
+            file_name = htype
             if self.file_exists(file_name):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
-                
+
+            for share, share_data in df.iteritems():
+                missing_data = share_data.loc[share_data == np.inf]
+                if missing_data.count() > 0:
+                    missing_data_start = regulate_date_format(missing_data.index[0])
+                    missing_data_end = regulate_date_format(missing_data.index[-1])
+                    print(f'will get price type raw data for:\n'
+                          f'share:    {share}\n'
+                          f'htype:    {htype}\n'
+                          f'start:    {missing_data_start}\n'
+                          f'end:      {missing_data_end}')
+                    online_data = get_price_type_raw_data(start=missing_data_start,
+                                                          end=missing_data_end,
+                                                          freq=freq,
+                                                          shares=share,
+                                                          htypes=htype)[0]
+
+                    print(f'\ngot missing data:\n{missing_data}\nand online data:\n{online_data}')
+                    share_data.loc[share_data == np.inf] = np.nan
+                    share_data.loc[online_data.index] = online_data.values.squeeze()
+                    print(f'historical data merged with online data, and got result:\n{share_data}')
+
+            if self.file_exists(file_name):
+                self.overwrite_file(file_name, df)
+            else:
+                self.new_file(file_name, df)
+            all_dfs.append(df)
+
+        hp = stack_dataframes(dfs=all_dfs, stack_along='htypes', htypes=htypes)
+        return hp
