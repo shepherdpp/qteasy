@@ -5106,6 +5106,18 @@ class TestDataBase(unittest.TestCase):
                                                   htypes=['close', 'open'])
         hp.info()
 
+    def test_sorting_of_bars(self):
+        df = get_price_type_raw_data(start='20200101',
+                                     end='20200531',
+                                     freq='d',
+                                     shares='000005.SZ',
+                                     htypes='close, open, high')
+        df2 = get_bar(shares='000005.SZ',
+                      start='20200101',
+                      end='20200531')
+        print(f'historical data downloaded with "get price type raw data": \n{df}')
+        print(f'historical data downloaded with "get bar": \n{df2}')
+
 
 def test_suite(*args):
     suite = unittest.TestSuite()

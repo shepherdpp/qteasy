@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/database.py" afterPath="$PROJECT_DIR$/qteasy/database.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/history.py" afterPath="$PROJECT_DIR$/qteasy/history.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test.py" afterPath="$PROJECT_DIR$/test.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -39,7 +38,7 @@
       <file leaf-file-name="history.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/history.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="387">
+            <state relative-caret-position="619">
               <caret line="926" column="61" lean-forward="true" selection-start-line="926" selection-start-column="61" selection-end-line="926" selection-end-column="61" />
               <folding>
                 <element signature="n#!!doc" expanded="false" />
@@ -345,8 +344,8 @@
       <file leaf-file-name="test.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="461">
-              <caret line="5109" column="22" lean-forward="true" selection-start-line="5109" selection-start-column="22" selection-end-line="5109" selection-end-column="22" />
+            <state relative-caret-position="575">
+              <caret line="5115" column="39" lean-forward="true" selection-start-line="5115" selection-start-column="39" selection-end-line="5115" selection-end-column="39" />
               <folding>
                 <element signature="e#0#15#0" expanded="true" />
                 <element signature="e#3415#11138#0" expanded="false" />
@@ -986,13 +985,13 @@
                 <element signature="e#258921#260190#0" expanded="false" />
                 <element signature="e#259053#259975#0" expanded="false" />
                 <element signature="e#260010#260190#0" expanded="false" />
-                <element signature="e#260904#261749#0" expanded="false" />
-                <element signature="e#260943#261168#0" expanded="false" />
-                <element signature="e#260964#261167#0" expanded="false" />
-                <element signature="e#261214#261516#0" expanded="false" />
-                <element signature="e#261235#261515#0" expanded="false" />
-                <element signature="e#261566#261749#0" expanded="false" />
-                <element signature="e#261587#261748#0" expanded="false" />
+                <element signature="e#261491#262336#0" expanded="false" />
+                <element signature="e#261530#261755#0" expanded="false" />
+                <element signature="e#261551#261754#0" expanded="false" />
+                <element signature="e#261801#262103#0" expanded="false" />
+                <element signature="e#261822#262102#0" expanded="false" />
+                <element signature="e#262153#262336#0" expanded="false" />
+                <element signature="e#262174#262335#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -1596,8 +1595,8 @@
         <option value="$PROJECT_DIR$/qteasy/strategy.py" />
         <option value="$PROJECT_DIR$/qteasy/core.py" />
         <option value="$PROJECT_DIR$/qteasy/database.py" />
-        <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/qteasy/history.py" />
+        <option value="$PROJECT_DIR$/test.py" />
       </list>
     </option>
   </component>
@@ -3430,7 +3429,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/history.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="387">
+        <state relative-caret-position="619">
           <caret line="926" column="61" lean-forward="true" selection-start-line="926" selection-start-column="61" selection-end-line="926" selection-end-column="61" />
           <folding>
             <element signature="n#!!doc" expanded="false" />
@@ -3636,8 +3635,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="461">
-          <caret line="5109" column="22" lean-forward="true" selection-start-line="5109" selection-start-column="22" selection-end-line="5109" selection-end-column="22" />
+        <state relative-caret-position="575">
+          <caret line="5115" column="39" lean-forward="true" selection-start-line="5115" selection-start-column="39" selection-end-line="5115" selection-end-column="39" />
           <folding>
             <element signature="e#0#15#0" expanded="true" />
             <element signature="e#3415#11138#0" expanded="false" />
@@ -4277,13 +4276,13 @@
             <element signature="e#258921#260190#0" expanded="false" />
             <element signature="e#259053#259975#0" expanded="false" />
             <element signature="e#260010#260190#0" expanded="false" />
-            <element signature="e#260904#261749#0" expanded="false" />
-            <element signature="e#260943#261168#0" expanded="false" />
-            <element signature="e#260964#261167#0" expanded="false" />
-            <element signature="e#261214#261516#0" expanded="false" />
-            <element signature="e#261235#261515#0" expanded="false" />
-            <element signature="e#261566#261749#0" expanded="false" />
-            <element signature="e#261587#261748#0" expanded="false" />
+            <element signature="e#261491#262336#0" expanded="false" />
+            <element signature="e#261530#261755#0" expanded="false" />
+            <element signature="e#261551#261754#0" expanded="false" />
+            <element signature="e#261801#262103#0" expanded="false" />
+            <element signature="e#261822#262102#0" expanded="false" />
+            <element signature="e#262153#262336#0" expanded="false" />
+            <element signature="e#262174#262335#0" expanded="false" />
           </folding>
         </state>
       </provider>
