@@ -5102,7 +5102,8 @@ class TestDataBase(unittest.TestCase):
         hp = self.data_source.get_and_update_data(start='20200101',
                                                   end='20200801',
                                                   freq='d',
-                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ', '000001.SZ'],
+                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
+                                                          '000001.SZ', '000002.SZ'],
                                                   htypes=['close', 'open'])
         hp.info()
 

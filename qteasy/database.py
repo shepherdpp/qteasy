@@ -240,6 +240,7 @@ class DataSource():
 
     def extract_data(self, file_name, shares, start, end):
         df = self.open_file(file_name)
+        df = self.validated_dataframe(df)
         return df
 
 
@@ -252,7 +253,7 @@ class DataSource():
         if not isinstance(df, pd.DataFrame):
             raise TypeError(f'data should be a pandas df, the input is not in valid format!')
         try:
-            df.rename(index=pd.to_datetime)
+            df.rename(index=pd.to_datetime, inplace=True)
             df.drop_duplicates(inplace=True)
             df.sort_index()
         except:
@@ -315,6 +316,11 @@ class DataSource():
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
 
+            for share in [share for share in shares if share not in df.columns]:
+                df[share] = np.inf
+
+            print(df)
+
             for share, share_data in df.iteritems():
                 missing_data = share_data.loc[share_data == np.inf]
                 if missing_data.count() > 0:
@@ -331,7 +337,9 @@ class DataSource():
                                                           shares=share,
                                                           htypes=htype)[0]
 
-                    print(f'\ngot missing data:\n{missing_data}\nand online data:\n{online_data}')
+                    print(f'\ngot missing data (index type: {type(missing_data.index[0])}):\n'
+                          f'{missing_data}\n'
+                          f'and online data (index type: {type(online_data.index[0])}):\n{online_data}')
                     share_data.loc[share_data == np.inf] = np.nan
                     share_data.loc[online_data.index] = online_data.values.squeeze()
                     print(f'historical data merged with online data, and got result:\n{share_data}')
