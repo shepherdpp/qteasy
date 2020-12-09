@@ -173,6 +173,7 @@ class DataSource():
             raise FileNotFoundError(f'File {LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT} not found!')
 
         df = pd.read_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
+        df = self.validated_dataframe(df)
         return df
 
     def overwrite_file(self, file_name, df):
@@ -189,59 +190,79 @@ class DataSource():
         df.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
-    def expand_file(self, file_name, df):
-        """ expand the file by adding more columns to the file with the name file_name
+    def merge_file(self, file_name, df):
+        """ merge some data stored in df into file_name,
 
-        in this case the datetime range of the file does not change, data that are out of
-        original datetime range will be discarded.
+        the downloaded data are stored in df, a pandas DataFrame, that might
+        contain more rows and/or columns than the original file.
 
-        :param file_name:
-        :param df:
-        :return:
-        """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        df = self.validated_dataframe(df)
+        if downloaded data contains more rows than original file, the original
+        file will be extended to contain more rows of data, those columns that
+        are not covered in downloaded data, np.inf will be used to pad missing
+        data to identify missing data.
 
-        if not self.file_exists(file_name):
-            self.new_file(file_name, df)
-            return df
-        else:
-            original_df = self.open_file(file_name)
-            if any(column in original_df.columns for column in df.columns):
-                raise KeyError(f'one or more column in df already exists in file, use self.append instead!')
-            new_df = original_df.join(df, how='outer')
-            self.overwrite_file(file_name, new_df)
-            return new_df
-
-    def append_file(self, file_name, df):
-        """ append more rows to the data thus datetime range is expended,
-        in this case the datetime range of df should not overlap with that
-        of the file
+        if more columns are downloaded, the same thing will happen as more rows
+        are downloaded.
 
         :param file_name:
         :param df:
         :return:
         """
         original_df = self.open_file(file_name)
-        return df
+        new_index = df.index
+        new_columns = df.columns
+        index_expansion = any(index not in original_df.index for index in new_index)
+        column_expansion = any(column not in original_df.columns for column in new_columns)
+        print(f'merging file, expanding index: {index_expansion}, expanding columns: {column_expansion}')
+        if index_expansion:
+            additional_index = [index for index in new_index if index not in original_df.index]
+            combined_index = list(set(original_df.index) | set(additional_index))
+            print(f'adding new index {additional_index}')
+            original_df = original_df.reindex(combined_index)
+            original_df.loc[additional_index] = np.inf
+            original_df.sort_index(inplace=True)
 
-    def merge_file(self, file_name, df):
-        """ merge some data stored in df into file_name,
+        if column_expansion:
+            additional_column = [c for c in new_columns if c not in original_df.columns]
+            print(f'adding new columns {additional_column}')
+            for col in additional_column:
+                original_df[col] = np.inf
 
-        the idea is that this method deals with the data frame whose index
-        is covered in file name, but data are not downloaded
+        for col in new_columns:
+            original_df[col].loc[new_index] = df[col].values
 
-        :param file_name:
-        :param df:
-        :return:
-        """
-        raise NotImplementedError
+        original_df.dropna(how='all', inplace=True)
+        print(f'values assigned! following DataFrame will be saved on disc:\n{original_df}')
 
-    def extract_data(self, file_name, shares, start, end):
+        self.overwrite_file(file_name, original_df)
+
+
+    def extract_data(self, file_name, shares, start, end, freq:str = 'd'):
+        expected_index = pd.date_range(start=start, end=end, freq=freq)
+        expected_columns = shares
+
         df = self.open_file(file_name)
-        df = self.validated_dataframe(df)
-        return df
+        print(f'type of df index is {type(df.index[0])}')
+
+        index_missing = any(index not in df.index for index in expected_index)
+        column_missing = any(column not in df.columns for column in expected_columns)
+
+        if index_missing:
+            additional_index = [index for index in expected_index if index not in df.index]
+            print(f'adding new index {additional_index}')
+            df = df.reindex(expected_index)
+            df.loc[additional_index] = np.inf
+
+        if column_missing:
+            additional_column = [c for c in expected_columns if c not in df.columns]
+            print(f'adding new columns {additional_column}')
+            for col in additional_column:
+                df[col] = np.inf
+
+        extracted = df[expected_columns].loc[expected_index]
+        extracted.dropna(how='all', inplace=True)
+
+        return extracted
 
 
     def validated_dataframe(self, df):
@@ -256,6 +277,7 @@ class DataSource():
             df.rename(index=pd.to_datetime, inplace=True)
             df.drop_duplicates(inplace=True)
             df.sort_index()
+            df.dropna(how='all', inplace=True)
         except:
             raise RuntimeError(f'Can not convert index of input data to datetime format!')
         return df
@@ -319,7 +341,7 @@ class DataSource():
             for share in [share for share in shares if share not in df.columns]:
                 df[share] = np.inf
 
-            print(df)
+            print(f'extracting dataframe from disc successful! DataFrame is:\n{df}')
 
             for share, share_data in df.iteritems():
                 missing_data = share_data.loc[share_data == np.inf]
@@ -337,15 +359,11 @@ class DataSource():
                                                           shares=share,
                                                           htypes=htype)[0]
 
-                    print(f'\ngot missing data (index type: {type(missing_data.index[0])}):\n'
-                          f'{missing_data}\n'
-                          f'and online data (index type: {type(online_data.index[0])}):\n{online_data}')
                     share_data.loc[share_data == np.inf] = np.nan
                     share_data.loc[online_data.index] = online_data.values.squeeze()
-                    print(f'historical data merged with online data, and got result:\n{share_data}')
 
             if self.file_exists(file_name):
-                self.overwrite_file(file_name, df)
+                self.merge_file(file_name, df)
             else:
                 self.new_file(file_name, df)
             all_dfs.append(df)

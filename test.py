@@ -5106,6 +5106,23 @@ class TestDataBase(unittest.TestCase):
                                                           '000001.SZ', '000002.SZ'],
                                                   htypes=['close', 'open'])
         hp.info()
+        print(f'test expanded date time range from 2019 07 01')
+        hp = self.data_source.get_and_update_data(start='20190701',
+                                                  end='20200801',
+                                                  freq='d',
+                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
+                                                          '000001.SZ', '000002.SZ'],
+                                                  htypes=['close', 'open'])
+        hp.info()
+
+        print(f'test different share scope, added 000005.SZ')
+        hp = self.data_source.get_and_update_data(start='20200101',
+                                                  end='20200901',
+                                                  freq='d',
+                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
+                                                  htypes=['close', 'open'])
+        hp.info()
+
 
     def test_sorting_of_bars(self):
         df = get_price_type_raw_data(start='20200101',
