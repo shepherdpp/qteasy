@@ -13,12 +13,17 @@ import numpy as np
 import pandas as pd
 from os import path
 
-from .tsfuncs import get_bar
-from .history import stack_dataframes, get_price_type_raw_data
+from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
 from .utilfuncs import regulate_date_format
+
+from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
+from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
+from ._arg_validators import INDICATOR_TYPE_DATA
+from ._arg_validators import COMPOSIT_TYPE_DATA
 
 LOCAL_DATA_FOLDER = 'qteasy/data/'
 LOCAL_DATA_FILE_EXT = '.csv'
+
 
 class DataSource():
     """ The DataSource object manages data sources in a specific location that
@@ -36,6 +41,7 @@ class DataSource():
     DB can be used for large data management.
 
     """
+
     def __init__(self, **kwargs):
         """
 
@@ -150,7 +156,7 @@ class DataSource():
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
         dataframe.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        print()
+        print(f'following data will be writen to disc as file name {file_name}:\n{dataframe}')
         return file_name
 
     def del_file(self, file_name):
@@ -213,49 +219,49 @@ class DataSource():
         new_columns = df.columns
         index_expansion = any(index not in original_df.index for index in new_index)
         column_expansion = any(column not in original_df.columns for column in new_columns)
-        print(f'merging file, expanding index: {index_expansion}, expanding columns: {column_expansion}')
+        # print(f'merging file, expanding index: {index_expansion}, expanding columns: {column_expansion}')
         if index_expansion:
             additional_index = [index for index in new_index if index not in original_df.index]
             combined_index = list(set(original_df.index) | set(additional_index))
-            print(f'adding new index {additional_index}')
+            # print(f'adding new index {additional_index}')
             original_df = original_df.reindex(combined_index)
             original_df.loc[additional_index] = np.inf
             original_df.sort_index(inplace=True)
 
         if column_expansion:
             additional_column = [c for c in new_columns if c not in original_df.columns]
-            print(f'adding new columns {additional_column}')
+            # print(f'adding new columns {additional_column}')
             for col in additional_column:
                 original_df[col] = np.inf
 
         for col in new_columns:
             original_df[col].loc[new_index] = df[col].values
 
-        original_df.dropna(how='all', inplace=True)
-        print(f'values assigned! following DataFrame will be saved on disc:\n{original_df}')
+        # print(f'values assigned! following DataFrame will be saved on disc as file name {file_name}:\n{original_df}')
 
         self.overwrite_file(file_name, original_df)
 
-
-    def extract_data(self, file_name, shares, start, end, freq:str = 'd'):
+    def extract_data(self, file_name, shares, start, end, freq: str = 'd'):
         expected_index = pd.date_range(start=start, end=end, freq=freq)
         expected_columns = shares
 
         df = self.open_file(file_name)
-        print(f'type of df index is {type(df.index[0])}')
+        # print(f'type of df index is {type(df.index[0])}')
 
         index_missing = any(index not in df.index for index in expected_index)
         column_missing = any(column not in df.columns for column in expected_columns)
 
         if index_missing:
             additional_index = [index for index in expected_index if index not in df.index]
-            print(f'adding new index {additional_index}')
+            # print(f'expected index is:\n{expected_index}\n'
+            #       f'original index is:\n{df.index}\n'
+            #       f'adding new index \n{additional_index}')
             df = df.reindex(expected_index)
             df.loc[additional_index] = np.inf
 
         if column_missing:
             additional_column = [c for c in expected_columns if c not in df.columns]
-            print(f'adding new columns {additional_column}')
+            # print(f'adding new columns {additional_column}')
             for col in additional_column:
                 df[col] = np.inf
 
@@ -263,7 +269,6 @@ class DataSource():
         extracted.dropna(how='all', inplace=True)
 
         return extracted
-
 
     def validated_dataframe(self, df):
         """ checks the df input, and validate its index and prepare sorting
@@ -275,9 +280,7 @@ class DataSource():
             raise TypeError(f'data should be a pandas df, the input is not in valid format!')
         try:
             df.rename(index=pd.to_datetime, inplace=True)
-            df.drop_duplicates(inplace=True)
             df.sort_index()
-            df.dropna(how='all', inplace=True)
         except:
             raise RuntimeError(f'Can not convert index of input data to datetime format!')
         return df
@@ -337,27 +340,26 @@ class DataSource():
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
-
-            for share in [share for share in shares if share not in df.columns]:
-                df[share] = np.inf
-
-            print(f'extracting dataframe from disc successful! DataFrame is:\n{df}')
+                for share in [share for share in shares if share not in df.columns]:
+                    df[share] = np.inf
 
             for share, share_data in df.iteritems():
                 missing_data = share_data.loc[share_data == np.inf]
                 if missing_data.count() > 0:
                     missing_data_start = regulate_date_format(missing_data.index[0])
                     missing_data_end = regulate_date_format(missing_data.index[-1])
-                    print(f'will get price type raw data for:\n'
-                          f'share:    {share}\n'
-                          f'htype:    {htype}\n'
-                          f'start:    {missing_data_start}\n'
-                          f'end:      {missing_data_end}')
-                    online_data = get_price_type_raw_data(start=missing_data_start,
-                                                          end=missing_data_end,
-                                                          freq=freq,
-                                                          shares=share,
-                                                          htypes=htype)[0]
+                    if htype in PRICE_TYPE_DATA:
+                        online_data = get_price_type_raw_data(start=missing_data_start,
+                                                              end=missing_data_end,
+                                                              freq=freq,
+                                                              shares=share,
+                                                              htypes=htype)[0]
+                    if htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
+                        inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
+                                                                                end=end,
+                                                                                shares=share,
+                                                                                htypes=htype)
+                        online_data = (inc + ind + blc + csh)[0]
 
                     share_data.loc[share_data == np.inf] = np.nan
                     share_data.loc[online_data.index] = online_data.values.squeeze()

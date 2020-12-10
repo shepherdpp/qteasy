@@ -765,7 +765,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
 # TODO: problem downloading financial type data, problems should be inspected and solved
-def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', chanel: str = 'online'):
+def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', chanel: str = 'local'):
     """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -794,71 +794,73 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                             indicator_type_data]
     dataframes_to_stack = []
     # print(f'in function get_history_panel got shares: \n{shares}\nand htypes:\n{htypes}')
-    result_hp = HistoryPanel()
-    if len(price_type_data) > 0:
-        print('Getting price type historical data...')
-        # print(f'In get history panel() function, price type data are \n{price_type_data}, \nshares are\n {shares}'
-        #       f'\n start date is {start}, type {type(start)}, \n end date is {end}, type {type(end)}')
-        dataframes_to_stack.extend(get_price_type_raw_data(start=start,
-                                                           end=end,
-                                                           freq=freq,
-                                                           shares=shares,
-                                                           htypes=price_type_data,
-                                                           asset_type=asset_type,
-                                                           chanel=chanel))
-        if isinstance(shares, str):
-            shares = str_to_list(shares)
-        result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
-                                                          stack_along='shares',
-                                                          shares=shares),
-                                   same_shares=True)
+    if chanel == 'local':
+        from .database import DataSource
+        ds = DataSource()
+        return ds.get_and_update_data(start=start, end=end, freq=freq,
+                                      shares=shares, htypes=htypes, asset_type=asset_type)
+    if chanel == 'online':
+        result_hp = HistoryPanel()
+        if len(price_type_data) > 0:
+            dataframes_to_stack.extend(get_price_type_raw_data(start=start,
+                                                               end=end,
+                                                               freq=freq,
+                                                               shares=shares,
+                                                               htypes=price_type_data,
+                                                               asset_type=asset_type,
+                                                               chanel=chanel))
+            if isinstance(shares, str):
+                shares = str_to_list(shares)
+            result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
+                                                              stack_along='shares',
+                                                              shares=shares),
+                                       same_shares=True)
 
-    for report_type in [t for t in finance_report_types if len(t) > 0]:
-        print('Getting finance report type historical data...')
-        # print(f'In get history panel() function, financial type data are \n{report_type}, \n'
-        #       f'shares are\n {shares}')
-        income_dfs, indicator_dfs, balance_dfs, cashflow_dfs = get_financial_report_type_raw_data(start=start,
-                                                                                                  end=end,
-                                                                                                  shares=shares,
-                                                                                                  htypes=report_type,
-                                                                                                  chanel=chanel)
-        if isinstance(shares, str):
-            shares = str_to_list(shares)
-        for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):
-            if len(dfs) > 0:
-                result_hp = result_hp.join(other=stack_dataframes(dfs=dfs,
-                                                                  stack_along='shares',
-                                                                  shares=shares),
-                                           same_shares=True)
+        for report_type in [t for t in finance_report_types if len(t) > 0]:
 
-    if len(composite_type_data) > 0:
-        print('Getting composite historical data...')
-        dataframes_to_stack = get_composite_type_raw_data(start=start,
-                                                          end=end,
-                                                          shares=shares,
-                                                          htypes=composite_type_data,
-                                                          chanel=chanel)
-        result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
-                                                          stack_along='shares',
-                                                          shares=str_to_list(shares)),
-                                   same_shares=True)
+            income_dfs, indicator_dfs, balance_dfs, cashflow_dfs = get_financial_report_type_raw_data(start=start,
+                                                                                                      end=end,
+                                                                                                      shares=shares,
+                                                                                                      htypes=report_type,
+                                                                                                      chanel=chanel)
+            if isinstance(shares, str):
+                shares = str_to_list(shares)
+            for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):
+                if len(dfs) > 0:
+                    result_hp = result_hp.join(other=stack_dataframes(dfs=dfs,
+                                                                      stack_along='shares',
+                                                                      shares=shares),
+                                               same_shares=True)
 
-    # debug
-    # print(f'in function get_history_panel(), history panel is generated, they are:\n')
-    # if result_hp is not None:
-        # print(f'result history panel: \n{result_hp.info()}')
+        if len(composite_type_data) > 0:
+            print('Getting composite historical data...')
+            dataframes_to_stack = get_composite_type_raw_data(start=start,
+                                                              end=end,
+                                                              shares=shares,
+                                                              htypes=composite_type_data,
+                                                              chanel=chanel)
+            result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
+                                                              stack_along='shares',
+                                                              shares=str_to_list(shares)),
+                                       same_shares=True)
 
-    return result_hp
+        # debug
+        # print(f'in function get_history_panel(), history panel is generated, they are:\n')
+        # if result_hp is not None:
+            # print(f'result history panel: \n{result_hp.info()}')
 
-# TODO: apply parallel downloading,
-# TODO: and dynamically group shares thus data downloading can be less repetitive.
+        return result_hp
+
+# TODO: dynamically group shares thus data downloading can be less repetitive
+# TODO: remove parameter chanel, and add progress: bool, to determine if progress bar
+# TODO: should be displayed.
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
                             shares: [str, list],
                             htypes: [str, list],
                             asset_type: str = 'E',
-                            parallel: int = 16,
+                            parallel: int = 4,
                             delay = 0,
                             chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
@@ -920,16 +922,14 @@ def get_price_type_raw_data(start: str,
             i += 1
             progress_bar(i, total_share_count)
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
-    # TODO: Investigate: following usage of ".sort_index()" might leads to wrong index:
-    # TODO: Investigate: seems like only index of df gets sorted and data are NOT, this
-    # TODO: Investigate: could be a big mistake!
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date).sort_index()
         df.drop(columns=columns_to_remove, inplace=True)
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
 
-# TODO: apply parallel downloading,
+# TODO: remove parameter chanel, and add progress: bool, to determine if progress bar
+# TODO: should be displayed.
 # TODO: and dynamically group shares thus data downloading can be less repetitive.
 def get_financial_report_type_raw_data(start: str,
                                        end: str,

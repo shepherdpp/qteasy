@@ -916,7 +916,7 @@ def run(operator, context):
                                     htypes=operator.op_data_types,
                                     freq=operator.op_data_freq,
                                     asset_type=context.asset_type,
-                                    chanel='online')
+                                    chanel='local')
         # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
         hist_loop = hist_op.to_dataframe(htype='close')
 
@@ -928,7 +928,7 @@ def run(operator, context):
                                       htypes=operator.op_data_types,
                                       freq=operator.op_data_freq,
                                       asset_type=context.asset_type,
-                                      chanel='online')
+                                      chanel='local')
         # 生成用于优化策略测试的测试历史数据集合
         hist_test = get_history_panel(start=context.test_start,
                                       end=context.test_end,
@@ -936,7 +936,7 @@ def run(operator, context):
                                       htypes=operator.op_data_types,
                                       freq=operator.op_data_freq,
                                       asset_type=context.asset_type,
-                                      chanel='online')
+                                      chanel='local')
         hist_test_loop = hist_test.to_dataframe(htype='close')
 
     # 生成参考历史数据，作为参考用于回测结果的评价
@@ -946,7 +946,7 @@ def run(operator, context):
                                         htypes=context.reference_data_type,
                                         freq=operator.op_data_freq,
                                         asset_type=context.reference_asset_type,
-                                        chanel='online')
+                                        chanel='local')
                       ).to_dataframe(htype='close')
     # debug
     # print(f'operation hist data downloaded, info: \n')
