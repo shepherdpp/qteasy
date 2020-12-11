@@ -27,7 +27,6 @@ from .evaluate import eval_beta, eval_volatility, eval_max_drawdown
 from .evaluate import eval_fv, eval_sharp, eval_operation
 from .tsfuncs import stock_basic
 
-
 AVAILABLE_EVALUATION_INDICATORS = []
 AVAILABLE_SHARE_INDUSTRIES = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
                               '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
@@ -58,6 +57,7 @@ AVAILABLE_SHARE_AREA = ['深圳', '北京', '吉林', '江苏', '辽宁', '广�
                         '上海', '西藏']
 AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR']
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
+
 
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -682,8 +682,10 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     except:
         date = pd.to_datetime('1970-01-01')
     # validate all input args:
-    if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()): raise KeyError
-    if not all(isinstance(val, (str, list)) for val in kwargs.values()): raise KeyError()
+    if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
+        raise KeyError
+    if not all(isinstance(val, (str, list)) for val in kwargs.values()):
+        raise KeyError()
 
     #
     share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
@@ -1134,8 +1136,25 @@ def run(operator, context):
               f'Info ratio:          {test_result_df["info"].mean():.3f} ± {test_result_df["info"].std():.3f}\n'
               f'250 day volatility:  {test_result_df.volatility.mean():.3f} ± {test_result_df.volatility.std():.3f}\n'
               f'other eval_res indicators are listed in below table\n')
-        print(test_result_df[["par","sell_count", "buy_count", "oper_count", "total_fee",
-                              "final_value", "total_return", "mdd"]])
+        print(test_result_df.to_string(columns=["par",
+                                                "sell_count",
+                                                "buy_count",
+                                                "total_fee",
+                                                "final_value",
+                                                "total_return",
+                                                "mdd"],
+                                       header=["Strategy pars",
+                                               "Sell-outs",
+                                               "Buy-ins",
+                                               "Total fee",
+                                               "Final value",
+                                               "ROI",
+                                               "MDD"],
+                                       formatters={'total_fee'   : '{:,.2f}'.format,
+                                                   'final_value' : '{:,.2f}'.format,
+                                                   'total_return': '{:.1%}'.format,
+                                                   'mdd'         : '{:.1%}'.format},
+                                       justify='center'))
         print(f'\n===========END OF REPORT=============\n')
         return perfs, pars
     elif run_mode == 3:
