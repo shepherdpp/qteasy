@@ -860,7 +860,7 @@ def get_price_type_raw_data(start: str,
                             shares: [str, list],
                             htypes: [str, list],
                             asset_type: str = 'E',
-                            parallel: int = 4,
+                            parallel: int = 16,
                             delay = 0,
                             chanel: str = 'online'):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
@@ -892,7 +892,7 @@ def get_price_type_raw_data(start: str,
     progress_bar(i, total_share_count)
 
     if parallel > 1: # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
-        proc_pool = ProcessPoolExecutor(16)
+        proc_pool = ProcessPoolExecutor(parallel)
         futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
                    shares}
         for f in as_completed(futures):

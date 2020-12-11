@@ -14,7 +14,7 @@ import pandas as pd
 from os import path
 
 from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
-from .utilfuncs import regulate_date_format
+from .utilfuncs import regulate_date_format, str_to_list
 
 from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
 from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
@@ -334,14 +334,27 @@ class DataSource():
         :return:
         """
         all_dfs = []
+        if isinstance(htypes, str):
+            htypes = str_to_list(input_string=htypes, sep_char=',')
+        if isinstance(shares, str):
+            shares = str_to_list(input_string=shares, sep_char=',')
         for htype in htypes:
             file_name = htype
+            if freq.upper() != 'D':
+                file_name = file_name + '-' + freq.upper()
+            if asset_type != 'E':
+                file_name = file_name + '-' + asset_type.upper()
             if self.file_exists(file_name):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
+                print(f'In func get_and_update_data():\n'
+                      f'historical data is extracted from local file: {file_name}.csv\n:{df}')
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
                 for share in [share for share in shares if share not in df.columns]:
                     df[share] = np.inf
+                print(f'In func get_and_update_data():\n'
+                      f'historical data can not be found locally with the name {file_name}.csv\n'
+                      f'empty dataframe is created:\n{df}')
 
             for share, share_data in df.iteritems():
                 missing_data = share_data.loc[share_data == np.inf]
@@ -353,7 +366,9 @@ class DataSource():
                                                               end=missing_data_end,
                                                               freq=freq,
                                                               shares=share,
-                                                              htypes=htype)[0]
+                                                              htypes=htype,
+                                                              asset_type=asset_type,
+                                                              parallel=4)[0]
                     if htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
                                                                                 end=end,
