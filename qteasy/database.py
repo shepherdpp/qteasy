@@ -156,7 +156,10 @@ class DataSource():
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
         dataframe.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        print(f'following data will be writen to disc as file name {file_name}:\n{dataframe}')
+        # debug
+        # print(f'\nIn func: new_file()\n'
+        #       f'new file will be created, following data will be writen to disc as file name {file_name}:\n'
+        #       f'{dataframe}')
         return file_name
 
     def del_file(self, file_name):
@@ -236,7 +239,7 @@ class DataSource():
 
         for col in new_columns:
             original_df[col].loc[new_index] = df[col].values
-
+        # debug
         # print(f'values assigned! following DataFrame will be saved on disc as file name {file_name}:\n{original_df}')
 
         self.overwrite_file(file_name, original_df)
@@ -246,6 +249,7 @@ class DataSource():
         expected_columns = shares
 
         df = self.open_file(file_name)
+        # debug
         # print(f'type of df index is {type(df.index[0])}')
 
         index_missing = any(index not in df.index for index in expected_index)
@@ -253,6 +257,7 @@ class DataSource():
 
         if index_missing:
             additional_index = [index for index in expected_index if index not in df.index]
+            # debug
             # print(f'expected index is:\n{expected_index}\n'
             #       f'original index is:\n{df.index}\n'
             #       f'adding new index \n{additional_index}')
@@ -346,15 +351,17 @@ class DataSource():
                 file_name = file_name + '-' + asset_type.upper()
             if self.file_exists(file_name):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
-                print(f'In func get_and_update_data():\n'
-                      f'historical data is extracted from local file: {file_name}.csv\n:{df}')
+                # debug
+                # print(f'\nIn func get_and_update_data():\n'
+                #       f'historical data is extracted from local file: {file_name}.csv\n:{df}')
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
                 for share in [share for share in shares if share not in df.columns]:
                     df[share] = np.inf
-                print(f'In func get_and_update_data():\n'
-                      f'historical data can not be found locally with the name {file_name}.csv\n'
-                      f'empty dataframe is created:\n{df}')
+                # debug
+                # print(f'\nIn func get_and_update_data():\n'
+                #       f'historical data can not be found locally with the name {file_name}.csv\n'
+                #       f'empty dataframe is created:\n{df}')
 
             for share, share_data in df.iteritems():
                 missing_data = share_data.loc[share_data == np.inf]
@@ -383,6 +390,7 @@ class DataSource():
                 self.merge_file(file_name, df)
             else:
                 self.new_file(file_name, df)
+            df = self.extract_data(file_name, shares=shares, start=start, end=end)
             all_dfs.append(df)
 
         hp = stack_dataframes(dfs=all_dfs, stack_along='htypes', htypes=htypes)

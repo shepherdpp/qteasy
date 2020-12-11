@@ -921,6 +921,11 @@ def run(operator, context):
                                     chanel='local')
         # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
         hist_loop = hist_op.to_dataframe(htype='close')
+        # debug
+        # print(f'\n got hist_op as following\n')
+        # hist_op.info()
+        # print(f'\n got hist_loop as following\n')
+        # hist_loop.info()
 
     if run_mode == 2:
         # 生成用于策略优化训练的训练历史数据集合
@@ -940,6 +945,13 @@ def run(operator, context):
                                       asset_type=context.asset_type,
                                       chanel='local')
         hist_test_loop = hist_test.to_dataframe(htype='close')
+        # debug
+        # print(f'\n got hist_opti as following\n')
+        # hist_opti.info()
+        # print(f'\n got hist_test as following\n')
+        # hist_test.info()
+        # print(f'\n got hist_test_loop as following\n')
+        # hist_test_loop.info()
 
     # 生成参考历史数据，作为参考用于回测结果的评价
     hist_reference = (get_history_panel(start=context.invest_start,
@@ -950,6 +962,9 @@ def run(operator, context):
                                         asset_type=context.reference_asset_type,
                                         chanel='local')
                       ).to_dataframe(htype='close')
+    # debug
+    # print(f'\n got hist_test_reference as following\n')
+    # hist_reference.info()
     # debug
     # print(f'operation hist data downloaded, info: \n')
     # hist_op.info()
