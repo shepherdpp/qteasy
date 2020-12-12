@@ -14,7 +14,7 @@ import pandas as pd
 from os import path
 
 from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
-from .utilfuncs import regulate_date_format, str_to_list
+from .utilfuncs import regulate_date_format, str_to_list, progress_bar
 
 from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
 from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
@@ -343,12 +343,19 @@ class DataSource():
             htypes = str_to_list(input_string=htypes, sep_char=',')
         if isinstance(shares, str):
             shares = str_to_list(input_string=shares, sep_char=',')
+
+        i = 0
+        progress_count = len(htypes) * len(shares) + len(htypes)
+        progress_bar(i, progress_count, f'total progress count: {progress_count}')
         for htype in htypes:
             file_name = htype
             if freq.upper() != 'D':
                 file_name = file_name + '-' + freq.upper()
             if asset_type != 'E':
                 file_name = file_name + '-' + asset_type.upper()
+
+            i += 1
+            progress_bar(i, progress_count, 'extracting local file')
             if self.file_exists(file_name):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
                 # debug
@@ -365,6 +372,8 @@ class DataSource():
 
             for share, share_data in df.iteritems():
                 missing_data = share_data.loc[share_data == np.inf]
+                i += 1
+                progress_bar(i, progress_count, 'downloading online data')
                 if missing_data.count() > 0:
                     missing_data_start = regulate_date_format(missing_data.index[0])
                     missing_data_end = regulate_date_format(missing_data.index[-1])
@@ -375,12 +384,14 @@ class DataSource():
                                                               shares=share,
                                                               htypes=htype,
                                                               asset_type=asset_type,
-                                                              parallel=4)[0]
+                                                              parallel=4,
+                                                              progress=False)[0]
                     if htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
                                                                                 end=missing_data_end,
                                                                                 shares=share,
-                                                                                htypes=htype)
+                                                                                htypes=htype,
+                                                                                progress=False)
                         online_data = (inc + ind + blc + csh)[0]
                     # debug
                     # print(f'\n<get_and_updated_data()>: '

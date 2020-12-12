@@ -807,8 +807,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                                freq=freq,
                                                                shares=shares,
                                                                htypes=price_type_data,
-                                                               asset_type=asset_type,
-                                                               chanel=chanel))
+                                                               asset_type=asset_type))
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
@@ -821,8 +820,7 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
             income_dfs, indicator_dfs, balance_dfs, cashflow_dfs = get_financial_report_type_raw_data(start=start,
                                                                                                       end=end,
                                                                                                       shares=shares,
-                                                                                                      htypes=report_type,
-                                                                                                      chanel=chanel)
+                                                                                                      htypes=report_type)
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):
@@ -861,21 +859,23 @@ def get_price_type_raw_data(start: str,
                             htypes: [str, list],
                             asset_type: str = 'E',
                             parallel: int = 16,
-                            delay = 0,
-                            chanel: str = 'online'):
+                            delay: float = 20,
+                            delay_every: int = 500,
+                            progress: bool = True):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
     :param end:
     :param freq:
+    :param htypes:
     :param shares:
     :param asset_type: type:string: one of {'E':股票, 'I':指数, 'F':期货, 'FD':基金}
     :param parallel: int, 默认16，同时开启的线程数量，为0或1时为单线程
     :param delay:   默认0，在两次请求网络数据之间需要延迟的时间长短，单位为秒
-    :param htypes:
-    :param chanel: str: {'online', 'local'}
-                    chanel == 'online' 从网络获取历史数据
-                    chanel == 'local'  从本地数据库获取历史数据
+    :param delay_every: int, 默认500，在两次delay之间允许下载的数量
+    :param progress: bool:
+                    progress == True, Default 下载时显示进度条
+                    progress == False  下载时不显示进度条
     :return:
     """
     if htypes is None:
@@ -885,11 +885,11 @@ def get_price_type_raw_data(start: str,
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
-    total_share_count = len(shares)
-    # debug
-    # print(f'will download htype date {htypes} for share {shares}'
+
     i = 0
-    progress_bar(i, total_share_count)
+    total_share_count = len(shares)
+    if progress:
+        progress_bar(i, total_share_count)
 
     if parallel > 1: # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
         proc_pool = ProcessPoolExecutor(parallel)
@@ -904,11 +904,13 @@ def get_price_type_raw_data(start: str,
             raw_df.index = range(len(raw_df))
             # print('\nraw df after rearange\n', raw_df)
             df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
+
             i += 1
-            progress_bar(i, total_share_count)
+            if progress:
+                progress_bar(i, total_share_count)
     else:
         for share in shares:
-            if delay > 0:
+            if i % delay_every == 0 and delay > 0:
                 sleep(delay)
             raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
             # debug
@@ -919,8 +921,11 @@ def get_price_type_raw_data(start: str,
             raw_df.index = range(len(raw_df))
             # print('\nraw df after rearange\n', raw_df)
             df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+
             i += 1
-            progress_bar(i, total_share_count)
+            if progress:
+                progress_bar(i, total_share_count)
+
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     for df in df_per_share:
         df.index = pd.to_datetime(df.trade_date).sort_index()
@@ -928,8 +933,6 @@ def get_price_type_raw_data(start: str,
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
 
-# TODO: remove parameter chanel, and add progress: bool, to determine if progress bar
-# TODO: should be displayed.
 # TODO: and dynamically group shares thus data downloading can be less repetitive.
 def get_financial_report_type_raw_data(start: str,
                                        end: str,
@@ -937,7 +940,8 @@ def get_financial_report_type_raw_data(start: str,
                                        htypes: [str, list],
                                        parallel: int = 0,
                                        delay = 1.25,
-                                       chanel: str = 'online'):
+                                       delay_every: int = 50,
+                                       progress: bool = True):
     """ 在线获取财报类历史数据
 
     :param report_type:
@@ -948,7 +952,10 @@ def get_financial_report_type_raw_data(start: str,
     :param htypes:
     :param parallel: int, 默认0，数字大于1时开启多线程并行下载，数字为并行线程数量
     :param delay: float, 为了防止网络限制，两次下载之间的间隔时间
-    :param chanel:
+    :param delay_every: int, 默认500，在两次delay之间允许下载的数量
+    :param progress: bool:
+                    progress == True, Default 下载时显示进度条
+                    progress == False  下载时不显示进度条
     :return:
     """
     if isinstance(htypes, str):
@@ -981,7 +988,8 @@ def get_financial_report_type_raw_data(start: str,
     cashflow_dfs = []
     # print('htypes:', htypes, "\nreport fields: ", report_fields)
     i = 0
-    progress_bar(i, total_share_count)
+    if progress:
+        progress_bar(i, total_share_count)
     if parallel > 1: # only works when number of shares < 50 because currently only 50 downloads per min is allowed
         proc_pool = ProcessPoolExecutor()
         if len(str_to_list(income_fields)) > 2:
@@ -994,8 +1002,10 @@ def get_financial_report_type_raw_data(start: str,
                 df.index.name = 'date'
                 df.drop(columns=['ts_code', 'ann_date'], inplace=True)
                 income_dfs.append(df)
+
                 i += 1
-                progress_bar(i, total_share_count)
+                if progress:
+                    progress_bar(i, total_share_count)
 
         if len(str_to_list(indicator_fields)) > 2:
             futures = {proc_pool.submit(indicators, share, None, start, end, None, indicator_fields): share for
@@ -1007,8 +1017,10 @@ def get_financial_report_type_raw_data(start: str,
                 df.index.name = 'date'
                 df.drop(columns=['ts_code', 'ann_date'], inplace=True)
                 indicator_dfs.append(df)
+
                 i += 1
-                progress_bar(i, total_share_count)
+                if progress:
+                    progress_bar(i, total_share_count)
 
         if len(str_to_list(balance_fields)) > 2:
             futures = {proc_pool.submit(balance, share, None, start, end, None, None, None, balance_fields): share for
@@ -1020,8 +1032,10 @@ def get_financial_report_type_raw_data(start: str,
                 df.index.name = 'date'
                 df.drop(columns=['ts_code', 'ann_date'], inplace=True)
                 balance_dfs.append(df)
+
                 i += 1
-                progress_bar(i, total_share_count)
+                if progress:
+                    progress_bar(i, total_share_count)
 
         if len(str_to_list(cashflow_fields)) > 2:
             futures = {proc_pool.submit(cashflow, share, None, start, end, None, None, None, cashflow_fields): share for
@@ -1033,12 +1047,14 @@ def get_financial_report_type_raw_data(start: str,
                 df.index.name = 'date'
                 df.drop(columns=['ts_code', 'ann_date'], inplace=True)
                 cashflow_dfs.append(df)
+
                 i += 1
-                progress_bar(i, total_share_count)
+                if progress:
+                    progress_bar(i, total_share_count)
 
     else:
         for share in shares:
-            if delay > 0:
+            if i % delay_every == 0 and delay > 0:
                 sleep(delay)
             # TODO: refract these codes, combine and simplify similar codes
             if len(str_to_list(income_fields)) > 2:
@@ -1072,12 +1088,10 @@ def get_financial_report_type_raw_data(start: str,
                 df.index.name = 'date'
                 df.drop(columns=['ts_code','ann_date'], inplace=True)
                 cashflow_dfs.append(df)
-                # print('raw df before rearange\n', raw_df)
-
-                # print('\nsingle df of share after removal\n', df)
 
             i += 1
-            progress_bar(i, total_share_count)
+            if progress:
+                progress_bar(i, total_share_count)
     return income_dfs, indicator_dfs, balance_dfs, cashflow_dfs
 
 
