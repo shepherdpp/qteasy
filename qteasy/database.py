@@ -377,12 +377,15 @@ class DataSource():
                                                               asset_type=asset_type,
                                                               parallel=4)[0]
                     if htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
-                        inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
-                                                                                end=end,
+                        inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
+                                                                                end=missing_data_end,
                                                                                 shares=share,
                                                                                 htypes=htype)
                         online_data = (inc + ind + blc + csh)[0]
-
+                    # debug
+                    # print(f'\n<get_and_updated_data()>: '
+                    #       f'share_data len: {len(share_data)}, online_data len: {len(online_data)}')
+                    # print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
                     share_data.loc[share_data == np.inf] = np.nan
                     share_data.loc[online_data.index] = online_data.values.squeeze()
 
