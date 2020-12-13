@@ -1036,21 +1036,23 @@ def get_financial_report_type_raw_data(start: str,
         for share in shares:
             if i % delay_every == 0 and delay > 0:
                 sleep(delay)
-            # TODO: refract these codes, combine and simplify similar codes
+            # TODO: Investigate: very strange!!! DON'T KNOW WHY
+            # TODO: whenever the ".sort_index()" is removed, the programe is going to fail
+            # TODO: if it is added, then the program runs, but WHY??
             if len(str_to_list(income_fields)) > 2:
-                df = income(start=start, end=end, share=share, fields=income_fields)
+                df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
                 income_dfs.append(regulate_financial_type_df(df))
 
             if len(str_to_list(indicator_fields)) > 2:
-                df = indicators(start=start, end=end, share=share, fields=indicator_fields)
+                df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
                 indicator_dfs.append(regulate_financial_type_df(df))
 
             if len(str_to_list(balance_fields)) > 2:
-                df = balance(start=start, end=end, share=share, fields=balance_fields)
+                df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
                 balance_dfs.append(regulate_financial_type_df(df))
 
             if len(str_to_list(cashflow_fields)) > 2:
-                df = cashflow(start=start, end=end, share=share, fields=cashflow_fields)
+                df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
                 cashflow_dfs.append(regulate_financial_type_df(df))
 
             i += 1

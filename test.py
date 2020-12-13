@@ -3362,6 +3362,7 @@ class TestHistoryPanel(unittest.TestCase):
         htypes = 'eps,basic_eps,diluted_eps,total_revenue,revenue,total_share,' \
                  'cap_rese,undistr_porfit,surplus_rese,net_profit'
 
+        print('test get financial data, in single process mode')
         df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes)
         self.assertIsInstance(df_list, tuple)
         self.assertEqual(len(df_list), 4)
@@ -3371,10 +3372,44 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(len(df_list[3]), 3)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for sublist in df_list for item in sublist))
         df_list = [item for sublist in df_list for item in sublist]
-        print(f'in get financial report type raw data, got DataFrames: \n{df_list[0].info()}\n'
-              f'{df_list[1].info()}\n{df_list[2].info()}\n{df_list[3].info()}\n{df_list[4].info()}\n'
-              f'{df_list[5].info()}\n{df_list[6].info()}\n{df_list[7].info()}\n{df_list[8].info()}\n'
-              f'{df_list[9].info()}\n{df_list[10].info()}\n{df_list[11].info()}')
+        print(f'in get financial report type raw data, got DataFrames: \n')
+        df_list[0].info()
+        df_list[1].info()
+        df_list[2].info()
+        df_list[3].info()
+        df_list[4].info()
+        df_list[5].info()
+        df_list[6].info()
+        df_list[7].info()
+        df_list[8].info()
+        df_list[9].info()
+        df_list[10].info()
+        df_list[11].info()
+
+
+        print('test get financial data, in multi process mode')
+        df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=4)
+        self.assertIsInstance(df_list, tuple)
+        self.assertEqual(len(df_list), 4)
+        self.assertEqual(len(df_list[0]), 3)
+        self.assertEqual(len(df_list[1]), 3)
+        self.assertEqual(len(df_list[2]), 3)
+        self.assertEqual(len(df_list[3]), 3)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for sublist in df_list for item in sublist))
+        df_list = [item for sublist in df_list for item in sublist]
+        print(f'in get financial report type raw data, got DataFrames: \n')
+        df_list[0].info()
+        df_list[1].info()
+        df_list[2].info()
+        df_list[3].info()
+        df_list[4].info()
+        df_list[5].info()
+        df_list[6].info()
+        df_list[7].info()
+        df_list[8].info()
+        df_list[9].info()
+        df_list[10].info()
+        df_list[11].info()
 
     def test_get_composite_type_raw_data(self):
         pass
