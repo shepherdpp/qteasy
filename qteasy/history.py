@@ -996,12 +996,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                df = f.result()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
-                income_dfs.append(df)
+                income_dfs.append(regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1011,12 +1006,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(indicators, share, None, start, end, None, indicator_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                df = f.result()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
-                indicator_dfs.append(df)
+                indicator_dfs.append(regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1026,12 +1016,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(balance, share, None, start, end, None, None, None, balance_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                df = f.result()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
-                balance_dfs.append(df)
+                balance_dfs.append(regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1041,12 +1026,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(cashflow, share, None, start, end, None, None, None, cashflow_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                df = f.result()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code', 'ann_date'], inplace=True)
-                cashflow_dfs.append(df)
+                cashflow_dfs.append(regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1058,36 +1038,20 @@ def get_financial_report_type_raw_data(start: str,
                 sleep(delay)
             # TODO: refract these codes, combine and simplify similar codes
             if len(str_to_list(income_fields)) > 2:
-                df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code','ann_date'], inplace=True)
-                income_dfs.append(df)
+                df = income(start=start, end=end, share=share, fields=income_fields)
+                income_dfs.append(regulate_financial_type_df(df))
 
             if len(str_to_list(indicator_fields)) > 2:
-                df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code','ann_date'], inplace=True)
-                indicator_dfs.append(df)
+                df = indicators(start=start, end=end, share=share, fields=indicator_fields)
+                indicator_dfs.append(regulate_financial_type_df(df))
 
             if len(str_to_list(balance_fields)) > 2:
-                df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code','ann_date'], inplace=True)
-                balance_dfs.append(df)
+                df = balance(start=start, end=end, share=share, fields=balance_fields)
+                balance_dfs.append(regulate_financial_type_df(df))
 
             if len(str_to_list(cashflow_fields)) > 2:
-                df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
-                df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-                df.index = pd.to_datetime(df.ann_date)
-                df.index.name = 'date'
-                df.drop(columns=['ts_code','ann_date'], inplace=True)
-                cashflow_dfs.append(df)
+                df = cashflow(start=start, end=end, share=share, fields=cashflow_fields)
+                cashflow_dfs.append(regulate_financial_type_df(df))
 
             i += 1
             if progress:
@@ -1107,3 +1071,19 @@ def get_composite_type_raw_data(start, end, shares, htypes, chanel):
     :return:
     """
     raise NotImplementedError
+
+
+def regulate_financial_type_df(df):
+    """ process and regulate downloaded financial data in form of DataFrame:
+        - remove duplicated items
+        - convert index into datetime format
+        - remove useless columns
+
+    :param df:
+    :return:
+    """
+    df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
+    df.index = pd.to_datetime(df.ann_date)
+    df.index.name = 'date'
+    df.drop(columns=['ts_code', 'ann_date'], inplace=True)
+    return df

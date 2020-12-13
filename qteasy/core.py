@@ -296,7 +296,7 @@ class Context:
         self.invest_cash_type = 0
         self.invest_cash_freq = 'Y'
         self.invest_cash_periods = 5
-        self.invest_end = today.strftime('%Y%m%d')
+        self.invest_end = '20201130'
         self.invest_total_amount = 50000
         self.invest_unit_amount = 10000
         self.riskfree_ir = 0.015
