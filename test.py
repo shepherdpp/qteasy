@@ -4989,7 +4989,7 @@ class TestQT(unittest.TestCase):
         self.cont.opti_start = '20040104'
         self.cont.opti_end = '20141231'
         self.cont.test_start = '20120604'
-        self.cont.test_end = '20201231'
+        self.cont.test_end = '20201130'
         qt.run(self.op, self.cont)
 
     def test_built_in_timing(self):
@@ -5039,7 +5039,14 @@ class TestQT(unittest.TestCase):
                                                       '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
                                                       '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
                                                       '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
-                                                      '广告包装', '轻工机械', '新型电力', '多元金融', '饲料'],
+                                                      '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
+                                                      '铜', '普钢', '航空', '特种钢',
+                                                      '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
+                                                      '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
+                                                      '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
+                                                      '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                                                      '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
+                                                      '陶瓷', '船舶'],
                                             area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
                                                   '安徽', '四川', '浙江', '湖南', '河北', '新疆',
                                                   '山东', '河南', '山西', '江西', '青海', '湖北',
@@ -5055,7 +5062,7 @@ class TestQT(unittest.TestCase):
         cont.mode = 1
         cont.print_log = False
         op.set_parameter('t-0', pars=(0, 0))
-        op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
+        op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 10),
                          sample_freq='Q',
                          data_types='basic_eps',
                          sort_ascending=True,
@@ -5063,7 +5070,7 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         _poq=0.4)
+                         _poq=10)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
         qt.run(op, cont)

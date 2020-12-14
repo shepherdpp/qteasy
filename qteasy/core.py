@@ -22,9 +22,8 @@ from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import plot_loop_result
 from .evaluate import evaluate
-from .evaluate import eval_info_ratio, eval_alpha, eval_benchmark
-from .evaluate import eval_beta, eval_volatility, eval_max_drawdown
-from .evaluate import eval_fv, eval_sharp, eval_operation
+from .evaluate import eval_benchmark
+from .evaluate import eval_fv
 from .tsfuncs import stock_basic
 
 AVAILABLE_EVALUATION_INDICATORS = []
@@ -335,7 +334,7 @@ class Context:
         self.test_period_type = 2
 
         self.test_start = '20120604'
-        self.test_end = '20201231'
+        self.test_end = '20201130'
         self.test_cash_plan = CashPlan(dates='20140106', amounts=10000)
         self.target_function = 'FV'
         self.maximize_result = True
@@ -397,6 +396,19 @@ class Context:
             self.cash_plan = CashPlan(dates=dates, amounts=self._invest_amounts)
         except:
             raise ValueError(f'Your input does not fit the invest amounts')
+
+    # TODO: implement this property to check validity of parameters before run()
+    # TODO: refract this into parameter validators in _arg_validators.py
+    @property
+    def is_validate(self):
+        """ Checks if all parameters are valid, further, checks if
+            parameters are not conflicting with each others
+
+        :return:
+        """
+        # TODO: validate all parameters here, create error texts here
+        self.error_info = ''
+        return True
 
 
 def _loop_step(pre_cash: float,
@@ -898,6 +910,8 @@ def run(operator, context):
     # 从context 上下文对象中读取运行所需的参数：
     # 股票清单或投资产品清单
     # shares = context.share_pool
+    if not context.is_validate:
+        raise ValueError(f'context object is not valid, check following info:\n{context.error_info}')
     reference_data = context.reference_asset
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     run_mode = context.mode
@@ -946,9 +960,9 @@ def run(operator, context):
                                       chanel='local')
         hist_test_loop = hist_test.to_dataframe(htype='close')
         # debug
-        # print(f'\n got hist_opti as following\n')
+        # print(f'\n got hist_opti as following between {context.opti_start} and {context.opti_end}\n')
         # hist_opti.info()
-        # print(f'\n got hist_test as following\n')
+        # print(f'\n got hist_test as following between {context.test_start} and {context.test_end}\n')
         # hist_test.info()
         # print(f'\n got hist_test_loop as following\n')
         # hist_test_loop.info()
@@ -963,15 +977,6 @@ def run(operator, context):
                                         chanel='local')
                       ).to_dataframe(htype='close')
     # debug
-    # print(f'\n got hist_test_reference as following\n')
-    # hist_reference.info()
-    # debug
-    # print(f'operation hist data downloaded, info: \n')
-    # hist_op.info()
-    # print(f'optimization hist data downloaded, info: \n')
-    # hist_opti.info()
-    # print(f'test hist data downloaded, info: \n')
-    # hist_test.info()
     # print(f'reference hist data downloaded, info: \n')
     # hist_reference.info()
 
