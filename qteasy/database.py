@@ -369,7 +369,7 @@ class DataSource():
                 # print(f'\nIn func get_and_update_data():\n'
                 #       f'historical data can not be found locally with the name {file_name}.csv\n'
                 #       f'empty dataframe is created:\n{df}')
-
+            data_index = df.index
             for share, share_data in df.iteritems():
                 missing_data = share_data.iloc[np.isinf(share_data).values]
                 i += 1
@@ -397,8 +397,9 @@ class DataSource():
                     # print(f'\n<get_and_updated_data()>: '
                     #       f'share_data len: {len(share_data)}, online_data len: {len(online_data)}')
                     # print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
-                    share_data.iloc[np.isinf(share_data).values] = np.nan # use 'iloc' is 3 5 times faster than 'loc'
-                    share_data.loc[online_data.index] = online_data.values.squeeze()
+                    # use 'iloc' is 3~5 times faster than 'loc'
+                    share_data.iloc[np.isinf(share_data).values] = np.nan
+                    share_data.iloc[np.searchsorted(data_index, online_data.index)] = online_data.values.squeeze()
 
             if self.file_exists(file_name):
                 self.merge_file(file_name, df)
