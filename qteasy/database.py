@@ -371,7 +371,7 @@ class DataSource():
                 #       f'empty dataframe is created:\n{df}')
 
             for share, share_data in df.iteritems():
-                missing_data = share_data.loc[share_data == np.inf]
+                missing_data = share_data.iloc[np.isinf(share_data).values]
                 i += 1
                 progress_bar(i, progress_count, 'downloading online data')
                 if missing_data.count() > 0:
@@ -397,7 +397,7 @@ class DataSource():
                     # print(f'\n<get_and_updated_data()>: '
                     #       f'share_data len: {len(share_data)}, online_data len: {len(online_data)}')
                     # print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
-                    share_data.loc[share_data == np.inf] = np.nan
+                    share_data.iloc[np.isinf(share_data).values] = np.nan # use 'iloc' is 3 5 times faster than 'loc'
                     share_data.loc[online_data.index] = online_data.values.squeeze()
 
             if self.file_exists(file_name):
