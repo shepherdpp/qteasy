@@ -343,7 +343,7 @@ class DataSource():
             htypes = str_to_list(input_string=htypes, sep_char=',')
         if isinstance(shares, str):
             shares = str_to_list(input_string=shares, sep_char=',')
-
+        share_count = len(shares)
         i = 0
         progress_count = len(htypes) * len(shares) + len(htypes)
         progress_bar(i, progress_count, f'total progress count: {progress_count}')
@@ -351,7 +351,7 @@ class DataSource():
             file_name = htype
             if freq.upper() != 'D':
                 file_name = file_name + '-' + freq.upper()
-            if asset_type != 'E':
+            if asset_type.upper() != 'E':
                 file_name = file_name + '-' + asset_type.upper()
 
             i += 1
@@ -371,6 +371,8 @@ class DataSource():
                 #       f'empty dataframe is created:\n{df}')
             data_index = df.index
             for share, share_data in df.iteritems():
+                # 'np.isinf() is much faster than "share_data == np.inf"
+                # and iloc[] is 3~5 times faster than loc[]
                 missing_data = share_data.iloc[np.isinf(share_data).values]
                 i += 1
                 progress_bar(i, progress_count, 'downloading online data')
@@ -393,13 +395,22 @@ class DataSource():
                                                                                 htypes=htype,
                                                                                 progress=False)
                         online_data = (inc + ind + blc + csh)[0]
-                    # debug
-                    # print(f'\n<get_and_updated_data()>: '
-                    #       f'share_data len: {len(share_data)}, online_data len: {len(online_data)}')
-                    # print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
+
                     # use 'iloc' is 3~5 times faster than 'loc'
                     share_data.iloc[np.isinf(share_data).values] = np.nan
-                    share_data.iloc[np.searchsorted(data_index, online_data.index)] = online_data.values.squeeze()
+                    try:
+                        share_data.iloc[np.searchsorted(data_index,
+                                                        online_data.index).clip(0,
+                                                                                share_count)] = \
+                            online_data.values.squeeze()
+                    except:
+                    # debug
+                        print(f'\nERROR OCCURED! =====  <get_and_updated_data()>: \n'
+                              f'share_data len: {len(share_data)}, online_data len: {len(online_data)}, by searching'
+                              f'for {htype} in:\n'
+                              f'range: between {missing_data_start} and {missing_data_end}\n')
+                        print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
+
 
             if self.file_exists(file_name):
                 self.merge_file(file_name, df)
