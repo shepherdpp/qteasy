@@ -5170,28 +5170,15 @@ class TestDataBase(unittest.TestCase):
         hp.info()
 
         print(f'test getting and updating lots of data')
-        hp = self.data_source.get_and_update_data(start='20200101',
+        hp = self.data_source.get_and_update_data(start='20150101',
                                                   end='20200901',
                                                   freq='d',
                                                   shares=qt.get_stock_pool(date='19980101',
-                                                                           market='主板'),
+                                                                           market='主板,中小板'),
                                                   htypes=['close', 'open', 'high', 'low', 'net_profit',
                                                           'finan_exp', 'total_share', 'eps',
                                                           'dt_eps', 'total_revenue_ps', 'cap_rese'])
         hp.info()
-
-
-    def test_sorting_of_bars(self):
-        df = get_price_type_raw_data(start='20200101',
-                                     end='20200531',
-                                     freq='d',
-                                     shares='000005.SZ',
-                                     htypes='close, open, high')
-        df2 = get_bar(shares='000005.SZ',
-                      start='20200101',
-                      end='20200531')
-        print(f'historical data downloaded with "get price type raw data": \n{df}')
-        print(f'historical data downloaded with "get bar": \n{df2}')
 
 
 def test_suite(*args):

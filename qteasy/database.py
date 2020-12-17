@@ -402,7 +402,8 @@ class DataSource():
                         share_data.iloc[np.searchsorted(data_index,
                                                         online_data.index).clip(0,
                                                                                 share_count)] = \
-                            online_data.values.squeeze()
+                            online_data
+                        # online_data.values will cause potential problem
                     except:
                     # debug
                         print(f'\nERROR OCCURED! =====  <get_and_updated_data()>: \n'
