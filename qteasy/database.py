@@ -373,9 +373,10 @@ class DataSource():
             for share, share_data in df.iteritems():
                 # 'np.isinf() is much faster than "share_data == np.inf"
                 # and iloc[] is 3~5 times faster than loc[]
+                progress_bar(i, progress_count, 'searching for missing data')
                 missing_data = share_data.iloc[np.isinf(share_data).values]
                 i += 1
-                progress_bar(i, progress_count, 'downloading online data')
+                progress_bar(i, progress_count, 'downloading missing data')
                 if missing_data.count() > 0:
                     missing_data_start = regulate_date_format(missing_data.index[0])
                     missing_data_end = regulate_date_format(missing_data.index[-1])
@@ -396,23 +397,26 @@ class DataSource():
                                                                                 progress=False)
                         online_data = (inc + ind + blc + csh)[0]
 
-                    # use 'iloc' is 3~5 times faster than 'loc'
-                    share_data.iloc[np.isinf(share_data).values] = np.nan
-                    try:
-                        share_data.iloc[np.searchsorted(data_index,
-                                                        online_data.index).clip(0,
-                                                                                share_count)] = \
-                            online_data
-                        # online_data.values will cause potential problem
-                    except:
-                    # debug
-                        print(f'\nERROR OCCURED! =====  <get_and_updated_data()>: \n'
-                              f'share_data len: {len(share_data)}, online_data len: {len(online_data)}, by searching'
-                              f'for {htype} in:\n'
-                              f'range: between {missing_data_start} and {missing_data_end}\n')
-                        print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
+                    if online_data.empty: # 当下载的数据为空时，就不要改写任何数据
+                        print(f'EMPTY data loaded, will skip')
+                    else:
+                        try:
+                            share_data.loc[online_data.index] = \
+                                online_data[htype]
+                            # online_data.values will cause potential problem
+                            # using 'iloc' is 3~5 times faster than 'loc'
+                            share_data.iloc[np.isinf(share_data).values] = np.nan
+                        except:
+                        # debug
+                            print(f'\nERROR OCCURED! =====  <get_and_updated_data()>: \n'
+                                  f'share_data len: {len(share_data)}, online_data len: {len(online_data)}, by '
+                                  f'searching for {htype} in:\n'
+                                  f'range: between {missing_data_start} and {missing_data_end}\n'
+                                  f'searched index locations are: '
+                                  f'{np.searchsorted(data_index, online_data.index).clip(0, share_count-1)}\n')
+                            print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
 
-
+            progress_bar(i, progress_count, 'Writing data to local files')
             if self.file_exists(file_name):
                 self.merge_file(file_name, df)
             else:

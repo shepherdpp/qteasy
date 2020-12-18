@@ -343,7 +343,7 @@ def income(share: str,
         ts_code	            str	    Y   TS代码
         ann_date	        str	    Y	公告日期
         f_ann_date	        str	    Y	实际公告日期
-        end	        str	    Y	报告期
+        end_date	        str	    Y	报告期
         report_type	        str	    Y	报告类型 1合并报表                  上市公司最新报表（默认）
                                                 2单季合并                  单一季度的合并报表
                                                 3调整单季合并表            调整后的单季合并报表（如果有）
@@ -418,9 +418,9 @@ def income(share: str,
         distable_profit	    float	Y	可分配利润
         update_flag	        str	    N	更新标识，0未修改1更正过
     :example
-        income(ts_code='600000.SH', start_date='20180101',
+        income(share='600000.SH', start_date='20180101',
                end='20180730',
-               fields='ts_code,ann_date,f_ann_date,end,report_type,comp_type,basic_eps,diluted_eps')
+               fields='ts_code,ann_date,f_ann_date,report_type,comp_type,basic_eps,diluted_eps')
     """
     BASIC_FIELDS = 'ts_code,ann_date,report_type,comp_type,basic_eps,diluted_eps'
     assert isinstance(share, str), f'share code should be a string, got {type(share)} instead!'
@@ -436,14 +436,18 @@ def income(share: str,
     start = regulate_date_format(start)
     end = regulate_date_format(end)
     # print(f'in tushare function income, got args: \nshare: {share}\nstart / end: {start}/{end} \nfields:{fields}')
-    return pro.income(ts_code=share,
-                      ann_date=rpt_date,
-                      start_date=start,
-                      end_date=end,
-                      period=period,
-                      report_type=report_type,
-                      comp_type=comp_type,
-                      fields=fields)
+    try:
+        return pro.income(ts_code=share,
+                          ann_date=rpt_date,
+                          start_date=start,
+                          end_date=end,
+                          period=period,
+                          report_type=report_type,
+                          comp_type=comp_type,
+                          fields=fields)
+    except:
+        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        return pd.DataFrame()
 
 
 @lru_cache(maxsize=16)
@@ -634,14 +638,18 @@ def balance(share: str,
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    return pro.balancesheet(ts_code=share,
-                            ann_date=rpt_date,
-                            start_date=start,
-                            end_date=end,
-                            period=period,
-                            report_type=report_type,
-                            comp_type=comp_type,
-                            fields=fields)
+    try:
+        return pro.balancesheet(ts_code=share,
+                                ann_date=rpt_date,
+                                start_date=start,
+                                end_date=end,
+                                period=period,
+                                report_type=report_type,
+                                comp_type=comp_type,
+                                fields=fields)
+    except:
+        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        return pd.DataFrame()
 
 
 @lru_cache(maxsize=16)
@@ -784,14 +792,18 @@ def cashflow(share: str,
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    return pro.cashflow(ts_code=share,
-                        ann_date=rpt_date,
-                        start_date=start,
-                        end_date=end,
-                        period=period,
-                        report_type=report_type,
-                        comp_type=comp_type,
-                        fields=fields)
+    try:
+        return pro.cashflow(ts_code=share,
+                            ann_date=rpt_date,
+                            start_date=start,
+                            end_date=end,
+                            period=period,
+                            report_type=report_type,
+                            comp_type=comp_type,
+                            fields=fields)
+    except:
+        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        return pd.DataFrame()
 
 
 @lru_cache(maxsize=16)
@@ -995,12 +1007,16 @@ def indicators(share: str,
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
-    return pro.fina_indicator(ts_code=share,
-                              ann_date=rpt_date,
-                              start_date=start,
-                              end_date=end,
-                              period=period,
-                              fields=fields)
+    try:
+        return pro.fina_indicator(ts_code=share,
+                                  ann_date=rpt_date,
+                                  start_date=start,
+                                  end_date=end,
+                                  period=period,
+                                  fields=fields)
+    except:
+        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        return pd.DataFrame()
 
 
 # Market Data

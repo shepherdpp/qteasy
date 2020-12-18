@@ -964,7 +964,7 @@ def get_financial_report_type_raw_data(start: str,
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
     total_share_count = len(shares)
-    report_fields = ['ts_code', 'ann_date']
+    report_fields = ['ts_code', 'end_date']
     # debug
     # # print(f'in function get financial report type raw data, got htypes: \n{htypes}, \n'
     # #       f'income fields will be {[htype for htype in htypes if htype in INCOME_TYPE_DATA]}')
@@ -1084,8 +1084,12 @@ def regulate_financial_type_df(df):
     :param df:
     :return:
     """
-    df.drop_duplicates(subset=['ts_code', 'ann_date'], inplace=True)
-    df.index = pd.to_datetime(df.ann_date)
+    # TODO: investigate: what does ann_date really means, how to get correct report date?
+    # TODO: current way of extracting date is WRONG!! ann_date sometimes are incorrect!
+    if df.empty:
+        return df
+    df.drop_duplicates(subset=['ts_code', 'end_date'], inplace=True)
+    df.index = pd.to_datetime(df.end_date) + pd.Timedelta(90, 'd')
     df.index.name = 'date'
-    df.drop(columns=['ts_code', 'ann_date'], inplace=True)
+    df.drop(columns=['ts_code', 'end_date'], inplace=True)
     return df

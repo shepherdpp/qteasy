@@ -5174,7 +5174,7 @@ class TestDataBase(unittest.TestCase):
                                                   end='20200901',
                                                   freq='d',
                                                   shares=qt.get_stock_pool(date='19980101',
-                                                                           market='主板,中小板'),
+                                                                           market='主板,中小板')[:100],
                                                   htypes=['close', 'open', 'high', 'low', 'net_profit',
                                                           'finan_exp', 'total_share', 'eps',
                                                           'dt_eps', 'total_revenue_ps', 'cap_rese'])
