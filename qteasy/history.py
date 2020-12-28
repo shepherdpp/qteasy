@@ -91,6 +91,8 @@ class HistoryPanel():
                         历史时间戳
         :param columns:str，通常为股票代码或证券代码，
         """
+
+        #TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
         self._levels = None
         self._columns = None
         self._rows = None
@@ -161,7 +163,20 @@ class HistoryPanel():
 
     @property
     def levels(self):
-        """返回HistoryPanel的层标签——数据类型列表"""
+        """返回HistoryPanel的层标签字典
+
+        HistoryPanel的层标签是保存成一个字典形式的：
+        levels =    {level_name[0]: 0,
+                     level_name[1]: 1,
+                     level_name[2]: 2,
+                     ...
+                     level_name[l]: l}
+        这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过：
+            data = HP.values[levels[level_name[a], :, :]
+        来访问
+
+        不过这是HistoryPanel内部的处理机制，在HistoryPanel的外部，可以通过切片的方式快速访问不同的数据。
+        """
         return self._levels
 
     @property
@@ -189,15 +204,27 @@ class HistoryPanel():
 
     @property
     def share_count(self):
+        """获取HistoryPanel中股票的数量"""
         return self._l_count
 
     @property
     def rows(self):
+        """ 与levels类似，rows也是返回一个字典，通过这个字典建立日期与行号的联系：
+
+        rows =  {row_date[0]: 0,
+                 row_daet[1]: 1,
+                 row_date[2]: 2,
+                 ...
+                 row_date[r]: r
+                 }
+        因此内部可以较快地进行数据切片或数据访问
+        :return:
+        """
         return self._rows
 
     @property
     def hdates(self):
-        """hdates 是一个list"""
+        """获取HistoryPanel的历史日期时间戳list"""
         if self.is_empty:
             return 0
         else:
@@ -218,14 +245,17 @@ class HistoryPanel():
 
     @property
     def row_count(self):
+        """获取HistoryPanel的行数量"""
         return self._r_count
 
     @property
     def hdate_count(self):
+        """获取HistoryPanel的历史数据类型数量"""
         return self._r_count
 
     @property
     def htypes(self):
+        """获取HistoryPanel的历史数据类型列表"""
         if self.is_empty:
             return 0
         else:
@@ -246,18 +276,30 @@ class HistoryPanel():
 
     @property
     def columns(self):
+        """与levels及rows类似，获取一个字典，将股票代码与列号进行对应
+        columns = {share_name[0]: 0,
+                   share_naem[1]: 1,
+                   share_name[2]: 2,
+                   ...
+                   share_name[c]: c}
+
+        这样便于内部根据股票代码对数据进行切片
+        """
         return self._columns
 
     @property
     def column_count(self):
+        """获取HistoryPanel的列数量或股票数量"""
         return self._c_count
 
     @property
     def htype_count(self):
+        """获取HistoryPanel的历史数据类型数量"""
         return self._c_count
 
     @property
     def shape(self):
+        """获取HistoryPanel的各个维度的尺寸"""
         return self._l_count, self._r_count, self._c_count
 
     def __getitem__(self, keys=None):
@@ -323,6 +365,7 @@ class HistoryPanel():
             return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
 
     def __str__(self):
+        """打印HistoryPanel"""
         res = []
         if self.is_empty:
             res.append(f'{type(self)} \nEmpty History Panel at {hex(id(self))}')
@@ -374,6 +417,7 @@ class HistoryPanel():
             print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
     def copy(self):
+        #TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
         return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
@@ -410,9 +454,48 @@ class HistoryPanel():
              same_hdates: bool = False,
              fill_value: float = np.nan):
         """ Join one historypanel object with another one
-            将一个HistoryPanel对象与另一个HistoryPanel对象连接起来
+            将一个HistoryPanel对象与另一个HistoryPanel对象连接起来，生成一个新的HistoryPanel：
 
-            连接时可以指定两个HistoryPanel之间共享的
+            新HistoryPanel的行、列、层标签分别是两个原始HistoryPanel的行、列、层标签的并集，也就是说，新的HistoryPanel的行、列
+            层标签完全包含两个HistoryPanel对象的对应标签。
+
+            如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
+
+            hp1:
+            share 0, label: close
+                        000100  000200  000300
+            2020-01-01       8       9       9
+            2020-01-02       7       5       5
+            2020-01-03       4       8       4
+            2020-01-04       1       0       7
+            2020-01-05       8       7       9
+
+            share 1, label: open
+                        000100  000200  000300
+            2020-01-01       2       3       3
+            2020-01-02       5       4       6
+            2020-01-03       2       8       7
+            2020-01-04       3       3       4
+            2020-01-05       8       8       7
+
+            hp2:
+            share 0, label: close
+            000100  000200  000300
+            2020-01-01       8       9       9
+            2020-01-02       7       5       5
+            2020-01-03       4       8       4
+            2020-01-04       1       0       7
+            2020-01-05       8       7       9
+
+            share 1, label: open
+                        000100  000200  000300
+            2020-01-01       2       3       3
+            2020-01-02       5       4       6
+            2020-01-03       2       8       7
+            2020-01-04       3       3       4
+            2020-01-05       8       8       7
+
+            连接时可以指定两个HistoryPanel之间共享的标签类型，如
 
         :param other: type: HistoryPanel 需要合并的另一个HistoryPanel
         :param same_shares: 两个HP的shares是否相同，如果相同，可以省去shares纬度的标签合并。默认False，
@@ -491,8 +574,10 @@ class HistoryPanel():
                             elif htype in other_htypes and hdate in other_hdates:
                                 combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
                                     other.values[:, other_hdate_id[hdate], other_htype_id[htype]]
+            #TODO: implement this section 实现相同htype的HistoryPanel合并
             elif same_htypes:
                 raise NotImplementedError
+            #TODO: implement this section 实现相同数据历史时间戳的HistoryPanel合并
             else:
                 raise NotImplementedError
             return HistoryPanel(values=combined_values,
