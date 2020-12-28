@@ -370,6 +370,7 @@ class DataSource():
                 #       f'historical data can not be found locally with the name {file_name}.csv\n'
                 #       f'empty dataframe is created:\n{df}')
             data_index = df.index
+            index_count = len(df.index)
             for share, share_data in df.iteritems():
                 # 'np.isinf() is much faster than "share_data == np.inf"
                 # and iloc[] is 3~5 times faster than loc[]
@@ -401,7 +402,18 @@ class DataSource():
                         print(f'EMPTY data loaded, will skip')
                     else:
                         try:
-                            share_data.loc[online_data.index] = \
+                            # debug
+                            # print(f'i-locations of data to be set are:\n'
+                            #       f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n'
+                            #       f'data that are to be set are:\n'
+                            #       f'{online_data[htype].values}\n'
+                            #       f'data to be replaced are \n'
+                            #       f'{share_data.iloc[np.searchsorted(data_index, online_data.index).clip(0, index_count-1)]}\n'
+                            #       f'DOING THE WORK...')
+
+                            share_data.iloc[np.searchsorted(data_index,
+                                                            online_data.index).clip(0,
+                                                                                    index_count-1)] = \
                                 online_data[htype]
                             # online_data.values will cause potential problem
                             # using 'iloc' is 3~5 times faster than 'loc'
@@ -409,11 +421,11 @@ class DataSource():
                         except:
                         # debug
                             print(f'\nERROR OCCURED! =====  <get_and_updated_data()>: \n'
-                                  f'share_data len: {len(share_data)}, online_data len: {len(online_data)}, by '
+                                  f'share_data len: {index_count}, online_data len: {len(online_data)}, by '
                                   f'searching for {htype} in:\n'
                                   f'range: between {missing_data_start} and {missing_data_end}\n'
                                   f'searched index locations are: '
-                                  f'{np.searchsorted(data_index, online_data.index).clip(0, share_count-1)}\n')
+                                  f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n')
                             print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
 
             progress_bar(i, progress_count, 'Writing data to local files')

@@ -77,10 +77,19 @@ class HistoryPanel():
     def __init__(self, values: np.ndarray = None, levels=None, rows=None, columns=None):
         """ 初始化HistoryPanel对象，必须传入values作为HistoryPanel的数据
 
-        :param values:
-        :param levels:
-        :param rows: datetime range or timestamp index of the data
-        :param columns:
+            一个HistoryPanel对象是qteasy中用于历史数据操作的主要数据结构，其本质是一个numpy.ndarray，这个ndarray是一个
+            三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。
+
+            在生成一个HistoryPanel的时候，应该同时输入层标签、行标签和列标签分别代表所输入数据的数据类型、日期时间戳以及股票代码，如果
+            不输入这些数据，从数据结构的层面上来说不会有问题，但是在qteasy应用中可能会报错。
+
+            历史数据类型可以包括类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据
+
+        :param values: 一个ndarray，必须是一个三维数组，如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
+        :param levels: HistoryPanel的层标签，层的数量为values第一个维度的数据量，每一层代表一个数据类型
+        :param rows: datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，行标签代表每一条数据对应的
+                        历史时间戳
+        :param columns:str，通常为股票代码或证券代码，
         """
         self._levels = None
         self._columns = None
@@ -142,18 +151,22 @@ class HistoryPanel():
 
     @property
     def is_empty(self):
+        """判断HistoryPanel是否为空"""
         return self._is_empty
 
     @property
     def values(self):
+        """返回HistoryPanel的values"""
         return self._values
 
     @property
     def levels(self):
+        """返回HistoryPanel的层标签——数据类型列表"""
         return self._levels
 
     @property
     def shares(self):
+        """返回HistoryPanel的列标签——股票列表"""
         if self.is_empty:
             return 0
         else:
@@ -171,6 +184,7 @@ class HistoryPanel():
 
     @property
     def level_count(self):
+        """返回HistoryPanel中数据类型的数量"""
         return self._l_count
 
     @property
@@ -1089,7 +1103,7 @@ def regulate_financial_type_df(df):
     if df.empty:
         return df
     df.drop_duplicates(subset=['ts_code', 'end_date'], inplace=True)
-    df.index = pd.to_datetime(df.end_date) + pd.Timedelta(90, 'd')
+    df.index = pd.to_datetime(df.end_date)
     df.index.name = 'date'
     df.drop(columns=['ts_code', 'end_date'], inplace=True)
     return df
