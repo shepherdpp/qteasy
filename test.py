@@ -2941,6 +2941,34 @@ class TestHistoryPanel(unittest.TestCase):
         self.hp5 = qt.HistoryPanel(values=self.data)
         self.hp6 = qt.HistoryPanel(values=self.data, levels=self.shares, rows=self.index3)
 
+    def test_empty_history_panel(self):
+        """测试空HP或者特殊HP如维度标签为纯数字的HP"""
+        test_hp = qt.HistoryPanel(self.data)
+        self.assertFalse(test_hp.is_empty)
+        self.assertIsInstance(test_hp, qt.HistoryPanel)
+        self.assertEqual(test_hp.shape[0], 5)
+        self.assertEqual(test_hp.shape[1], 10)
+        self.assertEqual(test_hp.shape[2], 4)
+        self.assertEqual(test_hp.level_count, 5)
+        self.assertEqual(test_hp.row_count, 10)
+        self.assertEqual(test_hp.column_count, 4)
+        self.assertEqual(test_hp.shares, list(range(5)))
+        self.assertEqual(test_hp.hdates, list(pd.date_range(start='20200730', periods=10, freq='d')))
+        self.assertEqual(test_hp.htypes, list(range(4)))
+        self.assertTrue(np.allclose(test_hp.values, self.data))
+        print(f'shares: {test_hp.shares}\nhtypes: {test_hp.htypes}')
+        print(test_hp)
+
+        empty_hp = qt.HistoryPanel()
+        self.assertTrue(empty_hp.is_empty)
+        self.assertIsInstance(empty_hp, qt.HistoryPanel)
+        self.assertEqual(empty_hp.shape[0], 0)
+        self.assertEqual(empty_hp.shape[1], 0)
+        self.assertEqual(empty_hp.shape[2], 0)
+        self.assertEqual(empty_hp.level_count, 0)
+        self.assertEqual(empty_hp.row_count, 0)
+        self.assertEqual(empty_hp.column_count, 0)
+
     def test_create_history_panel(self):
         """ test the creation of a HistoryPanel object by passing all data explicitly
 
@@ -3042,6 +3070,8 @@ class TestHistoryPanel(unittest.TestCase):
                           rows='a,b,c,d,e,f,g,h,i,j')
 
     def test_history_panel_slicing(self):
+        """测试HistoryPanel的各种切片方法
+        包括通过标签名称切片，通过数字切片，通过逗号分隔的标签名称切片，通过冒号分隔的标签名称切片等切片方式"""
         self.assertTrue(np.allclose(self.hp['close'], self.data[:, :, 0:1]))
         self.assertTrue(np.allclose(self.hp['close,open'], self.data[:, :, 0:2]))
         self.assertTrue(np.allclose(self.hp[['close', 'open']], self.data[:, :, 0:2]))
@@ -3218,7 +3248,8 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp[:, '000100'], df_test.values))
 
         print(f'test DataFrame conversion error: type incorrect')
-        self.assertRaises(AssertionError, self.hp.to_dataframe, share=3)
+        self.assertRaises(AssertionError, self.hp.to_dataframe, share=3.0)
+
 
         print(f'test DataFrame error raising with share not found error')
         self.assertRaises(KeyError, self.hp.to_dataframe, share='000300')
@@ -3346,6 +3377,7 @@ class TestHistoryPanel(unittest.TestCase):
                                     new_values, equal_nan=True))
 
     def test_get_history_panel(self):
+        # TODO: implement this test case
         pass
 
     def test_get_price_type_raw_data(self):

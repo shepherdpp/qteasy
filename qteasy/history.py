@@ -92,7 +92,7 @@ class HistoryPanel():
         :param columns:str，通常为股票代码或证券代码，
         """
 
-        #TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
+        # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
         self._levels = None
         self._columns = None
         self._rows = None
@@ -370,7 +370,7 @@ class HistoryPanel():
         if self.is_empty:
             res.append(f'{type(self)} \nEmpty History Panel at {hex(id(self))}')
         else:
-            if self.level_count <= 10:
+            if self.level_count <= 7:
                 display_shares = self.shares
             else:
                 display_shares = self.shares[0:3]
@@ -379,7 +379,7 @@ class HistoryPanel():
                 df = self.to_dataframe(share=share)
                 res.append(df.__str__())
                 res.append('\n')
-            if self.level_count > 10:
+            if self.level_count > 7:
                 res.append('\n ...  \n')
                 for share in self.shares[-2:]:
                     res.append(f'\nshare {self.levels[share]}, label: {share}\n')
@@ -417,7 +417,7 @@ class HistoryPanel():
             print(f'memory usage: {sys.getsizeof(self.values)} bytes\n')
 
     def copy(self):
-        #TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
+        # TODO: 应该考虑使用copy模块的copy(deep=True)代替下面的代码
         return HistoryPanel(values=self.values, levels=self.levels, rows=self.rows, columns=self.columns)
 
     def re_label(self, shares: str = None, htypes: str = None, hdates=None):
@@ -462,38 +462,38 @@ class HistoryPanel():
             如果两个HistoryPanel中包含标签相同的数据，那么新的HistoryPanel中将包含调用join方法的HistoryPanel对象的相应数据。例如：
 
             hp1:
-            share 0, label: close
-                        000100  000200  000300
-            2020-01-01       8       9       9
-            2020-01-02       7       5       5
-            2020-01-03       4       8       4
-            2020-01-04       1       0       7
-            2020-01-05       8       7       9
+            share 0, label: 000200
+                        close  open  high
+            2020-01-01      8     9     9
+            2020-01-02      7     5     5
+            2020-01-03      4     8     4
+            2020-01-04      1     0     7
+            2020-01-05      8     7     9
 
-            share 1, label: open
-                        000100  000200  000300
-            2020-01-01       2       3       3
-            2020-01-02       5       4       6
-            2020-01-03       2       8       7
-            2020-01-04       3       3       4
-            2020-01-05       8       8       7
+            share 1, label: 000300
+                        close  open  high
+            2020-01-01      2     3     3
+            2020-01-02      5     4     6
+            2020-01-03      2     8     7
+            2020-01-04      3     3     4
+            2020-01-05      8     8     7
 
             hp2:
-            share 0, label: close
-            000100  000200  000300
-            2020-01-01       8       9       9
-            2020-01-02       7       5       5
-            2020-01-03       4       8       4
-            2020-01-04       1       0       7
-            2020-01-05       8       7       9
+            share 0, label: 000200
+                        close  open  high
+            2020-01-01      8     9     9
+            2020-01-02      7     5     5
+            2020-01-03      4     8     4
+            2020-01-04      1     0     7
+            2020-01-05      8     7     9
 
-            share 1, label: open
-                        000100  000200  000300
-            2020-01-01       2       3       3
-            2020-01-02       5       4       6
-            2020-01-03       2       8       7
-            2020-01-04       3       3       4
-            2020-01-05       8       8       7
+            share 1, label: 000300
+                        close  open  high
+            2020-01-01      2     3     3
+            2020-01-02      5     4     6
+            2020-01-03      2     8     7
+            2020-01-04      3     3     4
+            2020-01-05      8     8     7
 
             连接时可以指定两个HistoryPanel之间共享的标签类型，如
 
@@ -574,10 +574,10 @@ class HistoryPanel():
                             elif htype in other_htypes and hdate in other_hdates:
                                 combined_values[:, combined_hdate_id[hdate], combined_htype_id[htype]] = \
                                     other.values[:, other_hdate_id[hdate], other_htype_id[htype]]
-            #TODO: implement this section 实现相同htype的HistoryPanel合并
+            # TODO: implement this section 实现相同htype的HistoryPanel合并
             elif same_htypes:
                 raise NotImplementedError
-            #TODO: implement this section 实现相同数据历史时间戳的HistoryPanel合并
+            # TODO: implement this section 实现相同数据历史时间戳的HistoryPanel合并
             else:
                 raise NotImplementedError
             return HistoryPanel(values=combined_values,
@@ -601,7 +601,7 @@ class HistoryPanel():
     def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
         """将HistoryPanel对象中的指定片段转化为DataFrame
 
-        由于HistoryPanel对象包含三维数据，因此在转化时必须指定
+        由于HistoryPanel对象包含三维数据，因此在转化时必须指定htype或者share参数中的一个
         """
         if self.is_empty:
             return pd.DataFrame()
@@ -611,19 +611,36 @@ class HistoryPanel():
                 raise KeyError(f'Only and exactly one of the parameters htype and share should be given, '
                                f'got both or none')
             if htype is not None:
-                assert isinstance(htype, str), f'htype must be a string, got {type(htype)}'
+                assert isinstance(htype, (str, int)), f'htype must be a string or an integer, got {type(htype)}'
                 if htype in self.htypes:
                     v = self[htype].T.squeeze()
                     return pd.DataFrame(v, index=self.hdates, columns=self.shares)
                 else:
                     raise KeyError(f'htype {htype} is not found!')
             if share is not None:
-                assert isinstance(share, str), f'share must be a string, got {type(share)}'
+                assert isinstance(share, (str, int)), f'share must be a string or an integer, got {type(share)}'
                 if share in self.shares:
                     v = self[:, share].squeeze()
                     return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
                 else:
                     raise KeyError(f'share {share} is not found!')
+
+    # TODO: implement this method
+    def plot(self, *args, **kwargs):
+        """plot current HistoryPanel, settings according to args and kwargs
+        """
+
+        raise NotImplementedError
+
+    # TODO: implement this method
+    def ohlc(self, *args, **kwargs):
+        """ plot ohlc chart with data in the HistoryPanel, check data availability before plotting
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError
 
     # TODO implement this method
     def to_csv(self):
@@ -677,6 +694,8 @@ def hp_join(*historypanels):
     :param *historypanels: tuple,
     :return:
     """
+    assert all(isinstance(hp, HistoryPanel) for hp in historypanels), \
+        f'Object type Error, all objects passed to this function should be HistoryPanel'
     res_hp = HistoryPanel()
     for hp in historypanels:
         if isinstance(hp, HistoryPanel):
@@ -860,6 +879,7 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
                         rows=combined_index,
                         columns=combined_htypes)
 
+
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
@@ -941,12 +961,13 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                               shares=str_to_list(shares)),
                                        same_shares=True)
 
-        # debug
-        # print(f'in function get_history_panel(), history panel is generated, they are:\n')
-        # if result_hp is not None:
+            # debug
+            # print(f'in function get_history_panel(), history panel is generated, they are:\n')
+            # if result_hp is not None:
             # print(f'result history panel: \n{result_hp.info()}')
 
         return result_hp
+
 
 # TODO: dynamically group shares thus data downloading can be less repetitive
 # TODO: remove parameter chanel, and add progress: bool, to determine if progress bar
@@ -990,7 +1011,7 @@ def get_price_type_raw_data(start: str,
     if progress:
         progress_bar(i, total_share_count)
 
-    if parallel > 1: # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
+    if parallel > 1:  # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
         proc_pool = ProcessPoolExecutor(parallel)
         futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
                    shares}
@@ -1032,13 +1053,14 @@ def get_price_type_raw_data(start: str,
         df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
 
+
 # TODO: and dynamically group shares thus data downloading can be less repetitive.
 def get_financial_report_type_raw_data(start: str,
                                        end: str,
                                        shares: str,
                                        htypes: [str, list],
                                        parallel: int = 0,
-                                       delay = 1.25,
+                                       delay=1.25,
                                        delay_every: int = 50,
                                        progress: bool = True):
     """ 在线获取财报类历史数据
@@ -1089,7 +1111,7 @@ def get_financial_report_type_raw_data(start: str,
     i = 0
     if progress:
         progress_bar(i, total_share_count)
-    if parallel > 1: # only works when number of shares < 50 because currently only 50 downloads per min is allowed
+    if parallel > 1:  # only works when number of shares < 50 because currently only 50 downloads per min is allowed
         proc_pool = ProcessPoolExecutor()
         if len(str_to_list(income_fields)) > 2:
             futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for
