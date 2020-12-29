@@ -633,8 +633,24 @@ class HistoryPanel():
         raise NotImplementedError
 
     # TODO: implement this method
+    def candle(self, *args, **kwargs):
+        """ plot candle chart with data in the HistoryPanel, check data availability before plotting
+        """
+        raise NotImplementedError
+
+    # TODO: implement this method
     def ohlc(self, *args, **kwargs):
         """ plot ohlc chart with data in the HistoryPanel, check data availability before plotting
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        raise NotImplementedError
+
+    # TODO: implement this method
+    def renko(self, *args, **kwargs):
+        """ plot renko chart with data in the HistoryPanel, check data availability before plotting
 
         :param args:
         :param kwargs:

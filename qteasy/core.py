@@ -58,6 +58,7 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 
+# TODO: 使用logging模块来管理log
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
 
