@@ -58,7 +58,7 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 
-# TODO: 使用logging模块来管理log
+# TODO: 使用logging模块来管理logs
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
 
@@ -92,6 +92,7 @@ class Log:
 # TODO: 提供config参数的保存和显示功能，设置所有参数的显示级别，确保按照不同级别显示不同的config参数
 # TODO: 在run()中增加基本args确认功能，在运行之前确认不会缺乏必要的参数
 # TODO: 完善context对象的信息属性，使得用户可以快速了解当前配置
+# TODO: Context应该有一个保存功能，或至少有一个"read_last"功能，以便用户长期保存常用的上下文参数变量
 class Context:
     """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及参数
 
@@ -253,18 +254,17 @@ class Context:
                          'decreasing step size to provide increased accuracy over rounds',
                       3: 'Genetic Algorithm, searches for local optimal parameter by adopting genetic evolution laws'}
 
-    def __init__(self,
-                 mode: int = 1,
-                 moq: float = 0.,
-                 riskfree_interest_rate: float = 0.035,
-                 visual: bool = False):
-        """初始化所有的环境变量和环境常量
+    def __init__(self, *args, **kwargs):
+        """初始化所有的上下文变量
+
+        所有的上下文变量通过*args以及**kwargs传入，接受参数后，所有参数通过_arg_validators.py中的arg_validator()函数进行
+        验证，这些参数的验证过程与qt.run()函数中的参数验证过程是同意过程，这样就可以保证两个地方的参数等价。
+
+        当所有的参数均通过基本验证后，所有的参数被存放到一个上下文变量字典中。这个字典可以被当成参数直接传入qt.run()函数中，这样就
+        不需要在qt.run()中重复输入运行参数了
 
         input:
-            :param mode: 操作模式：{0: 实盘操作模式, 1: 历史数据回测模式, 2: 历史数据优化模式}
-            :param moq: 最小交易单位
-            :param riskfree_interest_rate: 无风险利率水平
-            :param visual: 是否输出可视化结果
+            可用的args定义在_arg_validators.py中
 
         更多参数含义见Context类的docstring
         """
