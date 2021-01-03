@@ -254,7 +254,7 @@ class Context:
                          'decreasing step size to provide increased accuracy over rounds',
                       3: 'Genetic Algorithm, searches for local optimal parameter by adopting genetic evolution laws'}
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, mode, *args, **kwargs):
         """初始化所有的上下文变量
 
         所有的上下文变量通过*args以及**kwargs传入，接受参数后，所有参数通过_arg_validators.py中的arg_validator()函数进行
@@ -274,8 +274,8 @@ class Context:
         self.share_pool = None
         self.asset_type = 'E'
 
-        self.moq = moq
-        self.riskfree_interest_rate = riskfree_interest_rate
+        self.moq = 0
+        self.riskfree_interest_rate = 0.035
         self.parallel = True
         self.print_log = False
 
@@ -288,7 +288,7 @@ class Context:
         self.reference_asset_type = 'E'
         self.reference_data_type = 'close'
         self.rate = Cost()
-        self.visual = visual
+        self.visual = True
         self.log = True
 
         # TODO: 这里除了invest_dates 以及invest_amounts以外，其他的参数均不起作用，需要重新规划

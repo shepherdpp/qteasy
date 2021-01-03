@@ -497,7 +497,7 @@ class Operator:
         """
         raise NotImplementedError
 
-    def add_strategy(self, stg):
+    def add_strategy(self, stg, usage):
         """add strategy"""
         raise NotImplementedError
 
