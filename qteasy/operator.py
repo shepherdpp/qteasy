@@ -550,7 +550,7 @@ class Operator:
                     [v0, v1, v2]，其中v2 = (i0, i1, i2)
             set_opt_par函数遍历Operator对象中的所有strategy函数，检查它的opt_tag值，对于opt_tag==2的策略，则分配参数给这个策略
                      stg1:   stg2:       stg3:
-                     tag=1   tag=0       tag=1
+                     tag=1   tag=0       tag=2
                     [p0, p1, p2, p3, p4, p5, p6, p7]
                      ==  ==              ==  ==  ==
                     [v0, v1]         v2=[i0, i1, i2]
