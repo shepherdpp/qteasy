@@ -338,6 +338,7 @@ class DataSource():
         :param asset_type:
         :return:
         """
+        #TODO: No file saving is needed if no new data is downloaded online
         all_dfs = []
         if isinstance(htypes, str):
             htypes = str_to_list(input_string=htypes, sep_char=',')
@@ -347,6 +348,7 @@ class DataSource():
         i = 0
         progress_count = len(htypes) * len(shares) + len(htypes)
         progress_bar(i, progress_count, f'total progress count: {progress_count}')
+        data_downloaded = False
         for htype in htypes:
             file_name = htype
             if freq.upper() != 'D':
@@ -379,6 +381,7 @@ class DataSource():
                 i += 1
                 progress_bar(i, progress_count, 'downloading missing data')
                 if missing_data.count() > 0:
+                    data_downloaded = True
                     missing_data_start = regulate_date_format(missing_data.index[0])
                     missing_data_end = regulate_date_format(missing_data.index[-1])
                     if htype in PRICE_TYPE_DATA:
@@ -429,10 +432,12 @@ class DataSource():
                             print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
 
             progress_bar(i, progress_count, 'Writing data to local files')
-            if self.file_exists(file_name):
-                self.merge_file(file_name, df)
-            else:
-                self.new_file(file_name, df)
+            if data_downloaded:
+                if self.file_exists(file_name):
+                    self.merge_file(file_name, df)
+                else:
+                    self.new_file(file_name, df)
+            progress_bar(i, progress_count, 'Extracting data')
             df = self.extract_data(file_name, shares=shares, start=start, end=end)
             all_dfs.append(df)
 

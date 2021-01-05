@@ -254,7 +254,7 @@ class Context:
                          'decreasing step size to provide increased accuracy over rounds',
                       3: 'Genetic Algorithm, searches for local optimal parameter by adopting genetic evolution laws'}
 
-    def __init__(self, mode, *args, **kwargs):
+    def __init__(self, mode = 1, *args, **kwargs):
         """初始化所有的上下文变量
 
         所有的上下文变量通过*args以及**kwargs传入，接受参数后，所有参数通过_arg_validators.py中的arg_validator()函数进行
