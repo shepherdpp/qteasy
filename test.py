@@ -2034,6 +2034,62 @@ class TestOperator(unittest.TestCase):
         self.hp2.info()
         self.op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
 
+    def test_info(self):
+        """Test information output of Operator"""
+        raise NotImplementedError
+
+    def test_operator_ready(self):
+        """test the method ready of Operator"""
+        raise NotImplementedError
+
+    def test_operator_add_strategy(self):
+        """test adding strategies to Operator"""
+        self.assertIsInstance(self.op, qt.Operator)
+        self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
+        self.assertIsInstance(self.op.ricon[0], qt.RiconUrgent)
+        self.assertEqual(self.op.selecting_count, 1)
+        self.assertEqual(self.op.strategy_count, 3)
+        self.assertEqual(self.op.ricon_count, 1)
+        self.assertEqual(self.op.timing_count, 1)
+        self.assertEqual(self.op.ls_blender, 'pos-1')
+        print(f'test adding strategies into existing op')
+        print('test adding strategy by string')
+        self.op.add_strategy('macd', 'timing')
+        self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.timing[1], qt.TimingMACD)
+        self.assertEqual(self.op.selecting_count, 1)
+        self.assertEqual(self.op.strategy_count, 4)
+        self.assertEqual(self.op.ricon_count, 1)
+        self.assertEqual(self.op.timing_count, 2)
+        self.assertEqual(self.op.ls_blender, 'pos-1')
+        self.op.add_strategy('random', 'selecting')
+        self.assertIsInstance(self.op.selecting[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.selecting[1], qt.TimingMACD)
+        self.assertEqual(self.op.selecting_count, 2)
+        self.assertEqual(self.op.strategy_count, 5)
+        self.assertEqual(self.op.ricon_count, 1)
+        self.assertEqual(self.op.timing_count, 2)
+        self.assertEqual(self.op.selecting_blender, '0 or 1')
+        self.op.add_strategy('none', 'ricon')
+        self.assertIsInstance(self.op.ricon[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.ricon[1], qt.TimingMACD)
+        self.assertEqual(self.op.selecting_count, 2)
+        self.assertEqual(self.op.strategy_count, 6)
+        self.assertEqual(self.op.ricon_count, 2)
+        self.assertEqual(self.op.timing_count, 2)
+        print('test adding strategy by list')
+        self.op.add_strategy(['dma', 'macd'], 'timing')
+        print('test adding strategy by object')
+        test_ls = TestLSStrategy()
+        self.op.add_strategy(test_ls, 'timing')
+
+
+
+    def test_operator_remove_strategy(self):
+        """test removing strategies from Operator"""
+        raise NotImplementedError
+
     def test_property_get(self):
         self.assertIsInstance(self.op, qt.Operator)
         self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
@@ -5128,10 +5184,14 @@ class TestVisual(unittest.TestCase):
 
 
 class TestBuiltIns(unittest.TestCase):
+
     def test_first(self):
         stg = qt.TimingCrossline()
         self.assertIsInstance(stg, qt.built_in.TimingCrossline)
         print(f'type of class: {type(stg)}')
+
+    def test_second(self):
+        raise NotImplementedError
 
 
 class TestFastExperiments(unittest.TestCase):

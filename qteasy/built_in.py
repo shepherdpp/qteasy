@@ -19,6 +19,21 @@ from .tafuncs import ht, kama, mama, mavp, t3, tema, trima, wma
 
 # Built-in Rolling timing strategies:
 
+def built_in_list(*args, **kwargs):
+    """display information of built-in strategies"""
+    return BUILT_IN_STRATEGY_DICT
+
+
+def built_ins(*args, **kwargs):
+    """alias of built_in_list()"""
+    return built_in_list(*args, **kwargs)
+
+
+def built_in_strategies(*args, **kwargs):
+    """alias of built_in_list()"""
+    return built_in_list(*args, **kwargs)
+
+
 class TimingCrossline(stg.RollingTiming):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
@@ -213,6 +228,7 @@ class TimingEMA(stg.RollingTiming):
     """
 
     """
+
     def __init__(self, pars):
         super().__init__(pars=pars)
 
@@ -230,6 +246,7 @@ class SCRSSMA(stg.RollingTiming):
         two parameters:
         - range - range of simple moving average
     """
+
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=1,
@@ -536,6 +553,7 @@ class DCRSSMA(stg.RollingTiming):
     - fast
     - slow
     """
+
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=2,
@@ -544,7 +562,6 @@ class DCRSSMA(stg.RollingTiming):
                          stg_name='SINGLE CROSSLINE - SMA',
                          stg_text='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
-
 
     def _realize(self, hist_data, params):
         f, s = params
@@ -841,6 +858,7 @@ class SLPSMA(stg.RollingTiming):
     """ Double cross line strategy with simple moving average
 
     """
+
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=2,
@@ -850,9 +868,8 @@ class SLPSMA(stg.RollingTiming):
                          stg_text='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = sma(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -880,7 +897,7 @@ class SLPDEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = dema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -908,7 +925,7 @@ class SLPEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -963,7 +980,7 @@ class SLPKAMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = kama(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1078,7 +1095,7 @@ class SLPTEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1106,7 +1123,7 @@ class SLPTRIMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = trima(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1134,7 +1151,7 @@ class SLPWMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f,  = params
+        f, = params
         h = hist_data.T
         curve = wma(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1262,7 +1279,7 @@ class TimingDMA(stg.SimpleTiming):
         return cat
 
 
-#TODO: TimingBBands should be updated to return a vector of signals instead one single number
+# TODO: TimingBBands should be updated to return a vector of signals instead one single number
 class TimingBBand(stg.SimpleTiming):
     """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
 
@@ -1690,6 +1707,7 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
         策略参数为n，一个大于2小于150的正整数
 
     """
+
     def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
@@ -1707,34 +1725,34 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
 
         """
         n, = self.pars
-        #TODO: not Implemented!
+        # TODO: not Implemented!
         factors = atr(hist_data)
 
         return factors
 
 
-BUILT_IN_STRATEGY_DICT = {'crossline':          TimingCrossline,
-                          'macd':               TimingMACD,
-                          'dma':                TimingDMA,
-                          'trix':               TimingTRIX,
-                          'cdl':                TimingCDL,
-                          'bband':              TimingBBand,
-                          'ricon_none':         RiconNone,
-                          'urgent':             RiconUrgent,
-                          'long':               TimingLong,
-                          'short':              TimingShort,
-                          'zero':               TimingZero,
-                          'all':                SelectingAll,
-                          'none':               SelectingNone,
-                          'random':             SelectingRandom,
-                          'finance':            SelectingFinanceIndicator,
-                          'last_open':          SelectingLastOpen,
-                          'last_close':         SelectingLastClose,
-                          'last_high':          SelectingLastHigh,
-                          'last_low':           SelectingLastLow,
-                          'avg_open':           SelectingAvgOpen,
-                          'avg_close':          SelectingAvgClose,
-                          'avg_high':           SelectingAvghigh,
-                          'avg_low':            SelectingAvgLow}
+BUILT_IN_STRATEGY_DICT = {'crossline' : TimingCrossline,
+                          'macd'      : TimingMACD,
+                          'dma'       : TimingDMA,
+                          'trix'      : TimingTRIX,
+                          'cdl'       : TimingCDL,
+                          'bband'     : TimingBBand,
+                          'ricon_none': RiconNone,
+                          'urgent'    : RiconUrgent,
+                          'long'      : TimingLong,
+                          'short'     : TimingShort,
+                          'zero'      : TimingZero,
+                          'all'       : SelectingAll,
+                          'none'      : SelectingNone,
+                          'random'    : SelectingRandom,
+                          'finance'   : SelectingFinanceIndicator,
+                          'last_open' : SelectingLastOpen,
+                          'last_close': SelectingLastClose,
+                          'last_high' : SelectingLastHigh,
+                          'last_low'  : SelectingLastLow,
+                          'avg_open'  : SelectingAvgOpen,
+                          'avg_close' : SelectingAvgClose,
+                          'avg_high'  : SelectingAvghigh,
+                          'avg_low'   : SelectingAvgLow}
 
 AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()
