@@ -717,8 +717,24 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     return list(share_basics['ts_code'].values)
 
 
+def info(**kwargs):
+    """ qteasy 模块的帮助信息入口函数
+
+    :param kwargs:
+    :return:
+    """
+    raise NotImplementedError
+
+def help(**kwargs):
+    """ qteasy 模块的帮助信息入口函数
+
+    :param kwargs:
+    :return:
+    """
+    raise NotImplementedError
+
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
-def run(operator, context):
+def run(operator, context, *args, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
         接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
