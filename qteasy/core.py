@@ -288,7 +288,7 @@ class Context:
         self.reference_asset_type = 'E'
         self.reference_data_type = 'close'
         self.rate = Cost()
-        self.visual = True
+        self.visual = True  # duplicate
         self.log = True
 
         # TODO: 这里除了invest_dates 以及invest_amounts以外，其他的参数均不起作用，需要重新规划
@@ -299,7 +299,7 @@ class Context:
         self.invest_end = '20201130'
         self.invest_total_amount = 50000
         self.invest_unit_amount = 10000
-        self.riskfree_ir = 0.015
+        self.riskfree_ir = 0.015  # duplicate
         self._invest_dates = '20060403'
         self._invest_amounts = [10000]
         self.cash_plan = CashPlan(self._invest_dates, self._invest_amounts)
@@ -312,7 +312,6 @@ class Context:
         self.min_sell_fee = 5
         self.slippage = 0
         self.rate_type = 0
-        self.visual = True
         self.performance_indicators = 'FV'
 
         self.loop_log_file_path = None
@@ -401,14 +400,14 @@ class Context:
     # TODO: implement this property to check validity of parameters before run()
     # TODO: refract this into parameter validators in _arg_validators.py
     @property
-    def is_validate(self):
+    def is_valid(self):
         """ Checks if all parameters are valid, further, checks if
             parameters are not conflicting with each others
 
         :return:
         """
         # TODO: validate all parameters here, create error texts here
-        self.error_info = ''
+        self.error_msg = ''
         return True
 
 
@@ -725,6 +724,7 @@ def info(**kwargs):
     """
     raise NotImplementedError
 
+
 def help(**kwargs):
     """ qteasy 模块的帮助信息入口函数
 
@@ -732,6 +732,16 @@ def help(**kwargs):
     :return:
     """
     raise NotImplementedError
+
+
+def config(**kwargs):
+    """ 配置qteasy的运行参数
+
+    :param kwargs:
+    :return:
+    """
+    raise NotImplementedError
+
 
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
 def run(operator, context, *args, **kwargs):

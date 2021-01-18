@@ -8,6 +8,7 @@
 # ======================================
 
 from .finance import CashPlan, Cost
+import datetime
 
 PRICE_TYPE_DATA = ['close',
                    'open',
@@ -486,7 +487,7 @@ def _valid_qt_args():
 
     :return:
     """
-
+    today = datetime.datetime.today().date()
     vkwargs = {
         'mode'                  :  {'Default'   : 1,  # 运行模式
                                     'Validator' : lambda value: value in (0, 1, 2, 3),
@@ -515,9 +516,9 @@ def _valid_qt_args():
                                     'Validator' : lambda value: isinstance(value, (int, float))
                                                                 and value >= 0,
                                     'level'     : 0,
-                                    'text'      : '投资产品的最小申购批量大小'
-                                                  '0  : 可以购买任意份额的投资产品，包括小数份额'
-                                                  '1  : 只能购买整数份额的投资产品'
+                                    'text'      : '投资产品的最小申购批量大小，浮点数，例如：'
+                                                  '0. : 可以购买任意份额的投资产品，包括小数份额'
+                                                  '1. : 只能购买整数份额的投资产品'
                                                   '100: 可以购买100的整数倍份额投资产品'
                                                   'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
 
@@ -612,6 +613,95 @@ def _valid_qt_args():
                                     'level'    : 2,
                                     'text'     : '交易成本模型，默认为None，系统自动根据前面的cost参数生成一个成本模型，如果'
                                                  '直接给出成本模型，则忽略前面的cost参数'},
+
+        'log'                   :  {'Default'   : True,
+                                    'Validator' : lambda value: isinstance(value, bool),
+                                    'level'     : 1,
+                                    'text'      : '是否生成日志'},
+
+        'invest_start'          :  {'Default'   : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                    'Validator' : lambda value: isinstance(value, str)
+                                                                and value >= 0,
+                                    'level'     : 0,
+                                    'text'      : '回测模式下的回测开始日期'},
+
+        'invest_end'            :  {'Default'   : today.strftime('%Y%m%d'),
+                                    'Validator' : lambda value: isinstance(value, str)
+                                                                and value >= 0,
+                                    'level'     : 0,
+                                    'text'      : '回测模式下的回测结束日期'},
+
+        'invest_cash_amount'    :  {'Default'  : [100000.0],
+                                    'Validator': lambda value: isinstance(value, (tuple, list))
+                                                               and all(isinstance(item, (float, int))
+                                                                       for item in value)
+                                                               and all(item > 1 for item in value),
+                                    'level'    : 1,
+                                    'text'     : '投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+
+        'invest_cash_dates'     :  {'Default'  : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                    'Validator': lambda value: isinstance(value, (str, list))
+                                                               and all(isinstance(item, str)
+                                                                       for item in value),
+                                    'level'    : 1,
+                                    'text'     : '投资的日期，一个str或list'},
+
+
+        'opti_start'            :  {'Default'   : (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
+                                    'Validator' : lambda value: isinstance(value, str)
+                                                                and value >= 0,
+                                    'level'     : 0,
+                                    'text'      : '优化模式下的策略优化区间开始日期'},
+
+        'opti_end'              :  {'Default'   : (today - datetime.timedelta(500)).strftime('%Y%m%d'),
+                                    'Validator' : lambda value: isinstance(value, str)
+                                                                and value >= 0,
+                                    'level'     : 0,
+                                    'text'      : '优化模式下的策略优化区间结束日期'},
+
+        'opti_cash_amount'      :  {'Default'  : [100000.0],
+                                    'Validator': lambda value: isinstance(value, (tuple, list))
+                                                               and all(isinstance(item, (float, int))
+                                                                       for item in value)
+                                                               and all(item > 1 for item in value),
+                                    'level'    : 1,
+                                    'text'     : '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+
+        'opti_cash_dates'       :  {'Default'  : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                    'Validator': lambda value: isinstance(value, (str, list))
+                                                               and all(isinstance(item, str)
+                                                                       for item in value),
+                                    'level'    : 1,
+                                    'text'     : '优化模式投资的日期，一个str或list'},
+
+
+        'test_start'            :  {'Default'   : (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
+                                    'Validator' : lambda value: isinstance(value, str)
+                                                                and value >= 0,
+                                    'level'     : 0,
+                                    'text'      : '优化模式下的策略测试区间开始日期'},
+
+        'test_end'              :  {'Default'   : (today - datetime.timedelta(500)).strftime('%Y%m%d'),
+                                    'Validator' : lambda value: isinstance(value, str)
+                                                                and value >= 0,
+                                    'level'     : 0,
+                                    'text'      : '优化模式下的策略测试区间结束日期'},
+
+        'test_cash_amount'      :  {'Default'  : [100000.0],
+                                    'Validator': lambda value: isinstance(value, (tuple, list))
+                                                               and all(isinstance(item, (float, int))
+                                                                       for item in value)
+                                                               and all(item > 1 for item in value),
+                                    'level'    : 1,
+                                    'text'     : '优化模式策略测试投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+
+        'test_cash_dates'       :  {'Default'  : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                    'Validator': lambda value: isinstance(value, (str, list))
+                                                               and all(isinstance(item, str)
+                                                                       for item in value),
+                                    'level'    : 1,
+                                    'text'     : '优化模式策略测试投资的日期，一个str或list'},
+
 
     }
     _validate_keywords_dict(vkwargs)
