@@ -12,6 +12,7 @@ import numpy as np
 import datetime
 import time
 import math
+import logging
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -25,6 +26,9 @@ from .evaluate import evaluate
 from .evaluate import eval_benchmark
 from .evaluate import eval_fv
 from .tsfuncs import stock_basic
+
+from ._arg_validators import _valid_qt_kwargs
+from ._arg_validators import _process_kwargs
 
 AVAILABLE_EVALUATION_INDICATORS = []
 AVAILABLE_SHARE_INDUSTRIES = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
@@ -58,6 +62,7 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 
+
 # TODO: 使用logging模块来管理logs
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -80,6 +85,21 @@ class Log:
         """
 
         raise NotImplementedError
+
+
+class ConfigDict(dict):
+    """ 继承自dict的一个类，与字典相同，用于构造qt.run()函数的参数表
+        比dict多出一个功能，即通过属性来访问字典的键值，提供访问便利性
+
+        即：
+        config.attr = config['attr']
+
+    """
+    def __getattr__(self, item):
+        if item in self.keys():
+            return self[item]
+        else:
+            raise KeyError(f'the key {item} is not valid!')
 
 
 # TODO: Usability improvements:
@@ -695,7 +715,7 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
         date = pd.to_datetime('1970-01-01')
     # validate all input args:
     if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
-        raise KeyError
+        raise KeyError()
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
@@ -734,8 +754,8 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def config(**kwargs):
-    """ 配置qteasy的运行参数
+def configurate(**kwargs):
+    """ 配置qteasy的运行参数QT_CONFIG
 
     :param kwargs:
     :return:
@@ -743,6 +763,72 @@ def config(**kwargs):
     raise NotImplementedError
 
 
+def check_and_prepare_hist_data(operator, config):
+    """ 根据config参数字典中的参数，下载或读取所需的历史数据
+
+    :param: operator: Operator对象，
+    :param: config, dict 参数字典
+    :return:
+    """
+    run_mode = config.mode
+    hist_op = get_history_panel(start=config.invest_start,
+                                end=config.invest_end,
+                                shares=config.share_pool,
+                                htypes=operator.op_data_types,
+                                freq=operator.op_data_freq,
+                                asset_type=config.asset_type,
+                                chanel='local') if run_mode <= 1 else HistoryPanel()
+    # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
+    hist_loop = hist_op.to_dataframe(htype='close')
+    # debug
+    # print(f'\n got hist_op as following\n')
+    # hist_op.info()
+    # print(f'\n got hist_loop as following\n')
+    # hist_loop.info()
+
+    # 生成用于策略优化训练的训练历史数据集合
+    hist_opti = get_history_panel(start=config.opti_start,
+                                  end=config.opti_end,
+                                  shares=config.share_pool,
+                                  htypes=operator.op_data_types,
+                                  freq=operator.op_data_freq,
+                                  asset_type=config.asset_type,
+                                  chanel='local') if run_mode == 2 else HistoryPanel()
+    # 生成用于优化策略测试的测试历史数据集合
+    hist_test = get_history_panel(start=config.test_start,
+                                  end=config.test_end,
+                                  shares=config.share_pool,
+                                  htypes=operator.op_data_types,
+                                  freq=operator.op_data_freq,
+                                  asset_type=config.asset_type,
+                                  chanel='local') if run_mode == 2 else HistoryPanel()
+
+    hist_test_loop = hist_test.to_dataframe(htype='close')
+    # debug
+    # print(f'\n got hist_opti as following between {context.opti_start} and {context.opti_end}\n')
+    # hist_opti.info()
+    # print(f'\n got hist_test as following between {context.test_start} and {context.test_end}\n')
+    # hist_test.info()
+    # print(f'\n got hist_test_loop as following\n')
+    # hist_test_loop.info()
+
+    # 生成参考历史数据，作为参考用于回测结果的评价
+    hist_reference = (get_history_panel(start=config.invest_start,
+                                        end=config.invest_end,
+                                        shares=config.reference_asset,
+                                        htypes=config.reference_data_type,
+                                        freq=operator.op_data_freq,
+                                        asset_type=config.reference_asset_type,
+                                        chanel='local')
+                      ).to_dataframe(htype='close')
+    # debug
+    # print(f'reference hist data downloaded, info: \n')
+    # hist_reference.info()
+    return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference
+
+
+
+# TODO: 简化run函数，将其中的子功能独立出来成为单独的函数
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
 def run(operator, context, *args, **kwargs):
     """开始运行，qteasy模块的主要入口函数
@@ -937,75 +1023,24 @@ def run(operator, context, *args, **kwargs):
     # 从context 上下文对象中读取运行所需的参数：
     # 股票清单或投资产品清单
     # shares = context.share_pool
-    if not context.is_validate:
-        raise ValueError(f'context object is not valid, check following info:\n{context.error_info}')
-    reference_data = context.reference_asset
+
+    config = _process_kwargs(kwargs, _valid_qt_kwargs())
+
+    reference_data = config['reference_asset']
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
-    run_mode = context.mode
-    run_mode_text = context.mode_text
-    print(f'====================================\n'
-          f'       RUNNING IN MODE {run_mode}\n'
-          f'      --{run_mode_text}--\n'
-          f'====================================\n')
+    run_mode = config['mode']
 
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
+    # TODO: 将历史数据的准备工作转入check_and_prepare_op()函数中
     # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
     # 生成用于数据回测的历史数据
-    if run_mode <= 1:
-        hist_op = get_history_panel(start=context.invest_start,
-                                    end=context.invest_end,
-                                    shares=context.share_pool,
-                                    htypes=operator.op_data_types,
-                                    freq=operator.op_data_freq,
-                                    asset_type=context.asset_type,
-                                    chanel='local')
-        # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
-        hist_loop = hist_op.to_dataframe(htype='close')
-        # debug
-        # print(f'\n got hist_op as following\n')
-        # hist_op.info()
-        # print(f'\n got hist_loop as following\n')
-        # hist_loop.info()
-
-    if run_mode == 2:
-        # 生成用于策略优化训练的训练历史数据集合
-        hist_opti = get_history_panel(start=context.opti_start,
-                                      end=context.opti_end,
-                                      shares=context.share_pool,
-                                      htypes=operator.op_data_types,
-                                      freq=operator.op_data_freq,
-                                      asset_type=context.asset_type,
-                                      chanel='local')
-        # 生成用于优化策略测试的测试历史数据集合
-        hist_test = get_history_panel(start=context.test_start,
-                                      end=context.test_end,
-                                      shares=context.share_pool,
-                                      htypes=operator.op_data_types,
-                                      freq=operator.op_data_freq,
-                                      asset_type=context.asset_type,
-                                      chanel='local')
-        hist_test_loop = hist_test.to_dataframe(htype='close')
-        # debug
-        # print(f'\n got hist_opti as following between {context.opti_start} and {context.opti_end}\n')
-        # hist_opti.info()
-        # print(f'\n got hist_test as following between {context.test_start} and {context.test_end}\n')
-        # hist_test.info()
-        # print(f'\n got hist_test_loop as following\n')
-        # hist_test_loop.info()
-
-    # 生成参考历史数据，作为参考用于回测结果的评价
-    hist_reference = (get_history_panel(start=context.invest_start,
-                                        end=context.invest_end,
-                                        shares=context.reference_asset,
-                                        htypes=context.reference_data_type,
-                                        freq=operator.op_data_freq,
-                                        asset_type=context.reference_asset_type,
-                                        chanel='local')
-                      ).to_dataframe(htype='close')
-    # debug
-    # print(f'reference hist data downloaded, info: \n')
-    # hist_reference.info()
+    (hist_op,
+     hist_loop,
+     hist_opti,
+     hist_test,
+     hist_test_loop,
+     hist_reference) = check_and_prepare_hist_data(operator, config)
 
     if run_mode == 0:
         # 进入实时信号生成模式：

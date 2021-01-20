@@ -7,6 +7,7 @@ from .strategy import *
 from .visual import *
 from .built_in import *
 from .finance import *
+from ._arg_validators import _process_kwargs, _valid_qt_kwargs
 
 # TODO: 仅需要导入用户可能会用到的类或函数即可，不需要导入所有的函数
 
@@ -51,4 +52,7 @@ print('tushare version:', ts.__version__)
 TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
 
-print('tushare token set!')
+# TODO: in future versions, Configurations can be loaded from local
+# TODO: files, thus previous configurations can be initialized at __init__()
+
+QT_CONFIG = _process_kwargs({}, _valid_qt_kwargs())

@@ -7,7 +7,7 @@
 # and related other functions.
 # ======================================
 
-from .finance import CashPlan, Cost
+from .finance import Cost
 import datetime
 
 PRICE_TYPE_DATA = ['close',
@@ -461,15 +461,8 @@ INDICATOR_TYPE_DATA = ['eps',
 FINANCE_TYPE_DATA = INCOME_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA
 COMPOSIT_TYPE_DATA = []
 
-def check_and_prepare_data():
-    """
 
-    :return:
-    """
-    raise NotImplementedError
-
-
-def _valid_qt_args():
+def _valid_qt_kwargs():
     """
     Construct and return the "valid kwargs table" for the qteasy.run() function.
     A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
@@ -489,301 +482,358 @@ def _valid_qt_args():
     """
     today = datetime.datetime.today().date()
     vkwargs = {
-        'mode'                  :  {'Default'   : 1,  # 运行模式
-                                    'Validator' : lambda value: value in (0, 1, 2, 3),
-                                    'level'     : 0,
-                                    'text'      : 'qteasy 的运行模式: '
-                                                  '0: 实时信号生成模式'
-                                                  '1: 回测-评价模式'
-                                                  '2: 策略优化模式'
-                                                  '3: 统计预测模式'},
+        'mode':                {'Default':   1,  # 运行模式
+                                'Validator': lambda value: value in (0, 1, 2, 3),
+                                'level':     0,
+                                'text':      'qteasy 的运行模式: '
+                                             '0: 实时信号生成模式'
+                                             '1: 回测-评价模式'
+                                             '2: 策略优化模式'
+                                             '3: 统计预测模式'},
 
-        'asset_pool'            :  {'Default'   : None,  #
-                                    'Validator' : lambda value: isinstance(value, (str, list)),
-                                    'level'     : 0,
-                                    'text'      : '可用投资产品池，投资组合基于池中的产品创建'},
+        'asset_pool':          {'Default':   None,  #
+                                'Validator': lambda value: isinstance(value, (str, list))
+                                                           and _validate_asset_pool(value),
+                                'level':     0,
+                                'text':      '可用投资产品池，投资组合基于池中的产品创建'},
 
-        'asset_type'            :  {'Default'   : 'E',  #
-                                    'Validator' : lambda value: isinstance(value, str) and _validate_asset_type(value),
-                                    'level'     : 0,
-                                    'text'      : '投资产品的资产类型，包括：'
-                                                  'I  : 指数'
-                                                  'E  : 股票'
-                                                  'F  : 期货'
-                                                  'FD : 基金'},
+        'asset_type':          {'Default':   'E',  #
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and _validate_asset_type(value),
+                                'level':     0,
+                                'text':      '投资产品的资产类型，包括：'
+                                             'I  : 指数'
+                                             'E  : 股票'
+                                             'F  : 期货'
+                                             'FD : 基金'},
 
-        'trade_batch_size'      :  {'Default'   : 0.0,
-                                    'Validator' : lambda value: isinstance(value, (int, float))
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '投资产品的最小申购批量大小，浮点数，例如：'
-                                                  '0. : 可以购买任意份额的投资产品，包括小数份额'
-                                                  '1. : 只能购买整数份额的投资产品'
-                                                  '100: 可以购买100的整数倍份额投资产品'
-                                                  'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
+        'trade_batch_size':    {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, (int, float))
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '投资产品的最小申购批量大小，浮点数，例如：'
+                                             '0. : 可以购买任意份额的投资产品，包括小数份额'
+                                             '1. : 只能购买整数份额的投资产品'
+                                             '100: 可以购买100的整数倍份额投资产品'
+                                             'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
 
-        'riskfree_ir'           :  {'Default'  : 0.0035,
-                                    'Validator': lambda value: isinstance(value, float) and 0 <= value < 1,
-                                    'level'    : 1,
-                                    'text'     : '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
+        'riskfree_ir':         {'Default':   0.0035,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and 0 <= value < 1,
+                                'level':     1,
+                                'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
 
-        'parallel'              :  {'Default'  : False,
-                                    'Validator': lambda value: isinstance(value, bool),
-                                    'level'    : 1,
-                                    'text'     : '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
+        'parallel':            {'Default':   False,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     1,
+                                'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
 
-        'gpu'                   :  {'Default'  : False,
-                                    'Validator': lambda value: isinstance(value, bool),
-                                    'level'    : 1,
-                                    'text'     : '如果True，策略参数寻优时使用GPU加速计算'},
+        'gpu':                 {'Default':   False,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     1,
+                                'text':      '如果True，策略参数寻优时使用GPU加速计算'},
 
-        'print_backtest_log'    :  {'Default'  : False,
-                                    'Validator': lambda value: isinstance(value, bool),
-                                    'level'    : 1,
-                                    'text'     : '如果True，在回测过程中会打印回测的详细交易记录'},
+        'print_backtest_log':  {'Default':   False,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     1,
+                                'text':      '如果True，在回测过程中会打印回测的详细交易记录'},
 
-        'reference_asset'       :  {'Default'  : '000300.SH',
-                                    'Validator': lambda value: isinstance(value, str) and _validate_asset_id(value),
-                                    'level'    : 0,
-                                    'text'     : '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数'},
+        'reference_asset':     {'Default':   '000300.SH',
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and _validate_asset_id(value),
+                                'level':     0,
+                                'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数'},
 
-        'ref_asset_type'        :  {'Default'  : 'I',
-                                    'Validator': lambda value: _validate_asset_type(value),
-                                    'level'    : 0,
-                                    'text'     : '参考价格的资产类型，包括：'
-                                                  'I  : 指数'
-                                                  'E  : 股票'
-                                                  'F  : 期货'
-                                                  'FD : 基金'},
+        'ref_asset_type':      {'Default':   'I',
+                                'Validator': lambda value: _validate_asset_type(value),
+                                'level':     0,
+                                'text':      '参考价格的资产类型，包括：'
+                                             'I  : 指数'
+                                             'E  : 股票'
+                                             'F  : 期货'
+                                             'FD : 基金'},
 
-        'ref_asset_dtype'       :  {'Default'  : 'close',
-                                    'Validator': lambda value: value in PRICE_TYPE_DATA,
-                                    'level'    : 0,
-                                    'text'     : '作为参考价格的资产的价格类型。'},
+        'ref_asset_dtype':     {'Default':   'close',
+                                'Validator': lambda value: value in PRICE_TYPE_DATA,
+                                'level':     0,
+                                'text':      '作为参考价格的资产的价格类型。'},
 
-        'visual'                :  {'Default'  : True,
-                                    'Validator': lambda value: isinstance(value, bool),
-                                    'level'    : 0,
-                                    'text'     : '为True时使用图表显示回测的结果'},
+        'visual':              {'Default':   True,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     0,
+                                'text':      '为True时使用图表显示回测的结果'},
 
-        'cost_fixed_buy'        :  {'Default'  : 0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'},
+        'cost_fixed_buy':      {'Default':   0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'},
 
-        'cost_fixed_sell'       :  {'Default'  : 0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化'},
+        'cost_fixed_sell':     {'Default':   0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化'},
 
-        'cost_rate_buy'         :  {'Default'  : 0.0003,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and 0 <= value < 1,
-                                    'level'    : 0,
-                                    'text'     : '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算'},
+        'cost_rate_buy':       {'Default':   0.0003,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and 0 <= value < 1,
+                                'level':     0,
+                                'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算'},
 
-        'cost_rate_sell'        :  {'Default'  : 0.0001,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and 0 <= value < 1,
-                                    'level'    : 1,
-                                    'text'     : '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算'},
+        'cost_rate_sell':      {'Default':   0.0001,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and 0 <= value < 1,
+                                'level':     1,
+                                'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算'},
 
-        'cost_min_buy'          :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
+        'cost_min_buy':        {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
 
-        'cost_min_sell'         :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额'},
+        'cost_min_sell':       {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额'},
 
-        'cost_slippage'         :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and 0 <= value < 1,
-                                    'level'    : 1,
-                                    'text'     : '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
+        'cost_slippage':       {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and 0 <= value < 1,
+                                'level':     1,
+                                'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
 
-        'trade_cost'            :  {'Default'  : None,
-                                    'Validator': lambda value: isinstance(value, Cost),
-                                    'level'    : 2,
-                                    'text'     : '交易成本模型，默认为None，系统自动根据前面的cost参数生成一个成本模型，如果'
-                                                 '直接给出成本模型，则忽略前面的cost参数'},
+        'trade_cost':          {'Default':   None,
+                                'Validator': lambda value: isinstance(value, Cost),
+                                'level':     2,
+                                'text':      '交易成本模型，默认为None，系统自动根据前面的cost参数生成一个成本模型，如果'
+                                             '直接给出成本模型，则忽略前面的cost参数'},
 
-        'log'                   :  {'Default'   : True,
-                                    'Validator' : lambda value: isinstance(value, bool),
-                                    'level'     : 1,
-                                    'text'      : '是否生成日志'},
+        'log':                 {'Default':   True,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     1,
+                                'text':      '是否生成日志'},
 
-        'invest_start'          :  {'Default'   : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
-                                    'Validator' : lambda value: isinstance(value, str)
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '回测模式下的回测开始日期'},
+        'invest_start':        {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '回测模式下的回测开始日期'},
 
-        'invest_end'            :  {'Default'   : today.strftime('%Y%m%d'),
-                                    'Validator' : lambda value: isinstance(value, str)
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '回测模式下的回测结束日期'},
+        'invest_end':          {'Default':   today.strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '回测模式下的回测结束日期'},
 
-        'invest_cash_amount'    :  {'Default'  : [100000.0],
-                                    'Validator': lambda value: isinstance(value, (tuple, list))
-                                                               and all(isinstance(item, (float, int))
-                                                                       for item in value)
-                                                               and all(item > 1 for item in value),
-                                    'level'    : 1,
-                                    'text'     : '投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+        'invest_cash_amount':  {'Default':   [100000.0],
+                                'Validator': lambda value: isinstance(value, (tuple, list))
+                                                           and all(isinstance(item, (float, int))
+                                                                   for item in value)
+                                                           and all(item > 1 for item in value),
+                                'level':     1,
+                                'text':      '投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'invest_cash_dates'     :  {'Default'  : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
-                                    'Validator': lambda value: isinstance(value, (str, list))
-                                                               and all(isinstance(item, str)
-                                                                       for item in value),
-                                    'level'    : 1,
-                                    'text'     : '投资的日期，一个str或list'},
+        'invest_cash_dates':   {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, (str, list))
+                                                           and all(isinstance(item, str)
+                                                                   for item in value),
+                                'level':     1,
+                                'text':      '投资的日期，一个str或list'},
 
+        'opti_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '优化模式下的策略优化区间开始日期'},
 
-        'opti_start'            :  {'Default'   : (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
-                                    'Validator' : lambda value: isinstance(value, str)
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '优化模式下的策略优化区间开始日期'},
+        'opti_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '优化模式下的策略优化区间结束日期'},
 
-        'opti_end'              :  {'Default'   : (today - datetime.timedelta(500)).strftime('%Y%m%d'),
-                                    'Validator' : lambda value: isinstance(value, str)
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '优化模式下的策略优化区间结束日期'},
+        'opti_cash_amount':    {'Default':   [100000.0],
+                                'Validator': lambda value: isinstance(value, (tuple, list))
+                                                           and all(isinstance(item, (float, int))
+                                                                   for item in value)
+                                                           and all(item > 1 for item in value),
+                                'level':     1,
+                                'text':      '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'opti_cash_amount'      :  {'Default'  : [100000.0],
-                                    'Validator': lambda value: isinstance(value, (tuple, list))
-                                                               and all(isinstance(item, (float, int))
-                                                                       for item in value)
-                                                               and all(item > 1 for item in value),
-                                    'level'    : 1,
-                                    'text'     : '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+        'opti_cash_dates':     {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, (str, list))
+                                                           and all(isinstance(item, str)
+                                                                   for item in value),
+                                'level':     1,
+                                'text':      '优化模式投资的日期，一个str或list'},
 
-        'opti_cash_dates'       :  {'Default'  : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
-                                    'Validator': lambda value: isinstance(value, (str, list))
-                                                               and all(isinstance(item, str)
-                                                                       for item in value),
-                                    'level'    : 1,
-                                    'text'     : '优化模式投资的日期，一个str或list'},
+        'test_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '优化模式下的策略测试区间开始日期'},
 
+        'test_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value >= 0,
+                                'level':     0,
+                                'text':      '优化模式下的策略测试区间结束日期'},
 
-        'test_start'            :  {'Default'   : (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
-                                    'Validator' : lambda value: isinstance(value, str)
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '优化模式下的策略测试区间开始日期'},
+        'test_cash_amount':    {'Default':   [100000.0],
+                                'Validator': lambda value: isinstance(value, (tuple, list))
+                                                           and all(isinstance(item, (float, int))
+                                                                   for item in value)
+                                                           and all(item > 1 for item in value),
+                                'level':     1,
+                                'text':      '优化模式策略测试投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'test_end'              :  {'Default'   : (today - datetime.timedelta(500)).strftime('%Y%m%d'),
-                                    'Validator' : lambda value: isinstance(value, str)
-                                                                and value >= 0,
-                                    'level'     : 0,
-                                    'text'      : '优化模式下的策略测试区间结束日期'},
+        'test_cash_dates':     {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+                                'Validator': lambda value: isinstance(value, (str, list))
+                                                           and all(isinstance(item, str)
+                                                                   for item in value),
+                                'level':     1,
+                                'text':      '优化模式策略测试投资的日期，一个str或list'},
 
-        'test_cash_amount'      :  {'Default'  : [100000.0],
-                                    'Validator': lambda value: isinstance(value, (tuple, list))
-                                                               and all(isinstance(item, (float, int))
-                                                                       for item in value)
-                                                               and all(item > 1 for item in value),
-                                    'level'    : 1,
-                                    'text'     : '优化模式策略测试投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+        'optimize_target':     {'Default':   'FV',
+                                'Validator': lambda value: isinstance(value, str)
+                                                           and value in ['FV', 'SHARP'],
+                                'level':     1,
+                                'text':      '策略的优化目标。即优化时以找到该指标最佳的策略为目标'},
 
-        'test_cash_dates'       :  {'Default'  : (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
-                                    'Validator': lambda value: isinstance(value, (str, list))
-                                                               and all(isinstance(item, str)
-                                                                       for item in value),
-                                    'level'    : 1,
-                                    'text'     : '优化模式策略测试投资的日期，一个str或list'},
+        'maximize_target':     {'Default':   True,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     1,
+                                'text':      '为True时寻找目标值最大的策略，为False时寻找目标值最低的策略'},
 
-        'optimize_target'       :  {'Default'  : 'FV',
-                                    'Validator': lambda value: isinstance(value, str)
-                                                               and value in ['FV', 'SHARP'],
-                                    'level'    : 1,
-                                    'text'     : '策略的优化目标。即优化时以找到该指标最佳的策略为目标'},
+        'opti_method':         {'Default':   0,
+                                'Validator': lambda value: isinstance(value, int)
+                                                           and value <= 3,
+                                'level':     1,
+                                'text':      '策略优化算法，可选值如下:'
+                                             '0 - 穷举法，按照一定间隔对整个向量空间进行完全搜索'
+                                             '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略'
+                                             '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子空间，缩小'
+                                             '    步长进一步搜索'
+                                             '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）'
+                                             '4 - ML方法，基于机器学习的最佳策略搜索算法（尚未完成）'},
 
-        'maximize_target'       :  {'Default'  : True,
-                                    'Validator': lambda value: isinstance(value, bool),
-                                    'level'    : 1,
-                                    'text'     : '为True时寻找目标值最大的策略，为False时寻找目标值最低的策略'},
+        'opti_step_size':      {'Default':   1,
+                                'Validator': lambda value: isinstance(value, (float, int)) and value > 0,
+                                'level':     1,
+                                'text':      '使用穷举法搜索最佳策略时有用，搜索步长'},
 
-        'opti_method'           :  {'Default'  : 0,
-                                    'Validator': lambda value: isinstance(value, int)
-                                                               and value <= 3,
-                                    'level'    : 1,
-                                    'text'     : '策略优化算法，可选值如下:'
-                                                 '0 - 穷举法，按照一定间隔对整个向量空间进行完全搜索'
-                                                 '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略'
-                                                 '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子空间，缩小'
-                                                 '    步长进一步搜索'
-                                                 '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）'
-                                                 '4 - ML方法，基于机器学习的最佳策略搜索算法（尚未完成）'},
+        'opti_sample_size':    {'Default':   1000,
+                                'Validator': lambda value: isinstance(value, int) and value > 0,
+                                'level':     1,
+                                'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
 
-        'opti_step_size'        :  {'Default'  : 1,
-                                    'Validator': lambda value: isinstance(value, (float, int))
-                                                               and value > 0,
-                                    'level'    : 1,
-                                    'text'     : '使用穷举法搜索最佳策略时有用，搜索步长'},
+        'opti_init_step_size': {'Default':   16,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '在使用递进步长法搜索最佳策略时有用，第一轮搜索时的步长'},
 
-        'opti_sample_size'      :  {'Default'  : 1000,
-                                    'Validator': lambda value: isinstance(value, int)
-                                                               and value > 0,
-                                    'level'    : 1,
-                                    'text'     : '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
+        'opti_incre_ratio':    {'Default':   2,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value > 1,
+                                'level':     1,
+                                'text':      '在使用递进步长法搜索最佳策略时有用，后一轮搜索的步长缩小的比例'},
 
-        'opti_init_step_size'   :  {'Default'  : 16,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '在使用递进步长法搜索最佳策略时有用，第一轮搜索时的步长'},
+        'opti_screen_size':    {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '在使用递进步长法搜索最佳策略时有用，后一轮搜索子空间区域的大小'},
 
-        'opti_incre_ratio'      :  {'Default'  : 2,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value > 1,
-                                    'level'    : 1,
-                                    'text'     : '在使用递进步长法搜索最佳策略时有用，后一轮搜索的步长缩小的比例'},
+        'opti_min_step_size':  {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '在使用递进步长法搜索最佳策略时有用，最小步长，达到最小步长后搜索停止'},
 
-        'opti_screen_size'      :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '在使用递进步长法搜索最佳策略时有用，后一轮搜索子空间区域的大小'},
+        'opti_population':     {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量'},
 
-        'opti_min_step_size'    :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '在使用递进步长法搜索最佳策略时有用，最小步长，达到最小步长后搜索停止'},
-
-        'opti_population'       :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '在使用遗传算法搜索最佳策略时有用，种群的数量'},
-
-        'opti_output_count'     :  {'Default'  : 0.0,
-                                    'Validator': lambda value: isinstance(value, float)
-                                                               and value >= 0,
-                                    'level'    : 1,
-                                    'text'     : '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
+        'opti_output_count':   {'Default':   0.0,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0,
+                                'level':     1,
+                                'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
 
     }
-    _validate_keywords_dict(vkwargs)
+    _validate_vkwargs_dict(vkwargs)
+
+    return vkwargs
 
 
-def _validate_keywords_dict(kwargs):
-    """
+def _validate_vkwargs_dict(vkwargs):
+    """ Check that we didn't make a typo in any of the things
+        that should be the same for all vkwargs dict items:
 
-    :param kwargs:
+    :param vkwargs:
     :return:
     """
-    raise NotImplementedError
+    for key, value in vkwargs.items():
+        if len(value) != 4:
+            raise ValueError(f'Items != 2 in valid kwarg table, for kwarg {key}')
+        if 'Default' not in value:
+            raise ValueError(f'Missing "Default" value for kwarg {key}')
+        if 'Validator' not in value:
+            raise ValueError(f'Missing "Validator" function for kwarg {key}')
+        if 'level' not in value:
+            raise ValueError(f'Missing "level" identifier for kwarg {key}')
+        if 'text' not in value:
+            raise ValueError(f'Missing "text" string for kwarg {key}')
+
+
+def _process_kwargs(kwargs, vkwargs):
+    """ Given a "valid kwargs table" and some kwargs, verify that each key-word
+        is valid per the kwargs table, and that the value of the kwarg is the
+        correct type.  Fill a configuration dictionary with the default value
+        for each kwarg, and then substitute in any values that were provided
+        as kwargs and return the configuration dictionary.
+
+    :param kwargs: keywords that is given by user
+    :param vkwargs: valid keywords table usd for validating given kwargs
+    :return:
+    """
+    # initialize configuration from valid_kwargs_table:
+    config = {}
+    for key, value in vkwargs.items():
+        config[key] = value['Default']
+
+    # now validate kwargs, and for any valid kwargs
+    #  replace the appropriate value in config:
+    for key in kwargs.keys():
+        if key not in vkwargs:
+            raise KeyError(f'Unrecognized kwarg={str(key)}')
+        else:
+            value = kwargs[key]
+            try:
+                valid = vkwargs[key]['Validator'](value)
+            except Exception as ex:
+                ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
+                raise
+            if not valid:
+                import inspect
+                v = inspect.getsource(vkwargs[key]['Validator']).strip()
+                raise TypeError(
+                        f'kwarg {key} validator returned False for value: {str(value)}\n    ' + v)
+
+        # ---------------------------------------------------------------
+        #  At this point in the loop, if we have not raised an exception,
+        #      then kwarg is valid as far as we can tell, therefore,
+        #      go ahead and replace the appropriate value in config:
+
+        config[key] = value
+
+    return config
 
 
 def _validate_asset_id(kwargs):
@@ -792,7 +842,7 @@ def _validate_asset_id(kwargs):
     :param kwargs:
     :return:
     """
-    raise NotImplementedError
+    return True
 
 
 def _validate_asset_type(kwargs):
@@ -802,3 +852,12 @@ def _validate_asset_type(kwargs):
     :return:
     """
     return kwargs in ['I', 'E', 'F', 'FD']
+
+
+def _validate_asset_pool(kwargs):
+    """
+
+    :param kwargs:
+    :return:
+    """
+    return True
