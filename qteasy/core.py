@@ -29,6 +29,7 @@ from .tsfuncs import stock_basic
 
 from ._arg_validators import _valid_qt_kwargs
 from ._arg_validators import _process_kwargs
+from ._arg_validators import QT_CONFIG
 
 AVAILABLE_EVALUATION_INDICATORS = []
 AVAILABLE_SHARE_INDUSTRIES = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
@@ -85,21 +86,6 @@ class Log:
         """
 
         raise NotImplementedError
-
-
-class ConfigDict(dict):
-    """ 继承自dict的一个类，与字典相同，用于构造qt.run()函数的参数表
-        比dict多出一个功能，即通过属性来访问字典的键值，提供访问便利性
-
-        即：
-        config.attr = config['attr']
-
-    """
-    def __getattr__(self, item):
-        if item in self.keys():
-            return self[item]
-        else:
-            raise KeyError(f'the key {item} is not valid!')
 
 
 # TODO: Usability improvements:
@@ -736,6 +722,15 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     return list(share_basics['ts_code'].values)
 
 
+def is_ready(**kwargs):
+    """ 检查QT_CONFIG以及Operator对象，确认qt.run()是否具备基本运行条件
+
+    :param kwargs:
+    :return:
+    """
+    return True
+
+
 def info(**kwargs):
     """ qteasy 模块的帮助信息入口函数
 
@@ -754,13 +749,24 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def configurate(**kwargs):
+def configure(**kwargs):
     """ 配置qteasy的运行参数QT_CONFIG
 
     :param kwargs:
     :return:
     """
-    raise NotImplementedError
+    for key in kwargs.keys():
+        value = kwargs[key]
+        QT_CONFIG.__setattr__(key, value)
+
+
+def configuration(level=0):
+    """
+
+    :param level:
+    :return:
+    """
+    print(QT_CONFIG)
 
 
 def check_and_prepare_hist_data(operator, config):
@@ -773,7 +779,7 @@ def check_and_prepare_hist_data(operator, config):
     run_mode = config.mode
     hist_op = get_history_panel(start=config.invest_start,
                                 end=config.invest_end,
-                                shares=config.share_pool,
+                                shares=config.asset_pool,
                                 htypes=operator.op_data_types,
                                 freq=operator.op_data_freq,
                                 asset_type=config.asset_type,
@@ -827,10 +833,9 @@ def check_and_prepare_hist_data(operator, config):
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference
 
 
-
 # TODO: 简化run函数，将其中的子功能独立出来成为单独的函数
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
-def run(operator, context, *args, **kwargs):
+def run(operator, context, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
         接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
@@ -1024,11 +1029,12 @@ def run(operator, context, *args, **kwargs):
     # 股票清单或投资产品清单
     # shares = context.share_pool
 
-    config = _process_kwargs(kwargs, _valid_qt_kwargs())
+    configure(**kwargs)
+    config = QT_CONFIG
 
-    reference_data = config['reference_asset']
+    reference_data = config.reference_asset
     # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
-    run_mode = config['mode']
+    run_mode = config.mode
 
     # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
     # 用于交易信号生成的历史数据
@@ -1044,17 +1050,12 @@ def run(operator, context, *args, **kwargs):
 
     if run_mode == 0:
         # 进入实时信号生成模式：
-        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_op, cash_plan=config.cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
-        if context:
-            # 根据context对象的某个属性确定后续的步骤：要么从磁盘上读取当前持仓，要么手动输入当前持仓，要么假定当前持仓为0
-            pass
-        else:
-            pass
-        amounts = [0] * len(context.share_pool)
+        amounts = [0] * len(config.share_pool)
         print(f'====================================\n'
               f'|                                  |\n'
               f'|       OPERATION SIGNALS          |\n'
@@ -1073,7 +1074,7 @@ def run(operator, context, *args, **kwargs):
         print(f'\n===========END OF REPORT=============\n')
     elif run_mode == 1:
         # 进入回测模式
-        operator.prepare_data(hist_data=hist_op, cash_plan=context.cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_op, cash_plan=config.cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         # print(f'created operation list is: \n{op_list}')
@@ -1082,10 +1083,10 @@ def run(operator, context, *args, **kwargs):
         st = time.time()  # 记录交易信号回测耗时
         looped_values = apply_loop(op_list=op_list,
                                    history_list=hist_loop,
-                                   cash_plan=context.cash_plan,
-                                   moq=context.moq,
-                                   cost_rate=context.rate,
-                                   print_log=context.print_log)
+                                   cash_plan=config.cash_plan,
+                                   moq=config.moq,
+                                   cost_rate=config.rate,
+                                   print_log=config.print_log)
         et = time.time()
         run_time_loop_full = (et - st)
         # TODO: refract following codes, merge all evaluations into function evaluate(),

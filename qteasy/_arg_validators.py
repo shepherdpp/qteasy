@@ -7,6 +7,7 @@
 # and related other functions.
 # ======================================
 
+import pandas as pd
 from .finance import Cost
 import datetime
 
@@ -462,6 +463,41 @@ FINANCE_TYPE_DATA = INCOME_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA + 
 COMPOSIT_TYPE_DATA = []
 
 
+class ConfigDict(dict):
+    """ 继承自dict的一个类，与字典相同，用于构造qt.run()函数的参数表
+        比dict多出一个功能，即通过属性来访问字典的键值，提供访问便利性
+
+        即：
+        config.attr = config['attr']
+
+    """
+    def __getattr__(self, item):
+        if item in self.keys():
+            return self[item]
+        else:
+            raise KeyError(f'the key ({item}) is not valid!')
+
+    def __setattr__(self, key, value):
+        if key in self.keys():
+            vkwargs = _valid_qt_kwargs()
+            if key in vkwargs:
+                try:
+                    valid = vkwargs[key]['Validator'](value)
+                except Exception as ex:
+                    ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
+                    raise
+                if not valid:
+                    import inspect
+                    v = inspect.getsource(vkwargs[key]['Validator']).strip()
+                    raise TypeError(
+                            f'kwarg {key} validator returned False for value: {str(value)}\n    ' + v)
+                self[key] = value
+            else:
+                raise KeyError(f'the key ({key}) is not valid!')
+        else:
+            raise KeyError(f'the key ({key}) does not exist')
+
+
 def _valid_qt_kwargs():
     """
     Construct and return the "valid kwargs table" for the qteasy.run() function.
@@ -491,7 +527,7 @@ def _valid_qt_kwargs():
                                              '2: 策略优化模式'
                                              '3: 统计预测模式'},
 
-        'asset_pool':          {'Default':   None,  #
+        'asset_pool':          {'Default':   '000300.SH',  #
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and _validate_asset_pool(value),
                                 'level':     0,
@@ -618,13 +654,13 @@ def _valid_qt_kwargs():
 
         'invest_start':        {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value >= 0,
+                                                           and _is_datelike(value),
                                 'level':     0,
                                 'text':      '回测模式下的回测开始日期'},
 
         'invest_end':          {'Default':   today.strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value >= 0,
+                                                           and _is_datelike(value),
                                 'level':     0,
                                 'text':      '回测模式下的回测结束日期'},
 
@@ -639,19 +675,21 @@ def _valid_qt_kwargs():
         'invest_cash_dates':   {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
+                                                                   for item in value)
+                                                           and all(_is_datelike(item)
                                                                    for item in value),
                                 'level':     1,
                                 'text':      '投资的日期，一个str或list'},
 
         'opti_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value >= 0,
+                                                           and _is_datelike(value),
                                 'level':     0,
                                 'text':      '优化模式下的策略优化区间开始日期'},
 
         'opti_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value >= 0,
+                                                           and _is_datelike(value),
                                 'level':     0,
                                 'text':      '优化模式下的策略优化区间结束日期'},
 
@@ -666,19 +704,21 @@ def _valid_qt_kwargs():
         'opti_cash_dates':     {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
+                                                                   for item in value)
+                                                           and all(_is_datelike(item)
                                                                    for item in value),
                                 'level':     1,
                                 'text':      '优化模式投资的日期，一个str或list'},
 
         'test_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value >= 0,
+                                                           and _is_datelike(value),
                                 'level':     0,
                                 'text':      '优化模式下的策略测试区间开始日期'},
 
         'test_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value >= 0,
+                                                           and _is_datelike(value),
                                 'level':     0,
                                 'text':      '优化模式下的策略测试区间结束日期'},
 
@@ -804,7 +844,7 @@ def _process_kwargs(kwargs, vkwargs):
     :return:
     """
     # initialize configuration from valid_kwargs_table:
-    config = {}
+    config = ConfigDict()
     for key, value in vkwargs.items():
         config[key] = value['Default']
 
@@ -836,22 +876,52 @@ def _process_kwargs(kwargs, vkwargs):
     return config
 
 
-def _validate_asset_id(kwargs):
+def _validate_asset_id(value):
     """
 
-    :param kwargs:
+    :param value:
     :return:
     """
     return True
 
 
-def _validate_asset_type(kwargs):
+def _validate_asset_type(value):
     """
 
-    :param kwargs:
+    :param value:
     :return:
     """
     return kwargs in ['I', 'E', 'F', 'FD']
+
+
+def _is_datelike(value):
+    if isinstance(value, (pd.Timestamp,datetime.datetime,datetime.date)):
+        return True
+    if isinstance(value,str):
+        try:
+            dt = pd.to_datetime(value)
+            return True
+        except:
+            return False
+    return False
+
+
+def _bypass_kwarg_validation(value):
+    ''' For some kwargs, we either don't know enough, or
+        the validation is too complex to make it worth while,
+        so we bypass kwarg validation.  If the kwarg is
+        invalid, then eventually an exception will be
+        raised at the time the kwarg value is actually used.
+    '''
+    return True
+
+def _kwarg_not_implemented(value):
+    ''' If you want to list a kwarg in a valid_kwargs dict for a given
+        function, but you have not yet, or don't yet want to, implement
+        the kwarg; or you simply want to (temporarily) disable the kwarg,
+        then use this function as the kwarg validator
+    '''
+    raise NotImplementedError('kwarg NOT implemented.')
 
 
 def _validate_asset_pool(kwargs):
@@ -861,3 +931,6 @@ def _validate_asset_pool(kwargs):
     :return:
     """
     return True
+
+
+QT_CONFIG = _process_kwargs({}, _valid_qt_kwargs())
