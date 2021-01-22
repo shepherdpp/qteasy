@@ -822,9 +822,9 @@ def check_and_prepare_hist_data(operator, config):
     hist_reference = (get_history_panel(start=config.invest_start,
                                         end=config.invest_end,
                                         shares=config.reference_asset,
-                                        htypes=config.reference_data_type,
+                                        htypes=config.ref_asset_dtype,
                                         freq=operator.op_data_freq,
-                                        asset_type=config.reference_asset_type,
+                                        asset_type=config.ref_asset_type,
                                         chanel='local')
                       ).to_dataframe(htype='close')
     # debug
@@ -835,7 +835,7 @@ def check_and_prepare_hist_data(operator, config):
 
 # TODO: 简化run函数，将其中的子功能独立出来成为单独的函数
 # TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
-def run(operator, context, **kwargs):
+def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
         接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
@@ -1048,14 +1048,25 @@ def run(operator, context, **kwargs):
      hist_test_loop,
      hist_reference) = check_and_prepare_hist_data(operator, config)
 
+    cash_plan = CashPlan(config.invest_cash_dates,
+                         config.invest_cash_amounts)
+
+    trade_cost_rate = Cost(config.cost_fixed_buy,
+                           config.cost_fixed_sell,
+                           config.cost_rate_buy,
+                           config.cost_rate_sell,
+                           config.cost_min_buy,
+                           config.cost_min_sell,
+                           config.cost_slippage)
+
     if run_mode == 0:
         # 进入实时信号生成模式：
-        operator.prepare_data(hist_data=hist_op, cash_plan=config.cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
-        amounts = [0] * len(config.share_pool)
+        amounts = [0] * len(config.asset_pool)
         print(f'====================================\n'
               f'|                                  |\n'
               f'|       OPERATION SIGNALS          |\n'
@@ -1074,7 +1085,7 @@ def run(operator, context, **kwargs):
         print(f'\n===========END OF REPORT=============\n')
     elif run_mode == 1:
         # 进入回测模式
-        operator.prepare_data(hist_data=hist_op, cash_plan=config.cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         # print(f'created operation list is: \n{op_list}')
@@ -1083,10 +1094,10 @@ def run(operator, context, **kwargs):
         st = time.time()  # 记录交易信号回测耗时
         looped_values = apply_loop(op_list=op_list,
                                    history_list=hist_loop,
-                                   cash_plan=config.cash_plan,
-                                   moq=config.moq,
-                                   cost_rate=config.rate,
-                                   print_log=config.print_log)
+                                   cash_plan=cash_plan,
+                                   moq=config.trade_batch_size,
+                                   cost_rate=trade_cost_rate,
+                                   print_log=config.log)
         et = time.time()
         run_time_loop_full = (et - st)
         # TODO: refract following codes, merge all evaluations into function evaluate(),
@@ -1097,9 +1108,9 @@ def run(operator, context, **kwargs):
                             looped_values=looped_values,
                             hist_reference=hist_reference,
                             reference_data=reference_data,
-                            cash_plan=context.cash_plan,
+                            cash_plan=cash_plan,
                             indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
-        if context.visual:
+        if config.visual:
             # 图表输出投资回报历史曲线
             complete_value = _get_complete_hist(looped_value=looped_values,
                                                 h_list=hist_loop,
@@ -1143,10 +1154,10 @@ def run(operator, context, **kwargs):
             print(f'\n===========END OF REPORT=============\n')
         return None
     elif run_mode == 2:
-        how = context.opti_method
-        operator.prepare_data(hist_data=hist_opti, cash_plan=context.opti_cash_plan)  # 在生成交易信号之前准备历史数据
+        how = config.opti_method
+        operator.prepare_data(hist_data=hist_opti, cash_plan=config.opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
-        pars, perfs = OPTIMIZATION_METHODS[how](hist=hist_opti, op=operator, context=context)
+        pars, perfs = OPTIMIZATION_METHODS[how](hist=hist_opti, op=operator, context=config)
 
         print(f'====================================\n'
               f'|                                  |\n'
@@ -1174,21 +1185,21 @@ def run(operator, context, **kwargs):
                                                'beta',
                                                'sharp',
                                                'info'])
-        operator.prepare_data(hist_data=hist_test, cash_plan=context.test_cash_plan)
+        operator.prepare_data(hist_data=hist_test, cash_plan=config.test_cash_plan)
         for par in pars:
             operator.set_opt_par(par)  # 设置需要优化的策略参数
             op_list = operator.create_signal(hist_test)
             looped_values = apply_loop(op_list=op_list,
                                        history_list=hist_test_loop,
-                                       cash_plan=context.test_cash_plan,
-                                       cost_rate=context.rate,
-                                       moq=context.moq)
+                                       cash_plan=config.test_cash_plan,
+                                       cost_rate=trade_cost_rate,
+                                       moq=config.moq)
 
             eval_res = evaluate(op_list=op_list,
                                 looped_values=looped_values,
                                 hist_reference=hist_reference,
                                 reference_data=reference_data,
-                                cash_plan=context.cash_plan,
+                                cash_plan=config.cash_plan,
                                 indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
 
             eval_res['par'] = par
@@ -1205,7 +1216,7 @@ def run(operator, context, **kwargs):
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {test_result_df.years[0]} years.')
         print(f'total investment amount: ¥{test_result_df.total_invest[0]:13,.2f}')
-        print(f'Reference index type is {context.reference_asset} at {context.reference_asset_type}\n'
+        print(f'Reference index type is {config.reference_asset} at {config.reference_asset_type}\n'
               f'Total reference return: {ref_rtn * 100:.3f}% \n'
               f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
         print(f'statistical analysis of optimal strategy eval_res indicators: \n'

@@ -928,12 +928,20 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                             cashflow_type_data,
                             indicator_type_data]
     dataframes_to_stack = []
+    # debug
     # print(f'in function get_history_panel got shares: \n{shares}\nand htypes:\n{htypes}')
     if chanel == 'local':
         from .database import DataSource
         ds = DataSource()
-        return ds.get_and_update_data(start=start, end=end, freq=freq,
-                                      shares=shares, htypes=htypes, asset_type=asset_type)
+        result_hp = ds.get_and_update_data(start=start, end=end, freq=freq,
+                                           shares=shares, htypes=htypes, asset_type=asset_type)
+        # debug
+        # print(f'in function get_history_panel(), history panel is generated from local source, they are:\n')
+        # if result_hp is not None:
+        #     print(f'result history panel: \n{result_hp.info()}')
+        # else:
+        #     print(f'empty HistoryPanel')
+        return result_hp
     if chanel == 'online':
         result_hp = HistoryPanel()
         if len(price_type_data) > 0:
@@ -978,9 +986,11 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                        same_shares=True)
 
             # debug
-            # print(f'in function get_history_panel(), history panel is generated, they are:\n')
+            # print(f'in function get_history_panel(), history panel is generated from web, they are:\n')
             # if result_hp is not None:
-            # print(f'result history panel: \n{result_hp.info()}')
+            #     print(f'result history panel: \n{result_hp.info()}')
+            # else:
+            #     print(f'empty HistoryPanel')
 
         return result_hp
 
@@ -1021,7 +1031,19 @@ def get_price_type_raw_data(start: str,
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
-
+    # debug
+    # print(f'\n\n------------------------------'
+    #       f'\nin function get_price_type_raw_data() got following parameters:'
+    #       f'\nstart       = {start}'
+    #       f'\nend         = {end}'
+    #       f'\nfreq        = {freq}'
+    #       f'\nhtypes      = {htypes}'
+    #       f'\nshares      = {shares}'
+    #       f'\nasset_type  = {asset_type}'
+    #       f'\nparallel    = {parallel}'
+    #       f'\ndelay       = {delay}'
+    #       f'\ndelay_every = {delay_every}'
+    #       f'\nprogress    = {progress}')
     i = 0
     total_share_count = len(shares)
     if progress:

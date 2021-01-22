@@ -641,12 +641,6 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
 
-        'trade_cost':          {'Default':   None,
-                                'Validator': lambda value: isinstance(value, Cost),
-                                'level':     2,
-                                'text':      '交易成本模型，默认为None，系统自动根据前面的cost参数生成一个成本模型，如果'
-                                             '直接给出成本模型，则忽略前面的cost参数'},
-
         'log':                 {'Default':   True,
                                 'Validator': lambda value: isinstance(value, bool),
                                 'level':     1,
@@ -664,7 +658,7 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '回测模式下的回测结束日期'},
 
-        'invest_cash_amount':  {'Default':   [100000.0],
+        'invest_cash_amounts': {'Default':   [100000.0],
                                 'Validator': lambda value: isinstance(value, (tuple, list))
                                                            and all(isinstance(item, (float, int))
                                                                    for item in value)
@@ -672,11 +666,9 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'invest_cash_dates':   {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+        'invest_cash_dates':   {'Default':   '20060403',
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
-                                                                   for item in value)
-                                                           and all(_is_datelike(item)
                                                                    for item in value),
                                 'level':     1,
                                 'text':      '投资的日期，一个str或list'},
@@ -801,8 +793,8 @@ def _valid_qt_kwargs():
                                 'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量'},
 
         'opti_output_count':   {'Default':   0.0,
-                                'Validator': lambda value: isinstance(value, float)
-                                                           and value >= 0,
+                                'Validator': lambda value: isinstance(value, int)
+                                                           and value > 0,
                                 'level':     1,
                                 'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
 
@@ -891,7 +883,7 @@ def _validate_asset_type(value):
     :param value:
     :return:
     """
-    return kwargs in ['I', 'E', 'F', 'FD']
+    return value in ['I', 'E', 'F', 'FD']
 
 
 def _is_datelike(value):

@@ -5037,6 +5037,14 @@ class TestQT(unittest.TestCase):
         self.cont.output_count = 50
         self.cont.invest_start = '20020101'
         self.cont.moq = 1
+        qt.configure(reference_asset='000300.SH',
+                     ref_asset_type='I',
+                     asset_pool='000300.SH',
+                     asset_type='I',
+                     opti_output_count=50,
+                     invest_start='20020101',
+                     trade_batch_size=0,
+                     parallel=True)
 
         timing_pars1 = (165, 191, 23)
         timing_pars2 = {'000100': (77, 118, 144),
@@ -5052,17 +5060,16 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
-        self.cont.mode = 0
-        qt.run(self.op, self.cont)
+        qt.QT_CONFIG.mode = 0
+        qt.run(self.op)
 
     def test_run_mode_1(self):
         """测试策略的回测模式,结果打印但不可视化"""
-        self.cont.mode = 1
-        self.cont.moq = 0.01
-        self.cont.visual = False
-        self.cont.print_log = True
-        self.cont.cash_plan = qt.CashPlan('20100104', 10000)
-        qt.run(self.op, self.cont)
+        qt.configure(mode=1,
+                     trade_batch_size=0.01,
+                     visual=True,
+                     invest_cash_dates='20100104',)
+        qt.run(self.op)
 
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
