@@ -652,7 +652,7 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '回测模式下的回测开始日期'},
 
-        'invest_end':          {'Default':   today.strftime('%Y%m%d'),
+        'invest_end':          {'Default':   (today - datetime.timedelta(5)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
@@ -685,7 +685,7 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '优化模式下的策略优化区间结束日期'},
 
-        'opti_cash_amount':    {'Default':   [100000.0],
+        'opti_cash_amounts':   {'Default':   [100000.0],
                                 'Validator': lambda value: isinstance(value, (tuple, list))
                                                            and all(isinstance(item, (float, int))
                                                                    for item in value)
@@ -693,11 +693,9 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'opti_cash_dates':     {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+        'opti_cash_dates':     {'Default':   '20060403',
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
-                                                                   for item in value)
-                                                           and all(_is_datelike(item)
                                                                    for item in value),
                                 'level':     1,
                                 'text':      '优化模式投资的日期，一个str或list'},
@@ -714,7 +712,7 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '优化模式下的策略测试区间结束日期'},
 
-        'test_cash_amount':    {'Default':   [100000.0],
+        'test_cash_amounts':   {'Default':   [100000.0],
                                 'Validator': lambda value: isinstance(value, (tuple, list))
                                                            and all(isinstance(item, (float, int))
                                                                    for item in value)
@@ -722,7 +720,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '优化模式策略测试投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'test_cash_dates':     {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+        'test_cash_dates':     {'Default':   '20140106',
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value),

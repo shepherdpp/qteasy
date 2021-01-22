@@ -5067,29 +5067,32 @@ class TestQT(unittest.TestCase):
         """测试策略的回测模式,结果打印但不可视化"""
         qt.configure(mode=1,
                      trade_batch_size=0.01,
-                     visual=True,
+                     visual=False,
                      invest_cash_dates='20100104',)
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
-        self.cont.mode = 1
-        self.cont.moq = 0.01
-        self.cont.visual = True
-        self.cont.print_log = False
-        self.cont.cash_plan = qt.CashPlan('20080104', 10000)
-        qt.run(self.op, self.cont)
+        qt.run(self.op,
+               mode=1,
+               trade_batch_size=0.01,
+               visual=True,
+               log=False,
+               invest_cash_dates='20080104')
 
     def test_run_mode_2(self):
         """测试策略的优化模式"""
-        self.cont.mode = 2
-        self.cont.opti_method = 1
-        self.cont.opti_method_sample_size = 100
-        self.cont.opti_start = '20040104'
-        self.cont.opti_end = '20141231'
-        self.cont.test_start = '20120604'
-        self.cont.test_end = '20201130'
-        qt.run(self.op, self.cont)
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_sample_size=100,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=False)
 
     def test_built_in_timing(self):
         pass

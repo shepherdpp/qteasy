@@ -795,7 +795,7 @@ def check_and_prepare_hist_data(operator, config):
     # 生成用于策略优化训练的训练历史数据集合
     hist_opti = get_history_panel(start=config.opti_start,
                                   end=config.opti_end,
-                                  shares=config.share_pool,
+                                  shares=config.asset_pool,
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
@@ -803,7 +803,7 @@ def check_and_prepare_hist_data(operator, config):
     # 生成用于优化策略测试的测试历史数据集合
     hist_test = get_history_panel(start=config.test_start,
                                   end=config.test_end,
-                                  shares=config.share_pool,
+                                  shares=config.asset_pool,
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
@@ -1051,6 +1051,12 @@ def run(operator, **kwargs):
     cash_plan = CashPlan(config.invest_cash_dates,
                          config.invest_cash_amounts)
 
+    opti_cash_plan = CashPlan(config.opti_cash_dates,
+                              config.opti_cash_amounts)
+
+    test_cash_plan = CashPlan(config.test_cash_dates,
+                              config.test_cash_amounts)
+
     trade_cost_rate = Cost(config.cost_fixed_buy,
                            config.cost_fixed_sell,
                            config.cost_rate_buy,
@@ -1155,9 +1161,9 @@ def run(operator, **kwargs):
         return None
     elif run_mode == 2:
         how = config.opti_method
-        operator.prepare_data(hist_data=hist_opti, cash_plan=config.opti_cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
-        pars, perfs = OPTIMIZATION_METHODS[how](hist=hist_opti, op=operator, context=config)
+        pars, perfs = OPTIMIZATION_METHODS[how](hist=hist_opti, op=operator, config=config)
 
         print(f'====================================\n'
               f'|                                  |\n'
@@ -1185,21 +1191,21 @@ def run(operator, **kwargs):
                                                'beta',
                                                'sharp',
                                                'info'])
-        operator.prepare_data(hist_data=hist_test, cash_plan=config.test_cash_plan)
+        operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
         for par in pars:
             operator.set_opt_par(par)  # 设置需要优化的策略参数
             op_list = operator.create_signal(hist_test)
             looped_values = apply_loop(op_list=op_list,
                                        history_list=hist_test_loop,
-                                       cash_plan=config.test_cash_plan,
+                                       cash_plan=test_cash_plan,
                                        cost_rate=trade_cost_rate,
-                                       moq=config.moq)
+                                       moq=config.trade_batch_size)
 
             eval_res = evaluate(op_list=op_list,
                                 looped_values=looped_values,
                                 hist_reference=hist_reference,
                                 reference_data=reference_data,
-                                cash_plan=config.cash_plan,
+                                cash_plan=cash_plan,
                                 indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
 
             eval_res['par'] = par
@@ -1216,7 +1222,7 @@ def run(operator, **kwargs):
         print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
               f'Total looped periods: {test_result_df.years[0]} years.')
         print(f'total investment amount: ¥{test_result_df.total_invest[0]:13,.2f}')
-        print(f'Reference index type is {config.reference_asset} at {config.reference_asset_type}\n'
+        print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
               f'Total reference return: {ref_rtn * 100:.3f}% \n'
               f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
         print(f'statistical analysis of optimal strategy eval_res indicators: \n'
@@ -1269,7 +1275,7 @@ def _get_parameter_performance(par: tuple,
                                op: Operator,
                                hist: HistoryPanel,
                                history_list: pd.DataFrame,
-                               context: Context) -> float:
+                               config) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
 
     input:
@@ -1277,7 +1283,7 @@ def _get_parameter_performance(par: tuple,
         :param op:  Operator: 一个operator对象，包含多个投资策略
         :param hist:  用于生成operation List的历史数据
         :param history_list: 用于进行回测的历史数据
-        :param context: 上下文对象，用于保存相关配置
+        :param config: 上下文对象，用于保存相关配置
     :return:
         float 一个代表该策略在使用par作为参数时的性能表现评分
     """
@@ -1288,16 +1294,23 @@ def _get_parameter_performance(par: tuple,
         return 0
     looped_val = apply_loop(op_list=op_list,
                             history_list=history_list,
-                            cash_plan=context.cash_plan,
-                            cost_rate=context.rate,
-                            moq=context.moq)
+                            cash_plan=CashPlan(config.invest_cash_dates,
+                                               config.invest_cash_amounts),
+                            cost_rate=Cost(config.cost_fixed_buy,
+                                           config.cost_fixed_sell,
+                                           config.cost_rate_buy,
+                                           config.cost_rate_sell,
+                                           config.cost_min_buy,
+                                           config.cost_min_sell,
+                                           config.cost_slippage),
+                            moq=config.trade_batch_size)
     # 使用评价函数计算该组参数模拟交易的评价值
     perf = eval_fv(looped_val)
     return perf
 
 
 # TODO: refactor this segment of codes: merge all _search_XXX() functions into a simpler way
-def _search_exhaustive(hist, op, context):
+def _search_exhaustive(hist, op, config):
     """ 最优参数搜索算法1: 穷举法或间隔搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
@@ -1307,33 +1320,33 @@ def _search_exhaustive(hist, op, context):
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
-        :param context, object, 用于存储优化参数的上下文对象
+        :param config, object, 用于存储优化参数的上下文对象
     return: =====tuple对象，包含两个变量
         pars 作为结果输出的参数组
         perfs 输出的参数组的评价分数
     """
-    pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
+    pool = ResultPool(config.output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
 
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
     i = 0
-    it, total = space.extract(context.opti_method_step_size)
+    it, total = space.extract(config.opti_method_step_size)
     # debug
     # print('Result pool has been created, capacity of result pool: ', pool.capacity)
     # print('Searching Space has been created: ')
     # space.info()
     # print('Number of points to be checked: ', total)
     # print(f'Historical Data List: \n{hist.info()}')
-    # print(f'Cash Plan:\n{context.cash_plan}\nCost Rate:\n{context.rate}')
+    # print(f'Cash Plan:\n{config.cash_plan}\nCost Rate:\n{config.rate}')
     # print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     best_so_far = 0
-    if context.parallel:
+    if config.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, config): par for par in
                    it}
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
@@ -1344,7 +1357,7 @@ def _search_exhaustive(hist, op, context):
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     else:
         for par in it:
-            perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list, context=context)
+            perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list, config=config)
             pool.in_pool(par, perf)
             i += 1
             if perf > best_so_far:
@@ -1355,13 +1368,13 @@ def _search_exhaustive(hist, op, context):
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     progress_bar(i, i)
-    pool.cut(context.larger_is_better)
+    pool.cut(config.larger_is_better)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs
 
 
-def _search_montecarlo(hist, op, context):
+def _search_montecarlo(hist, op, config):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -1370,19 +1383,19 @@ def _search_montecarlo(hist, op, context):
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
-        :param context, object 用于存储相关参数的上下文对象
+        :param config, object 用于存储相关参数的上下文对象
         :param point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
             取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
     return: =====tuple对象，包含两个变量
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 """
-    pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
+    pool = ResultPool(config.opti_output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
-    it, total = space.extract(context.opti_method_sample_size, how='rand')
+    it, total = space.extract(config.opti_sample_size, how='rand')
     # debug
     # print('Result pool has been created, capacity of result pool: ', pool.capacity)
     # print('Searching Space has been created: ')
@@ -1392,10 +1405,10 @@ def _search_montecarlo(hist, op, context):
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     best_so_far = 0
-    if context.parallel:
+    if config.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
-        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, context): par for par in
+        futures = {proc_pool.submit(_get_parameter_performance, par, op, hist, history_list, config): par for par in
                    it}
         for f in as_completed(futures):
             pool.in_pool(futures[f], f.result())
@@ -1407,14 +1420,14 @@ def _search_montecarlo(hist, op, context):
     else:
         # 禁用并行计算
         for par in it:
-            perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list, context=context)
+            perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list, config=config)
             pool.in_pool(par, perf)
             i += 1
             if perf > best_so_far:
                 best_so_far = perf
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
-    pool.cut(context.maximize_result)
+    pool.cut(config.maximize_target)
     et = time.time()
     progress_bar(total, total)
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st, short_form=True)}')
@@ -1489,7 +1502,7 @@ def _search_incremental(hist, op, context):
                     # 以下所有函数都是循环内函数，需要进行提速优化
                     # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
                     perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list,
-                                                      context=context)
+                                                      config=context)
                     pool.in_pool(par, perf)
                     i += 1
                     if i % 20 == 0:
