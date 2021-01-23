@@ -743,15 +743,15 @@ def _valid_qt_kwargs():
                                                            and value <= 3,
                                 'level':     1,
                                 'text':      '策略优化算法，可选值如下:'
-                                             '0 - 穷举法，按照一定间隔对整个向量空间进行完全搜索'
+                                             '0 - 网格法，按照一定间隔对整个向量空间进行完全搜索'
                                              '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略'
                                              '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子空间，缩小'
                                              '    步长进一步搜索'
                                              '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）'
                                              '4 - ML方法，基于机器学习的最佳策略搜索算法（尚未完成）'},
 
-        'opti_step_size':      {'Default':   1,
-                                'Validator': lambda value: isinstance(value, (float, int)) and value > 0,
+        'opti_grid_size':      {'Default':   1,
+                                'Validator': lambda value: _num_or_seq_of_num(value) and value > 0,
                                 'level':     1,
                                 'text':      '使用穷举法搜索最佳策略时有用，搜索步长'},
 
@@ -761,7 +761,7 @@ def _valid_qt_kwargs():
                                 'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
 
         'opti_init_step_size': {'Default':   16,
-                                'Validator': lambda value: isinstance(value, float)
+                                'Validator': lambda value: _num_or_seq_of_num(value)
                                                            and value >= 0,
                                 'level':     1,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，第一轮搜索时的步长'},
@@ -772,25 +772,25 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，后一轮搜索的步长缩小的比例'},
 
-        'opti_screen_size':    {'Default':   0.0,
+        'opti_screen_size':    {'Default':   100.0,
                                 'Validator': lambda value: isinstance(value, float)
-                                                           and value >= 0,
+                                                           and value > 0,
                                 'level':     1,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，后一轮搜索子空间区域的大小'},
 
-        'opti_min_step_size':  {'Default':   0.0,
+        'opti_min_step_size':  {'Default':   1.0,
                                 'Validator': lambda value: isinstance(value, float)
-                                                           and value >= 0,
+                                                           and value > 0,
                                 'level':     1,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，最小步长，达到最小步长后搜索停止'},
 
-        'opti_population':     {'Default':   0.0,
+        'opti_population':     {'Default':   1000.0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     1,
                                 'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量'},
 
-        'opti_output_count':   {'Default':   0.0,
+        'opti_output_count':   {'Default':   50,
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value > 0,
                                 'level':     1,
@@ -894,6 +894,13 @@ def _is_datelike(value):
         except:
             return False
     return False
+
+
+def _num_or_seq_of_num(value):
+    return ( isinstance(value,(int,float))  or
+             (isinstance(value,(list,tuple,np.ndarray)) and
+              all([isinstance(v,(int,float)) for v in value]))
+           )
 
 
 def _bypass_kwarg_validation(value):

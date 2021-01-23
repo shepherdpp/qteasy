@@ -944,7 +944,7 @@ def run(operator, **kwargs):
                         穷举法能确保找到参数空间中的全剧最优参数，不过必须逐一测试所有可能的参数点，因此计算量相当大。同时，穷举法只
                         适用于非连续的参数空间，对于连续空间，仍然可以使用穷举法，但无法真正"穷尽"所有的参数组合
 
-                        关于穷举法的具体参数和输出，参见self._search_exhaustive()函数的docstring
+                        关于穷举法的具体参数和输出，参见self._search_grid()函数的docstring
 
                     2，Montecarlo_searching                  蒙特卡洛法
 
@@ -1020,7 +1020,7 @@ def run(operator, **kwargs):
         type: Log()，运行日志记录，txt 或 pd.DataFrame
     """
     import time
-    OPTIMIZATION_METHODS = {0: _search_exhaustive,
+    OPTIMIZATION_METHODS = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,
                             3: _search_ga
@@ -1310,8 +1310,8 @@ def _get_parameter_performance(par: tuple,
 
 
 # TODO: refactor this segment of codes: merge all _search_XXX() functions into a simpler way
-def _search_exhaustive(hist, op, config):
-    """ 最优参数搜索算法1: 穷举法或间隔搜索法
+def _search_grid(hist, op, config):
+    """ 最优参数搜索算法1: 网格搜索法
 
         逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
         “间隔”从空间中逐个取出所有的点（不管离散空间还是连续空间均适用）并逐一测试，
@@ -1325,13 +1325,13 @@ def _search_exhaustive(hist, op, config):
         pars 作为结果输出的参数组
         perfs 输出的参数组的评价分数
     """
-    pool = ResultPool(config.output_count)  # 用于存储中间结果或最终结果的参数池对象
+    pool = ResultPool(config.opti_output_count)  # 用于存储中间结果或最终结果的参数池对象
     s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
 
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
     i = 0
-    it, total = space.extract(config.opti_method_step_size)
+    it, total = space.extract(config.opti_grid_size)
     # debug
     # print('Result pool has been created, capacity of result pool: ', pool.capacity)
     # print('Searching Space has been created: ')
@@ -1368,7 +1368,7 @@ def _search_exhaustive(hist, op, config):
     # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
     # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     progress_bar(i, i)
-    pool.cut(config.larger_is_better)
+    pool.cut(config.maximize_target)
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs

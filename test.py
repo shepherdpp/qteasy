@@ -5080,14 +5080,41 @@ class TestQT(unittest.TestCase):
                log=False,
                invest_cash_dates='20080104')
 
-    def test_run_mode_2(self):
-        """测试策略的优化模式"""
+    def test_run_mode_2_montecarlo(self):
+        """测试策略的优化模式，使用蒙特卡洛寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
         qt.run(self.op,
                mode=2,
                opti_method=1,
                opti_sample_size=100,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=False)
+
+    def test_run_mode_2_grid_search(self):
+        """测试策略的优化模式，使用网格寻优"""
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        qt.run(self.op,
+               mode=2,
+               opti_method=0,
+               opti_grid_size=64,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=False)
+
+    def test_run_mode_2_incremental(self):
+        """测试策略的优化模式，使用递进步长网格寻优"""
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
@@ -5201,7 +5228,7 @@ class TestBuiltIns(unittest.TestCase):
         print(f'type of class: {type(stg)}')
 
     def test_second(self):
-        raise NotImplementedError
+        pass
 
 
 class TestFastExperiments(unittest.TestCase):
