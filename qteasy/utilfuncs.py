@@ -62,7 +62,7 @@ def mask_to_signal(lst):
     return: =====
         op，ndarray，交易信号矩阵
     """
-    np.seterr(divide='ignore')
+    np.seterr(divide='ignore', invalid='ignore')
     if lst.ndim == 2: # 如果输入信号是2D的，则逐行操作（axis=0）
         # 比较本期交易时间点和上期之间的持仓比率差额，差额大于0者可以直接作为补仓买入信号，如上期为0.35，
         # 本期0.7，买入信号为0.35，即使用总资金的35%买入该股，加仓到70%

@@ -18,7 +18,6 @@ from .tafuncs import ht, kama, mama, mavp, t3, tema, trima, wma
 # All following strategies can be used to create strategies by referring to its stragety ID
 
 # Built-in Rolling timing strategies:
-
 def built_in_list(*args, **kwargs):
     """display information of built-in strategies"""
     return BUILT_IN_STRATEGY_DICT

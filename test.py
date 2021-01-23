@@ -238,7 +238,7 @@ class TestSpace(unittest.TestCase):
         s = Space(pars=pars_list, par_types=None)
         self.assertEqual(s.types, ['conti', 'discr'])
         self.assertEqual(s.dim, 2)
-        self.assertEqual(s.size, 110)
+        self.assertEqual(s.size, (10.0, 11))
         self.assertEqual(s.shape, (np.inf, 11))
         self.assertEqual(s.count, np.inf)
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
@@ -247,7 +247,7 @@ class TestSpace(unittest.TestCase):
         s = Space(pars=pars_list, par_types='conti, enum')
         self.assertEqual(s.types, ['conti', 'enum'])
         self.assertEqual(s.dim, 2)
-        self.assertEqual(s.size, 20.)
+        self.assertEqual(s.size, (10.0, 2))
         self.assertEqual(s.shape, (np.inf, 2))
         self.assertEqual(s.count, np.inf)
         self.assertEqual(s.boes, [(0., 10), (0, 10)])
@@ -256,7 +256,7 @@ class TestSpace(unittest.TestCase):
         s = Space(pars=pars_list)
         self.assertEqual(s.types, ['discr', 'discr', 'discr'])
         self.assertEqual(s.dim, 3)
-        self.assertEqual(s.size, 8)
+        self.assertEqual(s.size, (2, 2, 2))
         self.assertEqual(s.shape, (2, 2, 2))
         self.assertEqual(s.count, 8)
         self.assertEqual(s.boes, [(1, 2), (2, 3), (3, 4)])
@@ -265,7 +265,7 @@ class TestSpace(unittest.TestCase):
         s = Space(pars=pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
         self.assertEqual(s.dim, 3)
-        self.assertEqual(s.size, 27)
+        self.assertEqual(s.size, (3, 3, 3))
         self.assertEqual(s.shape, (3, 3, 3))
         self.assertEqual(s.count, 27)
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
@@ -274,7 +274,7 @@ class TestSpace(unittest.TestCase):
         s = Space(pars=pars_list)
         self.assertEqual(s.types, ['enum'])
         self.assertEqual(s.dim, 1)
-        self.assertEqual(s.size, 3)
+        self.assertEqual(s.size, (3,))
         self.assertEqual(s.shape, (3,))
         self.assertEqual(s.count, 3)
 
@@ -282,7 +282,7 @@ class TestSpace(unittest.TestCase):
         s = Space(pars=pars_list)
         self.assertEqual(s.types, ['enum', 'enum', 'enum'])
         self.assertEqual(s.dim, 3)
-        self.assertEqual(s.size, 27)
+        self.assertEqual(s.size, (3, 3, 3))
         self.assertEqual(s.shape, (3, 3, 3))
         self.assertEqual(s.count, 27)
         self.assertEqual(s.boes, [(1, 2, 3), (2, 3, 4), (3, 4, 5)])
@@ -405,6 +405,30 @@ class TestSpace(unittest.TestCase):
             self.assertIsInstance(point[1], (int, np.int64))
             self.assertIn(point[0], [(0., 10), (1, 'c'), ('a', 'b'), (1, 14)])
 
+        print(f'test incremental extraction')
+        pars_list = [(10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250)]
+        s = Space(pars_list)
+        ext, count = s.extract(64, 'interval')
+        self.assertEqual(count, 4096)
+        points = list(ext)
+        # 已经取出所有的点，围绕其中10个点生成十个subspaces
+        # 检查是否每个subspace都为Space，是否都在s范围内，使用32生成点集，检查生成数量是否正确
+        for point in points[1000:1010]:
+            subspace = s.from_point(point, 64)
+            self.assertIsInstance(subspace, Space)
+            self.assertTrue(subspace in s)
+            self.assertEqual(subspace.dim, 6)
+            self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+            ext, count = subspace.extract(32)
+            points = list(ext)
+            self.assertGreaterEqual(count, 512)
+            self.assertLessEqual(count, 4096)
+            print(f'\n---------------------------------'
+                  f'\nthe space created around point <{point}> is'
+                  f'\n{subspace.boes}'
+                  f'\nand extracted {count} points, the first 5 are:'
+                  f'\n{points[:5]}')
+
     def test_axis_extract(self):
         # test axis object with conti type
         axis = Axis((0., 5))
@@ -444,6 +468,72 @@ class TestSpace(unittest.TestCase):
         extracted = axis.extract(8, 'rand')
         self.assertEqual(len(extracted), 8)
         self.assertTrue(all([(item in [1, 5, 7, 10, 'A', 'F']) for item in extracted]))
+
+    def test_from_point(self):
+        """测试从一个点生成一个space"""
+        # 生成一个space，指定space中的一个点以及distance，生成一个sub-space
+        pars_list = [(0., 10), (0, 10)]
+        s = Space(pars=pars_list, par_types=None)
+        self.assertEqual(s.types, ['conti', 'discr'])
+        self.assertEqual(s.dim, 2)
+        self.assertEqual(s.size, (10., 11))
+        self.assertEqual(s.shape, (np.inf, 11))
+        self.assertEqual(s.count, np.inf)
+        self.assertEqual(s.boes, [(0., 10), (0, 10)])
+
+        print('create subspace from a point in space')
+        p = (3, 3)
+        distance = 2
+        subspace = s.from_point(p, distance)
+        self.assertIsInstance(subspace, Space)
+        self.assertEqual(subspace.types, ['conti', 'discr'])
+        self.assertEqual(subspace.dim, 2)
+        self.assertEqual(subspace.size, (4.0, 5))
+        self.assertEqual(subspace.shape, (np.inf, 5))
+        self.assertEqual(subspace.count, np.inf)
+        self.assertEqual(subspace.boes, [(1, 5), (1, 5)])
+
+        print('create subspace from a 6 dimensional discrete space')
+        s = Space(pars=[(10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250)])
+        p = (15, 200, 150, 150, 150, 150)
+        d = 10
+        subspace = s.from_point(p, d)
+        self.assertIsInstance(subspace, Space)
+        self.assertEqual(subspace.types, ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
+        self.assertEqual(subspace.dim, 6)
+        self.assertEqual(subspace.volume, 65345616)
+        self.assertEqual(subspace.size, (16, 21, 21, 21, 21, 21))
+        self.assertEqual(subspace.shape, (16, 21, 21, 21, 21, 21))
+        self.assertEqual(subspace.count, 65345616)
+        self.assertEqual(subspace.boes, [(10, 25), (190, 210), (140, 160), (140, 160), (140, 160), (140, 160)])
+
+        print('create subspace from a 6 dimensional continuous space')
+        s = Space(pars=[(10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250)])
+        p = (15, 200, 150, 150, 150, 150)
+        d = 10
+        subspace = s.from_point(p, d)
+        self.assertIsInstance(subspace, Space)
+        self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+        self.assertEqual(subspace.dim, 6)
+        self.assertEqual(subspace.volume, 48000000)
+        self.assertEqual(subspace.size, (15.0, 20.0, 20.0, 20.0, 20.0, 20.0))
+        self.assertEqual(subspace.shape, (np.inf, np.inf, np.inf, np.inf, np.inf, np.inf))
+        self.assertEqual(subspace.count, np.inf)
+        self.assertEqual(subspace.boes, [(10, 25), (190, 210), (140, 160), (140, 160), (140, 160), (140, 160)])
+
+        print('create subspace with different distances on each dimension')
+        s = Space(pars=[(10., 250), (10., 250), (10., 250), (10., 250), (10., 250), (10., 250)])
+        p = (15, 200, 150, 150, 150, 150)
+        d = [10, 5, 5, 10, 10, 5]
+        subspace = s.from_point(p, d)
+        self.assertIsInstance(subspace, Space)
+        self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+        self.assertEqual(subspace.dim, 6)
+        self.assertEqual(subspace.volume, 6000000)
+        self.assertEqual(subspace.size, (15.0, 10.0, 10.0, 20.0, 20.0, 10.0))
+        self.assertEqual(subspace.shape, (np.inf, np.inf, np.inf, np.inf, np.inf, np.inf))
+        self.assertEqual(subspace.count, np.inf)
+        self.assertEqual(subspace.boes, [(10, 25), (195, 205), (145, 155), (140, 160), (140, 160), (145, 155)])
 
 
 class TestCashPlan(unittest.TestCase):
@@ -2084,8 +2174,6 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         self.op.add_strategy(test_ls, 'timing')
 
-
-
     def test_operator_remove_strategy(self):
         """test removing strategies from Operator"""
         raise NotImplementedError
@@ -3306,7 +3394,6 @@ class TestHistoryPanel(unittest.TestCase):
         print(f'test DataFrame conversion error: type incorrect')
         self.assertRaises(AssertionError, self.hp.to_dataframe, share=3.0)
 
-
         print(f'test DataFrame error raising with share not found error')
         self.assertRaises(KeyError, self.hp.to_dataframe, share='000300')
 
@@ -3477,7 +3564,6 @@ class TestHistoryPanel(unittest.TestCase):
         df_list[9].info()
         df_list[10].info()
         df_list[11].info()
-
 
         print('test get financial data, in multi process mode')
         df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=4)
@@ -5068,7 +5154,7 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=1,
                      trade_batch_size=0.01,
                      visual=False,
-                     invest_cash_dates='20100104',)
+                     invest_cash_dates='20100104', )
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):
@@ -5087,7 +5173,7 @@ class TestQT(unittest.TestCase):
         qt.run(self.op,
                mode=2,
                opti_method=1,
-               opti_sample_size=100,
+               opti_sample_count=100,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
@@ -5101,7 +5187,7 @@ class TestQT(unittest.TestCase):
         qt.run(self.op,
                mode=2,
                opti_method=0,
-               opti_grid_size=64,
+               opti_grid_size=128,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
@@ -5115,6 +5201,10 @@ class TestQT(unittest.TestCase):
         qt.run(self.op,
                mode=2,
                opti_method=2,
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_min_volume=5**6,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
@@ -5221,7 +5311,6 @@ class TestVisual(unittest.TestCase):
 
 
 class TestBuiltIns(unittest.TestCase):
-
     def test_first(self):
         stg = qt.TimingCrossline()
         self.assertIsInstance(stg, qt.built_in.TimingCrossline)

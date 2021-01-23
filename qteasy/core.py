@@ -14,6 +14,7 @@ import time
 import math
 import logging
 
+from functools import lru_cache
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .history import get_history_panel, HistoryPanel
@@ -1236,6 +1237,7 @@ def run(operator, **kwargs):
               f'Info ratio:          {test_result_df["info"].mean():.3f} ± {test_result_df["info"].std():.3f}\n'
               f'250 day volatility:  {test_result_df.volatility.mean():.3f} ± {test_result_df.volatility.std():.3f}\n'
               f'other eval_res indicators are listed in below table\n')
+        # test_result_df.sort_values(by='final_value', ascending=False, inplace=True)
         print(test_result_df.to_string(columns=["par",
                                                 "sell_count",
                                                 "buy_count",
@@ -1395,7 +1397,7 @@ def _search_montecarlo(hist, op, config):
     space = Space(s_range, s_type)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
-    it, total = space.extract(config.opti_sample_size, how='rand')
+    it, total = space.extract(config.opti_sample_count, how='rand')
     # debug
     # print('Result pool has been created, capacity of result pool: ', pool.capacity)
     # print('Searching Space has been created: ')
@@ -1434,7 +1436,17 @@ def _search_montecarlo(hist, op, config):
     return pool.pars, pool.perfs
 
 
-def _search_incremental(hist, op, context):
+# TODO: 修改此算法，将网格搜索方法改为蒙特卡洛法：定义参数如下：
+# TODO: 以较小的采样数量进行蒙特卡洛搜索，每一轮搜索后，取出结果最好的部分结果，
+# TODO: 生成较小子空间急需搜索，直至子空间体积Volume小于预设值或总轮数超标
+# TODO: r_sample_count：每次搜索时取样的数量，每次相同
+# TODO: reduce_ratio：每次搜索后择优留用的采样点数量，以及下一轮子空间体积与前一轮的比值
+# TODO:
+# TODO:
+# TODO:
+# TODO:
+# TODO:
+def _search_incremental(hist, op, config):
     """ 最优参数搜索算法3: 递进搜索法
 
         该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
@@ -1445,81 +1457,108 @@ def _search_incremental(hist, op, context):
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
-        :param context, object, 用于存储交易相关参数的上下文对象
-        :param init_step，int，初始步长，默认值为16
-        :param inc_step，float，递进系数，每次重新搜索时，新的步长缩小的倍数
-        :param min_step，int，终止步长，当搜索步长最小达到min_step时停止搜索
+        :param config, object, 用于存储交易相关参数的上下文对象
     return: =====tuple对象，包含两个变量
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 
 """
-    init_step = context.opti_method_init_step_size
-    min_step = context.opti_method_min_step_size
-    inc_step = context.opti_method_incre_ratio
-    parallel = context.parallel
-    pool = ResultPool(context.output_count)  # 用于存储中间结果或最终结果的参数池对象
+    sample_count = config.opti_r_sample_count
+    min_volume = config.opti_min_volume
+    max_rounds = config.opti_max_rounds
+    reduce_ratio = config.opti_reduce_ratio
+    parallel = config.parallel
     s_range, s_type = op.opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     base_space = Space(s_range, s_type)
+    base_dimension = base_space.dim
+    reduced_sample_count = int(sample_count * reduce_ratio)
+    pool = ResultPool(reduced_sample_count)  # 用于存储中间结果或最终结果的参数池对象
+    size_reduce_ratio = reduce_ratio ** (1 / base_dimension) / reduced_sample_count
     spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
-    step_size = init_step  # 设定初始搜索步长
+    space_count_in_round = 1
+    current_round = 1
+    current_volume = base_space.volume
     history_list = hist.to_dataframe(htype='close').fillna(0)
-    round_count = math.log(init_step / min_step) / math.log(inc_step)
-    round_size = context.output_count * 5 ** base_space.dim
-    first_round_size = base_space.size / init_step ** base_space.dim
-    total_calc_rounds = int(first_round_size + round_count * round_size)
+    round_count = min(5, -(math.log(current_volume / min_volume) * math.log(reduce_ratio)))
+    total_calc_rounds = int(round_count * sample_count)
     # debug
-    # print(f'Result pool prepared, {pool.capacity} total output will be generated')
+    # print(f'\n--------------------------------------------------------------------'
+    #       f'\nResult pool prepared, {pool.capacity} total output will be generated')
     # print(f'Base Searching Space has been created: ')
     # base_space.info()
+    # print(f'searching parameters:\n'
+    #       f'sample count:      {sample_count // space_count_in_round}\n'
+    #       f'min volume:        {min_volume}\n'
+    #       f'reduce ratio:      {reduce_ratio}\n'
+    #       f'parallel:          {parallel}')
     # print(f'Estimated Total Number of points to be checked:', total_calc_rounds)
     # print('Searching Starts...')
     i = 0
     st = time.time()
-    while step_size >= min_step:  # 从初始搜索步长开始搜索，一回合后缩短步长，直到步长小于min_step参数
+    while current_volume >= min_volume and current_round < max_rounds:  # 从当前space开始搜索，一回合后生成更小的subspaces，直到subspace的volume小于预设值
         while spaces:
             space = spaces.pop()
             # 逐个弹出子空间列表中的子空间，用当前步长在其中搜索最佳参数，所有子空间的最佳参数全部进入pool并筛选最佳参数集合
-            it, total = space.extract(step_size, how='interval')
+            it, total = space.extract(sample_count // space_count_in_round, how='rand')
             # debug
-            # print(f'Searching the {context.output_count - len(spaces)}th Space from the space list:\n{space.info()}')
-            # print(f'{total} points to be checked at step size {step_size}\n')
+            # print(f'\n-----------------------------------------------------------------'
+            #       f'\nSearching the {space_count_in_round - len(spaces)}/'
+            #       f'{space_count_in_round}th Space in current round')
+            # print(f'{total} points to be checked\n')
             if parallel:
                 # 启用并行计算
                 proc_pool = ProcessPoolExecutor()
                 futures = {proc_pool.submit(_get_parameter_performance, par, op, hist,
-                                            history_list, context): par for
+                                            history_list, config): par for
                            par in it}
                 for f in as_completed(futures):
                     pool.in_pool(futures[f], f.result())
                     i += 1
-                    if i % 10 == 0:
-                        progress_bar(i, total_calc_rounds, f'step size: {step_size}')
+                    if i % 20 == 0:
+                        progress_bar(i, total_calc_rounds, f'total samples in current step: {total}')
             else:
                 # 禁用并行计算
                 for par in it:
                     # 以下所有函数都是循环内函数，需要进行提速优化
-                    # 以下所有函数在几种优化算法中是相同的，因此可以考虑简化
                     perf = _get_parameter_performance(par=par, op=op, hist=hist, history_list=history_list,
-                                                      config=context)
+                                                      config=config)
                     pool.in_pool(par, perf)
                     i += 1
                     if i % 20 == 0:
-                        progress_bar(i, total_calc_rounds, f'step size: {step_size}')
+                        progress_bar(i, total_calc_rounds, f'total samples in current step: {total}')
         # debug
-        # print(f'Completed one round, {pool.item_count} items are put in the Result pool')
-        pool.cut(context.larger_is_better)
-        # print(f'Cut the pool to reduce its items to capacity, {pool.item_count} items left')
+        # print(f'\n----------------'
+        #       f'\nCompleted one round, {pool.item_count} items are put in the Result pool')
+        pool.cut(config.maximize_target)
+        # print(f'\n------------------'
+        #       f'\nCut the pool to reduce its items to capacity, {pool.item_count} items left')
         # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
-        spaces.append(base_space.from_point(point=item, distance=step_size) for item in pool.pars)
+        reduced_size = tuple(np.array(space.size) * size_reduce_ratio)
+        current_volume = 0
+        for point in pool.pars:
+            subspace = base_space.from_point(point=point, distance=reduced_size)
+            spaces.append(subspace)
+            current_volume += subspace.volume
+            # debug
+            # print(f'\na space is generated around the point {point} with distance {reduced_size}'
+            #       f'\nthe space is like:'
+            #       f'{space.boes}')
+            # base_space.from_point(point=point, distance=reduced_size).info()
+        # spaces.extend([base_space.from_point(point=item, distance=step_size) for item in pool.pars])
         # 刷新搜索步长
         # debug
-        # print(f'{len(spaces)}new spaces created, start next round with new step size', step_size)
-        step_size //= inc_step
-        progress_bar(i, total_calc_rounds, f'step size: {step_size}')
+        current_round += 1
+        space_count_in_round = len(spaces)
+        # print(f'\n{len(spaces)}new spaces created, information of first 5 spaces are:')
+        # for space in spaces[:5]:
+        #     print(space.boes)
+        # print(f'\nfinished round {current_round - 1}'
+        #       f'\nnext round space count will be {space_count_in_round}\n'
+        #       f'total volume of these spaces are {current_volume}')
+        progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
     et = time.time()
-    progress_bar(i, i, f'step size: {step_size}')
+    progress_bar(i, i)
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
     return pool.pars, pool.perfs
 

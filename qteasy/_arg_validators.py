@@ -755,34 +755,35 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '使用穷举法搜索最佳策略时有用，搜索步长'},
 
-        'opti_sample_size':    {'Default':   1000,
+        'opti_sample_count':   {'Default':   1000,
                                 'Validator': lambda value: isinstance(value, int) and value > 0,
                                 'level':     1,
                                 'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
 
-        'opti_init_step_size': {'Default':   16,
+        'opti_r_sample_count': {'Default':   16,
                                 'Validator': lambda value: _num_or_seq_of_num(value)
                                                            and value >= 0,
                                 'level':     1,
-                                'text':      '在使用递进步长法搜索最佳策略时有用，第一轮搜索时的步长'},
+                                'text':      '在使用递进步长法搜索最佳策略时有用，每一轮随机取样的数量'},
 
-        'opti_incre_ratio':    {'Default':   2,
+        'opti_reduce_ratio':   {'Default':   0.1,
                                 'Validator': lambda value: isinstance(value, float)
+                                                           and 0 < value < 1,
+                                'level':     1,
+                                'text':      '在使用递进步长法搜索最佳策略时有用，'
+                                             '每一轮随机取样后择优留用的比例，同样也是子空间缩小的比例'},
+
+        'opti_max_rounds':     {'Default':   5,
+                                'Validator': lambda value: isinstance(value, int)
                                                            and value > 1,
                                 'level':     1,
-                                'text':      '在使用递进步长法搜索最佳策略时有用，后一轮搜索的步长缩小的比例'},
+                                'text':      '在使用递进步长法搜索最佳策略时有用，多轮搜索的最大轮数，轮数大于该值时停止搜索'},
 
-        'opti_screen_size':    {'Default':   100.0,
-                                'Validator': lambda value: isinstance(value, float)
+        'opti_min_volume':     {'Default':   1000,
+                                'Validator': lambda value: isinstance(value, (float, int))
                                                            and value > 0,
                                 'level':     1,
-                                'text':      '在使用递进步长法搜索最佳策略时有用，后一轮搜索子空间区域的大小'},
-
-        'opti_min_step_size':  {'Default':   1.0,
-                                'Validator': lambda value: isinstance(value, float)
-                                                           and value > 0,
-                                'level':     1,
-                                'text':      '在使用递进步长法搜索最佳策略时有用，最小步长，达到最小步长后搜索停止'},
+                                'text':      '在使用递进步长法搜索最佳策略时有用，空间最小体积，当空间volume低于该值时停止搜索'},
 
         'opti_population':     {'Default':   1000.0,
                                 'Validator': lambda value: isinstance(value, float)

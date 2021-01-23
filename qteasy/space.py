@@ -97,6 +97,12 @@ class Space:
     def size(self):
         """输出空间的尺度，输出每个维度的跨度之乘积"""
         s = [ax.size for ax in self._axis]
+        return tuple(s)
+
+    @property
+    def volume(self):
+        """输出空间的尺度，输出每个维度的跨度之乘积"""
+        s = [ax.size for ax in self._axis]
         return np.product(s)
 
     @property
@@ -141,23 +147,36 @@ class Space:
         elif how == 'rand':
             return itertools.zip_longest(*axis_ranges), interval_or_qty  # 使用迭代器工具将所有点组合打包为点集
 
-    def __contains__(self, point: [list, tuple]):
+    def __contains__(self, item: [list, tuple, object]):
         """ 判断item是否在Space对象中, 返回True如果item在Space中，否则返回False
 
-        :param point:
+        :param item:
         :return: bool
         """
-        assert isinstance(point, (list, tuple)), \
-            f'TypeError, a point in a space must be in forms of a tuple or a list, got {type(point)}'
-        if len(point) != self.dim:
-            return False
-        for coordinate, boe, s_type in zip(point, self.boes, self.types):
-            if s_type == 'enum':
-                if coordinate not in boe:
-                    return False
-            else:
-                if not boe[0] < coordinate < boe[1]:
-                    return False
+        assert isinstance(item, (list, tuple, Space)), \
+            f'TypeError, the item must be a point (tuple or list or coordinates) or a subspace, got {type(item)}'
+        if isinstance(item, (tuple, list)):  # if item is a point
+            if len(item) != self.dim:
+                return False
+            for coordinate, boe, s_type in zip(item, self.boes, self.types):
+                if s_type == 'enum':
+                    if coordinate not in boe:
+                        return False
+                else:
+                    if not boe[0] <= coordinate <= boe[1]:
+                        return False
+        else:  # if item is a space, check if all boes are within self boes
+            if item.dim != self.dim:
+                return False
+            if any(item_type != self_type for item_type, self_type in zip (item.types, self.types)):
+                return False
+            for it_boe, s_boe, s_type in zip(item.boes, self.boes, self.types):
+                if s_type == 'enum': # in case of enum, check if all items are in self boe
+                    if any(it not in s_it for it, s_it in zip(it_boe, s_boe)):
+                        return False
+                else: # in other cases just to check both bounds
+                    if not s_boe[0] <= it_boe[0] < it_boe[1] <= s_boe[1]:
+                        return False
         return True
 
     def from_point(self, point, distance: [int, float, list], ignore_enums=True):
@@ -173,10 +192,10 @@ class Space:
         """
         assert point in self, f'ValueError, point {point} is not in space!'
         assert self.dim > 0, 'original space should not be empty!'
-        assert isinstance(distance, (int, float, list)), \
+        assert isinstance(distance, (int, float, list, tuple)), \
             f'TypeError, the distance must be a number of a list of numbers, got {type(distance)} instead'
         pars = []
-        if isinstance(distance, list):
+        if isinstance(distance, (list, tuple)):
             assert len(distance) == self.dim, \
                 f'ValueError, can not match {len(distance)} distances in {self.dim} dimensions!'
         else:
