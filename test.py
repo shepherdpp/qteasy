@@ -5152,6 +5152,16 @@ class TestQT(unittest.TestCase):
 
         pass
 
+    def test_configuration(self):
+        """ 测试CONFIG的显示"""
+        qt.configuration()
+
+        qt.configuration(mode=0)
+
+        qt.configuration(info=True)
+
+        qt.configuration(info=True, verbose=True)
+
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
         qt.QT_CONFIG.mode = 0

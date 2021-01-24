@@ -521,11 +521,11 @@ def _valid_qt_kwargs():
         'mode':                {'Default':   1,  # 运行模式
                                 'Validator': lambda value: value in (0, 1, 2, 3),
                                 'level':     0,
-                                'text':      'qteasy 的运行模式: '
-                                             '0: 实时信号生成模式'
-                                             '1: 回测-评价模式'
-                                             '2: 策略优化模式'
-                                             '3: 统计预测模式'},
+                                'text':      'qteasy 的运行模式: \n'
+                                             '0: 实时信号生成模式\n'
+                                             '1: 回测-评价模式\n'
+                                             '2: 策略优化模式\n'
+                                             '3: 统计预测模式\n'},
 
         'asset_pool':          {'Default':   '000300.SH',  #
                                 'Validator': lambda value: isinstance(value, (str, list))
@@ -537,21 +537,21 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _validate_asset_type(value),
                                 'level':     0,
-                                'text':      '投资产品的资产类型，包括：'
-                                             'I  : 指数'
-                                             'E  : 股票'
-                                             'F  : 期货'
-                                             'FD : 基金'},
+                                'text':      '投资产品的资产类型，包括：\n'
+                                             'I  : 指数\n'
+                                             'E  : 股票\n'
+                                             'F  : 期货\n'
+                                             'FD : 基金\n'},
 
         'trade_batch_size':    {'Default':   0.0,
                                 'Validator': lambda value: isinstance(value, (int, float))
                                                            and value >= 0,
                                 'level':     0,
-                                'text':      '投资产品的最小申购批量大小，浮点数，例如：'
-                                             '0. : 可以购买任意份额的投资产品，包括小数份额'
-                                             '1. : 只能购买整数份额的投资产品'
-                                             '100: 可以购买100的整数倍份额投资产品'
-                                             'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数'},
+                                'text':      '投资产品的最小申购批量大小，浮点数，例如：\n'
+                                             '0. : 可以购买任意份额的投资产品，包括小数份额\n'
+                                             '1. : 只能购买整数份额的投资产品\n'
+                                             '100: 可以购买100的整数倍份额投资产品\n'
+                                             'n  : 可以购买的投资产品份额为n的整数倍，n不必为整数\n'},
 
         'riskfree_ir':         {'Default':   0.0035,
                                 'Validator': lambda value: isinstance(value, float)
@@ -583,11 +583,11 @@ def _valid_qt_kwargs():
         'ref_asset_type':      {'Default':   'I',
                                 'Validator': lambda value: _validate_asset_type(value),
                                 'level':     0,
-                                'text':      '参考价格的资产类型，包括：'
-                                             'I  : 指数'
-                                             'E  : 股票'
-                                             'F  : 期货'
-                                             'FD : 基金'},
+                                'text':      '参考价格的资产类型，包括：\n'
+                                             'I  : 指数\n'
+                                             'E  : 股票\n'
+                                             'F  : 期货\n'
+                                             'FD : 基金\n'},
 
         'ref_asset_dtype':     {'Default':   'close',
                                 'Validator': lambda value: value in PRICE_TYPE_DATA,
@@ -742,13 +742,13 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value <= 3,
                                 'level':     1,
-                                'text':      '策略优化算法，可选值如下:'
-                                             '0 - 网格法，按照一定间隔对整个向量空间进行完全搜索'
-                                             '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略'
-                                             '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子空间，缩小'
-                                             '    步长进一步搜索'
-                                             '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）'
-                                             '4 - ML方法，基于机器学习的最佳策略搜索算法（尚未完成）'},
+                                'text':      '策略优化算法，可选值如下:\n'
+                                             '0 - 网格法，按照一定间隔对整个向量空间进行完全搜索\n'
+                                             '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略\n'
+                                             '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子空间，缩小\n'
+                                             '    步长进一步搜索\n'
+                                             '3 - 遗传算法，模拟生物种群在环境压力下不断进化的方法寻找全局最优（尚未完成）\n'
+                                             '4 - ML方法，基于机器学习的最佳策略搜索算法（尚未完成）\n'},
 
         'opti_grid_size':      {'Default':   1,
                                 'Validator': lambda value: _num_or_seq_of_num(value) and value > 0,
@@ -770,8 +770,8 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 < value < 1,
                                 'level':     1,
-                                'text':      '在使用递进步长法搜索最佳策略时有用，'
-                                             '每一轮随机取样后择优留用的比例，同样也是子空间缩小的比例'},
+                                'text':      '在使用递进步长法搜索最佳策略时有用，\n'
+                                             '每一轮随机取样后择优留用的比例，同样也是子空间缩小的比例\n'},
 
         'opti_max_rounds':     {'Default':   5,
                                 'Validator': lambda value: isinstance(value, int)
@@ -821,6 +821,50 @@ def _validate_vkwargs_dict(vkwargs):
             raise ValueError(f'Missing "level" identifier for kwarg {key}')
         if 'text' not in value:
             raise ValueError(f'Missing "text" string for kwarg {key}')
+
+
+def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
+    """ Given a list of kwargs, verify that all kwargs are in the valid kwargs,
+        and display their values and other information according to given
+        parameters. return a string with all formulated information
+
+    :param kwargs: list or tuple, kwargs that are to be displayed
+    :param level:
+    :param info:
+    :param verbose:
+    :return:
+    """
+    COLUMN_W_KEY = 21
+    COLUMN_W_CURRENT = 15
+    COLUMN_OFFSET_DESCRIPTION = 0
+    vkwargs = _valid_qt_kwargs()
+    output_strings = list()
+    if info:
+        output_strings.append('Key                   Current        Default\n')
+        if verbose:
+            output_strings.append('Description\n')
+        output_strings.append('------------------------------------------------\n')
+    else:
+        output_strings.append('Key                   Current        \n')
+        output_strings.append('-------------------------------------\n')
+    for key in kwargs:
+        if key not in vkwargs:
+            raise KeyError(f'Unrecognized kwarg={str(key)}')
+        else:
+            cur_level = vkwargs[key]['level']
+            if cur_level <= level: # only display kwargs that are at higher level
+                cur_value = str(QT_CONFIG[key])
+                default_value = str(vkwargs[key]['Default'])
+                description = str(vkwargs[key]['text'])
+                output_strings.append(f'{str(key)}:{" "*(COLUMN_W_KEY - len(str(key)))}')
+                if info:
+                    output_strings.append(f'{cur_value}{" "*(COLUMN_W_CURRENT - len(cur_value))}'
+                                          f'<{default_value}>\n')
+                    if verbose:
+                        output_strings.append(f'{" "*COLUMN_OFFSET_DESCRIPTION}{description}\n')
+                else:
+                    output_strings.append(f'{cur_value}\n')
+    return ''.join(output_strings)
 
 
 def _process_kwargs(kwargs, vkwargs):

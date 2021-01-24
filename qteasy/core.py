@@ -26,7 +26,7 @@ from .evaluate import eval_benchmark
 from .evaluate import eval_fv
 from .tsfuncs import stock_basic
 
-from ._arg_validators import QT_CONFIG
+from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
 AVAILABLE_EVALUATION_INDICATORS = []
 AVAILABLE_SHARE_INDUSTRIES = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
@@ -433,13 +433,67 @@ def configure(**kwargs):
         QT_CONFIG.__setattr__(key, value)
 
 
-def configuration(level=0):
+def configuration(mode=None, type = None, opti_method=None, level=0, info = False, verbose=False):
     """
 
+    :param mode:
+    :param type:
+    :param opti_method
     :param level:
+    :param info:
+    :param verbose:
     :return:
     """
-    print(QT_CONFIG)
+    AVAILABLE_TYPES = ['system',
+                       'cost',
+                       ]
+    if mode is None:
+        mode = QT_CONFIG.mode
+    kwargs = list()
+    if mode == 'all':
+        pass
+    elif mode == 0:
+        kwargs = ['mode',
+                  'asset_pool',
+                  'asset_type',
+                  'reference_asset',
+                  'ref_asset_type',
+                  'ref_asset_dtype']
+    elif mode == 1:
+        kwargs = ['mode',
+                  'trade_batch_size',
+                  'riskfree_ir',
+                  'visual',
+                  'log',
+                  'asset_pool',
+                  'asset_type',
+                  'invest_start',
+                  'invest_end',
+                  'cost_fixed_buy',
+                  'cost_fixed_sell',
+                  'invest_cash_amounts',
+                  'invest_cash_dates',
+                  'reference_asset',
+                  'ref_asset_type',
+                  'ref_asset_dtype']
+    elif mode == 2:
+        kwargs = ['mode',
+                  'trade_batch_size',
+                  'riskfree_ir',
+                  'visual',
+                  'log',
+                  'asset_pool',
+                  'asset_type',
+                  'opti_start',
+                  'opti_end',
+                  'opti_cash_amounts',
+                  'opti_cash_dates',
+                  'test_start',
+                  'test_end',
+                  'opti_method']
+    else:
+        raise KeyError(f'mode ({mode}) is not valid!')
+    print(_vkwargs_to_text(kwargs=kwargs, level=level, info=info, verbose=verbose))
 
 
 def check_and_prepare_hist_data(operator, config):
