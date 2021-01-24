@@ -5154,12 +5154,21 @@ class TestQT(unittest.TestCase):
 
     def test_configuration(self):
         """ 测试CONFIG的显示"""
+        print(f'configuration without argument\n')
         qt.configuration()
-
+        print(f'configuration with mode=0\n')
         qt.configuration(mode=0)
-
+        print(f'configuration with mode="all"\n')
+        qt.configuration(mode='all')
+        print(f'configuration with mode="all", level=1\n')
+        qt.configuration(mode='all',level=1)
+        print(f'configuration with mode="all", level=0\n')
+        qt.configuration(mode='all',level=0)
+        print(f'configuration with mode=0, level=1\n')
+        qt.configuration(mode=0, level=1)
+        print(f'configuration with info=True\n')
         qt.configuration(info=True)
-
+        print(f'configuration with info=True, verbose=True\n')
         qt.configuration(info=True, verbose=True)
 
     def test_run_mode_0(self):

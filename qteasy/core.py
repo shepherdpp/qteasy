@@ -451,7 +451,32 @@ def configuration(mode=None, type = None, opti_method=None, level=0, info = Fals
         mode = QT_CONFIG.mode
     kwargs = list()
     if mode == 'all':
-        pass
+        kwargs = ['mode',
+                  'trade_batch_size',
+                  'riskfree_ir',
+                  'visual',
+                  'log',
+                  'asset_pool',
+                  'asset_type',
+                  'invest_start',
+                  'invest_end',
+                  'cost_fixed_buy',
+                  'cost_fixed_sell',
+                  'cost_rate_buy',
+                  'cost_rate_sell',
+                  'cost_slippage',
+                  'invest_cash_amounts',
+                  'invest_cash_dates',
+                  'reference_asset',
+                  'ref_asset_type',
+                  'ref_asset_dtype',
+                  'opti_start',
+                  'opti_end',
+                  'opti_cash_amounts',
+                  'opti_cash_dates',
+                  'test_start',
+                  'test_end',
+                  'opti_method']
     elif mode == 0:
         kwargs = ['mode',
                   'asset_pool',
