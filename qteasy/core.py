@@ -9,12 +9,10 @@
 
 import pandas as pd
 import numpy as np
-import datetime
 import time
 import math
 import logging
 
-from functools import lru_cache
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .history import get_history_panel, HistoryPanel
@@ -28,8 +26,6 @@ from .evaluate import eval_benchmark
 from .evaluate import eval_fv
 from .tsfuncs import stock_basic
 
-from ._arg_validators import _valid_qt_kwargs
-from ._arg_validators import _process_kwargs
 from ._arg_validators import QT_CONFIG
 
 AVAILABLE_EVALUATION_INDICATORS = []
@@ -64,7 +60,6 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 
-
 # TODO: 使用logging模块来管理logs
 class Log:
     """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
@@ -91,333 +86,9 @@ class Log:
 
 # TODO: Usability improvements:
 # TODO: 1: 增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
-# TODO: 2: 取消Context类，采用config字典的形式处理所有的qt.run()参数。借鉴
-# TODO:     matplotlib.finance的处理方法，将所有的参数内容都以**kwargs
-# TODO:     的形式传入qt.run()方法，使用config字典来获取所有的参数。使用
-# TODO:     _valid_qt_args()函数来保存并设置所有可用的参数以及他们的验证方法
-# TODO: 使用_validate_qt_args()方法来对所有的参数进行验证，在qt.run()中调用config字典，使用config字典中的参数来控制qt的行为。
-# TODO: 提供config参数的保存和显示功能，设置所有参数的显示级别，确保按照不同级别显示不同的config参数
-# TODO: 在run()中增加基本args确认功能，在运行之前确认不会缺乏必要的参数
-# TODO: 完善context对象的信息属性，使得用户可以快速了解当前配置
-# TODO: Context应该有一个保存功能，或至少有一个"read_last"功能，以便用户长期保存常用的上下文参数变量
-class Context:
-    """QT Easy量化交易系统的上下文对象，保存所有相关环境变量及参数
-
-    所有系统执行相关的变量都存储在Context对象中，在调用core模块中的主要公有方法时，应该引用Context对象以提供所有的环境变量。
-
-    包含的常量：
-    ========
-        RUN_MODE_LIVE = 0
-        RUN_MODE_BACKLOOP = 1
-        RUN_MODE_OPTIMIZE = 2
-        RUN_MODE_PREDICT = 3
-
-    包含的参数：
-    ========
-        基本参数：
-            mode:                       int, 运行模式，包括实盘模式、回测模式和优化模式三种方式:
-                                        {0: 实盘模式,
-                                         1: 回测模式,
-                                         2: 优化模式}
-
-            mode_text,                  int, 只读属性，mode属性的解释文本
-            share_pool:                 str, 投资资产池
-            asset_type:                 str, 资产类型:
-                                        {'E': 股票,
-                                         'I': 指数,
-                                         'F': 期货}
-            asset_type_text:            str, 只读属性，asset_type属性的解释文本
-
-            moq:                        float, 金融资产交易最小单位
-            riskfree_interest_rate:     float, 无风险利率，在回测时可以选择考虑现金以无风险利率增长对资产价值和投资策略的影响
-            parallel:                   bool, 是否启用多核CPU多进程模式加速优化，默认True，False表示只使用单核心
-            print_log:                  bool, 默认False，是否将回测或优化记录中的详细信息打印在屏幕上
-
-        实盘模式相关参数：
-            account_name:               str,  账户用户名
-            proxy_name:                 str,    代理服务器名
-            server_name:                str,   服务器名
-            password:                   str,      密码
-
-        回测模式相关参数:
-            reference_asset:            str, 用于对比回测收益率优劣的参照投资产品
-            reference_asset_type:       str, 参照投资产品的资产类型: {'E': 股票, 'I': 指数, 'F': 期货}
-            reference_data_type:        str, 参照投资产品的数据类型（'close', 'open' 等）
-            rate:                       qteasy.Rate, 投资费率对象
-            visual:                     bool, 默认False，可视化输出回测结果
-            log:                        bool, 默认True，输出回测详情到log文件
-
-        回测历史区间参数:
-            invest_cash_amounts:        list, 只读属性，模拟回测的投资额分笔清单，通过cashplan对象获取
-            invest_cash_dates:          list,  只读属性，模拟回测的投资额分笔投入时间清单，通过cashplan对象获取
-            invest_start:               str, 投资开始日期
-            invest_cash_type:           int, 投资金额类型，{0: 全部资金在投资起始日一次性投入, 1: 资金分笔投入（定投）}
-            invest_cash_freq:           str, 资金投入频率，当资金分笔投入时有效
-            invest_cash_periods:        str, 资金投入笔数，当资金分笔投入时有效
-            invest_end:                 str, 完成资金投入的日期
-            invest_total_amount:        float, 总投资额
-            invest_unit_amount:         float, 资金单次投入数量，仅当资金分笔投入时有效
-            riskfree_ir:                float, 无风险利率水平，在回测时可以选择是否计算现金的无风险增值或通货膨胀
-
-            fixed_buy_fee:              float, 固定买入费用，买入资产时需要支付的固定费用
-            fixed_sell_fee:             float, 固定卖出费用，卖出资产时需要支付的固定费用
-            fixed_buy_rate:             float, 固定买入费率，买入资产时需要支付费用的费率
-            fixed_sell_rate:            float, 固定卖出费率，卖出资产时需要支付费用的费率
-            min_buy_fee:                float, 最小买入费用，买入资产时需要支付的最低费用
-            min_sell_fee:               float, 最小卖出费用，卖出资产时需要支付的最低费用
-            slippage:                   float, 滑点，通过不同的模型应用滑点率估算交易中除交易费用以外的成本，如交易滑点和冲击成本等
-            rate_type:                  int, 费率计算模型，可以选用不同的模型以最佳地估算实际的交易成本
-            visual:                     bool, 默认值True，是否输出完整的投资价值图表和详细报告
-            performance_indicators:     str, 回测后对回测结果计算各种指标，支持的指标包括：格式为逗号分隔的字符串，如'FV, sharp'
-                                        indicator           instructions
-                                        FV                  终值
-                                        sharp               夏普率
-                                        alpha               阿尔法比率
-                                        beta                贝塔比率
-                                        information         信息比率
-
-            loop_log_file_path:         str, 回测记录日志文件存储路径
-            cash_inflate:               bool, 默认为False，现金增长，在回测时是否考虑现金的时间价值，如果为True，则现金按照无风险
-                                        利率增长
-
-        优化模式参数:
-            opti_invest_amount:         float, 优化投资金额，优化时默认使用简单投资额，即一次性在优化期初投入所有金额
-            opti_use_loop_cashplan:     bool, 是否使用回测的现金投资计划设置，默认False，如果使用复杂现金计划，会更加耗时
-            opti_fixed_rate:            float, 优化回测交易费率，优化时默认使用简单投资费率，即固定费率，为了效率
-            opti_use_loop_rate:         bool, 是否使用回测投资成本估算模型，默认False，如果使用复杂成本估算模型，会更加耗时
-
-            opti_period_type:           int, 优化区间类型:
-                                        {0: 单一优化区间，在一段历史数据区间上进行参数寻优,
-                                         1: 多重优化区间，根据策略参数在几段不同的历史数据区间上的平均表现来确定最优参数}
-
-            opti_start:                 str, 优化历史区间起点，默认值'20050106'
-            opti_end:                   str, 优化历史区间终点，默认值'20141231'
-            opti_window_count:          int, 当选择多重优化区间时，优化历史区间的数量，默认值=1
-            opti_window_offset:         str, 当选择多重优化区间时，不同区间的开始间隔，默认值='1Y'
-            opti_weighting_type:        int 当选择多重优化区间时，计算平均表现分数的方法：
-                                        {0: 简单平均值,
-                                         1: 线性加权平均值,
-                                         2: 指数加权平均值}
-
-            test_period_type:           int, 参数测试区间类型，在一段历史数据区间上找到最优参数后，可以在同一个区间上测试最优参数的
-                                        表现，也可以在不同的历史数据区间上测试（这是更好的办法），选项有三个：
-                                        {0: 相同区间, 此情况下忽略test_start与test_end参数，使用opti_start与opti_end,
-                                         1: 接续区间, 此情况下忽略test_start与test_end参数，使用
-                                                    opti_end与opti_end+opti_end-opti_start
-                                         2: 自定义区间}
-                                         默认值=2
-
-            test_start:                 str, 如果选择自定义区间，测试区间与寻优区间之间的间隔
-            test_end:                   str, 测试历史区间跨度
-            target_function:            str, 作为优化目标的评价函数
-            maximize_result:            bool, 确定目标函数的优化方向，保留函数值最大的还是最小的结果，默认True，寻找函数值最大的结果
-
-            opti_method:                int, 不同的优化参数搜索算法：
-                                        {0: Exhaustive，固定步长搜索法,
-                                         1: MonteCarlo，蒙特卡洛搜索法 ,
-                                         2: Incremental，递减步长搜索 ,
-                                         3: GA，遗传算法 ,
-                                         4: ANN，基于机器学习或神经网络的算法}
-
-            opti_method_step_size:      [int, tuple], 用于固定步长搜索法，固定搜索步长
-            opti_method_sample_size:    int, 用于蒙特卡洛搜索法，在空间中随机选取的样本数量
-            opti_method_init_step_size: int, 用于递减步长搜索法，初始步长
-            opti_method_incre_ratio:    float, 用于递减步长搜索法，步长递减比率
-            opti_method_screen_size:    int, 用于递减步长搜索法，每一轮搜索保留的结果数量
-            opti_method_min_step_size:  int, 用于递减步长搜索法，最小搜索步长
-            opti_method_population:     int, 用于遗传算法，种群数量
-            opti_method_swap_rate:      float, 用于遗传算法，交换比率
-            opti_methdo_crossover_rate: float, 用于遗传算法，交配比率
-            opti_method_mute_rate:      float, 用于遗传算法，变异比率
-            opti_method_max_generation: int, 用于遗传算法，最大传递代数
-
-            opti_output_count:          int, 输出结果的个数
-            opti_log_file_path:         str, 输出结果日志文件的保存路径
-            opti_perf_report:           bool, 是否对所有结果进行详细表现评价，默认False，True时会生成所有策略在测试历史区间的详细评价报告
-            opti_report_indicators:     str, 用于上述详细评价报告的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
-
-        预测模式参数:
-            predict:                    bool, 默认False，决定是否利用蒙特卡洛方法对未来的策略表现进行统计预测
-            pred_period:                str, 如果对策略的未来表现进行预测，这是预测期
-            pred_cycles:                int, 蒙特卡洛预测的预测次数
-            pred_report_indicators:     str, 预测分析的报告中所涉及的评价指标，格式为逗号分隔的字符串，如'FV, sharp, information'
-
-    """
-    run_mode_text = {0: 'Real-time Running Mode',
-                     1: 'Back-looping Mode',
-                     2: 'Optimization Mode',
-                     3: 'Predict Mode'}
-
-    asset_type_text = {'E': 'equity',
-                       'I': 'index',
-                       'F': 'futures'}
-
-    test_period_type_text = {0: '', 1: '', 2: '', 3: ''}
-
-    opti_mode_text = {0: 'Exhaustive searching method, searches the parameter space over all posible vectors '
-                         'at a fixed step size',
-                      1: 'MonteCarlo searching method, searches randomly distributed vectors in the parameter space',
-                      2: 'Decremental step size, searches the parameter space in multiple rounds, each time with '
-                         'decreasing step size to provide increased accuracy over rounds',
-                      3: 'Genetic Algorithm, searches for local optimal parameter by adopting genetic evolution laws'}
-
-    def __init__(self, mode = 1, *args, **kwargs):
-        """初始化所有的上下文变量
-
-        所有的上下文变量通过*args以及**kwargs传入，接受参数后，所有参数通过_arg_validators.py中的arg_validator()函数进行
-        验证，这些参数的验证过程与qt.run()函数中的参数验证过程是同意过程，这样就可以保证两个地方的参数等价。
-
-        当所有的参数均通过基本验证后，所有的参数被存放到一个上下文变量字典中。这个字典可以被当成参数直接传入qt.run()函数中，这样就
-        不需要在qt.run()中重复输入运行参数了
-
-        input:
-            可用的args定义在_arg_validators.py中
-
-        更多参数含义见Context类的docstring
-        """
-        today = datetime.datetime.today().date()
-
-        self.mode = mode
-        self.share_pool = None
-        self.asset_type = 'E'
-
-        self.moq = 0
-        self.riskfree_interest_rate = 0.035
-        self.parallel = True
-        self.print_log = False
-
-        self.account_name = None
-        self.proxy_name = None
-        self.server_name = None
-        self.password = None
-
-        self.reference_asset = None
-        self.reference_asset_type = 'E'
-        self.reference_data_type = 'close'
-        self.rate = Cost()
-        self.visual = True  # duplicate
-        self.log = True
-
-        # TODO: 这里除了invest_dates 以及invest_amounts以外，其他的参数均不起作用，需要重新规划
-        self.invest_start = (today - datetime.timedelta(3650)).strftime('%Y%m%d')
-        self.invest_cash_type = 0
-        self.invest_cash_freq = 'Y'
-        self.invest_cash_periods = 5
-        self.invest_end = '20201130'
-        self.invest_total_amount = 50000
-        self.invest_unit_amount = 10000
-        self.riskfree_ir = 0.015  # duplicate
-        self._invest_dates = '20060403'
-        self._invest_amounts = [10000]
-        self.cash_plan = CashPlan(self._invest_dates, self._invest_amounts)
-
-        self.fixed_buy_fee = 5
-        self.fixed_sell_fee = 0
-        self.fixed_buy_rate = 0.0035
-        self.fixed_sell_rate = 0.0015
-        self.min_buy_fee = 5
-        self.min_sell_fee = 5
-        self.slippage = 0
-        self.rate_type = 0
-        self.performance_indicators = 'FV'
-
-        self.loop_log_file_path = None
-        self.cash_inflate = False
-
-        self.opti_invest_amount = 10000
-        self.opti_use_loop_cashplan = False
-        self.opti_fixed_rate = 0.0035
-        self.opti_use_loop_rate = False
-
-        self.opti_period_type = 0
-
-        self.opti_start = '20040506'
-        self.opti_end = '20141231'
-        self.opti_window_count = 1
-        self.opti_window_offset = '1Y'
-        self.opti_weighting_type = 0
-        self.opti_cash_plan = CashPlan(dates='20060403', amounts=10000)
-
-        self.test_period_type = 2
-
-        self.test_start = '20120604'
-        self.test_end = '20201130'
-        self.test_cash_plan = CashPlan(dates='20140106', amounts=10000)
-        self.target_function = 'FV'
-        self.maximize_result = True
-
-        self.opti_method = 0
-
-        self.opti_method_step_size = 1
-        self.opti_method_sample_size = 1000
-        self.opti_method_init_step_size = 16
-        self.opti_method_incre_ratio = 2
-        self.opti_method_screen_size = 100
-        self.opti_method_min_step_size = 1
-        self.opti_method_population = 1000
-        self.opti_method_swap_rate = 0.3
-        self.opti_methdo_crossover_rate = 0.2
-        self.opti_method_mute_rate = 0.2
-        self.opti_method_max_generation = 10000
-
-        self.opti_output_count = 64
-        self.opti_log_file_path = ''
-        self.opti_perf_report = False
-
-    def __str__(self):
-        """定义Context类的打印样式"""
-        out_str = list()
-        out_str.append(f'{type(self)} at {hex(id(self))}')
-        out_str.append('qteasy running information:')
-        out_str.append('===========================')
-        out_str.append(f'execution mode:          {self.mode} - {self.mode_text}\n'
-                       f'')
-        return ''.join(out_str)
-
-    @property
-    def mode_text(self):
-        return self.run_mode_text[self.mode]
-
-    @property
-    def asset_type_text(self):
-        return self.asset_type_text[self.asset_type]
-
-    @property
-    def invest_amounts(self):
-        return self.cash_plan.amounts
-
-    @invest_amounts.setter
-    def invest_amounts(self, amounts):
-        try:
-            self.cash_plan = CashPlan(dates=self._invest_dates, amounts=amounts)
-        except:
-            raise ValueError(f'Your input does not fit the invest dates')
-
-    @property
-    def invest_dates(self):
-        return [day.strftime('%Y%m%d') for day in self.cash_plan.dates]
-
-    @invest_dates.setter
-    def invest_dates(self, dates):
-        try:
-            self.cash_plan = CashPlan(dates=dates, amounts=self._invest_amounts)
-        except:
-            raise ValueError(f'Your input does not fit the invest amounts')
-
-    # TODO: implement this property to check validity of parameters before run()
-    # TODO: refract this into parameter validators in _arg_validators.py
-    @property
-    def is_valid(self):
-        """ Checks if all parameters are valid, further, checks if
-            parameters are not conflicting with each others
-
-        :return:
-        """
-        # TODO: validate all parameters here, create error texts here
-        self.error_msg = ''
-        return True
-
-
+# TODO: 完善config字典的信息属性，使得用户可以快速了解当前配置
+# TODO: Config应该有一个保存功能，或至少有一个"read_last"功能，以便用户长期保存常用的上下文参数变量
+# TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升
 def _loop_step(pre_cash: float,
                pre_amounts: np.ndarray,
                op: np.ndarray,
@@ -569,6 +240,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
+# TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                cash_plan: CashPlan = None,
