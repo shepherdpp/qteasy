@@ -2126,11 +2126,12 @@ class TestOperator(unittest.TestCase):
 
     def test_info(self):
         """Test information output of Operator"""
-        raise NotImplementedError
+        print(f'test printing information of operator object')
+        self.op.info()
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
-        raise NotImplementedError
+        print(f'operator is ready? "{self.op.ready}"')
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
@@ -2176,7 +2177,7 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_remove_strategy(self):
         """test removing strategies from Operator"""
-        raise NotImplementedError
+        self.op.remove_strategy(stg='macd')
 
     def test_property_get(self):
         self.assertIsInstance(self.op, qt.Operator)
@@ -5107,7 +5108,6 @@ class TestQT(unittest.TestCase):
         self.op = qt.Operator(timing_types=['dma', 'macd'],
                               selecting_types=['all'],
                               ricon_types=['urgent'])
-        self.cont = qt.Context(moq=0)
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
         self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
@@ -5116,13 +5116,6 @@ class TestQT(unittest.TestCase):
         # self.op.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         self.op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
 
-        self.cont.reference_asset = '000300.SH'
-        self.cont.reference_asset_type = 'I'
-        self.cont.share_pool = '000300.SH'
-        self.cont.asset_type = 'I'
-        self.cont.output_count = 50
-        self.cont.invest_start = '20020101'
-        self.cont.moq = 1
         qt.configure(reference_asset='000300.SH',
                      ref_asset_type='I',
                      asset_pool='000300.SH',
@@ -5141,8 +5134,23 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter(stg_id='t-0', pars=timing_pars1)
         self.op.set_parameter(stg_id='t-1', pars=timing_pars3)
         self.op.set_parameter('r-0', pars=(9, -0.1595))
-        self.cont.parallel = True
-        self.cont.print_log = False
+
+    def test_configure(self):
+        """测试参数设置
+            通过configure设置参数
+            通过QR_CONFIG直接设置参数
+            设置不存在的参数时报错
+            设置不合法参数时报错
+            参数设置后可以重用
+
+        """
+        config = qt.QT_CONFIG
+        self.assertEqual(config.mode, 1)
+        qt.configure(mode=2)
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(qt.QT_CONFIG.mode, 2)
+
+        pass
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
@@ -5217,20 +5225,22 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
+        # TODO: Investigate, error when invest_end being set to "20181231", problem probably
+        # TODO: related to trade day calendar.
         op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
-        cont = qt.Context()
         all_shares = stock_basic()
         shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
-        cont.share_pool = shares_banking[10:15]
-        cont.asset_type = 'E'
-        cont.reference_asset = '000300.SH'
-        cont.reference_asset_type = 'I'
-        cont.output_count = 50
-        cont.invest_start = '20020101'
-        cont.moq = 1.
-        cont.mode = 1
-        cont.print_log = False
+        qt.configure(asset_pool=shares_banking[10:20],
+                     asset_type='E',
+                     reference_asset='000300.SH',
+                     ref_asset_type='I',
+                     opti_output_count=50,
+                     invest_start='20020101',
+                     invest_end='20181229',
+                     trade_batch_size=1.,
+                     mode=1,
+                     log=False)
         op.set_parameter('t-0', pars=(0, 0))
         op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
                          sample_freq='Q',
@@ -5245,41 +5255,41 @@ class TestQT(unittest.TestCase):
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
-        qt.run(op, cont)
+        qt.run(op)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance
         """
         print(f'test portfolio selection from large quantities of shares')
         op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
-        cont = qt.Context()
-        cont.share_pool = qt.get_stock_pool(date='19980101',
-                                            industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
-                                                      '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
-                                                      '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
-                                                      '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
-                                                      '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
-                                                      '铜', '普钢', '航空', '特种钢',
-                                                      '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
-                                                      '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
-                                                      '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
-                                                      '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
-                                                      '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
-                                                      '陶瓷', '船舶'],
-                                            area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
-                                                  '安徽', '四川', '浙江', '湖南', '河北', '新疆',
-                                                  '山东', '河南', '山西', '江西', '青海', '湖北',
-                                                  '内蒙', '海南', '重庆', '陕西', '福建', '广西',
-                                                  '上海'])
-        print(f'in total a number of {len(cont.share_pool)} shares are selected!')
-        cont.asset_type = 'E'
-        cont.reference_asset = '000300.SH'
-        cont.reference_asset_type = 'I'
-        cont.output_count = 50
-        cont.invest_start = '20020101'
-        cont.moq = 1.
-        cont.mode = 1
-        cont.print_log = False
+        qt.configure(asset_pool=qt.get_stock_pool(date='19980101',
+                                                  industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
+                                                            '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
+                                                            '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
+                                                            '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                                            '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
+                                                            '铜', '普钢', '航空', '特种钢',
+                                                            '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
+                                                            '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
+                                                            '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
+                                                            '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                                                            '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
+                                                            '陶瓷', '船舶'],
+                                                  area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
+                                                        '安徽', '四川', '浙江', '湖南', '河北', '新疆',
+                                                        '山东', '河南', '山西', '江西', '青海', '湖北',
+                                                        '内蒙', '海南', '重庆', '陕西', '福建', '广西',
+                                                        '上海']),
+                     asset_type='E',
+                     reference_asset='000300.SH',
+                     ref_asset_type='I',
+                     opti_output_count=50,
+                     invest_start='20020101',
+                     invest_end='20181229',
+                     trade_batch_size=1.,
+                     mode=1,
+                     log=False)
+        print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('t-0', pars=(0, 0))
         op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 10),
                          sample_freq='Q',
@@ -5292,7 +5302,7 @@ class TestQT(unittest.TestCase):
                          _poq=10)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
-        qt.run(op, cont)
+        qt.run(op)
 
 
 class TestVisual(unittest.TestCase):
@@ -5350,10 +5360,10 @@ class TestFastExperiments(unittest.TestCase):
 
     def test_exp1(self):
         print(f'test case fast experiment 1 is running!')
-        self.cont.mode = 1
-        self.cont.print_log = False
-        self.cont.visual = False
-        qt.run(self.op, self.cont)
+        qt.configure(mode=1,
+                     log=False,
+                     visual=False)
+        qt.run(self.op)
 
 
 class TestDataBase(unittest.TestCase):

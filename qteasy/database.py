@@ -401,8 +401,12 @@ class DataSource():
                                                                                 progress=False)
                         online_data = (inc + ind + blc + csh)[0]
 
-                    if online_data.empty: # 当下载的数据为空时，就不要改写任何数据
-                        print(f'EMPTY data loaded, will skip')
+                    if online_data.empty:
+                        # 当下载的数据为空时，就不要改写任何数据
+                        # (这点不一定，如果下载的是稀疏数据，可能这段时间本来就没有数据，这时应该写入空数据到数据库中
+                        # ，避免下次再重新从网上下载数据)
+                        # print(f'EMPTY data loaded, will skip')
+                        pass
                     else:
                         try:
                             # debug

@@ -1122,6 +1122,17 @@ def get_financial_report_type_raw_data(start: str,
 
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
+    # debug
+    # print(f'\n\n------------------------------'
+    #       f'\nin function get_financial_report_type_raw_data() got following parameters:'
+    #       f'\nstart       = {start}'
+    #       f'\nend         = {end}'
+    #       f'\nhtypes      = {htypes}'
+    #       f'\nshares      = {shares}'
+    #       f'\nparallel    = {parallel}'
+    #       f'\ndelay       = {delay}'
+    #       f'\ndelay_every = {delay_every}'
+    #       f'\nprogress    = {progress}')
     total_share_count = len(shares)
     report_fields = ['ts_code', 'end_date']
     # debug
