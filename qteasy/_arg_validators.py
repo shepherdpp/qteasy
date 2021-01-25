@@ -464,38 +464,42 @@ COMPOSIT_TYPE_DATA = []
 
 
 class ConfigDict(dict):
-    """ 继承自dict的一个类，与字典相同，用于构造qt.run()函数的参数表
+    """ 继承自dict的一个类，用于构造qt.run()函数的参数表字典对象
         比dict多出一个功能，即通过属性来访问字典的键值，提供访问便利性
 
         即：
         config.attr = config['attr']
 
     """
-    def __getattr__(self, item):
-        if item in self.keys():
-            return self[item]
-        else:
-            raise KeyError(f'the key ({item}) is not valid!')
+    def __init__(self, *args, **kwargs):
+        super(ConfigDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
-    def __setattr__(self, key, value):
-        if key in self.keys():
-            vkwargs = _valid_qt_kwargs()
-            if key in vkwargs:
-                try:
-                    valid = vkwargs[key]['Validator'](value)
-                except Exception as ex:
-                    ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
-                    raise
-                if not valid:
-                    import inspect
-                    v = inspect.getsource(vkwargs[key]['Validator']).strip()
-                    raise TypeError(
-                            f'kwarg {key} validator returned False for value: {str(value)}\n    ' + v)
-                self[key] = value
-            else:
-                raise KeyError(f'the key ({key}) is not valid!')
-        else:
-            raise KeyError(f'the key ({key}) does not exist')
+    # def __getattr__(self, item):
+    #     if item in self.keys():
+    #         return self[item]
+    #     else:
+    #         raise KeyError(f'the key ({item}) is not valid!')
+    #
+    # def __setattr__(self, key, value):
+    #     if key in self.keys():
+    #         vkwargs = _valid_qt_kwargs()
+    #         if key in vkwargs:
+    #             try:
+    #                 valid = vkwargs[key]['Validator'](value)
+    #             except Exception as ex:
+    #                 ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
+    #                 raise
+    #             if not valid:
+    #                 import inspect
+    #                 v = inspect.getsource(vkwargs[key]['Validator']).strip()
+    #                 raise TypeError(
+    #                         f'kwarg {key} validator returned False for value: {str(value)}\n    ' + v)
+    #             self[key] = value
+    #         else:
+    #             raise KeyError(f'the key ({key}) is not valid!')
+    #     else:
+    #         raise KeyError(f'the key ({key}) does not exist')
 
 
 def _valid_qt_kwargs():

@@ -5197,6 +5197,7 @@ class TestQT(unittest.TestCase):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
+        print(f'strategy optimization in Montecarlo algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -5206,11 +5207,22 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=False)
+        print(f'strategy optimization in Montecarlo algorithm with parallel ON')
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_sample_count=100,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True)
 
     def test_run_mode_2_grid_search(self):
         """测试策略的优化模式，使用网格寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
+        print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
                opti_method=0,
@@ -5220,11 +5232,22 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=False)
+        print(f'strategy optimization in grid search algorithm with parallel ON')
+        qt.run(self.op,
+               mode=2,
+               opti_method=0,
+               opti_grid_size=128,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True)
 
     def test_run_mode_2_incremental(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
+        print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
                opti_method=2,
@@ -5237,6 +5260,19 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=False)
+        print(f'strategy optimization in incremental algorithm with parallel ON')
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_min_volume=5**6,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True)
 
     def test_built_in_timing(self):
         pass

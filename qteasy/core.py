@@ -1137,8 +1137,6 @@ def _search_montecarlo(hist, op, config):
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
         :param op，object，交易信号生成器对象
         :param config, object 用于存储相关参数的上下文对象
-        :param point_count，int或list，搜索参数，提取数量，如果是int型，则在空间的每一个轴上
-            取同样多的随机值，如果是list型，则取list中的数字分别作为每个轴随机值提取数量目标
     return: =====tuple对象，包含两个变量
         pool.pars 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
