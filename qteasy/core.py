@@ -1066,9 +1066,12 @@ def _get_parameter_performance(par: tuple,
 def _search_grid(hist, op, config):
     """ 最优参数搜索算法1: 网格搜索法
 
-        逐个遍历整个参数空间（仅当空间为离散空间时）的所有点并逐一测试，或者使用某个固定的
-        “间隔”从空间中逐个取出所有的点（不管离散空间还是连续空间均适用）并逐一测试，
-        寻找使得评价函数的值最大的一组或多组参数
+        在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
+        根据该点的参数生成操作信号、回测后寻找表现最佳的一组或多组参数
+        与该算法相关的设置选项有：
+            grid_size:  网格大小，float/int/list/tuple 当参数为数字时，生成空间所有方向
+                        上都均匀分布的网格；当参数为list或tuple时，可以在空间的不同方向
+                        上生成不同间隔大小的网格。list或tuple的维度须与空间的维度一致
 
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
@@ -1085,14 +1088,6 @@ def _search_grid(hist, op, config):
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
     i = 0
     it, total = space.extract(config.opti_grid_size)
-    # debug
-    # print('Result pool has been created, capacity of result pool: ', pool.capacity)
-    # print('Searching Space has been created: ')
-    # space.info()
-    # print('Number of points to be checked: ', total)
-    # print(f'Historical Data List: \n{hist.info()}')
-    # print(f'Cash Plan:\n{config.cash_plan}\nCost Rate:\n{config.rate}')
-    # print('Searching Starts...\n')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     best_so_far = 0
@@ -1118,8 +1113,6 @@ def _search_grid(hist, op, config):
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 将当前参数以及评价结果成对压入参数池中，并去掉最差的结果
-    # 至于去掉的是评价函数最大值还是最小值，由keep_largest_perf参数确定
-    # keep_largest_perf为True则去掉perf最小的参数组合，否则去掉最大的组合
     progress_bar(i, i)
     pool.cut(config.maximize_target)
     et = time.time()
@@ -1131,7 +1124,9 @@ def _search_montecarlo(hist, op, config):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
-        随机抽取的参数点的数量为point_count, 输出结果的数量为output_count
+        与该算法相关的设置选项有：
+            sample_size:采样点数量，int 由于采样点的分布是随机的，因此采样点越多，越有可能
+                        接近全局最优值
 
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
@@ -1147,12 +1142,6 @@ def _search_montecarlo(hist, op, config):
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
     i = 0
     it, total = space.extract(config.opti_sample_count, how='rand')
-    # debug
-    # print('Result pool has been created, capacity of result pool: ', pool.capacity)
-    # print('Searching Space has been created: ')
-    # space.info()
-    # print('Number of points to be checked:', total)
-    # print('Searching Starts...')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
     best_so_far = 0
@@ -1196,12 +1185,27 @@ def _search_montecarlo(hist, op, config):
 # TODO:
 # TODO:
 def _search_incremental(hist, op, config):
-    """ 最优参数搜索算法3: 递进搜索法
+    """ 最优参数搜索算法3: 增量递进搜索法
 
-        该搜索方法的基础还是间隔搜索法，首先通过较大的搜索步长确定可能出现最优参数的区域，然后逐步
-        缩小步长并在可能出现最优参数的区域进行“精细搜索”，最终锁定可能的最优参数
-        与确定步长的搜索方法和蒙特卡洛方法相比，这种方法能够极大地提升搜索速度，缩短搜索时间，但是
-        可能无法找到全局最优参数。同时，这种方法需要参数的评价函数值大致连续
+        该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
+        而且每一轮搜索都（大概率）更接近全局最优解。
+        该算法的第一轮搜索就是标准的蒙特卡洛算法，在整个参数空间中随机取出一定数量的参数组合，使用这
+        些参数分别进行信号回测。第一轮搜索结束后，在第一轮的全部结果中择优选出一定比例的最佳参数，以
+        这些最佳参数为中心点，构建一批子空间，这些子空间的总体积比起最初的参数空间小的多，但是大概率
+        容纳了最初参数空间的全局最优解。
+        接着，程序继续在新生成的子空间中取出同样多的参数组合，并同样选出最佳参数组合，以新的最优解为
+        中心创建下一轮的参数空间，其总体积再次缩小。
+        如上所诉反复运行程序，每一轮需要搜索的子空间的体积越来越小，找到全局最优的概率也越来越大，直到
+        参数空间的体积小于一个固定值，或者循环的次数超过最大次数，循环停止，输出当前轮的最佳参数组合。
+
+        与该算法相关的设置选项有：
+            r_sample_size:      采样点数量，int 每一轮搜索中采样点的数量
+            reduce_ratio:       择优比例，float, 大于零小于1的浮点数，次轮搜索参数空间大小与本轮
+                                空间大小的比例，同时也是参数组的择优比例，例如0。2代表每次搜索的
+                                参数中最佳的20%会被用于创建下一轮的子空间邻域，同时下一轮的子空间
+                                体积为本轮空间体积的20%
+            max_rounds:         最大轮数，int，循环次数达到该值时结束循环
+            min_volume:         最小体积，float，当参数空间的体积（Volume）小于该值时停止循环
 
     input:
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
@@ -1221,13 +1225,14 @@ def _search_incremental(hist, op, config):
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     base_space = Space(s_range, s_type)
     base_dimension = base_space.dim
+    # 每一轮参数寻优后需要保留的参数组的数量
     reduced_sample_count = int(sample_count * reduce_ratio)
     pool = ResultPool(reduced_sample_count)  # 用于存储中间结果或最终结果的参数池对象
-    size_reduce_ratio = reduce_ratio ** (1 / base_dimension) / reduced_sample_count
+
     spaces.append(base_space)  # 将整个空间作为第一个子空间对象存储起来
-    space_count_in_round = 1
-    current_round = 1
-    current_volume = base_space.volume
+    space_count_in_round = 1  # 本轮运行子空间的数量
+    current_round = 1  # 当前运行轮次
+    current_volume = base_space.volume  # 当前运行轮次子空间的总体积
     history_list = hist.to_dataframe(htype='close').fillna(0)
     round_count = min(5, -(math.log(current_volume / min_volume) * math.log(reduce_ratio)))
     total_calc_rounds = int(round_count * sample_count)
@@ -1245,16 +1250,14 @@ def _search_incremental(hist, op, config):
     # print('Searching Starts...')
     i = 0
     st = time.time()
-    while current_volume >= min_volume and current_round < max_rounds:  # 从当前space开始搜索，一回合后生成更小的subspaces，直到subspace的volume小于预设值
+    # 从当前space开始搜索，当subspace的体积小于min_volume或循环次数达到max_rounds时停止循环
+    while current_volume >= min_volume and current_round < max_rounds:
+        # 在每一轮循环中，spaces列表存储该轮所有的空间或子空间
         while spaces:
             space = spaces.pop()
-            # 逐个弹出子空间列表中的子空间，用当前步长在其中搜索最佳参数，所有子空间的最佳参数全部进入pool并筛选最佳参数集合
+            # 逐个弹出子空间列表中的子空间，随机选择参数，生成参数生成器generator
+            # 生成的所有参数及评价结果压入pool结果池，每一轮所有空间遍历完成后再排序择优
             it, total = space.extract(sample_count // space_count_in_round, how='rand')
-            # debug
-            # print(f'\n-----------------------------------------------------------------'
-            #       f'\nSearching the {space_count_in_round - len(spaces)}/'
-            #       f'{space_count_in_round}th Space in current round')
-            # print(f'{total} points to be checked\n')
             if parallel:
                 # 启用并行计算
                 proc_pool = ProcessPoolExecutor()
@@ -1276,14 +1279,24 @@ def _search_incremental(hist, op, config):
                     i += 1
                     if i % 20 == 0:
                         progress_bar(i, total_calc_rounds, f'total samples in current step: {total}')
-        # debug
-        # print(f'\n----------------'
-        #       f'\nCompleted one round, {pool.item_count} items are put in the Result pool')
+        # 本轮所有结果都进入结果池，根据择优方向选择最优结果保留，剪除其余结果
         pool.cut(config.maximize_target)
-        # print(f'\n------------------'
-        #       f'\nCut the pool to reduce its items to capacity, {pool.item_count} items left')
+        # 为了生成新的子空间，计算下一轮子空间的半径大小
+        # 为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
+        # 的缩小比例。这个比例与空间的维数和子空间的数量有关
+        # 例如：
+        # 若 reduce_ratio(rr)=0.5，设初始空间体积为Vi,边长为Si，第k轮空间体积为Vk，子空间数量为m，
+        #       每个子空间的体积为V，Size为S，空间的维数为d,则有：
+        #       Si ** d * (rr ** k) = Vi * (rr ** k) = Vk =  V * m = S ** d * m
+        #       于是：
+        #       S ** d * m = Si ** d * (rr ** k)
+        #       (S/Si) ** d = (rr ** k) / m
+        #       S/Si = ((rr ** k) / m) ** (1/d)
+        # 根据上述结果，第k轮的子空间半径S可以由原始空间的半径Si得到：
+        #       S = Si * ((rr ** k) / m) ** (1/d)
+        size_reduce_ratio = ((reduce_ratio ** current_round) / reduced_sample_count) ** (1 / base_dimension)
+        reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio)
         # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
-        reduced_size = tuple(np.array(space.size) * size_reduce_ratio)
         current_volume = 0
         for point in pool.pars:
             subspace = base_space.from_point(point=point, distance=reduced_size)
