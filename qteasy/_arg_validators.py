@@ -475,31 +475,6 @@ class ConfigDict(dict):
         super(ConfigDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
 
-    # def __getattr__(self, item):
-    #     if item in self.keys():
-    #         return self[item]
-    #     else:
-    #         raise KeyError(f'the key ({item}) is not valid!')
-    #
-    # def __setattr__(self, key, value):
-    #     if key in self.keys():
-    #         vkwargs = _valid_qt_kwargs()
-    #         if key in vkwargs:
-    #             try:
-    #                 valid = vkwargs[key]['Validator'](value)
-    #             except Exception as ex:
-    #                 ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
-    #                 raise
-    #             if not valid:
-    #                 import inspect
-    #                 v = inspect.getsource(vkwargs[key]['Validator']).strip()
-    #                 raise TypeError(
-    #                         f'kwarg {key} validator returned False for value: {str(value)}\n    ' + v)
-    #             self[key] = value
-    #         else:
-    #             raise KeyError(f'the key ({key}) is not valid!')
-    #     else:
-    #         raise KeyError(f'the key ({key}) does not exist')
 
 
 def _valid_qt_kwargs():
