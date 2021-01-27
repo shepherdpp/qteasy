@@ -1224,6 +1224,7 @@ def _search_incremental(hist, op, config):
     s_range, s_type = op.opt_space_par
     spaces = list()  # 子空间列表，用于存储中间结果邻域子空间，邻域子空间数量与pool中的元素个数相同
     base_space = Space(s_range, s_type)
+    base_volume = base_space.volume
     base_dimension = base_space.dim
     # 每一轮参数寻优后需要保留的参数组的数量
     reduced_sample_count = int(sample_count * reduce_ratio)
@@ -1233,18 +1234,29 @@ def _search_incremental(hist, op, config):
     space_count_in_round = 1  # 本轮运行子空间的数量
     current_round = 1  # 当前运行轮次
     current_volume = base_space.volume  # 当前运行轮次子空间的总体积
-    history_list = hist.to_dataframe(htype='close').fillna(0)
-    round_count = min(5, -(math.log(current_volume / min_volume) * math.log(reduce_ratio)))
+    history_list = hist.to_dataframe(htype='close').fillna(0)  # 准备历史数据
+    # 估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
+    # 因此总的运行回合数就等于轮数乘以每一轮的回合数。关键是计算轮数
+    # 由于轮数的多少取决于两个变量，一个是最大轮次数，另一个是下一轮产生的子空间总和体积是否
+    # 小于最小体积阈值，因此，推算过程如下：
+    # 设初始空间体积为Vi，最小空间体积为Vmin，每一轮的缩小率为rr，最大计算轮数为Rmax
+    # 且第k轮的空间体积为Vk，则有：
+    #                       Vk = Vi * rr ** k
+    #       停止条件1：      Vk = Vi * rr ** k < Vmin
+    #       停止条件2:      k >= Rmax
+    #    根据停止条件1：    rr ** k < Vmin / Vi
+    #                    k > log(Vmin / Vi) / log(rr)
+    #        因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
+    round_count = min(max_rounds, (math.log(min_volume / base_volume) / math.log(reduce_ratio)))
     total_calc_rounds = int(round_count * sample_count)
     # debug
-    # print(f'\n--------------------------------------------------------------------'
-    #       f'\nResult pool prepared, {pool.capacity} total output will be generated')
-    # print(f'Base Searching Space has been created: ')
-    # base_space.info()
+    # print(f'\n--------------------------------------------------------------------')
     # print(f'searching parameters:\n'
     #       f'sample count:      {sample_count // space_count_in_round}\n'
+    #       f'current volume:    {current_volume}'
     #       f'min volume:        {min_volume}\n'
     #       f'reduce ratio:      {reduce_ratio}\n'
+    #       f'max round count:   {max_rounds}\n'
     #       f'parallel:          {parallel}')
     # print(f'Estimated Total Number of points to be checked:', total_calc_rounds)
     # print('Searching Starts...')
@@ -1292,32 +1304,25 @@ def _search_incremental(hist, op, config):
         #       S ** d * m = Si ** d * (rr ** k)
         #       (S/Si) ** d = (rr ** k) / m
         #       S/Si = ((rr ** k) / m) ** (1/d)
-        # 根据上述结果，第k轮的子空间半径S可以由原始空间的半径Si得到：
+        # 根据上述结果，第k轮的子空间直径S可以由原始空间的半径Si得到：
         #       S = Si * ((rr ** k) / m) ** (1/d)
+        #       distance = S / 2
         size_reduce_ratio = ((reduce_ratio ** current_round) / reduced_sample_count) ** (1 / base_dimension)
-        reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio)
+        reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio / 2)
         # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
         current_volume = 0
         for point in pool.pars:
             subspace = base_space.from_point(point=point, distance=reduced_size)
             spaces.append(subspace)
             current_volume += subspace.volume
-            # debug
-            # print(f'\na space is generated around the point {point} with distance {reduced_size}'
-            #       f'\nthe space is like:'
-            #       f'{space.boes}')
-            # base_space.from_point(point=point, distance=reduced_size).info()
-        # spaces.extend([base_space.from_point(point=item, distance=step_size) for item in pool.pars])
-        # 刷新搜索步长
-        # debug
         current_round += 1
         space_count_in_round = len(spaces)
-        # print(f'\n{len(spaces)}new spaces created, information of first 5 spaces are:')
-        # for space in spaces[:5]:
-        #     print(space.boes)
-        # print(f'\nfinished round {current_round - 1}'
-        #       f'\nnext round space count will be {space_count_in_round}\n'
-        #       f'total volume of these spaces are {current_volume}')
+        # debug
+        # print(f'\n-----------------------------------------------'
+        #       f'\nfinished optimization round {current_round - 1}'
+        #       f'\n{space_count_in_round} spaces are generated in base space:'
+        #       f'\nwith distance: {np.round(reduced_size, 3)}'
+        #       f'\ntotal volume: {current_volume}')
         progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
     et = time.time()
     progress_bar(i, i)
