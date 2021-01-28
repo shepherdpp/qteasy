@@ -679,6 +679,26 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '优化模式投资的日期，一个str或list'},
 
+        'opti_type':           {'Default':   'single',
+                                'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
+                                'level':     2,
+                                'text':      '仅对无监督优化有效。优化类型。指优化数据的利用方式:'
+                                             '"single"   - 在每一回合的优化测试中，在优化区间上进行覆盖整个区间的单次回测并评价'
+                                             '             回测结果'
+                                             '"multiple" - 在每一回合的优化测试中，将优化区间的数据划分为多个子区间，在这些子区间'
+                                             '             上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果'},
+
+        'opti_sub_periods':    {'Default':   5,
+                                'Validator': lambda value: isinstance(value, int) and value >= 1,
+                                'level':     2,
+                                'text':      '仅对无监督优化有效。且仅当优化类型为"multiple"时有效。将优化区间切分为子区间的数量'},
+
+        'opti_sub_prd_length': {'Default':   0.6,
+                                'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
+                                'level':     2,
+                                'text':      '仅当优化类型为"multiple"时有效。每一个优化子区间长度占整个优化区间长度的比例'
+                                             '例如，当优化区间长度为10年时，本参数为0.6代表每一个优化子区间长度为6年'},
+
         'test_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
@@ -705,6 +725,35 @@ def _valid_qt_kwargs():
                                                                    for item in value),
                                 'level':     1,
                                 'text':      '优化模式策略测试投资的日期，一个str或list'},
+
+        'test_type':           {'Default':   'single',
+                                'Validator': lambda value: isinstance(value, str) and
+                                                           value in ['single', 'multiple', 'montecarlo'],
+                                'level':     2,
+                                'text':      '测试类型。指测试数据的利用方式:'
+                                             '"single"     - 在每一回合的优化测试中，在测试区间上进行覆盖整个区间的单次回测并评价'
+                                             '               回测结果'
+                                             '"multiple"   - 在每一回合的优化测试中，将测试区间的数据划分为多个子区间，在这些子区间'
+                                             '               上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果'
+                                             '"montecarlo" - 蒙特卡洛测试，根据测试区间历史数据的统计性质，随机生成大量的模拟价格变'
+                                             '               化数据，用这些数据对策略的表现进行评价，最后给出统计意义的评价结果'},
+
+        'test_sub_periods':    {'Default':   3,
+                                'Validator': lambda value: isinstance(value, int) and value >= 1,
+                                'level':     2,
+                                'text':      '仅当测试类型为"multiple"时有效。将测试区间切分为子区间的数量'},
+
+        'test_sub_prd_length': {'Default':   0.75,
+                                'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
+                                'level':     2,
+                                'text':      '仅当测试类型为"multiple"时有效。每一个测试子区间长度占整个测试区间长度的比例'
+                                             '例如，当测试区间长度为4年时，本参数0.75代表每个测试子区间长度为3年'},
+
+        'test_cycle_count':    {'Default':   100,
+                                'Validator': lambda value: isinstance(value, int) and value >= 1,
+                                'level':     2,
+                                'text':      '仅当测试类型为"montecarlo"时有效。生成的模拟测试数据的数量。'
+                                             '默认情况下生成100组模拟价格数据，并进行100次策略回测并评价其统计结果'},
 
         'optimize_target':     {'Default':   'FV',
                                 'Validator': lambda value: isinstance(value, str)
