@@ -557,7 +557,10 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _validate_asset_id(value),
                                 'level':     0,
-                                'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数'},
+                                'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数'
+                                             '参考价格用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的'
+                                             '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会'
+                                             '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
         'ref_asset_type':      {'Default':   'I',
                                 'Validator': lambda value: _validate_asset_type(value),
@@ -582,31 +585,36 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     1,
-                                'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'},
+                                'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'
+                                             '默认值为10元'},
 
         'cost_fixed_sell':     {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     1,
-                                'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化'},
+                                'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化'
+                                             '默认值为0'},
 
         'cost_rate_buy':       {'Default':   0.0003,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 <= value < 1,
                                 'level':     0,
-                                'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算'},
+                                'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算'
+                                             '默认值为万分之三'},
 
         'cost_rate_sell':      {'Default':   0.0001,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 <= value < 1,
                                 'level':     1,
-                                'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算'},
+                                'text':      '卖出证券或资产时的成本费率或佣金比率，以卖出金额的比例计算'
+                                             '默认值为万分之一'},
 
-        'cost_min_buy':        {'Default':   0.0,
+        'cost_min_buy':        {'Default':   5.0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     1,
-                                'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
+                                'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'
+                                             '默认值为5元'},
 
         'cost_min_sell':       {'Default':   0.0,
                                 'Validator': lambda value: isinstance(value, float)
@@ -703,13 +711,17 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
-                                'text':      '优化模式下的策略测试区间开始日期'},
+                                'text':      '优化模式下的策略测试区间开始日期'
+                                             '格式为"YYYYMMDD"'
+                                             '字符串类型输入'},
 
         'test_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
-                                'text':      '优化模式下的策略测试区间结束日期'},
+                                'text':      '优化模式下的策略测试区间结束日期'
+                                             '格式为"YYYYMMDD"'
+                                             '字符串类型输入'},
 
         'test_cash_amounts':   {'Default':   [100000.0],
                                 'Validator': lambda value: isinstance(value, (tuple, list))
@@ -717,14 +729,21 @@ def _valid_qt_kwargs():
                                                                    for item in value)
                                                            and all(item > 1 for item in value),
                                 'level':     1,
-                                'text':      '优化模式策略测试投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
+                                'text':      '优化模式策略测试投资的金额，一个tuple或list，每次投入资金的金额。'
+                                             '模拟现金多次定投投入时，输入多个数字表示多次投入'
+                                             '输入的数字的个数必须与cash_dates中的日期数量相同'},
 
         'test_cash_dates':     {'Default':   '20140106',
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value),
                                 'level':     1,
-                                'text':      '优化模式策略测试投资的日期，一个str或list'},
+                                'text':      '优化模式策略测试投资的日期，一个str或list'
+                                             'str类型输入时，格式为"YYYYMMDD"'
+                                             '如果需要模拟现金多次定投投入，或者多次分散投入，则可以输入list类型或str类型'
+                                             '以下两种输入方式等效：'
+                                             '"20100104,20100202,20100304"'
+                                             '["20100104", "20100202", "20100304"]'},
 
         'test_type':           {'Default':   'single',
                                 'Validator': lambda value: isinstance(value, str) and
