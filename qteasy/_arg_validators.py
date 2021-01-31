@@ -946,7 +946,8 @@ def _process_kwargs(kwargs, vkwargs):
                 import inspect
                 v = inspect.getsource(vkwargs[key]['Validator']).strip()
                 raise TypeError(
-                        f'kwarg {key} validator returned False for value: {str(value)}\n    ' + v)
+                        f'kwarg {key} validator returned False for value: {str(value)}\n'
+                        f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
 
         # ---------------------------------------------------------------
         #  At this point in the loop, if we have not raised an exception,

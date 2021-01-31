@@ -274,6 +274,9 @@ def apply_loop(op_list: pd.DataFrame,
     op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
+    # TODO: FutureWarning:
+    # TODO: Passing list-likes to .loc or [] with any missing label will raise
+    # TODO: KeyError in the future, you can use .reindex() as an alternative.
     price = history_list.fillna(0).loc[op_list.index].values
 
     looped_dates = list(op_list.index)
@@ -841,6 +844,8 @@ def run(operator, **kwargs):
             elif signal < 0:
                 print(f'Sell out {-signal * 100}% of current on holding stock!')
         print(f'\n===========END OF REPORT=============\n')
+        return None
+
     elif run_mode == 1:
         # 进入回测模式
         operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
@@ -911,6 +916,7 @@ def run(operator, **kwargs):
                   f'from {eval_res["max_date"].date()} to {eval_res["low_date"].date()}')
             print(f'\n===========END OF REPORT=============\n')
         return None
+
     elif run_mode == 2:
         how = config.opti_method
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
@@ -923,12 +929,15 @@ def run(operator, **kwargs):
               f'|                                  |\n'
               f'====================================\n')
         print(f'Searching finished, {len(perfs)} best results are generated')
-        print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result')
-        print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{pars[-1]}')
-        print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{pars[0]}')
-        print(f'==========VALIDATION OF OPTIMIZATION RESULTS============')
-        # TODO: 在返回优化的pars/perfs之前，应该先将所有的pars在测试区间上进行
-        # TODO: 测试，并将打印/输出测试评价指标的统计结果。
+        print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result:\n'
+              f'======================OPTIMIZATION RESULTS=========================\n'
+              f'                    parameter                     |    performance    \n'
+              f'--------------------------------------------------|-------------------')
+        for par, perf in zip(pars, perfs):
+            print(f'{par}{" " * (50 - len(str(par)))}|  {perf:.3f}' )
+        # print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{pars[-1]}')
+        # print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{pars[0]}')
+        print(f'===============VALIDATION OF OPTIMIZATION RESULTS==================')
         test_result_df = pd.DataFrame(columns=['par',
                                                'sell_count',
                                                'buy_count',
@@ -1010,6 +1019,7 @@ def run(operator, **kwargs):
                                        justify='center'))
         print(f'\n===========END OF REPORT=============\n')
         return perfs, pars
+
     elif run_mode == 3:
         """ 进入策略统计预测分析模式
         
@@ -1030,6 +1040,7 @@ def _get_parameter_performance(par: tuple,
                                history_list: pd.DataFrame,
                                config) -> float:
     """ 所有优化函数的核心部分，将par传入op中，并给出一个float，代表这组参数的表现评分值performance
+        如果config设置使用多重优化或多重测试时，则将测试数据切片分别测试
 
     input:
         :param par:  tuple: 一组参数，包含多个策略的参数的混合体
@@ -1044,21 +1055,78 @@ def _get_parameter_performance(par: tuple,
     # 生成交易清单并进行模拟交易生成交易记录
     op_list = op.create_signal(hist)
     if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回0
-        return 0
-    looped_val = apply_loop(op_list=op_list,
-                            history_list=history_list,
-                            cash_plan=CashPlan(config.invest_cash_dates,
-                                               config.invest_cash_amounts),
-                            cost_rate=Cost(config.cost_fixed_buy,
-                                           config.cost_fixed_sell,
-                                           config.cost_rate_buy,
-                                           config.cost_rate_sell,
-                                           config.cost_min_buy,
-                                           config.cost_min_sell,
-                                           config.cost_slippage),
-                            moq=config.trade_batch_size)
-    # 使用评价函数计算该组参数模拟交易的评价值
-    perf = eval_fv(looped_val)
+        return -np.inf
+    # TODO: according to opti_type, create start and end points of back-testing periods, and get loop result
+
+    if config.opti_type == 'single':
+        # in this case, config.invest_cash_dates will be utilized
+        looped_val = apply_loop(op_list=op_list,
+                                history_list=history_list,
+                                cash_plan=CashPlan(config.invest_cash_dates,
+                                                   config.invest_cash_amounts),
+                                cost_rate=Cost(config.cost_fixed_buy,
+                                               config.cost_fixed_sell,
+                                               config.cost_rate_buy,
+                                               config.cost_rate_sell,
+                                               config.cost_min_buy,
+                                               config.cost_min_sell,
+                                               config.cost_slippage),
+                                moq=config.trade_batch_size)
+        # 使用评价函数计算该组参数模拟交易的评价值
+        # TODO: add other evaluation functions
+        perf = eval_fv(looped_val)
+    elif config.opti_type == 'multiple':
+        # create list of start and end dates
+        # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
+        # used as the investment date for each sub-periods
+        start_dates = []
+        end_dates = []
+        first_history_date = history_list.index[0]
+        last_history_date = history_list.index[-1]
+        history_range = last_history_date - first_history_date
+        sub_hist_range = history_range * config.opti_sub_prd_length
+        sub_hist_interval = (1 - config.opti_sub_prd_length) * history_range / config.opti_sub_periods
+        for i in range(config.opti_sub_periods):
+            start_date = first_history_date + i * sub_hist_interval
+            start_dates.append(start_date)
+            end_dates.append(start_date + sub_hist_range)
+        # loop over all pairs of start and end dates, get the results separately and output average
+        total_perf = 0
+        #debug
+        # print(f'in optimization multiple opti_ranges are utilized')
+        for start, end in zip(start_dates, end_dates):
+            op_list_seg = op_list[start:end].copy()
+            history_list_seg = history_list[start:end].copy()
+            cash_plan = CashPlan(history_list_seg.index[0].strftime('%Y%m%d'),
+                                 config.invest_cash_amounts)
+            trade_cost = Cost(config.cost_fixed_buy,
+                              config.cost_fixed_sell,
+                              config.cost_rate_buy,
+                              config.cost_rate_sell,
+                              config.cost_min_buy,
+                              config.cost_min_sell,
+                              config.cost_slippage)
+            looped_val = apply_loop(op_list=op_list_seg,
+                                    history_list=history_list_seg,
+                                    cash_plan=cash_plan,
+                                    cost_rate=trade_cost,
+                                    moq=config.trade_batch_size)
+            perf = eval_fv(looped_val)
+            total_perf += perf
+            #debug
+            # print(f'in current optimization segment, a segment of history list is selected:\n'
+            #       f'started from:       {history_list_seg.index[0]}\n'
+            #       f'ended on:           {history_list_seg.index[-1]}\n'
+            #       f'opti_list_segment also created:\n'
+            #       f'started from:       {op_list.index[0]}\n'
+            #       f'ended on:           {op_list.index[-1]}\n'
+            #       f'with cash plan:\n'
+            #       f'{cash_plan.info()}\n'
+            #       f'optimization result is:\n'
+            #       f'final value:        {perf}\n'
+            #       f'total fv:           {total_perf}')
+        perf = perf / len(start_dates)
+
     return perf
 
 
