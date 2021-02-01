@@ -1074,7 +1074,12 @@ def _get_parameter_performance(par: tuple,
                                 moq=config.trade_batch_size)
         # 使用评价函数计算该组参数模拟交易的评价值
         # TODO: add other evaluation functions
-        perf = eval_fv(looped_val)
+        if config.optimize_target = 'FV':
+            perf = eval_fv(looped_val)
+        elif config.optimize_target = 'MDD':
+            perf = eval_max_drawdown(looped_val)
+        else:
+            raise NotImplementedError(f'Evaluation function "{config.optimize_target}" not implemented yet!')
     elif config.opti_type == 'multiple':
         # create list of start and end dates
         # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
