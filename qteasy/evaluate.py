@@ -12,8 +12,61 @@ import pandas as pd
 from .utilfuncs import str_to_list
 
 
+def performance_statistics(performances: list, stats='mean'):
+    """ 输入几个不同的评价指标，对它们进行统计分析，并输出统计分析的结果
+
+    :param performance: 一个列表，包含一个或多个不同的评价指标，所有评价指标
+    :return:
+    """
+    assert isinstance(performances, list), \
+        f'performance dicts should be a list of dicts, got {type(performances)} instead'
+    assert all(isinstance(perf, dict) for perf in performances),\
+        f'One or more of the performances dicts is not dict'
+    assert any(bool(perf) for perf in performances), \
+        f'One or more of the performance dicts is empty!\n' \
+        f'got performances:\n{performances}'
+
+    # TODO: following calculations available only for numeric performances,
+    # TODO: op_infos shall be excluded, op_infos like: oper_count(pd.DataFrame)
+    # TODO:
+    res = {}
+    if 'oper_count' in performances[0]:
+        res['oper_count'] = 0
+        for perf in performances:
+            res['oper_count'] += perf['oper_count']
+        res['oper_count'] = res['oper_count'] / len(performances)
+    if 'max_date' in performances[0]:
+        res['max_date'] = performances[0]['max_date']
+        res['low_date'] = performances[0]['low_date']
+    keys_to_process = [perf for perf in performances[0] if perf not in ['oper_count', 'max_date', 'low_date']]
+    for key in keys_to_process:
+        values = np.array([perf[key] for perf in performances])
+        if stats == 'mean':
+            res[key] = values.mean()
+        elif stats == 'std':
+            res[key] = values.std()
+        elif stats == 'max':
+            res[key] = values.max()
+        elif stats == 'min':
+            res[key] = values.min()
+        else:
+            raise KeyError(f'the stats {stats} is not yet implemented!')
+
+    return res
+
+
 def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, indicators: str = 'final_value'):
-    """根据args获取相应的性能指标"""
+    """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
+        返回一个dict，包含所有需要的indicators
+
+    :param op_list: operator对象生成的交易清单
+    :param hist_reference: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
+    :param reference_data: 参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
+    :param cash_plan: 投资计划
+    :param indicators: 评价指标，逗号分隔的多个评价指标
+    :return:
+    :type looped_values: dict: 一个字典，每个指标的各种值
+    """
     indicator_list = str_to_list(indicators)
     performance_dict = {}
     if any(indicator in indicator_list for indicator in ['years', 'oper_count', 'total_invest', 'total_fee', 'return']):
@@ -25,7 +78,7 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         performance_dict['total_invest'] = total_invest
         performance_dict['total_fee'] = total_fee
     # 评价回测结果——计算回测终值
-    if any(indicator in indicator_list for indicator in ['fv', 'final_value']):
+    if any(indicator in indicator_list for indicator in ['FV', 'fv', 'final_value']):
         performance_dict['final_value'] = eval_fv(looped_val=looped_values)
     # 评价回测结果——计算总投资收益率
     if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
@@ -144,7 +197,7 @@ def eval_beta(looped_value, reference_value, reference_data):
     if not isinstance(looped_value, pd.DataFrame):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
     if not reference_data in reference_value.columns:
-        raise KeyError(f'reference data should \'{reference_data}\' can not be found in reference data')
+        raise KeyError(f'reference data type \'{reference_data}\' can not be found in reference data')
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
     ret_dev = ret.var()
     ref = reference_value[reference_data]
@@ -290,7 +343,7 @@ def eval_operation(op_list, looped_value, cash_plan):
     """ 评价函数，统计操作过程中的基本信息:
 
     对回测过程进行统计，输出以下内容：
-    1，总交易次数：买入操作次数、卖出操作次数
+    1，总交易次数：买入操作次数、卖出操作次数，总操作次数。由于针对不同的股票分别统计，因此操作次数并不是一个数字，而是一个DataFrame
     2，总投资额
     3，总交易费用
     4，回测时间长度
