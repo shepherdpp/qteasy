@@ -261,12 +261,12 @@ class Strategy:
         """设置策略参数，在设置之前对参数的个数进行检查
 
         input:
-            :param: type pars: tuple，需要设置的参数
+            :param: type items: tuple，需要设置的参数
         return:
             int: 1: 设置成功，0: 设置失败
         """
         assert isinstance(pars, (tuple, dict)) or pars is None, \
-            f'parameter should be either a tuple or a dict, got {type(pars)} instead'
+            f'parameter should be either a tuple or a dict, got {type(items)} instead'
         if pars is None:
             self._pars = pars
             return 1
@@ -274,7 +274,7 @@ class Strategy:
             self._pars = pars
             return 1
         raise ValueError(f'parameter setting error in set_pars() method of \n{self}\nexpected par count: '
-                         f'{self.par_count}, got {len(pars)}')
+                         f'{self.par_count}, got {len(items)}')
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型
@@ -527,7 +527,7 @@ class RollingTiming(Strategy):
         :return:
             np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
-        # print(f'在Timing.generate_over()函数中取到历史数据切片hist_slice的shape为 {hist_slice.shape}, 参数为: {pars}')
+        # print(f'在Timing.generate_over()函数中取到历史数据切片hist_slice的shape为 {hist_slice.shape}, 参数为: {items}')
         # print(f'first 20 rows of hist_price_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用_realize()函数
         # 由于输入的历史数据来自于HistoryPanel，因此总是三维数据的切片即二维数据，因此可以简化：
@@ -717,9 +717,9 @@ class SimpleSelecting(Strategy):
         """
         # 提取策略参数
         assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
+        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.items)}'
         assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+            f'InputError, expected count of parameter is {self.par_count}, got {len(self.items)} instead'
         assert isinstance(hist_data, np.ndarray), \
             f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
         assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
@@ -1139,9 +1139,9 @@ class FactoralSelecting(Strategy):
         """
         # 提取策略参数
         assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
+        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.items)}'
         assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+            f'InputError, expected count of parameter is {self.par_count}, got {len(self.items)} instead'
         assert isinstance(hist_data, np.ndarray), \
             f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
         assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'

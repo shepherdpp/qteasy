@@ -648,7 +648,7 @@ class Operator:
         if pars is not None:
             if strategy.set_pars(pars):
                 pass
-                # print(f'{strategy} parameter has been set to {pars}')
+                # print(f'{strategy} parameter has been set to {items}')
             else:
                 raise ValueError(f'parameter setting error')
                 # print(f'parameter setting error')

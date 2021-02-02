@@ -669,20 +669,20 @@ class TestPool(unittest.TestCase):
         self.p.in_pool(self.additional_result1[0], self.additional_result1[1])
         self.p.cut()
         self.assertEqual(self.p.item_count, 1)
-        self.assertEqual(self.p.pars, ['abc'])
+        self.assertEqual(self.p.items, ['abc'])
         for item, perf in zip(self.items, self.perfs):
             self.p.in_pool(item, perf)
         self.assertEqual(self.p.item_count, 6)
-        self.assertEqual(self.p.pars, ['abc', 'first', 'second', (1, 2, 3), 'this', 24])
+        self.assertEqual(self.p.items, ['abc', 'first', 'second', (1, 2, 3), 'this', 24])
         self.p.cut()
-        self.assertEqual(self.p.pars, ['second', (1, 2, 3), 'this', 24, 'abc'])
+        self.assertEqual(self.p.items, ['second', (1, 2, 3), 'this', 24, 'abc'])
         self.assertEqual(self.p.perfs, [2, 3, 4, 5, 12])
 
         self.p.in_pool(self.additional_result2[0], self.additional_result2[1])
         self.p.in_pool(self.additional_result3[0], self.additional_result3[1])
         self.assertEqual(self.p.item_count, 7)
         self.p.cut(keep_largest=False)
-        self.assertEqual(self.p.pars, [[1, 2], 'second', (1, 2, 3), 'this', 24])
+        self.assertEqual(self.p.items, [[1, 2], 'second', (1, 2, 3), 'this', 24])
         self.assertEqual(self.p.perfs, [-1, 2, 3, 4, 5])
 
 
@@ -2403,7 +2403,7 @@ class TestOperator(unittest.TestCase):
                               sample_freq='d',
                               window_length=20,
                               data_types='close, open')
-        self.assertEqual(self.op.timing[0].pars, (5, 10, 5))
+        self.assertEqual(self.op.timing[0].items, (5, 10, 5))
         self.assertEqual(self.op.timing[0].par_boes, ((5, 10), (5, 15), (10, 15)))
 
         self.assertEqual(self.op.op_data_freq, 'd')
@@ -2455,14 +2455,14 @@ class TestOperator(unittest.TestCase):
                               sample_freq='d',
                               window_length=20,
                               data_types='close, open')
-        self.assertEqual(self.op.timing[0].pars, (5, 10, 5))
-        self.assertEqual(self.op.selecting[0].pars, (0.5,))
-        self.assertEqual(self.op.ricon[0].pars, (9, -0.23))
+        self.assertEqual(self.op.timing[0].items, (5, 10, 5))
+        self.assertEqual(self.op.selecting[0].items, (0.5,))
+        self.assertEqual(self.op.ricon[0].items, (9, -0.23))
         self.assertEqual(self.op.opt_types, [1, 0, 1])
         self.op.set_opt_par((5, 12, 9, 8, -0.1))
-        self.assertEqual(self.op.timing[0].pars, (5, 12, 9))
-        self.assertEqual(self.op.selecting[0].pars, (0.5,))
-        self.assertEqual(self.op.ricon[0].pars, (8, -0.1))
+        self.assertEqual(self.op.timing[0].items, (5, 12, 9))
+        self.assertEqual(self.op.selecting[0].items, (0.5,))
+        self.assertEqual(self.op.ricon[0].items, (8, -0.1))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
 

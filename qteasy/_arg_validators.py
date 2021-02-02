@@ -757,6 +757,12 @@ def _valid_qt_kwargs():
                                              '"montecarlo" - 蒙特卡洛测试，根据测试区间历史数据的统计性质，随机生成大量的模拟价格变'
                                              '               化数据，用这些数据对策略的表现进行评价，最后给出统计意义的评价结果'},
 
+        'test_indicators':     {'Default':   'years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
+                                'Validator': lambda value: isinstance(value, str),
+                                'level':     2,
+                                'text':      '对优化后的策略参数进行测试评价的评价指标。'
+                                             '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出'},
+
         'test_sub_periods':    {'Default':   3,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,
                                 'level':     2,

@@ -31,10 +31,10 @@ class Space:
         input:
             :param pars，int、float或list,需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照
                 types中的类型字符串创建不同的轴，如果没有给出types，系统根据不同的输入类型动态生成的空间类型分别如下：
-                    pars为float，自动生成上下界为(0, pars)的浮点型数值轴，
-                    pars为int，自动生成上下界为(0, pars)的整形数值轴
+                    pars为float，自动生成上下界为(0, items)的浮点型数值轴，
+                    pars为int，自动生成上下界为(0, items)的整形数值轴
                     pars为list，根据list的元素种类和数量生成不同类型轴：
-                        list元素只有两个且元素类型为int或float：生成上下界为(pars[0], pars[1])的浮点型数值
+                        list元素只有两个且元素类型为int或float：生成上下界为(items[0], items[1])的浮点型数值
                         轴或整形数值轴
                         list元素不是两个，或list元素类型不是int或float：生成枚举轴，轴的元素包含par中的元素
             :param par_types，list，默认为空，生成的空间每个轴的类型，如果给出types，应该包含每个轴的类型字符串：
@@ -57,7 +57,7 @@ class Space:
         par_types = input_to_list(par_types, par_dim, None)
         # debug：
         # print('par dim:', par_dim)
-        # print('pars and par_types:', pars, par_types)
+        # print('items and par_types:', items, par_types)
         # 逐一生成Axis对象并放入axes列表中
         self._axis = [Axis(par, par_type) for par, par_type in zip(pars, par_types)]
 
@@ -480,7 +480,7 @@ class ResultPool:
         self.__perfs = []  # 用于存放每个中间结果的评价分数，老算法仍然使用列表对象
 
     @property
-    def pars(self):
+    def items(self):
         return self.__pool  # 只读属性，所有池中参数
 
     @property
@@ -493,11 +493,11 @@ class ResultPool:
 
     @property
     def item_count(self):
-        return len(self.pars)
+        return len(self.items)
 
     @property
     def is_empty(self):
-        return len(self.pars) == 0
+        return len(self.items) == 0
 
     def in_pool(self, item, perf):
         """将新的结果压入池中
@@ -510,6 +510,16 @@ class ResultPool:
         """
         self.__pool.append(item)  # 新元素入池
         self.__perfs.append(perf)  # 新元素评价分记录
+
+    def __add__(self, other):
+        """ 将另一个pool中的内容合并到self中
+
+        :param other:
+        :return:
+        """
+        self.__pool.extend(other.items)
+        self.__perfs.extend(other.perfs)
+        return self
 
     def cut(self, keep_largest=True):
         """将pool内的结果排序并剪切到capacity要求的大小

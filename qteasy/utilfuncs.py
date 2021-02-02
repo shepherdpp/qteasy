@@ -270,10 +270,10 @@ def input_to_list(pars: [str, int, list], dim: int, padder=None):
         :param dim，需要生成的目标list的元素数量
         :param padder，当元素数量不足的时候用来补充的元素
     return: =====
-        pars, list 转化好的元素清单
+        items, list 转化好的元素清单
     """
     if isinstance(pars, (str, int, np.int64)):  # 处理字符串类型的输入
-        # print 'type of types', type(pars)
+        # print 'type of types', type(items)
         pars = [pars] * dim
     else:
         pars = list(pars)  # 正常处理，输入转化为列表类型
@@ -327,9 +327,10 @@ def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bo
     :param comments:  需要显示在进度条中的文字信息
     :param short_form:  显示
     """
-    if prog > total:
-        prog = total
-    progress_str = f'\r \rProgress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
-                   f' {prog}/{total}. {np.round(prog / total * 100, 1)}%  {comments}'
-    sys.stdout.write(progress_str)
-    sys.stdout.flush()
+    if total > 0:
+        if prog > total:
+            prog = total
+        progress_str = f'\r \rProgress: [{PROGRESS_BAR[int(prog / total * 40)]}]' \
+                       f' {prog}/{total}. {np.round(prog / total * 100, 1)}%  {comments}'
+        sys.stdout.write(progress_str)
+        sys.stdout.flush()
