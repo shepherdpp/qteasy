@@ -1430,3 +1430,32 @@ def _search_ga(hist, ref_hist, ref_type, op, config):
 
     """
     raise NotImplementedError
+
+
+def _search_gradient(hist, ref_hist, ref_type, op, config):
+    """ 最优参数搜索算法5：梯度下降法
+    在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
+    最大步数为止，输出结果为最后N步的结果
+
+    :input
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param ref_hist:
+        :param ref_type:
+        :param op，object，交易信号生成器对象
+        :param config, object, 用于存储交易相关参数配置对象
+    :return:
+    """
+    raise NotImplementedError
+
+
+def _search_particles(hist, ref_hist, ref_type, op, config):
+    """ 粒子群算法，与梯度下降相似，不过同时有N个粒子同时向山坡下滚动，输出结果为所有N个球的最后一步结果
+
+    :input
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param ref_hist:
+        :param ref_type:
+        :param op，object，交易信号生成器对象
+        :param config, object, 用于存储交易相关参数配置对象
+    :return:
+    """
