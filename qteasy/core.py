@@ -20,7 +20,7 @@ from .utilfuncs import time_str_format, progress_bar, str_to_list
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
-from .visual import plot_loop_result, print_loop_result, print_table_result
+from .visual import plot_loop_result, print_loop_result, print_table_result, print_opti_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -897,21 +897,7 @@ def run(operator, **kwargs):
                                                 op=operator,
                                                 config=config)
 
-        print(f'====================================\n'
-              f'|                                  |\n'
-              f'|       OPTIMIZATION RESULT        |\n'
-              f'|                                  |\n'
-              f'====================================\n')
-        print(f'Searching finished, {len(perfs)} best results are generated')
-        print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result:\n'
-              f'=======================OPTIMIZATION RESULTS===========================\n'
-              f'                    parameter                     |    performance    \n'
-              f'--------------------------------------------------|-------------------')
-        for par, perf in zip(pars, perfs):
-            print(f'{par}{" " * (50 - len(str(par)))}|  {perf:.3f}' )
-        # print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{items[-1]}')
-        # print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{items[0]}')
-        print(f'===============VALIDATION OF OPTIMIZATION RESULTS==================')
+        print_opti_result(pars, perfs)
         test_result_df = pd.DataFrame(columns=['par',
                                                'sell_count',
                                                'buy_count',

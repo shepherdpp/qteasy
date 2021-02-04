@@ -332,3 +332,31 @@ def print_table_result(result, messages=None, config=None, columns=None, headers
                                                'buy_count':    '{:.1f}'.format},
                            justify='center'))
     print(f'\n===========END OF REPORT=============\n')
+
+
+def print_opti_result(pars, perfs, config=None, columns=None, headers=None, formatter=None):
+    """
+
+    :param result:
+    :param messages:
+    :param config:
+    :param columns:
+    :param headers:
+    :param formatter:
+    :return:
+    """
+    print(f'====================================\n'
+          f'|                                  |\n'
+          f'|       OPTIMIZATION RESULT        |\n'
+          f'|                                  |\n'
+          f'====================================\n')
+    print(f'Searching finished, {len(perfs)} best results are generated')
+    print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result:\n'
+          f'=======================OPTIMIZATION RESULTS===========================\n'
+          f'                    parameter                     |    performance    \n'
+          f'--------------------------------------------------|-------------------')
+    for par, perf in zip(pars, perfs):
+        print(f'{par}{" " * (50 - len(str(par)))}|  {perf:.3f}')
+    # print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{items[-1]}')
+    # print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{items[0]}')
+    print(f'===============VALIDATION OF OPTIMIZATION RESULTS==================')
