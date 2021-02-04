@@ -20,9 +20,9 @@ from .utilfuncs import time_str_format, progress_bar, str_to_list
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
-from .visual import plot_loop_result
+from .visual import plot_loop_result, print_loop_result, print_table_result
 from .evaluate import evaluate, performance_statistics
-from ._arg_validators import _process_kwargs, _validate_key_and_value
+from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
@@ -863,9 +863,6 @@ def run(operator, **kwargs):
                                    print_log=config.log)
         et = time.time()
         run_time_loop_full = (et - st)
-        # TODO: refract following codes, merge all evaluations into function evaluate(),
-        # TODO: by giving name of indicators as argument to the function a dict
-        # TODO: containing all result is returned.
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
         eval_res = evaluate(op_list=op_list,
                             looped_values=looped_values,
@@ -873,48 +870,21 @@ def run(operator, **kwargs):
                             reference_data=reference_data,
                             cash_plan=cash_plan,
                             indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
+        eval_res['run_time_p'] = run_time_prepare_data
+        eval_res['run_time_l'] = run_time_loop_full
+        eval_res['loop_start'] = looped_values.index[0]
+        eval_res['loop_end'] = looped_values.index[-1]
         if config.visual:
             # 图表输出投资回报历史曲线
             complete_value = _get_complete_hist(looped_value=looped_values,
                                                 h_list=hist_loop,
                                                 ref_list=hist_reference,
                                                 with_price=False)
-            # TODO: above eval_res indicators should be also printed on the plot,
-            # TODO: thus users can choose either plain text report or a chart report.
-            eval_res['run_time_p'] = run_time_prepare_data
-            eval_res['run_time_l'] = run_time_loop_full
-            eval_res['loop_start'] = looped_values.index[0]
-            eval_res['loop_end'] = looped_values.index[-1]
+
             plot_loop_result(complete_value, msg=eval_res)
         else:
             # 格式化输出回测结果
-            print(f'==================================== \n'
-                  f'|                                  |\n'
-                  f'|       BACK TESTING RESULT        |\n'
-                  f'|                                  |\n'
-                  f'====================================')
-            print(f'\nqteasy running mode: 1 - History back looping\n'
-                  f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)} ms\n'
-                  f'time consumption for operation back looping: {time_str_format(run_time_loop_full)} ms\n')
-            print(f'investment starts on {looped_values.index[0]}\nends on {looped_values.index[-1]}\n'
-                  f'Total looped periods: {eval_res["years"]} years.')
-            print(f'operation summary:\n {eval_res["oper_count"]}\n'
-                  f'Total operation fee:     ¥{eval_res["total_fee"]:13,.2f}')
-            print(f'total investment amount: ¥{eval_res["total_invest"]:13,.2f}\n'
-                  f'final value:             ¥{eval_res["final_value"]:13,.2f}')
-            print(f'Total return: {eval_res["rtn"] * 100 - 100:.3f}% \n'
-                  f'Average Yearly return rate: {(eval_res["rtn"] ** (1 / eval_res["years"]) - 1) * 100: .3f}%')
-            print(f'Total reference return: {eval_res["ref_rtn"] * 100:.3f}% \n'
-                  f'Average Yearly reference return rate: {eval_res["ref_annual_rtn"] * 100:.3f}%')
-            print(f'strategy eval_res indicators: \n'
-                  f'alpha:               {eval_res["alpha"]:.3f}\n'
-                  f'Beta:                {eval_res["beta"]:.3f}\n'
-                  f'Sharp ratio:         {eval_res["sharp"]:.3f}\n'
-                  f'Info ratio:          {eval_res["info"]:.3f}\n'
-                  f'250 day volatility:  {eval_res["volatility"]:.3f}\n'
-                  f'Max drawdown:        {eval_res["mdd"] * 100:.3f}% '
-                  f'from {eval_res["max_date"].date()} to {eval_res["low_date"].date()}')
-            print(f'\n===========END OF REPORT=============\n')
+            print_loop_result(looped_values, eval_res)
         return None
 
     elif run_mode == 2:
@@ -958,6 +928,8 @@ def run(operator, **kwargs):
                                                'info'])
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
         # TODO: merge following codes into _evaluate_all_parameters()
+        # TODO: which requires output of _evaluate_all_parameters to be pool
+        # TODO: with not only one performance value, but also dict of other performance indicators
         for par in pars:
             eval_res = _evaluate_one_parameter(par=par,
                                                op=operator,
@@ -977,48 +949,9 @@ def run(operator, **kwargs):
                                                    ignore_index=True)
 
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        # TODO: 将以下代码合并到一个函数"_performance_in_table_form()"，用文字+表格格式输出回测/优化结果，放到visualize.py中
-        ref_rtn, ref_annual_rtn = eval_res['ref_rtn'], eval_res['ref_annual_rtn']
-        print(f'investment starts on {hist_test_loop.index[0]}\nends on {hist_test_loop.index[-1]}\n'
-              f'Total looped periods: {test_result_df.years[0]} years.')
-        print(f'total investment amount: ¥{test_result_df.total_invest[0]:13,.2f}')
-        print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
-              f'Total reference return: {ref_rtn * 100:.3f}% \n'
-              f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
-        print(f'statistical analysis of optimal strategy eval_res indicators: \n'
-              f'total return:        {test_result_df.total_return.mean() * 100:.3f}% ±'
-              f' {test_result_df.total_return.std() * 100:.3f}%\n'
-              f'annual return:       {test_result_df.annual_return.mean() * 100:.3f}% ±'
-              f' {test_result_df.annual_return.std() * 100:.3f}%\n'
-              f'alpha:               {test_result_df.alpha.mean():.3f} ± {test_result_df.alpha.std():.3f}\n'
-              f'Beta:                {test_result_df.beta.mean():.3f} ± {test_result_df.beta.std():.3f}\n'
-              f'Sharp ratio:         {test_result_df.sharp.mean():.3f} ± {test_result_df.sharp.std():.3f}\n'
-              f'Info ratio:          {test_result_df["info"].mean():.3f} ± {test_result_df["info"].std():.3f}\n'
-              f'250 day volatility:  {test_result_df.volatility.mean():.3f} ± {test_result_df.volatility.std():.3f}\n'
-              f'other eval_res indicators are listed in below table\n')
-        # test_result_df.sort_values(by='final_value', ascending=False, inplace=True)
-        print(test_result_df.to_string(columns=["par",
-                                                "sell_count",
-                                                "buy_count",
-                                                "total_fee",
-                                                "final_value",
-                                                "total_return",
-                                                "mdd"],
-                                       header=["Strategy items",
-                                               "Sell-outs",
-                                               "Buy-ins",
-                                               "Total fee",
-                                               "Final value",
-                                               "ROI",
-                                               "MDD"],
-                                       formatters={'total_fee'   : '{:,.2f}'.format,
-                                                   'final_value' : '{:,.2f}'.format,
-                                                   'total_return': '{:.1%}'.format,
-                                                   'mdd'         : '{:.1%}'.format,
-                                                   'sell_count'  : '{:.1f}'.format,
-                                                   'buy_count': '{:.1f}'.format},
-                                       justify='center'))
-        print(f'\n===========END OF REPORT=============\n')
+        eval_res['loop_start'] = hist_test_loop.index[0]
+        eval_res['loop_end'] = hist_test_loop.index[-1]
+        print_table_result(test_result_df, eval_res, config)
         return perfs, pars
 
     elif run_mode == 3:
@@ -1105,7 +1038,7 @@ def _evaluate_all_parameters(par_generator,
 def _evaluate_one_parameter(par: tuple,
                             op: Operator,
                             op_history_data: HistoryPanel,
-                            loop_history_data: pd.DataFrame,
+                            loop_history_data: [pd.DataFrame, pd.Series],
                             reference_history_data,
                             reference_history_data_type,
                             config,
@@ -1127,11 +1060,12 @@ def _evaluate_one_parameter(par: tuple,
         float 一个代表该策略在使用par作为参数时的性能表现评分
     """
     assert stage in ['optimize', 'test']
-    op.set_opt_par(par)  # 设置需要优化的策略参数
+    if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
+        op.set_opt_par(par)
     # 生成交易清单并进行模拟交易生成交易记录
     op_list = op.create_signal(op_history_data)
     if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回0
-        return {'final_value': -np.inf}
+        return {'final_value': np.NINF}
     # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数
     if stage == 'optimize':
         invest_cash_amount = config.opti_cash_amounts[0]

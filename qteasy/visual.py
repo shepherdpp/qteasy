@@ -237,29 +237,98 @@ def plot_loop_result(result, msg: dict):
     plt.show()
 
 
-def print_loop_result(result, message, columns, headers, formatter):
+def print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
 
     :param result:
-    :param message:
+    :param messages:
     :param columns:
     :param headers:
     :param formatter:
     :return:
     """
-    raise NotImplementedError
+    print(f'==================================== \n'
+          f'|                                  |\n'
+          f'|       BACK TESTING RESULT        |\n'
+          f'|                                  |\n'
+          f'====================================')
+    print(f'\nqteasy running mode: 1 - History back looping\n'
+          f'time consumption for operate signal creation: {time_str_format(messages["run_time_p"])} ms\n'
+          f'time consumption for operation back looping: {time_str_format(messages["run_time_l"])} ms\n')
+    print(f'investment starts on {result.index[0]}\nends on {result.index[-1]}\n'
+          f'Total looped periods: {messages["years"]} years.')
+    print(f'operation summary:\n {messages["oper_count"]}\n'
+          f'Total operation fee:     ¥{messages["total_fee"]:13,.2f}')
+    print(f'total investment amount: ¥{messages["total_invest"]:13,.2f}\n'
+          f'final value:             ¥{messages["final_value"]:13,.2f}')
+    print(f'Total return: {messages["rtn"] * 100 - 100:.3f}% \n'
+          f'Average Yearly return rate: {(messages["rtn"] ** (1 / messages["years"]) - 1) * 100: .3f}%')
+    print(f'Total reference return: {messages["ref_rtn"] * 100:.3f}% \n'
+          f'Average Yearly reference return rate: {messages["ref_annual_rtn"] * 100:.3f}%')
+    print(f'strategy messages indicators: \n'
+          f'alpha:               {messages["alpha"]:.3f}\n'
+          f'Beta:                {messages["beta"]:.3f}\n'
+          f'Sharp ratio:         {messages["sharp"]:.3f}\n'
+          f'Info ratio:          {messages["info"]:.3f}\n'
+          f'250 day volatility:  {messages["volatility"]:.3f}\n'
+          f'Max drawdown:        {messages["mdd"] * 100:.3f}% '
+          f'from {messages["max_date"].date()} to {messages["low_date"].date()}')
+    print(f'\n===========END OF REPORT=============\n')
 
 
-def print_table_result(result, message, columns, headers, formatter):
+
+def print_table_result(result, messages=None, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
         以统计结果和表格的形式输出
 
     :param result:
-    :param message:
+    :param messages:
     :param columns:
     :param headers:
     :param formatter:
     :return:
     """
+
+    ref_rtn, ref_annual_rtn = messages['ref_rtn'], messages['ref_annual_rtn']
+    print(f'investment starts on {messages["loop_start"]}\nends on {messages["loop_end"]}\n'
+          f'Total looped periods: {result.years[0]} years.')
+    print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
+    print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
+          f'Total reference return: {ref_rtn * 100:.3f}% \n'
+          f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
+    print(f'statistical analysis of optimal strategy messages indicators: \n'
+          f'total return:        {result.total_return.mean() * 100:.3f}% ±'
+          f' {result.total_return.std() * 100:.3f}%\n'
+          f'annual return:       {result.annual_return.mean() * 100:.3f}% ±'
+          f' {result.annual_return.std() * 100:.3f}%\n'
+          f'alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
+          f'Beta:                {result.beta.mean():.3f} ± {result.beta.std():.3f}\n'
+          f'Sharp ratio:         {result.sharp.mean():.3f} ± {result.sharp.std():.3f}\n'
+          f'Info ratio:          {result["info"].mean():.3f} ± {result["info"].std():.3f}\n'
+          f'250 day volatility:  {result.volatility.mean():.3f} ± {result.volatility.std():.3f}\n'
+          f'other messages indicators are listed in below table\n')
+    # result.sort_values(by='final_value', ascending=False, inplace=True)
+    print(result.to_string(columns=["par",
+                                            "sell_count",
+                                            "buy_count",
+                                            "total_fee",
+                                            "final_value",
+                                            "total_return",
+                                            "mdd"],
+                           header=["Strategy items",
+                                           "Sell-outs",
+                                           "Buy-ins",
+                                           "Total fee",
+                                           "Final value",
+                                           "ROI",
+                                           "MDD"],
+                           formatters={'total_fee':    '{:,.2f}'.format,
+                                               'final_value':  '{:,.2f}'.format,
+                                               'total_return': '{:.1%}'.format,
+                                               'mdd':          '{:.1%}'.format,
+                                               'sell_count':   '{:.1f}'.format,
+                                               'buy_count':    '{:.1f}'.format},
+                           justify='center'))
+    print(f'\n===========END OF REPORT=============\n')

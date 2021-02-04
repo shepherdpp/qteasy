@@ -639,7 +639,7 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '回测模式下的回测开始日期'},
 
-        'invest_end':          {'Default':   (today - datetime.timedelta(5)).strftime('%Y%m%d'),
+        'invest_end':          {'Default':   '20210201',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
