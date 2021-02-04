@@ -916,42 +916,74 @@ def run(operator, **kwargs):
         # TODO: merge following codes into _evaluate_all_parameters()
         # TODO: which requires output of _evaluate_all_parameters to be pool
         # TODO: with not only one performance value, but also dict of other performance indicators
-        for par in pars:
-            eval_res = _evaluate_one_parameter(par=par,
-                                               op=operator,
-                                               op_history_data=hist_test,
-                                               loop_history_data=hist_test_loop,
-                                               reference_history_data=hist_reference,
-                                               reference_history_data_type=reference_data,
-                                               config=config,
-                                               stage='test')
-            eval_res['par'] = par
-            eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
-            eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
-            eval_res['oper_count'] = eval_res['oper_count'].total.sum()
-            eval_res['total_return'] = eval_res['rtn']
-            eval_res['annual_return'] = eval_res['annual_rtn']
-            test_result_df = test_result_df.append(eval_res,
-                                                   ignore_index=True)
+        if config.test_type in ['single', 'multiple']:
+            for par in pars:
+                eval_res = _evaluate_one_parameter(par=par,
+                                                   op=operator,
+                                                   op_history_data=hist_test,
+                                                   loop_history_data=hist_test_loop,
+                                                   reference_history_data=hist_reference,
+                                                   reference_history_data_type=reference_data,
+                                                   config=config,
+                                                   stage='test')
+                eval_res['par'] = par
+                eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
+                eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
+                eval_res['oper_count'] = eval_res['oper_count'].total.sum()
+                eval_res['total_return'] = eval_res['rtn']
+                eval_res['annual_return'] = eval_res['annual_rtn']
+                test_result_df = test_result_df.append(eval_res,
+                                                       ignore_index=True)
 
-        # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        eval_res['loop_start'] = hist_test_loop.index[0]
-        eval_res['loop_end'] = hist_test_loop.index[-1]
-        print_table_result(test_result_df, eval_res, config)
+            # 评价回测结果——计算参考数据收益率以及平均年化收益率
+            eval_res['loop_start'] = hist_test_loop.index[0]
+            eval_res['loop_end'] = hist_test_loop.index[-1]
+            print_table_result(test_result_df, eval_res, config)
+        elif config.test_type == 'montecarlo':
+            # 生成模拟测试数据
+            mock_test_loop = _create_mock_data(hist_test_loop, qty=30)  # config.test_cycle_count)
+            for name in mock_test_loop.htypes:
+                # 生成用于蒙特卡洛测试的模拟数据，由于每组测试数据中只含有一种数据类型，但是可能有多重股票数据，因此每一组数据是
+                # 一个数据框DataFrame，要生成多组数据，就必须把数据组合成HistoryPanel格式，然后再分别取出每个片段用于回测
+                mont_loop = mock_test_loop.to_dataframe(htype=name)
+                test_result_df = pd.DataFrame(columns=['par',
+                                                       'sell_count',
+                                                       'buy_count',
+                                                       'oper_count',
+                                                       'total_fee',
+                                                       'final_value',
+                                                       'total_return',
+                                                       'annual_return',
+                                                       'mdd',
+                                                       'volatility',
+                                                       'alpha',
+                                                       'beta',
+                                                       'sharp',
+                                                       'info'])
+                for par in pars:  # 分别对每个策略参数执行同样的测试数据
+                    eval_res = _evaluate_one_parameter(par=par,
+                                                       op=operator,
+                                                       op_history_data=hist_test,
+                                                       loop_history_data=mont_loop,
+                                                       reference_history_data=mont_loop,
+                                                       reference_history_data_type=0,
+                                                       config=config,
+                                                       stage='test')
+                    eval_res['par'] = par
+                    eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
+                    eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
+                    eval_res['oper_count'] = eval_res['oper_count'].total.sum()
+                    eval_res['total_return'] = eval_res['rtn']
+                    eval_res['annual_return'] = eval_res['annual_rtn']
+                    test_result_df = test_result_df.append(eval_res,
+                                                           ignore_index=True)
+
+                # 评价回测结果——计算参考数据收益率以及平均年化收益率
+                eval_res['loop_start'] = mont_loop.index[0]
+                eval_res['loop_end'] = mont_loop.index[-1]
+                print_table_result(test_result_df, eval_res, config)
+
         return perfs, pars
-
-    elif run_mode == 3:
-        """ 进入策略统计预测分析模式
-        
-        使用蒙特卡洛方法预测策略的未来表现。
-        
-        """
-        print(f'====================================\n'
-              f'|                                  |\n'
-              f'|       PREDICTIVE RESULTS         |\n'
-              f'|                                  |\n'
-              f'====================================\n')
-        raise NotImplementedError
 
 
 def _evaluate_all_parameters(par_generator,
@@ -1070,7 +1102,7 @@ def _evaluate_one_parameter(par: tuple,
     # used as the investment date for each sub-periods
     start_dates = []
     end_dates = []
-    if period_util_type == 'single':
+    if period_util_type == 'single' or period_util_type == 'montecarlo':
         start_dates.append(loop_history_data.index[0])
         end_dates.append(loop_history_data.index[-1])
     elif period_util_type == 'multiple':
@@ -1105,7 +1137,7 @@ def _evaluate_one_parameter(par: tuple,
                                 history_list=history_list_seg,
                                 cash_plan=cash_plan,
                                 cost_rate=trade_cost,
-                                moq=config.trade_batch_size)
+                                moq=config.trade_batch_size,print_log=False)
         perf = evaluate(op_list=op_list_seg,
                         looped_values=looped_val,
                         hist_reference=reference_history_data,
@@ -1128,6 +1160,37 @@ def _evaluate_one_parameter(par: tuple,
     perf = performance_statistics(perf_list)
 
     return perf
+
+
+def _create_mock_data(history_data, qty=100)->HistoryPanel:
+    """ 根据输入的历史数据的统计特征，随机生成多组具备同样统计特征的随机序列，用于进行策略收益的蒙特卡洛模拟
+
+    :param history_data:
+    :return:
+    """
+    assert isinstance(history_data, pd.DataFrame)
+    share_count = len(history_data.columns)
+    record_count = len(history_data.index)
+    hist_price_values = history_data.values
+
+    mock_price_values = np.zeros((share_count, record_count, qty))
+    for i in range(share_count):
+        prices = hist_price_values[:,i]
+        init_price = prices[0]
+        price_changes = prices / np.roll(prices, 1) - 1
+        mean = price_changes.mean()
+        std = price_changes.std()
+        mock_price_changes = np.random.randn(record_count*qty) * std + mean
+        mock_price_changes = mock_price_changes.reshape(record_count, qty) + 1
+        mock_price_changes[0, :] = init_price
+        mock_prices = mock_price_changes.cumprod(axis=0)
+
+        mock_price_values[i,:,:] = mock_prices
+
+    # 生成一个HistoryPanel对象，每一层一个个股
+    mock_data = HistoryPanel(mock_price_values, rows=history_data.index)
+    print(mock_data)
+    return mock_data
 
 
 def _search_grid(hist, ref_hist, ref_type, op, config):
