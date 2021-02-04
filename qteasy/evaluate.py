@@ -8,6 +8,7 @@
 
 import numpy as np
 import pandas as pd
+from functools import lru_cache
 
 from .utilfuncs import str_to_list
 
@@ -49,6 +50,8 @@ def performance_statistics(performances: list, stats='mean'):
             res[key] = values.max()
         elif stats == 'min':
             res[key] = values.min()
+        elif stats == 'median':
+            res[key] = np.median(values)
         else:
             raise KeyError(f'the stats {stats} is not yet implemented!')
 
@@ -82,7 +85,11 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         performance_dict['final_value'] = eval_fv(looped_val=looped_values)
     # 评价回测结果——计算总投资收益率
     if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
-        performance_dict['rtn'] = performance_dict['final_value'] / performance_dict['total_invest']
+        years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
+                                                                    looped_value=looped_values,
+                                                                    cash_plan=cash_plan)
+        performance_dict['rtn'] = eval_fv(looped_val=looped_values) / total_invest - 1
+        performance_dict['annual_rtn'] = (performance_dict['rtn'] + 1) ** (1 / years) - 1
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
     if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
         mdd, max_date, low_date = eval_max_drawdown(looped_values)
@@ -113,6 +120,7 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         return performance_dict
     else:
         return performance_dict
+
 
 # TODO: move all variable validations from evaluation sub functions to evaluate() function -> 2020/11/11
 def _get_yearly_span(value_df: pd.DataFrame) -> float:

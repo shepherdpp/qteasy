@@ -8,6 +8,7 @@
 # ======================================
 
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 import pandas as pd
 from abc import abstractmethod, ABCMeta
 from .utilfuncs import str_to_list
@@ -545,10 +546,20 @@ class RollingTiming(Strategy):
             return cat[self.window_length:]
 
         # 如果有足够的非nan数据，则开始进行历史数据的滚动展开
-        hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
-        # TODO：需要找到比循环的方式更快的数据滚动展开的方法，目前循环就是最快的办法，是否可以尝试使用矩阵的公式创建？
-        for i in range(loop_count):
-            hist_pack[i] = hist_nonan[i:i + self._window_length]
+        # ------------- The as_strided solution --------------------------------------
+        hist_pack = as_strided(hist_nonan,
+                               shape=(loop_count, *hist_nonan[:self._window_length].shape),
+                               strides=(hist_nonan.strides[0], *hist_nonan.strides),
+                               subok=False,
+                               writeable=False)
+        # ------------- The numpy sliding_window_view solution -----------------------
+        # This solution will only be effective after numpy version 1.20
+        # NotImplemented
+        # ------------- The for-loop solution ----------------------------------------
+        # hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
+        # for i in range(loop_count):
+        #     hist_pack[i] = hist_nonan[i:i + self._window_length]
+        # ----------------------------------------------------------------------------
         # 滚动展开完成，形成一个新的3D或2D矩阵
         # 开始将参数应用到策略实施函数generate中
         par_list = [pars] * loop_count

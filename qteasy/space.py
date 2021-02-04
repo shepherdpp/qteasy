@@ -154,7 +154,7 @@ class Space:
         :return: bool
         """
         assert isinstance(item, (list, tuple, Space)), \
-            f'TypeError, the item must be a point (tuple or list or coordinates) or a subspace, got {type(item)}'
+            f'TypeError, the item must be a point (tuple or list of coordinates) or a subspace, got {type(item)}'
         if isinstance(item, (tuple, list)):  # if item is a point
             if len(item) != self.dim:
                 return False
@@ -171,10 +171,10 @@ class Space:
             if any(item_type != self_type for item_type, self_type in zip (item.types, self.types)):
                 return False
             for it_boe, s_boe, s_type in zip(item.boes, self.boes, self.types):
-                if s_type == 'enum': # in case of enum, check if all items are in self boe
+                if s_type == 'enum':  # in case of enum, check if all items are in self boe
                     if any(it not in s_it for it, s_it in zip(it_boe, s_boe)):
                         return False
-                else: # in other cases just to check both bounds
+                else:  # in other cases just to check both bounds
                     if not s_boe[0] <= it_boe[0] < it_boe[1] <= s_boe[1]:
                         return False
         return True
@@ -193,7 +193,7 @@ class Space:
         assert point in self, f'ValueError, point {point} is not in space!'
         assert self.dim > 0, 'original space should not be empty!'
         assert isinstance(distance, (int, float, list, tuple)), \
-            f'TypeError, the distance must be a number of a list of numbers, got {type(distance)} instead'
+            f'TypeError, the distance must be a number or a list of numbers, got {type(distance)} instead'
         pars = []
         if isinstance(distance, (list, tuple)):
             assert len(distance) == self.dim, \

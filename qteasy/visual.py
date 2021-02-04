@@ -235,3 +235,31 @@ def plot_loop_result(result, msg: dict):
     ax3.xaxis.set_minor_locator(months)
 
     plt.show()
+
+
+def print_loop_result(result, message, columns, headers, formatter):
+    """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
+        确保输出的格式美观一致
+
+    :param result:
+    :param message:
+    :param columns:
+    :param headers:
+    :param formatter:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def print_table_result(result, message, columns, headers, formatter):
+    """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
+        输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
+        以统计结果和表格的形式输出
+
+    :param result:
+    :param message:
+    :param columns:
+    :param headers:
+    :param formatter:
+    :return:
+    """

@@ -22,7 +22,7 @@ from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import plot_loop_result
 from .evaluate import evaluate, performance_statistics
-from .evaluate import eval_benchmark
+from ._arg_validators import _process_kwargs, _validate_key_and_value
 from .tsfuncs import stock_basic
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
@@ -432,6 +432,7 @@ def configure(**kwargs):
     """
     for key in kwargs.keys():
         value = kwargs[key]
+        _validate_key_and_value(key, value)
         QT_CONFIG.__setattr__(key, value)
 
 
@@ -956,7 +957,7 @@ def run(operator, **kwargs):
                                                'sharp',
                                                'info'])
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
-        # TODO: merge following codes into _evaluate_one_parameter()
+        # TODO: merge following codes into _evaluate_all_parameters()
         for par in pars:
             eval_res = _evaluate_one_parameter(par=par,
                                                op=operator,
@@ -970,8 +971,8 @@ def run(operator, **kwargs):
             eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
             eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
             eval_res['oper_count'] = eval_res['oper_count'].total.sum()
-            eval_res['total_return'] = eval_res['rtn'] - 1
-            eval_res['annual_return'] = (eval_res['rtn'] + 1) ** (1 / eval_res['years']) - 1
+            eval_res['total_return'] = eval_res['rtn']
+            eval_res['annual_return'] = eval_res['annual_rtn']
             test_result_df = test_result_df.append(eval_res,
                                                    ignore_index=True)
 
@@ -1013,7 +1014,9 @@ def run(operator, **kwargs):
                                        formatters={'total_fee'   : '{:,.2f}'.format,
                                                    'final_value' : '{:,.2f}'.format,
                                                    'total_return': '{:.1%}'.format,
-                                                   'mdd'         : '{:.1%}'.format},
+                                                   'mdd'         : '{:.1%}'.format,
+                                                   'sell_count'  : '{:.1f}'.format,
+                                                   'buy_count': '{:.1f}'.format},
                                        justify='center'))
         print(f'\n===========END OF REPORT=============\n')
         return perfs, pars

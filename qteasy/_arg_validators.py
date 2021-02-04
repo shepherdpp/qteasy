@@ -690,11 +690,11 @@ def _valid_qt_kwargs():
         'opti_type':           {'Default':   'single',
                                 'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
                                 'level':     2,
-                                'text':      '仅对无监督优化有效。优化类型。指优化数据的利用方式:'
+                                'text':      '优化类型。指优化数据的利用方式:\n'
                                              '"single"   - 在每一回合的优化测试中，在优化区间上进行覆盖整个区间的单次回测并评价'
-                                             '             回测结果'
+                                             '回测结果\n'
                                              '"multiple" - 在每一回合的优化测试中，将优化区间的数据划分为多个子区间，在这些子区间'
-                                             '             上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果'},
+                                             '上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果'},
 
         'opti_sub_periods':    {'Default':   5,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,
@@ -749,11 +749,11 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, str) and
                                                            value in ['single', 'multiple', 'montecarlo'],
                                 'level':     2,
-                                'text':      '测试类型。指测试数据的利用方式:'
+                                'text':      '测试类型。指测试数据的利用方式:\n'
                                              '"single"     - 在每一回合的优化测试中，在测试区间上进行覆盖整个区间的单次回测并评价'
-                                             '               回测结果'
+                                             '               回测结果\n'
                                              '"multiple"   - 在每一回合的优化测试中，将测试区间的数据划分为多个子区间，在这些子区间'
-                                             '               上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果'
+                                             '               上分别测试，并根据所有测试的结果确定策略在整个区间上的评价结果\n'
                                              '"montecarlo" - 蒙特卡洛测试，根据测试区间历史数据的统计性质，随机生成大量的模拟价格变'
                                              '               化数据，用这些数据对策略的表现进行评价，最后给出统计意义的评价结果'},
 
@@ -939,31 +939,43 @@ def _process_kwargs(kwargs, vkwargs):
     # now validate kwargs, and for any valid kwargs
     #  replace the appropriate value in config:
     for key in kwargs.keys():
-        if key not in vkwargs:
-            raise KeyError(f'Unrecognized kwarg={str(key)}')
-        else:
-            value = kwargs[key]
-            try:
-                valid = vkwargs[key]['Validator'](value)
-            except Exception as ex:
-                ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
-                raise
-            if not valid:
-                import inspect
-                v = inspect.getsource(vkwargs[key]['Validator']).strip()
-                raise TypeError(
-                        f'kwarg {key} validator returned False for value: {str(value)}\n'
-                        f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
-
-        # ---------------------------------------------------------------
-        #  At this point in the loop, if we have not raised an exception,
-        #      then kwarg is valid as far as we can tell, therefore,
-        #      go ahead and replace the appropriate value in config:
-
+        value = kwargs[key]
+        _validate_key_and_value(key, value)
         config[key] = value
 
     return config
 
+
+def _validate_key_and_value(key, value):
+    """ given one key, validate the key according to vkwargs dict
+        return True if the key is valid
+        raise if the key is not valid
+
+    :param key:
+    :param vkwargs:
+    :return:
+    """
+    vkwargs = _valid_qt_kwargs()
+    if key not in vkwargs:
+        raise KeyError(f'Unrecognized kwarg={str(key)}')
+    else:
+        try:
+            valid = vkwargs[key]['Validator'](value)
+        except Exception as ex:
+            ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
+            raise
+        if not valid:
+            import inspect
+            v = inspect.getsource(vkwargs[key]['Validator']).strip()
+            raise TypeError(
+                    f'kwarg {key} validator returned False for value: {str(value)}\n'
+                    f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
+        # ---------------------------------------------------------------
+        #      At this point , if we have not raised an exception,
+        #      then kwarg is valid as far as we can tell, therefore,
+        #      go ahead and replace the appropriate value in config:
+
+    return True
 
 def _validate_asset_id(value):
     """
