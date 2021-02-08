@@ -275,7 +275,7 @@ class Strategy:
             self._pars = pars
             return 1
         raise ValueError(f'parameter setting error in set_pars() method of \n{self}\nexpected par count: '
-                         f'{self.par_count}, got {len(items)}')
+                         f'{self.par_count}, got {len(pars)}')
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型
@@ -728,9 +728,9 @@ class SimpleSelecting(Strategy):
         """
         # 提取策略参数
         assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.items)}'
+        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
         assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.items)} instead'
+            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
         assert isinstance(hist_data, np.ndarray), \
             f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
         assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
