@@ -5,6 +5,7 @@
 # This file contains all built-in
 # strategies that inherited from
 # Strategy class and its sub-classes.
+# 2021 Chinese New Year Update - 2
 # ======================================
 
 import numpy as np

@@ -3,8 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/core.py" afterPath="$PROJECT_DIR$/qteasy/core.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/space.py" afterPath="$PROJECT_DIR$/qteasy/space.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/strategy.py" afterPath="$PROJECT_DIR$/qteasy/strategy.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -42,7 +41,6 @@
             <state relative-caret-position="19532">
               <caret line="1043" column="38" lean-forward="false" selection-start-line="1043" selection-start-column="38" selection-end-line="1043" selection-end-column="38" />
               <folding>
-                <element signature="e#272#291#0" expanded="true" />
                 <marker date="1611475470464" expanded="true" signature="1000:6970" ph="..." />
                 <marker date="1611475470464" expanded="true" signature="3409:3465" ph="..." />
                 <marker date="1611475470464" expanded="true" signature="9174:9179" ph="..." />
@@ -103,7 +101,7 @@
       <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="423">
+            <state relative-caret-position="1197">
               <caret line="5101" column="20" lean-forward="false" selection-start-line="5101" selection-start-column="20" selection-end-line="5101" selection-end-column="20" />
               <folding>
                 <element signature="e#3636#11359#0" expanded="false" />
@@ -1101,7 +1099,7 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="core.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="core.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/core.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="190">
@@ -1166,20 +1164,20 @@
       <file leaf-file-name="space.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/space.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1364">
+            <state relative-caret-position="3021">
               <caret line="161" column="36" lean-forward="true" selection-start-line="161" selection-start-column="36" selection-end-line="161" selection-end-column="36" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="strategy.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="strategy.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/qteasy/strategy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5130">
-              <caret line="275" column="20" lean-forward="true" selection-start-line="275" selection-start-column="20" selection-end-line="275" selection-end-column="20" />
+            <state relative-caret-position="152">
+              <caret line="8" column="40" lean-forward="true" selection-start-line="8" selection-start-column="40" selection-end-line="8" selection-end-column="40" />
               <folding>
-                <element signature="e#218#236#0" expanded="true" />
+                <element signature="e#253#271#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -1344,10 +1342,10 @@
         <option value="$PROJECT_DIR$/qteasy/_arg_validators.py" />
         <option value="$PROJECT_DIR$/qteasy/evaluate.py" />
         <option value="$PROJECT_DIR$/qteasy/visual.py" />
-        <option value="$PROJECT_DIR$/qteasy/strategy.py" />
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/qteasy/space.py" />
         <option value="$PROJECT_DIR$/qteasy/core.py" />
+        <option value="$PROJECT_DIR$/qteasy/strategy.py" />
       </list>
     </option>
   </component>
@@ -1932,13 +1930,7 @@
     <entry file="file://$USER_HOME$/anaconda/envs/py3/lib/python3.6/site-packages/numpy/core/numeric.py" />
     <entry file="file://$USER_HOME$/anaconda/envs/py3/lib/python3.6/site-packages/pandas/core/indexes/base.py" />
     <entry file="file://$USER_HOME$/anaconda/envs/py3/lib/python3.6/site-packages/pandas/core/generic.py" />
-    <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.2/python_stubs/-293037236/builtins.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="12473">
-          <caret line="780" column="8" lean-forward="false" selection-start-line="780" selection-start-column="8" selection-end-line="780" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.2/python_stubs/-293037236/builtins.py" />
     <entry file="file://$USER_HOME$/anaconda/envs/py3/lib/python3.6/site-packages/numpy/core/fromnumeric.py" />
     <entry file="file://$USER_HOME$/anaconda/envs/py3/lib/python3.6/site-packages/tushare/pro/data_pro.py" />
     <entry file="file://$USER_HOME$/anaconda/envs/py3/lib/python3.6/site-packages/numpy/lib/shape_base.py" />
@@ -2077,58 +2069,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.2/python_stubs/-1345108047/time.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="10" column="29" lean-forward="true" selection-start-line="10" selection-start-column="29" selection-end-line="10" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$USER_HOME$/Library/Caches/PyCharm2017.2/python_stubs/-1345108047/time.py" />
     <entry file="file://$PROJECT_DIR$/qteasy/tsfuncs.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4636">
           <caret line="448" column="78" lean-forward="false" selection-start-line="448" selection-start-column="77" selection-end-line="448" selection-end-column="78" />
-          <folding>
-            <element signature="n#!!doc" expanded="false" />
-            <element signature="e#226#245#0" expanded="true" />
-            <element signature="e#414#445#0" expanded="false" />
-            <element signature="e#764#2031#0" expanded="false" />
-            <element signature="e#764#1600#1" expanded="false" />
-            <element signature="e#2218#2685#1" expanded="false" />
-            <element signature="e#3047#4481#0" expanded="false" />
-            <element signature="e#3047#4202#1" expanded="false" />
-            <element signature="e#4592#7451#0" expanded="false" />
-            <element signature="e#4592#7371#1" expanded="false" />
-            <element signature="e#7614#10034#0" expanded="false" />
-            <element signature="e#7614#9822#1" expanded="false" />
-            <element signature="e#10037#10053#0" expanded="false" />
-            <element signature="e#12634#12876#0" expanded="false" />
-            <element signature="e#12634#12775#1" expanded="false" />
-            <element signature="e#12879#12893#0" expanded="false" />
-            <element signature="e#19277#26452#1" expanded="false" />
-            <element signature="e#27683#33525#1" expanded="false" />
-            <element signature="e#34658#43742#1" expanded="false" />
-            <element signature="e#44475#44488#0" expanded="false" />
-            <element signature="e#44656#46347#0" expanded="false" />
-            <element signature="e#44656#46084#1" expanded="false" />
-            <element signature="e#46350#46362#0" expanded="false" />
-            <element signature="e#46607#48569#0" expanded="false" />
-            <element signature="e#46607#48213#1" expanded="false" />
-            <element signature="e#48751#49858#0" expanded="false" />
-            <element signature="e#48751#49650#1" expanded="false" />
-            <element signature="e#49861#49873#0" expanded="false" />
-            <element signature="e#50088#51384#0" expanded="false" />
-            <element signature="e#50088#51068#1" expanded="false" />
-            <element signature="e#51387#51411#0" expanded="false" />
-            <element signature="e#51593#53449#0" expanded="false" />
-            <element signature="e#51593#53147#1" expanded="false" />
-            <element signature="e#53617#55601#0" expanded="false" />
-            <element signature="e#53617#55272#1" expanded="false" />
-            <element signature="e#55872#58209#0" expanded="false" />
-            <element signature="e#55872#57671#1" expanded="false" />
-            <element signature="e#58486#60966#0" expanded="false" />
-            <element signature="e#58486#60444#1" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -2143,7 +2088,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="6156">
           <caret line="328" column="7" lean-forward="true" selection-start-line="328" selection-start-column="7" selection-end-line="328" selection-end-column="7" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -2485,16 +2429,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/strategy.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5130">
-          <caret line="275" column="20" lean-forward="true" selection-start-line="275" selection-start-column="20" selection-end-line="275" selection-end-column="20" />
-          <folding>
-            <element signature="e#218#236#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/_arg_validators.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3819">
@@ -2515,7 +2449,6 @@
         <state relative-caret-position="19532">
           <caret line="1043" column="38" lean-forward="false" selection-start-line="1043" selection-start-column="38" selection-end-line="1043" selection-end-column="38" />
           <folding>
-            <element signature="e#272#291#0" expanded="true" />
             <marker date="1611475470464" expanded="true" signature="1000:6970" ph="..." />
             <marker date="1611475470464" expanded="true" signature="3409:3465" ph="..." />
             <marker date="1611475470464" expanded="true" signature="9174:9179" ph="..." />
@@ -2557,7 +2490,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="423">
+        <state relative-caret-position="1197">
           <caret line="5101" column="20" lean-forward="false" selection-start-line="5101" selection-start-column="20" selection-end-line="5101" selection-end-column="20" />
           <folding>
             <element signature="e#3636#11359#0" expanded="false" />
@@ -3249,7 +3182,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/space.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1364">
+        <state relative-caret-position="3021">
           <caret line="161" column="36" lean-forward="true" selection-start-line="161" selection-start-column="36" selection-end-line="161" selection-end-column="36" />
           <folding />
         </state>
@@ -3289,6 +3222,16 @@
             <marker date="1613057731028" expanded="true" signature="46174:46227" ph="..." />
             <marker date="1613057731028" expanded="true" signature="46229:46288" ph="..." />
             <marker date="1613057731028" expanded="true" signature="46291:46454" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/strategy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="152">
+          <caret line="8" column="40" lean-forward="true" selection-start-line="8" selection-start-column="40" selection-end-line="8" selection-end-column="40" />
+          <folding>
+            <element signature="e#253#271#0" expanded="true" />
           </folding>
         </state>
       </provider>
