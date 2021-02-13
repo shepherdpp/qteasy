@@ -717,6 +717,34 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(p1 in sp)
         print(f'point {p1} is in space {sp}')
 
+    def test_space_in_space(self):
+        print('test if a space is in another space')
+        sp = Space([(0., 10.), (0., 10.), (0., 10.)])
+        sp2 = Space([(0., 10.), (0., 10.), (0., 10.)])
+        self.assertTrue(sp2 in sp)
+        self.assertTrue(sp in sp2)
+        print(f'space {sp2} is in space {sp}\n'
+              f'and space {sp} is in space {sp2}\n'
+              f'they are equal to each other\n')
+        sp2 = Space([(0, 5.), (2, 7.), (3., 9.)])
+        self.assertTrue(sp2 in sp)
+        self.assertFalse(sp in sp2)
+        print(f'space {sp2} is in space {sp}\n'
+              f'and space {sp} is not in space {sp2}\n'
+              f'{sp2} is a sub space of {sp}\n')
+        sp2 = Space([(0, 5), (2, 7), (3., 9)])
+        self.assertFalse(sp2 in sp)
+        self.assertFalse(sp in sp2)
+        print(f'space {sp2} is not in space {sp}\n'
+              f'and space {sp} is not in space {sp2}\n'
+              f'they have different types of axes\n')
+        sp = Space([(0., 10.), (0., 10.), range(40, 3, -2)])
+        self.assertFalse(sp in sp2)
+        self.assertFalse(sp2 in sp)
+        print(f'space {sp2} is not in space {sp}\n'
+              f'and space {sp} is not in space {sp2}\n'
+              f'they have different types of axes\n')
+
     def test_space_around_centre(self):
         sp = Space([(0., 10.), (0., 10.), (0., 10.)])
         p1 = (5.5, 3.2, 7)

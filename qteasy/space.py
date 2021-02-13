@@ -110,6 +110,15 @@ class Space:
         s = [ax.count for ax in self._axis]
         return np.product(s)
 
+    def __repr__(self):
+        output = []
+        for item in self.boes:
+            if len(item) <= 3:
+                output.append(str(item))
+            else:
+                output.append(f'({item[0]},...,{item[-1]})')
+        return '<' + ','.join(output) + '>'
+
     def info(self):
         """打印空间的各项信息"""
         if self.dim > 0:
@@ -248,6 +257,7 @@ class Axis:
     AVAILABLE_EXTRACT_METHODS = ['int', 'interval', 'random', 'rand']
 
     def __init__(self, bounds_or_enum, typ=None):
+        import numbers
         self._axis_type = None  # 数轴类型
         self._lbound = None  # 离散型或连续型数轴下界
         self._ubound = None  # 离散型或连续型数轴上界
@@ -259,13 +269,17 @@ class Axis:
         # print('in Axis: boe recieved, and its length:', boe, length, 'type of boe:', typ)
         if typ is None:
             # 当typ为空时，需要根据输入数据的类型猜测typ
-            if length <= 2:  # list长度小于等于2，根据数据类型取上下界，int产生离散，float产生连续
-                if isinstance(boe[0], int):
-                    typ = 'discr'
-                elif isinstance(boe[0], float):
+            if length <= 2:
+                # list长度小于等于2，根据数据类型取上下界:
+                #    1， 当任意一个元素不是数字时，类型为枚举，否则->2
+                #    2， 当任意一个元素是浮点型时，类型为连续型，否则->
+                #    3， 所有元素都是整形，类型为离散型
+                if any(not isinstance(item, numbers.Number) for item in boe):
+                    typ = 'enum'
+                elif any(isinstance(item, float) for item in boe):
                     typ = 'conti'
                 else:  # 输入数据类型不是数字时，处理为枚举类型
-                    typ = 'enum'
+                    typ = 'discr'
             else:  # list长度为其余值时，全部处理为enum数据
                 typ = 'enum'
         elif typ != 'enum' and typ != 'discr' and typ != 'conti':
