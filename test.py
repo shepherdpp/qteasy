@@ -795,6 +795,7 @@ class TestCoreSubFuncs(unittest.TestCase):
 class TestEvaluations(unittest.TestCase):
     """Test all evaluation functions in core.py"""
 
+    # TODO: 手动计算各种评价指标并确认计算正确
     def setUp(self):
         """用np.random生成测试用数据，使用cumsum()模拟股票走势"""
         self.test_data1 = pd.DataFrame([5.34892759, 5.65768696, 5.79227076, 5.56266871, 5.88189632,

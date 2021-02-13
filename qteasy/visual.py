@@ -133,7 +133,7 @@ def plot_loop_result(result, msg: dict):
     years_fmt = mdates.DateFormatter('%Y')
 
     CHART_WIDTH = 0.88
-
+    # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle('Back Testing Result - reference: 000300.SH')
 
@@ -176,6 +176,8 @@ def plot_loop_result(result, msg: dict):
     ax1.spines['right'].set_visible(False)
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
+
+    # 显示持股仓位区间
     for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
         # fill long/short strips with grey
         # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
