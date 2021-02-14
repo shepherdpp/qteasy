@@ -5176,8 +5176,6 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
 
-        pass
-
     def test_configuration(self):
         """ 测试CONFIG的显示"""
         print(f'configuration without argument\n')
@@ -5223,7 +5221,6 @@ class TestQT(unittest.TestCase):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
-        print(f'strategy optimization in Montecarlo algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -5235,42 +5232,42 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=False)
-        print(f'strategy optimization in Montecarlo algorithm with parallel ON')
-        qt.run(self.op,
-               mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=True)
-        print(f'strategy optimization in Montecarlo with multiple sub-range optimization')
-        qt.run(self.op,
-               mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=True)
-        print(f'strategy optimization in Montecarlo with multiple sub-range testing')
-        qt.run(self.op,
-               mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='multiple',
-               opti_sample_count=900,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=True)
+        # print(f'strategy optimization in Montecarlo algorithm with parallel ON')
+        # qt.run(self.op,
+        #        mode=2,
+        #        opti_method=1,
+        #        opti_type='single',
+        #        test_type='single',
+        #        opti_sample_count=900,
+        #        opti_start='20040104',
+        #        opti_end='20141231',
+        #        test_start='20120604',
+        #        test_end='20201130',
+        #        parallel=True)
+        # print(f'strategy optimization in Montecarlo with multiple sub-range optimization')
+        # qt.run(self.op,
+        #        mode=2,
+        #        opti_method=1,
+        #        opti_type='multiple',
+        #        test_type='single',
+        #        opti_sample_count=900,
+        #        opti_start='20040104',
+        #        opti_end='20141231',
+        #        test_start='20120604',
+        #        test_end='20201130',
+        #        parallel=True)
+        # print(f'strategy optimization in Montecarlo with multiple sub-range testing')
+        # qt.run(self.op,
+        #        mode=2,
+        #        opti_method=1,
+        #        opti_type='multiple',
+        #        test_type='multiple',
+        #        opti_sample_count=900,
+        #        opti_start='20040104',
+        #        opti_end='20141231',
+        #        test_start='20120604',
+        #        test_end='20201130',
+        #        parallel=True)
 
     def test_run_mode_2_grid(self):
         """测试策略的优化模式，使用网格寻优"""

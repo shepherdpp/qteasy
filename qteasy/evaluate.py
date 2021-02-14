@@ -163,13 +163,21 @@ def eval_benchmark(looped_value, reference_value, reference_data):
     #       f'info of looped_value and reference_value\n')
     # looped_value.info()
     # reference_value.info()
-    rtn_data = reference_value[reference_data]
-    rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
-    # # debug
-    # print(f'\nIn func: eval_benchmark()\n')
-    # print(f'total year is \n{total_year}')
-    # print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
-    # print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
+    try:
+        rtn_data = reference_value[reference_data]
+        rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
+        print(f'total year is \n{total_year:.3f}\n'
+              f'total return is calculated by finding following dates:\n'
+              f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
+              f'{rtn_data.index}')
+    except:
+        print(f'\nERROR DETECTED: \nIn func: eval_benchmark()\n')
+        print(f'total year is \n{total_year:.3f}\n'
+              f'total return is calculated by finding following dates:\n'
+              f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
+              f'{rtn_data.index}')
+        print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
+        print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
     return rtn - 1, rtn ** (1 / total_year) - 1.
 
 

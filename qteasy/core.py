@@ -18,7 +18,7 @@ import logging
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .history import get_history_panel, HistoryPanel
-from .utilfuncs import time_str_format, progress_bar, str_to_list
+from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -577,8 +577,13 @@ def check_and_prepare_hist_data(operator, config):
     # hist_test_loop.info()
 
     # 生成参考历史数据，作为参考用于回测结果的评价
-    hist_reference = (get_history_panel(start=config.invest_start,
-                                        end=config.invest_end,
+    # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
+    all_starts = [pd.to_datetime(date_str) for date_str in [config.invest_start, config.opti_start, config.test_start]]
+    all_ends = [pd.to_datetime(date_str) for date_str in [config.invest_end, config.opti_end, config.test_end]]
+    refer_hist_start = regulate_date_format(min(all_starts))
+    refer_hist_end = regulate_date_format(max(all_ends))
+    hist_reference = (get_history_panel(start=refer_hist_start,
+                                        end=refer_hist_end,
                                         shares=config.reference_asset,
                                         htypes=config.ref_asset_dtype,
                                         freq=operator.op_data_freq,
