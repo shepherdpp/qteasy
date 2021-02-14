@@ -8,7 +8,7 @@
 
 import numpy as np
 import pandas as pd
-from functools import lru_cache
+from .utilfuncs import function_debugger
 
 from .utilfuncs import str_to_list
 
@@ -166,26 +166,30 @@ def eval_benchmark(looped_value, reference_value, reference_data):
     try:
         rtn_data = reference_value[reference_data]
         rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
-        print(f'total year is \n{total_year:.3f}\n'
-              f'total return is calculated by finding following dates:\n'
-              f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
-              f'{rtn_data.index}')
+        # debug
+        # print(f'total year is \n{total_year:.3f}\n'
+        #       f'total return is calculated by finding following dates:\n'
+        #       f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
+        #       f'{rtn_data.index}')
+        return rtn - 1, rtn ** (1 / total_year) - 1.
     except:
-        print(f'\nERROR DETECTED: \nIn func: eval_benchmark()\n')
-        print(f'total year is \n{total_year:.3f}\n'
-              f'total return is calculated by finding following dates:\n'
-              f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
-              f'{rtn_data.index}')
-        print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
-        print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
-    return rtn - 1, rtn ** (1 / total_year) - 1.
+        # debug
+        # print(f'\nERROR DETECTED: \nIn func: eval_benchmark()\n')
+        # print(f'total year is \n{total_year:.3f}\n'
+        #       f'total return is calculated by finding following dates:\n'
+        #       f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
+        #       f'{rtn_data.index}')
+        # print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
+        # print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
+        return 0., 0.
 
 
-def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.035):
+def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.0035):
     """ 回测结果评价函数：alpha率
 
-    阿尔法。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
+    阿尔法比率 alpha Rate。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
     这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
+    :param risk_free_ror: 无风险利率，默认值设置为0.35%
     :param looped_value:
     :param total_invest:
     :param reference_value:

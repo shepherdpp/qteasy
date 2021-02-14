@@ -98,16 +98,17 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     return daily, share_name
 
 
-def plot_loop_result(result, msg: dict):
-    """plot the loop results in a fancy way that displays all infomration more clearly"""
+def _plot_loop_result(result, msg: dict):
+    """plot the loop results in a fancy way that displays all information more clearly"""
     # prepare result dataframe
     if not isinstance(result, pd.DataFrame):
         raise TypeError('')
     if result.empty:
         raise ValueError()
-    # TODO: needs to find out all the stock holding columns,
-    # TODO: and calculate change according to the change of all
-    # TODO: stocks
+    # debug
+    # print(f'in visual function, got msg max date and low_date: \n'
+    #       f'msg["max_date"]:  {msg["max_date"]}\n'
+    #       f'msg["low_date"]:  {msg["low_date"]}')
     result_columns = result.columns
     fixed_column_items = ['fee', 'cash', 'value', 'reference']
     stock_holdings = [item for
@@ -178,6 +179,7 @@ def plot_loop_result(result, msg: dict):
     ax1.spines['left'].set_visible(False)
 
     # 显示持股仓位区间
+    # TODO: 使用箭头标记买入和卖出点：位于参考线下方的绿色箭头代表买入，位于参考线上方的红色箭头代表卖出
     for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
         # fill long/short strips with grey
         # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
@@ -239,7 +241,23 @@ def plot_loop_result(result, msg: dict):
     plt.show()
 
 
-def print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):
+def plot_opti_result():
+    """ plot optimization results
+
+    :return:
+    """
+    raise NotImplementedError
+
+
+def plot_test_result():
+    """ plot test result of optimization results
+
+    :return:
+    """
+    raise NotImplementedError
+
+
+def _print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
 

@@ -334,3 +334,33 @@ def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bo
                        f' {prog}/{total}. {np.round(prog / total * 100, 1)}%  {comments}'
         sys.stdout.write(progress_str)
         sys.stdout.flush()
+
+
+def function_debugger(func):
+    """ a decorator that can be used to debug func during run time,
+    print out extra information:
+
+    name of function
+    arguments of the function
+    type of arguments of the function
+    run-time of the function
+    :param func:
+    :return:
+    """
+    def func_debugger(*args, **kwargs):
+        import time
+        try:
+            st = time.time()
+            res = func(*args, **kwargs)
+            run_time = time.time() - st
+            print(f'Run time: {run_time * 1000:.5f} ms\nresult of {func.__name__}({args, kwargs}) is\n{res}')
+            return res
+        except Exception as ex:
+            print(f'Error encountered during run time of function {func.__name__}({args, kwargs})\n'
+                  f'types of arguments:')
+            for arg in args:
+                print(f'{arg}:    \n{type(arg)}')
+            for arg in kwargs:
+                print(f'{arg}:    \n{type(arg)}')
+            raise
+    return func_debugger

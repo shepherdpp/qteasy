@@ -22,7 +22,7 @@ from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
-from .visual import plot_loop_result, print_loop_result, print_table_result, print_opti_result
+from .visual import _plot_loop_result, _print_loop_result, print_table_result, print_opti_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -544,11 +544,15 @@ def check_and_prepare_hist_data(operator, config):
                                 chanel='local') if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
     hist_loop = hist_op.to_dataframe(htype='close')
+    # fill np.inf in hist_loop to prevent from result in nan in value
+    inf_locs = np.where(np.isinf(hist_loop))
+    for row, col in zip(inf_locs[0], inf_locs[1]):
+        hist_loop.iloc[row, col] = 0
     # debug
     # print(f'\n got hist_op as following\n')
     # hist_op.info()
-    # print(f'\n got hist_loop as following\n')
-    # hist_loop.info()
+    print(f'\n got hist_loop as following\n')
+    hist_loop.info()
 
     # 生成用于策略优化训练的训练历史数据集合
     hist_opti = get_history_panel(start=config.opti_start,
@@ -568,6 +572,9 @@ def check_and_prepare_hist_data(operator, config):
                                   chanel='local') if run_mode == 2 else HistoryPanel()
 
     hist_test_loop = hist_test.to_dataframe(htype='close')
+    inf_locs = np.where(np.isinf(hist_test_loop))
+    for row, col in zip(inf_locs[0], inf_locs[1]):
+        hist_test_loop.iloc[row, col] = 0
     # debug
     # print(f'\n got hist_opti as following between {context.opti_start} and {context.opti_end}\n')
     # hist_opti.info()
@@ -596,8 +603,6 @@ def check_and_prepare_hist_data(operator, config):
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference
 
 
-# TODO: 简化run函数，将其中的子功能独立出来成为单独的函数
-# TODO: add predict mode 增加predict模式，使用蒙特卡洛方法预测股价未来的走势，并评价策略在各种预测走势中的表现，进行策略表现的统计评分
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
@@ -889,10 +894,10 @@ def run(operator, **kwargs):
                                                 ref_list=hist_reference,
                                                 with_price=False)
 
-            plot_loop_result(complete_value, msg=eval_res)
+            _plot_loop_result(complete_value, msg=eval_res)
         else:
             # 格式化输出回测结果
-            print_loop_result(looped_values, eval_res)
+            _print_loop_result(looped_values, eval_res)
         return None
 
     elif run_mode == 2:

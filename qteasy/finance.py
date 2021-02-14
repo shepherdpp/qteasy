@@ -11,7 +11,7 @@
 
 import numpy as np
 import pandas as pd
-import numba
+from numba import jit, int64, float64
 from collections import Iterable
 
 
@@ -184,7 +184,7 @@ class Cost:
         return a_purchased, cash_spent.sum(), fee
 
 
-@numba.njit
+@jit(float64[:](float64[:], int64, int64, float64, float64, float64, float64, float64, float64, float64), nopython=True)
 def _calculate_fee(trade_values, fixed_fees, is_buying, bf, sf, br, sr, bm, sm, slp):
     """calculate the transaction fee given all parameters
 
