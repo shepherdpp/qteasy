@@ -3673,6 +3673,7 @@ class TestHistorySubFuncs(unittest.TestCase):
 
 
 class TestTushare(unittest.TestCase):
+    """测试所有Tushare函数的运行正确"""
     def setUp(self):
         pass
 
@@ -4145,6 +4146,7 @@ class TestTushare(unittest.TestCase):
 
 
 class TestTAFuncs(unittest.TestCase):
+    """测试所有的TAlib函数输出正常"""
     def setUp(self):
         self.data_rows = 50
 

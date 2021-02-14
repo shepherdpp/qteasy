@@ -11,6 +11,7 @@
 
 import numpy as np
 import pandas as pd
+import numba
 from collections import Iterable
 
 
@@ -33,13 +34,13 @@ class Cost:
                  buy_min: float = 5.0,
                  sell_min: float = 0.0,
                  slipage: float = 0.0):
-        self.buy_fix = buy_fix
-        self.sell_fix = sell_fix
-        self.buy_rate = buy_rate
-        self.sell_rate = sell_rate
-        self.buy_min = buy_min
-        self.sell_min = sell_min
-        self.slipage = slipage
+        self.buy_fix = float(buy_fix)
+        self.sell_fix = float(sell_fix)
+        self.buy_rate = float(buy_rate)
+        self.sell_rate = float(sell_rate)
+        self.buy_min = float(buy_min)
+        self.sell_min = float(sell_min)
+        self.slipage = float(slipage)
 
     def __str__(self):
         """设置Rate对象的打印形式"""
@@ -54,7 +55,7 @@ class Cost:
     def __call__(self,
                  trade_values: np.ndarray,
                  is_buying: bool = True,
-                 fixed_fees: bool = False) -> np.ndarray:
+                 fixed_fees: bool = False) -> float:
         """直接调用对象，计算交易费率或交易费用
 
         采用两种模式计算：
@@ -67,24 +68,17 @@ class Cost:
         :return:
         np.ndarray,
         """
-        if fixed_fees:  # 采用固定费用模式计算
-            if is_buying:
-                return self.buy_fix + self.slipage * trade_values ** 2
-            else:
-                return self.sell_fix + self.slipage * trade_values ** 2
-        else:  # 采用固定费率模式计算
-            if is_buying:
-                if self.buy_min == 0:
-                    return self.buy_rate + self.slipage * trade_values
-                else:
-                    min_rate = self.buy_min / (trade_values - self.buy_min)
-                    return np.fmax(self.buy_rate, min_rate) + self.slipage * trade_values
-            else:
-                if self.sell_min == 0:
-                    return self.sell_rate + self.slipage * trade_values
-                else:
-                    min_rate = self.sell_min / trade_values
-                    return np.fmax(self.sell_rate, min_rate) + self.slipage * trade_values
+        bf = self.buy_fix
+        sf = self.sell_fix
+        br = self.buy_rate
+        sr = self.sell_rate
+        bm = self.buy_min
+        sm = self.sell_min
+        slp = self.slipage
+        return _calculate_fee(trade_values.astype('float'),
+                              fixed_fees,
+                              is_buying,
+                              bf, sf, br, sr, bm, sm, slp)
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
@@ -108,6 +102,7 @@ class Cost:
         else:
             raise TypeError
 
+    # @numba.njit
     def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray):
         """计算出售投资产品的要素
 
@@ -122,12 +117,10 @@ class Cost:
         cash_gained: float
         fee: float
         """
-        a_sold = np.where(prices, np.where(op < 0, amounts * op, 0), 0)
+        a_sold = np.sign(prices) * np.where(op < 0, amounts * op, 0)
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=False)
-            # debug
-            # print(f'selling rate is {rates}')
             cash_gained = (-1 * sold_values * (1 - rates)).sum()
             fee = (sold_values * rates).sum()
         else:
@@ -136,6 +129,7 @@ class Cost:
             cash_gained = - sold_values.sum() + fee
         return a_sold, cash_gained, fee
 
+    # @numba.njit
     def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
         """获得购买资产时的要素
 
@@ -148,7 +142,7 @@ class Cost:
         cash_spent: float，花费的总金额，包括费用在内
         fee: 花费的费用，购买成本，包括佣金和滑点等投资成本
         """
-        if self.buy_fix == 0:
+        if self.buy_fix == 0.:
             # 固定费用为0，按照费率模式计算
             rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False)
             # debug
@@ -188,6 +182,31 @@ class Cost:
             cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0)
             fee = np.where(a_purchased, fixed_fees, 0).sum()
         return a_purchased, cash_spent.sum(), fee
+
+
+@numba.njit
+def _calculate_fee(trade_values, fixed_fees, is_buying, bf, sf, br, sr, bm, sm, slp):
+    """calculate the transaction fee given all parameters
+
+    """
+    if fixed_fees:  # 采用固定费用模式计算
+        if is_buying:
+            return bf + slp * trade_values ** 2
+        else:
+            return sf + slp * trade_values ** 2
+    else:  # 采用固定费率模式计算
+        if is_buying:
+            if bm == 0.:
+                return br + slp * trade_values
+            else:
+                min_rate = bm / (trade_values - bm)
+                return np.fmax(br, min_rate) + slp * trade_values
+        else:
+            if sm == 0.:
+                return sr + slp * trade_values
+            else:
+                min_rate = sm / trade_values
+                return np.fmax(sr, min_rate) + slp * trade_values
 
 
 # TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
