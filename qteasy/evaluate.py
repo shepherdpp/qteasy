@@ -15,9 +15,34 @@ from .utilfuncs import str_to_list
 
 def performance_statistics(performances: list, stats='mean'):
     """ 输入几个不同的评价指标，对它们进行统计分析，并输出统计分析的结果
+        所有输入侧评价指标存储在一个列表中，每个指标都必须是dict类型，且所有的dict结构相同，例如：
 
-    :param performance: 一个列表，包含一个或多个不同的评价指标，所有评价指标
+        performances = [{'fv':     20000,
+                         'rtn':    0.12,
+                         'beta':   0.003},
+                        {'fv':     18000,
+                         'rtn':    0.10,
+                         'beta':   0.002},
+                         {'fv':     35070,
+                         'rtn':    0.245,
+                         'beta':   0.013}]
+        上面的performances中含有三组参数的评价指标，每组评价指标中都有fv、rtn、beta三种指标的评分
+
+    :param performances: List: 一个列表，包含一个或多个不同的评价指标，所有评价指标
+    :param stats: str: 统计方法，确定输出所有评价指标的统计方法：
+                                'mean':     返回所有指标的均值
+                                'std':      返回所有指标的标准差
+                                'max':      返回所有指标的最大值
+                                'min':      返回所有指标的最小值
+                                'median':   返回所有指标的中值
     :return:
+        dict: 一个字典，其结构和输入的字典结构相同，值为输入数据的统计值
+        例如，如过stats=='max'时，前例输入的输出为：
+
+        res = {'fv':     35070,
+               'rtn':    0.245,
+               'beta':   0.013}
+
     """
     assert isinstance(performances, list), \
         f'performance dicts should be a list of dicts, got {type(performances)} instead'

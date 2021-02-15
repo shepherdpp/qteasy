@@ -690,7 +690,7 @@ class TestCoreSubFuncs(unittest.TestCase):
     """Test all functions in core.py"""
 
     def setUp(self):
-        pass
+        raise NotImplementedError
 
     def test_input_to_list(self):
         print('Testing input_to_list() function')
@@ -979,6 +979,11 @@ class TestEvaluations(unittest.TestCase):
                                         2.53159917, 2.96273967, 3.25626185, 2.97425402, 3.16412191,
                                         3.58280763, 3.23257727, 3.62353556, 3.12806399, 2.92532313],
                                        columns=['value'])
+
+    def test_performance_stats(self):
+        """test the function performance_statistics()
+        """
+        raise NotImplementedError
 
     def test_fv(self):
         print(f'test with test data and empty DataFrame')
@@ -1801,12 +1806,12 @@ class TestOperatorSubFuncs(unittest.TestCase):
     def test_sel_blend(self):
         """测试选股蒙板的混合器，包括所有的混合模式"""
         # step2, test blending of sel masks
-        pass
+        raise NotImplementedError
 
     def test_bs_blend(self):
         """测试买卖信号混合模式"""
         # step3, test blending of op signals
-        pass
+        raise NotImplementedError
 
     def test_unify(self):
         print('Testing Unify functions\n')
@@ -1847,7 +1852,7 @@ class TestLSStrategy(qt.RollingTiming):
                          data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
-        pass
+        raise NotImplementedError
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
         n, price = params
@@ -1879,7 +1884,7 @@ class TestSelStrategy(qt.SimpleSelecting):
                          data_freq='d',
                          sample_freq='10d',
                          window_length=5)
-        pass
+        raise NotImplementedError
 
     def _realize(self, hist_data: np.ndarray):
         avg = np.nanmean(hist_data, axis=(1, 2))
@@ -1917,7 +1922,7 @@ class TestSelStrategyDiffTime(qt.SimpleSelecting):
                          data_freq='d',
                          sample_freq='w',
                          window_length=2)
-        pass
+        raise NotImplementedError
 
     def _realize(self, hist_data: np.ndarray):
         avg = hist_data.mean(axis=1).squeeze()
@@ -1947,7 +1952,7 @@ class TestSigStrategy(qt.SimpleTiming):
                          par_bounds_or_enums=([2, 10], [0, 3], [0, 3]),
                          data_types='close, open, high, low',
                          window_length=2)
-        pass
+        raise NotImplementedError
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
         r, price1, price2 = params
@@ -2160,12 +2165,12 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
-        pass
+        raise NotImplementedError
         # print(f'operator is ready? "{self.op.ready}"')
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
-        pass
+        raise NotImplementedError
         # self.assertIsInstance(self.op, qt.Operator)
         # self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
         # self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
@@ -2208,7 +2213,7 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_remove_strategy(self):
         """test removing strategies from Operator"""
-        pass
+        raise NotImplementedError
         # self.op.remove_strategy(stg='macd')
 
     def test_property_get(self):
@@ -2271,7 +2276,7 @@ class TestOperator(unittest.TestCase):
         ric_hist_data = self.op._ricon_history_data[0]
         print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)
-        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
+        print('originally raise NotImplementedErrored data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
         self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
@@ -3076,16 +3081,16 @@ class TestOperator(unittest.TestCase):
 
 class TestLog(unittest.TestCase):
     def test_init(self):
-        pass
+        raise NotImplementedError
 
 
 class TestConfig(unittest.TestCase):
     """测试Config对象以及QT_CONFIG变量的设置和获取值"""
     def test_init(self):
-        pass
+        raise NotImplementedError
 
     def test_invest(self):
-        pass
+        raise NotImplementedError
 
 
 class TestHistoryPanel(unittest.TestCase):
@@ -3139,7 +3144,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(empty_hp.column_count, 0)
 
     def test_create_history_panel(self):
-        """ test the creation of a HistoryPanel object by passing all data explicitly
+        """ test the creation of a HistoryPanel object by raise NotImplementedErroring all data explicitly
 
         """
         self.assertIsInstance(self.hp, qt.HistoryPanel)
@@ -3351,10 +3356,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(AssertionError, temp_hp.re_label, htypes='wrong input!')
 
     def test_csv_to_hp(self):
-        pass
+        raise NotImplementedError
 
     def test_hdf_to_hp(self):
-        pass
+        raise NotImplementedError
 
     def test_hp_join(self):
         print(f'join two simple HistoryPanels with same shares')
@@ -3527,10 +3532,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_to_csv(self):
-        pass
+        raise NotImplementedError
 
     def test_to_hdf(self):
-        pass
+        raise NotImplementedError
 
     def test_fill_na(self):
         print(self.hp)
@@ -3546,7 +3551,7 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         # TODO: implement this test case
-        pass
+        raise NotImplementedError
 
     def test_get_price_type_raw_data(self):
         shares = '000039.SZ, 600748.SH, 000039.SZ'
@@ -3615,12 +3620,12 @@ class TestHistoryPanel(unittest.TestCase):
         df_list[11].info()
 
     def test_get_composite_type_raw_data(self):
-        pass
+        raise NotImplementedError
 
 
 class TestHistorySubFuncs(unittest.TestCase):
     def setUp(self):
-        pass
+        raise NotImplementedError
 
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
@@ -3675,7 +3680,7 @@ class TestHistorySubFuncs(unittest.TestCase):
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
     def setUp(self):
-        pass
+        raise NotImplementedError
 
     def test_stock_basic(self):
         print(f'test tushare function: stock_basic')
@@ -5231,7 +5236,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=False)
+               parallel=False,
+               visual=False)
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -5243,7 +5249,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in Montecarlo with multiple sub-range optimization')
         qt.run(self.op,
                mode=2,
@@ -5255,7 +5262,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in Montecarlo with multiple sub-range testing')
         qt.run(self.op,
                mode=2,
@@ -5267,7 +5275,64 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
+
+    def test_run_mode_2_montecarlo_visual(self):
+        """测试策略的优化模式，使用蒙特卡洛寻优"""
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_type='single',
+               test_type='single',
+               opti_sample_count=900,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=False,
+               visual=True)
+        print(f'strategy optimization in Montecarlo algorithm with parallel ON')
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_type='single',
+               test_type='single',
+               opti_sample_count=900,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in Montecarlo with multiple sub-range optimization')
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_type='multiple',
+               test_type='single',
+               opti_sample_count=900,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in Montecarlo with multiple sub-range testing')
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_type='multiple',
+               test_type='multiple',
+               opti_sample_count=900,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
 
     def test_run_mode_2_grid(self):
         """测试策略的优化模式，使用网格寻优"""
@@ -5284,7 +5349,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=False)
+               parallel=False,
+               visual=False)
         print(f'strategy optimization in grid search algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -5296,7 +5362,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in grid search with multiple sub-range optimization')
         qt.run(self.op,
                mode=2,
@@ -5308,7 +5375,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in grid search with multiple sub-range optimization')
         qt.run(self.op,
                mode=2,
@@ -5320,7 +5388,65 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
+
+    def test_run_mode_2_grid_visual(self):
+        """测试策略的优化模式，使用网格寻优"""
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        print(f'strategy optimization in grid search algorithm with parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method=0,
+               opti_type='single',
+               test_type='single',
+               opti_grid_size=128,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=False,
+               visual=True)
+        print(f'strategy optimization in grid search algorithm with parallel ON')
+        qt.run(self.op,
+               mode=2,
+               opti_method=0,
+               opti_type='single',
+               test_type='single',
+               opti_grid_size=128,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in grid search with multiple sub-range optimization')
+        qt.run(self.op,
+               mode=2,
+               opti_method=0,
+               opti_type='multiple',
+               test_type='single',
+               opti_grid_size=128,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in grid search with multiple sub-range optimization')
+        qt.run(self.op,
+               mode=2,
+               opti_method=0,
+               opti_type='multiple',
+               test_type='multiple',
+               opti_grid_size=128,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
 
     def test_run_mode_2_incremental(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
@@ -5339,7 +5465,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=False)
+               parallel=False,
+               visual=False)
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -5353,7 +5480,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in incremental with multiple sub-range optimization')
         qt.run(self.op,
                mode=2,
@@ -5369,7 +5497,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in incremental with multiple sub-range testing')
         qt.run(self.op,
                mode=2,
@@ -5385,7 +5514,77 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
+
+    def test_run_mode_2_incremental_visual(self):
+        """测试策略的优化模式，使用递进步长网格寻优"""
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        print(f'strategy optimization in incremental algorithm with parallel OFF')
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_max_rounds=10,
+               opti_min_volume=5E7,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=False,
+               visual=True)
+        print(f'strategy optimization in incremental algorithm with parallel ON')
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_max_rounds=50,
+               opti_min_volume=5E9,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in incremental with multiple sub-range optimization')
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
+               opti_type='multiple',
+               test_type='single',
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_max_rounds=50,
+               opti_min_volume=5E9,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in incremental with multiple sub-range testing')
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
+               opti_type='multiple',
+               test_type='multiple',
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_max_rounds=50,
+               opti_min_volume=5E9,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
 
     def test_run_mode_2_predict(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
@@ -5403,7 +5602,8 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
         print(f'strategy optimization in incremental with with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
@@ -5419,10 +5619,47 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               parallel=True)
+               parallel=True,
+               visual=False)
+
+    def test_run_mode_2_predict_visual(self):
+        """测试策略的优化模式，使用递进步长网格寻优"""
+        # TODO: investigate, function does not work while
+        # TODO: setting parallel = True
+        print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
+        qt.run(self.op,
+               mode=2,
+               opti_method=1,
+               opti_type='single',
+               test_type='montecarlo',
+               opti_output_count=20,
+               opti_sample_count=900,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
+        print(f'strategy optimization in incremental with with predictive montecarlo test')
+        qt.run(self.op,
+               mode=2,
+               opti_method=2,
+               opti_type='single',
+               test_type='montecarlo',
+               opti_r_sample_count=200,
+               opti_reduce_ratio=0.3,
+               opti_output_count=20,
+               opti_max_rounds=50,
+               opti_min_volume=5E9,
+               opti_start='20040104',
+               opti_end='20141231',
+               test_start='20120604',
+               test_end='20201130',
+               parallel=True,
+               visual=True)
 
     def test_built_in_timing(self):
-        pass
+        raise NotImplementedError
 
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
@@ -5529,7 +5766,7 @@ class TestBuiltIns(unittest.TestCase):
         print(f'type of class: {type(stg)}')
 
     def test_second(self):
-        pass
+        raise NotImplementedError
 
 
 class TestFastExperiments(unittest.TestCase):

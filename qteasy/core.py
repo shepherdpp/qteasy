@@ -22,7 +22,7 @@ from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
-from .visual import _plot_loop_result, _print_loop_result, print_table_result, print_opti_result
+from .visual import _plot_loop_result, _print_loop_result, _print_test_result, _print_opti_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -550,9 +550,9 @@ def check_and_prepare_hist_data(operator, config):
         hist_loop.iloc[row, col] = 0
     # debug
     # print(f'\n got hist_op as following\n')
-    # hist_op.info()
-    print(f'\n got hist_loop as following\n')
-    hist_loop.info()
+    # # hist_op.info()
+    # print(f'\n got hist_loop as following\n')
+    # hist_loop.info()
 
     # 生成用于策略优化训练的训练历史数据集合
     hist_opti = get_history_panel(start=config.opti_start,
@@ -704,43 +704,39 @@ def run(operator, **kwargs):
                 在同一个历史区间上反复回测，通过比较回测的结果而找到最优或较优的参数。这一类优化方法的假设是，如果这一组参数在过去取得了良好的
                 投资结果，那么很可能在未来也不会太差。
                 这一类方法包括：
-                    1，Exhaustive_searching                  穷举法：
+                    1，Grid_searching                        网格搜索法：
 
-                        穷举法是最简单和直接的参数优化方法，在已经定义好的参数空间中，按照一定的间隔均匀地从向量空间中取出一系列的点，
+                        网格法是最简单和直接的参数优化方法，在已经定义好的参数空间中，按照一定的间隔均匀地从向量空间中取出一系列的点，
                         逐个在优化空间中生成交易信号并进行回测，把所有的参数组合都测试完毕后，根据目标函数的值选择排名靠前的参数组合即可。
 
-                        穷举法能确保找到参数空间中的全剧最优参数，不过必须逐一测试所有可能的参数点，因此计算量相当大。同时，穷举法只
-                        适用于非连续的参数空间，对于连续空间，仍然可以使用穷举法，但无法真正"穷尽"所有的参数组合
+                        网格法能确保找到参数空间中的全剧最优参数，不过必须逐一测试所有可能的参数点，因此计算量相当大。同时，网格法只
+                        适用于非连续的参数空间，对于连续空间，仍然可以使用网格法，但无法真正"穷尽"所有的参数组合
 
-                        关于穷举法的具体参数和输出，参见self._search_grid()函数的docstring
+                        关于网格法的具体参数和输出，参见self._search_grid()函数的docstring
 
                     2，Montecarlo_searching                  蒙特卡洛法
 
-                        蒙特卡洛法与穷举法类似，也需要检查并测试参数空间中的大量参数组合。不过在蒙特卡洛法中，参数组合是从参数空间中随机
-                        选出的，而且在参数空间中均匀分布。与穷举法相比，蒙特卡洛方法更适合于连续参数空间。
+                        蒙特卡洛法与网格法类似，也需要检查并测试参数空间中的大量参数组合。不过在蒙特卡洛法中，参数组合是从参数空间中随机
+                        选出的，而且在参数空间中均匀分布。与网格法相比，蒙特卡洛方法不仅更适合于连续参数空间、通常情况下也有更好的性能。
 
                         关于蒙特卡洛方法的参数和输出，参见self._search_montecarlo()函数的docstring
 
-                    3，Incremental_steped_searching          步进搜索法
-                        Incremental Stepped Search 递进步长法
+                    3，Incremental_steped_searching          递进搜索法
 
-                        递进步长法本质上与穷举法是一样的。不过规避了穷举法的计算量过大的缺点，大大降低了计算量，同时在对最优结果的搜
-                        索能力上并未作出太大牺牲。递进步长法的基本思想是对参数空间进行多轮递进式的搜索，第一次搜索时使用一个相对较大
-                        的搜索步长，由于搜索的步长较大（通常为8或16，或者更大）因此第一次搜索的计算量只有标准穷举法的1/16^3或更少。
-                        第一次搜索完毕后，选出结果最优的参数点，通常为50个到1000个之间，在这些参数点的"附件"进行第二轮搜索，此时搜
-                        索的步长只有第一次的1/2或1/3。虽然搜索步长减小，但是搜索的空间更小，因此计算量也不大。第二轮搜索完成后，继
-                        续减小搜索步长，同样对上一轮搜索中找到的最佳参数附近搜索。这样循环直到完成整个空间的搜索。
+                        递进步长法的基本思想是对参数空间进行多轮递进式的搜索，每一轮搜索方法与蒙特卡洛法相同但是每一轮搜索后都将搜索
+                        范围缩小到更希望产生全局最优的子空间中，并在这个较小的子空间中继续使用蒙特卡洛法进行搜索，直到该子空间太小、
+                        或搜索轮数大于设定值为止。
 
-                        使用这种技术，在一个250*250X250的空间中，能够把搜索量从15,000,000降低到28,000左右,缩减到原来的1/500。
-                        如果目标函数在参数空间中大体上是连续的情况下，使用ISS方法可以以五百分之一的计算量得到近似穷举法的搜索效果。
+                        使用这种技术，在一个250*250*250的空间中，能够把搜索量从15,000,000降低到10,000左右,缩减到原来的1/1500，
+                        却不太会影响最终搜索的效果。
 
                         关于递进步长法的参数和输出，参见self._search_incremental()函数的docstring
 
                     4，Genetic_Algorithm                     遗传算法
 
-                        遗传算法适用于"超大"参数空间的参数寻优。对于有二到三个参数的策略来说，使用蒙特卡洛或穷举法是可以承受的选择，
+                        遗传算法适用于"超大"参数空间的参数寻优。对于有二到三个参数的策略来说，使用蒙特卡洛或网格法是可以承受的选择，
                         如果参数数量增加到4到5个，递进步长法可以帮助降低计算量，然而如果参数有数百个，而且每一个都有无限取值范围的时
-                        候，任何一种基于穷举的方法都没有应用的意义了。如果目标函数在参数空间中是连续且可微的，可以使用基于梯度的方法，
+                        候，任何一种基于网格的方法都没有应用的意义了。如果目标函数在参数空间中是连续且可微的，可以使用基于梯度的方法，
                         但如果目标函数不可微分，GA方法提供了一个在可以承受的时间内找到全局最优或局部最优的方法。
 
                         GA方法受生物进化论的启发，通过模拟生物在自然选择下的基因进化过程，在复杂的超大参数空间中搜索全局最优或局部最
@@ -751,6 +747,10 @@ def run(operator, **kwargs):
                         加优秀的基因，最终可能演化出全局最优或至少局部最优的基因。
 
                         关于遗传算法的详细参数和输出，参见self._search_ga()函数的docstring
+
+                    5, Gradient Descendent Algorithm        梯度下降算法
+
+                        梯度下降算法
 
                 2，有监督方法类：这一类方法依赖于历史数据上的（有用的）先验信息：比如过去一个区间上的已知交易信号、或者价格变化信息。然后通过
                 优化方法寻找历史数据和有用的先验信息之间的联系（目标联系）。这一类优化方法的假设是，如果这些通过历史数据直接获取先验信息的
@@ -877,7 +877,11 @@ def run(operator, **kwargs):
         et = time.time()
         run_time_loop_full = (et - st)
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
-        eval_res = evaluate(op_list=op_list,
+        complete_values = _get_complete_hist(looped_value=looped_values,
+                                            h_list=hist_loop,
+                                            ref_list=hist_reference,
+                                            with_price=False)
+        eval_res = evaluate(op_list=complete_values,
                             looped_values=looped_values,
                             hist_reference=hist_reference,
                             reference_data=reference_data,
@@ -889,15 +893,12 @@ def run(operator, **kwargs):
         eval_res['loop_end'] = looped_values.index[-1]
         if config.visual:
             # 图表输出投资回报历史曲线
-            complete_value = _get_complete_hist(looped_value=looped_values,
-                                                h_list=hist_loop,
-                                                ref_list=hist_reference,
-                                                with_price=False)
 
-            _plot_loop_result(complete_value, msg=eval_res)
+            _plot_loop_result(complete_values, msg=eval_res)
         else:
             # 格式化输出回测结果
-            _print_loop_result(looped_values, eval_res)
+            _print_loop_result(complete_values, eval_res)
+
         return None
 
     elif run_mode == 2:
@@ -910,7 +911,10 @@ def run(operator, **kwargs):
                                                 op=operator,
                                                 config=config)
 
-        print_opti_result(pars, perfs)
+        if config.visual:
+            pass
+        else:
+            _print_opti_result(pars, perfs)
         test_result_df = pd.DataFrame(columns=['par',
                                                'sell_count',
                                                'buy_count',
@@ -951,7 +955,10 @@ def run(operator, **kwargs):
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
             eval_res['loop_start'] = hist_test_loop.index[0]
             eval_res['loop_end'] = hist_test_loop.index[-1]
-            print_table_result(test_result_df, eval_res, config)
+            if config.visual:
+                pass
+            else:
+                _print_test_result(test_result_df, eval_res, config)
         elif config.test_type == 'montecarlo':
             # 生成模拟测试数据
             mock_test_loop = _create_mock_data(hist_test_loop, qty=30)  # config.test_cycle_count)
@@ -994,7 +1001,10 @@ def run(operator, **kwargs):
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
                 eval_res['loop_start'] = mont_loop.index[0]
                 eval_res['loop_end'] = mont_loop.index[-1]
-                print_table_result(test_result_df, eval_res, config)
+                if config.visual:
+                    pass
+                else:
+                    _print_test_result(test_result_df, eval_res, config)
 
         return perfs, pars
 
@@ -1011,7 +1021,6 @@ def _evaluate_all_parameters(par_generator,
     """ 批量
 
     :param par_generator:
-    :param parallel:
     :param op:
     :param op_history_data:
     :param loop_history_data:
@@ -1074,21 +1083,70 @@ def _evaluate_one_parameter(par: tuple,
                             reference_history_data_type,
                             config,
                             stage='optimize') -> dict:
-    """ 将par传入op中，并返回一个dict，包含这一组参数在历史区间上的performance indicator值
-        根据stage参数，选择优化参数或者测试参数参与运算
+    """ 基于op中的交易策略，在给定策略参数par的条件下，计算交易策略在一段历史数据上的交易信号，并对交易信号的交易
+        结果进行回测，对回测结果数据进行评价，并给出评价结果。
+        本函数是一个方便的包裹函数，包裹了交易信号生成、交易信号回测以及回测结果评价结果的打包过程，同时，根据QT基
+        本配置的不同，可以在交易信号回测的过程中进行多重回测，即将一段历史区间分成几个子区间，在每一个子区间上分别
+        回测后返回多次回测的综合结果。
 
     input:
-        :param par:  tuple: 一组参数，包含多个策略的参数的混合体
-        :param op:  Operator: 一个operator对象，包含多个投资策略
-        :param op_history_data:  用于生成operation List的历史数据
-        :param loop_history_data: 用于进行回测的历史数据
-        :param reference_history_data:
-        :param reference_history_data_type:
-        :param config: 上下文对象，用于保存相关配置
-        :param stage:
-        :param indicators
+        :param par:     tuple: 输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且
+                        符合op对象中每个交易策略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见
+                        qt.operator.set_opt_par()的docstring
+
+        :param op:      Operator: 一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数
+                        生成交易信号
+
+        :param op_history_data: HistoryPanel: 用于生成operation List的历史数据。根据operator中的策略
+                        种类不同，需要的历史数据类型也不同，该组历史数据是一个HistoryPanel对象，包含适合于
+                        交易信号创建的所有投资品种所有相关数据类型的数据。如交易价格数据（如果策略通过交易价格
+                        生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
+
+        :param loop_history_data: DataFrame: 用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是
+                        仅包含回测所需要的价格信息，通常为收盘价（假设交易价格为收盘价）
+
+        :param reference_history_data: DataFrame: 用于回测结果评价的参考历史数据，历史区间与回测历史数据
+                        相同，但是通常是能代表整个市场整体波动的金融资产的价格，例如沪深300指数的价格。
+
+        :param reference_history_data_type: str: 用于回测结果评价的参考历史数据种类，通常为收盘价close
+
+        :param config: Config: 参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
+                        1, config.opti_type/test_type:
+                            优化或测试模式，决定如何利用回测区间
+                            single:     在整个回测区间上进行一次回测
+                            multiple:   将回测区间分割为多个子区间并分别回测
+                            montecarlo: 根据回测区间的数据生成模拟数据进行回测（仅在test模式下）
+                        2, config.optimize_target/test_indicators:
+                            优化目标函数（优化模式下）或评价指标（测试模式下）
+                            在优化模式下，使用特定的优化目标函数来确定表现最好的策略参数
+                            在测试模式下，对策略的回测结果进行多重评价并输出评价结果
+                        3, config.opti_cash_amounts/test_cash_amounts:
+                            优化/测试投资金额
+                            在多区间回测情况下，投资金额会被调整，初始投资日期会等于每一个回测子区间的第一天
+                        4, config.opti_sub_periods/test_sub_periods:
+                            优化/测试区间数量
+                            在多区间回测情况下，在整个回测区间中间隔均匀地取出多个区间，在每个区间上分别回测
+                            每个区间的长度相同，但是起止点不同。每个起点之间的间隔与子区间的长度和数量同时相关，
+                            确保每个区间的起点是均匀分布的，同时所有的子区间正好覆盖整个回测区间。
+                        5, config.opti_sub_prd_length/test_sub_prd_length:
+                            优化/测试子区间长度
+                            该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
+                            例如，0.5代表每个子区间的长度是整个区间的一半
+
+        :param stage: str: 运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
+                        1, 'optimize': 运行模式为优化模式，
+                        2, 'test':
     :return:
-        float 一个代表该策略在使用par作为参数时的性能表现评分
+        dict: 一个dict对象，该策略在使用par作为参数时的性能表现评分，允许对性能表现进行多重指标评价，dict
+        的指标类型为dict的键，评价结果为值，dict不能为空，至少包含'final_value' 的值。例如：
+
+        {'final_value': 34567,
+         'sharp':       0.123}
+
+        如果当前的策略不能生成有效的交易操作清单时，直接返回默认结果，其终值为负无穷大：
+
+        {'final_value': np.NINF}
+
     """
     assert stage in ['optimize', 'test']
     if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
@@ -1132,8 +1190,6 @@ def _evaluate_one_parameter(par: tuple,
         raise KeyError(f'Not recognized optimization type: {config.opti_type}')
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
-    # TODO: currently only one-time invest plan can be used for optimization
-    # TODO: , later multiple invest plan should be supported
     for start, end in zip(start_dates, end_dates):
         op_list_seg = op_list[start:end].copy()
         history_list_seg = loop_history_data[start:end].copy()
@@ -1264,7 +1320,7 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
 """
     s_range, s_type = op.opt_space_par
     space = Space(s_range, s_type)  # 生成参数空间
-    # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与穷举法一致
+    # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
     par_generator, total = space.extract(config.opti_sample_count, how='rand')
     history_list = hist.to_dataframe(htype='close').fillna(0)
     st = time.time()
@@ -1334,18 +1390,20 @@ def _search_incremental(hist, ref_hist, ref_type, op, config):
     current_round = 1  # 当前运行轮次
     current_volume = base_space.volume  # 当前运行轮次子空间的总体积
     history_list = hist.to_dataframe(htype='close').fillna(0)  # 准备历史数据
-    # 估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
-    # 因此总的运行回合数就等于轮数乘以每一轮的回合数。关键是计算轮数
-    # 由于轮数的多少取决于两个变量，一个是最大轮次数，另一个是下一轮产生的子空间总和体积是否
-    # 小于最小体积阈值，因此，推算过程如下：
-    # 设初始空间体积为Vi，最小空间体积为Vmin，每一轮的缩小率为rr，最大计算轮数为Rmax
-    # 且第k轮的空间体积为Vk，则有：
-    #                       Vk = Vi * rr ** k
-    #       停止条件1：      Vk = Vi * rr ** k < Vmin
-    #       停止条件2:      k >= Rmax
-    #    根据停止条件1：    rr ** k < Vmin / Vi
-    #                    k > log(Vmin / Vi) / log(rr)
-    #        因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
+    """
+    估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
+    因此总的运行回合数就等于轮数乘以每一轮的回合数。关键是计算轮数
+    由于轮数的多少取决于两个变量，一个是最大轮次数，另一个是下一轮产生的子空间总和体积是否
+    小于最小体积阈值，因此，推算过程如下：
+    设初始空间体积为Vi，最小空间体积为Vmin，每一轮的缩小率为rr，最大计算轮数为Rmax
+    且第k轮的空间体积为Vk，则有：
+                          Vk = Vi * rr ** k
+          停止条件1：      Vk = Vi * rr ** k < Vmin
+          停止条件2:      k >= Rmax
+       根据停止条件1：    rr ** k < Vmin / Vi
+                       k > log(Vmin / Vi) / log(rr)
+           因此，当：    k > min(Rmax, log(Vmin / Vi) / log(rr))
+    """
     round_count = min(max_rounds, (math.log(min_volume / base_volume) / math.log(reduce_ratio)))
     total_calc_rounds = int(round_count * sample_count)
     i = 0
@@ -1370,20 +1428,22 @@ def _search_incremental(hist, ref_hist, ref_type, op, config):
                                                    stage='optimize')
         # 本轮所有结果都进入结果池，根据择优方向选择最优结果保留，剪除其余结果
         pool.cut(config.maximize_target)
-        # 为了生成新的子空间，计算下一轮子空间的半径大小
-        # 为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
-        # 的缩小比例。这个比例与空间的维数和子空间的数量有关
-        # 例如：
-        # 若 reduce_ratio(rr)=0.5，设初始空间体积为Vi,边长为Si，第k轮空间体积为Vk，子空间数量为m，
-        #       每个子空间的体积为V，Size为S，空间的维数为d,则有：
-        #       Si ** d * (rr ** k) = Vi * (rr ** k) = Vk =  V * m = S ** d * m
-        #       于是：
-        #       S ** d * m = Si ** d * (rr ** k)
-        #       (S/Si) ** d = (rr ** k) / m
-        #       S/Si = ((rr ** k) / m) ** (1/d)
-        # 根据上述结果，第k轮的子空间直径S可以由原始空间的半径Si得到：
-        #       S = Si * ((rr ** k) / m) ** (1/d)
-        #       distance = S / 2
+        """
+        为了生成新的子空间，计算下一轮子空间的半径大小
+        为确保下一轮的子空间总体积与本轮子空间总体积的比值是reduce_ratio，需要根据空间的体积公式设置正确
+        的缩小比例。这个比例与空间的维数和子空间的数量有关
+        例如：
+        若 reduce_ratio(rr)=0.5，设初始空间体积为Vi,边长为Si，第k轮空间体积为Vk，子空间数量为m，
+              每个子空间的体积为V，Size为S，空间的维数为d,则有：
+              Si ** d * (rr ** k) = Vi * (rr ** k) = Vk =  V * m = S ** d * m
+              于是：
+              S ** d * m = Si ** d * (rr ** k)
+              (S/Si) ** d = (rr ** k) / m
+              S/Si = ((rr ** k) / m) ** (1/d)
+        根据上述结果，第k轮的子空间直径S可以由原始空间的半径Si得到：
+              S = Si * ((rr ** k) / m) ** (1/d)
+              distance = S / 2
+        """
         size_reduce_ratio = ((reduce_ratio ** current_round) / reduced_sample_count) ** (1 / base_dimension)
         reduced_size = tuple(np.array(base_space.size) * size_reduce_ratio / 2)
         # 完成一轮搜索后，检查pool中留存的所有点，并生成由所有点的邻域组成的子空间集合
