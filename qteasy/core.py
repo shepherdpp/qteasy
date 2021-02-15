@@ -22,7 +22,8 @@ from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
-from .visual import _plot_loop_result, _print_loop_result, _print_test_result, _print_opti_result
+from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
+    _print_opti_result, _print_operation_signal
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -782,40 +783,50 @@ def run(operator, **kwargs):
             表现
     input：
 
-        :param operator: Operator()，策略执行器对象
+        :param operator:
+            :type Operator
+            策略执行器对象
+
         :param context: Context()，策略执行环境的上下文对象
-    return：=====
-        type: Log()，运行日志记录，txt 或 pd.DataFrame
+    return:
+        1, 在signal模式或模式0下: 返回None
+        2, 在back_test模式或模式1下: 返回None
+        3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
     import time
     OPTIMIZATION_METHODS = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,
-                            3: _search_ga
+                            3: _search_ga,
+                            4: _search_gradient,
+                            5: _search_particles
                             }
-    # 从context 上下文对象中读取运行所需的参数：
-    # 股票清单或投资产品清单
-    # shares = context.share_pool
-
+    # 如果函数调用时用户给出了关键字参数(**kwargs），则首先处理关键字参数，将所有的关键字参数赋值给QT_CONFIG变量，用于运行参数配置
     configure(**kwargs)
     config = QT_CONFIG
 
+    # 赋值给参考数据和运行模式
     reference_data = config.reference_asset
-    # 如果没有显式给出运行模式，则按照context上下文对象中的运行模式运行，否则，适用mode参数中的模式
     run_mode = config.mode
-
-    # 根据根据operation对象和context对象的参数生成不同的历史数据用于不同的用途：
-    # 用于交易信号生成的历史数据
-    # TODO: 将历史数据的准备工作转入check_and_prepare_op()函数中
-    # TODO: 生成的历史数据还应该基于更多的参数，比如采样频率、以及提前期等
-    # 生成用于数据回测的历史数据
+    """
+    用于交易信号生成、数据回测、策略优化、结果测试以及结果评价参考的历史数据:
+    hist_op:            信号生成数据，根据策略的运行方式，信号生成数据可能包含量价数据、基本面数据、指数、财务指标等等
+    hist_loop:          回测价格数据，用于在backtest模式下对生成的信号进行测试，仅包含买卖价格数据（定价回测）
+    hist_opti:          策略优化数据，数据的类型与信号生成数据一样，但是取自专门的独立区间用于策略的参数优化
+    hist_opti_loop:     优化回测价格，用于在optimization模式下在策略优化区间上回测交易结果，目前这组数据并未提前生成，
+                        而是在optimize的时候生成，实际上应该提前生成
+    hist_test:          策略检验数据，数据的类型与信号生成数据一样，同样取自专门的独立区间用于策略参数的性能检测
+    hist_test_loop:     检验回测价格，用于在optimization模式下在策略检验区间上回测交易结果
+    hist_reference:     评价参考价格，用于评价回测结果，大部分用于评价回测结果的alpha表现（取出无风险回报之后的表现）
+                        相关的指标都需要用到参考价格;
+    """
     (hist_op,
      hist_loop,
      hist_opti,
      hist_test,
      hist_test_loop,
      hist_reference) = check_and_prepare_hist_data(operator, config)
-
+    # 生成不同模式下回测所需要的投资计划对象和交易成本对象
     cash_plan = CashPlan(config.invest_cash_dates,
                          config.invest_cash_amounts)
 
@@ -833,33 +844,19 @@ def run(operator, **kwargs):
                            config.cost_min_sell,
                            config.cost_slippage)
 
-    if run_mode == 0:
+    if run_mode == 0 or run_mode == 'signal':
         # 进入实时信号生成模式：
-        operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
+        # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
+        operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
-        amounts = [0] * len(config.asset_pool)
-        print(f'====================================\n'
-              f'|                                  |\n'
-              f'|       OPERATION SIGNALS          |\n'
-              f'|                                  |\n'
-              f'====================================\n')
-        print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
-        print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
-              f'Total signals generated: {len(op_list.index)}.')
-        print(f'Operation signal for shares on {op_list.index[-1].date()}')
-        for share, signal in op_list.iloc[-1].iteritems():
-            print(f'share {share}:')
-            if signal > 0:
-                print(f'Buy in with {signal * 100}% of total investment value!')
-            elif signal < 0:
-                print(f'Sell out {-signal * 100}% of current on holding stock!')
-        print(f'\n===========END OF REPORT=============\n')
+        # amounts = [0] * len(config.asset_pool)
+        _print_operation_signal(run_time_prepare_data=run_time_prepare_data, op_list=op_list)
         return None
 
-    elif run_mode == 1:
+    elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式
         operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
@@ -901,7 +898,7 @@ def run(operator, **kwargs):
 
         return None
 
-    elif run_mode == 2:
+    elif run_mode == 2 or run_mode == 'optimization':
         how = config.opti_method
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
@@ -1006,7 +1003,7 @@ def run(operator, **kwargs):
                 else:
                     _print_test_result(test_result_df, eval_res, config)
 
-        return perfs, pars
+        return pars
 
 
 def _evaluate_all_parameters(par_generator,
@@ -1018,17 +1015,55 @@ def _evaluate_all_parameters(par_generator,
                              reference_history_data_type,
                              config,
                              stage='optimize'):
-    """ 批量
+    """ 接受一个策略参数生成器对象，批量生成策略参数，反复调用_evaluate_one_parameter()函数，使用所有生成的策略参数
+        生成历史区间上的交易策略和回测结果，将得到的回测结果全部放入一个结果池对象，并根据策略筛选方法筛选出符合要求的回测
+        结果，并返回筛选后的结果。
 
-    :param par_generator:
-    :param op:
-    :param op_history_data:
-    :param loop_history_data:
-    :param reference_history_data:
-    :param reference_history_data_type:
-    :param config:
-    :param stage:
+        根据config中的配置参数，这里可以选择进行并行计算以充分利用多核处理器的全部算力以缩短运行时间。
+
+    input:
+        :param par_generator:
+            :type Generator:
+            一个迭代器对象，生成所有需要迭代测试的策略参数
+
+        :param op:
+            :type qt.Operator
+            一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
+
+        :param op_history_data:
+            :type qt.HistoryPanel
+            用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
+            历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
+            价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
+
+        :param loop_history_data:
+            :type pd.DataFrame
+            用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
+            （假设交易价格为收盘价）
+
+        :param reference_history_data:
+            :type pd.DataFrame
+            用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
+            产的价格，例如沪深300指数的价格。
+
+        :param reference_history_data_type:
+            :type str
+            用于回测结果评价的参考历史数据种类，通常为收盘价close
+
+        :param config:
+            :type Config:
+            参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
+                1, config.opti_output_count:
+                    优化结果数量
+                2, config.parallel:
+                    并行计算选项，True时进行多进程并行计算，False时进行单进程计算
+
+        :param stage:
+            :type str
+            该参数直接传递至_evaluate_one_parameter()函数中，其含义和作用参见其docstring
     :return:
+        pool，一个Pool对象，包含经过筛选后的所有策略参数以及它们的性能表现
+
     """
     pool = ResultPool(config.opti_output_count)  # 用于存储中间结果或最终结果的参数池对象
     i = 0
@@ -1090,52 +1125,66 @@ def _evaluate_one_parameter(par: tuple,
         回测后返回多次回测的综合结果。
 
     input:
-        :param par:     tuple: 输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且
-                        符合op对象中每个交易策略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见
-                        qt.operator.set_opt_par()的docstring
+        :param par:
+            :type tuple
+            输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且符合op对象中每个交易策
+            略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见qt.operator.set_opt_par()的
+            docstring
 
-        :param op:      Operator: 一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数
-                        生成交易信号
+        :param op:
+            :type qt.Operator
+            一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
 
-        :param op_history_data: HistoryPanel: 用于生成operation List的历史数据。根据operator中的策略
-                        种类不同，需要的历史数据类型也不同，该组历史数据是一个HistoryPanel对象，包含适合于
-                        交易信号创建的所有投资品种所有相关数据类型的数据。如交易价格数据（如果策略通过交易价格
-                        生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
+        :param op_history_data:
+            :type qt.HistoryPanel
+            用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
+            历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
+            价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
-        :param loop_history_data: DataFrame: 用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是
-                        仅包含回测所需要的价格信息，通常为收盘价（假设交易价格为收盘价）
+        :param loop_history_data:
+            :type pd.DataFrame
+            用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
+            （假设交易价格为收盘价）
 
-        :param reference_history_data: DataFrame: 用于回测结果评价的参考历史数据，历史区间与回测历史数据
-                        相同，但是通常是能代表整个市场整体波动的金融资产的价格，例如沪深300指数的价格。
+        :param reference_history_data:
+            :type pd.DataFrame
+            用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
+            产的价格，例如沪深300指数的价格。
 
-        :param reference_history_data_type: str: 用于回测结果评价的参考历史数据种类，通常为收盘价close
+        :param reference_history_data_type:
+            :type str
+            用于回测结果评价的参考历史数据种类，通常为收盘价close
 
-        :param config: Config: 参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
-                        1, config.opti_type/test_type:
-                            优化或测试模式，决定如何利用回测区间
-                            single:     在整个回测区间上进行一次回测
-                            multiple:   将回测区间分割为多个子区间并分别回测
-                            montecarlo: 根据回测区间的数据生成模拟数据进行回测（仅在test模式下）
-                        2, config.optimize_target/test_indicators:
-                            优化目标函数（优化模式下）或评价指标（测试模式下）
-                            在优化模式下，使用特定的优化目标函数来确定表现最好的策略参数
-                            在测试模式下，对策略的回测结果进行多重评价并输出评价结果
-                        3, config.opti_cash_amounts/test_cash_amounts:
-                            优化/测试投资金额
-                            在多区间回测情况下，投资金额会被调整，初始投资日期会等于每一个回测子区间的第一天
-                        4, config.opti_sub_periods/test_sub_periods:
-                            优化/测试区间数量
-                            在多区间回测情况下，在整个回测区间中间隔均匀地取出多个区间，在每个区间上分别回测
-                            每个区间的长度相同，但是起止点不同。每个起点之间的间隔与子区间的长度和数量同时相关，
-                            确保每个区间的起点是均匀分布的，同时所有的子区间正好覆盖整个回测区间。
-                        5, config.opti_sub_prd_length/test_sub_prd_length:
-                            优化/测试子区间长度
-                            该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
-                            例如，0.5代表每个子区间的长度是整个区间的一半
+        :param config:
+            :type Config:
+            参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
+                1, config.opti_type/test_type:
+                    优化或测试模式，决定如何利用回测区间
+                    single:     在整个回测区间上进行一次回测
+                    multiple:   将回测区间分割为多个子区间并分别回测
+                    montecarlo: 根据回测区间的数据生成模拟数据进行回测（仅在test模式下）
+                2, config.optimize_target/test_indicators:
+                    优化目标函数（优化模式下）或评价指标（测试模式下）
+                    在优化模式下，使用特定的优化目标函数来确定表现最好的策略参数
+                    在测试模式下，对策略的回测结果进行多重评价并输出评价结果
+                3, config.opti_cash_amounts/test_cash_amounts:
+                    优化/测试投资金额
+                    在多区间回测情况下，投资金额会被调整，初始投资日期会等于每一个回测子区间的第一天
+                4, config.opti_sub_periods/test_sub_periods:
+                    优化/测试区间数量
+                    在多区间回测情况下，在整个回测区间中间隔均匀地取出多个区间，在每个区间上分别回测
+                    每个区间的长度相同，但是起止点不同。每个起点之间的间隔与子区间的长度和数量同时相关，
+                    确保每个区间的起点是均匀分布的，同时所有的子区间正好覆盖整个回测区间。
+                5, config.opti_sub_prd_length/test_sub_prd_length:
+                    优化/测试子区间长度
+                    该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
+                    例如，0.5代表每个子区间的长度是整个区间的一半
 
-        :param stage: str: 运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
-                        1, 'optimize': 运行模式为优化模式，
-                        2, 'test':
+        :param stage:
+            :type str:
+            运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
+                1, 'optimize': 运行模式为优化模式，
+                2, 'test':
     :return:
         dict: 一个dict对象，该策略在使用par作为参数时的性能表现评分，允许对性能表现进行多重指标评价，dict
         的指标类型为dict的键，评价结果为值，dict不能为空，至少包含'final_value' 的值。例如：

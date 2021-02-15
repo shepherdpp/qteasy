@@ -29,15 +29,19 @@ class Space:
         """参数空间对象初始化，根据输入的参数生成一个空间
 
         input:
-            :param pars，int、float或list,需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照
-                types中的类型字符串创建不同的轴，如果没有给出types，系统根据不同的输入类型动态生成的空间类型分别如下：
+            :param pars，
+                ：type int、float或list,
+                需要建立参数空间的初始信息，通常为一个数值轴的上下界，如果给出了types，按照types中的类型字符串创建不
+                同的轴，如果没有给出types，系统根据不同的输入类型动态生成的空间类型分别如下：
                     pars为float，自动生成上下界为(0, items)的浮点型数值轴，
                     pars为int，自动生成上下界为(0, items)的整形数值轴
                     pars为list，根据list的元素种类和数量生成不同类型轴：
                         list元素只有两个且元素类型为int或float：生成上下界为(items[0], items[1])的浮点型数值
                         轴或整形数值轴
                         list元素不是两个，或list元素类型不是int或float：生成枚举轴，轴的元素包含par中的元素
-            :param par_types，list，默认为空，生成的空间每个轴的类型，如果给出types，应该包含每个轴的类型字符串：
+            :param par_types，
+                :type list
+                默认为空，生成的空间每个轴的类型，如果给出types，应该包含每个轴的类型字符串：
                 'discr': 生成整数型轴
                 'conti': 生成浮点数值轴
                 'enum': 生成枚举轴

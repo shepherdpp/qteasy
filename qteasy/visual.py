@@ -257,6 +257,26 @@ def _plot_test_result():
     raise NotImplementedError
 
 
+def _print_operation_signal(run_time_prepare_data, op_list):
+    """打印实时信号生成模式的运行结果
+    """
+    print(f'====================================\n'
+          f'|                                  |\n'
+          f'|       OPERATION SIGNALS          |\n'
+          f'|                                  |\n'
+          f'====================================\n')
+    print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
+    print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
+          f'Total signals generated: {len(op_list.index)}.')
+    print(f'Operation signal for shares on {op_list.index[-1].date()}')
+    for share, signal in op_list.iloc[-1].iteritems():
+        print(f'share {share}:')
+        if signal > 0:
+            print(f'Buy in with {signal * 100}% of total investment value!')
+        elif signal < 0:
+            print(f'Sell out {-signal * 100}% of current on holding stock!')
+    print(f'\n===========END OF REPORT=============\n')
+
 def _print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
