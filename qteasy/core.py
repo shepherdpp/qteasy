@@ -902,16 +902,58 @@ def run(operator, **kwargs):
         how = config.opti_method
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
+        # OPTIMIZATION METHODS
         pars, perfs = OPTIMIZATION_METHODS[how](hist=hist_opti,
                                                 ref_hist=hist_reference,
                                                 ref_type=reference_data,
                                                 op=operator,
                                                 config=config)
+        # 输出策略优化的评价结果
+        # TODO: 将下面的代码合并到_evaluate_all_parameters()中实现，因为绝大部分核心功能
+        # TODO: 是一致的，唯一的区别在于，在这里需要一个包含所有参数的性能表现的dataFrame，
+        # TODO: 而_evaluate_all_parameters()并不具备这个功能，仅能返回一个pool对象
+        hist_opti_loop = hist_opti.to_dataframe(htype='close').fillna(0)
+        opti_result_df = pd.DataFrame(columns=['par',
+                                               'sell_count',
+                                               'buy_count',
+                                               'oper_count',
+                                               'total_fee',
+                                               'final_value',
+                                               'total_return',
+                                               'annual_return',
+                                               'mdd',
+                                               'volatility',
+                                               'alpha',
+                                               'beta',
+                                               'sharp',
+                                               'info'])
+        for par in pars:
+            eval_res = _evaluate_one_parameter(par=par,
+                                               op=operator,
+                                               op_history_data=hist_opti,
+                                               loop_history_data=hist_opti_loop,
+                                               reference_history_data=hist_reference,
+                                               reference_history_data_type=reference_data,
+                                               config=config,
+                                               stage='test')
+            eval_res['par'] = par
+            eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
+            eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
+            eval_res['oper_count'] = eval_res['oper_count'].total.sum()
+            eval_res['total_return'] = eval_res['rtn']
+            eval_res['annual_return'] = eval_res['annual_rtn']
+            opti_result_df = opti_result_df.append(eval_res,
+                                                   ignore_index=True)
 
+        # 评价回测结果——计算参考数据收益率以及平均年化收益率
+        eval_res['loop_start'] = hist_opti_loop.index[0]
+        eval_res['loop_end'] = hist_opti_loop.index[-1]
         if config.visual:
             pass
         else:
-            _print_opti_result(pars, perfs)
+            _print_test_result(opti_result_df, eval_res, config)
+
+        # 完成策略参数的寻优，在测试数据集上检验寻优的结果
         test_result_df = pd.DataFrame(columns=['par',
                                                'sell_count',
                                                'buy_count',
@@ -927,9 +969,9 @@ def run(operator, **kwargs):
                                                'sharp',
                                                'info'])
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
-        # TODO: merge following codes into _evaluate_all_parameters()
-        # TODO: which requires output of _evaluate_all_parameters to be pool
-        # TODO: with not only one performance value, but also dict of other performance indicators
+        # TODO: 将下面的代码合并到_evaluate_all_parameters()中实现，因为绝大部分核心功能
+        # TODO: 是一致的，唯一的区别在于，在这里需要一个包含所有参数的性能表现的dataFrame，
+        # TODO: 而_evaluate_all_parameters()并不具备这个功能，仅能返回一个pool对象
         if config.test_type in ['single', 'multiple']:
             for par in pars:
                 eval_res = _evaluate_one_parameter(par=par,
@@ -1068,6 +1110,7 @@ def _evaluate_all_parameters(par_generator,
     pool = ResultPool(config.opti_output_count)  # 用于存储中间结果或最终结果的参数池对象
     i = 0
     best_so_far = 0
+    # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
         proc_pool = ProcessPoolExecutor()
@@ -1088,6 +1131,7 @@ def _evaluate_all_parameters(par_generator,
                 best_so_far = f.result()['final_value']
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
+    # 禁用多进程计算方式，使用单进程计算
     else:
         for par in par_generator:
             perf = _evaluate_one_parameter(par=par,
