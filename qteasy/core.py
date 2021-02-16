@@ -875,19 +875,19 @@ def run(operator, **kwargs):
         run_time_loop_full = (et - st)
         # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
         complete_values = _get_complete_hist(looped_value=looped_values,
-                                            h_list=hist_loop,
-                                            ref_list=hist_reference,
-                                            with_price=False)
-        eval_res = evaluate(op_list=complete_values,
-                            looped_values=looped_values,
+                                             h_list=hist_loop,
+                                             ref_list=hist_reference,
+                                             with_price=False)
+        eval_res = evaluate(op_list=op_list,
+                            looped_values=complete_values,
                             hist_reference=hist_reference,
                             reference_data=reference_data,
                             cash_plan=cash_plan,
                             indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
         eval_res['run_time_p'] = run_time_prepare_data
         eval_res['run_time_l'] = run_time_loop_full
-        eval_res['loop_start'] = looped_values.index[0]
-        eval_res['loop_end'] = looped_values.index[-1]
+        eval_res['loop_start'] = complete_values.index[0]
+        eval_res['loop_end'] = complete_values.index[-1]
         if config.visual:
             # 图表输出投资回报历史曲线
 
@@ -1256,8 +1256,12 @@ def _evaluate_one_parameter(par: tuple,
                                 cash_plan=cash_plan,
                                 cost_rate=trade_cost,
                                 moq=config.trade_batch_size,print_log=False)
+        complete_values = _get_complete_hist(looped_value=looped_val,
+                                             h_list=history_list_seg,
+                                             ref_list=reference_history_data,
+                                             with_price=False)
         perf = evaluate(op_list=op_list_seg,
-                        looped_values=looped_val,
+                        looped_values=complete_values,
                         hist_reference=reference_history_data,
                         reference_data=reference_history_data_type,
                         cash_plan=cash_plan,

@@ -277,6 +277,7 @@ def _print_operation_signal(run_time_prepare_data, op_list):
             print(f'Sell out {-signal * 100}% of current on holding stock!')
     print(f'\n===========END OF REPORT=============\n')
 
+
 def _print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
@@ -294,10 +295,10 @@ def _print_loop_result(result, messages=None, columns=None, headers=None, format
           f'|                                  |\n'
           f'====================================')
     print(f'\nqteasy running mode: 1 - History back looping\n'
-          f'time consumption for operate signal creation: {time_str_format(messages["run_time_p"])} ms\n'
-          f'time consumption for operation back looping: {time_str_format(messages["run_time_l"])} ms\n')
+          f'time consumption for operate signal creation: {time_str_format(messages["run_time_p"])}\n'
+          f'time consumption for operation back looping: {time_str_format(messages["run_time_l"])}\n')
     print(f'investment starts on {result.index[0]}\nends on {result.index[-1]}\n'
-          f'Total looped periods: {messages["years"]} years.')
+          f'Total looped periods: {messages["years"]:.1f} years.')
     print(f'operation summary:\n {messages["oper_count"]}\n'
           f'Total operation fee:     ¥{messages["total_fee"]:13,.2f}')
     print(f'total investment amount: ¥{messages["total_invest"]:13,.2f}\n'
@@ -332,7 +333,7 @@ def _print_test_result(result, messages=None, config=None, columns=None, headers
 
     ref_rtn, ref_annual_rtn = messages['ref_rtn'], messages['ref_annual_rtn']
     print(f'investment starts on {messages["loop_start"]}\nends on {messages["loop_end"]}\n'
-          f'Total looped periods: {result.years[0]} years.')
+          f'Total looped periods: {result.years[0]:.1f} years.')
     print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
     print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
           f'Total reference return: {ref_rtn * 100:.3f}% \n'

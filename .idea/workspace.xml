@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/core.py" afterPath="$PROJECT_DIR$/qteasy/core.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/space.py" afterPath="$PROJECT_DIR$/qteasy/space.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/qteasy/visual.py" afterPath="$PROJECT_DIR$/qteasy/visual.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -36,11 +36,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="test.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="347">
-              <caret line="5134" column="32" lean-forward="false" selection-start-line="5134" selection-start-column="32" selection-end-line="5134" selection-end-column="32" />
+            <state relative-caret-position="475">
+              <caret line="787" column="67" lean-forward="true" selection-start-line="787" selection-start-column="67" selection-end-line="787" selection-end-column="67" />
               <folding>
                 <element signature="e#3636#11359#0" expanded="false" />
                 <element signature="e#3661#3818#0" expanded="false" />
@@ -87,7 +87,6 @@
                 <element signature="e#34817#35075#0" expanded="false" />
                 <element signature="e#35112#35153#0" expanded="false" />
                 <element signature="e#35193#36153#0" expanded="false" />
-                <element signature="e#36203#42960#0" expanded="false" />
                 <element signature="e#36269#36294#0" expanded="false" />
                 <element signature="e#36338#37135#0" expanded="false" />
                 <element signature="e#37180#37632#0" expanded="false" />
@@ -98,7 +97,6 @@
                 <element signature="e#38752#38898#0" expanded="false" />
                 <element signature="e#38949#40266#0" expanded="false" />
                 <element signature="e#40121#40242#0" expanded="false" />
-                <element signature="e#40315#41625#0" expanded="false" />
                 <element signature="e#41670#42960#0" expanded="false" />
                 <element signature="e#42166#42501#0" expanded="false" />
                 <element signature="e#42534#42812#0" expanded="false" />
@@ -746,45 +744,45 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="core.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="core.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/core.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="203">
-              <caret line="857" column="0" lean-forward="true" selection-start-line="857" selection-start-column="0" selection-end-line="857" selection-end-column="0" />
+            <state relative-caret-position="137">
+              <caret line="1262" column="44" lean-forward="true" selection-start-line="1262" selection-start-column="44" selection-end-line="1262" selection-end-column="44" />
               <folding>
                 <element signature="e#305#324#0" expanded="true" />
-                <element signature="e#38285#39060#0" expanded="false" />
-                <element signature="e#39485#40598#0" expanded="false" />
-                <element signature="e#61563#62075#1" expanded="false" />
-                <element signature="e#63561#64180#1" expanded="false" />
-                <marker date="1613408788581" expanded="true" signature="3547:3581" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="3548:3581" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="3583:3612" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="3614:3647" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="3649:3680" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="3682:3706" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="3708:3739" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="6709:6753" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="6710:6753" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="6755:6800" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="6802:6849" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="8963:8984" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10381:10423" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10382:10423" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10425:10463" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10476:10506" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10515:10539" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10549:10584" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="10594:10624" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="15325:15327" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="15442:15462" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="17430:17503" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="20405:23991" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="47915:47953" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="47916:47953" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="47955:48008" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="48010:48069" ph="..." />
-                <marker date="1613408788581" expanded="true" signature="48072:48235" ph="..." />
+                <element signature="e#38286#39061#0" expanded="false" />
+                <element signature="e#39486#40599#0" expanded="false" />
+                <element signature="e#61850#62362#1" expanded="false" />
+                <element signature="e#63848#64467#1" expanded="false" />
+                <marker date="1613449675204" expanded="true" signature="3547:3581" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="3548:3581" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="3583:3612" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="3614:3647" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="3649:3680" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="3682:3706" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="3708:3739" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="6709:6753" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="6710:6753" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="6755:6800" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="6802:6849" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="8963:8984" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10381:10423" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10382:10423" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10425:10463" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10476:10506" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10515:10539" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10549:10584" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="10594:10624" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="15325:15327" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="15442:15462" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="17430:17503" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="20405:23991" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="47916:47954" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="47917:47954" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="47956:48009" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="48011:48070" ph="..." />
+                <marker date="1613449675204" expanded="true" signature="48073:48236" ph="..." />
               </folding>
             </state>
           </provider>
@@ -793,7 +791,7 @@
       <file leaf-file-name="database.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/database.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="90">
+            <state relative-caret-position="7448">
               <caret line="402" column="0" lean-forward="false" selection-start-line="402" selection-start-column="0" selection-end-line="402" selection-end-column="0" />
               <folding />
             </state>
@@ -803,7 +801,7 @@
       <file leaf-file-name="utilfuncs.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/utilfuncs.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="351">
+            <state relative-caret-position="4895">
               <caret line="349" column="39" lean-forward="false" selection-start-line="349" selection-start-column="39" selection-end-line="349" selection-end-column="39" />
               <folding />
             </state>
@@ -813,8 +811,8 @@
       <file leaf-file-name="evaluate.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/evaluate.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="241">
-              <caret line="49" column="52" lean-forward="false" selection-start-line="49" selection-start-column="51" selection-end-line="49" selection-end-column="52" />
+            <state relative-caret-position="243">
+              <caret line="137" column="31" lean-forward="true" selection-start-line="137" selection-start-column="31" selection-end-line="137" selection-end-column="31" />
               <folding>
                 <element signature="e#194#212#0" expanded="true" />
               </folding>
@@ -825,7 +823,7 @@
       <file leaf-file-name="finance.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/finance.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="237">
+            <state relative-caret-position="3192">
               <caret line="192" column="21" lean-forward="false" selection-start-line="192" selection-start-column="21" selection-end-line="192" selection-end-column="21" />
               <folding>
                 <element signature="e#304#322#0" expanded="true" />
@@ -838,15 +836,14 @@
       <file leaf-file-name="visual.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/visual.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="177">
-              <caret line="257" column="0" lean-forward="true" selection-start-line="257" selection-start-column="0" selection-end-line="257" selection-end-column="0" />
+            <state relative-caret-position="285">
+              <caret line="335" column="30" lean-forward="false" selection-start-line="335" selection-start-column="12" selection-end-line="335" selection-end-column="30" />
               <folding>
                 <element signature="e#3568#10043#0" expanded="false" />
                 <element signature="e#10075#10156#0" expanded="false" />
                 <element signature="e#10188#10284#0" expanded="false" />
-                <element signature="e#11416#13470#0" expanded="false" />
-                <element signature="e#13581#16705#0" expanded="false" />
-                <element signature="e#16806#18008#0" expanded="false" />
+                <element signature="e#10352#11319#0" expanded="false" />
+                <element signature="e#16809#18011#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -855,7 +852,7 @@
       <file leaf-file-name="strategy.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/strategy.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1898">
+            <state relative-caret-position="3978">
               <caret line="752" column="69" lean-forward="true" selection-start-line="752" selection-start-column="69" selection-end-line="752" selection-end-column="69" />
               <folding>
                 <element signature="e#253#271#0" expanded="true" />
@@ -867,7 +864,7 @@
       <file leaf-file-name="space.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/space.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
+            <state relative-caret-position="817">
               <caret line="45" column="32" lean-forward="true" selection-start-line="45" selection-start-column="32" selection-end-line="45" selection-end-column="32" />
               <folding />
             </state>
@@ -877,7 +874,7 @@
       <file leaf-file-name="operator.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/qteasy/operator.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-9427">
+            <state relative-caret-position="76">
               <caret line="4" column="8" lean-forward="false" selection-start-line="4" selection-start-column="7" selection-end-line="4" selection-end-column="8" />
               <folding />
             </state>
@@ -895,9 +892,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>mama</find>
-      <find>trix</find>
-      <find>tema</find>
       <find>stoc</find>
       <find>stoch</find>
       <find>minmax</find>
@@ -925,6 +919,9 @@
       <find>pass</find>
       <find>穷举</find>
       <find>got hist_</find>
+      <find>total looped perio</find>
+      <find>g</find>
+      <find>time_str_</find>
     </findStrings>
     <replaceStrings>
       <replace />
@@ -1033,10 +1030,10 @@
         <option value="$PROJECT_DIR$/qteasy/finance.py" />
         <option value="$PROJECT_DIR$/qteasy/database.py" />
         <option value="$PROJECT_DIR$/qteasy/evaluate.py" />
-        <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/qteasy/space.py" />
         <option value="$PROJECT_DIR$/qteasy/visual.py" />
         <option value="$PROJECT_DIR$/qteasy/core.py" />
+        <option value="$PROJECT_DIR$/test.py" />
       </list>
     </option>
   </component>
@@ -1543,18 +1540,17 @@
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <editor active="true" />
     <layout>
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21666667" sideWeight="0.4917647" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.48117647" sideWeight="0.50416666" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297568" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35764706" sideWeight="0.49583334" order="2" side_tool="false" content_ui="tabs" x="110" y="285" width="1044" height="518" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32889965" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.52588236" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.35764706" sideWeight="0.49583334" order="2" side_tool="false" content_ui="tabs" x="110" y="285" width="1044" height="518" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5883978" sideWeight="0.49713877" order="9" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.21666667" sideWeight="0.4917647" order="0" side_tool="false" content_ui="combo" />
-      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3297568" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34378922" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.24930556" sideWeight="0.49598163" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.19722222" sideWeight="0.5082353" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.5883978" sideWeight="0.49713877" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.39782345" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.19722222" sideWeight="0.5082353" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Data View" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3397711" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
@@ -1562,6 +1558,7 @@
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
       <window_info id="Coverage" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="true" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.34378922" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Concurrent Activities Diagram" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3282353" sideWeight="0.5" order="11" side_tool="false" content_ui="tabs" />
     </layout>
@@ -2151,17 +2148,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/utilfuncs.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="351">
-          <caret line="349" column="39" lean-forward="false" selection-start-line="349" selection-start-column="39" selection-end-line="349" selection-end-column="39" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/finance.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="237">
+        <state relative-caret-position="3192">
           <caret line="192" column="21" lean-forward="false" selection-start-line="192" selection-start-column="21" selection-end-line="192" selection-end-column="21" />
           <folding>
             <element signature="e#304#322#0" expanded="true" />
@@ -2172,15 +2161,45 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/database.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
+        <state relative-caret-position="7448">
           <caret line="402" column="0" lean-forward="false" selection-start-line="402" selection-start-column="0" selection-end-line="402" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/operator.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76">
+          <caret line="4" column="8" lean-forward="false" selection-start-line="4" selection-start-column="7" selection-end-line="4" selection-end-column="8" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/space.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="817">
+          <caret line="45" column="32" lean-forward="true" selection-start-line="45" selection-start-column="32" selection-end-line="45" selection-end-column="32" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/visual.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="285">
+          <caret line="335" column="30" lean-forward="false" selection-start-line="335" selection-start-column="12" selection-end-line="335" selection-end-column="30" />
+          <folding>
+            <element signature="e#3568#10043#0" expanded="false" />
+            <element signature="e#10075#10156#0" expanded="false" />
+            <element signature="e#10188#10284#0" expanded="false" />
+            <element signature="e#10352#11319#0" expanded="false" />
+            <element signature="e#16809#18011#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/strategy.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1898">
+        <state relative-caret-position="3978">
           <caret line="752" column="69" lean-forward="true" selection-start-line="752" selection-start-column="69" selection-end-line="752" selection-end-column="69" />
           <folding>
             <element signature="e#253#271#0" expanded="true" />
@@ -2188,28 +2207,70 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/qteasy/core.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="137">
+          <caret line="1262" column="44" lean-forward="true" selection-start-line="1262" selection-start-column="44" selection-end-line="1262" selection-end-column="44" />
+          <folding>
+            <element signature="e#305#324#0" expanded="true" />
+            <element signature="e#38286#39061#0" expanded="false" />
+            <element signature="e#39486#40599#0" expanded="false" />
+            <element signature="e#61850#62362#1" expanded="false" />
+            <element signature="e#63848#64467#1" expanded="false" />
+            <marker date="1613449675204" expanded="true" signature="3547:3581" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="3548:3581" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="3583:3612" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="3614:3647" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="3649:3680" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="3682:3706" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="3708:3739" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="6709:6753" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="6710:6753" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="6755:6800" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="6802:6849" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="8963:8984" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10381:10423" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10382:10423" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10425:10463" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10476:10506" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10515:10539" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10549:10584" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="10594:10624" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="15325:15327" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="15442:15462" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="17430:17503" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="20405:23991" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="47916:47954" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="47917:47954" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="47956:48009" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="48011:48070" ph="..." />
+            <marker date="1613449675204" expanded="true" signature="48073:48236" ph="..." />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/qteasy/evaluate.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="241">
-          <caret line="49" column="52" lean-forward="false" selection-start-line="49" selection-start-column="51" selection-end-line="49" selection-end-column="52" />
+        <state relative-caret-position="243">
+          <caret line="137" column="31" lean-forward="true" selection-start-line="137" selection-start-column="31" selection-end-line="137" selection-end-column="31" />
           <folding>
             <element signature="e#194#212#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/operator.py">
+    <entry file="file://$PROJECT_DIR$/qteasy/utilfuncs.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-9427">
-          <caret line="4" column="8" lean-forward="false" selection-start-line="4" selection-start-column="7" selection-end-line="4" selection-end-column="8" />
+        <state relative-caret-position="4895">
+          <caret line="349" column="39" lean-forward="false" selection-start-line="349" selection-start-column="39" selection-end-line="349" selection-end-column="39" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="347">
-          <caret line="5134" column="32" lean-forward="false" selection-start-line="5134" selection-start-column="32" selection-end-line="5134" selection-end-column="32" />
+        <state relative-caret-position="475">
+          <caret line="787" column="67" lean-forward="true" selection-start-line="787" selection-start-column="67" selection-end-line="787" selection-end-column="67" />
           <folding>
             <element signature="e#3636#11359#0" expanded="false" />
             <element signature="e#3661#3818#0" expanded="false" />
@@ -2256,7 +2317,6 @@
             <element signature="e#34817#35075#0" expanded="false" />
             <element signature="e#35112#35153#0" expanded="false" />
             <element signature="e#35193#36153#0" expanded="false" />
-            <element signature="e#36203#42960#0" expanded="false" />
             <element signature="e#36269#36294#0" expanded="false" />
             <element signature="e#36338#37135#0" expanded="false" />
             <element signature="e#37180#37632#0" expanded="false" />
@@ -2267,7 +2327,6 @@
             <element signature="e#38752#38898#0" expanded="false" />
             <element signature="e#38949#40266#0" expanded="false" />
             <element signature="e#40121#40242#0" expanded="false" />
-            <element signature="e#40315#41625#0" expanded="false" />
             <element signature="e#41670#42960#0" expanded="false" />
             <element signature="e#42166#42501#0" expanded="false" />
             <element signature="e#42534#42812#0" expanded="false" />
@@ -2910,71 +2969,6 @@
             <element signature="e#292255#292416#0" expanded="false" />
             <element signature="e#292468#292656#0" expanded="false" />
             <element signature="e#292468#292504#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/space.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
-          <caret line="45" column="32" lean-forward="true" selection-start-line="45" selection-start-column="32" selection-end-line="45" selection-end-column="32" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/visual.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="177">
-          <caret line="257" column="0" lean-forward="true" selection-start-line="257" selection-start-column="0" selection-end-line="257" selection-end-column="0" />
-          <folding>
-            <element signature="e#3568#10043#0" expanded="false" />
-            <element signature="e#10075#10156#0" expanded="false" />
-            <element signature="e#10188#10284#0" expanded="false" />
-            <element signature="e#11416#13470#0" expanded="false" />
-            <element signature="e#13581#16705#0" expanded="false" />
-            <element signature="e#16806#18008#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/qteasy/core.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="857" column="0" lean-forward="true" selection-start-line="857" selection-start-column="0" selection-end-line="857" selection-end-column="0" />
-          <folding>
-            <element signature="e#305#324#0" expanded="true" />
-            <element signature="e#38285#39060#0" expanded="false" />
-            <element signature="e#39485#40598#0" expanded="false" />
-            <element signature="e#61563#62075#1" expanded="false" />
-            <element signature="e#63561#64180#1" expanded="false" />
-            <marker date="1613408788581" expanded="true" signature="3547:3581" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="3548:3581" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="3583:3612" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="3614:3647" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="3649:3680" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="3682:3706" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="3708:3739" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="6709:6753" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="6710:6753" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="6755:6800" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="6802:6849" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="8963:8984" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10381:10423" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10382:10423" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10425:10463" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10476:10506" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10515:10539" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10549:10584" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="10594:10624" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="15325:15327" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="15442:15462" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="17430:17503" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="20405:23991" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="47915:47953" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="47916:47953" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="47955:48008" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="48010:48069" ph="..." />
-            <marker date="1613408788581" expanded="true" signature="48072:48235" ph="..." />
           </folding>
         </state>
       </provider>
