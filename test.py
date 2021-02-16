@@ -5208,16 +5208,16 @@ class TestQT(unittest.TestCase):
     def test_run_mode_1(self):
         """测试策略的回测模式,结果打印但不可视化"""
         qt.configure(mode=1,
-                     trade_batch_size=0.01,
+                     trade_batch_size=1,
                      visual=False,
-                     invest_cash_dates='20100104', )
+                     invest_cash_dates='20080104', )
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
         qt.run(self.op,
                mode=1,
-               trade_batch_size=0.01,
+               trade_batch_size=1,
                visual=True,
                log=False,
                invest_cash_dates='20080104')

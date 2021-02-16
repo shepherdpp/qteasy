@@ -15,6 +15,7 @@ import matplotlib.cbook as cbook
 import matplotlib.ticker as mtick
 
 import pandas as pd
+from pandas.plotting import register_matplotlib_converters
 import datetime
 from .tsfuncs import get_bar, name_change
 from .utilfuncs import time_str_format
@@ -109,6 +110,7 @@ def _plot_loop_result(result, msg: dict):
     # print(f'in visual function, got msg max date and low_date: \n'
     #       f'msg["max_date"]:  {msg["max_date"]}\n'
     #       f'msg["low_date"]:  {msg["low_date"]}')
+    register_matplotlib_converters()
     result_columns = result.columns
     fixed_column_items = ['fee', 'cash', 'value', 'reference']
     stock_holdings = [item for
@@ -136,27 +138,42 @@ def _plot_loop_result(result, msg: dict):
     CHART_WIDTH = 0.88
     # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle('Back Testing Result - reference: 000300.SH')
-
-    fig.text(0.05, 0.93, f'periods: {msg["years"]} years, '
-                         f'from: {msg["loop_start"].date()} to {msg["loop_end"].date()}   ... '
+    fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
+    # output all evaluate result in table form (values and labels are printed separately)
+    fig.text(0.07, 0.93, f'periods: {msg["years"]} years, '
+                         f'from: {msg["loop_start"].date()} to {msg["loop_end"].date()}'
                          f'time consumed:   signal creation: {time_str_format(msg["run_time_p"])};'
                          f'  back test:{time_str_format(msg["run_time_l"])}')
-    fig.text(0.05, 0.90, f'operation summary: {msg["oper_count"].values.sum()}     Total operation fee:'
-                         f'¥{msg["total_fee"]:13,.2f}     '
-                         f'total investment amount: ¥{msg["total_invest"]:13,.2f}    '
-                         f'final value:  ¥{msg["final_value"]:13,.2f}')
-    fig.text(0.05, 0.87, f'Total return: {msg["rtn"] * 100 - 100:.3f}%    '
-                         f'Avg annual return: {((msg["rtn"]) ** (1 / msg["years"]) - 1) * 100: .3f}%    '
-                         f'ref return: {msg["ref_rtn"] * 100:.3f}%    '
-                         f'Avg annual ref return: {msg["ref_annual_rtn"] * 100:.3f}%')
-    fig.text(0.05, 0.84, f'alpha: {msg["alpha"]:.3f}  '
-                         f'Beta: {msg["beta"]:.3f}  '
-                         f'Sharp ratio: {msg["sharp"]:.3f}  '
-                         f'Info ratio: {msg["info"]:.3f}  '
-                         f'250-day volatility: {msg["volatility"]:.3f}  '
-                         f'Max drawdown: {msg["mdd"] * 100:.3f}% from {msg["max_date"].date()} '
-                         f'to {msg["low_date"].date()}')
+    fig.text(0.21, 0.82, f'Operation summary:\n\n'
+                         f'Total op fee:\n'
+                         f'total investment:\n'
+                         f'final value:', ha='right')
+    fig.text(0.23, 0.82, f'{msg["oper_count"].buy.sum()}     buys \n'
+                         f'{msg["oper_count"].sell.sum()}     sells\n'
+                         f'¥{msg["total_fee"]:13,.2f}\n'
+                         f'¥{msg["total_invest"]:13,.2f}\n'
+                         f'¥{msg["final_value"]:13,.2f}')
+    fig.text(0.50, 0.82, f'Total return:\n'
+                         f'Avg annual return:\n'
+                         f'ref return:\n'
+                         f'Avg annual ref return:\n'
+                         f'Max drawdown:', ha='right')
+    fig.text(0.52, 0.82, f'{msg["rtn"] * 100:.2f}%    \n'
+                         f'{msg["annual_rtn"] * 100: .2f}%    \n'
+                         f'{msg["ref_rtn"] * 100:.2f}%    \n'
+                         f'{msg["ref_annual_rtn"] * 100:.2f}%\n'
+                         f'{msg["mdd"] * 100:.3f}%'
+                         f' on {msg["low_date"].date()}')
+    fig.text(0.82, 0.82, f'alpha:\n'
+                         f'Beta:\n'
+                         f'Sharp ratio:\n'
+                         f'Info ratio:\n'
+                         f'250-day volatility:', ha='right')
+    fig.text(0.84, 0.82, f'{msg["alpha"]:.3f}  \n'
+                         f'{msg["beta"]:.3f}  \n'
+                         f'{msg["sharp"]:.3f}  \n'
+                         f'{msg["info"]:.3f}  \n'
+                         f'{msg["volatility"]:.3f}')
 
     ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
     ax1.plot(result.index, ref_rate, linestyle='-',
@@ -296,24 +313,26 @@ def _print_loop_result(result, messages=None, columns=None, headers=None, format
           f'====================================')
     print(f'\nqteasy running mode: 1 - History back looping\n'
           f'time consumption for operate signal creation: {time_str_format(messages["run_time_p"])}\n'
-          f'time consumption for operation back looping: {time_str_format(messages["run_time_l"])}\n')
-    print(f'investment starts on {result.index[0]}\nends on {result.index[-1]}\n'
-          f'Total looped periods: {messages["years"]:.1f} years.')
-    print(f'operation summary:\n {messages["oper_count"]}\n'
-          f'Total operation fee:     ¥{messages["total_fee"]:13,.2f}')
-    print(f'total investment amount: ¥{messages["total_invest"]:13,.2f}\n'
-          f'final value:             ¥{messages["final_value"]:13,.2f}')
-    print(f'Total return: {messages["rtn"] * 100 - 100:.3f}% \n'
-          f'Average Yearly return rate: {(messages["rtn"] ** (1 / messages["years"]) - 1) * 100: .3f}%')
-    print(f'Total reference return: {messages["ref_rtn"] * 100:.3f}% \n'
-          f'Average Yearly reference return rate: {messages["ref_annual_rtn"] * 100:.3f}%')
-    print(f'strategy messages indicators: \n'
-          f'alpha:               {messages["alpha"]:.3f}\n'
-          f'Beta:                {messages["beta"]:.3f}\n'
-          f'Sharp ratio:         {messages["sharp"]:.3f}\n'
-          f'Info ratio:          {messages["info"]:.3f}\n'
-          f'250 day volatility:  {messages["volatility"]:.3f}\n'
-          f'Max drawdown:        {messages["mdd"] * 100:.3f}% '
+          f'time consumption for operation back looping:  {time_str_format(messages["run_time_l"])}\n')
+    print(f'investment starts on      {result.index[0]}\n'
+          f'ends on                   {result.index[-1]}\n'
+          f'Total looped periods:     {messages["years"]:.1f} years.')
+    print(f'-----------operation summary:-----------\n '
+          f'{messages["oper_count"]}\n'
+          f'Total operation fee:     ¥{messages["total_fee"]:12,.2f}')
+    print(f'total investment amount: ¥{messages["total_invest"]:12,.2f}\n'
+          f'final value:             ¥{messages["final_value"]:12,.2f}')
+    print(f'Total return:             {messages["rtn"] * 100:12.2f}% \n'
+          f'Avg Yearly return:        {messages["annual_rtn"] * 100:12.2f}%')
+    print(f'Reference return:         {messages["ref_rtn"] * 100:12.2f}% \n'
+          f'Reference Yearly return:  {messages["ref_annual_rtn"] * 100:12.2f}%')
+    print(f'------strategy messages indicators------ \n'
+          f'alpha:                    {messages["alpha"]:13.3f}\n'
+          f'Beta:                     {messages["beta"]:13.3f}\n'
+          f'Sharp ratio:              {messages["sharp"]:13.3f}\n'
+          f'Info ratio:               {messages["info"]:13.3f}\n'
+          f'250 day volatility:       {messages["volatility"]:13.3f}\n'
+          f'Max drawdown:             {messages["mdd"] * 100:13.3f}% '
           f'from {messages["max_date"].date()} to {messages["low_date"].date()}')
     print(f'\n===========END OF REPORT=============\n')
 
