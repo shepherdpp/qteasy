@@ -713,20 +713,38 @@ class Operator:
     # TODO 临时性使用cashplan作为参数之一，理想中应该只用一个"start_date"即可，这个Start_date可以在core.run()中具体指定，因为
     # TODO 在不同的运行模式下，start_date可能来源是不同的：
     def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan):
-        """ 在create_signal之前准备好相关数据如历史数据，检查历史数据是否符合所有策略的要求：
+        """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
-        检查hist_data历史数据的类型正确；
-        检查cash_plan投资计划的类型正确；
-        检查hist_data是否为空（要求不为空）；
-        在hist_data中找到cash_plan投资计划中投资时间点的具体位置
-        检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
-        检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
-        检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
-        从hist_data中根据各个量化策略的参数选取正确的切片放入各个策略数据仓库中
+            检查hist_data历史数据的类型正确；
+            检查cash_plan投资计划的类型正确；
+            检查hist_data是否为空（要求不为空）；
+            在hist_data中找到cash_plan投资计划中投资时间点的具体位置
+            检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
+            检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
+            检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
+            从hist_data中根据各个量化策略的参数选取正确的切片放入各个策略数据仓库中
 
-        :param hist_data: 历史数据
+            然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
+            切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。
+
+        :param hist_data:
+            :type HistoryPanel
+            历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
+            个股所有类型的数据，例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
+                策略        所需数据类型
+                ------------------------------
+                策略A:   close, open, high
+                策略B:   close, eps
+
+            hist_data中就应该包含close、open、high、eps四种类型的数据
+            数据覆盖的时间段和时间频率也必须符合上述要求
+
         :param cash_plan:
+            :type CashPlan
+            一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
+
         :return:
+            None
         """
         # 确保输入的历史数据是HistoryPanel类型
         if not isinstance(hist_data, HistoryPanel):
@@ -818,9 +836,20 @@ class Operator:
 
         对信号进行合法性处理，最终生成合法交易信号
         input:
-            hist_data：从数据仓库中导出的历史数据，包含多只股票在一定时期内特定频率的一组或多组数据
+        :param hist_data:
+            :type HistoryPanel
+            从数据仓库中导出的历史数据，包含多只股票在一定时期内特定频率的一组或多组数据
+            ！！但是！！
+            作为参数传入的这组历史数据并不会被直接用于交易信号的生成，用于生成交易信号的历史数据
+            存储在operator对象的下面三个属性中，在生成交易信号时直接调用，避免了每次生成交易信号
+            时再动态分配历史数据。
+                self._selecting_history_data
+                self._timing_history_data
+                self._ricon_history_data
+
         :return=====
-            lst：使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
+            :type list:
+            使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）

@@ -266,9 +266,20 @@ def _plot_opti_result():
     raise NotImplementedError
 
 
-def _plot_test_result():
+# TODO: like _print_test_result, take the evaluate results on both opti and test hist data
+# TODO: and commit comparison base on these two data sets
+def _plot_test_result(test_eval_res: pd.DataFrame,
+                      opti_eval_res: pd.DataFrame,
+                      test_loop_lists: list,
+                      opti_loop_lists: list,
+                      config):
     """ plot test result of optimization results
 
+    :param test_eval_res:
+    :param opti_eval_res:
+    :param test_loop_lists:
+    :param opti_loop_lists:
+    :param config:
     :return:
     """
     raise NotImplementedError
@@ -311,7 +322,7 @@ def _print_loop_result(result, messages=None, columns=None, headers=None, format
           f'|       BACK TESTING RESULT        |\n'
           f'|                                  |\n'
           f'====================================')
-    print(f'\nqteasy running mode: 1 - History back looping\n'
+    print(f'\nqteasy running mode: 1 - History back testing\n'
           f'time consumption for operate signal creation: {time_str_format(messages["run_time_p"])}\n'
           f'time consumption for operation back looping:  {time_str_format(messages["run_time_l"])}\n')
     print(f'investment starts on      {result.index[0]}\n'
@@ -337,6 +348,8 @@ def _print_loop_result(result, messages=None, columns=None, headers=None, format
     print(f'\n===========END OF REPORT=============\n')
 
 
+# TODO: like _plot_test_result, take the evaluate results on both opti and test hist data
+# TODO: and commit comparison base on these two data sets
 def _print_test_result(result, messages=None, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
@@ -351,6 +364,12 @@ def _print_test_result(result, messages=None, config=None, columns=None, headers
     """
 
     ref_rtn, ref_annual_rtn = messages['ref_rtn'], messages['ref_annual_rtn']
+    print(f'==================================== \n'
+          f'|                                  |\n'
+          f'|       OPTIMIZATION RESULT        |\n'
+          f'|                                  |\n'
+          f'====================================')
+    print(f'\nqteasy running mode: 2 - Strategy Parameter Optimization\n')
     print(f'investment starts on {messages["loop_start"]}\nends on {messages["loop_end"]}\n'
           f'Total looped periods: {result.years[0]:.1f} years.')
     print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')

@@ -169,12 +169,25 @@ def _get_complete_hist(looped_value: pd.DataFrame,
         同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为context.reference_asset
 
     input:=====
-        :param values：完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
-        :param h_list：完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
-        :param ref_list: 参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
-        :param with_price：Bool，True时在返回的清单中包含历史价格，否则仅返回资产总价值
+        :param looped_value:
+            :type pd.DataFrame
+            完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
+
+        :param h_list:
+            :type pd.DataFrame
+            完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
+
+        :param ref_list:
+            :type pd.DataFrame
+            参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
+
+        :param with_price:
+            :type boolean
+            True时在返回的清单中包含历史价格，否则仅返回资产总价值
+
     return: =====
-        values，pandas.DataFrame：重新填充的完整历史交易日资产总价值清单
+        pandas.DataFrame:
+        重新填充的完整历史交易日资产总价值清单
     """
     # 获取价格清单中的投资产品列表
     shares = h_list.columns  # 获取资产清单
@@ -999,12 +1012,23 @@ def run(operator, **kwargs):
             else:
                 _print_test_result(test_result_df, eval_res, config)
         elif config.test_type == 'montecarlo':
-            # 生成模拟测试数据
-            mock_test_loop = _create_mock_data(hist_test_loop, qty=30)  # config.test_cycle_count)
-            for name in mock_test_loop.htypes:
-                # 生成用于蒙特卡洛测试的模拟数据，由于每组测试数据中只含有一种数据类型，但是可能有多重股票数据，因此每一组数据是
-                # 一个数据框DataFrame，要生成多组数据，就必须把数据组合成HistoryPanel格式，然后再分别取出每个片段用于回测
-                mont_loop = mock_test_loop.to_dataframe(htype=name)
+            # TODO: refract the structure of mock data:
+            # TODO: the mock data should be generated ad-hoc: in order to create signal
+            # TODO: on mock data, the mock data should have full flavor of operation history
+            # TODO: data, e.g, complete set of data types like eps, close, open prices etc.
+            # TODO: thus a complete HistoryPanel will be used to mock only one set of data
+            # TODO: also the relationships between different data types should be considered
+            # TODO: thus it is NOT possible to create multiple sets of mock data in one HistoryPanel
+            # TODO: so, current plan is:
+            # TODO: 1, mock data generation available for only ohlc and volume type of data
+            # TODO: 2, one set of mock data is created everytime, set to operator, completed evaluation
+            # TODO: and then thrown away before the second one is generated
+            for i in config.test_cycle_count:
+                # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
+                # 重新生成交易信号，并在模拟的历史数据上进行回测
+                mock_test_loop = _create_mock_data(hist_test)
+                operator.prepare_data(hist_data=mock_test_loop)
+                mont_loop = mock_test_loop.to_dataframe(htype='close')
                 test_result_df = pd.DataFrame(columns=['par',
                                                        'sell_count',
                                                        'buy_count',
@@ -1020,9 +1044,13 @@ def run(operator, **kwargs):
                                                        'sharp',
                                                        'info'])
                 for par in pars:  # 分别对每个策略参数执行同样的测试数据
+                    # TODO: 这里又一个大的bug，在开始生成交易清单并评估策略的回报之前，并没有把新的历史数据传送给operator
+                    # TODO: 对象，因此这里使用了错误的历史数据。
+                    # TODO: 应该使用operator.prepare_data()将正确的数据灌入operator中（但是目前在不更改mock_test_loop
+                    # TODO: 的数据标签index和列名column之前无法这样做）
                     eval_res = _evaluate_one_parameter(par=par,
                                                        op=operator,
-                                                       op_history_data=hist_test,
+                                                       op_history_data=mock_test_loop,
                                                        loop_history_data=mont_loop,
                                                        reference_history_data=mont_loop,
                                                        reference_history_data_type=0,
@@ -1328,13 +1356,21 @@ def _evaluate_one_parameter(par: tuple,
     return perf
 
 
-def _create_mock_data(history_data, qty=100)->HistoryPanel:
+def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
     """ 根据输入的历史数据的统计特征，随机生成多组具备同样统计特征的随机序列，用于进行策略收益的蒙特卡洛模拟
 
+        目前仅支持OHLC数据以及VOLUME数据的随机生成，其余种类的数据需要继续摸索
+
     :param history_data:
+        :type HistoryPanel
+        模拟数据的参考源
+
     :return:
+        :type HistoryPanel
     """
-    assert isinstance(history_data, pd.DataFrame)
+    assert isinstance(history_data, HistoryPanel)
+    data_types = history_data.htypes
+    assert all(data_type in ['close', 'open', 'high', 'low', 'volume'] for data_type in data_types)
     share_count = len(history_data.columns)
     record_count = len(history_data.index)
     hist_price_values = history_data.values
@@ -1354,7 +1390,7 @@ def _create_mock_data(history_data, qty=100)->HistoryPanel:
         mock_price_values[i,:,:] = mock_prices
 
     # 生成一个HistoryPanel对象，每一层一个个股
-    mock_data = HistoryPanel(mock_price_values, rows=history_data.index)
+    mock_data = HistoryPanel(mock_price_values, rows=history_data.index, levels=history_data.columns)
     print(mock_data)
     return mock_data
 
