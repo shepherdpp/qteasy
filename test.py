@@ -9,8 +9,9 @@ import datetime
 from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
-from qteasy.core import apply_loop
+from qteasy.core import apply_loop, _create_mock_data
 from qteasy.built_in import SelectingFinanceIndicator
+from qteasy.history import stack_dataframes
 from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
@@ -5797,12 +5798,24 @@ class TestFastExperiments(unittest.TestCase):
         qt.configure(invest_cash_dates = '20061128')
         qt.configure(invest_cash_amounts=[10000])
 
-    def test_exp1(self):
+    def test_configure_and_run(self):
         print(f'test case fast experiment 1 is running!')
         qt.configure(mode=1,
                      log=False,
                      visual=False)
         qt.run(self.op)
+
+    def test_mock_data_generate(self):
+        print(f'experiment of generating mock data')
+        # 测试随机股票数据生成的效果和性能
+
+        # 载入一段5年长度的某股票的K线数据
+        data = qt.ohlc(stock='000300.SH', start='20100101', asset_type='I', no_visual=True)
+        data_hp = stack_dataframes([data], stack_along='shares', shares='000300.SH')
+        mock_data = _create_mock_data(data_hp)
+        
+        qt.ohlc(data, share_name='000300.SH')
+        qt.ohlc(mock_data.to_dataframe(share='000300.SH'), share_name='mock share')
 
 
 class TestDataBase(unittest.TestCase):

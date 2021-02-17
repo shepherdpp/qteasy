@@ -17,7 +17,7 @@ import logging
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from .history import get_history_panel, HistoryPanel
+from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
@@ -1356,10 +1356,15 @@ def _evaluate_one_parameter(par: tuple,
     return perf
 
 
+# TODO: 这个函数有潜在大量运行的可能，需要使用Numba加速
 def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
     """ 根据输入的历史数据的统计特征，随机生成多组具备同样统计特征的随机序列，用于进行策略收益的蒙特卡洛模拟
 
-        目前仅支持OHLC数据以及VOLUME数据的随机生成，其余种类的数据需要继续摸索
+        目前仅支持OHLC数据以及VOLUME数据的随机生成，其余种类的数据需要继续研究
+        为了确保生成的数据留有足够的前置数据窗口，生成的伪数据包含两段，第一段长度与最大前置窗口长度相同，这一段
+        为真实历史数据，第二段才是随机生成的模拟数据
+        同时，生成的数据仍然满足OHLC的关系，同时所有的数据在统计上与参考数据是一致的，也就是说，随机生成的数据
+        不仅仅满足K线图的形态要求，其各个参数的均值、标准差与参考数据一致。
 
     :param history_data:
         :type HistoryPanel
@@ -1368,29 +1373,38 @@ def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
     :return:
         :type HistoryPanel
     """
+
     assert isinstance(history_data, HistoryPanel)
     data_types = history_data.htypes
-    assert all(data_type in ['close', 'open', 'high', 'low', 'volume'] for data_type in data_types)
-    share_count = len(history_data.columns)
-    record_count = len(history_data.index)
-    hist_price_values = history_data.values
-
-    mock_price_values = np.zeros((share_count, record_count, qty))
-    for i in range(share_count):
-        prices = hist_price_values[:,i]
-        init_price = prices[0]
-        price_changes = prices / np.roll(prices, 1) - 1
-        mean = price_changes.mean()
-        std = price_changes.std()
-        mock_price_changes = np.random.randn(record_count*qty) * std + mean
-        mock_price_changes = mock_price_changes.reshape(record_count, qty) + 1
-        mock_price_changes[0, :] = init_price
-        mock_prices = mock_price_changes.cumprod(axis=0)
-
-        mock_price_values[i,:,:] = mock_prices
+    # volume数据的生成还需要继续研究
+    assert all(data_type in ['close', 'open', 'high', 'low', 'volume'] for data_type in data_types), \
+        f'the data type {data_types} does not fit'
+    # 按照细粒度方法同时生成OHLC数据
+    # 针对每一个share生成OHLC数据
+    # 先考虑生成正确的信息，以后再考虑优化
+    dfs_for_share = []
+    for share in history_data.shares:
+        share_df = history_data.to_dataframe(share=share)
+        share_df['close_chg'] = share_df.close / share_df.close.shift(1)
+        mean = share_df.close_chg.mean()
+        std = share_df.close_chg.std()
+        mock_col = np.random.randn(len(history_data.hdates) * 5) * std * 5 + mean
+        mock_col = 1 + 0.09 * (mock_col - 1)
+        mock_col[0] = share_df.close.iloc[0]
+        mock_col = np.cumprod(mock_col)
+        mock = mock_col.reshape(len(history_data.hdates), 5)
+        mock_df = pd.DataFrame(index=history_data.hdates)
+        mock_df['open'] = mock[:, 0]
+        mock_df['high'] = np.max(mock, axis=1)
+        mock_df['low'] = np.min(mock, axis=1)
+        mock_df['close'] = mock[:, 4]
+        mock_df['volume'] = share_df.volume
+        dfs_for_share.append(mock_df.copy())
 
     # 生成一个HistoryPanel对象，每一层一个个股
-    mock_data = HistoryPanel(mock_price_values, rows=history_data.index, levels=history_data.columns)
+    mock_data = stack_dataframes(dfs_for_share,
+                                 stack_along='shares',
+                                 shares=history_data.shares)
     print(mock_data)
     return mock_data
 

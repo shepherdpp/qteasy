@@ -21,8 +21,18 @@ from .tsfuncs import get_bar, name_change
 from .utilfuncs import time_str_format
 
 
-def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+# TODO: simplify and merge these three functions
+def candle(stock_data=None, share_name=None, stock=None, start=None, end=None,
+           asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+    if stock_data is None:
+        assert stock is not None
+        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    else:
+        assert type(stock_data) == pd.DataFrame
+        assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
+        daily = stock_data
+        if share_name is None:
+            share_name = 'stock'
     mc = mpf.make_marketcolors(up='r', down='g',
                                volume='in')
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -35,10 +45,20 @@ def candle(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5,
                  figsize=figsize,
                  mav=mav,
                  figscale=0.5)
+    return daily
 
 
-def ohlc(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+def ohlc(stock_data=None, share_name=None, stock=None, start=None, end=None,
+         asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+    if stock_data is None:
+        assert stock is not None
+        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    else:
+        assert isinstance(stock_data, pd.DataFrame)
+        assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
+        daily = stock_data
+        if share_name is None:
+            share_name = 'stock'
     mc = mpf.make_marketcolors(up='r', down='g',
                                volume='in')
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -51,10 +71,20 @@ def ohlc(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 1
                  figsize=figsize,
                  mav=mav,
                  figscale=0.5)
+    return daily
 
 
-def renko(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+def renko(stock_data=None, share_name=None, stock=None, start=None, end=None,
+          asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+    if stock_data is None:
+        assert stock is not None
+        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+    else:
+        assert isinstance(stock_data, pd.DataFrame)
+        assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
+        daily = stock_data
+        if share_name is None:
+            share_name = 'stock'
     mc = mpf.make_marketcolors(up='r', down='g',
                                volume='in')
     s = mpf.make_mpf_style(marketcolors=mc)
@@ -67,6 +97,7 @@ def renko(stock, start=None, end=None, asset_type='E', figsize=(10, 5), mav=(5, 
                  figsize=figsize,
                  mav=mav,
                  figscale=0.5)
+    return daily
 
 
 def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):

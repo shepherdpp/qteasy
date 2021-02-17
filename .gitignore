@@ -30,3 +30,4 @@ All_timing_test_separately.ipynb
 Backtest_plotting.ipynb
 *.csv
 *.pyc
+*.ipynb
