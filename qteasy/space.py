@@ -494,8 +494,9 @@ class ResultPool:
     def __init__(self, capacity):
         """result pool stores all intermediate or final result of searching, the points"""
         self.__capacity = capacity  # 池中最多可以放入的结果数量
-        self.__pool = []  # 用于存放中间结果
+        self.__pool = []  # 用于存放被结果所评价的元素，如参数等
         self.__perfs = []  # 用于存放每个中间结果的评价分数，老算法仍然使用列表对象
+        self.__extra = []  # 用于存放额外的信息，与每个元素一一相关，在裁剪时会跟随元素被裁剪掉
 
     @property
     def items(self):
@@ -504,6 +505,10 @@ class ResultPool:
     @property
     def perfs(self):
         return self.__perfs  # 只读属性，所有池中参数的评价分
+
+    @property
+    def extra(self):
+        return self.__extra  # 只读属性，所有池中参数的额外信息
 
     @property
     def capacity(self):
@@ -517,17 +522,27 @@ class ResultPool:
     def is_empty(self):
         return len(self.items) == 0
 
-    def in_pool(self, item, perf):
+    def clear(self):
+        """ 清空整个结果池
+
+        :return:
+        """
+        self.__pool = []
+        self.__perfs = []
+
+    def in_pool(self, item, perf, extra=None):
         """将新的结果压入池中
 
         input:
             :param item，object，需要放入结果池的参数对象
             :param perf，float，放入结果池的参数评价分数
+            :param extra: object, 需要放入结果池的参数对象的额外信息
         return: =====
             无
         """
         self.__pool.append(item)  # 新元素入池
         self.__perfs.append(perf)  # 新元素评价分记录
+        self.__extra.append(extra)
 
     def __add__(self, other):
         """ 将另一个pool中的内容合并到self中
@@ -537,6 +552,7 @@ class ResultPool:
         """
         self.__pool.extend(other.items)
         self.__perfs.extend(other.perfs)
+        self.__extra.extend(other.extra)
         return self
 
     def cut(self, keep_largest=True):
@@ -550,6 +566,7 @@ class ResultPool:
         """
         poo = self.__pool  # 所有池中元素
         per = self.__perfs  # 所有池中元素的评价分
+        ext = self.__extra  # 池中元素的额外信息
         cap = self.__capacity
         if keep_largest:
             arr = np.array(per).argsort()[-cap:]
@@ -557,8 +574,10 @@ class ResultPool:
             arr = np.array(per).argsort()[:cap]
         poo2 = [poo[i] for i in arr]
         per2 = [per[i] for i in arr]
+        ext2 = [ext[i] for i in arr]
         self.__pool = poo2
         self.__perfs = per2
+        self.__extra = ext2
 
 
 def space_around_centre(space, centre, radius, ignore_enums=True):

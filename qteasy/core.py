@@ -879,7 +879,10 @@ def run(operator, **kwargs):
         hist_op = _create_mock_data(hist_op)
         hist_loop = hist_op.to_dataframe(htype='close')
         hist_reference = hist_op.to_dataframe(htype='close')
+        # -------------------------
 
+        # TODO: 使用_evaluate_one_parameter()代替下面的代码，但是_evaluate_one_parameter()
+        # TODO: 首先应该改造，改造方向见_evaluate_one_parameter()的TODO项
         operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
@@ -1084,7 +1087,7 @@ def run(operator, **kwargs):
 
         return pars
 
-
+# TODO: ResultPool已经改造完毕，在ResultPool中应放入完整的结果评价字典，且该字典中包含完整的回测结果
 def _evaluate_all_parameters(par_generator,
                              total,
                              op: Operator,
@@ -1191,6 +1194,9 @@ def _evaluate_all_parameters(par_generator,
     return pool
 
 
+# TODO: 该函数应该改造：
+# TODO: 该函数的返回值字典中应该增加以下内容：
+# TODO:    -'complete_value' : 该参数回测后的回测结果曲线，未回测时为None
 def _evaluate_one_parameter(par: tuple,
                             op: Operator,
                             op_history_data: HistoryPanel,
