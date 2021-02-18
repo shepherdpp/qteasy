@@ -4,7 +4,7 @@
 # ======================================
 # This file contains core functions and
 # core Classes. Such as looping and
-# optimizations, Contexts and Spaces, etc.
+# optimizations, Configs and Spaces, etc.
 # 2021 Chinese New Year update ^_^
 # Happy New Year and prosperous in 2021!!
 # ======================================
@@ -166,7 +166,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
                        ref_list: pd.DataFrame,
                        with_price: bool = False) -> pd.DataFrame:
     """完成历史交易回测后，填充完整的历史资产总价值清单，
-        同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为context.reference_asset
+        同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为Config.reference_asset
 
     input:=====
         :param looped_value:
@@ -590,9 +590,9 @@ def check_and_prepare_hist_data(operator, config):
     for row, col in zip(inf_locs[0], inf_locs[1]):
         hist_test_loop.iloc[row, col] = 0
     # debug
-    # print(f'\n got hist_opti as following between {context.opti_start} and {context.opti_end}\n')
+    # print(f'\n got hist_opti as following between {Config.opti_start} and {Config.opti_end}\n')
     # hist_opti.info()
-    # print(f'\n got hist_test as following between {context.test_start} and {context.test_end}\n')
+    # print(f'\n got hist_test as following between {Config.test_start} and {Config.test_end}\n')
     # hist_test.info()
     # print(f'\n got hist_test_loop as following\n')
     # hist_test_loop.info()
@@ -620,11 +620,11 @@ def check_and_prepare_hist_data(operator, config):
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
-        接受context上下文对象和operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
-        根据context中的设置和运行模式（mode）进行不同的操作：
-        context.mode == 0 or mode == 0:
+        接受operator执行器对象作为主要的运行组件，根据输入的运行模式确定运行的方式和结果
+        根据QT_CONFIG环境变量中的设置和运行模式（mode）进行不同的操作：
+        mode == 0:
             进入实时信号生成模式：
-            根据context实时策略运行所需的历史数据，根据历史数据实时生成操作信号
+            根据Config实时策略运行所需的历史数据，根据历史数据实时生成操作信号
             策略参数不能为空
 
             根据生成的执行器历史数据hist_op，应用operator对象中定义的投资策略生成当前的投资组合和各投资产品的头寸及仓位
@@ -644,9 +644,9 @@ def run(operator, **kwargs):
 
              以上信息被记录到log对象中，并最终存储在磁盘上
 
-        context.mode == 1 or mode == 1:
-            进入回测模式：
-            根据context规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
+        mode == 1:
+            回测模式：
+            根据Config规定的回测区间，使用History模块联机读取或从本地读取覆盖整个回测区间的历史数据
             生成投资资金模型，模拟在回测区间内使用投资资金模型进行模拟交易的结果
             输出对结果的评价（使用多维度的评价方法）
             输出回测日志·
@@ -654,7 +654,7 @@ def run(operator, **kwargs):
 
             根据执行器历史数据hist_op，应用operator执行器对象中定义的投资策略生成一张投资产品头寸及仓位建议表。
             这张表的每一行内的数据代表在这个历史时点上，投资策略建议对每一个投资产品应该持有的仓位。每一个历史时点的数据都是根据这个历史时点的
-            相对历史数据计算出来的。这张投资仓位建议表的历史区间受context上下文对象的"loop_period_start, loop_period_end, loop_period_freq"
+            相对历史数据计算出来的。这张投资仓位建议表的历史区间受Config上下文对象的"loop_period_start, loop_period_end, loop_period_freq"
             等参数确定。
             同时，这张投资仓位建议表是由operator执行器对象在hist_op策略生成历史数据上生成的。hist_op历史数据包含所有用于生成策略运行结果的信息
             包括足够的数据密度、足够的前置历史区间以及足够的历史数据类型（如不同价格种类、不同财报指标种类等）
@@ -691,9 +691,9 @@ def run(operator, **kwargs):
             上述所有评价结果和历史区间数据能够以可视化的方式输出到图表中。同时回测的结果数据和回测区间的每一次模拟交易记录也可以被记录到log对象中
             保存在磁盘上供未来调用
 
-        context.mode == 2 or mode == 2:
-            进入优化模式：
-            根据context规定的优化区间和回测区间，使用History模块联机读取或本地读取覆盖整个区间的历史数据
+        mode == 2:
+            策略优化模式：
+            根据Config规定的优化区间和回测区间，使用History模块联机读取或本地读取覆盖整个区间的历史数据
             生成待优化策略的参数空间，并生成投资资金模型
             使用指定的优化方法在优化区间内查找投资资金模型的全局最优或局部最优参数组合集合
             使用在优化区间内搜索到的全局最优策略参数在回测区间上进行多次回测并再次记录结果
@@ -790,7 +790,7 @@ def run(operator, **kwargs):
             常见的评价指标都可以用来做目标函数，甚至目标函数可以用复合指标，如综合考虑收益率、交易成本、最大回撤等指标的一个复合指标，只要目标函数
             的输出是一个实数，就能被用作目标函数。而对于有监督方法，目标函数表征的是从历史数据到先验信息的映射能力，通常用实际输出与先验信息之间
             的差值的函数来表示。在机器学习和数值优化领域，有多种函数可选，例如MSE函数，CrossEntropy等等。
-        context.mode == 3 or mode == 3:
+        Config.mode == 3 or mode == 3:
             进入评价模式（技术冻结后暂停开发此功能）
             评价模式的思想是使用随机生成的模拟历史数据对策略进行评价。由于可以使用大量随机历史数据序列进行评价，因此可以得到策略的统计学
             表现
@@ -800,14 +800,17 @@ def run(operator, **kwargs):
             :type Operator
             策略执行器对象
 
-        :param context: Context()，策略执行环境的上下文对象
+        :param **kwargs:
+            可用的kwargs包括：
+
+
     return:
         1, 在signal模式或模式0下: 返回None
         2, 在back_test模式或模式1下: 返回None
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
     import time
-    OPTIMIZATION_METHODS = {0: _search_grid,
+    optimization_methods = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,
                             3: _search_ga,
@@ -915,8 +918,7 @@ def run(operator, **kwargs):
         how = config.opti_method
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
-        # OPTIMIZATION METHODS
-        pars, perfs = OPTIMIZATION_METHODS[how](hist=hist_opti,
+        pars, perfs = optimization_methods[how](hist=hist_opti,
                                                 ref_hist=hist_reference,
                                                 ref_type=reference_data,
                                                 op=operator,
@@ -1023,12 +1025,13 @@ def run(operator, **kwargs):
             # TODO: 1, mock data generation available for only ohlc and volume type of data
             # TODO: 2, one set of mock data is created everytime, set to operator, completed evaluation
             # TODO: and then thrown away before the second one is generated
-            for i in config.test_cycle_count:
+            for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
-                mock_test_loop = _create_mock_data(hist_test)
-                operator.prepare_data(hist_data=mock_test_loop)
-                mont_loop = mock_test_loop.to_dataframe(htype='close')
+                mock_hist = _create_mock_data(hist_test)
+                operator.prepare_data(hist_data=mock_hist,
+                                      cash_plan=CashPlan(config.test_cash_dates, config.test_cash_amounts))
+                mock_hist_loop = mock_hist.to_dataframe(htype='close')
                 test_result_df = pd.DataFrame(columns=['par',
                                                        'sell_count',
                                                        'buy_count',
@@ -1044,16 +1047,16 @@ def run(operator, **kwargs):
                                                        'sharp',
                                                        'info'])
                 for par in pars:  # 分别对每个策略参数执行同样的测试数据
-                    # TODO: 这里又一个大的bug，在开始生成交易清单并评估策略的回报之前，并没有把新的历史数据传送给operator
+                    # TODO: 这里有一个大的bug，在开始生成交易清单并评估策略的回报之前，并没有把新的历史数据传送给operator
                     # TODO: 对象，因此这里使用了错误的历史数据。
                     # TODO: 应该使用operator.prepare_data()将正确的数据灌入operator中（但是目前在不更改mock_test_loop
                     # TODO: 的数据标签index和列名column之前无法这样做）
                     eval_res = _evaluate_one_parameter(par=par,
                                                        op=operator,
-                                                       op_history_data=mock_test_loop,
-                                                       loop_history_data=mont_loop,
-                                                       reference_history_data=mont_loop,
-                                                       reference_history_data_type=0,
+                                                       op_history_data=mock_hist,
+                                                       loop_history_data=mock_hist_loop,
+                                                       reference_history_data=mock_hist_loop,
+                                                       reference_history_data_type=reference_data,
                                                        config=config,
                                                        stage='test')
                     eval_res['par'] = par
@@ -1066,8 +1069,8 @@ def run(operator, **kwargs):
                                                            ignore_index=True)
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
-                eval_res['loop_start'] = mont_loop.index[0]
-                eval_res['loop_end'] = mont_loop.index[-1]
+                eval_res['loop_start'] = mock_hist_loop.index[0]
+                eval_res['loop_end'] = mock_hist_loop.index[-1]
                 if config.visual:
                     pass
                 else:
@@ -1377,8 +1380,9 @@ def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
     assert isinstance(history_data, HistoryPanel)
     data_types = history_data.htypes
     # volume数据的生成还需要继续研究
-    assert all(data_type in ['close', 'open', 'high', 'low', 'volume'] for data_type in data_types), \
+    assert any(data_type in ['close', 'open', 'high', 'low', 'volume'] for data_type in data_types), \
         f'the data type {data_types} does not fit'
+    has_volume = any(data_type in ['volume'] for data_type in data_types)
     # 按照细粒度方法同时生成OHLC数据
     # 针对每一个share生成OHLC数据
     # 先考虑生成正确的信息，以后再考虑优化
@@ -1398,14 +1402,14 @@ def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
         mock_df['high'] = np.max(mock, axis=1)
         mock_df['low'] = np.min(mock, axis=1)
         mock_df['close'] = mock[:, 4]
-        mock_df['volume'] = share_df.volume
+        if has_volume:
+            mock_df['volume'] = share_df.volume
         dfs_for_share.append(mock_df.copy())
 
     # 生成一个HistoryPanel对象，每一层一个个股
     mock_data = stack_dataframes(dfs_for_share,
                                  stack_along='shares',
                                  shares=history_data.shares)
-    print(mock_data)
     return mock_data
 
 

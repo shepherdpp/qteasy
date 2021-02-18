@@ -22,67 +22,44 @@ from .utilfuncs import time_str_format
 
 
 # TODO: simplify and merge these three functions
-def candle(stock_data=None, share_name=None, stock=None, start=None, end=None,
+def candle(stock=None, start=None, end=None, stock_data=None, share_name=None,
            asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    if stock_data is None:
-        assert stock is not None
-        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
-    else:
-        assert type(stock_data) == pd.DataFrame
-        assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
-        daily = stock_data
-        if share_name is None:
-            share_name = 'stock'
-    mc = mpf.make_marketcolors(up='r', down='g',
-                               volume='in')
-    s = mpf.make_mpf_style(marketcolors=mc)
-    if not no_visual:
-        mpf.plot(daily,
-                 title=share_name,
-                 volume=True,
-                 type='candle',
-                 style=s,
-                 figsize=figsize,
-                 mav=mav,
-                 figscale=0.5)
-    return daily
+    """plot stock data or extracted data in candle form"""
+    return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
+                    end=end, asset_type=asset_type, plot_type='candle',
+                    no_visual=no_visual, figsize=figsize, mav=mav)
 
 
-def ohlc(stock_data=None, share_name=None, stock=None, start=None, end=None,
+def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None,
          asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
-    if stock_data is None:
-        assert stock is not None
-        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
-    else:
-        assert isinstance(stock_data, pd.DataFrame)
-        assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
-        daily = stock_data
-        if share_name is None:
-            share_name = 'stock'
-    mc = mpf.make_marketcolors(up='r', down='g',
-                               volume='in')
-    s = mpf.make_mpf_style(marketcolors=mc)
-    if not no_visual:
-        mpf.plot(daily,
-                 title=share_name,
-                 volume=True,
-                 type='ohlc',
-                 style=s,
-                 figsize=figsize,
-                 mav=mav,
-                 figscale=0.5)
-    return daily
+    """plot stock data or extracted data in ohlc form"""
+    return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
+                    end=end, asset_type=asset_type, plot_type='ohlc',
+                    no_visual=no_visual, figsize=figsize, mav=mav)
 
 
-def renko(stock_data=None, share_name=None, stock=None, start=None, end=None,
+def renko(stock=None, start=None, end=None, stock_data=None, share_name=None,
           asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+    """plot stock data or extracted data in renko form"""
+    return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
+                    end=end, asset_type=asset_type, plot_type='renko',
+                    no_visual=no_visual, figsize=figsize, mav=mav)
+
+
+def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
+             asset_type='E', plot_type=None, no_visual=False, **kwargs):
+    """plot stock data or extracted data in renko form
+    """
+    assert plot_type is not None
     if stock_data is None:
         assert stock is not None
         daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+        has_volume = True
     else:
         assert isinstance(stock_data, pd.DataFrame)
         assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
         daily = stock_data
+        has_volume = any(col in ['volume'] for col in stock_data.columns)
         if share_name is None:
             share_name = 'stock'
     mc = mpf.make_marketcolors(up='r', down='g',
@@ -91,12 +68,11 @@ def renko(stock_data=None, share_name=None, stock=None, start=None, end=None,
     if not no_visual:
         mpf.plot(daily,
                  title=share_name,
-                 volume=True,
-                 type='renko',
+                 volume=has_volume,
+                 type=plot_type,
                  style=s,
-                 figsize=figsize,
-                 mav=mav,
-                 figscale=0.5)
+                 figscale=0.5,
+                 **kwargs)
     return daily
 
 
@@ -319,22 +295,25 @@ def _plot_test_result(test_eval_res: pd.DataFrame,
 def _print_operation_signal(run_time_prepare_data, op_list):
     """打印实时信号生成模式的运行结果
     """
-    print(f'====================================\n'
-          f'|                                  |\n'
-          f'|       OPERATION SIGNALS          |\n'
-          f'|                                  |\n'
-          f'====================================\n')
+    print(f'\n      ====================================\n'
+          f'      |                                  |\n'
+          f'      |       OPERATION SIGNALS          |\n'
+          f'      |                                  |\n'
+          f'      ====================================\n')
     print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
     print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
           f'Total signals generated: {len(op_list.index)}.')
-    print(f'Operation signal for shares on {op_list.index[-1].date()}')
+    print(f'Operation signal for shares on {op_list.index[-1].date()}\n'
+          f'Last three operation signals:\n'
+          f'{op_list.tail(3)}\n')
+    print(f'---------Current Operation Instructions------------\n')
     for share, signal in op_list.iloc[-1].iteritems():
-        print(f'share {share}:')
+        print(f'------share {share}-----------:')
         if signal > 0:
             print(f'Buy in with {signal * 100}% of total investment value!')
         elif signal < 0:
             print(f'Sell out {-signal * 100}% of current on holding stock!')
-    print(f'\n===========END OF REPORT=============\n')
+    print(f'\n      ===========END OF REPORT=============\n')
 
 
 def _print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):

@@ -5751,13 +5751,31 @@ class TestVisual(unittest.TestCase):
     """
 
     def test_ohlc(self):
-        qt.ohlc('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        print(f'test mpf plot in ohlc form')
+        qt.ohlc(stock='513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        print(f'get data from mpf plot function')
+        daily = qt.ohlc('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        daily.drop(columns=['volume'], inplace=True)
+        print(f'test plot mpf data directly from DataFrame without volume')
+        qt.ohlc(stock_data=daily, no_visual=True)
 
     def test_candle(self):
+        print(f'test mpf plot in candle form')
         qt.candle('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        print(f'get data from mpf plot function')
+        daily = qt.candle('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        daily.drop(columns=['volume'], inplace=True)
+        print(f'test plot mpf data directly from DataFrame without volume')
+        qt.candle(stock_data=daily, no_visual=True)
 
     def test_renko(self):
+        print(f'test mpf plot in renko form')
         qt.renko('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        print(f'get data from mpf plot function')
+        daily = qt.renko('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        daily.drop(columns=['volume'], inplace=True)
+        print(f'test plot mpf data directly from DataFrame without volume')
+        qt.renko(stock_data=daily, no_visual=True)
 
 
 class TestBuiltIns(unittest.TestCase):
@@ -5813,9 +5831,10 @@ class TestFastExperiments(unittest.TestCase):
         data = qt.ohlc(stock='000300.SH', start='20100101', asset_type='I', no_visual=True)
         data_hp = stack_dataframes([data], stack_along='shares', shares='000300.SH')
         mock_data = _create_mock_data(data_hp)
-        
-        qt.ohlc(data, share_name='000300.SH')
-        qt.ohlc(mock_data.to_dataframe(share='000300.SH'), share_name='mock share')
+        print(f'The real stock data is\n{data.head(10)}\n'
+              f'and synthetic stock data is \n{mock_data.to_dataframe(share="000300.SH")}')
+        qt.ohlc(stock_data=data, share_name='000300.SH')
+        qt.ohlc(stock_data=mock_data.to_dataframe(share='000300.SH'), share_name='mock share')
 
 
 class TestDataBase(unittest.TestCase):
