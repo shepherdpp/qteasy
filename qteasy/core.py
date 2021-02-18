@@ -874,6 +874,12 @@ def run(operator, **kwargs):
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式
+        # Temp test -------
+        # Create mock test data here just to visually see how one strategy performs for mock data
+        hist_op = _create_mock_data(hist_op)
+        hist_loop = hist_op.to_dataframe(htype='close')
+        hist_reference = hist_op.to_dataframe(htype='close')
+
         operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
@@ -1087,7 +1093,7 @@ def _evaluate_all_parameters(par_generator,
                              reference_history_data,
                              reference_history_data_type,
                              config,
-                             stage='optimize'):
+                             stage='optimize') -> ResultPool:
     """ 接受一个策略参数生成器对象，批量生成策略参数，反复调用_evaluate_one_parameter()函数，使用所有生成的策略参数
         生成历史区间上的交易策略和回测结果，将得到的回测结果全部放入一个结果池对象，并根据策略筛选方法筛选出符合要求的回测
         结果，并返回筛选后的结果。
