@@ -5831,10 +5831,14 @@ class TestFastExperiments(unittest.TestCase):
         data = qt.ohlc(stock='000300.SH', start='20100101', asset_type='I', no_visual=True)
         data_hp = stack_dataframes([data], stack_along='shares', shares='000300.SH')
         mock_data = _create_mock_data(data_hp)
-        print(f'The real stock data is\n{data.head(10)}\n'
-              f'and synthetic stock data is \n{mock_data.to_dataframe(share="000300.SH")}')
+        mock_df = mock_data.to_dataframe(share='000300.SH')
         qt.ohlc(stock_data=data, share_name='000300.SH')
-        qt.ohlc(stock_data=mock_data.to_dataframe(share='000300.SH'), share_name='mock share')
+        qt.ohlc(stock_data=mock_df, share_name='mock share')
+        for col in ['open', 'high', 'low', 'close']:
+            data[col] = np.log(data[col] / data[col].shift(1))
+            mock_df[col] = np.log(mock_df[col] / mock_df[col].shift(1))
+        print(f'The real stock data is\n{data.head()}\nstatistics:\n{data.describe()}\n'
+              f'and synthetic stock data is \n{mock_df.head()}\nstatistics:\n{mock_df.describe()}')
 
 
 class TestDataBase(unittest.TestCase):

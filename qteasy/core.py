@@ -876,9 +876,9 @@ def run(operator, **kwargs):
         # 进入回测模式
         # Temp test -------
         # Create mock test data here just to visually see how one strategy performs for mock data
-        hist_op = _create_mock_data(hist_op)
-        hist_loop = hist_op.to_dataframe(htype='close')
-        hist_reference = hist_op.to_dataframe(htype='close')
+        # hist_op = _create_mock_data(hist_op)
+        # hist_loop = hist_op.to_dataframe(htype='close')
+        # hist_reference = hist_op.to_dataframe(htype='close')
         # -------------------------
 
         # TODO: 使用_evaluate_one_parameter()代替下面的代码，但是_evaluate_one_parameter()
@@ -932,27 +932,10 @@ def run(operator, **kwargs):
                                                 ref_type=reference_data,
                                                 op=operator,
                                                 config=config)
-        # 输出策略优化的评价结果
-        # TODO: 将下面的代码合并到_evaluate_all_parameters()中实现，因为绝大部分核心功能
-        # TODO: 是一致的，唯一的区别在于，在这里需要一个包含所有参数的性能表现的dataFrame，
-        # TODO: 而_evaluate_all_parameters()并不具备这个功能，仅能返回一个pool对象
+        # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
         hist_opti_loop = hist_opti.to_dataframe(htype='close').fillna(0)
-        opti_result_df = pd.DataFrame(columns=['par',
-                                               'sell_count',
-                                               'buy_count',
-                                               'oper_count',
-                                               'total_fee',
-                                               'final_value',
-                                               'total_return',
-                                               'annual_return',
-                                               'mdd',
-                                               'volatility',
-                                               'alpha',
-                                               'beta',
-                                               'sharp',
-                                               'info'])
-        for par in pars:
-            eval_res = _evaluate_one_parameter(par=par,
+        result_pool = _evaluate_all_parameters(par_generator=pars,
+                                               total=config.opti_output_count,
                                                op=operator,
                                                op_history_data=hist_opti,
                                                loop_history_data=hist_opti_loop,
@@ -960,45 +943,19 @@ def run(operator, **kwargs):
                                                reference_history_data_type=reference_data,
                                                config=config,
                                                stage='test')
-            eval_res['par'] = par
-            eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
-            eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
-            eval_res['oper_count'] = eval_res['oper_count'].total.sum()
-            eval_res['total_return'] = eval_res['rtn']
-            eval_res['annual_return'] = eval_res['annual_rtn']
-            opti_result_df = opti_result_df.append(eval_res,
-                                                   ignore_index=True)
-
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        eval_res['loop_start'] = hist_opti_loop.index[0]
-        eval_res['loop_end'] = hist_opti_loop.index[-1]
+        eval_res = result_pool.extra
+        print(eval_res[0])
         if config.visual:
             pass
         else:
-            _print_test_result(opti_result_df, eval_res, config)
+            _print_test_result(eval_res, config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
-        test_result_df = pd.DataFrame(columns=['par',
-                                               'sell_count',
-                                               'buy_count',
-                                               'oper_count',
-                                               'total_fee',
-                                               'final_value',
-                                               'total_return',
-                                               'annual_return',
-                                               'mdd',
-                                               'volatility',
-                                               'alpha',
-                                               'beta',
-                                               'sharp',
-                                               'info'])
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
-        # TODO: 将下面的代码合并到_evaluate_all_parameters()中实现，因为绝大部分核心功能
-        # TODO: 是一致的，唯一的区别在于，在这里需要一个包含所有参数的性能表现的dataFrame，
-        # TODO: 而_evaluate_all_parameters()并不具备这个功能，仅能返回一个pool对象
         if config.test_type in ['single', 'multiple']:
-            for par in pars:
-                eval_res = _evaluate_one_parameter(par=par,
+            result_pool = _evaluate_all_parameters(par_generator=pars,
+                                                   total=config.opti_output_count,
                                                    op=operator,
                                                    op_history_data=hist_test,
                                                    loop_history_data=hist_test_loop,
@@ -1006,34 +963,14 @@ def run(operator, **kwargs):
                                                    reference_history_data_type=reference_data,
                                                    config=config,
                                                    stage='test')
-                eval_res['par'] = par
-                eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
-                eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
-                eval_res['oper_count'] = eval_res['oper_count'].total.sum()
-                eval_res['total_return'] = eval_res['rtn']
-                eval_res['annual_return'] = eval_res['annual_rtn']
-                test_result_df = test_result_df.append(eval_res,
-                                                       ignore_index=True)
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
-            eval_res['loop_start'] = hist_test_loop.index[0]
-            eval_res['loop_end'] = hist_test_loop.index[-1]
+            eval_res = result_pool.extra
             if config.visual:
                 pass
             else:
-                _print_test_result(test_result_df, eval_res, config)
+                _print_test_result(eval_res, config)
         elif config.test_type == 'montecarlo':
-            # TODO: refract the structure of mock data:
-            # TODO: the mock data should be generated ad-hoc: in order to create signal
-            # TODO: on mock data, the mock data should have full flavor of operation history
-            # TODO: data, e.g, complete set of data types like eps, close, open prices etc.
-            # TODO: thus a complete HistoryPanel will be used to mock only one set of data
-            # TODO: also the relationships between different data types should be considered
-            # TODO: thus it is NOT possible to create multiple sets of mock data in one HistoryPanel
-            # TODO: so, current plan is:
-            # TODO: 1, mock data generation available for only ohlc and volume type of data
-            # TODO: 2, one set of mock data is created everytime, set to operator, completed evaluation
-            # TODO: and then thrown away before the second one is generated
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
@@ -1041,26 +978,8 @@ def run(operator, **kwargs):
                 operator.prepare_data(hist_data=mock_hist,
                                       cash_plan=CashPlan(config.test_cash_dates, config.test_cash_amounts))
                 mock_hist_loop = mock_hist.to_dataframe(htype='close')
-                test_result_df = pd.DataFrame(columns=['par',
-                                                       'sell_count',
-                                                       'buy_count',
-                                                       'oper_count',
-                                                       'total_fee',
-                                                       'final_value',
-                                                       'total_return',
-                                                       'annual_return',
-                                                       'mdd',
-                                                       'volatility',
-                                                       'alpha',
-                                                       'beta',
-                                                       'sharp',
-                                                       'info'])
-                for par in pars:  # 分别对每个策略参数执行同样的测试数据
-                    # TODO: 这里有一个大的bug，在开始生成交易清单并评估策略的回报之前，并没有把新的历史数据传送给operator
-                    # TODO: 对象，因此这里使用了错误的历史数据。
-                    # TODO: 应该使用operator.prepare_data()将正确的数据灌入operator中（但是目前在不更改mock_test_loop
-                    # TODO: 的数据标签index和列名column之前无法这样做）
-                    eval_res = _evaluate_one_parameter(par=par,
+                result_pool = _evaluate_all_parameters(par_generator=pars,
+                                                       total=config.test_cycle_count,
                                                        op=operator,
                                                        op_history_data=mock_hist,
                                                        loop_history_data=mock_hist_loop,
@@ -1068,26 +987,17 @@ def run(operator, **kwargs):
                                                        reference_history_data_type=reference_data,
                                                        config=config,
                                                        stage='test')
-                    eval_res['par'] = par
-                    eval_res['sell_count'] = eval_res['oper_count'].sell.sum()
-                    eval_res['buy_count'] = eval_res['oper_count'].buy.sum()
-                    eval_res['oper_count'] = eval_res['oper_count'].total.sum()
-                    eval_res['total_return'] = eval_res['rtn']
-                    eval_res['annual_return'] = eval_res['annual_rtn']
-                    test_result_df = test_result_df.append(eval_res,
-                                                           ignore_index=True)
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
-                eval_res['loop_start'] = mock_hist_loop.index[0]
-                eval_res['loop_end'] = mock_hist_loop.index[-1]
+                eval_res = result_pool.extra
                 if config.visual:
                     pass
                 else:
-                    _print_test_result(test_result_df, eval_res, config)
+                    _print_test_result(eval_res, config)
 
         return pars
 
-# TODO: ResultPool已经改造完毕，在ResultPool中应放入完整的结果评价字典，且该字典中包含完整的回测结果
+
 def _evaluate_all_parameters(par_generator,
                              total,
                              op: Operator,
@@ -1150,6 +1060,7 @@ def _evaluate_all_parameters(par_generator,
     pool = ResultPool(config.opti_output_count)  # 用于存储中间结果或最终结果的参数池对象
     i = 0
     best_so_far = 0
+    opti_target = config.optimize_target
     # 启用多进程计算方式利用所有的CPU核心计算
     if config.parallel:
         # 启用并行计算
@@ -1165,10 +1076,12 @@ def _evaluate_all_parameters(par_generator,
                                     stage): par for par in
                    par_generator}
         for f in as_completed(futures):
-            pool.in_pool(futures[f], f.result()['final_value'])
+            eval_dict = f.result()
+            target_value = eval_dict[opti_target]
+            pool.in_pool(item=futures[f], perf=target_value, extra=eval_dict)
             i += 1
-            if f.result()['final_value'] > best_so_far:
-                best_so_far = f.result()['final_value']
+            if target_value > best_so_far:
+                best_so_far = target_value
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 禁用多进程计算方式，使用单进程计算
@@ -1182,10 +1095,11 @@ def _evaluate_all_parameters(par_generator,
                                            reference_history_data_type=reference_history_data_type,
                                            config=config,
                                            stage=stage)
-            pool.in_pool(par, perf['final_value'])
+            target_value = perf[opti_target]
+            pool.in_pool(item=par, perf=target_value, extra=perf)
             i += 1
-            if perf['final_value'] > best_so_far:
-                best_so_far = perf['final_value']
+            if target_value > best_so_far:
+                best_so_far = target_value
             if i % 10 == 0:
                 progress_bar(i, total, comments=f'best performance: {best_so_far:.3f}')
     # 将当前参数以及评价结果成对压入参数池中，并返回所有成对参数和评价结果
@@ -1270,27 +1184,55 @@ def _evaluate_one_parameter(par: tuple,
         :param stage:
             :type str:
             运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
-                1, 'optimize': 运行模式为优化模式，
-                2, 'test':
+                1, 'optimize':  运行模式为优化模式，在这种模式下：
+                                使用优化区间回测投资计划
+                                回测区间利用方式使用opti_type的设置值
+                                回测区间分段数量和间隔使用opti_sub_periods
+                2, 'test':      运行模式为测试模式
+                                使用测试区间回测投资计划
+                                回测区间利用方式使用test_type的设置值
+                                回测区间分段数量和间隔使用test_sub_periods
     :return:
-        dict: 一个dict对象，该策略在使用par作为参数时的性能表现评分，允许对性能表现进行多重指标评价，dict
-        的指标类型为dict的键，评价结果为值，dict不能为空，至少包含'final_value' 的值。例如：
+        dict: 一个dict对象，存储该策略在使用par作为参数时的性能表现评分以及一些其他运行信息，允许对性能
+        表现进行多重指标评价，dict的指标类型为dict的键，评价结果为结果分值，dict不能为空，至少包含以下值：
+
+        'complete_value': 完整的回测结果清单，无结果时为None
+        'op_run_time':    交易清单生成耗时
+        'loop_run_time':  回测耗时
+        'final_value':    回测结果终值（默认评价指标）
+
+        除了上述必须存在的项目以外，返回的res_dict还可以包含任意evaluation模块可以输出的评价值，例如：
 
         {'final_value': 34567,
          'sharp':       0.123}
 
         如果当前的策略不能生成有效的交易操作清单时，直接返回默认结果，其终值为负无穷大：
 
-        {'final_value': np.NINF}
+        {'complete_values':  None,
+         'op_run_time':     0.0354675,
+         'loop_run_time':   None,
+         'final_value':     np.NINF}
 
     """
+    res_dict = {'par':              None,
+                'complete_values':  None,
+                'op_run_time':      None,
+                'loop_run_time':    None,
+                'final_value':      None}
+
     assert stage in ['optimize', 'test']
     if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
         op.set_opt_par(par)
+        res_dict['par'] = par
     # 生成交易清单并进行模拟交易生成交易记录
+    st = time.time()
     op_list = op.create_signal(op_history_data)
-    if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回0
-        return {'final_value': np.NINF}
+    et = time.time()
+    op_run_time = et - st
+    res_dict['op_run_time'] = op_run_time
+    if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
+        res_dict['final_value'] = np.NINF
+        return res_dict
     # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数
     if stage == 'optimize':
         invest_cash_amount = config.opti_cash_amounts[0]
@@ -1326,6 +1268,7 @@ def _evaluate_one_parameter(par: tuple,
         raise KeyError(f'Not recognized optimization type: {config.opti_type}')
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
+    st = time.time()
     for start, end in zip(start_dates, end_dates):
         op_list_seg = op_list[start:end].copy()
         history_list_seg = loop_history_data[start:end].copy()
@@ -1367,8 +1310,11 @@ def _evaluate_one_parameter(par: tuple,
         #       f'final value:        {perf}\n'
         #       f'total fv:           {total_perf}')
     perf = performance_statistics(perf_list)
-
-    return perf
+    et = time.time()
+    loop_run_time = et - st
+    res_dict.update(perf)
+    res_dict['loop_run_time'] = loop_run_time
+    return res_dict
 
 
 # TODO: 这个函数有潜在大量运行的可能，需要使用Numba加速

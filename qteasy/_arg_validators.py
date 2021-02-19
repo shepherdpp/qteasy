@@ -780,7 +780,7 @@ def _valid_qt_kwargs():
                                 'text':      '仅当测试类型为"montecarlo"时有效。生成的模拟测试数据的数量。'
                                              '默认情况下生成100组模拟价格数据，并进行100次策略回测并评价其统计结果'},
 
-        'optimize_target':     {'Default':   'FV',
+        'optimize_target':     {'Default':   'final_value',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and value in ['FV', 'SHARP'],
                                 'level':     1,
@@ -848,7 +848,7 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value > 0,
                                 'level':     1,
-                                'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'},
+                                'text':      '策略参数优化后输出的最优参数数量'},
 
     }
     _validate_vkwargs_dict(vkwargs)

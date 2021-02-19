@@ -52,19 +52,33 @@ def performance_statistics(performances: list, stats='mean'):
         f'One or more of the performance dicts is empty!\n' \
         f'got performances:\n{performances}'
 
-    # TODO: following calculations available only for numeric performances,
-    # TODO: op_infos shall be excluded, op_infos like: oper_count(pd.DataFrame)
-    # TODO:
-    res = {}
+    res = dict()
+
+    # try:
+    #     res['par'] = performances[0]['par']
+    # except:
+    #     print(f'\nERROR RAISED! \n'
+    #           f'in performance statistics: performances[0]:\n{performances[0]}')
+    res['loop_start'] = performances[0]['loop_start']
+    res['loop_end'] = performances[-1]['loop_end']
+    # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法
+    res['complete_values'] = performances[0]['complete_values']
     if 'oper_count' in performances[0]:
         res['oper_count'] = 0
         for perf in performances:
             res['oper_count'] += perf['oper_count']
         res['oper_count'] = res['oper_count'] / len(performances)
+        res['sell_count'] = res['oper_count'].sell.sum()
+        res['buy_count'] = res['oper_count'].buy.sum()
     if 'max_date' in performances[0]:
         res['max_date'] = performances[0]['max_date']
         res['low_date'] = performances[0]['low_date']
-    keys_to_process = [perf for perf in performances[0] if perf not in ['oper_count', 'max_date', 'low_date']]
+    keys_to_process = [perf for perf in performances[0] if perf not in ['oper_count',
+                                                                        'max_date',
+                                                                        'low_date',
+                                                                        'loop_start',
+                                                                        'loop_end',
+                                                                        'complete_values']]
     for key in keys_to_process:
         values = np.array([perf[key] for perf in performances])
         if stats == 'mean':
@@ -96,7 +110,12 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
     :type looped_values: dict: 一个字典，每个指标的各种值
     """
     indicator_list = str_to_list(indicators)
-    performance_dict = {}
+    performance_dict = dict()
+    # 评价回测结果——计算回测终值，这是默认输出结果
+    performance_dict['final_value'] = eval_fv(looped_val=looped_values)
+    performance_dict['loop_start'] = looped_values.index[0]
+    performance_dict['loop_end'] = looped_values.index[-1]
+    performance_dict['complete_values'] = looped_values
     if any(indicator in indicator_list for indicator in ['years', 'oper_count', 'total_invest', 'total_fee', 'return']):
         years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
                                                                     looped_value=looped_values,
@@ -105,9 +124,6 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         performance_dict['oper_count'] = oper_count
         performance_dict['total_invest'] = total_invest
         performance_dict['total_fee'] = total_fee
-    # 评价回测结果——计算回测终值
-    if any(indicator in indicator_list for indicator in ['FV', 'fv', 'final_value']):
-        performance_dict['final_value'] = eval_fv(looped_val=looped_values)
     # 评价回测结果——计算总投资收益率
     if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
         years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,

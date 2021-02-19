@@ -360,7 +360,7 @@ def _print_loop_result(result, messages=None, columns=None, headers=None, format
 
 # TODO: like _plot_test_result, take the evaluate results on both opti and test hist data
 # TODO: and commit comparison base on these two data sets
-def _print_test_result(result, messages=None, config=None, columns=None, headers=None, formatter=None):
+def _print_test_result(result, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时
         以统计结果和表格的形式输出
@@ -372,25 +372,26 @@ def _print_test_result(result, messages=None, config=None, columns=None, headers
     :param formatter:
     :return:
     """
-
-    ref_rtn, ref_annual_rtn = messages['ref_rtn'], messages['ref_annual_rtn']
+    result = pd.DataFrame(result)
+    first_res = result.iloc[0]
+    ref_rtn, ref_annual_rtn = first_res['ref_rtn'], first_res['ref_annual_rtn']
     print(f'==================================== \n'
           f'|                                  |\n'
           f'|       OPTIMIZATION RESULT        |\n'
           f'|                                  |\n'
           f'====================================')
     print(f'\nqteasy running mode: 2 - Strategy Parameter Optimization\n')
-    print(f'investment starts on {messages["loop_start"]}\nends on {messages["loop_end"]}\n'
+    print(f'investment starts on {first_res["loop_start"]}\nends on {first_res["loop_end"]}\n'
           f'Total looped periods: {result.years[0]:.1f} years.')
     print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
     print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
           f'Total reference return: {ref_rtn * 100:.3f}% \n'
           f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
     print(f'statistical analysis of optimal strategy messages indicators: \n'
-          f'total return:        {result.total_return.mean() * 100:.3f}% ±'
-          f' {result.total_return.std() * 100:.3f}%\n'
-          f'annual return:       {result.annual_return.mean() * 100:.3f}% ±'
-          f' {result.annual_return.std() * 100:.3f}%\n'
+          f'total return:        {result.rtn.mean() * 100:.3f}% ±'
+          f' {result.rtn.std() * 100:.3f}%\n'
+          f'annual return:       {result.annual_rtn.mean() * 100:.3f}% ±'
+          f' {result.annual_rtn.std() * 100:.3f}%\n'
           f'alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
           f'Beta:                {result.beta.mean():.3f} ± {result.beta.std():.3f}\n'
           f'Sharp ratio:         {result.sharp.mean():.3f} ± {result.sharp.std():.3f}\n'
@@ -403,7 +404,7 @@ def _print_test_result(result, messages=None, config=None, columns=None, headers
                                     "buy_count",
                                     "total_fee",
                                     "final_value",
-                                    "total_return",
+                                    "rtn",
                                     "ref_rtn",
                                     "mdd"],
                            header=["Strategy items",
@@ -416,7 +417,7 @@ def _print_test_result(result, messages=None, config=None, columns=None, headers
                                    "MDD"],
                            formatters={'total_fee':    '{:,.2f}'.format,
                                        'final_value':  '{:,.2f}'.format,
-                                       'total_return': '{:.1%}'.format,
+                                       'rtn':          '{:.1%}'.format,
                                        'mdd':          '{:.1%}'.format,
                                        'ref_rtn':      '{:.1%}'.format,
                                        'sell_count':   '{:.1f}'.format,
