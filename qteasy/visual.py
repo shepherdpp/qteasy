@@ -191,12 +191,12 @@ def _plot_loop_result(loop_results: dict):
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
-    # ax1.fill_between(looped_values.index, 0, ref_rate,
-    #                  where=ref_rate >= 0,
-    #                  facecolor=(0.4, 0.6, 0.2), alpha=0.35)
-    # ax1.fill_between(looped_values.index, 0, ref_rate,
-    #                  where=ref_rate < 0,
-    #                  facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+    ax1.fill_between(looped_values.index, 0, ref_rate,
+                     where=ref_rate >= 0,
+                     facecolor=(0.4, 0.6, 0.2), alpha=0.35)
+    ax1.fill_between(looped_values.index, 0, ref_rate,
+                     where=ref_rate < 0,
+                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
     ax1.yaxis.tick_right()
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
@@ -210,15 +210,19 @@ def _plot_loop_result(loop_results: dict):
         # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
         # fill long/short strips with green/red colors
         if long_short > 0:
+            # fill green arrow on buy dates
+            ax1.annotate('', xy=(first, long_short), arrowprops=dict(facecolor='green', shrink=0.2))
             # fill green strips if position is long
             ax1.axvspan(first, second,
                         facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
                         alpha=0.2)
         else:
+            ax1.annotate('', xy=(first, long_short), arrowprops=dict(facecolor='red', shrink=0.2))
             # fill red strips if position is short
             ax1.axvspan(first, second,
                         facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
                         alpha=0.2)
+    # put arrow on where max draw down is
     ax1.annotate("max_drawdown",
                  xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
                  xytext=(0.7, 0.0),
@@ -266,92 +270,33 @@ def _plot_loop_result(loop_results: dict):
     plt.show()
 
 
-def _plot_opti_result(result_pool: list):
+def _plot_opti_result(result_pool: list, config):
     """ plot optimization results
 
     :return:
     """
     """plot the loop results in a fancy way that displays all information more clearly"""
     # prepare looped_values dataframe
-    if not isinstance(loop_results, dict):
-        raise TypeError('')
-    looped_values = loop_results['complete_values']
+    result_count = len(result_pool)
+    complete_results = [result['complete_values'] for result in result_pool]
+    looped_values = complete_results[0]
+    # for complete_value in complete_results:
+    #     print(complete_value.tail(100))
     if looped_values.empty:
         raise ValueError()
-    # debug
-    # print(f'in visual function, got loop_results max date and low_date: \n'
-    #       f'loop_results["max_date"]:  {loop_results["max_date"]}\n'
-    #       f'loop_results["low_date"]:  {loop_results["low_date"]}')
     register_matplotlib_converters()
-    result_columns = looped_values.columns
-    fixed_column_items = ['fee', 'cash', 'value', 'reference']
-    stock_holdings = [item for
-                      item in
-                      result_columns if
-                      item not in fixed_column_items and
-                      item[-2:] != '_p']
-    change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
-    start_point = looped_values['value'].iloc[0]
-    adjust_factor = looped_values['value'].iloc[0] / looped_values['reference'].iloc[0]
-    reference = looped_values['reference'] * adjust_factor
-    ret = looped_values['value'] - looped_values['value'].shift(1)
-    position = 1 - (looped_values['cash'] / looped_values['value'])
-    return_rate = (looped_values.value - start_point) / start_point * 100
-    ref_rate = (reference - start_point) / start_point * 100
-    position_bounds = [looped_values.index[0]]
-    position_bounds.extend(looped_values.loc[change != 0].index)
-    position_bounds.append(looped_values.index[-1])
-
-    # process plot figure and axes formatting
-    years = mdates.YearLocator()  # every year
-    months = mdates.MonthLocator()  # every month
-    years_fmt = mdates.DateFormatter('%Y')
-
-    CHART_WIDTH = 0.88
+    CHART_WIDTH = 0.9
     # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
+    fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
     # output all evaluate looped_values in table form (values and labels are printed separately)
-    fig.text(0.07, 0.93, f'periods: {loop_results["years"]} years, '
-                         f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
-                         f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
-                         f'  back test:{time_str_format(loop_results["loop_run_time"])}')
-    fig.text(0.21, 0.82, f'Operation summary:\n\n'
-                         f'Total op fee:\n'
-                         f'total investment:\n'
-                         f'final value:', ha='right')
-    fig.text(0.23, 0.82, f'{loop_results["oper_count"].buy.sum()}     buys \n'
-                         f'{loop_results["oper_count"].sell.sum()}     sells\n'
-                         f'¥{loop_results["total_fee"]:13,.2f}\n'
-                         f'¥{loop_results["total_invest"]:13,.2f}\n'
-                         f'¥{loop_results["final_value"]:13,.2f}')
-    fig.text(0.50, 0.82, f'Total return:\n'
-                         f'Avg annual return:\n'
-                         f'ref return:\n'
-                         f'Avg annual ref return:\n'
-                         f'Max drawdown:', ha='right')
-    fig.text(0.52, 0.82, f'{loop_results["rtn"] * 100:.2f}%    \n'
-                         f'{loop_results["annual_rtn"] * 100: .2f}%    \n'
-                         f'{loop_results["ref_rtn"] * 100:.2f}%    \n'
-                         f'{loop_results["ref_annual_rtn"] * 100:.2f}%\n'
-                         f'{loop_results["mdd"] * 100:.3f}%'
-                         f' on {loop_results["low_date"].date()}')
-    fig.text(0.82, 0.82, f'alpha:\n'
-                         f'Beta:\n'
-                         f'Sharp ratio:\n'
-                         f'Info ratio:\n'
-                         f'250-day volatility:', ha='right')
-    fig.text(0.84, 0.82, f'{loop_results["alpha"]:.3f}  \n'
-                         f'{loop_results["beta"]:.3f}  \n'
-                         f'{loop_results["sharp"]:.3f}  \n'
-                         f'{loop_results["info"]:.3f}  \n'
-                         f'{loop_results["volatility"]:.3f}')
-
-    ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
-    ax1.plot(looped_values.index, ref_rate, linestyle='-',
+    reference = looped_values.reference
+    ax1.set_position([0.05, 0.15, CHART_WIDTH, 0.75])
+    ax1.plot(looped_values.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
-    ax1.plot(looped_values.index, return_rate, linestyle='-',
-             color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
+    for cres in complete_results:
+        ax1.plot(looped_values.index, cres.value, linestyle='-',
+                 color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
@@ -361,30 +306,8 @@ def _plot_opti_result(result_pool: list):
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
-    # 显示持股仓位区间
-    # TODO: 使用箭头标记买入和卖出点：位于参考线下方的绿色箭头代表买入，位于参考线上方的红色箭头代表卖出
-    for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
-        # fill long/short strips with grey
-        # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
-        # fill long/short strips with green/red colors
-        if long_short > 0:
-            # fill green strips if position is long
-            ax1.axvspan(first, second,
-                        facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
-                        alpha=0.2)
-        else:
-            # fill red strips if position is short
-            ax1.axvspan(first, second,
-                        facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
-                        alpha=0.2)
-    ax1.annotate("max_drawdown",
-                 xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
-                 xytext=(0.7, 0.0),
-                 textcoords='axes fraction',
-                 arrowprops=dict(facecolor='black', shrink=0.3),
-                 horizontalalignment='right',
-                 verticalalignment='top')
-    ax1.legend()
+    ax2.set_position([0.05, 0.05, CHART_WIDTH, 0.01])
+    ax3.set_position([0.05, 0.05, CHART_WIDTH, 0.01])
 
     plt.show()
 
@@ -543,29 +466,29 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
     print(f'\n===========END OF REPORT=============\n')
 
 
-def _print_opti_result(pars, perfs, config=None, columns=None, headers=None, formatter=None):
-    """
-
-    :param result:
-    :param messages:
-    :param config:
-    :param columns:
-    :param headers:
-    :param formatter:
-    :return:
-    """
-    print(f'====================================\n'
-          f'|                                  |\n'
-          f'|       OPTIMIZATION RESULT        |\n'
-          f'|                                  |\n'
-          f'====================================\n')
-    print(f'Searching finished, {len(perfs)} best results are generated')
-    print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result:\n'
-          f'=======================OPTIMIZATION RESULTS===========================\n'
-          f'                    parameter                     |    performance    \n'
-          f'--------------------------------------------------|-------------------')
-    for par, perf in zip(pars, perfs):
-        print(f'{par}{" " * (50 - len(str(par)))}|  {perf:.3f}')
-    # print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{items[-1]}')
-    # print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{items[0]}')
-    print(f'===============VALIDATION OF OPTIMIZATION RESULTS==================')
+# def _print_opti_result(pars, perfs, config=None, columns=None, headers=None, formatter=None):
+#     """
+#
+#     :param result:
+#     :param messages:
+#     :param config:
+#     :param columns:
+#     :param headers:
+#     :param formatter:
+#     :return:
+#     """
+#     print(f'====================================\n'
+#           f'|                                  |\n'
+#           f'|       OPTIMIZATION RESULT        |\n'
+#           f'|                                  |\n'
+#           f'====================================\n')
+#     print(f'Searching finished, {len(perfs)} best results are generated')
+#     print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result:\n'
+#           f'=======================OPTIMIZATION RESULTS===========================\n'
+#           f'                    parameter                     |    performance    \n'
+#           f'--------------------------------------------------|-------------------')
+#     for par, perf in zip(pars, perfs):
+#         print(f'{par}{" " * (50 - len(str(par)))}|  {perf:.3f}')
+#     # print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{items[-1]}')
+#     # print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{items[0]}')
+#     print(f'===============VALIDATION OF OPTIMIZATION RESULTS==================')

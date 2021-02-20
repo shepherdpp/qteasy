@@ -23,7 +23,7 @@ from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
-    _print_opti_result, _print_operation_signal
+    _print_operation_signal, _plot_test_result, _plot_opti_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -852,14 +852,6 @@ def run(operator, **kwargs):
     test_cash_plan = CashPlan(config.test_cash_dates,
                               config.test_cash_amounts)
 
-    trade_cost_rate = Cost(config.cost_fixed_buy,
-                           config.cost_fixed_sell,
-                           config.cost_rate_buy,
-                           config.cost_rate_sell,
-                           config.cost_min_buy,
-                           config.cost_min_sell,
-                           config.cost_slippage)
-
     if run_mode == 0 or run_mode == 'signal':
         # 进入实时信号生成模式：
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
@@ -925,9 +917,8 @@ def run(operator, **kwargs):
                                                stage='test')
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         eval_res = result_pool.extra
-        print(eval_res[0])
         if config.visual:
-            pass
+            _plot_opti_result(eval_res, config)
         else:
             _print_test_result(eval_res, config)
 
