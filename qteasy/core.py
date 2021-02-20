@@ -884,42 +884,22 @@ def run(operator, **kwargs):
         # TODO: 使用_evaluate_one_parameter()代替下面的代码，但是_evaluate_one_parameter()
         # TODO: 首先应该改造，改造方向见_evaluate_one_parameter()的TODO项
         operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
-        st = time.time()  # 记录交易信号生成耗时
-        op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
-        # print(f'created operation list is: \n{op_list}')
-        et = time.time()
-        run_time_prepare_data = (et - st)
-        st = time.time()  # 记录交易信号回测耗时
-        looped_values = apply_loop(op_list=op_list,
-                                   history_list=hist_loop,
-                                   cash_plan=cash_plan,
-                                   moq=config.trade_batch_size,
-                                   cost_rate=trade_cost_rate,
-                                   print_log=config.log)
-        et = time.time()
-        run_time_loop_full = (et - st)
-        # 对回测的结果进行基本评价（回测年数，操作次数、总投资额、总交易费用（成本）
-        complete_values = _get_complete_hist(looped_value=looped_values,
-                                             h_list=hist_loop,
-                                             ref_list=hist_reference,
-                                             with_price=False)
-        eval_res = evaluate(op_list=op_list,
-                            looped_values=complete_values,
-                            hist_reference=hist_reference,
-                            reference_data=reference_data,
-                            cash_plan=cash_plan,
-                            indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info')
-        eval_res['run_time_p'] = run_time_prepare_data
-        eval_res['run_time_l'] = run_time_loop_full
-        eval_res['loop_start'] = complete_values.index[0]
-        eval_res['loop_end'] = complete_values.index[-1]
+
+        # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
+        loop_result = _evaluate_one_parameter(par=None,
+                                              op=operator,
+                                              op_history_data=hist_op,
+                                              loop_history_data=hist_loop,
+                                              reference_history_data=hist_reference,
+                                              reference_history_data_type=reference_data,
+                                              config=config,
+                                              stage='loop')
         if config.visual:
             # 图表输出投资回报历史曲线
-
-            _plot_loop_result(complete_values, msg=eval_res)
+            _plot_loop_result(loop_result)
         else:
             # 格式化输出回测结果
-            _print_loop_result(complete_values, eval_res)
+            _print_loop_result(loop_result)
 
         return None
 
@@ -979,7 +959,7 @@ def run(operator, **kwargs):
                                       cash_plan=CashPlan(config.test_cash_dates, config.test_cash_amounts))
                 mock_hist_loop = mock_hist.to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(par_generator=pars,
-                                                       total=config.test_cycle_count,
+                                                       total=config.opti_output_count,
                                                        op=operator,
                                                        op_history_data=mock_hist,
                                                        loop_history_data=mock_hist_loop,
@@ -1220,7 +1200,7 @@ def _evaluate_one_parameter(par: tuple,
                 'loop_run_time':    None,
                 'final_value':      None}
 
-    assert stage in ['optimize', 'test']
+    assert stage in ['loop', 'optimize', 'test']
     if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
         op.set_opt_par(par)
         res_dict['par'] = par
@@ -1234,14 +1214,21 @@ def _evaluate_one_parameter(par: tuple,
         res_dict['final_value'] = np.NINF
         return res_dict
     # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数
-    if stage == 'optimize':
-        invest_cash_amount = config.opti_cash_amounts[0]
+    if stage == 'loop':
+        invest_cash_amounts = config.invest_cash_amounts
+        invest_cash_dates = config.invest_cash_dates
+        period_util_type = 'single'
+        indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
+    elif stage == 'optimize':
+        invest_cash_amounts = config.opti_cash_amounts[0]
+        invest_cash_dates = None
         period_util_type = config.opti_type
         period_count = config.opti_sub_periods
         period_length = config.opti_sub_prd_length
         indicators = config.optimize_target
     else:
-        invest_cash_amount = config.test_cash_amounts[0]
+        invest_cash_amounts = config.test_cash_amounts[0]
+        invest_cash_dates = None
         period_util_type = config.test_type
         period_count = config.test_sub_periods
         period_length = config.test_sub_prd_length
@@ -1272,8 +1259,10 @@ def _evaluate_one_parameter(par: tuple,
     for start, end in zip(start_dates, end_dates):
         op_list_seg = op_list[start:end].copy()
         history_list_seg = loop_history_data[start:end].copy()
-        cash_plan = CashPlan(history_list_seg.index[0].strftime('%Y%m%d'),
-                             invest_cash_amount)
+        if stage != 'loop':
+            invest_cash_dates = history_list_seg.index[0].strftime('%Y%m%d')
+        cash_plan = CashPlan(invest_cash_dates,
+                             invest_cash_amounts)
         trade_cost = Cost(config.cost_fixed_buy,
                           config.cost_fixed_sell,
                           config.cost_rate_buy,

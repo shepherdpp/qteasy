@@ -106,36 +106,37 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     return daily, share_name
 
 
-def _plot_loop_result(result, msg: dict):
+def _plot_loop_result(loop_results: dict):
     """plot the loop results in a fancy way that displays all information more clearly"""
-    # prepare result dataframe
-    if not isinstance(result, pd.DataFrame):
+    # prepare looped_values dataframe
+    if not isinstance(loop_results, dict):
         raise TypeError('')
-    if result.empty:
+    looped_values = loop_results['complete_values']
+    if looped_values.empty:
         raise ValueError()
     # debug
-    # print(f'in visual function, got msg max date and low_date: \n'
-    #       f'msg["max_date"]:  {msg["max_date"]}\n'
-    #       f'msg["low_date"]:  {msg["low_date"]}')
+    # print(f'in visual function, got loop_results max date and low_date: \n'
+    #       f'loop_results["max_date"]:  {loop_results["max_date"]}\n'
+    #       f'loop_results["low_date"]:  {loop_results["low_date"]}')
     register_matplotlib_converters()
-    result_columns = result.columns
+    result_columns = looped_values.columns
     fixed_column_items = ['fee', 'cash', 'value', 'reference']
     stock_holdings = [item for
                       item in
                       result_columns if
                       item not in fixed_column_items and
                       item[-2:] != '_p']
-    change = (result[stock_holdings] - result[stock_holdings].shift(1)).sum(1)
-    start_point = result['value'].iloc[0]
-    adjust_factor = result['value'].iloc[0] / result['reference'].iloc[0]
-    reference = result['reference'] * adjust_factor
-    ret = result['value'] - result['value'].shift(1)
-    position = 1 - (result['cash'] / result['value'])
-    return_rate = (result.value - start_point) / start_point * 100
+    change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
+    start_point = looped_values['value'].iloc[0]
+    adjust_factor = looped_values['value'].iloc[0] / looped_values['reference'].iloc[0]
+    reference = looped_values['reference'] * adjust_factor
+    ret = looped_values['value'] - looped_values['value'].shift(1)
+    position = 1 - (looped_values['cash'] / looped_values['value'])
+    return_rate = (looped_values.value - start_point) / start_point * 100
     ref_rate = (reference - start_point) / start_point * 100
-    position_bounds = [result.index[0]]
-    position_bounds.extend(result.loc[change != 0].index)
-    position_bounds.append(result.index[-1])
+    position_bounds = [looped_values.index[0]]
+    position_bounds.extend(looped_values.loc[change != 0].index)
+    position_bounds.append(looped_values.index[-1])
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
@@ -146,56 +147,56 @@ def _plot_loop_result(result, msg: dict):
     # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
-    # output all evaluate result in table form (values and labels are printed separately)
-    fig.text(0.07, 0.93, f'periods: {msg["years"]} years, '
-                         f'from: {msg["loop_start"].date()} to {msg["loop_end"].date()}'
-                         f'time consumed:   signal creation: {time_str_format(msg["run_time_p"])};'
-                         f'  back test:{time_str_format(msg["run_time_l"])}')
+    # output all evaluate looped_values in table form (values and labels are printed separately)
+    fig.text(0.07, 0.93, f'periods: {loop_results["years"]} years, '
+                         f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
+                         f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
+                         f'  back test:{time_str_format(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.82, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
                          f'final value:', ha='right')
-    fig.text(0.23, 0.82, f'{msg["oper_count"].buy.sum()}     buys \n'
-                         f'{msg["oper_count"].sell.sum()}     sells\n'
-                         f'¥{msg["total_fee"]:13,.2f}\n'
-                         f'¥{msg["total_invest"]:13,.2f}\n'
-                         f'¥{msg["final_value"]:13,.2f}')
+    fig.text(0.23, 0.82, f'{loop_results["oper_count"].buy.sum()}     buys \n'
+                         f'{loop_results["oper_count"].sell.sum()}     sells\n'
+                         f'¥{loop_results["total_fee"]:13,.2f}\n'
+                         f'¥{loop_results["total_invest"]:13,.2f}\n'
+                         f'¥{loop_results["final_value"]:13,.2f}')
     fig.text(0.50, 0.82, f'Total return:\n'
                          f'Avg annual return:\n'
                          f'ref return:\n'
                          f'Avg annual ref return:\n'
                          f'Max drawdown:', ha='right')
-    fig.text(0.52, 0.82, f'{msg["rtn"] * 100:.2f}%    \n'
-                         f'{msg["annual_rtn"] * 100: .2f}%    \n'
-                         f'{msg["ref_rtn"] * 100:.2f}%    \n'
-                         f'{msg["ref_annual_rtn"] * 100:.2f}%\n'
-                         f'{msg["mdd"] * 100:.3f}%'
-                         f' on {msg["low_date"].date()}')
+    fig.text(0.52, 0.82, f'{loop_results["rtn"] * 100:.2f}%    \n'
+                         f'{loop_results["annual_rtn"] * 100: .2f}%    \n'
+                         f'{loop_results["ref_rtn"] * 100:.2f}%    \n'
+                         f'{loop_results["ref_annual_rtn"] * 100:.2f}%\n'
+                         f'{loop_results["mdd"] * 100:.3f}%'
+                         f' on {loop_results["low_date"].date()}')
     fig.text(0.82, 0.82, f'alpha:\n'
                          f'Beta:\n'
                          f'Sharp ratio:\n'
                          f'Info ratio:\n'
                          f'250-day volatility:', ha='right')
-    fig.text(0.84, 0.82, f'{msg["alpha"]:.3f}  \n'
-                         f'{msg["beta"]:.3f}  \n'
-                         f'{msg["sharp"]:.3f}  \n'
-                         f'{msg["info"]:.3f}  \n'
-                         f'{msg["volatility"]:.3f}')
+    fig.text(0.84, 0.82, f'{loop_results["alpha"]:.3f}  \n'
+                         f'{loop_results["beta"]:.3f}  \n'
+                         f'{loop_results["sharp"]:.3f}  \n'
+                         f'{loop_results["info"]:.3f}  \n'
+                         f'{loop_results["volatility"]:.3f}')
 
     ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
-    ax1.plot(result.index, ref_rate, linestyle='-',
+    ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
-    ax1.plot(result.index, return_rate, linestyle='-',
+    ax1.plot(looped_values.index, return_rate, linestyle='-',
              color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
-    ax1.fill_between(result.index, 0, ref_rate,
-                     where=ref_rate >= 0,
-                     facecolor=(0.4, 0.6, 0.2), alpha=0.35)
-    ax1.fill_between(result.index, 0, ref_rate,
-                     where=ref_rate < 0,
-                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+    # ax1.fill_between(looped_values.index, 0, ref_rate,
+    #                  where=ref_rate >= 0,
+    #                  facecolor=(0.4, 0.6, 0.2), alpha=0.35)
+    # ax1.fill_between(looped_values.index, 0, ref_rate,
+    #                  where=ref_rate < 0,
+    #                  facecolor=(0.8, 0.2, 0.0), alpha=0.35)
     ax1.yaxis.tick_right()
     ax1.spines['top'].set_visible(False)
     ax1.spines['right'].set_visible(False)
@@ -219,7 +220,7 @@ def _plot_loop_result(result, msg: dict):
                         facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
                         alpha=0.2)
     ax1.annotate("max_drawdown",
-                 xy=(msg["max_date"], return_rate[msg["low_date"]]),
+                 xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
                  xytext=(0.7, 0.0),
                  textcoords='axes fraction',
                  arrowprops=dict(facecolor='black', shrink=0.3),
@@ -228,7 +229,7 @@ def _plot_loop_result(result, msg: dict):
     ax1.legend()
 
     ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])
-    ax2.plot(result.index, position)
+    ax2.plot(looped_values.index, position)
     ax2.set_ylabel('Amount bought / sold')
     ax2.set_xlabel(None)
     ax2.yaxis.tick_right()
@@ -239,7 +240,7 @@ def _plot_loop_result(result, msg: dict):
     ax2.grid(True)
 
     ax3.set_position([0.05, 0.05, CHART_WIDTH, 0.18])
-    ax3.bar(result.index, ret)
+    ax3.bar(looped_values.index, ret)
     ax3.set_ylabel('Daily return')
     ax3.set_xlabel('date')
     ax3.yaxis.tick_right()
@@ -265,12 +266,127 @@ def _plot_loop_result(result, msg: dict):
     plt.show()
 
 
-def _plot_opti_result():
+def _plot_opti_result(result_pool: list):
     """ plot optimization results
 
     :return:
     """
-    raise NotImplementedError
+    """plot the loop results in a fancy way that displays all information more clearly"""
+    # prepare looped_values dataframe
+    if not isinstance(loop_results, dict):
+        raise TypeError('')
+    looped_values = loop_results['complete_values']
+    if looped_values.empty:
+        raise ValueError()
+    # debug
+    # print(f'in visual function, got loop_results max date and low_date: \n'
+    #       f'loop_results["max_date"]:  {loop_results["max_date"]}\n'
+    #       f'loop_results["low_date"]:  {loop_results["low_date"]}')
+    register_matplotlib_converters()
+    result_columns = looped_values.columns
+    fixed_column_items = ['fee', 'cash', 'value', 'reference']
+    stock_holdings = [item for
+                      item in
+                      result_columns if
+                      item not in fixed_column_items and
+                      item[-2:] != '_p']
+    change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
+    start_point = looped_values['value'].iloc[0]
+    adjust_factor = looped_values['value'].iloc[0] / looped_values['reference'].iloc[0]
+    reference = looped_values['reference'] * adjust_factor
+    ret = looped_values['value'] - looped_values['value'].shift(1)
+    position = 1 - (looped_values['cash'] / looped_values['value'])
+    return_rate = (looped_values.value - start_point) / start_point * 100
+    ref_rate = (reference - start_point) / start_point * 100
+    position_bounds = [looped_values.index[0]]
+    position_bounds.extend(looped_values.loc[change != 0].index)
+    position_bounds.append(looped_values.index[-1])
+
+    # process plot figure and axes formatting
+    years = mdates.YearLocator()  # every year
+    months = mdates.MonthLocator()  # every month
+    years_fmt = mdates.DateFormatter('%Y')
+
+    CHART_WIDTH = 0.88
+    # 显示投资回报评价信息
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+    fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
+    # output all evaluate looped_values in table form (values and labels are printed separately)
+    fig.text(0.07, 0.93, f'periods: {loop_results["years"]} years, '
+                         f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
+                         f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
+                         f'  back test:{time_str_format(loop_results["loop_run_time"])}')
+    fig.text(0.21, 0.82, f'Operation summary:\n\n'
+                         f'Total op fee:\n'
+                         f'total investment:\n'
+                         f'final value:', ha='right')
+    fig.text(0.23, 0.82, f'{loop_results["oper_count"].buy.sum()}     buys \n'
+                         f'{loop_results["oper_count"].sell.sum()}     sells\n'
+                         f'¥{loop_results["total_fee"]:13,.2f}\n'
+                         f'¥{loop_results["total_invest"]:13,.2f}\n'
+                         f'¥{loop_results["final_value"]:13,.2f}')
+    fig.text(0.50, 0.82, f'Total return:\n'
+                         f'Avg annual return:\n'
+                         f'ref return:\n'
+                         f'Avg annual ref return:\n'
+                         f'Max drawdown:', ha='right')
+    fig.text(0.52, 0.82, f'{loop_results["rtn"] * 100:.2f}%    \n'
+                         f'{loop_results["annual_rtn"] * 100: .2f}%    \n'
+                         f'{loop_results["ref_rtn"] * 100:.2f}%    \n'
+                         f'{loop_results["ref_annual_rtn"] * 100:.2f}%\n'
+                         f'{loop_results["mdd"] * 100:.3f}%'
+                         f' on {loop_results["low_date"].date()}')
+    fig.text(0.82, 0.82, f'alpha:\n'
+                         f'Beta:\n'
+                         f'Sharp ratio:\n'
+                         f'Info ratio:\n'
+                         f'250-day volatility:', ha='right')
+    fig.text(0.84, 0.82, f'{loop_results["alpha"]:.3f}  \n'
+                         f'{loop_results["beta"]:.3f}  \n'
+                         f'{loop_results["sharp"]:.3f}  \n'
+                         f'{loop_results["info"]:.3f}  \n'
+                         f'{loop_results["volatility"]:.3f}')
+
+    ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
+    ax1.plot(looped_values.index, ref_rate, linestyle='-',
+             color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
+    ax1.plot(looped_values.index, return_rate, linestyle='-',
+             color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
+    ax1.set_ylabel('Total return rate')
+    ax1.grid(True)
+    ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax1.yaxis.tick_right()
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['bottom'].set_visible(False)
+    ax1.spines['left'].set_visible(False)
+
+    # 显示持股仓位区间
+    # TODO: 使用箭头标记买入和卖出点：位于参考线下方的绿色箭头代表买入，位于参考线上方的红色箭头代表卖出
+    for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
+        # fill long/short strips with grey
+        # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
+        # fill long/short strips with green/red colors
+        if long_short > 0:
+            # fill green strips if position is long
+            ax1.axvspan(first, second,
+                        facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
+                        alpha=0.2)
+        else:
+            # fill red strips if position is short
+            ax1.axvspan(first, second,
+                        facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
+                        alpha=0.2)
+    ax1.annotate("max_drawdown",
+                 xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
+                 xytext=(0.7, 0.0),
+                 textcoords='axes fraction',
+                 arrowprops=dict(facecolor='black', shrink=0.3),
+                 horizontalalignment='right',
+                 verticalalignment='top')
+    ax1.legend()
+
+    plt.show()
 
 
 # TODO: like _print_test_result, take the evaluate results on both opti and test hist data
@@ -316,45 +432,46 @@ def _print_operation_signal(run_time_prepare_data, op_list):
     print(f'\n      ===========END OF REPORT=============\n')
 
 
-def _print_loop_result(result, messages=None, columns=None, headers=None, formatter=None):
+def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=None):
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
 
-    :param result:
-    :param messages:
+    :param looped_values:
+    :param loop_results:
     :param columns:
     :param headers:
     :param formatter:
     :return:
     """
+    looped_values = loop_results['complete_values']
     print(f'==================================== \n'
           f'|                                  |\n'
           f'|       BACK TESTING RESULT        |\n'
           f'|                                  |\n'
           f'====================================')
     print(f'\nqteasy running mode: 1 - History back testing\n'
-          f'time consumption for operate signal creation: {time_str_format(messages["run_time_p"])}\n'
-          f'time consumption for operation back looping:  {time_str_format(messages["run_time_l"])}\n')
-    print(f'investment starts on      {result.index[0]}\n'
-          f'ends on                   {result.index[-1]}\n'
-          f'Total looped periods:     {messages["years"]:.1f} years.')
+          f'time consumption for operate signal creation: {time_str_format(loop_results["op_run_time"])}\n'
+          f'time consumption for operation back looping:  {time_str_format(loop_results["loop_run_time"])}\n')
+    print(f'investment starts on      {looped_values.index[0]}\n'
+          f'ends on                   {looped_values.index[-1]}\n'
+          f'Total looped periods:     {loop_results["years"]:.1f} years.')
     print(f'-----------operation summary:-----------\n '
-          f'{messages["oper_count"]}\n'
-          f'Total operation fee:     ¥{messages["total_fee"]:12,.2f}')
-    print(f'total investment amount: ¥{messages["total_invest"]:12,.2f}\n'
-          f'final value:             ¥{messages["final_value"]:12,.2f}')
-    print(f'Total return:             {messages["rtn"] * 100:12.2f}% \n'
-          f'Avg Yearly return:        {messages["annual_rtn"] * 100:12.2f}%')
-    print(f'Reference return:         {messages["ref_rtn"] * 100:12.2f}% \n'
-          f'Reference Yearly return:  {messages["ref_annual_rtn"] * 100:12.2f}%')
-    print(f'------strategy messages indicators------ \n'
-          f'alpha:                    {messages["alpha"]:13.3f}\n'
-          f'Beta:                     {messages["beta"]:13.3f}\n'
-          f'Sharp ratio:              {messages["sharp"]:13.3f}\n'
-          f'Info ratio:               {messages["info"]:13.3f}\n'
-          f'250 day volatility:       {messages["volatility"]:13.3f}\n'
-          f'Max drawdown:             {messages["mdd"] * 100:13.3f}% '
-          f'from {messages["max_date"].date()} to {messages["low_date"].date()}')
+          f'{loop_results["oper_count"]}\n'
+          f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
+    print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
+          f'final value:             ¥{loop_results["final_value"]:12,.2f}')
+    print(f'Total return:             {loop_results["rtn"] * 100:12.2f}% \n'
+          f'Avg Yearly return:        {loop_results["annual_rtn"] * 100:12.2f}%')
+    print(f'Reference return:         {loop_results["ref_rtn"] * 100:12.2f}% \n'
+          f'Reference Yearly return:  {loop_results["ref_annual_rtn"] * 100:12.2f}%')
+    print(f'------strategy loop_results indicators------ \n'
+          f'alpha:                    {loop_results["alpha"]:13.3f}\n'
+          f'Beta:                     {loop_results["beta"]:13.3f}\n'
+          f'Sharp ratio:              {loop_results["sharp"]:13.3f}\n'
+          f'Info ratio:               {loop_results["info"]:13.3f}\n'
+          f'250 day volatility:       {loop_results["volatility"]:13.3f}\n'
+          f'Max drawdown:             {loop_results["mdd"] * 100:13.3f}% '
+          f'from {loop_results["max_date"].date()} to {loop_results["low_date"].date()}')
     print(f'\n===========END OF REPORT=============\n')
 
 
