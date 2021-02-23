@@ -581,6 +581,16 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '为True时使用图表显示回测的结果'},
 
+        'buy_sell_points':     {'Default':   True,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     2,
+                                'text':      '为True时在回测图表中显示买卖点，使用红色和绿色箭头标示出买卖点的位置'},
+
+        'show_positions':      {'Default':   True,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     2,
+                                'text':      '为True时在回测图表中用色带显示投资仓位'},
+
         'cost_fixed_buy':      {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
@@ -633,7 +643,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '是否生成日志'},
 
-        'invest_start':        {'Default':   (today - datetime.timedelta(1000)).strftime('%Y%m%d'),
+        'invest_start':        {'Default':   '20060403',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,

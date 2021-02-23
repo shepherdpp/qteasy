@@ -15,6 +15,7 @@ import matplotlib.cbook as cbook
 import matplotlib.ticker as mtick
 
 import pandas as pd
+import numpy as np
 from pandas.plotting import register_matplotlib_converters
 import datetime
 from .tsfuncs import get_bar, name_change
@@ -106,7 +107,7 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     return daily, share_name
 
 
-def _plot_loop_result(loop_results: dict):
+def _plot_loop_result(loop_results: dict, config):
     """plot the loop results in a fancy way that displays all information more clearly"""
     # prepare looped_values dataframe
     if not isinstance(loop_results, dict):
@@ -114,29 +115,47 @@ def _plot_loop_result(loop_results: dict):
     looped_values = loop_results['complete_values']
     if looped_values.empty:
         raise ValueError()
-    # debug
-    # print(f'in visual function, got loop_results max date and low_date: \n'
-    #       f'loop_results["max_date"]:  {loop_results["max_date"]}\n'
-    #       f'loop_results["low_date"]:  {loop_results["low_date"]}')
+    # register matplotlib converters is requested in future matplotlib versions
     register_matplotlib_converters()
+    # 计算在整个投资回测区间内每天的持股数量，通过持股数量的变化来推出买卖点
     result_columns = looped_values.columns
-    fixed_column_items = ['fee', 'cash', 'value', 'reference']
+    fixed_column_items = ['fee', 'cash', 'value', 'reference', 'ref', 'ret']
     stock_holdings = [item for
                       item in
                       result_columns if
                       item not in fixed_column_items and
                       item[-2:] != '_p']
+    # 为了确保回测结果和参考价格在同一个水平线上比较，需要将他们的起点"重合"在一起，否则
+    # 就会出现两者无法比较的情况。
+    # 例如，当参考价格为HS300指数，而回测时的初始资金额为100000时，回测结果的金额通常在
+    # 100000以上，而HS300指数的价格仅仅在2000～5000之间波动，这就导致在同一个图表上
+    # plot两个指标时，只能看到回测结果，而HS300指数则被压缩成了一条直线，无法对比
+    # 解决办法时同时显示两者的相对收益率，两条线的起点都是0，就能很好地解决上述问题。
+
+    # 持股数量变动量，当持股数量发生变动时，判断产生买卖行为
     change = (looped_values[stock_holdings] - looped_values[stock_holdings].shift(1)).sum(1)
+    # 计算回测记录第一天的回测结果和参考指数价格，以此计算后续的收益率曲线
     start_point = looped_values['value'].iloc[0]
-    adjust_factor = looped_values['value'].iloc[0] / looped_values['reference'].iloc[0]
-    reference = looped_values['reference'] * adjust_factor
+    ref_start = looped_values['reference'].iloc[0]
+    # 计算回测结果的每日回报率
     ret = looped_values['value'] - looped_values['value'].shift(1)
+    # 计算每日的持仓仓位
     position = 1 - (looped_values['cash'] / looped_values['value'])
+    # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
-    ref_rate = (reference - start_point) / start_point * 100
-    position_bounds = [looped_values.index[0]]
-    position_bounds.extend(looped_values.loc[change != 0].index)
-    position_bounds.append(looped_values.index[-1])
+    ref_rate = (looped_values.reference - ref_start) / ref_start * 100
+    # 查找每次买进和卖出的时间点并将他们存储在一个列表中，用于标记买卖时机
+    if config.show_positions:
+        position_bounds = [looped_values.index[0]]
+        position_bounds.extend(looped_values.loc[change != 0].index)
+        position_bounds.append(looped_values.index[-1])
+
+    # 显示买卖时机的另一种方法，使用buy / sell 来存储买卖点
+    # buy_point是当持股数量增加时为买点，sell_points是当持股数量下降时
+    # 在买卖点当天写入的数据是参考数值，这是为了使用散点图画出买卖点的位置
+    if config.buy_sell_points:
+        buy_points = np.where(change > 0, ref_rate, np.nan)
+        sell_points = np.where(change < 0, ref_rate, np.nan)
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
@@ -147,7 +166,8 @@ def _plot_loop_result(loop_results: dict):
     # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
-    # output all evaluate looped_values in table form (values and labels are printed separately)
+    # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
+    # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.93, f'periods: {loop_results["years"]} years, '
                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
                          f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
@@ -184,10 +204,18 @@ def _plot_loop_result(loop_results: dict):
                          f'{loop_results["volatility"]:.3f}')
 
     ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
+    # 绘制参考数据的收益率曲线图
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
-             color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
+             color=(0.4, 0.6, 0.8), alpha=0.85, label='Reference')
+    # 绘制回测结果的收益率曲线图
     ax1.plot(looped_values.index, return_rate, linestyle='-',
-             color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
+             color=(0.8, 0.2, 0.0), alpha=0.85, label='Return')
+    # 绘制买卖点散点图(效果是在ref线上使用红绿箭头标识买卖点)
+    if config.buy_sell_points:
+        ax1.scatter(looped_values.index, buy_points, color='green',
+                    label='Buy', marker='^', alpha=0.9)
+        ax1.scatter(looped_values.index, sell_points, color='red',
+                    label='Sell', marker='v', alpha=0.9)
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
@@ -203,33 +231,29 @@ def _plot_loop_result(loop_results: dict):
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
-    # 显示持股仓位区间
-    # TODO: 使用箭头标记买入和卖出点：位于参考线下方的绿色箭头代表买入，位于参考线上方的红色箭头代表卖出
-    for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
-        # fill long/short strips with grey
-        # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
-        # fill long/short strips with green/red colors
-        if long_short > 0:
-            # fill green arrow on buy dates
-            ax1.annotate('', xy=(first, long_short), arrowprops=dict(facecolor='green', shrink=0.2))
-            # fill green strips if position is long
-            ax1.axvspan(first, second,
-                        facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
-                        alpha=0.2)
-        else:
-            ax1.annotate('', xy=(first, long_short), arrowprops=dict(facecolor='red', shrink=0.2))
-            # fill red strips if position is short
-            ax1.axvspan(first, second,
-                        facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
-                        alpha=0.2)
+    # 显示持股仓位区间（效果是在回测区间上用绿色带表示多头仓位，红色表示空头仓位，颜色越深仓位越高）
+    if config.show_positions:
+        for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
+            # fill long/short strips with grey
+            # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
+            # fill long/short strips with green/red colors
+            if long_short > 0:
+                # fill green strips if position is long
+                ax1.axvspan(first, second,
+                            facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
+                            alpha=0.2)
+            else:# fill red strips if position is short
+                ax1.axvspan(first, second,
+                            facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
+                            alpha=0.2)
     # put arrow on where max draw down is
-    ax1.annotate("max_drawdown",
-                 xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
-                 xytext=(0.7, 0.0),
-                 textcoords='axes fraction',
-                 arrowprops=dict(facecolor='black', shrink=0.3),
-                 horizontalalignment='right',
-                 verticalalignment='top')
+    # ax1.annotate("max_drawdown",
+    #              xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
+    #              xytext=(0.7, 0.0),
+    #              textcoords='axes fraction',
+    #              arrowprops=dict(facecolor='black', shrink=0.3),
+    #              horizontalalignment='right',
+    #              verticalalignment='top')
     ax1.legend()
 
     ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])

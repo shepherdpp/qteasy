@@ -772,14 +772,21 @@ class Operator:
         #       f'the operation matrix should contain at least {len(hist_data.hdates) - first_cash_pos} '
         #       f'rows of data to cover the range from {first_cash_pos} to {len(hist_data.hdates)}')
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
+        # TODO: 这里应该提高容错度，设置更好的回测历史区间设置方法，尽量使用户通过较少的参数设置就能完成基
+        # TODO: 本的运行，不用过分强求参数之间的关系完美无缺，如果用户输入的参数之间有冲突，根据优先级调整
+        # TODO: 相关参数即可，毋须责备求全。
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date {cash_plan.first_day}, ' \
             f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
         # 确保最后一个投资日也在输入的历史数据范围内
+        # TODO: 这里应该提高容错度，如果某个投资日超出了历史数据范围，可以丢弃该笔投资，仅输出警告信息即可
+        # TODO: 没必要过度要求用户的输入完美无缺。
         assert last_cash_pos < len(hist_data.hdates), \
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
+        # TODO: 这个要求在实际应用中很容易产生过度要求，应该设法调整用户的输入，将非交易日的投资平移到最近的
+        # TODO: 交易日，而不是一味地要求用户输入的日期全部是交易日。
         invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
             np_dates_in_hist = np.array(invest_dates_in_hist)
@@ -870,13 +877,10 @@ class Operator:
         date_list = hist_data.hdates
         # timing
         # st = time.clock()
-        # TODO: here shares and dates should NOT be passed
-        # TODO: into sel.generate() function as parameters
-        # TODO: for uniformity reason. it should be the same
-        # TODO: as tmg.generate() and ricon.generate()
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
-            # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，未来应该考虑消除掉这两个参数
+            # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
+            # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]
             sel_masks.append(
                     sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))

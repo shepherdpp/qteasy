@@ -5216,11 +5216,24 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
+        print(f'test plot with no buy-sell points and position indicators')
         qt.run(self.op,
                mode=1,
                trade_batch_size=1,
                visual=True,
                log=False,
+               buy_sell_points=False,
+               show_positions=False,
+               invest_cash_dates='20080104')
+
+        print(f'test plot with both buy-sell points and position indicators')
+        qt.run(self.op,
+               mode=1,
+               trade_batch_size=1,
+               visual=True,
+               log=False,
+               buy_sell_points=True,
+               show_positions=True,
                invest_cash_dates='20080104')
 
     def test_run_mode_2_montecarlo(self):

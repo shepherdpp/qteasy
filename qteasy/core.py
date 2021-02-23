@@ -453,7 +453,7 @@ def configure(**kwargs):
         QT_CONFIG.__setattr__(key, value)
 
 
-def configuration(mode=None, type = None, opti_method=None, level=0, info = False, verbose=False):
+def configuration(mode=None, type = None, opti_method=None, level=0, info=False, verbose=False):
     """
 
     :param mode:
@@ -541,6 +541,8 @@ def configuration(mode=None, type = None, opti_method=None, level=0, info = Fals
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=info, verbose=verbose))
 
 
+# TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
+# TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据
 
@@ -888,10 +890,10 @@ def run(operator, **kwargs):
                                               stage='loop')
         if config.visual:
             # 图表输出投资回报历史曲线
-            _plot_loop_result(loop_result)
+            _plot_loop_result(loop_result, config)
         else:
             # 格式化输出回测结果
-            _print_loop_result(loop_result)
+            _print_loop_result(loop_result, config)
 
         return None
 
