@@ -314,12 +314,15 @@ def _plot_opti_result(result_pool: list, config):
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
     # output all evaluate looped_values in table form (values and labels are printed separately)
-    reference = looped_values.reference
+    ref_start_value = looped_values.reference.iloc[0]
+    reference = (looped_values.reference - ref_start_value) / ref_start_value * 100
     ax1.set_position([0.05, 0.15, CHART_WIDTH, 0.75])
     ax1.plot(looped_values.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
     for cres in complete_results:
-        ax1.plot(looped_values.index, cres.value, linestyle='-',
+        start_value = cres.value.iloc[0]
+        values = (cres.value - start_value) / start_value * 100
+        ax1.plot(looped_values.index, values, linestyle='-',
                  color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
