@@ -297,6 +297,9 @@ def _plot_loop_result(loop_results: dict, config):
 def _plot_opti_result(result_pool: list, config):
     """ plot optimization results
 
+    :param result_pool
+        :type result_pool: list, 一个包含了所有最优参数的评价指标的list。
+
     :return:
     """
     """plot the loop results in a fancy way that displays all information more clearly"""
@@ -307,7 +310,7 @@ def _plot_opti_result(result_pool: list, config):
     # for complete_value in complete_results:
     #     print(complete_value.tail(100))
     if looped_values.empty:
-        raise ValueError()
+        raise ValueError
     register_matplotlib_converters()
     CHART_WIDTH = 0.9
     # 显示投资回报评价信息
@@ -316,7 +319,7 @@ def _plot_opti_result(result_pool: list, config):
     # output all evaluate looped_values in table form (values and labels are printed separately)
     ref_start_value = looped_values.reference.iloc[0]
     reference = (looped_values.reference - ref_start_value) / ref_start_value * 100
-    ax1.set_position([0.05, 0.15, CHART_WIDTH, 0.75])
+    ax1.set_position([0.05, 0.35, CHART_WIDTH, 0.55])
     ax1.plot(looped_values.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
     for cres in complete_results:
@@ -333,8 +336,21 @@ def _plot_opti_result(result_pool: list, config):
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
-    ax2.set_position([0.05, 0.05, CHART_WIDTH, 0.01])
-    ax3.set_position([0.05, 0.05, CHART_WIDTH, 0.01])
+    # display information of rtn and annual_rtn, alpha
+    indicator_df = pd.DataFrame([{'rtn':        result['rtn'],
+                                  'annual_rtn': result['annual_rtn'],
+                                  'alpha':      result['alpha']} for result in result_pool],
+                                index=[result['par'] for result in result_pool])
+    ax2.set_position([0.05, 0.05, CHART_WIDTH / 2, 0.25])
+    maxes = indicator_df.max(axis=0)
+    mins = indicator_df.min(axis=0)
+    mean = indicator_df.mean(axis=0)
+    std = indicator_df.std(axis=0)
+    ax2.errorbar(np.arange(3), mean, std, fmt='ok', lw=3)
+    ax2.errorbar(np.arange(3), mean, [mean - mins, maxes - mean], fmt='.k', ecolor='gray', lw=1)
+
+    ax3.set_position([0.55, 0.05, CHART_WIDTH / 2, 0.25])
+    ax3.hist(indicator_df['alpha'], bins=10)
 
     plt.show()
 

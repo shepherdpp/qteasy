@@ -516,6 +516,12 @@ class Operator:
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
 
+        :param opt_par:
+            :type Tuple, 一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
+
+        :return
+            None
+
         本函数与set_parameter()不同，在优化过程中非常有用，可以同时将参数设置到几个不同的策略中去，只要这个策略的opt_tag不为零
         在一个包含多个Strategy的Operator中，可能同时有几个不同的strategy需要寻优。这时，为了寻找最优解，需要建立一个Space，包含需要寻优的
         几个strategy的所有参数空间。通过这个space生成参数空间后，空间中的每一个向量实际上包含了不同的策略的参数，因此需要将他们原样分配到不
@@ -555,9 +561,6 @@ class Operator:
                     [p0, p1, p2, p3, p4, p5, p6, p7]
                      ==  ==              ==  ==  ==
                     [v0, v1]         v2=[i0, i1, i2]
-
-        :param opt_par: 一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
-        :return
         """
         s = 0
         k = 0
@@ -586,8 +589,11 @@ class Operator:
                 stg.set_pars(opt_par[s])
                 s = k
 
+    # TODO: 完善本函数的Docstring，添加详细的使用介绍和示例
     def set_blender(self, blender_type, *args, **kwargs):
-        """统一的blender混合器属性设置入口"""
+        """ 统一的blender混合器属性设置入口
+
+        """
         if isinstance(blender_type, str):
             if blender_type.lower() == 'selecting':
                 self._set_selecting_blender(*args, **kwargs)
@@ -612,19 +618,37 @@ class Operator:
                       window_length: int = None,
                       data_types: [str, list] = None,
                       **kwargs):
-        """统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
-           stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
+        """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
+            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
 
+            这里应该有本函数的详细介绍
 
-           :param stg_id: 策略ID字符串，格式为x-N，表示第N个x类策略，x的取值范围为{'s', 't', 'r'},分别表示选股、择时和风控策略
-           :param pars: 需要设置的策略参数，格式为tuple
-           :param opt_tag: 优化类型，0：不参加优化，1：参加优化
-           :param par_boes: 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如[(0, 1), (0, 100), (0, 100)]
-           :param par_types: 策略参数类型列表，与par_boes配合确定策略参数取值范围类型，详情参见Space类的介绍
-           :param sample_freq: 采样频率，策略运行时的采样频率
-           :param window_length: 窗口长度：策略计算的前视窗口长度
-           :param data_types: 策略计算所需历史数据的数据类型
-           :return:
+            :param stg_id:
+                :type stg_id: str, 策略ID字符串，格式为x-N，表示第N个x类策略，x的取值范围为{'s', 't', 'r'},分别表示选股、择时和风控策略
+
+            :param pars:
+                :type pars: tuple or dict , 需要设置的策略参数，格式为tuple
+
+            :param opt_tag:
+                :type opt_tag: int, 优化类型，0：不参加优化，1：参加优化
+
+            :param par_boes:
+                :type par_boes: tuple or list, 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
+                [(0, 1), (0, 100), (0, 100)]
+
+            :param par_types:
+                :type par_types: str or list, 策略参数类型列表，与par_boes配合确定策略参数取值范围类型，详情参见Space类的介绍
+
+            :param sample_freq:
+                :type sample_freq: str, 采样频率，策略运行时的采样频率
+
+            :param window_length:
+                :type window_length: int, 窗口长度：策略计算的前视窗口长度
+
+            :param data_types:
+                :type data_types: str or list, 策略计算所需历史数据的数据类型
+
+            :return:
         """
         assert isinstance(stg_id, str), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
         l = stg_id.split('-')
@@ -677,10 +701,13 @@ class Operator:
     # =================================================
     # 下面是Operation模块的公有方法：
     def info(self, verbose = False):
-        """# 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
-        # 如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
-        # 在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息
-        # 首先打印Operation木块本身的信息"""
+        """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
+            如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
+            在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息
+            首先打印Operation木块本身的信息
+            :type verbose: bool
+
+        """
         # TODO: add parameter verbose, controling level of output detail
         # TODO: output information in table format if not verbose
         print('OPERATION MODULE INFO:')
@@ -948,7 +975,7 @@ class Operator:
 
     # ================================
     # 下面是Operation模块的私有方法
-
+    # TODO: 改进Docstring
     def _set_ls_blender(self, ls_blender):
         """设置多空蒙板的混合方式，混合方式包括pos-N-T, str-T, 及'avg'三种, 专门用于控制多空蒙板的混合方式。
 

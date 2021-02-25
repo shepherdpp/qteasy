@@ -5162,7 +5162,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('ls', 'combo')
+        self.op.set_blender('ls', 'pos-2')
         self.op.set_parameter(stg_id='t-0', pars=timing_pars1)
         self.op.set_parameter(stg_id='t-1', pars=timing_pars3)
         self.op.set_parameter('r-0', pars=(9, -0.1595))
