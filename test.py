@@ -5211,6 +5211,7 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=1,
                      trade_batch_size=1,
                      visual=False,
+                     print_backtest_log=True,
                      invest_cash_dates='20080104', )
         qt.run(self.op)
 
@@ -5221,7 +5222,7 @@ class TestQT(unittest.TestCase):
                mode=1,
                trade_batch_size=1,
                visual=True,
-               log=False,
+               print_backtest_log=False,
                buy_sell_points=False,
                show_positions=False,
                invest_cash_dates='20080104')
@@ -5231,7 +5232,7 @@ class TestQT(unittest.TestCase):
                mode=1,
                trade_batch_size=1,
                visual=True,
-               log=False,
+               print_backtest_log=False,
                buy_sell_points=True,
                show_positions=True,
                invest_cash_dates='20080104')

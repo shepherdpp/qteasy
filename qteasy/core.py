@@ -1157,11 +1157,14 @@ def _evaluate_one_parameter(par: tuple,
         :param stage:
             :type str:
             运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
-                1, 'optimize':  运行模式为优化模式，在这种模式下：
+                1, 'loop':      运行模式为回测模式，在这种模式下：
+                                使用投资区间回测投资计划
+                                使用config.print_backtest_log来确定是否打印回测结果
+                2, 'optimize':  运行模式为优化模式，在这种模式下：
                                 使用优化区间回测投资计划
                                 回测区间利用方式使用opti_type的设置值
                                 回测区间分段数量和间隔使用opti_sub_periods
-                2, 'test':      运行模式为测试模式
+                3, 'test':      运行模式为测试模式
                                 使用测试区间回测投资计划
                                 回测区间利用方式使用test_type的设置值
                                 回测区间分段数量和间隔使用test_sub_periods
@@ -1189,8 +1192,8 @@ def _evaluate_one_parameter(par: tuple,
     """
     res_dict = {'par':              None,
                 'complete_values':  None,
-                'op_run_time':      None,
-                'loop_run_time':    None,
+                'op_run_time':      0,
+                'loop_run_time':    0,
                 'final_value':      None}
 
     assert stage in ['loop', 'optimize', 'test']
@@ -1206,12 +1209,13 @@ def _evaluate_one_parameter(par: tuple,
     if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         return res_dict
-    # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数
+    # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数及回测参数
     if stage == 'loop':
         invest_cash_amounts = config.invest_cash_amounts
         invest_cash_dates = config.invest_cash_dates
         period_util_type = 'single'
         indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
+        print_backtest_log = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
     elif stage == 'optimize':
         invest_cash_amounts = config.opti_cash_amounts[0]
         invest_cash_dates = None
@@ -1219,6 +1223,7 @@ def _evaluate_one_parameter(par: tuple,
         period_count = config.opti_sub_periods
         period_length = config.opti_sub_prd_length
         indicators = config.optimize_target
+        print_backtest_log = False
     else:
         invest_cash_amounts = config.test_cash_amounts[0]
         invest_cash_dates = None
@@ -1226,6 +1231,7 @@ def _evaluate_one_parameter(par: tuple,
         period_count = config.test_sub_periods
         period_length = config.test_sub_prd_length
         indicators = config.test_indicators
+        print_backtest_log = False
     # create list of start and end dates
     # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
     # used as the investment date for each sub-periods
@@ -1267,7 +1273,8 @@ def _evaluate_one_parameter(par: tuple,
                                 history_list=history_list_seg,
                                 cash_plan=cash_plan,
                                 cost_rate=trade_cost,
-                                moq=config.trade_batch_size,print_log=False)
+                                moq=config.trade_batch_size,
+                                print_log=print_backtest_log)
         complete_values = _get_complete_hist(looped_value=looped_val,
                                              h_list=history_list_seg,
                                              ref_list=reference_history_data,

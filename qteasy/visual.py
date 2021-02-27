@@ -410,11 +410,11 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     :return:
     """
     looped_values = loop_results['complete_values']
-    print(f'==================================== \n'
-          f'|                                  |\n'
-          f'|       BACK TESTING RESULT        |\n'
-          f'|                                  |\n'
-          f'====================================')
+    print(f'\n     ==================================== \n'
+          f'     |                                  |\n'
+          f'     |       BACK TESTING RESULT        |\n'
+          f'     |                                  |\n'
+          f'     ====================================')
     print(f'\nqteasy running mode: 1 - History back testing\n'
           f'time consumption for operate signal creation: {time_str_format(loop_results["op_run_time"])}\n'
           f'time consumption for operation back looping:  {time_str_format(loop_results["loop_run_time"])}\n')
