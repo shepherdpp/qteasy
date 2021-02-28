@@ -341,7 +341,7 @@ def _plot_opti_result(result_pool: list, config):
                                   'annual_rtn': result['annual_rtn'],
                                   'alpha':      result['alpha']} for result in result_pool],
                                 index=[result['par'] for result in result_pool])
-    ax2.set_position([0.05, 0.05, CHART_WIDTH / 2, 0.25])
+    ax2.set_position([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
     maxes = indicator_df.max(axis=0)
     mins = indicator_df.min(axis=0)
     mean = indicator_df.mean(axis=0)
@@ -349,7 +349,7 @@ def _plot_opti_result(result_pool: list, config):
     ax2.errorbar(np.arange(3), mean, std, fmt='ok', lw=3)
     ax2.errorbar(np.arange(3), mean, [mean - mins, maxes - mean], fmt='.k', ecolor='gray', lw=1)
 
-    ax3.set_position([0.55, 0.05, CHART_WIDTH / 2, 0.25])
+    ax3.set_position([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
     ax3.hist(indicator_df['alpha'], bins=10)
 
     plt.show()

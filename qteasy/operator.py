@@ -29,10 +29,10 @@ from .utilfuncs import unify, mask_to_signal
 # TODO：另外，还需要加入更多交易相关信息，如限价单、市价单、交易数量等等，总之，之前仅用singal表示交易信号的方式太过于简单了
 
 
-#TODO: A reference data type should affiliated to strategies,
-#TODO: which is useful when a reference data is needed. for
-#TODO: example, a relative change rate is based on the difference
-#TODO: between the stock prices and reference prices.
+# TODO: A reference data type should affiliated to strategies,
+# TODO: which is useful when a reference data is needed. for
+# TODO: example, a relative change rate is based on the difference
+# TODO: between the stock prices and reference prices.
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
 
@@ -317,10 +317,12 @@ class Operator:
 
     @property
     def timing_count(self):
+        """返回operator对象中的所有timing对象的数量"""
         return len(self.timing)
 
     @property
     def ls_blender(self):
+        """返回operator对象中的多空蒙板混合器"""
         return self._ls_blender
 
     @property
@@ -330,14 +332,17 @@ class Operator:
 
     @property
     def selecting_count(self):
+        """返回operator对象的所有selecting对象的数量"""
         return len(self.selecting)
 
     @property
     def selecting_blender(self):
+        """返回operator对象的所有选股策略的选股结果混合器"""
         return self._selecting_blender_string
 
     @property
     def selecting_blender_expr(self):
+        """返回operator对象的所有选股策略的选股结果的混合器表达式"""
         return self._selecting_blender
 
     @property
@@ -347,10 +352,12 @@ class Operator:
 
     @property
     def ricon_count(self):
+        """返回operator对象的所有ricon对象的数量"""
         return len(self.ricon)
 
     @property
     def ricon_blender(self):
+        """返回operator对象的所有ricon对象的混合器"""
         return self._ricon_blender
 
     @property
@@ -361,6 +368,7 @@ class Operator:
 
     @property
     def strategy_count(self):
+        """返回operator对象的所有策略的数量"""
         return len(self.strategies)
 
     @property
@@ -390,12 +398,12 @@ class Operator:
             改属性的返回值是一个元组，包含ranges, types两个列表，这两个列表正好可以直接用作Space对象的创建参数，用于创建一个合适的
             Space对象
 
-        一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
-        stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
-        这样的控制，我们可以给每一个子策略一个属性opt_tag优化标签，通过设置这个标签的值，可以控制这个子策略是否参与优化：
-        {0: 'No optimization, 不参与优化，这个子策略在整个优化过程中将始终使用同一组参数',
-         1: 'Normal optimization, 普通优化，这个子策略在优化过程中使用不同的参数，这些参数都是从它的参数空间中按照规律取出的',
-         2: 'enumerate optimization, 枚举优化，在优化过程中使用不同的参数，但并非取自其参数空间，而是来自一个预设的枚举对象'}
+            一个完整的投资策略由三类多个不同的子策略组成。每个子策略都有自己特定的参数空间，它们的参数空间信息存储在stg.par_boes以及
+            stg.par_types等属性中。通常，我们在优化参数的过程中，希望仅对部分策略的参数空间进行搜索，而其他的策略保持参数不变。为了实现
+            这样的控制，我们可以给每一个子策略一个属性opt_tag优化标签，通过设置这个标签的值，可以控制这个子策略是否参与优化：
+            {0: 'No optimization, 不参与优化，这个子策略在整个优化过程中将始终使用同一组参数',
+             1: 'Normal optimization, 普通优化，这个子策略在优化过程中使用不同的参数，这些参数都是从它的参数空间中按照规律取出的',
+             2: 'enumerate optimization, 枚举优化，在优化过程中使用不同的参数，但并非取自其参数空间，而是来自一个预设的枚举对象'}
 
          这个函数遍历operator对象中所有子策略，根据其优化类型选择它的参数空间信息，组合成一个多维向量用于创建可以用于生成所有相关
          策略的参数的高维空间
@@ -406,17 +414,20 @@ class Operator:
         types = []
         for stg in self.strategies:
             if stg.opt_tag == 0:
-                pass  # 策略优化方案关闭
+                pass  # 策略参数不参与优化
             elif stg.opt_tag == 1:
+                # 所有的策略参数全部参与优化，且策略的每一个参数作为一个个体参与优化
                 ranges.extend(stg.par_boes)
                 types.extend(stg.par_types)
             elif stg.opt_tag == 2:
+                # 所有的策略参数全部参与优化，但策略的所有参数组合作为枚举同时参与优化
                 ranges.append(stg.par_boes)
                 types.extend(['enum'])
         return ranges, types
 
     @property
     def opt_types(self):
+        """返回所有策略的优化类型标签"""
         return [stg.opt_tag for stg in self.strategies]
 
     @property
@@ -593,17 +604,24 @@ class Operator:
     def set_blender(self, blender_type, *args, **kwargs):
         """ 统一的blender混合器属性设置入口
 
+        :param blender_type:
+            :type blender_type: str, 一个字符串，用于指定被设置属性的混合器的类型，接收到可识别
+            的输入后，调用不同的混合器设置函数，设置混合器
+
+        :return
+            None
+
         """
         if isinstance(blender_type, str):
-            if blender_type.lower() == 'selecting':
+            if blender_type.lower() in ['selecting', 'sel', 'select']:
                 self._set_selecting_blender(*args, **kwargs)
-            elif blender_type.lower() == 'ls':
+            elif blender_type.lower() in ['ls', 'longshort', 'long_short']:
                 self._set_ls_blender(*args, **kwargs)
-            elif blender_type.lower() == 'ricon':
+            elif blender_type.lower() in ['ricon']:
                 self._set_ricon_blender(*args, **kwargs)
             else:
                 raise ValueError(f'wrong input! \'{blender_type}\' is not a valid input, '
-                                 f'choose from [\'selecting\', \'ls\', \'ricon\']')
+                                 f'choose from [\'selecting\', \'sel\', \'ls\', \'ricon\']')
         else:
             raise TypeError(f'blender_type should be a string, got {type(blender_type)} instead')
         pass
@@ -630,7 +648,7 @@ class Operator:
                 :type pars: tuple or dict , 需要设置的策略参数，格式为tuple
 
             :param opt_tag:
-                :type opt_tag: int, 优化类型，0：不参加优化，1：参加优化
+                :type opt_tag: int, 优化类型，0: 不参加优化，1: 参加优化, 2: 以枚举类型参加优化
 
             :param par_boes:
                 :type par_boes: tuple or list, 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
@@ -951,6 +969,7 @@ class Operator:
             op_mat = (mask_to_signal(ls_mask * sel_mask).sum(axis=0) + ricon_mat).clip(-1, 1)
         # 生成DataFrame，并且填充日期数据
         date_list = hist_data.hdates[-op_mat.shape[0]:]
+        # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # debug
         # print(f'Finally op mask has been created, shaped {op_mat.shape}, first 20 rows are {op_mat[:20]}')
