@@ -5709,7 +5709,8 @@ class TestQT(unittest.TestCase):
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
-        qt.run(op)
+        qt.run(op, visual=True)
+        qt.run(op, visual=False, print_backtest_log=True)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance

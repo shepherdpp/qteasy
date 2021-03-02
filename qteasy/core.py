@@ -918,11 +918,11 @@ def run(operator, **kwargs):
                                                config=config,
                                                stage='test')
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
-        eval_res = result_pool.extra
+        opti_eval_res = result_pool.extra
         if config.visual:
-            _plot_opti_result(eval_res, config)
+            _plot_opti_result(opti_eval_res, config)
         else:
-            _print_test_result(eval_res, config)
+            _print_test_result(opti_eval_res, config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
@@ -938,11 +938,11 @@ def run(operator, **kwargs):
                                                    stage='test')
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
-            eval_res = result_pool.extra
+            test_eval_res = result_pool.extra
             if config.visual:
-                pass
+                _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
             else:
-                _print_test_result(eval_res, config)
+                _print_test_result(test_eval_res, config)
         elif config.test_type == 'montecarlo':
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
@@ -962,11 +962,11 @@ def run(operator, **kwargs):
                                                        stage='test')
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
-                eval_res = result_pool.extra
+                test_eval_res = result_pool.extra
                 if config.visual:
                     pass
                 else:
-                    _print_test_result(eval_res, config)
+                    _print_test_result(test_eval_res, config)
 
         return pars
 

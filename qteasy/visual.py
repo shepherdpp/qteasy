@@ -302,7 +302,6 @@ def _plot_opti_result(result_pool: list, config):
 
     :return:
     """
-    """plot the loop results in a fancy way that displays all information more clearly"""
     # prepare looped_values dataframe
     result_count = len(result_pool)
     complete_results = [result['complete_values'] for result in result_pool]
@@ -357,21 +356,69 @@ def _plot_opti_result(result_pool: list, config):
 
 # TODO: like _print_test_result, take the evaluate results on both opti and test hist data
 # TODO: and commit comparison base on these two data sets
-def _plot_test_result(test_eval_res: pd.DataFrame,
-                      opti_eval_res: pd.DataFrame,
-                      test_loop_lists: list,
-                      opti_loop_lists: list,
+def _plot_test_result(test_eval_res: list,
+                      opti_eval_res: list,
                       config):
     """ plot test result of optimization results
 
     :param test_eval_res:
+        :type test_eval_res: list
+
     :param opti_eval_res:
-    :param test_loop_lists:
-    :param opti_loop_lists:
+        :type opti_eval_res: list
+
     :param config:
     :return:
     """
-    raise NotImplementedError
+
+    # prepare looped_values dataframe
+    result_count = len(test_eval_res)
+    opti_complete_value_results = [result['complete_values'] for result in opti_eval_res]
+    test_complete_value_results = [result['complete_values'] for result in test_eval_res]
+    first_opti_looped_values = opti_complete_value_results[0]
+    first_test_looped_values = test_complete_value_results[0]
+    # for complete_value in complete_results:
+    #     print(complete_value.tail(100))
+    if first_opti_looped_values.empty:
+        raise ValueError
+    if first_test_looped_values.empty:
+        raise ValueError
+    register_matplotlib_converters()
+    CHART_WIDTH = 0.9
+    # 显示投资回报评价信息
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+    fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
+    # output all evaluate looped_values in table form (values and labels are printed separately)
+    ref_start_value = first_test_looped_values.reference.iloc[0]
+    reference = (first_test_looped_values.reference - ref_start_value) / ref_start_value * 100
+    ax1.set_position([0.05, 0.35, CHART_WIDTH, 0.55])
+    ax1.plot(first_test_looped_values.index, reference, linestyle='-',
+             color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
+    for cres in opti_complete_value_results:
+        start_value = cres.value.iloc[0]
+        values = (cres.value - start_value) / start_value * 100
+        ax1.plot(first_opti_looped_values.index, values, linestyle='-',
+                 color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
+    for cres in test_complete_value_results:
+        start_value = cres.value.iloc[0]
+        values = (cres.value - start_value) / start_value * 100
+        ax1.plot(first_test_looped_values.index, values, linestyle='-',
+                 color=(0.2, 0.8, 0.2), alpha=0.85, label='return')
+
+    ax1.set_ylabel('Total return rate')
+    ax1.grid(True)
+    ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax1.yaxis.tick_right()
+    ax1.spines['top'].set_visible(False)
+    ax1.spines['right'].set_visible(False)
+    ax1.spines['bottom'].set_visible(False)
+    ax1.spines['left'].set_visible(False)
+
+    ax2.set_position([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
+
+    ax3.set_position([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
+
+    fig.show()
 
 
 def _print_operation_signal(run_time_prepare_data, op_list):
