@@ -377,6 +377,10 @@ def _plot_test_result(test_eval_res: list,
     test_complete_value_results = [result['complete_values'] for result in test_eval_res]
     first_opti_looped_values = opti_complete_value_results[0]
     first_test_looped_values = test_complete_value_results[0]
+    opti_reference = first_opti_looped_values.reference
+    test_reference = first_test_looped_values.reference
+    complete_reference = opti_reference.reindex(opti_reference.index.union(test_reference.index))
+    complete_reference.loc[np.isnan(complete_reference)] = test_reference
     # for complete_value in complete_results:
     #     print(complete_value.tail(100))
     if first_opti_looped_values.empty:
@@ -389,10 +393,10 @@ def _plot_test_result(test_eval_res: list,
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
     # output all evaluate looped_values in table form (values and labels are printed separately)
-    ref_start_value = first_test_looped_values.reference.iloc[0]
-    reference = (first_test_looped_values.reference - ref_start_value) / ref_start_value * 100
+    ref_start_value = complete_reference.iloc[0]
+    reference = (complete_reference - ref_start_value) / ref_start_value * 100
     ax1.set_position([0.05, 0.35, CHART_WIDTH, 0.55])
-    ax1.plot(first_test_looped_values.index, reference, linestyle='-',
+    ax1.plot(complete_reference.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
     for cres in opti_complete_value_results:
         start_value = cres.value.iloc[0]
@@ -403,7 +407,7 @@ def _plot_test_result(test_eval_res: list,
         start_value = cres.value.iloc[0]
         values = (cres.value - start_value) / start_value * 100
         ax1.plot(first_test_looped_values.index, values, linestyle='-',
-                 color=(0.2, 0.8, 0.2), alpha=0.85, label='return')
+                 color=(0.2, 0.6, 0.2), alpha=0.85, label='return')
 
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
@@ -414,11 +418,28 @@ def _plot_test_result(test_eval_res: list,
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
+    opti_indicator_df = pd.DataFrame([{'rtn': result['rtn'],
+                                       'annual_rtn': result['annual_rtn'],
+                                       'alpha': result['alpha']} for result in opti_eval_res],
+                                     index=[result['par'] for result in opti_eval_res])
+    test_indicator_df = pd.DataFrame([{'rtn': result['rtn'],
+                                       'annual_rtn': result['annual_rtn'],
+                                       'alpha': result['alpha']} for result in test_eval_res],
+                                     index=[result['par'] for result in test_eval_res])
+
     ax2.set_position([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
+    ax2.scatter(opti_indicator_df.annual_rtn,
+                test_indicator_df.annual_rtn, color='green',
+                label='annual_return', marker='^', alpha=0.9)
+    ax2.legend()
 
     ax3.set_position([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
+    ax3.scatter(opti_indicator_df.alpha,
+                test_indicator_df.alpha, color='red',
+                label='alpha', marker='^', alpha=0.9)
+    ax3.legend()
 
-    fig.show()
+    plt.show()
 
 
 def _print_operation_signal(run_time_prepare_data, op_list):

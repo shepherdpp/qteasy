@@ -920,7 +920,8 @@ def run(operator, **kwargs):
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
         if config.visual:
-            _plot_opti_result(opti_eval_res, config)
+            pass
+            # _plot_opti_result(opti_eval_res, config)
         else:
             _print_test_result(opti_eval_res, config)
 

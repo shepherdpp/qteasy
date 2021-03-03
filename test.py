@@ -5297,50 +5297,12 @@ class TestQT(unittest.TestCase):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
-        qt.run(self.op,
-               mode=2,
-               opti_method=1,
-               opti_type='single',
-               test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=False,
-               visual=True)
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=True,
-               visual=True)
-        print(f'strategy optimization in Montecarlo with multiple sub-range optimization')
-        qt.run(self.op,
-               mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=True,
-               visual=True)
-        print(f'strategy optimization in Montecarlo with multiple sub-range testing')
-        qt.run(self.op,
-               mode=2,
-               opti_method=1,
-               opti_type='multiple',
-               test_type='multiple',
                opti_sample_count=900,
                opti_start='20040104',
                opti_end='20141231',
@@ -5536,21 +5498,6 @@ class TestQT(unittest.TestCase):
         """测试策略的优化模式，使用递进步长网格寻优"""
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
-        print(f'strategy optimization in incremental algorithm with parallel OFF')
-        qt.run(self.op,
-               mode=2,
-               opti_method=2,
-               opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
-               opti_output_count=20,
-               opti_max_rounds=10,
-               opti_min_volume=5E7,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=False,
-               visual=True)
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -5572,23 +5519,6 @@ class TestQT(unittest.TestCase):
                opti_method=2,
                opti_type='multiple',
                test_type='single',
-               opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
-               opti_output_count=20,
-               opti_max_rounds=50,
-               opti_min_volume=5E9,
-               opti_start='20040104',
-               opti_end='20141231',
-               test_start='20120604',
-               test_end='20201130',
-               parallel=True,
-               visual=True)
-        print(f'strategy optimization in incremental with multiple sub-range testing')
-        qt.run(self.op,
-               mode=2,
-               opti_method=2,
-               opti_type='multiple',
-               test_type='multiple',
                opti_r_sample_count=100,
                opti_reduce_ratio=0.3,
                opti_output_count=20,
