@@ -7,7 +7,8 @@ from numpy import int64
 import itertools
 import datetime
 from qteasy.tafuncs import sma
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list, is_trade_day
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import is_trade_day, is_definite_trade_day
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, _create_mock_data
 from qteasy.built_in import SelectingFinanceIndicator
@@ -3678,15 +3679,31 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(AssertionError, list_to_str_format, 123)
 
     def test_is_trade_day(self):
-        """test if the funcion is_trade_day() works properly
+        """test if the funcion is_trade_day() and is_definite_trade_day() works properly
         """
         date_trade = '20210401'
         date_holiday = '20210102'
         date_weekend = '20210424'
+        date_seems_trade_day = '20210217'
+        date_too_early = '19890601'
+        date_too_late = '20230105'
+        date_christmas = '20201225'
 
         self.assertTrue(is_trade_day(date_trade))
         self.assertFalse(is_trade_day(date_holiday))
         self.assertFalse(is_trade_day(date_weekend))
+        self.assertTrue(is_trade_day(date_seems_trade_day))
+        self.assertTrue(is_trade_day(date_too_early))
+        self.assertTrue(is_trade_day(date_too_late))
+        self.assertTrue(is_trade_day(date_christmas))
+        self.assertTrue(is_definite_trade_day(date_trade))
+        self.assertFalse(is_definite_trade_day(date_holiday))
+        self.assertFalse(is_definite_trade_day(date_weekend))
+        self.assertFalse(is_definite_trade_day(date_seems_trade_day))
+        self.assertFalse(is_definite_trade_day(date_too_early))
+        self.assertFalse(is_definite_trade_day(date_too_late))
+        self.assertTrue(is_definite_trade_day(date_christmas))
+        self.assertFalse(is_definite_trade_day(date_christmas, exchange='XHKG'))
 
         date_trade = pd.to_datetime('20210401')
         date_holiday = pd.to_datetime('20210102')

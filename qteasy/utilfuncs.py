@@ -9,9 +9,10 @@
 
 import numpy as np
 import pandas as pd
+import sys
+import qteasy
 from pandas import Timestamp
 from datetime import datetime
-import sys
 
 TIME_FREQ_STRINGS = ['TICK',
                      'T',
@@ -338,8 +339,11 @@ def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bo
 
 def is_trade_day(date):
     """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）
+    准确率有限但是效率高
 
     :param date:
+        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+
     :return:
     """
     # public_holidays 是一个含两个list的tuple，存储了闭市的公共假期，第一个list是代表月份的数字，第二个list是代表日期的数字
@@ -355,6 +359,46 @@ def is_trade_day(date):
         if date.month == m and date.day == d:
             return False
     return True
+
+
+def is_definite_trade_day(date, exchange: str = 'SSE'):
+    """ 根据交易所发布的交易日历判断一个日期是否是交易日，准确性高但需要读取网络数据，因此效率低
+
+    :param date:
+        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+
+    :param exchange:
+        :type exchange: str 交易所代码:
+                            SSE:    上交所,
+                            SZSE:   深交所,
+                            CFFEX:  中金所,
+                            SHFE:   上期所,
+                            CZCE:   郑商所,
+                            DCE:    大商所,
+                            INE:    上能源,
+                            IB:     银行间,
+                            XHKG:   港交所
+
+    :return:
+    """
+    try:
+        date = pd.to_datetime(date)
+    except:
+        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
+    if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
+        return False
+    if not isinstance(exchange, str) and exchange in ['SSE',
+                                                      'SZSE',
+                                                      'CFFEX',
+                                                      'SHFE',
+                                                      'CZCE',
+                                                      'DCE',
+                                                      'INE',
+                                                      'IB',
+                                                      'XHKG']:
+        raise TypeError(f'exchange \'{exchange}\' is not a valid input')
+    non_trade_days = qteasy.tsfuncs.trade_calendar(exchange=exchange, is_open=0)
+    return date not in non_trade_days
 
 
 def function_debugger(func):

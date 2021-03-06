@@ -10,10 +10,10 @@
 import pandas as pd
 import tushare as ts
 from functools import lru_cache
+from .utilfuncs import regulate_date_format, list_to_str_format
 
 VALID_STOCK_CODE_SUFFIX = ['.SZ', '.SH', '.HK']
 
-from .utilfuncs import regulate_date_format, list_to_str_format
 
 # TODO: Usability improvements:
 # TODO: 1: 增加可供qt调用的高级函数，用于以下场景
@@ -69,8 +69,10 @@ def stock_basic(is_hs: str = None,
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
                    end: str = None,
-                   is_open: str = None):
+                   is_open: int = None):
     """ 获取各大交易所交易日历数据,默认提取的是上交所
+        如果不指定is_open，则返回包含所有日期以及is_open代码的DataFrame
+        如果指定is_open == 0 或者 1， 则返回相应的日期列表
 
     :param exchange: 交易所 SSE上交所,SZSE深交所,CFFEX 中金所,SHFE 上期所,CZCE 郑商所,DCE 大商所,INE 上能源,IB 银行间,XHKG 港交所
     :param start: 开始日期
@@ -84,10 +86,14 @@ def trade_calendar(exchange: str = 'SSE',
         pretrade_date,  str,    默认不显示，  上一个交易日
     """
     pro = ts.pro_api()
-    return pro.trade_cal(exchange=exchange,
-                         start_date=start,
-                         end_date=end,
-                         is_open=is_open)
+    trade_cal = pro.trade_cal(exchange=exchange,
+                              start_date=start,
+                              end_date=end,
+                              is_open=is_open)
+    if is_open is None:
+        return trade_cal
+    else:
+        return list(pd.to_datetime(trade_cal.cal_date))
 
 
 @lru_cache(maxsize=16)
