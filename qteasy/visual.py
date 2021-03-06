@@ -442,7 +442,7 @@ def _plot_test_result(test_eval_res: list,
     plt.show()
 
 
-def _print_operation_signal(run_time_prepare_data, op_list):
+def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, history_data=None):
     """打印实时信号生成模式的运行结果
     """
     print(f'\n      ====================================\n'
@@ -450,6 +450,11 @@ def _print_operation_signal(run_time_prepare_data, op_list):
           f'      |       OPERATION SIGNALS          |\n'
           f'      |                                  |\n'
           f'      ====================================\n')
+    print(f'Operation list is created based on following strategy:\n{operator.strategies}\n'
+          f'{operator.info()}')
+    print(f'Operation list is created on history data: \n'
+          f'starts:     {history_data.hdates[0]}\n'
+          f'end:        {history_data.hdates[-1]}')
     print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
     print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
           f'Total signals generated: {len(op_list.index)}.')

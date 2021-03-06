@@ -820,6 +820,7 @@ class Operator:
         # TODO: 这里应该提高容错度，设置更好的回测历史区间设置方法，尽量使用户通过较少的参数设置就能完成基
         # TODO: 本的运行，不用过分强求参数之间的关系完美无缺，如果用户输入的参数之间有冲突，根据优先级调整
         # TODO: 相关参数即可，毋须责备求全。
+        # TODO: 当运行模式为0时，不需要判断cash_pos与max_window_length的关系
         assert first_cash_pos >= self.max_window_length, \
             f'InputError, Not enough history data records on first cash date {cash_plan.first_day}, ' \
             f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'

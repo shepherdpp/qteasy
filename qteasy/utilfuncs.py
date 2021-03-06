@@ -297,9 +297,9 @@ def regulate_date_format(date_str: [str, object]) -> str:
             date_str = date_time.strftime('%Y%m%d')
         except:
             raise ValueError(f'Input string {date_str} can not be converted to a time format')
-    elif isinstance(date_str, (Timestamp, datetime)):
+    try:
         date_str = date_str.strftime('%Y%m%d')
-    else:
+    except:
         raise TypeError(f'Input is {type(date_str)}, it\'s not a time or not in correct time format')
     return date_str
 
@@ -382,7 +382,7 @@ def is_definite_trade_day(date, exchange: str = 'SSE'):
     :return:
     """
     try:
-        date = pd.to_datetime(date)
+        date = pd.to_datetime(date).date()
     except:
         raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
     if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):

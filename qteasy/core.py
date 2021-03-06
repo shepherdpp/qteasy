@@ -20,11 +20,12 @@ from datetime import datetime
 
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
+from .utilfuncs import is_definite_trade_day, is_trade_day
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
-    _print_operation_signal, _plot_test_result, _plot_opti_result
+     _print_operation_signal, _plot_test_result, _plot_opti_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -553,10 +554,26 @@ def check_and_prepare_hist_data(operator, config):
     """
     run_mode = config.mode
     # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
-    runing_datetime = datetime.now()
+    current_datetime = datetime.now()
+    current_date = current_datetime.date()
+    current_time = current_datetime.time()
+    # 根据不同的运行模式，设定不同的运行历史数据起止日期
+    if run_mode == 0:
+        start = config.invest_start
+        # start = current_date - pd.Timedelta(250, 'd')
+        if is_trade_day(current_date) and current_time.hour > 16:  # 交易日17:00以后
+            end = regulate_date_format(current_date)
+        else:  # 交易日17:00以前，查询到前一个交易日
+            prev = current_date - pd.Timedelta(1, 'd')
+            while not is_trade_day(prev):
+                prev = prev - pd.Timedelta(1, 'd')
+            end = regulate_date_format(prev)
+    else:
+        start = config.invest_start
+        end = config.invest_end
 
-    hist_op = get_history_panel(start=config.invest_start,
-                                end=config.invest_end,
+    hist_op = get_history_panel(start=start,
+                                end=end,
                                 shares=config.asset_pool,
                                 htypes=operator.op_data_types,
                                 freq=operator.op_data_freq,
@@ -867,7 +884,10 @@ def run(operator, **kwargs):
         et = time.time()
         run_time_prepare_data = (et - st)
         # amounts = [0] * len(config.asset_pool)
-        _print_operation_signal(run_time_prepare_data=run_time_prepare_data, op_list=op_list)
+        _print_operation_signal(op_list=op_list,
+                                run_time_prepare_data=run_time_prepare_data,
+                                operator=operator,
+                                history_data=hist_op)
         return None
 
     elif run_mode == 1 or run_mode == 'back_test':
