@@ -7,7 +7,7 @@ from numpy import int64
 import itertools
 import datetime
 from qteasy.tafuncs import sma
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list, is_trade_day
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, _create_mock_data
 from qteasy.built_in import SelectingFinanceIndicator
@@ -3624,9 +3624,9 @@ class TestHistoryPanel(unittest.TestCase):
         raise NotImplementedError
 
 
-class TestHistorySubFuncs(unittest.TestCase):
+class TestUtilityFuncs(unittest.TestCase):
     def setUp(self):
-        raise NotImplementedError
+        pass
 
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
@@ -3676,6 +3676,25 @@ class TestHistorySubFuncs(unittest.TestCase):
         self.assertEqual(list_to_str_format('already,a,good,string'),
                          'already,a,good,string')
         self.assertRaises(AssertionError, list_to_str_format, 123)
+
+    def test_is_trade_day(self):
+        """test if the funcion is_trade_day() works properly
+        """
+        date_trade = '20210401'
+        date_holiday = '20210102'
+        date_weekend = '20210424'
+
+        self.assertTrue(is_trade_day(date_trade))
+        self.assertFalse(is_trade_day(date_holiday))
+        self.assertFalse(is_trade_day(date_weekend))
+
+        date_trade = pd.to_datetime('20210401')
+        date_holiday = pd.to_datetime('20210102')
+        date_weekend = pd.to_datetime('20210424')
+
+        self.assertTrue(is_trade_day(date_trade))
+        self.assertFalse(is_trade_day(date_holiday))
+        self.assertFalse(is_trade_day(date_weekend))
 
 
 class TestTushare(unittest.TestCase):

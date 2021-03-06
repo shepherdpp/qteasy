@@ -16,6 +16,7 @@ import math
 import logging
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from datetime import datetime
 
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
@@ -551,6 +552,9 @@ def check_and_prepare_hist_data(operator, config):
     :return:
     """
     run_mode = config.mode
+    # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
+    runing_datetime = datetime.now()
+
     hist_op = get_history_panel(start=config.invest_start,
                                 end=config.invest_end,
                                 shares=config.asset_pool,

@@ -53,6 +53,8 @@ TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
 np.seterr(divide='ignore', invalid='ignore')
 
+PUBLIC_HOLIDAYS = []
+
 # TODO: in future versions, Configurations can be loaded from local
 # TODO: files, thus previous configurations can be initialized at __init__()
 
