@@ -20,7 +20,7 @@ from datetime import datetime
 
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
-from .utilfuncs import is_market_trade_day, is_trade_day
+from .utilfuncs import is_market_trade_day, is_trade_day, weekday_name
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -99,7 +99,8 @@ def _loop_step(pre_cash: float,
                prices: np.ndarray,
                rate: Cost,
                moq: float,
-               print_log: bool = False) -> tuple:
+               print_log: bool = False,
+               share_dict: dict = None) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
     input：=====
@@ -119,22 +120,36 @@ def _loop_step(pre_cash: float,
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
     if print_log:
-        print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n期初现金: {pre_cash:.2f}, \n'
-              f'期初持有资产: {np.round(pre_amounts, 2)}\n且资产价格为: {np.round(prices, 2)}')
-        print(f'本期交易信号{np.round(op, 2)}')
+        # asset_array = np.array([pre_amounts, prices])
+        print(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
+              f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
+              f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
+              f'本期资产价格:  {np.around(prices, 2)}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 根据出售持有资产的份额数量计算获取的现金
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     op=op,
-                                                                    amounts=pre_amounts)
+                                                                    amounts=pre_amounts,
+                                                                    moq=1)
     if print_log:
-        print(f'以本期资产价格{np.round(prices, 2)}出售资产 {np.round(-amount_sold, 2)}')
-        print(f'获得现金:{cash_gained:.2f}, 产生交易费用 {fee_selling:.2f}, 交易后现金余额: {(pre_cash + cash_gained):.3f}')
+        item_sold = np.where(op < 0)[0]
+        if len(item_sold) > 0:
+            for i in item_sold:
+                if prices[i] != 0:
+                    print(f' - 资产:\'{share_dict[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+                          f'出售 {np.round(-amount_sold[i], 2)} 份')
+                else:
+                    print(f' - 资产:\'{share_dict[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+                          f'暂停交易，出售 {0.0} 份')
+            print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
+                  f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
+        else:
+            print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
-    if print_log:
+    if print_log and pur_values.sum() > 0:
         print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
@@ -148,8 +163,14 @@ def _loop_step(pre_cash: float,
                                                                         pur_values=pur_values,
                                                                         moq=moq)
     if print_log:
-        print(f'以本期资产价格{np.round(prices, 2)}买入资产 {np.round(amount_purchased, 2)}')
-        print(f'实际花费现金 {cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+        item_purchased = np.where(op > 0)[0]
+        if len(item_purchased) > 0:
+            for i in item_purchased:
+                print(f' - 资产:\'{share_dict[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+                      f' 买入 {np.round(amount_purchased[i], 2)} 份')
+            print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+        else:
+            print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
@@ -290,6 +311,8 @@ def apply_loop(op_list: pd.DataFrame,
     # 提取交易清单中的所有数据，生成np.ndarray，即所有的交易信号
     op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
+    shares = op_list.columns
+    share_dict = {k:v for k, v in zip(range(len(shares)), shares)}
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
     # TODO: FutureWarning:
     # TODO: Passing list-likes to .loc or [] with any missing label will raise
@@ -309,8 +332,6 @@ def apply_loop(op_list: pd.DataFrame,
         for i in range(1, len(looped_dates)):
             days_difference[i] = days_timedelta[i].days
         inflation_factors = 1 + days_difference * inflation_rate / 250
-        # debug
-        # print(f'number of difference in days are {days_difference}, inflation factors are {inflation_factors}')
     op_count = op.shape[0]  # 获取行数
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
@@ -326,7 +347,8 @@ def apply_loop(op_list: pd.DataFrame,
     # TODO: is it possible to use as_strided instead of for-loop here?
     for i in range(op_count):  # 对每一行历史交易信号开始回测
         if print_log:
-            print(f'交易日期:{looped_dates[i].strftime(date_print_format)}')
+            print(f'交易日期:{looped_dates[i].strftime(date_print_format)}, '
+                  f'{weekday_name(looped_dates[i].date().weekday())}')
         if inflation_rate > 0:  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             cash *= inflation_factors[i]
             if print_log:
@@ -344,7 +366,8 @@ def apply_loop(op_list: pd.DataFrame,
                                                prices=price[i],
                                                rate=cost_rate,
                                                moq=moq,
-                                               print_log=print_log)
+                                               print_log=print_log,
+                                               share_dict=shares)
         # 保存计算结果
         cashes.append(cash)
         fees.append(fee)

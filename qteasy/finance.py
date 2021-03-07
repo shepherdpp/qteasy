@@ -103,13 +103,14 @@ class Cost:
             raise TypeError
 
     # @numba.njit
-    def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray):
+    def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray, moq: float = 0):
         """计算出售投资产品的要素
 
 
         :param prices: 投资产品的价格
         :param op: 交易信号
         :param amounts: 持有投资产品的份额
+        :param moq: 卖出股票的最小交易单位
 
         :return:
         a_sold:
@@ -117,7 +118,10 @@ class Cost:
         cash_gained: float
         fee: float
         """
-        a_sold = np.sign(prices) * np.where(op < 0, amounts * op, 0)
+        if moq == 0:
+            a_sold = np.sign(prices) * np.where(op < 0, amounts * op, 0)
+        else:
+            a_sold = np.sign(prices) * np.where(op < 0, amounts * op // moq * moq, 0)
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=False)

@@ -62,7 +62,7 @@ from qteasy.database import DataSource
 class TestCost(unittest.TestCase):
     def setUp(self):
         self.amounts = np.array([10000, 20000, 10000])
-        self.op = np.array([0, 1, -1])
+        self.op = np.array([0, 1, -0.33333333])
         self.prices = np.array([10, 20, 10])
         self.r = qt.Cost()
 
@@ -83,12 +83,28 @@ class TestCost(unittest.TestCase):
     def test_rate_fee(self):
         self.r.buy_rate = 0.003
         self.r.sell_rate = 0.001
-        print('Sell result with fixed rate = 0.001:')
+        print('Sell result with fixed rate = 0.001 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.op, self.amounts))
+        print('Sell result with fixed rate = 0.001 and moq = 1:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 1))
+        print('Sell result with fixed rate = 0.001 and moq = 100:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 100))
+
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts)
-        self.assertIs(np.allclose(test_rate_fee_result[0], [0, 0, -10000]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], 99900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], -100.0, msg='result incorrect')
+        self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1], 33299.999667, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2], -33.333332999999996, msg='result incorrect')
+
+        test_rate_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 1)
+        self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3334]), True, 'result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1], 33306.66, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2], -33.34, msg='result incorrect')
+
+        test_rate_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 100)
+        self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3400]), True, 'result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1], 33966.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2], -34, msg='result incorrect')
+
         print('Purchase result with fixed rate = 0.003 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0))
         print('Purchase result with fixed rate = 0.003 and moq = 1:')
@@ -5807,8 +5823,8 @@ class TestQT(unittest.TestCase):
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
-        qt.run(op, visual=True)
-        qt.run(op, visual=False, print_backtest_log=True)
+        qt.run(op, visual=True, trade_batch_size=100)
+        qt.run(op, visual=False, print_backtest_log=True, trade_batch_size=100)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance

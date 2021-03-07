@@ -497,6 +497,22 @@ def next_market_trade_day(date, exchange='SSE'):
         return next
 
 
+def weekday_name(weekday: int):
+    """ 将weekday数字转化为易于理解的人类语言
+
+    :param weekday:
+    :return:
+    """
+    weekday_names = {0: 'Monday',
+                     1: 'Tuesday',
+                     2: 'Wednesday',
+                     3: 'Thursday',
+                     4: 'Friday',
+                     5: 'Saturday',
+                     6: 'Sunday'}
+    return weekday_names[weekday]
+
+
 def function_debugger(func):
     """ a decorator that can be used to debug func during run time,
     print out extra information:
