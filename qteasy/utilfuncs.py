@@ -291,17 +291,11 @@ def regulate_date_format(date_str: [str, object]) -> str:
     :param date_str:
     :return:
     """
-    if isinstance(date_str, str):
-        try:
-            date_time = pd.to_datetime(date_str)
-            date_str = date_time.strftime('%Y%m%d')
-        except:
-            raise ValueError(f'Input string {date_str} can not be converted to a time format')
     try:
-        date_str = date_str.strftime('%Y%m%d')
+        date_time = pd.to_datetime(date_str)
+        return date_time.strftime('%Y%m%d')
     except:
-        raise TypeError(f'Input is {type(date_str)}, it\'s not a time or not in correct time format')
-    return date_str
+        raise ValueError(f'Input string {date_str} can not be converted to a time format')
 
 
 def list_to_str_format(str_list: [list, str]) -> str:
@@ -361,7 +355,39 @@ def is_trade_day(date):
     return True
 
 
-def is_definite_trade_day(date, exchange: str = 'SSE'):
+def prev_trade_day(date):
+    """ 找到一个日期的前一个或然交易日
+
+    :param date:
+    :return:
+    """
+    if is_trade_day(date):
+        return date
+    else:
+        d = pd.to_datetime(date)
+        prev = d - pd.Timedelta(1, 'd')
+        while not is_trade_day(prev):
+            prev = prev - pd.Timedelta(1, 'd')
+        return prev
+
+
+def next_trade_day(date):
+    """ 返回一个日期的下一个或然交易日
+
+    :param date:
+    :return:
+    """
+    if is_trade_day(date):
+        return date
+    else:
+        d = pd.to_datetime(date)
+        next = d + pd.Timedelta(1, 'd')
+        while not is_trade_day(next):
+            next = next + pd.Timedelta(1, 'd')
+        return next
+
+
+def is_market_trade_day(date, exchange: str = 'SSE'):
     """ 根据交易所发布的交易日历判断一个日期是否是交易日，准确性高但需要读取网络数据，因此效率低
 
     :param date:
@@ -399,6 +425,76 @@ def is_definite_trade_day(date, exchange: str = 'SSE'):
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
     non_trade_days = qteasy.tsfuncs.trade_calendar(exchange=exchange, is_open=0)
     return date not in non_trade_days
+
+
+def prev_market_trade_day(date, exchange='SSE'):
+    """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
+
+    :param date:
+        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+
+    :param exchange:
+        :type exchange: str 交易所代码:
+                            SSE:    上交所,
+                            SZSE:   深交所,
+                            CFFEX:  中金所,
+                            SHFE:   上期所,
+                            CZCE:   郑商所,
+                            DCE:    大商所,
+                            INE:    上能源,
+                            IB:     银行间,
+                            XHKG:   港交所
+
+    :return:
+    """
+    try:
+        date = pd.to_datetime(date).date()
+    except:
+        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
+    if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
+        return None
+    if is_market_trade_day(date, exchange):
+        return date
+    else:
+        prev = date - pd.Timedelta(1, 'd')
+        while not is_market_trade_day(prev):
+            prev = prev - pd.Timedelta(1, 'd')
+        return prev
+
+
+def next_market_trade_day(date, exchange='SSE'):
+    """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
+
+    :param date:
+        :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
+
+    :param exchange:
+        :type exchange: str 交易所代码:
+                            SSE:    上交所,
+                            SZSE:   深交所,
+                            CFFEX:  中金所,
+                            SHFE:   上期所,
+                            CZCE:   郑商所,
+                            DCE:    大商所,
+                            INE:    上能源,
+                            IB:     银行间,
+                            XHKG:   港交所
+
+    :return:
+    """
+    try:
+        date = pd.to_datetime(date).date()
+    except:
+        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
+    if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
+        return None
+    if is_market_trade_day(date, exchange):
+        return date
+    else:
+        next = date + pd.Timedelta(1, 'd')
+        while not is_market_trade_day(next):
+            next = next + pd.Timedelta(1, 'd')
+        return next
 
 
 def function_debugger(func):

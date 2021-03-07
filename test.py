@@ -8,7 +8,8 @@ import itertools
 import datetime
 from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
-from qteasy.utilfuncs import is_trade_day, is_definite_trade_day
+from qteasy.utilfuncs import is_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
+from qteasy.utilfuncs import next_market_trade_day
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, _create_mock_data
 from qteasy.built_in import SelectingFinanceIndicator
@@ -3665,7 +3666,6 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(regulate_date_format(pd.Timestamp('2010.03.15')), '20100315')
         self.assertRaises(ValueError, regulate_date_format, 'abc')
         self.assertRaises(ValueError, regulate_date_format, '2019/13/43')
-        self.assertRaises(TypeError, regulate_date_format, 123)
 
     def test_list_to_str_format(self):
         self.assertEqual(list_to_str_format(['close', 'open', 'high', 'low']),
@@ -3679,7 +3679,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(AssertionError, list_to_str_format, 123)
 
     def test_is_trade_day(self):
-        """test if the funcion is_trade_day() and is_definite_trade_day() works properly
+        """test if the funcion is_trade_day() and is_market_trade_day() works properly
         """
         date_trade = '20210401'
         date_holiday = '20210102'
@@ -3696,14 +3696,14 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertTrue(is_trade_day(date_too_early))
         self.assertTrue(is_trade_day(date_too_late))
         self.assertTrue(is_trade_day(date_christmas))
-        self.assertTrue(is_definite_trade_day(date_trade))
-        self.assertFalse(is_definite_trade_day(date_holiday))
-        self.assertFalse(is_definite_trade_day(date_weekend))
-        self.assertFalse(is_definite_trade_day(date_seems_trade_day))
-        self.assertFalse(is_definite_trade_day(date_too_early))
-        self.assertFalse(is_definite_trade_day(date_too_late))
-        self.assertTrue(is_definite_trade_day(date_christmas))
-        self.assertFalse(is_definite_trade_day(date_christmas, exchange='XHKG'))
+        self.assertTrue(is_market_trade_day(date_trade))
+        self.assertFalse(is_market_trade_day(date_holiday))
+        self.assertFalse(is_market_trade_day(date_weekend))
+        self.assertFalse(is_market_trade_day(date_seems_trade_day))
+        self.assertFalse(is_market_trade_day(date_too_early))
+        self.assertFalse(is_market_trade_day(date_too_late))
+        self.assertTrue(is_market_trade_day(date_christmas))
+        self.assertFalse(is_market_trade_day(date_christmas, exchange='XHKG'))
 
         date_trade = pd.to_datetime('20210401')
         date_holiday = pd.to_datetime('20210102')
@@ -3712,6 +3712,125 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertTrue(is_trade_day(date_trade))
         self.assertFalse(is_trade_day(date_holiday))
         self.assertFalse(is_trade_day(date_weekend))
+
+    def test_prev_trade_day(self):
+        """test the function prev_trade_day()
+        """
+        date_trade = '20210401'
+        date_holiday = '20210102'
+        prev_holiday = pd.to_datetime(date_holiday) - pd.Timedelta(2, 'd')
+        date_weekend = '20210424'
+        prev_weekend = pd.to_datetime(date_weekend) - pd.Timedelta(1, 'd')
+        date_seems_trade_day = '20210217'
+        prev_seems_trade_day = '20210217'
+        date_too_early = '19890601'
+        date_too_late = '20230105'
+        date_christmas = '20201225'
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_trade)),
+                         pd.to_datetime(date_trade))
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_holiday)),
+                         pd.to_datetime(prev_holiday))
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_weekend)),
+                         pd.to_datetime(prev_weekend))
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_seems_trade_day)),
+                         pd.to_datetime(prev_seems_trade_day))
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_too_early)),
+                         pd.to_datetime(date_too_early))
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_too_late)),
+                         pd.to_datetime(date_too_late))
+        self.assertEqual(pd.to_datetime(prev_trade_day(date_christmas)),
+                         pd.to_datetime(date_christmas))
+
+
+    def test_next_trade_day(self):
+        """ test the function next_trade_day()
+        """
+        date_trade = '20210401'
+        date_holiday = '20210102'
+        next_holiday = pd.to_datetime(date_holiday) + pd.Timedelta(2, 'd')
+        date_weekend = '20210424'
+        next_weekend = pd.to_datetime(date_weekend) + pd.Timedelta(2, 'd')
+        date_seems_trade_day = '20210217'
+        next_seems_trade_day = '20210217'
+        date_too_early = '19890601'
+        date_too_late = '20230105'
+        date_christmas = '20201225'
+        self.assertEqual(pd.to_datetime(next_trade_day(date_trade)),
+                         pd.to_datetime(date_trade))
+        self.assertEqual(pd.to_datetime(next_trade_day(date_holiday)),
+                         pd.to_datetime(next_holiday))
+        self.assertEqual(pd.to_datetime(next_trade_day(date_weekend)),
+                         pd.to_datetime(next_weekend))
+        self.assertEqual(pd.to_datetime(next_trade_day(date_seems_trade_day)),
+                         pd.to_datetime(next_seems_trade_day))
+        self.assertEqual(pd.to_datetime(next_trade_day(date_too_early)),
+                         pd.to_datetime(date_too_early))
+        self.assertEqual(pd.to_datetime(next_trade_day(date_too_late)),
+                         pd.to_datetime(date_too_late))
+        self.assertEqual(pd.to_datetime(next_trade_day(date_christmas)),
+                         pd.to_datetime(date_christmas))
+
+    def test_prev_market_trade_day(self):
+        """ test the function prev_market_trade_day()
+        """
+        date_trade = '20210401'
+        date_holiday = '20210102'
+        prev_holiday = pd.to_datetime(date_holiday) - pd.Timedelta(2, 'd')
+        date_weekend = '20210424'
+        prev_weekend = pd.to_datetime(date_weekend) - pd.Timedelta(1, 'd')
+        date_seems_trade_day = '20210217'
+        prev_seems_trade_day = pd.to_datetime(date_seems_trade_day) - pd.Timedelta(7, 'd')
+        date_too_early = '19890601'
+        date_too_late = '20230105'
+        date_christmas = '20201225'
+        prev_christmas_xhkg = '20201224'
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_trade)),
+                         pd.to_datetime(date_trade))
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_holiday)),
+                         pd.to_datetime(prev_holiday))
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_weekend)),
+                         pd.to_datetime(prev_weekend))
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_seems_trade_day)),
+                         pd.to_datetime(prev_seems_trade_day))
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_too_early)),
+                         None)
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_too_late)),
+                         None)
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_christmas, 'SSE')),
+                         pd.to_datetime(date_christmas))
+        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_christmas, 'XHKG')),
+                         pd.to_datetime(prev_christmas_xhkg))
+
+    def test_next_market_trade_day(self):
+        """ test the function next_market_trade_day()
+        """
+        date_trade = '20210401'
+        date_holiday = '20210102'
+        next_holiday = pd.to_datetime(date_holiday) + pd.Timedelta(2, 'd')
+        date_weekend = '20210424'
+        next_weekend = pd.to_datetime(date_weekend) + pd.Timedelta(2, 'd')
+        date_seems_trade_day = '20210217'
+        next_seems_trade_day = pd.to_datetime(date_seems_trade_day) + pd.Timedelta(1, 'd')
+        date_too_early = '19890601'
+        date_too_late = '20230105'
+        date_christmas = '20201225'
+        next_christmas_xhkg = '20201228'
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_trade)),
+                         pd.to_datetime(date_trade))
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_holiday)),
+                         pd.to_datetime(next_holiday))
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_weekend)),
+                         pd.to_datetime(next_weekend))
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_seems_trade_day)),
+                         pd.to_datetime(next_seems_trade_day))
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_too_early)),
+                         None)
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_too_late)),
+                         None)
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'SSE')),
+                         pd.to_datetime(date_christmas))
+        self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'XHKG')),
+                         pd.to_datetime(next_christmas_xhkg))
 
 
 class TestTushare(unittest.TestCase):
@@ -5723,7 +5842,8 @@ class TestQT(unittest.TestCase):
                          _poq=10)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
-        qt.run(op)
+        qt.run(op, visual=False, print_backtest_log=True)
+        qt.run(op, visual=True)
 
 
 class TestVisual(unittest.TestCase):

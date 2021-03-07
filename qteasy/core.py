@@ -20,7 +20,7 @@ from datetime import datetime
 
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
-from .utilfuncs import is_definite_trade_day, is_trade_day
+from .utilfuncs import is_market_trade_day, is_trade_day
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -294,7 +294,13 @@ def apply_loop(op_list: pd.DataFrame,
     # TODO: FutureWarning:
     # TODO: Passing list-likes to .loc or [] with any missing label will raise
     # TODO: KeyError in the future, you can use .reindex() as an alternative.
-    price = history_list.fillna(0).loc[op_list.index].values
+    price = history_list.fillna(method='ffill').fillna(0).loc[op_list.index].values
+    # debug
+    print(f'there are all-NAN values in history_list, they are\n'
+          f'{history_list.loc[np.isnan(history_list).all(1)]}\n'
+          f'\nafter fillna, these values are now:\n'
+          f'{history_list.fillna(method="ffill").fillna(0).loc[np.isnan(history_list).all(1)]}')
+    print(f'filled prices are ')
 
     looped_dates = list(op_list.index)
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
@@ -313,11 +319,11 @@ def apply_loop(op_list: pd.DataFrame,
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
     # debug
-    # print(f'op list is loaded, op list head is \n{op_list.head(5)}')
-    # print(f'finding cash investment date position: finding: \n{cash_plan.dates} \nin looped dates (first 3):\n '
-    #       f'{looped_dates[0:3]}'
-    #       f', got result:\n{investment_date_pos}')
-    # print(f'investment date position calculated: {investment_date_pos}')
+    print(f'op list is loaded, op list head is \n{op_list.head(5)}')
+    print(f'finding cash investment date position: finding: \n{cash_plan.dates} \nin looped dates (first 3):\n '
+          f'{looped_dates[0:3]}'
+          f', got result:\n{investment_date_pos}')
+    print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
     cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
     amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量

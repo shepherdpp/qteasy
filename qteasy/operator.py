@@ -774,7 +774,7 @@ class Operator:
             切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。
 
         :param hist_data:
-            :type HistoryPanel
+            :type hist_data: HistoryPanel
             历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
             个股所有类型的数据，例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
                 策略        所需数据类型
@@ -786,7 +786,7 @@ class Operator:
             数据覆盖的时间段和时间频率也必须符合上述要求
 
         :param cash_plan:
-            :type CashPlan
+            :type cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
 
         :return:
@@ -891,7 +891,7 @@ class Operator:
         对信号进行合法性处理，最终生成合法交易信号
         input:
         :param hist_data:
-            :type HistoryPanel
+            :type hist_data: HistoryPanel
             从数据仓库中导出的历史数据，包含多只股票在一定时期内特定频率的一组或多组数据
             ！！但是！！
             作为参数传入的这组历史数据并不会被直接用于交易信号的生成，用于生成交易信号的历史数据
@@ -908,7 +908,6 @@ class Operator:
         """
         # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
-        # import time
         # 生成空的选股蒙板
 
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
@@ -921,8 +920,6 @@ class Operator:
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
-        # timing
-        # st = time.clock()
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
@@ -1105,6 +1102,7 @@ class Operator:
             # 在combo模式下，所有的信号被加总合并，这样每个所有的信号都会被保留，虽然并不是所有的信号都有效
             # 在这种模式下，本意是原样保存所有单个输入多空模板产生的交易信号，但是由于正常多空模板在生成卖出信号的时候，会运用"比例机制"生成
             # 卖出证券占持有份额的比例。这种比例机制会在针对combo模式的信号组合进行计算的过程中产生问题。
+            # TODO: 需要进一步解释上面注释中提到的问题
             return l_m_sum
         raise ValueError(f'Blender text \'({blndr})\' not recognized!')
 
