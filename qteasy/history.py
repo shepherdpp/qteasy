@@ -17,7 +17,7 @@ from time import sleep
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
-from .utilfuncs import list_to_str_format, progress_bar
+from .utilfuncs import list_to_str_format, progress_bar, next_trade_day, next_market_trade_day
 from .tsfuncs import get_bar, name_change
 from .tsfuncs import income, indicators, balance, cashflow
 
@@ -1092,7 +1092,6 @@ def get_price_type_raw_data(start: str,
     return df_per_share
 
 
-# TODO: and dynamically group shares thus data downloading can be less repetitive.
 def get_financial_report_type_raw_data(start: str,
                                        end: str,
                                        shares: str,
@@ -1103,8 +1102,6 @@ def get_financial_report_type_raw_data(start: str,
                                        progress: bool = True):
     """ 在线获取财报类历史数据
 
-    :param report_type:
-    :return:
     :param start:
     :param end:
     :param shares:
@@ -1246,10 +1243,12 @@ def get_composite_type_raw_data(start, end, shares, htypes, chanel):
 
 
 def regulate_financial_type_df(df):
-    """ process and regulate downloaded financial data in form of DataFrame:
-        - remove duplicated items
-        - convert index into datetime format
-        - remove useless columns
+    """ 处理下载的财务指标数据，将它们转化为标准的格式：
+        process and regulate downloaded financial data in form of DataFrame:
+        - remove duplicated items 删除重复的条目
+        - convert index into datetime format 将index转化为时间日期格式
+        - remove useless columns 删除不需要的列
+        - move non-trade day items to nearest next trade day 将所有的日期抖动到最近的下一交易日，确保所有日期都是交易日
 
     :param df:
     :return:
@@ -1259,6 +1258,7 @@ def regulate_financial_type_df(df):
     if df.empty:
         return df
     df.drop_duplicates(subset=['ts_code', 'end_date'], inplace=True)
+    df.end_date = df.end_date.apply(next_market_trade_day, 1)
     df.index = pd.to_datetime(df.end_date)
     df.index.name = 'date'
     df.drop(columns=['ts_code', 'end_date'], inplace=True)

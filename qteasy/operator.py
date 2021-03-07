@@ -920,6 +920,11 @@ class Operator:
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
+        # debug
+        # print(f'In operation signal list generation function: \n'
+        #       f'the history data is passed, although not useful, and can be checked\n'
+        #       f'the last 100 datetime labels of the history data is\n'
+        #       f'{date_list[-100:-1]}')
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # print('SPEED test OP create, Time of sel_mask creation')
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
@@ -932,7 +937,7 @@ class Operator:
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
         # # debug
         # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
-        # print(f'first 100 items of Sel-mask has been created! mask is\n{sel_mask[:100]}')
+        # print(f'Sel-mask has been created! last 100 items of mask is\n{sel_mask[-100:-1]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用

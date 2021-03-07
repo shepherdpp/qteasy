@@ -3741,7 +3741,6 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(pd.to_datetime(prev_trade_day(date_christmas)),
                          pd.to_datetime(date_christmas))
 
-
     def test_next_trade_day(self):
         """ test the function next_trade_day()
         """
@@ -3836,7 +3835,7 @@ class TestUtilityFuncs(unittest.TestCase):
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
     def setUp(self):
-        raise NotImplementedError
+        pass
 
     def test_stock_basic(self):
         print(f'test tushare function: stock_basic')
@@ -3985,11 +3984,25 @@ class TestTushare(unittest.TestCase):
 
         # test another shares data extraction:
         shares = '000010.SZ'
+        fields = 'ts_code,ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps,total_revenue,revenue, ' \
+                 'int_income, prem_earned, comm_income, n_commis_income, n_oth_income, n_oth_b_income'
         df = income(share=shares,
                     start=start,
-                    end=end)
+                    end=end,
+                    fields=fields)
         self.assertIsInstance(df, pd.DataFrame)
         print(f'Test income: extracted multiple share income: \n{df}')
+        self.assertFalse(df.empty)
+
+        shares = '000010.SZ'
+        fields = 'ts_code,ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps,total_revenue,revenue, ' \
+                 'int_income, prem_earned, comm_income, n_commis_income, n_oth_income, n_oth_b_income'
+        df = income(share=shares,
+                    start=start,
+                    end='20210307',
+                    fields=fields)
+        self.assertIsInstance(df, pd.DataFrame)
+        print(f'Test income: extracted multiple share income with end date = today: \n{df}')
         self.assertFalse(df.empty)
 
         # test long range data extraction:
@@ -4051,7 +4064,7 @@ class TestTushare(unittest.TestCase):
 
     def test_indicators(self):
         print(f'test tushare function: indicators')
-        shares = '600748.SH'
+        shares = '600016.SH'
         rpt_date = '20180101'
         start = '20180101'
         end = '20191231'
@@ -4067,7 +4080,7 @@ class TestTushare(unittest.TestCase):
                         end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-        print(f'Test indicators: extracted indicator: \n{df}')
+        print(f'\nTest indicators 2: extracted indicator: \n{df}')
 
     def test_top_list(self):
         shares = '000732.SZ'

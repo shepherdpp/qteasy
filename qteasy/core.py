@@ -294,14 +294,11 @@ def apply_loop(op_list: pd.DataFrame,
     # TODO: FutureWarning:
     # TODO: Passing list-likes to .loc or [] with any missing label will raise
     # TODO: KeyError in the future, you can use .reindex() as an alternative.
-    price = history_list.fillna(method='ffill').fillna(0).loc[op_list.index].values
-    # debug
-    print(f'there are all-NAN values in history_list, they are\n'
-          f'{history_list.loc[np.isnan(history_list).all(1)]}\n'
-          f'\nafter fillna, these values are now:\n'
-          f'{history_list.fillna(method="ffill").fillna(0).loc[np.isnan(history_list).all(1)]}')
-    print(f'filled prices are ')
-
+    # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
+    price = history_list.fillna(0).loc[op_list.index].values
+    # 以下测试代码，将Nan值替换成前一个有效交易日的价格，这样有助于计算某只股票停牌日的实际资产，但是将造成
+    # 股票停牌日的买卖错误信号，因此下面的算法将会导致错误结果
+    # price = history_list.fillna(method='ffill').fillna(0).loc[op_list.index].values
     looped_dates = list(op_list.index)
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     if inflation_rate > 0:
@@ -318,12 +315,6 @@ def apply_loop(op_list: pd.DataFrame,
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
     invest_dict = cash_plan.to_dict(investment_date_pos)
-    # debug
-    print(f'op list is loaded, op list head is \n{op_list.head(5)}')
-    print(f'finding cash investment date position: finding: \n{cash_plan.dates} \nin looped dates (first 3):\n '
-          f'{looped_dates[0:3]}'
-          f', got result:\n{investment_date_pos}')
-    print(f'investment date position calculated: {investment_date_pos}')
     # 初始化计算结果列表
     cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
     amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
@@ -551,6 +542,16 @@ def configuration(mode=None, type = None, opti_method=None, level=0, info=False,
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
+# TODO:
+# TODO: 发现一个导致在非交易日生成operation signal的bug:
+# TODO: 在某些非价格型历史数据（如财报数据等）中，某些数据点正好存在于非交易日上，例如：
+# TODO: 2018年9月30日是一个非交易日，但是当天有eps数据产生。如果某个策略使用eps生成
+# TODO: 交易信号，必须引用包含eps的历史数据，那么2018年9月30日这一天就会有历史数据，
+# TODO: 因而有可能在这一天产生交易信号。这个交易信号传送到loop函数中去后，就会在这一天
+# TODO  产生一个净值为0的异常交易日（因为这一天没有交易，因此所有股价为0，会产生异常值）
+# TODO  即使使用fillna填充了正确的值，也会导致图表中的参考数据产生异常值）
+# TODO  因此一个关键是确保operation signal全部在交易日产生，要做到这一点，目前最简单
+# TODO  的办法就是创建history_panel中只有交易日，没有其他日期
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据
 
