@@ -369,15 +369,30 @@ class Strategy:
         # 空白。
         # 解决办法是生成daterange之后，使用pd.Timedelta将它平移到dates[self.window_length]当天即可。
         bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
+        # 在这里发现另外一个问题，通过date_range生成的日期序列有可能生成非交易日的日期
+        # 这也许会成为一个问题
+        # debug
+        # print(f'\nIn strategy._seg_periods() function:\n'
+        #       f'first 30 items of created temp_date_series is {temp_date_series[:30]}\n'
+        #       f'and the weekdays of the temp_data_series are {[date.weekday() for date in temp_date_series[:30]]}\n'
+        #       f'above dates are adjusted, after adjustment the first 30 dates are:\n'
+        #       f'{bnds[:30]}\nand weekdays of adjusted bound days are:\n'
+        #       f'{[date.weekday() for date in bnds[:30]]}')
         # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
+        # 用searchsorted函数把输入的日期与历史数据日期匹配起来
+        seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # debug
         # print(f'in module selecting: function seg_perids generated date bounds supposed to start'
         #       f'from {dates[self.window_length]} to {dates[-1]}, actually got:\n'
         #       f'{bnds}\n'
-        #       f'now comparing first date {dates[0]} with first bound {bnds[0]}')
-        # 用searchsorted函数把输入的日期与历史数据日期匹配起来
-        seg_pos[1:-1] = np.searchsorted(dates, bnds)
+        #       f'now comparing first date {dates[0]} with first bound {bnds[0]}\n'
+        #       f'the first 100 dates in which signal dates are searched are\n'
+        #       f'{[date.strftime("%Y-%m-%d") for date in dates[:100]]}\n the weekdays are\n'
+        #       f'{[date.weekday() for date in dates[0:100]]}\n'
+        #       f'all dates found from dates are:\n'
+        #       f'{[dates[i].strftime("%Y-%m-%d") for i in seg_pos]} \n and their week days are:\n'
+        #       f'{[dates[i].weekday() for i in seg_pos]}')
         # 最后一个分隔位等于历史区间的总长度
         seg_pos[-1] = len(dates) - 1
         # print('Results check, selecting - segment creation, segments:', seg_pos)

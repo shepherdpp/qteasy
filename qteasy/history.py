@@ -1257,6 +1257,7 @@ def regulate_financial_type_df(df):
     # TODO: current way of extracting date is WRONG!! ann_date sometimes are incorrect!
     if df.empty:
         return df
+    df.fillna(np.nan)
     df.drop_duplicates(subset=['ts_code', 'end_date'], inplace=True)
     df.end_date = df.end_date.apply(next_market_trade_day, 1)
     df.index = pd.to_datetime(df.end_date)

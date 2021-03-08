@@ -14,7 +14,7 @@ import pandas as pd
 from os import path
 
 from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
-from .utilfuncs import regulate_date_format, str_to_list, progress_bar
+from .utilfuncs import regulate_date_format, str_to_list, progress_bar, is_market_trade_day
 
 from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
 from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
@@ -199,6 +199,7 @@ class DataSource():
         df.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
+    # TODO: this function is way too slow, should investigate how to improve
     def merge_file(self, file_name, df):
         """ merge some data stored in df into file_name,
 
@@ -250,7 +251,15 @@ class DataSource():
 
         df = self.open_file(file_name)
         # debug
-        # print(f'type of df index is {type(df.index[0])}')
+        # print(f'\nin extract_data() function from local file, df is read from file, before processing:'
+        #       f'\ntype of df index is {type(df.index[0])}\n'
+        #       f'the index of extracted data is\n'
+        #       f'{df.index[:10]}\n'
+        #       f'are they all trading date? \n'
+        #       f'{all([is_market_trade_day(date) for date in df.index])}\n'
+        #       f'first 30 indices are:\n'
+        #       f'{df.index[:30]}')
+        df.info()
 
         index_missing = any(index not in df.index for index in expected_index)
         column_missing = any(column not in df.columns for column in expected_columns)
@@ -258,7 +267,8 @@ class DataSource():
         if index_missing:
             additional_index = [index for index in expected_index if index not in df.index]
             # debug
-            # print(f'expected index is:\n{expected_index}\n'
+            # print(f'\nIn extract_date from local file'
+            #       f'\nexpected index is:\n{expected_index}\n'
             #       f'original index is:\n{df.index}\n'
             #       f'adding new index \n{additional_index}')
             df = df.reindex(expected_index)
@@ -362,7 +372,11 @@ class DataSource():
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
                 # debug
                 # print(f'\nIn func get_and_update_data():\n'
-                #       f'historical data is extracted from local file: {file_name}.csv\n:{df}')
+                #       f'historical data is extracted from local file: {file_name}.csv\n:{df.head()}\n'
+                #       f'are all the index of the df trading days? \n'
+                #       f'{all([is_market_trade_day(date) for date in df.index])}\n'
+                #       f'first 30 trading day assessment results:\n'
+                #       f'{[is_market_trade_day(date) for date in df.index[:30]]}')
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
                 for share in [share for share in shares if share not in df.columns]:
@@ -384,6 +398,11 @@ class DataSource():
                     data_downloaded = True
                     missing_data_start = regulate_date_format(missing_data.index[0])
                     missing_data_end = regulate_date_format(missing_data.index[-1])
+                    start = missing_data.index[0]
+                    end = missing_data.index[-1]
+                    # print(f'\nIn func get_and_update_data():\n'
+                    #       f'missing data for share {share} is not empty, they are:\n'
+                    #       f'{missing_data}')
                     if htype in PRICE_TYPE_DATA:
                         online_data = get_price_type_raw_data(start=missing_data_start,
                                                               end=missing_data_end,
@@ -393,7 +412,7 @@ class DataSource():
                                                               asset_type=asset_type,
                                                               parallel=4,
                                                               progress=False)[0]
-                    if htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
+                    elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
                                                                                 end=missing_data_end,
                                                                                 shares=share,
@@ -401,42 +420,74 @@ class DataSource():
                                                                                 progress=False)
                         online_data = (inc + ind + blc + csh)[0]
 
-                    if online_data.empty:
-                        # 当下载的数据为空时，就不要改写任何数据
-                        # (这点不一定，如果下载的是稀疏数据，可能这段时间本来就没有数据，这时应该写入空数据到数据库中
-                        # ，避免下次再重新从网上下载数据)
-                        # 例如，对于某些新上市的股票，如688680.SH，于2021年1月23日上市，在2021年以前没有财务数据
-                        # 这样就会取到空数据，这时候应该写入空数据而不是np.inf到数据库中，除了避免重新下载数据以外，
-                        # 还可以避免生成的loop数据中含有np.inf，从而导致loop失败
-                        # print(f'EMPTY data loaded, will skip')
-                        pass
-                    else:
-                        try:
-                            # debug
-                            # print(f'i-locations of data to be set are:\n'
-                            #       f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n'
-                            #       f'data that are to be set are:\n'
-                            #       f'{online_data[htype].values}\n'
-                            #       f'data to be replaced are \n'
-                            #       f'{share_data.iloc[np.searchsorted(data_index, online_data.index).clip(0, index_count-1)]}\n'
-                            #       f'DOING THE WORK...')
+                    # 按照原来的思路，下面的代码是将下载的数据（可能是稀疏数据）一个个写入到目标区域中，再将目标区域中的
+                    # np.inf逐个改写为np.nan。但是其实粗暴一点的做法是直接把下载的数据reindex，然后整体覆盖目标区域
+                    # 就可以了。
+                        # 这里是整体覆盖的代码：
+                        share_data[start:end] = online_data.reindex(share_data[start:end].index)[htype]
 
-                            share_data.iloc[np.searchsorted(data_index,
-                                                            online_data.index).clip(0,
-                                                                                    index_count-1)] = \
-                                online_data[htype]
-                            # online_data.values will cause potential problem
-                            # using 'iloc' is 3~5 times faster than 'loc'
-                            share_data.iloc[np.isinf(share_data).values] = np.nan
-                        except:
-                        # debug
-                            print(f'\nERROR OCCURED! =====  <get_and_updated_data()>: \n'
-                                  f'share_data len: {index_count}, online_data len: {len(online_data)}, by '
-                                  f'searching for {htype} in:\n'
-                                  f'range: between {missing_data_start} and {missing_data_end}\n'
-                                  f'searched index locations are: '
-                                  f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n')
-                            print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
+                        # 这里是单独分别写入的代码：
+                    # if online_data.empty:
+                    #     # 当下载的数据为空时，就不要改写任何数据
+                    #     # (这点不一定，如果下载的是稀疏数据，可能这段时间本来就没有数据，这时应该写入空数据到数据库中
+                    #     # ，避免下次再重新从网上下载数据)
+                    #     # 例如，对于某些新上市的股票，如688680.SH，于2021年1月23日上市，在2021年以前没有财务数据
+                    #     # 这样就会取到空数据，这时候应该写入空数据而不是np.inf到数据库中，除了避免重新下载数据以外，
+                    #     # 还可以避免生成的loop数据中含有np.inf，从而导致loop失败
+                    #     # print(f'EMPTY data loaded, will skip')
+                    #     try:
+                    #         # debug
+                    #         print(f'i-locations of data to be set are:\n'
+                    #               f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n'
+                    #               f'data that are to be set are:\n'
+                    #               f'{online_data[htype].values}\n'
+                    #               f'data to be replaced are \n'
+                    #               f'{share_data.iloc[np.searchsorted(data_index, online_data.index).clip(0, index_count-1)]}\n'
+                    #               f'DOING THE WORK...')
+                    #
+                    #         share_data.iloc[np.searchsorted(data_index,
+                    #                                         online_data.index).clip(0,
+                    #                                                                 index_count-1)] = \
+                    #             online_data[htype]
+                    #         # online_data.values will cause potential problem
+                    #         # using 'iloc' is 3~5 times faster than 'loc'
+                    #         share_data.iloc[np.isinf(share_data).values] = np.nan
+                    #     except Exception as e:
+                    #     # debug
+                    #         print(f'\nERROR OCCURED! {e}\n=====  <get_and_updated_data()>: \n'
+                    #               f'share_data len: {index_count}, online_data len: {len(online_data)}, by '
+                    #               f'searching for {htype} in:\n'
+                    #               f'range: between {missing_data_start} and {missing_data_end}\n'
+                    #               f'searched index locations are: '
+                    #               f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n')
+                    #         print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
+                    # else:
+                    #     try:
+                    #         # debug
+                    #         print(f'i-locations of data to be set are:\n'
+                    #               f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n'
+                    #               f'data that are to be set are:\n'
+                    #               f'{online_data[htype].values}\n'
+                    #               f'data to be replaced are \n'
+                    #               f'{share_data.iloc[np.searchsorted(data_index, online_data.index).clip(0, index_count-1)]}\n'
+                    #               f'DOING THE WORK...')
+                    #
+                    #         share_data.iloc[np.searchsorted(data_index,
+                    #                                         online_data.index).clip(0,
+                    #                                                                 index_count-1)] = \
+                    #             online_data[htype]
+                    #         # online_data.values will cause potential problem
+                    #         # using 'iloc' is 3~5 times faster than 'loc'
+                    #         share_data.iloc[np.isinf(share_data).values] = np.nan
+                    #     except Exception as e:
+                    #     # debug
+                    #         print(f'\nERROR OCCURED! {e}\n=====  <get_and_updated_data()>: \n'
+                    #               f'share_data len: {index_count}, online_data len: {len(online_data)}, by '
+                    #               f'searching for {htype} in:\n'
+                    #               f'range: between {missing_data_start} and {missing_data_end}\n'
+                    #               f'searched index locations are: '
+                    #               f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n')
+                    #         print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
 
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:
@@ -446,6 +497,7 @@ class DataSource():
                     self.new_file(file_name, df)
             progress_bar(i, progress_count, 'Extracting data')
             df = self.extract_data(file_name, shares=shares, start=start, end=end)
+            df
             all_dfs.append(df)
 
         hp = stack_dataframes(dfs=all_dfs, stack_along='htypes', htypes=htypes)

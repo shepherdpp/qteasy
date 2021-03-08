@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list
+from .utilfuncs import str_to_list, is_market_trade_day
 from .strategy import RollingTiming
 from .strategy import SimpleSelecting
 from .strategy import SimpleTiming
@@ -809,8 +809,14 @@ class Operator:
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # debug
-        # print(f'loaded historical data starts {hist_data.hdates[0].date()}, ends {hist_data.hdates[-1].date()}\n'
+        # print(f'\nloaded historical data starts {hist_data.hdates[0].date()}, ends {hist_data.hdates[-1].date()}\n'
         #       f'in total there are {len(hist_data.hdates)} rows of data in history data set')
+        # print(f'\nloaded historical data, all dates of the data are\n'
+        #       f'{[date.strftime("%Y-%m-%d") for date in hist_data.hdates[0:]]}\n'
+        #       f'weekdays of these dates are:\n'
+        #       f'{[date.weekday() for date in hist_data.hdates[0:]]}\n'
+        #       f'check if they are trade days:\n'
+        #       f'{[is_market_trade_day(date) for date in hist_data.hdates[0:]]}')
         # print(f'first and last cash investment dates are \n'
         #       f'first date:{cash_plan.first_day} at pos: {first_cash_pos}, \n'
         #       f'last date:{cash_plan.last_day} at pos: {last_cash_pos}\n'

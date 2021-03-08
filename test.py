@@ -5871,8 +5871,7 @@ class TestQT(unittest.TestCase):
                          _poq=10)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
-        qt.run(op, visual=False, print_backtest_log=True)
-        qt.run(op, visual=True)
+        qt.run(op, visual=True, print_backtest_log=True)
 
 
 class TestVisual(unittest.TestCase):
