@@ -1481,7 +1481,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[0],
                                                        prices=self.prices[0],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=False)
         print(f'day 1 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1497,7 +1497,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[3],
                                                        prices=self.prices[3],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=False)
         print(f'day 4 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1514,7 +1514,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[31],
                                                        prices=self.prices[31],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1531,7 +1531,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[60],
                                                        prices=self.prices[60],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=False)
         print(f'day 61 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1547,7 +1547,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[61],
                                                        prices=self.prices[61],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=False)
         print(f'day 62 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1564,7 +1564,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[96],
                                                        prices=self.prices[96],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=False)
         print(f'day 97 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1579,7 +1579,7 @@ class TestLoop(unittest.TestCase):
                                                        op=self.op_signals[97],
                                                        prices=self.prices[97],
                                                        rate=self.rate,
-                                                       moq=0,
+                                                       moq_buy=0,
                                                        print_log=False)
         print(f'day 98 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1594,7 +1594,7 @@ class TestLoop(unittest.TestCase):
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
-                         moq=0,
+                         moq_buy=0,
                          inflation_rate=0)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')

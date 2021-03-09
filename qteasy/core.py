@@ -98,7 +98,8 @@ def _loop_step(pre_cash: float,
                op: np.ndarray,
                prices: np.ndarray,
                rate: Cost,
-               moq: float,
+               moq_buy: float = 100,
+               moq_sell: float = 1,
                print_log: bool = False,
                share_dict: dict = None) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
@@ -109,7 +110,7 @@ def _loop_step(pre_cash: float,
         param op, np.ndarray：本次交易的个股交易清单
         param prices：np.ndarray，本次交易发生时各个股票的价格
         param rate：object Rate 交易成本率对象
-        param moq：float: 投资产品最小交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+        param moq_buy：float: 投资产品最小交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
     return：===== tuple，包含四个元素
         cash：交易后账户现金余额
@@ -131,7 +132,7 @@ def _loop_step(pre_cash: float,
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     op=op,
                                                                     amounts=pre_amounts,
-                                                                    moq=1)
+                                                                    moq=moq_sell)
     if print_log:
         item_sold = np.where(op < 0)[0]
         if len(item_sold) > 0:
@@ -162,7 +163,7 @@ def _loop_step(pre_cash: float,
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         op=op,
                                                                         pur_values=pur_values,
-                                                                        moq=moq)
+                                                                        moq=moq_buy)
     if print_log:
         item_purchased = np.where(op > 0)[0]
         if len(item_purchased) > 0:
@@ -284,7 +285,8 @@ def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
-               moq: float = 100.,
+               moq_buy: float = 100.,
+               moq_sell: float = 1,
                inflation_rate: float = 0.03,
                print_log: bool = False) -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
@@ -295,7 +297,8 @@ def apply_loop(op_list: pd.DataFrame,
         :param history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
         :param op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
-        :param moq: float：每次交易的最小份额单位
+        :param moq_buy: float：每次交易买进的最小份额单位
+        :param moq_sell: float: 每次交易卖出的最小份额单位
         :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
         :param print_log: bool: 设置为True将打印回测详细日志
 
@@ -366,7 +369,8 @@ def apply_loop(op_list: pd.DataFrame,
                                                op=op[i],
                                                prices=price[i],
                                                rate=cost_rate,
-                                               moq=moq,
+                                               moq_buy=moq_buy,
+                                               moq_sell=moq_sell,
                                                print_log=print_log,
                                                share_dict=shares)
         # 保存计算结果
@@ -1329,7 +1333,8 @@ def _evaluate_one_parameter(par: tuple,
                                 history_list=history_list_seg,
                                 cash_plan=cash_plan,
                                 cost_rate=trade_cost,
-                                moq=config.trade_batch_size,
+                                moq_buy=config.trade_batch_size,
+                                moq_sell=config.sell_batch_size,
                                 print_log=print_backtest_log)
         complete_values = _get_complete_hist(looped_value=looped_val,
                                              h_list=history_list_seg,
