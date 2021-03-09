@@ -124,7 +124,8 @@ def _loop_step(pre_cash: float,
         print(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
               f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
               f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
-              f'本期资产价格:  {np.around(prices, 2)}')
+              f'本期资产价格:  {np.around(prices, 2)}\n'
+              f'本期交易信号:  {op}')
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 根据出售持有资产的份额数量计算获取的现金
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,

@@ -259,7 +259,7 @@ class DataSource():
         #       f'{all([is_market_trade_day(date) for date in df.index])}\n'
         #       f'first 30 indices are:\n'
         #       f'{df.index[:30]}')
-        df.info()
+        # df.info()
 
         index_missing = any(index not in df.index for index in expected_index)
         column_missing = any(column not in df.columns for column in expected_columns)
@@ -371,12 +371,14 @@ class DataSource():
             if self.file_exists(file_name):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
                 # debug
-                # print(f'\nIn func get_and_update_data():\n'
-                #       f'historical data is extracted from local file: {file_name}.csv\n:{df.head()}\n'
-                #       f'are all the index of the df trading days? \n'
-                #       f'{all([is_market_trade_day(date) for date in df.index])}\n'
-                #       f'first 30 trading day assessment results:\n'
-                #       f'{[is_market_trade_day(date) for date in df.index[:30]]}')
+                # if htype == 'close':
+                #     print(f'\nIn func get_and_update_data() while htype == {htype}:\n'
+                #           f'historical data is extracted from local file: {file_name}.csv\n:{df.head()}\n'
+                #           f'are all the index of the df trading days? \n'
+                #           f'{all([is_market_trade_day(date) for date in df.index])}\n'
+                #           f'first 30 trading day assessment results:\n'
+                #           f'{[is_market_trade_day(date) for date in df.index[:30]]}\n'
+                #           f'is 688680.SH in share? {"688680.SH" in df.columns}')
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
                 for share in [share for share in shares if share not in df.columns]:
@@ -388,8 +390,6 @@ class DataSource():
             data_index = df.index
             index_count = len(df.index)
             for share, share_data in df.iteritems():
-                # 'np.isinf() is much faster than "share_data == np.inf"
-                # and iloc[] is 3~5 times faster than loc[]
                 progress_bar(i, progress_count, 'searching for missing data')
                 missing_data = share_data.iloc[np.isinf(share_data).values]
                 i += 1
@@ -412,6 +412,7 @@ class DataSource():
                                                               asset_type=asset_type,
                                                               parallel=4,
                                                               progress=False)[0]
+
                     elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
                                                                                 end=missing_data_end,
@@ -423,8 +424,8 @@ class DataSource():
                     # 按照原来的思路，下面的代码是将下载的数据（可能是稀疏数据）一个个写入到目标区域中，再将目标区域中的
                     # np.inf逐个改写为np.nan。但是其实粗暴一点的做法是直接把下载的数据reindex，然后整体覆盖目标区域
                     # 就可以了。
-                        # 这里是整体覆盖的代码：
-                        share_data[start:end] = online_data.reindex(share_data[start:end].index)[htype]
+                    # 这里是整体覆盖的代码：
+                    share_data[start:end] = online_data.reindex(share_data[start:end].index)[htype]
 
                         # 这里是单独分别写入的代码：
                     # if online_data.empty:
@@ -497,7 +498,13 @@ class DataSource():
                     self.new_file(file_name, df)
             progress_bar(i, progress_count, 'Extracting data')
             df = self.extract_data(file_name, shares=shares, start=start, end=end)
-            df
+            # debug
+            # print(f'\nIn func get_and_update_data():\n'
+            #       f'historical data is extracted from local file: {file_name}.csv\n:{df.head()}\n'
+            #       f'are all the index of the df trading days? \n'
+            #       f'{all([is_market_trade_day(date) for date in df.index])}\n'
+            #       f'first 30 trading day assessment results:\n'
+            #       f'{[is_market_trade_day(date) for date in df.index[:30]]}')
             all_dfs.append(df)
 
         hp = stack_dataframes(dfs=all_dfs, stack_along='htypes', htypes=htypes)
