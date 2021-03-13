@@ -5487,12 +5487,13 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=200,
+               opti_sample_count=900,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
-               test_indicators='years,fv,return,mdd,v,ref,alpha, beta,sharp,info',  # 'years,fv,return,mdd,v,ref,alpha, beta,sharp,info'
+               test_indicators='years,fv,return,mdd,v,ref,alpha,beta',  # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
+               indicator_plot_type='histo',
                parallel=True,
                visual=True)
 

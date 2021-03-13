@@ -792,8 +792,8 @@ def _valid_qt_kwargs():
                                              '"sharp"       - sharp rate\n'
                                              '"info"        - info rate'},
 
-        'indicator_plot_type': {'Default':   3,
-                                'Validator': lambda value: isinstance(value, int),
+        'indicator_plot_type': {'Default':   1,
+                                'Validator': lambda value: isinstance(value, (int, str)),
                                 'level':     2,
                                 'text':      '优化或测试结果评价指标的可视化图表类型:'
                                              '0  - errorbar 类型'

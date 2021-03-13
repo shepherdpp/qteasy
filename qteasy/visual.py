@@ -402,16 +402,16 @@ def _plot_test_result(opti_eval_res: list,
     available_result_keys = opti_eval_res[0].keys()
 
     # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
-    print(f'there are {len(opti_eval_res)} results in opti_eval_res\n'
-          f'they are all list of dicts that contains results of evaluation and information of parameters\n'
-          f'the keys of the results are:\n'
-          f'{available_result_keys}')
+    # print(f'there are {len(opti_eval_res)} results in opti_eval_res\n'
+    #       f'they are all list of dicts that contains results of evaluation and information of parameters\n'
+    #       f'the keys of the results are:\n'
+    #       f'{available_result_keys}')
 
     compariable_indicators = [i for i in opti_eval_res[0].keys() if i in plot_compariables]
     compariable_indicator_count = len(compariable_indicators)
 
-    print(f'out of all the indicators generated, {compariable_indicator_count} indicators are compariable, they are\n'
-          f'{compariable_indicators}')
+    # print(f'out of all the indicators generated, {compariable_indicator_count} indicators are compariable, they are\n'
+    #       f'{compariable_indicators}')
 
     # 显示投资回报评价信息
     fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
@@ -494,33 +494,38 @@ def _plot_test_result(opti_eval_res: list,
                                       for result in test_eval_res],
                                      index=[result['par'] for result in test_eval_res])
 
-    print(f'calculated opti and test indicator dfs, they are:\n'
-          f'{opti_indicator_df}\n'
-          f'{test_indicator_df}')
+    #
+    # print(f'compariable indicators are: \n'
+    #       f'{compariable_indicators}\n'
+    #       f'calculated opti and test indicator dfs, they are:\n'
+    #       f'{opti_indicator_df}\n'
+    #       f'{test_indicator_df}')
 
     if compariable_indicator_count > 0:
         for ax, name in zip(compariable_plots, compariable_indicators):
-            if config.indicator_plot_type == 'scatter':
+            ax.set_title(name)
+            if config.indicator_plot_type == 0 or config.indicator_plot_type == 'errorbar':
+                max_v = opti_indicator_df[name].max()
+                min_v = opti_indicator_df[name].min()
+                mean = opti_indicator_df[name].mean()
+                std = opti_indicator_df[name].std()
+                ax.errorbar(1, mean, std, fmt='ok', lw=3)
+                ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1)
+                max_v = test_indicator_df[name].max()
+                min_v = test_indicator_df[name].min()
+                mean = test_indicator_df[name].mean()
+                std = test_indicator_df[name].std()
+                ax.errorbar(2, mean, std, fmt='ok', lw=3)
+                ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1)
+            elif config.indicator_plot_type == 1 or config.indicator_plot_type == 'scatter':
                 ax.scatter(opti_indicator_df[name],
                            test_indicator_df[name],
                            label=name, marker='^', alpha=0.9)
                 ax.legend()
-            elif config.indicator_plot_type == 'errorbar':
-                maxes = opti_indicator_df[name].max(axis=0)
-                mins = opti_indicator_df[name].min(axis=0)
-                mean = opti_indicator_df[name].mean(axis=0)
-                std = opti_indicator_df[name].std(axis=0)
-                ax.errorbar(1, mean, std, fmt='ok', lw=3)
-                ax.errorbar(1, mean, [mean - mins, maxes - mean], fmt='.k', ecolor='red', lw=1)
-                maxes = test_indicator_df[name].max(axis=0)
-                mins = test_indicator_df[name].min(axis=0)
-                mean = test_indicator_df[name].mean(axis=0)
-                std = test_indicator_df[name].std(axis=0)
-                ax.errorbar(2, mean, std, fmt='ok', lw=3)
-                ax.errorbar(2, mean, [mean - mins, maxes - mean], fmt='.k', ecolor='green', lw=1)
-            elif config.indicator_plot_type == 'histo':
-                ax.hist(opti_indicator_df[name], bins=10)
-                ax.hist(test_indicator_df[name], bins=10)
+            else:
+                ax.hist(opti_indicator_df[name], bins=10, alpha=0.5, label='opti')
+                ax.hist(test_indicator_df[name], bins=10, alpha=0.5, label='test')
+                ax.legend()
 
     plt.show()
 
