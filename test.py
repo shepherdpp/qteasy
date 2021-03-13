@@ -5487,7 +5487,7 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=900,
+               opti_sample_count=200,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
@@ -5860,7 +5860,7 @@ class TestQT(unittest.TestCase):
                      log=False)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('t-0', pars=(0, 0))
-        op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 10),
+        op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 30),
                          sample_freq='Q',
                          data_types='basic_eps',
                          sort_ascending=True,
@@ -5868,7 +5868,7 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         _poq=10)
+                         _poq=30)
         op.set_parameter('r-0', pars=(0, 0))
         op.set_blender('ls', 'avg')
         qt.run(op, visual=True, print_backtest_log=True)

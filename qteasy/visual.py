@@ -356,8 +356,8 @@ def _plot_opti_result(result_pool: list, config):
 
 # TODO: like _print_test_result, take the evaluate results on both opti and test hist data
 # TODO: and commit comparison base on these two data sets
-def _plot_test_result(test_eval_res: list,
-                      opti_eval_res: list,
+def _plot_test_result(opti_eval_res: list,
+                      test_eval_res: list,
                       config):
     """ plot test result of optimization results
 
@@ -370,7 +370,16 @@ def _plot_test_result(test_eval_res: list,
     :param config:
     :return:
     """
-
+    # 以下评价指标是可以用来比较优化数据集和测试数据集的表现的
+    plot_compariables = ['annual_rtn',
+                         'mdd',
+                         'volatility',
+                         'beta',
+                         'sharp',
+                         'alpha',
+                         'info']
+    if test_eval_res is None:
+        test_eval_res = []
     # prepare looped_values dataframe
     result_count = len(test_eval_res)
     opti_complete_value_results = [result['complete_values'] for result in opti_eval_res]
@@ -389,13 +398,67 @@ def _plot_test_result(test_eval_res: list,
         raise ValueError
     register_matplotlib_converters()
     CHART_WIDTH = 0.9
+
+    # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
+    print(f'there are {len(opti_eval_res)} results in opti_eval_res\n'
+          f'they are all list of dicts that contains results of evaluation and information of parameters\n'
+          f'the keys of the results are:\n'
+          f'{opti_eval_res[0].keys()}')
+
+    compariable_indicators = [i for i in opti_eval_res[0].keys() if i in plot_compariables]
+    compariable_indicator_count = len(compariable_indicators)
+
+    print(f'out of all the indicators generated, {compariable_indicator_count} indicators are compariable, they are\n'
+          f'{compariable_indicators}')
+
     # 显示投资回报评价信息
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+    fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
     # output all evaluate looped_values in table form (values and labels are printed separately)
     ref_start_value = complete_reference.iloc[0]
     reference = (complete_reference - ref_start_value) / ref_start_value * 100
-    ax1.set_position([0.05, 0.35, CHART_WIDTH, 0.55])
+    compariable_plots = []
+
+    if compariable_indicator_count == 0:
+        ax1.set_position([0.05, 0.05, CHART_WIDTH, 0.8])
+    else:
+        ax1.set_position([0.05, 0.51, CHART_WIDTH, 0.40])
+        if compariable_indicator_count == 1:
+            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH, 0.35]))
+        elif compariable_indicator_count == 2:
+            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.35]))
+            compariable_plots.append(fig.add_axes([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.35]))
+        elif compariable_indicator_count == 3:
+            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 3 - 0.03, 0.35]))
+            compariable_plots.append(fig.add_axes([0.35, 0.05, CHART_WIDTH / 3 - 0.03, 0.35]))
+            compariable_plots.append(fig.add_axes([0.65, 0.05, CHART_WIDTH / 3 - 0.03, 0.35]))
+        elif compariable_indicator_count == 4:  # two rows, two plots each row
+            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.05, 0.15, CHART_WIDTH / 2 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.55, 0.15, CHART_WIDTH / 2 - 0.05, 0.18]))
+        elif compariable_indicator_count == 5:  # two rows, 3 and 2 plots each row respectively
+            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.35, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.65, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.05, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.35, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+        elif compariable_indicator_count == 6:
+            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.35, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.65, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.05, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.35, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.65, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+        elif compariable_indicator_count == 7:
+            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.283, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.516, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.750, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.283, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.516, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
+
     ax1.plot(complete_reference.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
     for cres in opti_complete_value_results:
@@ -427,17 +490,29 @@ def _plot_test_result(test_eval_res: list,
                                        'alpha': result['alpha']} for result in test_eval_res],
                                      index=[result['par'] for result in test_eval_res])
 
-    ax2.set_position([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
-    ax2.scatter(opti_indicator_df.annual_rtn,
-                test_indicator_df.annual_rtn, color='green',
-                label='annual_return', marker='^', alpha=0.9)
-    ax2.legend()
-
-    ax3.set_position([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
-    ax3.scatter(opti_indicator_df.alpha,
-                test_indicator_df.alpha, color='red',
-                label='alpha', marker='^', alpha=0.9)
-    ax3.legend()
+    if compariable_indicator_count > 0:
+        for ax, name in zip(compariable_plots, compariable_indicators):
+            if config.indicator_plot_type == 'scatter':
+                ax.scatter(opti_indicator_df[name],
+                           test_indicator_df[name],
+                           label=name, marker='^', alpha=0.9)
+                ax.legend()
+            elif config.indicator_plot_type == 'errorbar':
+                maxes = opti_indicator_df[name].max(axis=0)
+                mins = opti_indicator_df[name].min(axis=0)
+                mean = opti_indicator_df[name].mean(axis=0)
+                std = opti_indicator_df[name].std(axis=0)
+                ax.errorbar(1, mean, std, fmt='ok', lw=3)
+                ax.errorbar(1, mean, [mean - mins, maxes - mean], fmt='.k', ecolor='red', lw=1)
+                maxes = test_indicator_df[name].max(axis=0)
+                mins = test_indicator_df[name].min(axis=0)
+                mean = test_indicator_df[name].mean(axis=0)
+                std = test_indicator_df[name].std(axis=0)
+                ax.errorbar(2, mean, std, fmt='ok', lw=3)
+                ax.errorbar(2, mean, [mean - mins, maxes - mean], fmt='.k', ecolor='green', lw=1)
+            elif config.indicator_plot_type == 'histo':
+                ax.hist(opti_indicator_df[name], bins=10)
+                ax.hist(test_indicator_df[name], bins=10)
 
     plt.show()
 
@@ -581,30 +656,3 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                            justify='center'))
     print(f'\n===========END OF REPORT=============\n')
 
-
-# def _print_opti_result(pars, perfs, config=None, columns=None, headers=None, formatter=None):
-#     """
-#
-#     :param result:
-#     :param messages:
-#     :param config:
-#     :param columns:
-#     :param headers:
-#     :param formatter:
-#     :return:
-#     """
-#     print(f'====================================\n'
-#           f'|                                  |\n'
-#           f'|       OPTIMIZATION RESULT        |\n'
-#           f'|                                  |\n'
-#           f'====================================\n')
-#     print(f'Searching finished, {len(perfs)} best results are generated')
-#     print(f'The best parameter performs {perfs[-1]/perfs[0]:.3f} times better than the least performing result:\n'
-#           f'=======================OPTIMIZATION RESULTS===========================\n'
-#           f'                    parameter                     |    performance    \n'
-#           f'--------------------------------------------------|-------------------')
-#     for par, perf in zip(pars, perfs):
-#         print(f'{par}{" " * (50 - len(str(par)))}|  {perf:.3f}')
-#     # print(f'best result: {perfs[-1]:.3f} obtained at parameter: \n{items[-1]}')
-#     # print(f'least result: {perfs[0]:.3f} obtained at parameter: \n{items[0]}')
-#     print(f'===============VALIDATION OF OPTIMIZATION RESULTS==================')

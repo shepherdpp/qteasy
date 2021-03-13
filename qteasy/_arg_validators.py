@@ -471,10 +471,10 @@ class ConfigDict(dict):
         config.attr = config['attr']
 
     """
+
     def __init__(self, *args, **kwargs):
         super(ConfigDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
-
 
 
 def _valid_qt_kwargs():
@@ -783,6 +783,14 @@ def _valid_qt_kwargs():
                                 'text':      '对优化后的策略参数进行测试评价的评价指标。'
                                              '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出'},
 
+        'indicator_plot_type': {'Default':   3,
+                                'Validator': lambda value: isinstance(value, int),
+                                'level':     2,
+                                'text':      '优化或测试结果评价指标的可视化图表类型:'
+                                             '0  - errorbar 类型'
+                                             '1  - scatter 类型'
+                                             '2  - histo 类型'},
+
         'test_sub_periods':    {'Default':   3,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,
                                 'level':     2,
@@ -802,7 +810,7 @@ def _valid_qt_kwargs():
 
         'optimize_target':     {'Default':   'final_value',
                                 'Validator': lambda value: isinstance(value, str)
-                                                           and value in ['FV', 'SHARP'],
+                                                           and value in ['final_value', 'FV', 'SHARP'],
                                 'level':     1,
                                 'text':      '策略的优化目标。即优化时以找到该指标最佳的策略为目标'},
 
@@ -925,7 +933,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
             raise KeyError(f'Unrecognized kwarg={str(key)}')
         else:
             cur_level = vkwargs[key]['level']
-            if cur_level <= level: # only display kwargs that are at higher level
+            if cur_level <= level:  # only display kwargs that are at higher level
                 cur_value = str(QT_CONFIG[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
@@ -990,12 +998,13 @@ def _validate_key_and_value(key, value):
             raise TypeError(
                     f'kwarg {key} validator returned False for value: {str(value)}\n'
                     f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
-        # ---------------------------------------------------------------
-        #      At this point , if we have not raised an exception,
-        #      then kwarg is valid as far as we can tell, therefore,
-        #      go ahead and replace the appropriate value in config:
+            # ---------------------------------------------------------------
+            #      At this point , if we have not raised an exception,
+            #      then kwarg is valid as far as we can tell, therefore,
+            #      go ahead and replace the appropriate value in config:
 
     return True
+
 
 def _validate_asset_id(value):
     """
@@ -1016,9 +1025,9 @@ def _validate_asset_type(value):
 
 
 def _is_datelike(value):
-    if isinstance(value, (pd.Timestamp,datetime.datetime,datetime.date)):
+    if isinstance(value, (pd.Timestamp, datetime.datetime, datetime.date)):
         return True
-    if isinstance(value,str):
+    if isinstance(value, str):
         try:
             dt = pd.to_datetime(value)
             return True
@@ -1028,10 +1037,10 @@ def _is_datelike(value):
 
 
 def _num_or_seq_of_num(value):
-    return ( isinstance(value,(int,float))  or
-             (isinstance(value,(list,tuple,np.ndarray)) and
-              all([isinstance(v,(int,float)) for v in value]))
-           )
+    return (isinstance(value, (int, float)) or
+            (isinstance(value, (list, tuple, np.ndarray)) and
+             all([isinstance(v, (int, float)) for v in value]))
+            )
 
 
 def _bypass_kwarg_validation(value):
@@ -1042,6 +1051,7 @@ def _bypass_kwarg_validation(value):
         raised at the time the kwarg value is actually used.
     '''
     return True
+
 
 def _kwarg_not_implemented(value):
     ''' If you want to list a kwarg in a valid_kwargs dict for a given
