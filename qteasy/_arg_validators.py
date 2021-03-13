@@ -781,7 +781,16 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, str),
                                 'level':     2,
                                 'text':      '对优化后的策略参数进行测试评价的评价指标。'
-                                             '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出'},
+                                             '格式为逗号分隔的字符串，多个评价指标会以字典的形式输出，包含以下类型中的一种或多种\n'
+                                             '"years"       - total year\n'
+                                             '"fv"          - final values\n'
+                                             '"return"      - total return rate\n'
+                                             '"mdd"         - max draw down\n'
+                                             '"ref"         - reference data return\n'
+                                             '"alpha"       - alpha rate\n'
+                                             '"beta"        - beta rate\n'
+                                             '"sharp"       - sharp rate\n'
+                                             '"info"        - info rate'},
 
         'indicator_plot_type': {'Default':   3,
                                 'Validator': lambda value: isinstance(value, int),

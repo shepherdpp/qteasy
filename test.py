@@ -5492,6 +5492,7 @@ class TestQT(unittest.TestCase):
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
+               test_indicators='years,fv,return,mdd,v,ref,alpha, beta,sharp,info',  # 'years,fv,return,mdd,v,ref,alpha, beta,sharp,info'
                parallel=True,
                visual=True)
 

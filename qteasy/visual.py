@@ -399,11 +399,13 @@ def _plot_test_result(opti_eval_res: list,
     register_matplotlib_converters()
     CHART_WIDTH = 0.9
 
+    available_result_keys = opti_eval_res[0].keys()
+
     # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
     print(f'there are {len(opti_eval_res)} results in opti_eval_res\n'
           f'they are all list of dicts that contains results of evaluation and information of parameters\n'
           f'the keys of the results are:\n'
-          f'{opti_eval_res[0].keys()}')
+          f'{available_result_keys}')
 
     compariable_indicators = [i for i in opti_eval_res[0].keys() if i in plot_compariables]
     compariable_indicator_count = len(compariable_indicators)
@@ -424,32 +426,32 @@ def _plot_test_result(opti_eval_res: list,
     else:
         ax1.set_position([0.05, 0.51, CHART_WIDTH, 0.40])
         if compariable_indicator_count == 1:
-            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH, 0.35]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
         elif compariable_indicator_count == 2:
-            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.35]))
-            compariable_plots.append(fig.add_axes([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.35]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
+            compariable_plots.append(fig.add_axes([0.550, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
         elif compariable_indicator_count == 3:
-            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 3 - 0.03, 0.35]))
-            compariable_plots.append(fig.add_axes([0.35, 0.05, CHART_WIDTH / 3 - 0.03, 0.35]))
-            compariable_plots.append(fig.add_axes([0.65, 0.05, CHART_WIDTH / 3 - 0.03, 0.35]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
+            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
+            compariable_plots.append(fig.add_axes([0.680, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
         elif compariable_indicator_count == 4:  # two rows, two plots each row
-            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.18]))
-            compariable_plots.append(fig.add_axes([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.18]))
-            compariable_plots.append(fig.add_axes([0.05, 0.15, CHART_WIDTH / 2 - 0.05, 0.18]))
-            compariable_plots.append(fig.add_axes([0.55, 0.15, CHART_WIDTH / 2 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
+            compariable_plots.append(fig.add_axes([0.283, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
+            compariable_plots.append(fig.add_axes([0.516, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
+            compariable_plots.append(fig.add_axes([0.750, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
         elif compariable_indicator_count == 5:  # two rows, 3 and 2 plots each row respectively
-            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.35, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.65, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.05, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.35, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.365, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.680, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
         elif compariable_indicator_count == 6:
-            compariable_plots.append(fig.add_axes([0.05, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.35, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.65, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.05, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.35, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.65, 0.15, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.365, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.680, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.680, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
         elif compariable_indicator_count == 7:
             compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
             compariable_plots.append(fig.add_axes([0.283, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
@@ -481,14 +483,20 @@ def _plot_test_result(opti_eval_res: list,
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
-    opti_indicator_df = pd.DataFrame([{'rtn': result['rtn'],
-                                       'annual_rtn': result['annual_rtn'],
-                                       'alpha': result['alpha']} for result in opti_eval_res],
+    opti_indicator_df = pd.DataFrame([{key: value
+                                       for key, value in result.items()
+                                       if key in compariable_indicators}
+                                      for result in opti_eval_res],
                                      index=[result['par'] for result in opti_eval_res])
-    test_indicator_df = pd.DataFrame([{'rtn': result['rtn'],
-                                       'annual_rtn': result['annual_rtn'],
-                                       'alpha': result['alpha']} for result in test_eval_res],
+    test_indicator_df = pd.DataFrame([{key: value
+                                       for key, value in result.items()
+                                       if key in compariable_indicators}
+                                      for result in test_eval_res],
                                      index=[result['par'] for result in test_eval_res])
+
+    print(f'calculated opti and test indicator dfs, they are:\n'
+          f'{opti_indicator_df}\n'
+          f'{test_indicator_df}')
 
     if compariable_indicator_count > 0:
         for ax, name in zip(compariable_plots, compariable_indicators):
