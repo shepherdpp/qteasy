@@ -415,7 +415,49 @@ def _plot_test_result(opti_eval_res: list,
 
     # 显示投资回报评价信息
     fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
+    fig.suptitle(f'Optimization Test Results - {result_count} results', fontsize=14, fontweight=10)
+    # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
+    # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
+    fig.text(0.07, 0.91, f'opti periods: {opti_eval_res[0]["years"]} years, '
+                         f'from: {opti_eval_res[0]["loop_start"].date()} to '
+                         f'{opti_eval_res[0]["loop_end"].date()}  '
+                         f'time consumed:   signal creation: {time_str_format(opti_eval_res[0]["op_run_time"])};'
+                         f'  back test:{time_str_format(opti_eval_res[0]["loop_run_time"])}\n'
+                         f'test periods: {test_eval_res[0]["years"]} years, '
+                         f'from: {test_eval_res[0]["loop_start"].date()} to '
+                         f'{test_eval_res[0]["loop_end"].date()}  '
+                         f'time consumed:   signal creation: {time_str_format(test_eval_res[0]["op_run_time"])};'
+                         f'  back test:{time_str_format(test_eval_res[0]["loop_run_time"])}')
+    # fig.text(0.21, 0.82, f'Operation summary:\n\n'
+    #                      f'Total op fee:\n'
+    #                      f'total investment:\n'
+    #                      f'final value:', ha='right')
+    # fig.text(0.23, 0.82, f'{first_opti_looped_values["oper_count"].buy.sum()}     buys \n'
+    #                      f'{first_opti_looped_values["oper_count"].sell.sum()}     sells\n'
+    #                      f'¥{first_opti_looped_values["total_fee"]:13,.2f}\n'
+    #                      f'¥{first_opti_looped_values["total_invest"]:13,.2f}\n'
+    #                      f'¥{first_opti_looped_values["final_value"]:13,.2f}')
+    # fig.text(0.50, 0.82, f'Total return:\n'
+    #                      f'Avg annual return:\n'
+    #                      f'ref return:\n'
+    #                      f'Avg annual ref return:\n'
+    #                      f'Max drawdown:', ha='right')
+    # fig.text(0.52, 0.82, f'{first_opti_looped_values["rtn"] * 100:.2f}%    \n'
+    #                      f'{first_opti_looped_values["annual_rtn"] * 100: .2f}%    \n'
+    #                      f'{first_opti_looped_values["ref_rtn"] * 100:.2f}%    \n'
+    #                      f'{first_opti_looped_values["ref_annual_rtn"] * 100:.2f}%\n'
+    #                      f'{first_opti_looped_values["mdd"] * 100:.3f}%'
+    #                      f' on {first_opti_looped_values["low_date"]}')
+    # fig.text(0.82, 0.82, f'alpha:\n'
+    #                      f'Beta:\n'
+    #                      f'Sharp ratio:\n'
+    #                      f'Info ratio:\n'
+    #                      f'250-day volatility:', ha='right')
+    # fig.text(0.84, 0.82, f'{first_opti_looped_values["alpha"]:.3f}  \n'
+    #                      f'{first_opti_looped_values["beta"]:.3f}  \n'
+    #                      f'{first_opti_looped_values["sharp"]:.3f}  \n'
+    #                      f'{first_opti_looped_values["info"]:.3f}  \n'
+    #                      f'{first_opti_looped_values["volatility"]:.3f}')
     # output all evaluate looped_values in table form (values and labels are printed separately)
     ref_start_value = complete_reference.iloc[0]
     reference = (complete_reference - ref_start_value) / ref_start_value * 100
@@ -424,7 +466,7 @@ def _plot_test_result(opti_eval_res: list,
     if compariable_indicator_count == 0:
         ax1.set_position([0.05, 0.05, CHART_WIDTH, 0.8])
     else:
-        ax1.set_position([0.05, 0.51, CHART_WIDTH, 0.40])
+        ax1.set_position([0.05, 0.51, CHART_WIDTH, 0.39])
         if compariable_indicator_count == 1:
             compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
         elif compariable_indicator_count == 2:
@@ -434,7 +476,7 @@ def _plot_test_result(opti_eval_res: list,
             compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
             compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
             compariable_plots.append(fig.add_axes([0.680, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
-        elif compariable_indicator_count == 4:  # two rows, two plots each row
+        elif compariable_indicator_count == 4:  # 4 plots in one row
             compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
             compariable_plots.append(fig.add_axes([0.283, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
             compariable_plots.append(fig.add_axes([0.516, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
@@ -483,14 +525,12 @@ def _plot_test_result(opti_eval_res: list,
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
-    opti_indicator_df = pd.DataFrame([{key: value
-                                       for key, value in result.items()
-                                       if key in compariable_indicators}
+    opti_indicator_df = pd.DataFrame([{key: result[key]
+                                       for key in compariable_indicators}
                                       for result in opti_eval_res],
                                      index=[result['par'] for result in opti_eval_res])
-    test_indicator_df = pd.DataFrame([{key: value
-                                       for key, value in result.items()
-                                       if key in compariable_indicators}
+    test_indicator_df = pd.DataFrame([{key: result[key]
+                                       for key in compariable_indicators}
                                       for result in test_eval_res],
                                      index=[result['par'] for result in test_eval_res])
 

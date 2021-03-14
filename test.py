@@ -5487,7 +5487,7 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=900,
+               opti_sample_count=200,
                opti_start='20040104',
                opti_end='20141231',
                test_start='20120604',
@@ -6022,15 +6022,13 @@ def test_suite(*args):
             suite.addTests(tests=[TestCost(),
                                   TestSpace(),
                                   TestLog(),
-                                  TestContext(),
                                   TestCashPlan()])
         elif arg_item == 'core':
             suite.addTests(tests=[TestOperator(),
                                   TestOperatorSubFuncs(),
                                   TestLoop(),
                                   TestEvaluations(),
-                                  TestBuiltIns(),
-                                  TestHistorySubFuncs()])
+                                  TestBuiltIns()])
         elif arg_item == 'external':
             suite.addTests(tests=[TestQT(),
                                   TestVisual(),
