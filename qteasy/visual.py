@@ -219,6 +219,7 @@ def _plot_loop_result(loop_results: dict, config):
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
+    # 填充参考收益率的正负区间，绿色填充正收益率，红色填充负收益率
     ax1.fill_between(looped_values.index, 0, ref_rate,
                      where=ref_rate >= 0,
                      facecolor=(0.4, 0.6, 0.2), alpha=0.35)
@@ -417,37 +418,6 @@ def _plot_test_result(opti_eval_res: list,
                          f'{test_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:   signal creation: {time_str_format(test_eval_res[0]["op_run_time"])};'
                          f'  back test:{time_str_format(test_eval_res[0]["loop_run_time"])}')
-    # fig.text(0.21, 0.82, f'Operation summary:\n\n'
-    #                      f'Total op fee:\n'
-    #                      f'total investment:\n'
-    #                      f'final value:', ha='right')
-    # fig.text(0.23, 0.82, f'{first_opti_looped_values["oper_count"].buy.sum()}     buys \n'
-    #                      f'{first_opti_looped_values["oper_count"].sell.sum()}     sells\n'
-    #                      f'¥{first_opti_looped_values["total_fee"]:13,.2f}\n'
-    #                      f'¥{first_opti_looped_values["total_invest"]:13,.2f}\n'
-    #                      f'¥{first_opti_looped_values["final_value"]:13,.2f}')
-    # fig.text(0.50, 0.82, f'Total return:\n'
-    #                      f'Avg annual return:\n'
-    #                      f'ref return:\n'
-    #                      f'Avg annual ref return:\n'
-    #                      f'Max drawdown:', ha='right')
-    # fig.text(0.52, 0.82, f'{first_opti_looped_values["rtn"] * 100:.2f}%    \n'
-    #                      f'{first_opti_looped_values["annual_rtn"] * 100: .2f}%    \n'
-    #                      f'{first_opti_looped_values["ref_rtn"] * 100:.2f}%    \n'
-    #                      f'{first_opti_looped_values["ref_annual_rtn"] * 100:.2f}%\n'
-    #                      f'{first_opti_looped_values["mdd"] * 100:.3f}%'
-    #                      f' on {first_opti_looped_values["low_date"]}')
-    # fig.text(0.82, 0.82, f'alpha:\n'
-    #                      f'Beta:\n'
-    #                      f'Sharp ratio:\n'
-    #                      f'Info ratio:\n'
-    #                      f'250-day volatility:', ha='right')
-    # fig.text(0.84, 0.82, f'{first_opti_looped_values["alpha"]:.3f}  \n'
-    #                      f'{first_opti_looped_values["beta"]:.3f}  \n'
-    #                      f'{first_opti_looped_values["sharp"]:.3f}  \n'
-    #                      f'{first_opti_looped_values["info"]:.3f}  \n'
-    #                      f'{first_opti_looped_values["volatility"]:.3f}')
-    # output all evaluate looped_values in table form (values and labels are printed separately)
 
     # 确定参考数据在起始日的数据，以便计算参考数据在整个历史区间内的原因
     ref_start_value = complete_reference.iloc[0]
@@ -500,6 +470,14 @@ def _plot_test_result(opti_eval_res: list,
     # 绘制历史回测曲线图，包括参考数据、优化数据以及回测数据
     ax1.plot(complete_reference.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
+    # 填充参考收益率的正负区间，绿色填充正收益率，红色填充负收益率
+    ax1.fill_between(complete_reference.index, 0, reference,
+                     where=reference >= 0,
+                     facecolor=(0.4, 0.6, 0.2), alpha=0.35)
+    ax1.fill_between(complete_reference.index, 0, reference,
+                     where=reference < 0,
+                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+    # 逐个绘制所有的opti区间和test区间收益率曲线
     for cres in opti_complete_value_results:
         start_value = cres.value.iloc[0]
         values = (cres.value - start_value) / start_value * 100
