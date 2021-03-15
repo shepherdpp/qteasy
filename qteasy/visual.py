@@ -370,7 +370,7 @@ def _plot_test_result(opti_eval_res: list,
     :param config:
     :return:
     """
-    # 以下评价指标是可以用来比较优化数据集和测试数据集的表现的
+    # 以下评价指标是可以用来比较优化数据集和测试数据集的表现的，只有以下几个评价指标可以使用子图表显示
     plot_compariables = ['annual_rtn',
                          'mdd',
                          'volatility',
@@ -380,7 +380,7 @@ def _plot_test_result(opti_eval_res: list,
                          'info']
     if test_eval_res is None:
         test_eval_res = []
-    # prepare looped_values dataframe
+    # 从opti和test评价结果列表中取出完整的回测曲线
     result_count = len(test_eval_res)
     opti_complete_value_results = [result['complete_values'] for result in opti_eval_res]
     test_complete_value_results = [result['complete_values'] for result in test_eval_res]
@@ -390,23 +390,11 @@ def _plot_test_result(opti_eval_res: list,
     test_reference = first_test_looped_values.reference
     complete_reference = opti_reference.reindex(opti_reference.index.union(test_reference.index))
     complete_reference.loc[np.isnan(complete_reference)] = test_reference
-    # for complete_value in complete_results:
-    #     print(complete_value.tail(100))
-    if first_opti_looped_values.empty:
-        raise ValueError
-    if first_test_looped_values.empty:
-        raise ValueError
+    # matplotlib 所需固定操作
     register_matplotlib_converters()
     CHART_WIDTH = 0.9
 
-    available_result_keys = opti_eval_res[0].keys()
-
     # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
-    # print(f'there are {len(opti_eval_res)} results in opti_eval_res\n'
-    #       f'they are all list of dicts that contains results of evaluation and information of parameters\n'
-    #       f'the keys of the results are:\n'
-    #       f'{available_result_keys}')
-
     compariable_indicators = [i for i in opti_eval_res[0].keys() if i in plot_compariables]
     compariable_indicator_count = len(compariable_indicators)
 
@@ -416,6 +404,7 @@ def _plot_test_result(opti_eval_res: list,
     # 显示投资回报评价信息
     fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle(f'Optimization Test Results - {result_count} results', fontsize=14, fontweight=10)
+
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.91, f'opti periods: {opti_eval_res[0]["years"]} years, '
@@ -459,13 +448,18 @@ def _plot_test_result(opti_eval_res: list,
     #                      f'{first_opti_looped_values["info"]:.3f}  \n'
     #                      f'{first_opti_looped_values["volatility"]:.3f}')
     # output all evaluate looped_values in table form (values and labels are printed separately)
+
+    # 确定参考数据在起始日的数据，以便计算参考数据在整个历史区间内的原因
     ref_start_value = complete_reference.iloc[0]
     reference = (complete_reference - ref_start_value) / ref_start_value * 100
     compariable_plots = []
 
+    # 根据数据对比表的数量不同，生成不同数量的并安排对比表的位置和排列方式
     if compariable_indicator_count == 0:
+        # 没有子图表时，历史曲线图占据整个图幅
         ax1.set_position([0.05, 0.05, CHART_WIDTH, 0.8])
     else:
+        # 有子图表时，历史曲线图占据大约一半的图幅，其余对比图放置在历史曲线图的下方
         ax1.set_position([0.05, 0.51, CHART_WIDTH, 0.39])
         if compariable_indicator_count == 1:
             compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
@@ -503,6 +497,7 @@ def _plot_test_result(opti_eval_res: list,
             compariable_plots.append(fig.add_axes([0.283, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
             compariable_plots.append(fig.add_axes([0.516, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
 
+    # 绘制历史回测曲线图，包括参考数据、优化数据以及回测数据
     ax1.plot(complete_reference.index, reference, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
     for cres in opti_complete_value_results:
@@ -515,7 +510,7 @@ def _plot_test_result(opti_eval_res: list,
         values = (cres.value - start_value) / start_value * 100
         ax1.plot(first_test_looped_values.index, values, linestyle='-',
                  color=(0.2, 0.6, 0.2), alpha=0.85, label='return')
-
+    # 设置历史曲线图表的绘制格式
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
@@ -525,6 +520,7 @@ def _plot_test_result(opti_eval_res: list,
     ax1.spines['bottom'].set_visible(False)
     ax1.spines['left'].set_visible(False)
 
+    # 生成两个DataFrame，分别包含需要显示的对比数据，便于计算它们的统计值并绘制图表
     opti_indicator_df = pd.DataFrame([{key: result[key]
                                        for key in compariable_indicators}
                                       for result in opti_eval_res],
@@ -534,37 +530,44 @@ def _plot_test_result(opti_eval_res: list,
                                       for result in test_eval_res],
                                      index=[result['par'] for result in test_eval_res])
 
-    #
-    # print(f'compariable indicators are: \n'
-    #       f'{compariable_indicators}\n'
-    #       f'calculated opti and test indicator dfs, they are:\n'
-    #       f'{opti_indicator_df}\n'
-    #       f'{test_indicator_df}')
-
+    # 开始使用循环的方式逐个生成对比图表
     if compariable_indicator_count > 0:
         for ax, name in zip(compariable_plots, compariable_indicators):
-            ax.set_title(name)
+            # 设置每一个对比图表的基本显示格式
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['bottom'].set_visible(False)
+            ax.spines['left'].set_visible(False)
+            ax.set_ylabel(f'{name}')
+            ax.yaxis.tick_right()
+            # 根据config中设置的参数，选择生成三种不同类型的图表之一。
             if config.indicator_plot_type == 0 or config.indicator_plot_type == 'errorbar':
                 max_v = opti_indicator_df[name].max()
                 min_v = opti_indicator_df[name].min()
                 mean = opti_indicator_df[name].mean()
                 std = opti_indicator_df[name].std()
                 ax.errorbar(1, mean, std, fmt='ok', lw=3)
-                ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1)
+                ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
+                            label=f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}')
                 max_v = test_indicator_df[name].max()
                 min_v = test_indicator_df[name].min()
                 mean = test_indicator_df[name].mean()
                 std = test_indicator_df[name].std()
                 ax.errorbar(2, mean, std, fmt='ok', lw=3)
-                ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1)
+                ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
+                            label=f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}')
+                ax.set_xlim(0, 3)
+                ax.legend()
             elif config.indicator_plot_type == 1 or config.indicator_plot_type == 'scatter':
                 ax.scatter(opti_indicator_df[name],
                            test_indicator_df[name],
                            label=name, marker='^', alpha=0.9)
                 ax.legend()
             else:
-                ax.hist(opti_indicator_df[name], bins=10, alpha=0.5, label='opti')
-                ax.hist(test_indicator_df[name], bins=10, alpha=0.5, label='test')
+                ax.hist(opti_indicator_df[name], bins=10, alpha=0.5,
+                        label=f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}')
+                ax.hist(test_indicator_df[name], bins=10, alpha=0.5,
+                        label=f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}')
                 ax.legend()
 
     plt.show()
