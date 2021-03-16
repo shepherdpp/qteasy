@@ -432,40 +432,40 @@ def _plot_test_result(opti_eval_res: list,
         # 有子图表时，历史曲线图占据大约一半的图幅，其余对比图放置在历史曲线图的下方
         ax1.set_position([0.05, 0.51, CHART_WIDTH, 0.39])
         if compariable_indicator_count == 1:
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.1, 0.40]))
         elif compariable_indicator_count == 2:
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
-            compariable_plots.append(fig.add_axes([0.550, 0.05, CHART_WIDTH / 2 - 0.05, 0.40]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 2 - 0.1, 0.40]))
+            compariable_plots.append(fig.add_axes([0.550, 0.05, CHART_WIDTH / 2 - 0.1, 0.40]))
         elif compariable_indicator_count == 3:
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
-            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
-            compariable_plots.append(fig.add_axes([0.680, 0.05, CHART_WIDTH / 3 - 0.03, 0.40]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.06, 0.40]))
+            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.06, 0.40]))
+            compariable_plots.append(fig.add_axes([0.680, 0.05, CHART_WIDTH / 3 - 0.06, 0.40]))
         elif compariable_indicator_count == 4:  # 4 plots in one row
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
-            compariable_plots.append(fig.add_axes([0.283, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
-            compariable_plots.append(fig.add_axes([0.516, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
-            compariable_plots.append(fig.add_axes([0.750, 0.05, CHART_WIDTH / 4 - 0.025, 0.40]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.05, 0.40]))
+            compariable_plots.append(fig.add_axes([0.285, 0.05, CHART_WIDTH / 4 - 0.05, 0.40]))
+            compariable_plots.append(fig.add_axes([0.521, 0.05, CHART_WIDTH / 4 - 0.05, 0.40]))
+            compariable_plots.append(fig.add_axes([0.757, 0.05, CHART_WIDTH / 4 - 0.05, 0.40]))
         elif compariable_indicator_count == 5:  # two rows, 3 and 2 plots each row respectively
-            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.365, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.680, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.365, 0.28, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.680, 0.28, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.06, 0.18]))
         elif compariable_indicator_count == 6:
-            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.365, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.680, 0.28, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.365, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
-            compariable_plots.append(fig.add_axes([0.680, 0.05, CHART_WIDTH / 3 - 0.03, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.368, 0.28, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.686, 0.28, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.368, 0.05, CHART_WIDTH / 3 - 0.06, 0.18]))
+            compariable_plots.append(fig.add_axes([0.686, 0.05, CHART_WIDTH / 3 - 0.06, 0.18]))
         elif compariable_indicator_count == 7:
-            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
-            compariable_plots.append(fig.add_axes([0.283, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
-            compariable_plots.append(fig.add_axes([0.516, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
-            compariable_plots.append(fig.add_axes([0.750, 0.28, CHART_WIDTH / 4 - 0.025, 0.18]))
-            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
-            compariable_plots.append(fig.add_axes([0.283, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
-            compariable_plots.append(fig.add_axes([0.516, 0.05, CHART_WIDTH / 4 - 0.025, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.28, CHART_WIDTH / 4 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.285, 0.28, CHART_WIDTH / 4 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.521, 0.28, CHART_WIDTH / 4 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.757, 0.28, CHART_WIDTH / 4 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.050, 0.05, CHART_WIDTH / 4 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.285, 0.05, CHART_WIDTH / 4 - 0.05, 0.18]))
+            compariable_plots.append(fig.add_axes([0.521, 0.05, CHART_WIDTH / 4 - 0.05, 0.18]))
 
     # 绘制历史回测曲线图，包括参考数据、优化数据以及回测数据
     ax1.plot(complete_reference.index, reference, linestyle='-',
@@ -519,7 +519,8 @@ def _plot_test_result(opti_eval_res: list,
             ax.set_ylabel(f'{name}')
             ax.yaxis.tick_right()
             # 根据config中设置的参数，选择生成三种不同类型的图表之一。
-            if config.indicator_plot_type == 0 or config.indicator_plot_type == 'errorbar':
+            p_type = config.indicator_plot_type
+            if p_type == 0 or p_type == 'errorbar':
                 max_v = opti_indicator_df[name].max()
                 min_v = opti_indicator_df[name].min()
                 mean = opti_indicator_df[name].mean()
@@ -535,18 +536,39 @@ def _plot_test_result(opti_eval_res: list,
                 ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
                             label=f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}')
                 ax.set_xlim(0, 3)
-                ax.legend()
-            elif config.indicator_plot_type == 1 or config.indicator_plot_type == 'scatter':
+                labels = ['opti', 'test']
+                ax.set_xticks(np.arange(1, len(labels) + 1))
+                ax.set_xticklabels(labels)
+                ax.set_xlim(0.25, len(labels) + 0.75)
+            elif p_type == 1 or p_type == 'scatter':
                 ax.scatter(opti_indicator_df[name],
                            test_indicator_df[name],
                            label=name, marker='^', alpha=0.9)
+                ax.set_xlabel('opti')
+                ax.set_ylabel('test')
                 ax.legend()
-            else:
-                ax.hist(opti_indicator_df[name], bins=10, alpha=0.5,
+            elif p_type == 2 or p_type == 'histo':
+                ax.hist(opti_indicator_df[name], bins=15, alpha=0.5,
                         label=f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}')
-                ax.hist(test_indicator_df[name], bins=10, alpha=0.5,
+                ax.hist(test_indicator_df[name], bins=15, alpha=0.5,
                         label=f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}')
                 ax.legend()
+            elif p_type == 3 or p_type == 'violin':
+                data_df = pd.DataFrame(np.array([opti_indicator_df[name], test_indicator_df[name]]).T,
+                                       columns=['opti', 'test'])
+                ax.violinplot(data_df)
+                labels = ['opti', 'test']
+                ax.set_xticks(np.arange(1, len(labels) + 1))
+                ax.set_xticklabels(labels)
+                ax.set_xlim(0.25, len(labels) + 0.75)
+            else:
+                data_df = pd.DataFrame(np.array([opti_indicator_df[name], test_indicator_df[name]]).T,
+                                       columns=['opti', 'test'])
+                ax.boxplot(data_df)
+                labels = ['opti', 'test']
+                ax.set_xticks(np.arange(1, len(labels) + 1))
+                ax.set_xticklabels(labels)
+                ax.set_xlim(0.25, len(labels) + 0.75)
 
     plt.show()
 

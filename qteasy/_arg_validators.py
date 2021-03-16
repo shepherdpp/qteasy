@@ -792,13 +792,20 @@ def _valid_qt_kwargs():
                                              '"sharp"       - sharp rate\n'
                                              '"info"        - info rate'},
 
-        'indicator_plot_type': {'Default':   1,
-                                'Validator': lambda value: isinstance(value, (int, str)),
+        'indicator_plot_type': {'Default':   2,
+                                'Validator': lambda value: isinstance(value, (int, str)) and
+                                                           ((0 <= value <= 4) or (value in ['errorbar',
+                                                                                            'scatter',
+                                                                                            'histo',
+                                                                                            'violin',
+                                                                                            'box'])),
                                 'level':     2,
-                                'text':      '优化或测试结果评价指标的可视化图表类型:'
-                                             '0  - errorbar 类型'
-                                             '1  - scatter 类型'
-                                             '2  - histo 类型'},
+                                'text':      '优化或测试结果评价指标的可视化图表类型:\n'
+                                             '0  - errorbar 类型\n'
+                                             '1  - scatter 类型\n'
+                                             '2  - histo 类型\n'
+                                             '3  - violin 类型\n'
+                                             '4  - box 类型'},
 
         'test_sub_periods':    {'Default':   3,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,

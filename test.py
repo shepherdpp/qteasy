@@ -5493,7 +5493,7 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                test_indicators='years,fv,return,mdd,v,ref,alpha,beta',  # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
-               indicator_plot_type=0,
+               indicator_plot_type='violin',
                parallel=True,
                visual=True)
 
