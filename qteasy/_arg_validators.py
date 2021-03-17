@@ -794,11 +794,11 @@ def _valid_qt_kwargs():
 
         'indicator_plot_type': {'Default':   2,
                                 'Validator': lambda value: isinstance(value, (int, str)) and
-                                                           ((0 <= value <= 4) or (value in ['errorbar',
-                                                                                            'scatter',
-                                                                                            'histo',
-                                                                                            'violin',
-                                                                                            'box'])),
+                                                           ((value in ['errorbar',
+                                                                       'scatter',
+                                                                       'histo',
+                                                                       'violin',
+                                                                       'box']) or (0 <= value <= 4)),
                                 'level':     2,
                                 'text':      '优化或测试结果评价指标的可视化图表类型:\n'
                                              '0  - errorbar 类型\n'

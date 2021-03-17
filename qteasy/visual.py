@@ -11,7 +11,6 @@
 import mplfinance as mpf
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib.cbook as cbook
 import matplotlib.ticker as mtick
 
 import pandas as pd
@@ -144,25 +143,13 @@ def _plot_loop_result(loop_results: dict, config):
     # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
     ref_rate = (looped_values.reference - ref_start) / ref_start * 100
-    # 查找每次买进和卖出的时间点并将他们存储在一个列表中，用于标记买卖时机
-    if config.show_positions:
-        position_bounds = [looped_values.index[0]]
-        position_bounds.extend(looped_values.loc[change != 0].index)
-        position_bounds.append(looped_values.index[-1])
-
-    # 显示买卖时机的另一种方法，使用buy / sell 来存储买卖点
-    # buy_point是当持股数量增加时为买点，sell_points是当持股数量下降时
-    # 在买卖点当天写入的数据是参考数值，这是为了使用散点图画出买卖点的位置
-    if config.buy_sell_points:
-        buy_points = np.where(change > 0, ref_rate, np.nan)
-        sell_points = np.where(change < 0, ref_rate, np.nan)
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
     months = mdates.MonthLocator()  # every month
     years_fmt = mdates.DateFormatter('%Y')
 
-    CHART_WIDTH = 0.88
+    chart_width = 0.88
     # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
@@ -203,21 +190,15 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["info"]:.3f}  \n'
                          f'{loop_results["volatility"]:.3f}')
 
-    ax1.set_position([0.05, 0.41, CHART_WIDTH, 0.40])
+    ax1.set_position([0.05, 0.41, chart_width, 0.40])
     # 绘制参考数据的收益率曲线图
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Reference')
+
     # 绘制回测结果的收益率曲线图
     ax1.plot(looped_values.index, return_rate, linestyle='-',
              color=(0.8, 0.2, 0.0), alpha=0.85, label='Return')
-    # 绘制买卖点散点图(效果是在ref线上使用红绿箭头标识买卖点)
-    if config.buy_sell_points:
-        ax1.scatter(looped_values.index, buy_points, color='green',
-                    label='Buy', marker='^', alpha=0.9)
-        ax1.scatter(looped_values.index, sell_points, color='red',
-                    label='Sell', marker='v', alpha=0.9)
     ax1.set_ylabel('Total return rate')
-    ax1.grid(True)
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
     # 填充参考收益率的正负区间，绿色填充正收益率，红色填充负收益率
     ax1.fill_between(looped_values.index, 0, ref_rate,
@@ -226,27 +207,39 @@ def _plot_loop_result(loop_results: dict, config):
     ax1.fill_between(looped_values.index, 0, ref_rate,
                      where=ref_rate < 0,
                      facecolor=(0.8, 0.2, 0.0), alpha=0.35)
-    ax1.yaxis.tick_right()
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
-    ax1.spines['bottom'].set_visible(False)
-    ax1.spines['left'].set_visible(False)
 
     # 显示持股仓位区间（效果是在回测区间上用绿色带表示多头仓位，红色表示空头仓位，颜色越深仓位越高）
+    # 查找每次买进和卖出的时间点并将他们存储在一个列表中，用于标记买卖时机
     if config.show_positions:
-        for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:], position.loc[position_bounds[:-2]]):
-            # fill long/short strips with grey
-            # ax1.axvspan(first, second, facecolor=str(1 - color), alpha=0.2)
-            # fill long/short strips with green/red colors
+        position_bounds = [looped_values.index[0]]
+        position_bounds.extend(looped_values.loc[change != 0].index)
+        position_bounds.append(looped_values.index[-1])
+        for first, second, long_short in zip(position_bounds[:-2], position_bounds[1:],
+                                             position.loc[position_bounds[:-2]]):
+            # 分别使用绿色、红色填充交易回测历史中的多头和空头区间
             if long_short > 0:
-                # fill green strips if position is long
+                # 用不同深浅的绿色填充多头区间
                 ax1.axvspan(first, second,
                             facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
                             alpha=0.2)
-            else:# fill red strips if position is short
+            else:
+                # 用不同深浅的红色填充空头区间
                 ax1.axvspan(first, second,
                             facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
                             alpha=0.2)
+
+    # 显示买卖时机的另一种方法，使用buy / sell 来存储买卖点
+    # buy_point是当持股数量增加时为买点，sell_points是当持股数量下降时
+    # 在买卖点当天写入的数据是参考数值，这是为了使用散点图画出买卖点的位置
+    # 绘制买卖点散点图(效果是在ref线上使用红绿箭头标识买卖点)
+    if config.buy_sell_points:
+        buy_points = np.where(change > 0, ref_rate, np.nan)
+        sell_points = np.where(change < 0, ref_rate, np.nan)
+        ax1.scatter(looped_values.index, buy_points, color='green',
+                    label='Buy', marker='^', alpha=0.9)
+        ax1.scatter(looped_values.index, sell_points, color='red',
+                    label='Sell', marker='v', alpha=0.9)
+
     # put arrow on where max draw down is
     # ax1.annotate("max_drawdown",
     #              xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
@@ -257,27 +250,24 @@ def _plot_loop_result(loop_results: dict, config):
     #              verticalalignment='top')
     ax1.legend()
 
-    ax2.set_position([0.05, 0.23, CHART_WIDTH, 0.18])
+    ax2.set_position([0.05, 0.23, chart_width, 0.18])
     ax2.plot(looped_values.index, position)
     ax2.set_ylabel('Amount bought / sold')
     ax2.set_xlabel(None)
-    ax2.yaxis.tick_right()
-    ax2.spines['top'].set_visible(False)
-    ax2.spines['right'].set_visible(False)
-    ax2.spines['bottom'].set_visible(False)
-    ax2.spines['left'].set_visible(False)
-    ax2.grid(True)
 
-    ax3.set_position([0.05, 0.05, CHART_WIDTH, 0.18])
+    ax3.set_position([0.05, 0.05, chart_width, 0.18])
     ax3.bar(looped_values.index, ret)
     ax3.set_ylabel('Daily return')
     ax3.set_xlabel('date')
-    ax3.yaxis.tick_right()
-    ax3.spines['top'].set_visible(False)
-    ax3.spines['right'].set_visible(False)
-    ax3.spines['bottom'].set_visible(False)
-    ax3.spines['left'].set_visible(False)
-    ax3.grid(True)
+
+    # 设置所有图表的基本格式:
+    for ax in [ax1, ax2, ax3]:
+        ax.yaxis.tick_right()
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.grid(True)
 
     # format the ticks
     ax1.xaxis.set_major_locator(years)
@@ -295,71 +285,11 @@ def _plot_loop_result(loop_results: dict, config):
     plt.show()
 
 
-def _plot_opti_result(result_pool: list, config):
-    """ plot optimization results
-
-    :param result_pool
-        :type result_pool: list, 一个包含了所有最优参数的评价指标的list。
-
-    :return:
-    """
-    # prepare looped_values dataframe
-    result_count = len(result_pool)
-    complete_results = [result['complete_values'] for result in result_pool]
-    looped_values = complete_results[0]
-    # for complete_value in complete_results:
-    #     print(complete_value.tail(100))
-    if looped_values.empty:
-        raise ValueError
-    register_matplotlib_converters()
-    CHART_WIDTH = 0.9
-    # 显示投资回报评价信息
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle(f'Optimization Result - {result_count} results', fontsize=14, fontweight=10)
-    # output all evaluate looped_values in table form (values and labels are printed separately)
-    ref_start_value = looped_values.reference.iloc[0]
-    reference = (looped_values.reference - ref_start_value) / ref_start_value * 100
-    ax1.set_position([0.05, 0.35, CHART_WIDTH, 0.55])
-    ax1.plot(looped_values.index, reference, linestyle='-',
-             color=(0.4, 0.6, 0.8), alpha=0.85, label='reference')
-    for cres in complete_results:
-        start_value = cres.value.iloc[0]
-        values = (cres.value - start_value) / start_value * 100
-        ax1.plot(looped_values.index, values, linestyle='-',
-                 color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
-    ax1.set_ylabel('Total return rate')
-    ax1.grid(True)
-    ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
-    ax1.yaxis.tick_right()
-    ax1.spines['top'].set_visible(False)
-    ax1.spines['right'].set_visible(False)
-    ax1.spines['bottom'].set_visible(False)
-    ax1.spines['left'].set_visible(False)
-
-    # display information of rtn and annual_rtn, alpha
-    indicator_df = pd.DataFrame([{'rtn':        result['rtn'],
-                                  'annual_rtn': result['annual_rtn'],
-                                  'alpha':      result['alpha']} for result in result_pool],
-                                index=[result['par'] for result in result_pool])
-    ax2.set_position([0.05, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
-    maxes = indicator_df.max(axis=0)
-    mins = indicator_df.min(axis=0)
-    mean = indicator_df.mean(axis=0)
-    std = indicator_df.std(axis=0)
-    ax2.errorbar(np.arange(3), mean, std, fmt='ok', lw=3)
-    ax2.errorbar(np.arange(3), mean, [mean - mins, maxes - mean], fmt='.k', ecolor='gray', lw=1)
-
-    ax3.set_position([0.55, 0.05, CHART_WIDTH / 2 - 0.05, 0.25])
-    ax3.hist(indicator_df['alpha'], bins=10)
-
-    plt.show()
-
-
 # TODO: like _print_test_result, take the evaluate results on both opti and test hist data
 # TODO: and commit comparison base on these two data sets
 def _plot_test_result(opti_eval_res: list,
-                      test_eval_res: list,
-                      config):
+                      test_eval_res: list = None,
+                      config = None):
     """ plot test result of optimization results
 
     :param test_eval_res:
@@ -404,7 +334,7 @@ def _plot_test_result(opti_eval_res: list,
 
     # 显示投资回报评价信息
     fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle(f'Optimization Test Results - {result_count} results', fontsize=14, fontweight=10)
+    fig.suptitle(f'Optimization Test Results - {result_count} sets of strategy parameters', fontsize=14, fontweight=10)
 
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
@@ -606,7 +536,6 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     """ 格式化打印输出单次回测的结果，根据columns、headers、formatter等参数选择性输出result中的结果
         确保输出的格式美观一致
 
-    :param looped_values:
     :param loop_results:
     :param columns:
     :param headers:
@@ -653,7 +582,6 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
         以统计结果和表格的形式输出
 
     :param result:
-    :param messages:
     :param columns:
     :param headers:
     :param formatter:
@@ -702,13 +630,12 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                                    "ROI",
                                    "Reference return",
                                    "MDD"],
-                           formatters={'total_fee':    '{:,.2f}'.format,
-                                       'final_value':  '{:,.2f}'.format,
-                                       'rtn':          '{:.1%}'.format,
-                                       'mdd':          '{:.1%}'.format,
-                                       'ref_rtn':      '{:.1%}'.format,
-                                       'sell_count':   '{:.1f}'.format,
-                                       'buy_count':    '{:.1f}'.format},
+                           formatters={'total_fee':   '{:,.2f}'.format,
+                                       'final_value': '{:,.2f}'.format,
+                                       'rtn':         '{:.1%}'.format,
+                                       'mdd':         '{:.1%}'.format,
+                                       'ref_rtn':     '{:.1%}'.format,
+                                       'sell_count':  '{:.1f}'.format,
+                                       'buy_count':   '{:.1f}'.format},
                            justify='center'))
     print(f'\n===========END OF REPORT=============\n')
-

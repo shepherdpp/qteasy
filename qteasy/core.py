@@ -25,7 +25,7 @@ from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
-     _print_operation_signal, _plot_test_result, _plot_opti_result
+     _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -980,9 +980,9 @@ def run(operator, **kwargs):
         opti_eval_res = result_pool.extra
         if config.visual:
             pass
-            # _plot_opti_result(opti_eval_res, config)
+            # _plot_test_result(opti_eval_res, config=config)
         else:
-            _print_test_result(opti_eval_res, config)
+            _print_test_result(opti_eval_res, config=config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)

@@ -127,7 +127,6 @@ class TimingMACD(stg.RollingTiming):
         # 以下使用utfuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
         # diff, dea, _macd = macd(hist_data, s, l, m)
 
-
         if _macd[-1] > 0:
             return 1
         else:
@@ -235,7 +234,7 @@ class TimingEMA(stg.RollingTiming):
 # Built-in Single-cross-line strategies:
 # these strateges are basically adopting same philosaphy:
 # they track the close price vs its moving average lines
-# and trigger trading signals while the two lines cross
+# and trigger trading signals while the two lines cross each other
 # differences between these strategies are the types of
 # moving averages.
 
