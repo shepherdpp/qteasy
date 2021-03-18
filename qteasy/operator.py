@@ -528,7 +528,8 @@ class Operator:
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
 
         :param opt_par:
-            :type Tuple, 一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
+            :type opt_par:Tuple
+            一组参数，可能包含多个策略的参数，在这里被分配到不同的策略中
 
         :return
             None
@@ -908,7 +909,7 @@ class Operator:
                 self._ricon_history_data
 
         :return=====
-            :type list:
+            list
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """

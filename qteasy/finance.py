@@ -11,17 +11,24 @@
 
 import numpy as np
 import pandas as pd
-from numba import jit, int64, float64
+from numba import jit, njit, int64, float64
 from collections import Iterable
 
 
 class Cost:
     """ 交易成本类，用于在回测过程中对交易成本进行估算
 
-    交易成本的估算依赖三种类型的成本：
-    1， fix：type：float，固定费用，在交易过程中产生的固定现金费用，与交易金额和交易量无关： 固定费用 = 固定费用
-    2， fee：type：float，交易费率，或者叫一阶费率，交易过程中的固定费率，交易费用 = 交易金额 * 交易费率
-    3， slipage：type：float，交易滑点，或者叫二阶费率。
+    交易成本的估算依赖四种类型的成本：
+    1,  fixed_fee：固定费用，在交易过程中产生的固定现金费用，与交易金额和交易量无关，买入与卖出固定费用可以不同
+        固定费用类型与固定费率或最低费用不能同时存在，当固定费用不为0时，直接使用固定费用作为交易费用，忽略其他参数
+        交易费用 = 固定费用
+    2,  rate：type：float，交易费率，交易过程中的固定费率，与交易金额成正比，买入与卖出的交易费率可以不同
+        交易费用 = 交易金额 * 交易费率
+    3,  min_fee: float，最低交易费用，当设置了交易费率时，按照交易费率计算费用，但如果按照交易费率算出的费用低于
+        最低费用，则使用最低费用。例如：
+            卖出100股股票，假设每股价格10元，交易费率为千分之一，最低费用为5元，则
+            根据费率计算出交易费用为1元，但由于最低费用为5元，因而交易费用为5元
+    4,  slipage：type：float，交易滑点，或者叫二阶费率。
         用于模拟交易过程中由于交易延迟或买卖冲击形成的交易成本，滑点绿表现为一个关于交易量的函数, 交易
         滑点成本等于该滑点率乘以交易金额： 滑点成本 = f(交易金额） * 交易成本
     """
@@ -49,7 +56,8 @@ class Cost:
 
     def __repr__(self):
         """设置Rate对象"""
-        return f'Rate({self.fix}, {self.fee}, {self.slipage})'
+        return f'Rate({self.buy_fix}/{self.sell_fix}, {self.buy_rate}/{self.sell_rate}, ' \
+               f'{self.buy_min}/{self.sell_min}, {self.slipage})'
 
     # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
     def __call__(self,
@@ -102,7 +110,7 @@ class Cost:
         else:
             raise TypeError
 
-    # @numba.njit
+    #@njit
     def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray, moq: float = 0):
         """计算出售投资产品的要素
 
@@ -124,16 +132,16 @@ class Cost:
             a_sold = np.sign(prices) * np.where(op < 0, amounts * op // moq * moq, 0)
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
-            rates = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=False)
+            rates = self.__call__(trade_values=sold_values, is_buying=False, fixed_fees=False)
             cash_gained = (-1 * sold_values * (1 - rates)).sum()
-            fee = (sold_values * rates).sum()
-        else:
-            fixed_fees = self.__call__(trade_values=amounts * prices, is_buying=False, fixed_fees=True)
-            fee = -np.where(a_sold, fixed_fees, 0).sum()
-            cash_gained = - sold_values.sum() + fee
+            fee = -(sold_values * rates).sum()
+        else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
+            fixed_fees = self.__call__(trade_values=sold_values, is_buying=False, fixed_fees=True)
+            fee = np.where(a_sold, fixed_fees, 0).sum()
+            cash_gained = - sold_values.sum() - fee
         return a_sold, cash_gained, fee
 
-    # @numba.njit
+    # @njit
     def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
         """获得购买资产时的要素
 
@@ -149,8 +157,6 @@ class Cost:
         if self.buy_fix == 0.:
             # 固定费用为0，按照费率模式计算
             rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False)
-            # debug
-            # print(f'purchase rate is {rates}')
             # 费率模式下，计算综合费率（包含滑点）
             if moq == 0:  # moq为0，买入份额数为任意分数份额
                 a_purchased = np.where(prices,
@@ -207,9 +213,10 @@ def _calculate_fee(trade_values, fixed_fees, is_buying, bf, sf, br, sr, bm, sm, 
                 return np.fmax(br, min_rate) + slp * trade_values
         else:
             if sm == 0.:
-                return sr + slp * trade_values
+                return sr - slp * trade_values
             else:
-                min_rate = sm / trade_values
+                min_rate = -sm / trade_values
+                min_rate[np.isinf(min_rate)] = 0  # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
                 return np.fmax(sr, min_rate) + slp * trade_values
 
 
@@ -233,7 +240,7 @@ class CashPlan:
             f'TypeError: amounts should be a list of numbers, got {type(amounts)} instead'
         if isinstance(amounts, list):
             assert all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]), \
-                f'TypeError: amount should be number format, got {type(amount)} instead'
+                f'TypeError: amount should be number format, got unresolved format in amounts!'
             assert all([amount > 0 for amount in amounts]), f'InputError: Investment amount should be larger than 0'
         assert isinstance(dates, Iterable), f"Expect Iterable input dates, got {type(dates)} instead!"
 

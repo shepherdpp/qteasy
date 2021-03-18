@@ -195,19 +195,19 @@ def _get_complete_hist(looped_value: pd.DataFrame,
 
     input:=====
         :param looped_value:
-            :type pd.DataFrame
+            :type looped_value: pd.DataFrame
             完成历史交易回测后生成的历史资产总价值清单，只有在操作日才有记录，非操作日没有记录
 
         :param h_list:
-            :type pd.DataFrame
+            :type h_list: pd.DataFrame
             完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
 
         :param ref_list:
-            :type pd.DataFrame
+            :type ref_list: pd.DataFrame
             参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
 
         :param with_price:
-            :type boolean
+            :type with_price: boolean
             True时在返回的清单中包含历史价格，否则仅返回资产总价值
 
     return: =====
@@ -348,7 +348,7 @@ def apply_loop(op_list: pd.DataFrame,
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
     date_print_format = '%Y/%m/%d'
-    # TODO: is it possible to use as_strided instead of for-loop here?
+    # TODO: use Numba to optimize the efficiency of the looping process
     for i in range(op_count):  # 对每一行历史交易信号开始回测
         if print_log:
             print(f'交易日期:{looped_dates[i].strftime(date_print_format)}, '
@@ -1048,35 +1048,35 @@ def _evaluate_all_parameters(par_generator,
 
     input:
         :param par_generator:
-            :type Generator:
+            :type par_generator: Generator
             一个迭代器对象，生成所有需要迭代测试的策略参数
 
         :param op:
-            :type qt.Operator
+            :type op: qt.Operator
             一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
 
         :param op_history_data:
-            :type qt.HistoryPanel
+            :type op_history_data: qt.HistoryPanel
             用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
             历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
             价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
         :param loop_history_data:
-            :type pd.DataFrame
+            :type loop_history_data: pd.DataFrame
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
             （假设交易价格为收盘价）
 
         :param reference_history_data:
-            :type pd.DataFrame
+            :type reference_history_data_type: pd.DataFrame
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
             产的价格，例如沪深300指数的价格。
 
         :param reference_history_data_type:
-            :type str
+            :type reference_history_data: str
             用于回测结果评价的参考历史数据种类，通常为收盘价close
 
         :param config:
-            :type Config:
+            :type config: Config
             参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
                 1, config.opti_output_count:
                     优化结果数量
@@ -1084,7 +1084,7 @@ def _evaluate_all_parameters(par_generator,
                     并行计算选项，True时进行多进程并行计算，False时进行单进程计算
 
         :param stage:
-            :type str
+            :type stage: str
             该参数直接传递至_evaluate_one_parameter()函数中，其含义和作用参见其docstring
     :return:
         pool，一个Pool对象，包含经过筛选后的所有策略参数以及它们的性能表现
@@ -1160,37 +1160,37 @@ def _evaluate_one_parameter(par: tuple,
 
     input:
         :param par:
-            :type tuple
+            :type par: tuple
             输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且符合op对象中每个交易策
             略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见qt.operator.set_opt_par()的
             docstring
 
         :param op:
-            :type qt.Operator
+            :type op: qt.Operator
             一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
 
         :param op_history_data:
-            :type qt.HistoryPanel
+            :type op_history_data: qt.HistoryPanel
             用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
             历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
             价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
         :param loop_history_data:
-            :type pd.DataFrame
+            :type loop_history_data: pd.DataFrame
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
             （假设交易价格为收盘价）
 
         :param reference_history_data:
-            :type pd.DataFrame
+            :type reference_history_data: pd.DataFrame
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
             产的价格，例如沪深300指数的价格。
 
         :param reference_history_data_type:
-            :type str
+            :type reference_history_data_type: str
             用于回测结果评价的参考历史数据种类，通常为收盘价close
 
         :param config:
-            :type Config:
+            :type config: Config:
             参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
                 1, config.opti_type/test_type:
                     优化或测试模式，决定如何利用回测区间
@@ -1215,7 +1215,7 @@ def _evaluate_one_parameter(par: tuple,
                     例如，0.5代表每个子区间的长度是整个区间的一半
 
         :param stage:
-            :type str:
+            :type stage: str:
             运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
                 1, 'loop':      运行模式为回测模式，在这种模式下：
                                 使用投资区间回测投资计划
@@ -1378,11 +1378,11 @@ def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
         不仅仅满足K线图的形态要求，其各个参数的均值、标准差与参考数据一致。
 
     :param history_data:
-        :type HistoryPanel
+        :type history_data: HistoryPanel
         模拟数据的参考源
 
     :return:
-        :type HistoryPanel
+        HistoryPanel
     """
 
     assert isinstance(history_data, HistoryPanel)
@@ -1637,11 +1637,21 @@ def _search_ga(hist, ref_hist, ref_type, op, config):
     同时在繁殖的过程中引入随机的基因变异生成新的个体。最终使种群的数量恢复到初始值。这样就完成
     一次种群的迭代。重复上面过程数千乃至数万代直到种群中出现希望得到的最优或近似最优解为止
     input：
-        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param op，object，交易信号生成器对象
-        :param lpr，object，交易信号回测器对象
-        :param output_count，int，输出数量，优化器寻找的最佳参数的数量
-        :param keep_largest_perf，bool，True寻找评价分数最高的参数，False寻找评价分数最低的参数
+        :param hist
+            :type hist: object，历史数据，优化器的整个优化过程在历史数据上完成
+
+        :param ref_hist
+            :type ref_hist:
+
+        :param ref_type
+            :type ref_type:
+
+        :param op
+            :type op: object，交易信号生成器对象
+
+        :param config
+            :type config: ConfigDict
+
     return: =====tuple对象，包含两个变量
         pool.items 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
