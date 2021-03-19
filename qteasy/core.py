@@ -101,22 +101,51 @@ def _loop_step(pre_cash: float,
                moq_buy: float = 100,
                moq_sell: float = 1,
                print_log: bool = False,
-               share_dict: dict = None) -> tuple:
+               share_names: list = None) -> tuple:
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
     input：=====
-        param pre_cash, np.ndarray：本次交易开始前账户现金余额
-        param pre_amounts, np.ndarray：list，交易开始前各个股票账户中的股份余额
-        param op, np.ndarray：本次交易的个股交易清单
-        param prices：np.ndarray，本次交易发生时各个股票的价格
-        param rate：object Rate 交易成本率对象
-        param moq_buy：float: 投资产品最小交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+        :param pre_cash,
+            :type pre_cash: np.ndarray
+            本次交易开始前账户现金余额
+
+        :param pre_amounts,
+            :type pre_amounts: np.ndarray:
+            交易开始前各个股票账户中的股份余额
+
+        :param op,
+            :type op: np.ndarray
+            本次交易的个股交易清单
+
+        :param prices：
+            :type prices: np.ndarray，
+            本次交易发生时各个股票的价格
+
+        :param rate：
+            :type rate: object Cost
+            交易成本率对象
+
+        :param moq_buy：
+            :type moq_buy: float:
+            投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+
+        :param moq_sell：
+            :type moq_sell: float:
+            投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
+
+        :param print_log：
+            :type print_log: bool:
+            是否在回测过程中打印交易记录，临时解决方案，会导致效率降低。以后会被logs代替
+
+        :param share_names：
+            :type share_names: list:
+            以list的形式存储的股票名称，share_names列表的元素数量与股票的数量相同
 
     return：===== tuple，包含四个元素
-        cash：交易后账户现金余额
-        amounts：交易后每个个股账户中的股份余额
-        fee：本次交易总费用
-        value：本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
+        cash：       交易后账户现金余额
+        amounts：    交易后每个个股账户中的股份余额
+        fee：        本次交易总费用
+        value：      本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
     """
     # 计算交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
@@ -134,14 +163,17 @@ def _loop_step(pre_cash: float,
                                                                     amounts=pre_amounts,
                                                                     moq=moq_sell)
     if print_log:
+        # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
+        if share_names is None:
+            share_names = np.arange(len(op))
         item_sold = np.where(op < 0)[0]
         if len(item_sold) > 0:
             for i in item_sold:
                 if prices[i] != 0:
-                    print(f' - 资产:\'{share_dict[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
                           f'出售 {np.round(-amount_sold[i], 2)} 份')
                 else:
-                    print(f' - 资产:\'{share_dict[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+                    print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
                           f'暂停交易，出售 {0.0} 份')
             print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
                   f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
@@ -165,10 +197,13 @@ def _loop_step(pre_cash: float,
                                                                         pur_values=pur_values,
                                                                         moq=moq_buy)
     if print_log:
+        # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
+        if share_names is None:
+            share_names = np.arange(len(op))
         item_purchased = np.where(op > 0)[0]
         if len(item_purchased) > 0:
             for i in item_purchased:
-                print(f' - 资产:\'{share_dict[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+                print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
                       f' 买入 {np.round(amount_purchased[i], 2)} 份')
             print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
         else:
@@ -309,6 +344,11 @@ def apply_loop(op_list: pd.DataFrame,
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
+    if moq_buy == 0:
+        assert moq_sell == 0, f'ValueError, if moq buy is 0, then moq_sell should also be 0, got {moq_sell}'
+    if (moq_buy != 0) and (moq_sell != 0):
+        assert moq_buy % moq_sell == 0, \
+            f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
 
     # 根据最新的研究实验，在python3.6的环境下，nditer的速度显著地慢于普通的for-loop
     # 因此改回for-loop执行，直到找到更好的向量化执行方法
@@ -372,7 +412,7 @@ def apply_loop(op_list: pd.DataFrame,
                                                moq_buy=moq_buy,
                                                moq_sell=moq_sell,
                                                print_log=print_log,
-                                               share_dict=shares)
+                                               share_names=shares)
         # 保存计算结果
         cashes.append(cash)
         fees.append(fee)

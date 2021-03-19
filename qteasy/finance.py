@@ -165,6 +165,10 @@ class Cost:
                                                 0),
                                        0)
             else:  # moq不为零，买入份额必须是moq的倍数
+                # TODO: BUG: 当moq>0且按照最低额计算交易费用时，会出现交易费用计算不准确的情况，例如：
+                # TODO: 当rate=0.005，min_fee=100时，买入1000股每股价格10元，应收费用按费率计算为50
+                # TODO: 元，而最低费用为100元，此时应该按最低费用计费，但此时计算出的最低费用不是100元
+                # TODO: 而是9X.X元，这是因为返回的rate没有考虑到moq的损失导致的，应消除此bug
                 a_purchased = np.where(prices,
                                        np.where(op > 0,
                                                 pur_values // (prices * moq * (1 + rates)) * moq,

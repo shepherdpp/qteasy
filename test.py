@@ -88,23 +88,23 @@ class TestCost(unittest.TestCase):
         self.r.buy_min = 0
         self.r.sell_min = 0
         self.r.slipage = 0
+
         print('\nSell result with fixed rate = 0.001 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.op, self.amounts))
-        print('\nSell result with fixed rate = 0.001 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 1))
-        print('\nSell result with fixed rate = 0.001 and moq = 100:')
-        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 100))
-
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[1], 33299.999667, msg='result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[2], 33.333332999999996, msg='result incorrect')
 
+        print('\nSell result with fixed rate = 0.001 and moq = 1:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 1))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3334]), True, 'result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[1], 33306.66, msg='result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[2], 33.34, msg='result incorrect')
 
+        print('\nSell result with fixed rate = 0.001 and moq = 100:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 100))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3400]), True, 'result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[1], 33966.0, msg='result incorrect')
@@ -112,24 +112,23 @@ class TestCost(unittest.TestCase):
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0))
-        print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
-        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1))
-        print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
-        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
-
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997.00897308, 0.]), True, 'result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[1], -20000.0, msg='result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[2], 59.82053838484547, msg='result incorrect')
 
+        print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 1))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], -19999.819999999996, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1], -19999.82, msg='result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[2], 59.82, msg='result incorrect')
 
+        print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], -18053.999999999996, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1], -18054., msg='result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[2], 54.0, msg='result incorrect')
 
     def test_min_fee(self):
@@ -140,18 +139,47 @@ class TestCost(unittest.TestCase):
         self.r.buy_min = 300
         self.r.sell_min = 300
         self.r.slipage = 0.
-        print('\npurchase result with fixed cost rate with min fee = 300:')
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
         self.assertAlmostEqual(test_min_fee_result[1], -20000.0, msg='result incorrect')
         self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
 
-        print('\nselling result with fixed cost rate with min fee = 300:')
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 1:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 10))
+        test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 10)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
+        test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+
+        print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.op, self.amounts))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
         self.assertAlmostEqual(test_min_fee_result[1], 33033.333)
+        self.assertAlmostEqual(test_min_fee_result[2], 300.0)
+
+        print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 1))
+        test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 1)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], 33033)
+        self.assertAlmostEqual(test_min_fee_result[2], 300.0)
+
+        # TODO: investigate: 卖出股票时如果有moq，应该向上取整还是向下取整？例如，333.3应取整到340还是330？需要考虑
+        print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 100))
+        test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 100)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3400]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], 33700)
         self.assertAlmostEqual(test_min_fee_result[2], 300.0)
 
     def test_fixed_fee(self):
@@ -1398,6 +1426,13 @@ class TestLoop(unittest.TestCase):
                             buy_min=0,
                             sell_min=0,
                             slipage=0)
+        self.rate2 = qt.Cost(buy_fix=0,
+                             sell_fix=0,
+                             buy_rate=0,
+                             sell_rate=0,
+                             buy_min=10,
+                             sell_min=5,
+                             slipage=0)
         self.op_signal_df = pd.DataFrame(self.op_signals, index=self.dates, columns=self.shares)
         self.history_list = pd.DataFrame(self.prices, index=self.dates, columns=self.shares)
         self.res = np.array([[0.000, 0.000, 0.000, 0.000, 555.556, 0.000, 0.000, 7500.000, 0.000, 10000.000],
@@ -1460,8 +1495,7 @@ class TestLoop(unittest.TestCase):
                              [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 1339.207, 0.000, 0.000, 23099.082],
                              [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 1339.207, 0.000, 0.000, 22684.767],
                              [1073.823, 416.679, 735.644, 269.850, 0.000, 938.697, 1339.207, 0.000, 0.000, 22842.135],
-                             [1073.823, 416.679, 735.644, 269.850, 1785.205, 938.697, 1339.207, 5001.425, 0.000,
-                              33323.836],
+                             [1073.823, 416.679, 735.644, 269.850, 1785.205, 938.697, 1339.207, 5001.425, 0, 33323.836],
                              [0.000, 416.679, 1290.692, 719.924, 1785.205, 2701.488, 1339.207, 0.000, 0.000, 32820.290],
                              [0.000, 416.679, 1290.692, 719.924, 1785.205, 2701.488, 1339.207, 0.000, 0.000, 33174.614],
                              [0.000, 416.679, 1290.692, 719.924, 1785.205, 2701.488, 1339.207, 0.000, 0.000, 35179.466],
@@ -1509,7 +1543,8 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[0],
                                                        rate=self.rate,
                                                        moq_buy=0,
-                                                       print_log=False)
+                                                       moq_sell=0,
+                                                       print_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash:     {cash}\n'
               f'amounts:  {np.round(amounts, 2)}\n'
@@ -1525,7 +1560,8 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[3],
                                                        rate=self.rate,
                                                        moq_buy=0,
-                                                       print_log=False)
+                                                       moq_sell=0,
+                                                       print_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash:     {cash}\n'
               f'amounts:  {np.round(amounts, 2)}\n'
@@ -1542,6 +1578,7 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[31],
                                                        rate=self.rate,
                                                        moq_buy=0,
+                                                       moq_sell=0,
                                                        print_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash:     {cash}\n'
@@ -1559,7 +1596,8 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[60],
                                                        rate=self.rate,
                                                        moq_buy=0,
-                                                       print_log=False)
+                                                       moq_sell=0,
+                                                       print_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash:     {cash}\n'
               f'amounts:  {np.round(amounts, 2)}\n'
@@ -1575,7 +1613,8 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[61],
                                                        rate=self.rate,
                                                        moq_buy=0,
-                                                       print_log=False)
+                                                       moq_sell=0,
+                                                       print_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash:     {cash}\n'
               f'amounts:  {np.round(amounts, 2)}\n'
@@ -1592,7 +1631,8 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[96],
                                                        rate=self.rate,
                                                        moq_buy=0,
-                                                       print_log=False)
+                                                       moq_sell=0,
+                                                       print_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash:     {cash}\n'
               f'amounts:  {np.round(amounts, 2)}\n'
@@ -1607,7 +1647,8 @@ class TestLoop(unittest.TestCase):
                                                        prices=self.prices[97],
                                                        rate=self.rate,
                                                        moq_buy=0,
-                                                       print_log=False)
+                                                       moq_sell=0,
+                                                       print_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash:     {cash}\n'
               f'amounts:  {np.round(amounts, 2)}\n'
@@ -1622,10 +1663,42 @@ class TestLoop(unittest.TestCase):
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq_buy=0,
-                         inflation_rate=0)
+                         moq_sell=0,
+                         inflation_rate=0,
+                         print_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res.values, self.res, 5))
+        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
+        self.assertRaises(AssertionError,
+                          apply_loop,
+                          self.op_signal_df,
+                          self.history_list,
+                          self.cash,
+                          self.rate,
+                          0, 1,
+                          0,
+                          False)
+        self.assertRaises(AssertionError,
+                          apply_loop,
+                          self.op_signal_df,
+                          self.history_list,
+                          self.cash,
+                          self.rate,
+                          1, 5,
+                          0,
+                          False)
+        print(f'test loop results with moq equal to 100')
+        res = apply_loop(op_list=self.op_signal_df,
+                         history_list=self.history_list,
+                         cash_plan=self.cash,
+                         cost_rate=self.rate2,
+                         moq_buy=100,
+                         moq_sell=1,
+                         inflation_rate=0,
+                         print_log=True)
+        self.assertIsInstance(res, pd.DataFrame)
+        print(f'in test_loop:\nresult of loop test is \n{res}')
 
 
 class TestOperatorSubFuncs(unittest.TestCase):
