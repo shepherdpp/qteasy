@@ -611,15 +611,17 @@ def configuration(mode=None, type = None, opti_method=None, level=0, info=False,
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 # TODO:
-# TODO: 发现一个导致在非交易日生成operation signal的bug:
-# TODO: 在某些非价格型历史数据（如财报数据等）中，某些数据点正好存在于非交易日上，例如：
-# TODO: 2018年9月30日是一个非交易日，但是当天有eps数据产生。如果某个策略使用eps生成
-# TODO: 交易信号，必须引用包含eps的历史数据，那么2018年9月30日这一天就会有历史数据，
-# TODO: 因而有可能在这一天产生交易信号。这个交易信号传送到loop函数中去后，就会在这一天
-# TODO  产生一个净值为0的异常交易日（因为这一天没有交易，因此所有股价为0，会产生异常值）
-# TODO  即使使用fillna填充了正确的值，也会导致图表中的参考数据产生异常值）
-# TODO  因此一个关键是确保operation signal全部在交易日产生，要做到这一点，目前最简单
-# TODO  的办法就是创建history_panel中只有交易日，没有其他日期
+# TODO: 发现一个问题需要改进：
+# TODO: 在进行优化的时候，实际的优化结果开始日期并不是设置好的invest_start
+# TODO: 或opti_start/test_start日期，而是包含一长段没有任何交易任务的空白期
+# TODO: 在显示优化结果的时候，需要将优化回测结果与ref数据对比，由于回测后的结果包含了一段
+# TODO: 空白期，因此ref结果包含了这一段空白期中的数据，实际就导致回测结果并未与
+# TODO: ref数据进行1:1的对比（注意，mode=1的回测不存在此问题）, 例如：
+# TODO: 一组策略的回测本应从2020-01-01开始，但是在回测后，实际的回测结果从2019-06-01开始
+# TODO: 了，且从2019-06-01到2020-01-01之间的数据都是空白（0），实际回测结果从2020-01-01
+# TODO: 开始的，然而ref数据也是从2019-06-01开始，因此所有的后续评价都是基于从2020-01-01的回测
+# TODO: 结果与2019-06-01开始的ref数据之间的比较开始的，因此各项指标都不尽正确
+# TODO: 同时图表输出的结果也不正确，在回测结果的最前头总有一段平直为0的直线，需要改进！！
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据
 
@@ -634,21 +636,22 @@ def check_and_prepare_hist_data(operator, config):
     current_time = current_datetime.time()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
     if run_mode == 0:
-        start = config.invest_start
-        # start = current_date - pd.Timedelta(250, 'd')
-        if is_trade_day(current_date) and current_time.hour > 16:  # 交易日17:00以后
-            end = regulate_date_format(current_date)
+        invest_start = config.invest_start
+        # invest_start = current_date - pd.Timedelta(250, 'd')
+        if is_trade_day(current_date) and current_time.hour > 17:  # 交易日18:00以后
+            invest_end = regulate_date_format(current_date)
         else:  # 交易日17:00以前，查询到前一个交易日
             prev = current_date - pd.Timedelta(1, 'd')
             while not is_trade_day(prev):
                 prev = prev - pd.Timedelta(1, 'd')
-            end = regulate_date_format(prev)
+            invest_end = regulate_date_format(prev)
     else:
-        start = config.invest_start
-        end = config.invest_end
-
-    hist_op = get_history_panel(start=start,
-                                end=end,
+        invest_start = config.invest_start
+        invest_end = config.invest_end
+    window_length = operator.max_window_length
+    hist_op = get_history_panel(start=regulate_date_format(pd.to_datetime(invest_start) -
+                                                           pd.Timedelta(int(window_length * 1.5), 'd')),
+                                end=invest_end,
                                 shares=config.asset_pool,
                                 htypes=operator.op_data_types,
                                 freq=operator.op_data_freq,
@@ -667,7 +670,8 @@ def check_and_prepare_hist_data(operator, config):
     # hist_loop.info()
 
     # 生成用于策略优化训练的训练历史数据集合
-    hist_opti = get_history_panel(start=config.opti_start,
+    hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(config.opti_start) -
+                                                             pd.Timedelta(int(window_length * 1.5), 'd')),
                                   end=config.opti_end,
                                   shares=config.asset_pool,
                                   htypes=operator.op_data_types,
@@ -675,7 +679,8 @@ def check_and_prepare_hist_data(operator, config):
                                   asset_type=config.asset_type,
                                   chanel='local') if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
-    hist_test = get_history_panel(start=config.test_start,
+    hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(config.test_start) -
+                                                             pd.Timedelta(int(window_length * 1.5), 'd')),
                                   end=config.test_end,
                                   shares=config.asset_pool,
                                   htypes=operator.op_data_types,

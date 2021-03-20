@@ -174,6 +174,7 @@ class Cost:
                                                 pur_values // (prices * moq * (1 + rates)) * moq,
                                                 0),
                                        0)
+                # rates = self.__call__(trade_values=a_purchased * prices, is_buying=True, fixed_fees=False)
             cash_spent = np.where(a_purchased, -1 * a_purchased * prices * (1 + rates), 0)
             fee = -(cash_spent * rates / (1 + rates)).sum()
         elif self.buy_fix:

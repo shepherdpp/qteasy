@@ -146,11 +146,11 @@ class TestCost(unittest.TestCase):
         self.assertAlmostEqual(test_min_fee_result[1], -20000.0, msg='result incorrect')
         self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
 
-        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 1:')
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 10))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 10)
-        self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], -20000.0, msg='result incorrect')
+        self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], -19900.0, msg='result incorrect')
         self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
@@ -5509,7 +5509,7 @@ class TestQT(unittest.TestCase):
                print_backtest_log=False,
                buy_sell_points=False,
                show_positions=False,
-               invest_cash_dates='20080104')
+               invest_cash_dates='20070606')
 
         print(f'test plot with both buy-sell points and position indicators')
         qt.run(self.op,
@@ -5519,7 +5519,7 @@ class TestQT(unittest.TestCase):
                print_backtest_log=False,
                buy_sell_points=True,
                show_positions=True,
-               invest_cash_dates='20080104')
+               invest_cash_dates='20070604')
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
@@ -5590,8 +5590,10 @@ class TestQT(unittest.TestCase):
                opti_sample_count=900,
                opti_start='20040104',
                opti_end='20140601',
+               opti_cash_dates='20060307',
                test_start='20120604',
                test_end='20201130',
+               test_cash_dates='20140604',
                test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',  # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
                indicator_plot_type='violin',
                parallel=True,

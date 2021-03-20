@@ -113,22 +113,18 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
     performance_dict = dict()
     # 评价回测结果——计算回测终值，这是默认输出结果
     performance_dict['final_value'] = eval_fv(looped_val=looped_values)
-    performance_dict['loop_start'] = looped_values.index[0]
+    performance_dict['loop_start'] = op_list.index[0]
     performance_dict['loop_end'] = looped_values.index[-1]
     performance_dict['complete_values'] = looped_values
-    if any(indicator in indicator_list for indicator in ['years', 'oper_count', 'total_invest', 'total_fee', 'return']):
-        years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
-                                                                    looped_value=looped_values,
-                                                                    cash_plan=cash_plan)
-        performance_dict['years'] = years
-        performance_dict['oper_count'] = oper_count
-        performance_dict['total_invest'] = total_invest
-        performance_dict['total_fee'] = total_fee
+    years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
+                                                                looped_value=looped_values,
+                                                                cash_plan=cash_plan)
+    performance_dict['years'] = years
+    performance_dict['oper_count'] = oper_count
+    performance_dict['total_invest'] = total_invest
+    performance_dict['total_fee'] = total_fee
     # 评价回测结果——计算总投资收益率
     if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
-        years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
-                                                                    looped_value=looped_values,
-                                                                    cash_plan=cash_plan)
         performance_dict['rtn'] = eval_fv(looped_val=looped_values) / total_invest - 1
         performance_dict['annual_rtn'] = (performance_dict['rtn'] + 1) ** (1 / years) - 1
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
@@ -413,7 +409,7 @@ def eval_operation(op_list, looped_value, cash_plan):
     :param cash_plan:
     :return:
     """
-    total_year = np.round((looped_value.index[-1] - looped_value.index[0]).days / 365., 1)
+    total_year = np.round((op_list.index[-1] - looped_value.index[0]).days / 365., 1)
     sell_counts = []
     buy_counts = []
     # 循环统计op_list交易清单中每个个股
