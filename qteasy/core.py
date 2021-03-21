@@ -194,7 +194,7 @@ def _loop_step(pre_cash: float,
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         op=op,
-                                                                        pur_values=pur_values,
+                                                                        cash_to_be_spent=pur_values,
                                                                         moq=moq_buy)
     if print_log:
         # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
@@ -979,8 +979,6 @@ def run(operator, **kwargs):
         # hist_reference = hist_op.to_dataframe(htype='close')
         # -------------------------
 
-        # TODO: 使用_evaluate_one_parameter()代替下面的代码，但是_evaluate_one_parameter()
-        # TODO: 首先应该改造，改造方向见_evaluate_one_parameter()的TODO项
         operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价

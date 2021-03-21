@@ -129,7 +129,7 @@ class Cost:
         if moq == 0:
             a_sold = np.sign(prices) * np.where(op < 0, amounts * op, 0)
         else:
-            a_sold = np.sign(prices) * np.where(op < 0, amounts * op // moq * moq, 0)
+            a_sold = np.sign(prices) * np.where(op < 0, np.trunc(amounts * op / moq) * moq, 0)
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.__call__(trade_values=sold_values, is_buying=False, fixed_fees=False)
@@ -142,55 +142,67 @@ class Cost:
         return a_sold, cash_gained, fee
 
     # @njit
-    def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, pur_values: [np.ndarray, float], moq: float):
+    def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, cash_to_be_spent: [np.ndarray, float], moq: float):
         """获得购买资产时的要素
 
         :param prices: ndarray, 投资组合中每只股票的当前单价
         :param op: ndarray, 操作矩阵，针对投资组合中的每只股票的买卖操作，>0代表买入或平空仓,<0代表卖出或平多仓，绝对值表示买卖比例
-        :param pur_values: ndarray, 买入金额，可用于买入股票或资产的计划金额
+        :param cash_to_be_spent: ndarray, 买入金额，可用于买入股票或资产的计划金额
         :param moq: float, 最小交易单位
         :return:
-        a_purchased: 一个ndarray, 代表所有股票分别买入的份额或数量
+        a_to_purchase: 一个ndarray, 代表所有股票分别买入的份额或数量
         cash_spent: float，花费的总金额，包括费用在内
         fee: 花费的费用，购买成本，包括佣金和滑点等投资成本
         """
+        # 给三个函数返回值预先赋值
+        a_purchased = None
+        cash_spent = None
+        fee = None
         if self.buy_fix == 0.:
-            # 固定费用为0，按照费率模式计算
-            rates = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=False)
-            # 费率模式下，计算综合费率（包含滑点）
-            if moq == 0:  # moq为0，买入份额数为任意分数份额
+            # 固定费用为0，估算购买一定金额股票的交易费率
+            rates = self.__call__(trade_values=cash_to_be_spent, is_buying=True, fixed_fees=False)
+            # 计算期望购买份额，这是在不考虑moq的情况下，最多能买到的份额（通常不是整数）
+            a_to_purchase = np.where(prices,
+                                     np.where(op > 0,
+                                              cash_to_be_spent / (prices * (1 + rates)),
+                                              0),
+                                     0)
+            # 根据moq计算实际购买份额
+            if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
+                a_purchased = a_to_purchase
+            else:  # moq不为零，实际买入份额必须是moq的倍数，因此实际买入份额通常小于期望买入份额
                 a_purchased = np.where(prices,
                                        np.where(op > 0,
-                                                pur_values / (prices * (1 + rates)),
+                                                np.trunc(cash_to_be_spent / (prices * moq * (1 + rates))) * moq,
                                                 0),
                                        0)
-            else:  # moq不为零，买入份额必须是moq的倍数
-                # TODO: BUG: 当moq>0且按照最低额计算交易费用时，会出现交易费用计算不准确的情况，例如：
-                # TODO: 当rate=0.005，min_fee=100时，买入1000股每股价格10元，应收费用按费率计算为50
-                # TODO: 元，而最低费用为100元，此时应该按最低费用计费，但此时计算出的最低费用不是100元
-                # TODO: 而是9X.X元，这是因为返回的rate没有考虑到moq的损失导致的，应消除此bug
-                a_purchased = np.where(prices,
-                                       np.where(op > 0,
-                                                pur_values // (prices * moq * (1 + rates)) * moq,
-                                                0),
-                                       0)
-                # rates = self.__call__(trade_values=a_purchased * prices, is_buying=True, fixed_fees=False)
-            cash_spent = np.where(a_purchased, -1 * a_purchased * prices * (1 + rates), 0)
-            fee = -(cash_spent * rates / (1 + rates)).sum()
+            # 计算实际花费现金，股票价值部分使用实际份额乘以价格，根据计划买入金额不同，用不同的方式计算费用
+            # 对于大于min_fee_threshold的计划金额，使用a_purchased计算交易费用（因为费率是固定的）
+            # 对于小于min_fee_threshold的计划金额，使用a_to_purchase计算交易费用（因为费率是基于期望份额算出来的）
+            if self.buy_rate != 0:
+                min_fee_threshold = self.buy_min / self.buy_rate + self.buy_min
+                fee_base = np.where(cash_to_be_spent > min_fee_threshold, a_purchased, a_to_purchase)
+            else:
+                fee_base = a_to_purchase
+            # 根据交易费率基数计算交易费用
+            fees = fee_base * prices * rates
+            purchased_values = a_purchased * prices + fees
+            cash_spent = np.where(a_purchased, -1 * purchased_values, 0)
+            fee = fees.sum()
         elif self.buy_fix:
             # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，只计算买入金额大于固定费用的份额
-            fixed_fees = self.__call__(trade_values=pur_values, is_buying=True, fixed_fees=True)
+            fixed_fees = self.__call__(trade_values=cash_to_be_spent, is_buying=True, fixed_fees=True)
             if moq == 0:
                 a_purchased = np.fmax(np.where(prices,
                                                np.where(op > 0,
-                                                        (pur_values - fixed_fees) / prices,
+                                                        (cash_to_be_spent - fixed_fees) / prices,
                                                         0),
                                                0),
                                       0)
             else:
                 a_purchased = np.fmax(np.where(prices,
                                                np.where(op > 0,
-                                                        (pur_values - fixed_fees) // (prices * moq) * moq,
+                                                        np.trunc((cash_to_be_spent - fixed_fees) / (prices * moq)) * moq,
                                                         0),
                                                0),
                                       0)
@@ -204,7 +216,7 @@ def _calculate_fee(trade_values, fixed_fees, is_buying, bf, sf, br, sr, bm, sm, 
     """calculate the transaction fee given all parameters
 
     """
-    if fixed_fees:  # 采用固定费用模式计算
+    if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
         if is_buying:
             return bf + slp * trade_values ** 2
         else:
