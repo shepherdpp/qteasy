@@ -176,16 +176,8 @@ class Cost:
                                                 np.trunc(cash_to_be_spent / (prices * moq * (1 + rates))) * moq,
                                                 0),
                                        0)
-            # 计算实际花费现金，股票价值部分使用实际份额乘以价格，根据计划买入金额不同，用不同的方式计算费用
-            # 对于大于min_fee_threshold的计划金额，使用a_purchased计算交易费用（因为费率是固定的）
-            # 对于小于min_fee_threshold的计划金额，使用a_to_purchase计算交易费用（因为费率是基于期望份额算出来的）
-            if self.buy_rate != 0:
-                min_fee_threshold = self.buy_min / self.buy_rate + self.buy_min
-                fee_base = np.where(cash_to_be_spent > min_fee_threshold, a_purchased, a_to_purchase)
-            else:
-                fee_base = a_to_purchase
-            # 根据交易费率基数计算交易费用
-            fees = fee_base * prices * rates
+            # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
+            fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0)
             purchased_values = a_purchased * prices + fees
             cash_spent = np.where(a_purchased, -1 * purchased_values, 0)
             fee = fees.sum()

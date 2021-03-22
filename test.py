@@ -174,13 +174,63 @@ class TestCost(unittest.TestCase):
         self.assertAlmostEqual(test_min_fee_result[1], 33030)
         self.assertAlmostEqual(test_min_fee_result[2], 300.0)
 
-        # TODO: investigate: 卖出股票时如果有moq，应该向上取整还是向下取整？例如，333.3应取整到340还是330？需要考虑
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.op, self.amounts, 100))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
         self.assertAlmostEqual(test_min_fee_result[1], 32700)
         self.assertAlmostEqual(test_min_fee_result[2], 300.0)
+
+    def test_rate_with_min(self):
+        """Test transaction cost calculated by rate with min_fee"""
+        self.r.buy_rate = 0.0153
+        self.r.sell_rate = 0.01
+        self.r.buy_fix = 0.
+        self.r.sell_fix = 0.
+        self.r.buy_min = 300
+        self.r.sell_min = 333
+        self.r.slipage = 0.
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 0:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 0))
+        test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 0)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0., 984.9305624, 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2], 301.3887520929774, msg='result incorrect')
+
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 10))
+        test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 10)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+
+        print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
+        print(self.r.get_purchase_result(self.prices, self.op, self.amounts, 100))
+        test_min_fee_result = self.r.get_purchase_result(self.prices, self.op, self.amounts, 100)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+
+        print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts))
+        test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], 32999.99967)
+        self.assertAlmostEqual(test_min_fee_result[2], 333.33333)
+
+        print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 1))
+        test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 1)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], 32996.7)
+        self.assertAlmostEqual(test_min_fee_result[2], 333.3)
+
+        print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
+        print(self.r.get_selling_result(self.prices, self.op, self.amounts, 100))
+        test_min_fee_result = self.r.get_selling_result(self.prices, self.op, self.amounts, 100)
+        self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1], 32667.0)
+        self.assertAlmostEqual(test_min_fee_result[2], 333.0)
 
     def test_fixed_fee(self):
         self.r.buy_rate = 0.
