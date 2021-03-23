@@ -371,28 +371,10 @@ class Strategy:
         bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
         # 在这里发现另外一个问题，通过date_range生成的日期序列有可能生成非交易日的日期
         # 这也许会成为一个问题
-        # debug
-        # print(f'\nIn strategy._seg_periods() function:\n'
-        #       f'first 30 items of created temp_date_series is {temp_date_series[:30]}\n'
-        #       f'and the weekdays of the temp_data_series are {[date.weekday() for date in temp_date_series[:30]]}\n'
-        #       f'above dates are adjusted, after adjustment the first 30 dates are:\n'
-        #       f'{bnds[:30]}\nand weekdays of adjusted bound days are:\n'
-        #       f'{[date.weekday() for date in bnds[:30]]}')
         # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
         seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
         # 用searchsorted函数把输入的日期与历史数据日期匹配起来
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
-        # debug
-        # print(f'in module selecting: function seg_perids generated date bounds supposed to start'
-        #       f'from {dates[self.window_length]} to {dates[-1]}, actually got:\n'
-        #       f'{bnds}\n'
-        #       f'now comparing first date {dates[0]} with first bound {bnds[0]}\n'
-        #       f'the first 100 dates in which signal dates are searched are\n'
-        #       f'{[date.strftime("%Y-%m-%d") for date in dates[:100]]}\n the weekdays are\n'
-        #       f'{[date.weekday() for date in dates[0:100]]}\n'
-        #       f'all dates found from dates are:\n'
-        #       f'{[dates[i].strftime("%Y-%m-%d") for i in seg_pos]} \n and their week days are:\n'
-        #       f'{[dates[i].weekday() for i in seg_pos]}')
         # 最后一个分隔位等于历史区间的总长度
         seg_pos[-1] = len(dates) - 1
         # print('Results check, selecting - segment creation, segments:', seg_pos)
@@ -553,11 +535,6 @@ class RollingTiming(Strategy):
         cat = np.zeros(hist_slice.shape[0])
         hist_nonan = hist_slice[no_nan]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
-        # debug
-        # print(f'there are {len(hist_nonan)} rows of data that are not "Nan", \n'
-        #       f'thus these rows of data will be "rolled" to a 2-D '
-        #       f'shaped matrix containing in each column {self.window_length} rows of data \neach offsetting 1 row ahead'
-        #       f'the next column over the whole matrix, forming a {loop_count} X {self.window_length} matrix')
         if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
             return cat[self.window_length:]
 
@@ -586,20 +563,10 @@ class RollingTiming(Strategy):
                                 par_list)))
         # TODO: 如果在创建cat的时候就去掉最前面一段，那么这里的capping和concatenate()就都不需要了，这都是很费时的操作
         # 生成的结果缺少最前面window_length那一段，因此需要补齐
-        # debug
-        # print(f'created long/short masks with above matrix, shape is {res.shape}\n'
-        #       f'containing {np.count_nonzero(res)} non-zero signals, first signal is at {np.where(res)[0]}')
         capping = np.zeros(self._window_length - 1)
-        # debug
-        # print(f'in Timing.generate_over() function shapes of res and capping are {res.shape}, {capping.shape}')
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
         cat[no_nan] = res
-        # debug
-        # print(f'first 100 items of created long/short mask for current hist_slice is '
-        #       f'(shape:{cat[self.window_length:].shape}, containing '
-        #       f'{np.count_nonzero(cat[self.window_length:])} signals): \n'
-        #       f'{cat[self.window_length:][:100]}')
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
@@ -615,8 +582,6 @@ class RollingTiming(Strategy):
         return：=====
             L/S mask: ndarray, 所有股票在整个历史区间内的所有多空信号矩阵，包含M行N列，每行是一个时间点上的多空信号，每列一只股票
         """
-        # debug
-        # print(f'hist_data got in Timing.generate() function is shaped {hist_data.shape}')
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
         assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
         assert hist_data.ndim == 3, \
@@ -638,10 +603,6 @@ class RollingTiming(Strategy):
                                 hist_data,
                                 par_list))).T
 
-        # debug
-        # print(f'the history data passed to rolling realization function is shaped {hist_data.shape}')
-        # print(f'generate result of np timing generate, result shaped {res.shape}')
-        # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res
 
@@ -772,33 +733,16 @@ class SimpleSelecting(Strategy):
         seg_start = seg_pos[1]
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
-        # debug
-        # print(f'hist data received in selecting strategy (shape: {hist_data.shape}):\n{hist_data}')
-        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\n'
-        #       f'seg_count\n{seg_count}')
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
-            # debug
-            # print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
-            #       f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
             share_sel = self._realize(hist_data[:, sp - sl:sp, :])
             # assert isinstance(share_sel, np.ndarray)
             # assert len(share_sel) == len(shares)
             seg_end = seg_start + fill_len
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
-            # debug
-            # print(f'filling data into the sel_mask, now filling \n{share_sel}\nin she sell mask '
-            #       f'from row {seg_start} to {seg_end} (not included)\n')
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
-        # debug
-        # print(f'hist data is filled with sel value, shape is {sel_mask.shape}\n'
-        #       f'the first 100 items of sel values are {sel_mask[:100]}')
-        # print(f'but the first {self.window_length} rows will be removed from the data\n'
-        #       f'only last {sel_mask.shape[0] - self.window_length} rows will be returned\n'
-        #       f'returned mask shape is {sel_mask[self.window_length:].shape}\n'
-        #       f'first 100 items are \n{sel_mask[self.window_length:][:100]}')
         return sel_mask[self.window_length:]
 
 
@@ -944,10 +888,6 @@ class SimpleTiming(Strategy):
                                 hist_data,
                                 par_list))).T
 
-        # debug
-        # print(f'the history data passed to simple rolling realization function is shaped {hist_data.shape}')
-        # print(f'generate result of np timing generate, result shaped {res.shape}')
-        # print(f'generate result of np timing generate after cutting is shaped {res[self.window_length:, :].shape}')
         # 每个个股的多空信号清单被组装起来成为一个完整的多空信号矩阵，并返回
         return res[self.window_length:, :]
 
@@ -1093,9 +1033,6 @@ class FactoralSelecting(Strategy):
             raise ValueError(f'indication selection condition \'{condition}\' not supported!')
         nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
         if nan_count == share_count:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
-            # debug
-            # print(f'in SimpleSelecting realize method got ranking vector and share selecting vector like:\n'
-            #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
             return chosen
         if not sort_ascending:
             # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
@@ -1144,9 +1081,6 @@ class FactoralSelecting(Strategy):
         else:  # self.__distribution == 'even'
 
             chosen[args] = 1. / arg_count
-        # debug
-        # print(f'in SimpleSelecting realize method got ranking vector and share selecting vector like:\n'
-        #       f'{np.round(indices, 3)}\n{np.round(chosen,3)}')
         return chosen
 
     # TODO：需要重新定义FactoralSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
@@ -1194,33 +1128,16 @@ class FactoralSelecting(Strategy):
         seg_start = seg_pos[1]
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
         # TODO: 可以使用map函数生成分段
-        # debug
-        # print(f'hist data received in selecting strategy (shape: {hist_data.shape}):\n{hist_data}')
-        # print(f'history segmentation factors are:\nseg_pos:\n{seg_pos}\nseg_lens:\n{seg_lens}\n'
-        #       f'seg_count\n{seg_count}')
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
-            # debug
-            # print(f'{sl} rows of data,\n starting from {sp - sl} to {sp - 1},\n'
-            #       f' will be passed to selection realize function:\n{hist_data[:, sp - sl:sp, :]}')
             share_sel = self._process_factors(hist_data[:, sp - sl:sp, :])
             # assert isinstance(share_sel, np.ndarray)
             # assert len(share_sel) == len(shares)
             seg_end = seg_start + fill_len
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
-            # debug
-            # print(f'filling data into the sel_mask, now filling \n{share_sel}\nin she sell mask '
-            #       f'from row {seg_start} to {seg_end} (not included)\n')
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
-        # debug
-        # print(f'hist data is filled with sel value, shape is {sel_mask.shape}\n'
-        #       f'the first 100 items of sel values are {sel_mask[:100]}')
-        # print(f'but the first {self.window_length} rows will be removed from the data\n'
-        #       f'only last {sel_mask.shape[0] - self.window_length} rows will be returned\n'
-        #       f'returned mask shape is {sel_mask[self.window_length:].shape}\n'
-        #       f'first 100 items are \n{sel_mask[self.window_length:][:100]}')
         return sel_mask[self.window_length:]
 
 

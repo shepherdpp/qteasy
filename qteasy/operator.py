@@ -249,8 +249,6 @@ class Operator:
         self._timing = []
         self._timing_history_data = []
         self._ls_blender = 'pos-1'  # 默认的择时策略混合方式
-        # debug
-        # print(timing_types)
         for timing_type in timing_types:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
             if isinstance(timing_type, str):
@@ -584,20 +582,12 @@ class Operator:
             # 优化标记为1：该策略参与优化，用于优化的参数组的类型为上下界
             elif stg.opt_tag == 1:
                 k += stg.par_count
-                # debug
-                # print(f'in strategy.set_opt_par, got par like {opt_par[s:k]}\nsetting items from {s}-th to {k}-th '
-                #       f'in par_list {opt_par}\n'
-                #       f'to set to strategy \n{stg}')
                 stg.set_pars(opt_par[s:k])
                 s = k
             # 优化标记为2：该策略参与优化，用于优化的参数组的类型为枚举
             elif stg.opt_tag == 2:
                 # 在这种情况下，只需要取出参数向量中的一个分量，赋值给策略作为参数即可。因为这一个分量就包含了完整的策略参数tuple
                 k += 1
-                # debug
-                # print(f'in strategy.set_opt_par, got par like {opt_par[s:k]}\nsetting the {s}-th item'
-                #       f'in par_list {opt_par}\n'
-                #       f'to set to strategy \n{stg}')
                 stg.set_pars(opt_par[s])
                 s = k
 
@@ -692,16 +682,12 @@ class Operator:
         if pars is not None:
             if strategy.set_pars(pars):
                 pass
-                # print(f'{strategy} parameter has been set to {items}')
             else:
                 raise ValueError(f'parameter setting error')
-                # print(f'parameter setting error')
         if opt_tag is not None:
             strategy.set_opt_tag(opt_tag)
-            # print(f'{strategy} optimizaiton tag has been set to {opt_tag}')
         if par_boes is not None:
             strategy.set_par_boes(par_boes)
-            # print(f'{strategy} parameter space range or enum has been set to {par_boes}')
         if par_types is not None:
             strategy.par_types = par_types
         has_sf = sample_freq is not None
@@ -711,10 +697,7 @@ class Operator:
             strategy.set_hist_pars(sample_freq=sample_freq,
                                    window_length=window_length,
                                    data_types=data_types)
-            # print(f'{strategy} history looping parameter has been set to:\n sample frequency: {sample_freq}\n',
-            #       f'window length: {window_length} \ndata types: {data_types}')
         # set up additional properties of the class if they do exist:
-        # debug
         strategy.set_custom_pars(**kwargs)
 
     # =================================================
@@ -804,25 +787,8 @@ class Operator:
         if hist_data.is_empty:
             raise ValueError(f'history data can not be empty!')
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
-        # debug
-        # print(f'searching the first date ({cash_plan.first_day}), type {type(cash_plan.first_day)} '
-        #       f'in hdates of historical data: \n {hist_data.hdates} of type {type(hist_data.hdates[0])}')
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
-        # debug
-        # print(f'\nloaded historical data starts {hist_data.hdates[0].date()}, ends {hist_data.hdates[-1].date()}\n'
-        #       f'in total there are {len(hist_data.hdates)} rows of data in history data set')
-        # print(f'\nloaded historical data, all dates of the data are\n'
-        #       f'{[date.strftime("%Y-%m-%d") for date in hist_data.hdates[0:]]}\n'
-        #       f'weekdays of these dates are:\n'
-        #       f'{[date.weekday() for date in hist_data.hdates[0:]]}\n'
-        #       f'check if they are trade days:\n'
-        #       f'{[is_market_trade_day(date) for date in hist_data.hdates[0:]]}')
-        # print(f'first and last cash investment dates are \n'
-        #       f'first date:{cash_plan.first_day} at pos: {first_cash_pos}, \n'
-        #       f'last date:{cash_plan.last_day} at pos: {last_cash_pos}\n'
-        #       f'the operation matrix should contain at least {len(hist_data.hdates) - first_cash_pos} '
-        #       f'rows of data to cover the range from {first_cash_pos} to {len(hist_data.hdates)}')
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         # TODO: 这里应该提高容错度，设置更好的回测历史区间设置方法，尽量使用户通过较少的参数设置就能完成基
         # TODO: 本的运行，不用过分强求参数之间的关系完美无缺，如果用户输入的参数之间有冲突，根据优先级调整
@@ -857,25 +823,11 @@ class Operator:
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
         self._selecting_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                         for stg in self.selecting]
-        # debug
-        # print(f'slicing historical data for selecting data\n'
-        #       f'take "s-0" strategy as example, historical data of following types\n{self.selecting[0].data_types}\n'
-        #       f'and {self._selecting_history_data[0].shape[1]} rows '
-        #       f'are taken out of total {hist_data.shape[1]} rows from row '
-        #       f'{first_cash_pos - self.selecting[0].window_length} to row {hist_data.shape[1]}')
         # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
         self._timing_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                      for stg in self.timing]
-        # debug
-        # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos - self.timing[0].window_length} = '
-        #      f'{len(hist_data.hdates) - first_cash_pos + self.timing[0].window_length}'
-        #      f' rows for timing strategies')
         self._ricon_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                     for stg in self.ricon]
-        # debug
-        # print(f'slicing historical data {len(hist_data.hdates)} - {first_cash_pos} = '
-        #      f'{len(hist_data.hdates) - first_cash_pos}'
-        #      f' rows for ricon strategies')
 
     # TODO: 需要改进：
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
@@ -927,13 +879,7 @@ class Operator:
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
-        # debug
-        # print(f'In operation signal list generation function: \n'
-        #       f'the history data is passed, although not useful, and can be checked\n'
-        #       f'the last 100 datetime labels of the history data is\n'
-        #       f'{date_list[-100:-1]}')
         for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
-            # print('SPEED test OP create, Time of sel_mask creation')
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]
@@ -942,9 +888,6 @@ class Operator:
             # 生成的选股蒙板添加到选股蒙板队列中，
 
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
-        # # debug
-        # print(f'Sel_mask has been created! shape is {sel_mask.shape}')
-        # print(f'Sel-mask has been created! last 100 items of mask is\n{sel_mask[-100:-1]}')
         # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
         # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
         # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
@@ -954,22 +897,12 @@ class Operator:
         # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
         ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)])
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
-        # # debug
-        # print(f'Long/short_mask has been created! shape is {ls_mask.shape}')
-        # print('\n first 100 items of long/short mask: \n', ls_mask[:100])
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
         ricon_mats = np.array([ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)])
         ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
-        # debug
-        # print(f'risk control_mask has been created! shape is {ricon_mat.shape}')
-        # print('first 100 items of risk control matrix \n', ricon_mat[:100])
-        # print('first 100 items of sel_mask * ls_mask: \n', (ls_mask * sel_mask)[:100])
-        # print(f'sel_mask * ls_mask converted to signal matrix:\n{mask_to_signal(ls_mask * sel_mask)[:100]}')
-        # print(f'created operation matrix:\n{(mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)}')
 
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并移除所有大于1或小于-1的信号
-        # print('SPEED test OP create, Time of operation mask creation')
         # 生成交易信号矩阵
         if self._ls_blender != 'none':
             # 常规情况下，所有的ls_mask会先被混合起来，然后再与sel_mask相乘后生成交易信号，与ricon_mat相加
@@ -981,26 +914,9 @@ class Operator:
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
-        # debug
-        # print(f'Finally op mask has been created, shaped {op_mat.shape}, first 20 rows are {op_mat[:20]}')
-        # print(f'length of date_list: {len(date_list)} starting from {date_list[0]} to {date_list[-1]}\n'
-        #       f'first 20 rows of operation matrix before duplication removal is:\n{lst.head(20)}')
-        # print('operation matrix removed duplicates: \n', lst.loc[lst.any(axis=1)])
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
         return lst_out
-        # debug
-        # print('operation matrix: ', '\n', lst_out)
-        # 进一步找到所有相同且相邻的交易信号行，删除所有较晚的交易信号，只保留最早的信号（这样做的目的是减少重复信号，从而提高回测效率）
-        # ==================================================================
-        # TODO: 上面的做法是错误的。因为上面的操作实际上把连续买入或连续卖出的操作删除了。实际上这样的操作是需要的，例如，先建仓至1/3，再
-        # TODO: 建仓至2/3，可以考虑的是仅删除所有连续为1或连续-1的数据
-        # ==================================================================
-        # keep = (lst_out - lst_out.shift(1)).any(1)
-        # keep.iloc[0] = True
-        # debug
-        # print(f'trimmed operation matrix without duplicated signal: \n{lst_out[keep]}')
-        # return lst_out[keep]
 
     # ================================
     # 下面是Operation模块的私有方法
@@ -1060,9 +976,6 @@ class Operator:
         assert isinstance(blndr[0], str) and blndr[0] in self.AVAILABLE_LS_BLENDER_TYPES, \
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
             f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
-        # debug
-        # print(f'timing blender is:{blndr}')
-        # print(f'there are {ls_masks.shape[0]} long/short masks in the list, the combined shape is:\n{ls_masks.shape}')
         l_m = ls_masks
         l_m_sum = np.sum(l_m, 0) # 计算所有多空模版的和
         l_count = ls_masks.shape[0]
@@ -1127,8 +1040,6 @@ class Operator:
             ndarray, 混合完成的选股蒙板
         """
         exp = self._selecting_blender[:]
-        # debug
-        # print('expression in operation module', exp)
         s = []
         while exp:  # 等同于但是更好: while exp != []
             if exp[-1].isdigit():

@@ -298,19 +298,12 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
         raise TypeError(f'operation list should be a pandas DataFrame, got {type(op_list)} instead')
     if not isinstance(invest, CashPlan):
         raise TypeError(f'invest plan should be a qteasy CashPlan, got {type(invest)} instead')
-    # debug
-    # print(f'in function merge_invest_dates, got op_list BEFORE merging:\n{op_list}\n'
-    #       f'will merge following dates into op_list:\n{invest.dates}')
     for date in invest.dates:
         try:
             op_list.loc[date]
         except:
             op_list.loc[date] = 0
-    # debug
-    # print(f'in function merge_invest_dates, got op_list AFTER merging:\n{op_list}')
     op_list.sort_index(inplace=True)
-    # debug
-    # print(f'in function merge_invest_dates, got op_list AFTER merging:\n{op_list}')
     return op_list
 
 
@@ -665,11 +658,6 @@ def check_and_prepare_hist_data(operator, config):
     inf_locs = np.where(np.isinf(hist_loop))
     for row, col in zip(inf_locs[0], inf_locs[1]):
         hist_loop.iloc[row, col] = 0
-    # debug
-    # print(f'\n got hist_op as following\n')
-    # # hist_op.info()
-    # print(f'\n got hist_loop as following\n')
-    # hist_loop.info()
 
     # 生成用于策略优化训练的训练历史数据集合
     hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(config.opti_start) -
@@ -694,13 +682,6 @@ def check_and_prepare_hist_data(operator, config):
     inf_locs = np.where(np.isinf(hist_test_loop))
     for row, col in zip(inf_locs[0], inf_locs[1]):
         hist_test_loop.iloc[row, col] = 0
-    # debug
-    # print(f'\n got hist_opti as following between {Config.opti_start} and {Config.opti_end}\n')
-    # hist_opti.info()
-    # print(f'\n got hist_test as following between {Config.test_start} and {Config.test_end}\n')
-    # hist_test.info()
-    # print(f'\n got hist_test_loop as following\n')
-    # hist_test_loop.info()
 
     # 生成参考历史数据，作为参考用于回测结果的评价
     # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
@@ -716,9 +697,6 @@ def check_and_prepare_hist_data(operator, config):
                                         asset_type=config.ref_asset_type,
                                         chanel='local')
                       ).to_dataframe(htype='close')
-    # debug
-    # print(f'reference hist data downloaded, info: \n')
-    # hist_reference.info()
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference
 
 
@@ -1394,18 +1372,6 @@ def _evaluate_one_parameter(par: tuple,
                         cash_plan=cash_plan,
                         indicators=indicators)
         perf_list.append(perf)
-        # debug
-        # print(f'in current optimization segment, a segment of history list is selected:\n'
-        #       f'started from:       {history_list_seg.index[0]}\n'
-        #       f'ended on:           {history_list_seg.index[-1]}\n'
-        #       f'opti_list_segment also created:\n'
-        #       f'started from:       {op_list.index[0]}\n'
-        #       f'ended on:           {op_list.index[-1]}\n'
-        #       f'with cash plan:\n'
-        #       f'{cash_plan.info()}\n'
-        #       f'optimization result is:\n'
-        #       f'final value:        {perf}\n'
-        #       f'total fv:           {total_perf}')
     perf = performance_statistics(perf_list)
     et = time.time()
     loop_run_time = et - st
@@ -1660,12 +1626,6 @@ def _search_incremental(hist, ref_hist, ref_type, op, config):
             current_volume += subspace.volume
         current_round += 1
         space_count_in_round = len(spaces)
-        # debug
-        # print(f'\n-----------------------------------------------'
-        #       f'\nfinished optimization round {current_round - 1}'
-        #       f'\n{space_count_in_round} spaces are generated in base space:'
-        #       f'\nwith distance: {np.round(reduced_size, 3)}'
-        #       f'\ntotal volume: {current_volume}')
         progress_bar(i, total_calc_rounds, f'start next round with {space_count_in_round} spaces')
     et = time.time()
     print(f'\nOptimization completed, total time consumption: {time_str_format(et - st)}')
