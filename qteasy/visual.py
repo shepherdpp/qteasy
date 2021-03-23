@@ -92,8 +92,6 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
         if share_basic.empty:
             raise ValueError(f'stock {stock} can not be found or does not exist!')
         share_name = stock + ' - ' + share_basic.name[0]
-        # debug
-        # print(share_basic.head())
     else:
         share_name = stock + ' - ' + asset_type
     # data.info()
@@ -101,7 +99,6 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
     daily.columns = ['open', 'high', 'low', 'close', 'volume']
     daily.index = data['trade_date']
     daily = daily.rename(index=pd.Timestamp).sort_index()
-    # print(daily.head())
     # manipulating of mpf:
     return daily, share_name
 
@@ -328,9 +325,6 @@ def _plot_test_result(opti_eval_res: list,
     # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
     compariable_indicators = [i for i in opti_eval_res[0].keys() if i in plot_compariables]
     compariable_indicator_count = len(compariable_indicators)
-
-    # print(f'out of all the indicators generated, {compariable_indicator_count} indicators are compariable, they are\n'
-    #       f'{compariable_indicators}')
 
     # 显示投资回报评价信息
     fig, ax1 = plt.subplots(1, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))

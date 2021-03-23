@@ -191,33 +191,12 @@ def eval_benchmark(looped_value, reference_value, reference_data):
         :return:
     """
     total_year = _get_yearly_span(looped_value)
-    # debug
-    # print(f'\nIn func eval_benchmark():\n'
-    #       f'got parameters: \n'
-    #       f'looped_value and info: {type(looped_value)}\n'
-    #       f'reference_value and info: {type(reference_value)}'
-    #       f'reference_data: {type(reference_data)}\n'
-    #       f'info of looped_value and reference_value\n')
-    # looped_value.info()
-    # reference_value.info()
     try:
         rtn_data = reference_value[reference_data]
         rtn = (rtn_data[looped_value.index[-1]] / rtn_data[looped_value.index[0]])
-        # debug
-        # print(f'total year is \n{total_year:.3f}\n'
-        #       f'total return is calculated by finding following dates:\n'
-        #       f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
-        #       f'{rtn_data.index}')
         return rtn - 1, rtn ** (1 / total_year) - 1.
     except:
-        # debug
-        # print(f'\nERROR DETECTED: \nIn func: eval_benchmark()\n')
-        # print(f'total year is \n{total_year:.3f}\n'
-        #       f'total return is calculated by finding following dates:\n'
-        #       f'{looped_value.index[-1]} and {looped_value.index[0]} in following index of returned values:\n'
-        #       f'{rtn_data.index}')
-        # print(f'total return is: \n{rtn_data[looped_value.index[-1]]} / {rtn_data[looped_value.index[0]]} = \n{rtn - 1}')
-        # print(f'yearly return is:\n{rtn ** (1/total_year) - 1}')
+        pass
         return 0., 0.
 
 
@@ -261,9 +240,6 @@ def eval_beta(looped_value, reference_value, reference_data):
     ref_ret = (ref / ref.shift(1)) - 1
     looped_value['ref'] = ref_ret
     looped_value['ret'] = ret
-    # debug
-    # print(f'return is:\n{looped_value.ret.values}')
-    # print(f'reference value is:\n{looped_value.ref.values}')
     return looped_value.ref.cov(looped_value.ret) / ret_dev
 
 
@@ -279,9 +255,6 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035
     final_value = eval_fv(looped_value)
     strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
     volatility = eval_volatility(looped_value, logarithm=False)
-    # debug
-    # print(f'yearly return is: \n{final_value} / {total_invest} = \n{strategy_return}\n'
-    #       f'volatility is:  \n{volatility}')
     return (strategy_return - riskfree_interest_rate) / volatility
 
 
@@ -299,18 +272,11 @@ def eval_volatility(looped_value, logarithm: bool = True):
             ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
         else:
             ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-        # debug
-        # looped_value['ret'] = ret
-        # print(f'return is \n {looped_value}')
         if len(ret) > 250:
             volatility = ret.rolling(250).std() * np.sqrt(250)
-            # debug
-            # print(f'standard deviations (a list rolling calculated) are {ret.rolling(250).std()}')
             return volatility.iloc[-1]
         else:
             volatility = ret.std() * np.sqrt(250)
-            # debug
-            # print(f'standard deviation (a single number with all data) is {ret.std()}')
             return volatility
     else:
         return -np.inf
@@ -328,10 +294,6 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
     ref_ret = (ref / ref.shift(1)) - 1
     track_error = (ref_ret - ret).std(
             ddof=0)  # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
-    # debug
-    # print(f'average return is {ret.mean()} from:\n{ret}\n'
-    #       f'average reference return is {ref_ret.mean()} from: \n{ref_ret}\n'
-    #       f'tracking error is {track_error} from difference of return:\n{ref_ret - ret}')
     return (ret.mean() - ref_ret.mean()) / track_error
 
 
@@ -378,14 +340,6 @@ def eval_fv(looped_val):
 """
     assert isinstance(looped_val, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
-    # debug
-    # print(f'======================================\n'
-    #       f'=                                    =\n'
-    #       f'=   Start Evaluation of final value  =\n'
-    #       f'=                                    =\n'
-    #       f'======================================\n'
-    #       f'IN EVAL_FV:\n'
-    #       f'got DataFrame as following: \n{looped_val.info()}')
     if not looped_val.empty:
         try:
             perf = looped_val['value'].iloc[-1]
