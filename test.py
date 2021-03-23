@@ -5552,6 +5552,7 @@ class TestQT(unittest.TestCase):
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
         print(f'test plot with no buy-sell points and position indicators')
+        qt.configuration(mode='all', level=1, info=True)
         qt.run(self.op,
                mode=1,
                trade_batch_size=1,
@@ -5562,6 +5563,7 @@ class TestQT(unittest.TestCase):
                invest_cash_dates='20070606')
 
         print(f'test plot with both buy-sell points and position indicators')
+        qt.configuration(mode='all', level=1, info=True)
         qt.run(self.op,
                mode=1,
                trade_batch_size=1,
@@ -5632,6 +5634,7 @@ class TestQT(unittest.TestCase):
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
+        qt.configuration(mode='all', level=1, info=True)
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -5648,6 +5651,7 @@ class TestQT(unittest.TestCase):
                indicator_plot_type='violin',
                parallel=True,
                visual=True)
+        qt.configuration(mode='all', level=1, info=True)
 
     def test_run_mode_2_grid(self):
         """测试策略的优化模式，使用网格寻优"""

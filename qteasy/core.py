@@ -25,7 +25,7 @@ from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
-     _print_operation_signal, _plot_test_result
+    _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _validate_key_and_value
 from .tsfuncs import stock_basic
@@ -356,7 +356,7 @@ def apply_loop(op_list: pd.DataFrame,
     op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
     shares = op_list.columns
-    share_dict = {k:v for k, v in zip(range(len(shares)), shares)}
+    share_dict = {k: v for k, v in zip(range(len(shares)), shares)}
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
     # TODO: FutureWarning:
     # TODO: Passing list-likes to .loc or [] with any missing label will raise
@@ -520,7 +520,7 @@ def configure(**kwargs):
         QT_CONFIG.__setattr__(key, value)
 
 
-def configuration(mode=None, type = None, opti_method=None, level=0, info=False, verbose=False):
+def configuration(mode=None, type=None, opti_method=None, level=0, info=False, verbose=False):
     """
 
     :param mode:
@@ -563,6 +563,8 @@ def configuration(mode=None, type = None, opti_method=None, level=0, info=False,
                   'opti_cash_dates',
                   'test_start',
                   'test_end',
+                  'test_cash_amounts',
+                  'test_cash_dates',
                   'opti_method']
     elif mode == 0:
         kwargs = ['mode',
@@ -913,6 +915,8 @@ def run(operator, **kwargs):
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
     import time
+    import pdb
+    pdb.set_trace()
     optimization_methods = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,
@@ -1293,11 +1297,11 @@ def _evaluate_one_parameter(par: tuple,
          'final_value':     np.NINF}
 
     """
-    res_dict = {'par':              None,
-                'complete_values':  None,
-                'op_run_time':      0,
-                'loop_run_time':    0,
-                'final_value':      None}
+    res_dict = {'par':             None,
+                'complete_values': None,
+                'op_run_time':     0,
+                'loop_run_time':   0,
+                'final_value':     None}
 
     assert stage in ['loop', 'optimize', 'test']
     if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
@@ -1390,7 +1394,7 @@ def _evaluate_one_parameter(par: tuple,
                         cash_plan=cash_plan,
                         indicators=indicators)
         perf_list.append(perf)
-        #debug
+        # debug
         # print(f'in current optimization segment, a segment of history list is selected:\n'
         #       f'started from:       {history_list_seg.index[0]}\n'
         #       f'ended on:           {history_list_seg.index[-1]}\n'
@@ -1411,7 +1415,7 @@ def _evaluate_one_parameter(par: tuple,
 
 
 # TODO: 这个函数有潜在大量运行的可能，需要使用Numba加速
-def _create_mock_data(history_data: HistoryPanel)->HistoryPanel:
+def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     """ 根据输入的历史数据的统计特征，随机生成多组具备同样统计特征的随机序列，用于进行策略收益的蒙特卡洛模拟
 
         目前仅支持OHLC数据以及VOLUME数据的随机生成，其余种类的数据需要继续研究
