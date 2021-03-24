@@ -268,7 +268,7 @@ class Strategy:
             int: 1: 设置成功，0: 设置失败
         """
         assert isinstance(pars, (tuple, dict)) or pars is None, \
-            f'parameter should be either a tuple or a dict, got {type(items)} instead'
+            f'parameter should be either a tuple or a dict, got {type(pars)} instead'
         if pars is None:
             self._pars = pars
             return 1

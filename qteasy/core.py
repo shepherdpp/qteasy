@@ -1000,7 +1000,7 @@ def run(operator, **kwargs):
                                                reference_history_data=hist_reference,
                                                reference_history_data_type=reference_data,
                                                config=config,
-                                               stage='test')
+                                               stage='test-o')
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
         if config.visual:
@@ -1020,7 +1020,7 @@ def run(operator, **kwargs):
                                                    reference_history_data=hist_reference,
                                                    reference_history_data_type=reference_data,
                                                    config=config,
-                                                   stage='test')
+                                                   stage='test-t')
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
             test_eval_res = result_pool.extra
@@ -1249,7 +1249,11 @@ def _evaluate_one_parameter(par: tuple,
                                 使用优化区间回测投资计划
                                 回测区间利用方式使用opti_type的设置值
                                 回测区间分段数量和间隔使用opti_sub_periods
-                3, 'test':      运行模式为测试模式
+                3, 'test-o':    运行模式为测试模式-opti区间，以便在opti区间上进行一次与test区间完全相同的测试以比较结果
+                                使用优化区间回测投资计划
+                                回测区间利用方式使用test_type的设置值
+                                回测区间分段数量和间隔使用test_sub_periods
+                4, 'test-t':    运行模式为测试模式-test区间
                                 使用测试区间回测投资计划
                                 回测区间利用方式使用test_type的设置值
                                 回测区间分段数量和间隔使用test_sub_periods
@@ -1281,7 +1285,7 @@ def _evaluate_one_parameter(par: tuple,
                 'loop_run_time':   0,
                 'final_value':     None}
 
-    assert stage in ['loop', 'optimize', 'test']
+    assert stage in ['loop', 'optimize', 'test-o', 'test-t']
     if par is not None:  # 如果给出了策略参数，则更新策略参数，否则沿用原有的策略参数
         op.set_opt_par(par)
         res_dict['par'] = par
@@ -1303,15 +1307,26 @@ def _evaluate_one_parameter(par: tuple,
         print_backtest_log = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
     elif stage == 'optimize':
         invest_cash_amounts = config.opti_cash_amounts[0]
-        invest_cash_dates = None
+        # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
+        invest_cash_dates = pd.to_datetime(config.opti_cash_dates)
         period_util_type = config.opti_type
         period_count = config.opti_sub_periods
         period_length = config.opti_sub_prd_length
         indicators = config.optimize_target
         print_backtest_log = False
-    else:
+    elif stage == 'test-o':
         invest_cash_amounts = config.test_cash_amounts[0]
-        invest_cash_dates = None
+        # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
+        invest_cash_dates = pd.to_datetime(config.opti_cash_dates)
+        period_util_type = config.test_type
+        period_count = config.test_sub_periods
+        period_length = config.test_sub_prd_length
+        indicators = config.test_indicators
+        print_backtest_log = False
+    else:  # stage == 'test-t':
+        invest_cash_amounts = config.test_cash_amounts[0]
+        # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
+        invest_cash_dates = pd.to_datetime(config.test_cash_dates)
         period_util_type = config.test_type
         period_count = config.test_sub_periods
         period_length = config.test_sub_prd_length
@@ -1323,10 +1338,12 @@ def _evaluate_one_parameter(par: tuple,
     start_dates = []
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
-        start_dates.append(loop_history_data.index[0])
+        start_dates.append(invest_cash_dates)
+        # start_dates.append(loop_history_data.index[0])
         end_dates.append(loop_history_data.index[-1])
     elif period_util_type == 'multiple':
-        first_history_date = loop_history_data.index[0]
+        first_history_date = invest_cash_dates
+        # first_history_date = loop_history_data.index[0]
         last_history_date = loop_history_data.index[-1]
         history_range = last_history_date - first_history_date
         sub_hist_range = history_range * period_length

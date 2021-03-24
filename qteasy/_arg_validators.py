@@ -8,7 +8,7 @@
 # ======================================
 
 import pandas as pd
-from .finance import Cost
+import numpy as np
 import datetime
 
 PRICE_TYPE_DATA = ['close',
@@ -996,7 +996,7 @@ def _validate_key_and_value(key, value):
         raise if the key is not valid
 
     :param key:
-    :param vkwargs:
+    :param value:
     :return:
     """
     vkwargs = _valid_qt_kwargs()
