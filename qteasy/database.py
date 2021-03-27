@@ -417,51 +417,6 @@ class DataSource():
                     # 这里是整体覆盖的代码：
                     share_data[start:end] = online_data.reindex(share_data[start:end].index)[htype]
 
-                    # 这里是单独分别写入的代码：
-                    # if online_data.empty:
-                    #     # 当下载的数据为空时，就不要改写任何数据
-                    #     # (这点不一定，如果下载的是稀疏数据，可能这段时间本来就没有数据，这时应该写入空数据到数据库中
-                    #     # ，避免下次再重新从网上下载数据)
-                    #     # 例如，对于某些新上市的股票，如688680.SH，于2021年1月23日上市，在2021年以前没有财务数据
-                    #     # 这样就会取到空数据，这时候应该写入空数据而不是np.inf到数据库中，除了避免重新下载数据以外，
-                    #     # 还可以避免生成的loop数据中含有np.inf，从而导致loop失败
-                    #     # print(f'EMPTY data loaded, will skip')
-                    #     try:
-                    #
-                    #         share_data.iloc[np.searchsorted(data_index,
-                    #                                         online_data.index).clip(0,
-                    #                                                                 index_count-1)] = \
-                    #             online_data[htype]
-                    #         # online_data.values will cause potential problem
-                    #         # using 'iloc' is 3~5 times faster than 'loc'
-                    #         share_data.iloc[np.isinf(share_data).values] = np.nan
-                    #     except Exception as e:
-                    #         print(f'\nERROR OCCURED! {e}\n=====  <get_and_updated_data()>: \n'
-                    #               f'share_data len: {index_count}, online_data len: {len(online_data)}, by '
-                    #               f'searching for {htype} in:\n'
-                    #               f'range: between {missing_data_start} and {missing_data_end}\n'
-                    #               f'searched index locations are: '
-                    #               f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n')
-                    #         print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
-                    # else:
-                    #     try:
-                    #
-                    #         share_data.iloc[np.searchsorted(data_index,
-                    #                                         online_data.index).clip(0,
-                    #                                                                 index_count-1)] = \
-                    #             online_data[htype]
-                    #         # online_data.values will cause potential problem
-                    #         # using 'iloc' is 3~5 times faster than 'loc'
-                    #         share_data.iloc[np.isinf(share_data).values] = np.nan
-                    #     except Exception as e:
-                    #         print(f'\nERROR OCCURED! {e}\n=====  <get_and_updated_data()>: \n'
-                    #               f'share_data len: {index_count}, online_data len: {len(online_data)}, by '
-                    #               f'searching for {htype} in:\n'
-                    #               f'range: between {missing_data_start} and {missing_data_end}\n'
-                    #               f'searched index locations are: '
-                    #               f'{np.searchsorted(data_index, online_data.index).clip(0, index_count-1)}\n')
-                    #         print(f'share data:\n{share_data}\nonline_data: \n{online_data}')
-
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:
                 if self.file_exists(file_name):
@@ -474,3 +429,4 @@ class DataSource():
 
         hp = stack_dataframes(dfs=all_dfs, stack_along='htypes', htypes=htypes)
         return hp
+    
