@@ -23,7 +23,7 @@ from ._arg_validators import INDICATOR_TYPE_DATA
 from ._arg_validators import COMPOSIT_TYPE_DATA
 
 LOCAL_DATA_FOLDER = 'qteasy/data/'
-LOCAL_DATA_FILE_EXT = '.csv'
+LOCAL_DATA_FILE_EXT = '.dat'
 
 
 # TODO: ISSUE：改进文件处理部分，在example/文件夹中调用本地文件会失败
@@ -157,7 +157,8 @@ class DataSource():
 
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
-        dataframe.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        # dataframe.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        dataframe.reset_index().to_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
     def del_file(self, file_name):
@@ -180,7 +181,11 @@ class DataSource():
             raise FileNotFoundError(f'File {QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT} '
                                     f'not found!')
 
-        df = pd.read_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
+        # df = pd.read_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
+        df = pd.read_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        df.index = df['Unnamed: 0']
+        df.index.name = 'date'
+        df.drop(columns=['Unnamed: 0'], inplace=True)
         df = self.validated_dataframe(df)
         return df
 
@@ -194,8 +199,8 @@ class DataSource():
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         df = self.validated_dataframe(df)
-
-        df.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        # df.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        df.reset_index().to_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
     # TODO: this function is way too slow, should investigate how to improve

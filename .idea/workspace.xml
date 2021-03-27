@@ -2,14 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="Realized Rolling Loop for timing strategies:&#10;tested with 2D data (single data type), not yet tested for 3D data">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/strategy_optimization.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/strategy_optimization.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/core.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/core.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/history.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/history.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/visual.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/visual.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -601,6 +595,7 @@
       <workItem from="1616608904051" duration="1851000" />
       <workItem from="1616688051202" duration="1462000" />
       <workItem from="1616750755174" duration="16674000" />
+      <workItem from="1616862026278" duration="1118000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>
