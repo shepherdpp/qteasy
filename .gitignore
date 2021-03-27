@@ -31,3 +31,8 @@ Backtest_plotting.ipynb
 *.csv
 *.pyc
 *.ipynb
+examples/strategy_optimization.ipynb
+examples/basic.ipynb
+examples/strategy_optimization.ipynb
+examples/basic.ipynb
+examples/strategy_optimization.ipynb

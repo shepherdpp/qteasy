@@ -553,10 +553,38 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
 
+        'hist_dnld_parallel':  {'Default':   0,
+                                'Validator': lambda value: isinstance(value, int) and value >= 0,
+                                'level':     3,
+                                'text':      '下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程'},
+
+        'hist_dnld_delay':     {'Default':   None,
+                                'Validator': lambda value: isinstance(value, float) and value >= 0,
+                                'level':     3,
+                                'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒'},
+
+        'hist_dnld_delay_evy': {'Default':   None,
+                                'Validator': lambda value: isinstance(value, int) and value >= 0,
+                                'level':     3,
+                                'text':      '为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。\n'
+                                             '此参数为两次延迟之间的数据下载量'},
+
+        'hist_dnld_prog_bar':  {'Default':   None,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     3,
+                                'text':      '下载历史数据时是否显示进度条'},
+
         'gpu':                 {'Default':   False,
                                 'Validator': lambda value: isinstance(value, bool),
                                 'level':     1,
                                 'text':      '如果True，策略参数寻优时使用GPU加速计算'},
+
+        'hist_data_channel':   {'Default':   'local',
+                                'Validator': lambda value: isinstance(value, str) and value in ['local', 'online'],
+                                'level':     2,
+                                'text':      '确定如何获取历史数据：\n'
+                                             'local   - 优先从本地读取历史数据，未存储在本地的数据再从网上下载，并确保本地数据更新\n'
+                                             'online  - 从网上下载数据，不更新本地数据'},
 
         'print_backtest_log':  {'Default':   False,
                                 'Validator': lambda value: isinstance(value, bool),
@@ -840,7 +868,7 @@ def _valid_qt_kwargs():
                                                            and value <= 3,
                                 'level':     1,
                                 'text':      '策略优化算法，可选值如下:\n'
-                                             '0 - 网格法，按照一定间隔对整个向量空间进行完全搜索\n'
+                                             '0 - 网格法，按照一定间隔对整个向量空间进行网格搜索\n'
                                              '1 - 蒙特卡洛法，在向量空间中随机取出一定的点搜索最佳策略\n'
                                              '2 - 递进步长法，对向量空间进行多轮搜索，每一轮搜索结束后根据结果选择部分子空间，缩小\n'
                                              '    步长进一步搜索\n'
@@ -1016,8 +1044,7 @@ def _validate_key_and_value(key, value):
                     f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
             # ---------------------------------------------------------------
             #      At this point , if we have not raised an exception,
-            #      then kwarg is valid as far as we can tell, therefore,
-            #      go ahead and replace the appropriate value in config:
+            #      then kwarg is valid as far as we can tell.
 
     return True
 

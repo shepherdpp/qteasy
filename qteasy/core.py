@@ -651,7 +651,11 @@ def check_and_prepare_hist_data(operator, config):
                                 htypes=operator.op_data_types,
                                 freq=operator.op_data_freq,
                                 asset_type=config.asset_type,
-                                chanel='local') if run_mode <= 1 else HistoryPanel()
+                                chanel=config.hist_data_channel,
+                                parallel=config.hist_dnld_parallel,
+                                delay=config.hist_dnld_delay,
+                                delay_every=config.hist_dnld_delay_evy,
+                                progress=config.hist_dnld_prog_bar) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
     hist_loop = hist_op.to_dataframe(htype='close')
     # fill np.inf in hist_loop to prevent from result in nan in value
@@ -667,7 +671,11 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  chanel='local') if run_mode == 2 else HistoryPanel()
+                                  chanel=config.hist_data_channel,
+                                  parallel=config.hist_dnld_parallel,
+                                  delay=config.hist_dnld_delay,
+                                  delay_every=config.hist_dnld_delay_evy,
+                                  progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
     hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(config.test_start) -
                                                              pd.Timedelta(int(window_length * 1.5), 'd')),
@@ -676,7 +684,11 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  chanel='local') if run_mode == 2 else HistoryPanel()
+                                  chanel=config.hist_data_channel,
+                                  parallel=config.hist_dnld_parallel,
+                                  delay=config.hist_dnld_delay,
+                                  delay_every=config.hist_dnld_delay_evy,
+                                  progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
 
     hist_test_loop = hist_test.to_dataframe(htype='close')
     inf_locs = np.where(np.isinf(hist_test_loop))
@@ -695,7 +707,11 @@ def check_and_prepare_hist_data(operator, config):
                                         htypes=config.ref_asset_dtype,
                                         freq=operator.op_data_freq,
                                         asset_type=config.ref_asset_type,
-                                        chanel='local')
+                                        chanel=config.hist_data_channel,
+                                        parallel=config.hist_dnld_parallel,
+                                        delay=config.hist_dnld_delay,
+                                        delay_every=config.hist_dnld_delay_evy,
+                                        progress=config.hist_dnld_prog_bar)
                       ).to_dataframe(htype='close')
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference
 
@@ -893,8 +909,8 @@ def run(operator, **kwargs):
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
     import time
-    import pdb
-    pdb.set_trace()
+    # import pdb
+    # pdb.set_trace()
     optimization_methods = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,
@@ -1044,7 +1060,7 @@ def run(operator, **kwargs):
                                                        reference_history_data=mock_hist_loop,
                                                        reference_history_data_type=reference_data,
                                                        config=config,
-                                                       stage='test')
+                                                       stage='test-t')
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
                 test_eval_res = result_pool.extra

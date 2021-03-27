@@ -899,20 +899,33 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-# TODO: problem downloading financial type data, problems should be inspected and solved
-def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', chanel: str = 'local'):
+def get_history_panel(start,
+                      end,
+                      freq,
+                      shares,
+                      htypes,
+                      asset_type: str,
+                      chanel: str,
+                      parallel: int = None,
+                      delay: float = None,
+                      delay_every: int = None,
+                      progress: bool = None):
     """ 最主要的历史数据获取函数，从本地（数据库/csv/hd5）或者在线（Historical Utility functions）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
         首先利用不同的get_X_type_raw_data()函数获取不同类型的原始数据，再把原始数据整理成为date_by_row及htype_by_column的不同的
         dataframe，再使用stack_dataframe()函数把所有的dataframe组合成HistoryPanel格式
 
-    :param asset_type: str
     :param start:
     :param end:
     :param shares:
     :param htypes:
+    :param asset_type: str
     :param chanel:
+    :param parallel:
+    :param delay:
+    :param delay_every:
+    :param progress:
     :return:
     """
     if isinstance(htypes, str):
@@ -928,19 +941,11 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                             cashflow_type_data,
                             indicator_type_data]
     dataframes_to_stack = []
-    # debug
-    # print(f'in function get_history_panel got shares: \n{shares}\nand htypes:\n{htypes}')
     if chanel == 'local':
         from .database import DataSource
         ds = DataSource()
         result_hp = ds.get_and_update_data(start=start, end=end, freq=freq,
                                            shares=shares, htypes=htypes, asset_type=asset_type)
-        # debug
-        # print(f'in function get_history_panel(), history panel is generated from local source, they are:\n')
-        # if result_hp is not None:
-        #     print(f'result history panel: \n{result_hp.info()}')
-        # else:
-        #     print(f'empty HistoryPanel')
         return result_hp
     if chanel == 'online':
         result_hp = HistoryPanel()
@@ -950,7 +955,11 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                                freq=freq,
                                                                shares=shares,
                                                                htypes=price_type_data,
-                                                               asset_type=asset_type))
+                                                               asset_type=asset_type,
+                                                               parallel=parallel,
+                                                               delay=delay,
+                                                               delay_every=delay_every,
+                                                               progress=progress))
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
@@ -960,10 +969,18 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
 
         for report_type in [t for t in finance_report_types if len(t) > 0]:
 
-            income_dfs, indicator_dfs, balance_dfs, cashflow_dfs = get_financial_report_type_raw_data(start=start,
-                                                                                                      end=end,
-                                                                                                      shares=shares,
-                                                                                                      htypes=report_type)
+            (income_dfs,
+             indicator_dfs,
+             balance_dfs,
+             cashflow_dfs) = get_financial_report_type_raw_data(start=start,
+                                                              end=end,
+                                                              shares=shares,
+                                                              htypes=report_type,
+                                                              parallel=parallel,
+                                                              delay=delay,
+                                                              delay_every=delay_every,
+                                                              progress=progress
+                                                              )
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):
@@ -974,7 +991,6 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                same_shares=True)
 
         if len(composite_type_data) > 0:
-            print('Getting composite historical data...')
             dataframes_to_stack = get_composite_type_raw_data(start=start,
                                                               end=end,
                                                               shares=shares,
@@ -984,13 +1000,6 @@ def get_history_panel(start, end, freq, shares, htypes, asset_type: str = 'E', c
                                                               stack_along='shares',
                                                               shares=str_to_list(shares)),
                                        same_shares=True)
-
-            # debug
-            # print(f'in function get_history_panel(), history panel is generated from web, they are:\n')
-            # if result_hp is not None:
-            #     print(f'result history panel: \n{result_hp.info()}')
-            # else:
-            #     print(f'empty HistoryPanel')
 
         return result_hp
 
@@ -1031,19 +1040,14 @@ def get_price_type_raw_data(start: str,
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
     df_per_share = []
-    # debug
-    # print(f'\n\n------------------------------'
-    #       f'\nin function get_price_type_raw_data() got following parameters:'
-    #       f'\nstart       = {start}'
-    #       f'\nend         = {end}'
-    #       f'\nfreq        = {freq}'
-    #       f'\nhtypes      = {htypes}'
-    #       f'\nshares      = {shares}'
-    #       f'\nasset_type  = {asset_type}'
-    #       f'\nparallel    = {parallel}'
-    #       f'\ndelay       = {delay}'
-    #       f'\ndelay_every = {delay_every}'
-    #       f'\nprogress    = {progress}')
+    if parallel is None:
+        parallel = 16
+    if delay is None:
+        delay = 20
+    if delay_every is None:
+        delay_every = 500
+    if progress is None:
+        progress = True
     i = 0
     total_share_count = len(shares)
     if progress:
@@ -1053,14 +1057,30 @@ def get_price_type_raw_data(start: str,
         proc_pool = ProcessPoolExecutor(parallel)
         futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
                    shares}
+        print(f'process parameters submit to get_bar in parallel mode, with parameters:\n'
+              f'share = {shares}\n'
+              f'start = {start}\n'
+              f'end   = {end}\n'
+              f'asset_type = {asset_type}\n'
+              f'freq = {freq}')
         for f in as_completed(futures):
-            raw_df = f.result()
+            print(f'got result from futures, got f:\n'
+                  f'{f}')
+            try:
+                raw_df = f.result()
+            except Exception as ex:
+                ex.extra_info = f'bar_data downloading error @ parameters:\n' \
+                                f'share = {shares}\n' \
+                                f'start = {start}\n' \
+                                f'end   = {end}\n' \
+                                f'asset_type = {asset_type}\n' \
+                                f'freq = {freq}'
+                raise
 
             assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
                                        f'{futures[f]} from {start} to {end} in frequency {freq}'
             raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
             raw_df.index = range(len(raw_df))
-            # print('\nraw df after rearange\n', raw_df)
             df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
 
             i += 1
@@ -1071,13 +1091,10 @@ def get_price_type_raw_data(start: str,
             if i % delay_every == 0 and delay > 0:
                 sleep(delay)
             raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
-            # debug
-            # print('raw df before rearange\n', raw_df)
             assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
                                        f'{share} from {start} to {end} in frequency {freq}'
             raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
             raw_df.index = range(len(raw_df))
-            # print('\nraw df after rearange\n', raw_df)
             df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
 
             i += 1
@@ -1093,13 +1110,13 @@ def get_price_type_raw_data(start: str,
 
 
 def get_financial_report_type_raw_data(start: str,
-                                       end: str,
-                                       shares: str,
-                                       htypes: [str, list],
-                                       parallel: int = 0,
-                                       delay=1.25,
-                                       delay_every: int = 50,
-                                       progress: bool = True):
+                                      end: str,
+                                      shares: str,
+                                      htypes: [str, list],
+                                      parallel: int = 0,
+                                      delay=1.25,
+                                      delay_every: int = 50,
+                                      progress: bool = True):
     """ 在线获取财报类历史数据
 
     :param start:
@@ -1119,24 +1136,16 @@ def get_financial_report_type_raw_data(start: str,
 
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
-    # debug
-    # print(f'\n\n------------------------------'
-    #       f'\nin function get_financial_report_type_raw_data() got following parameters:'
-    #       f'\nstart       = {start}'
-    #       f'\nend         = {end}'
-    #       f'\nhtypes      = {htypes}'
-    #       f'\nshares      = {shares}'
-    #       f'\nparallel    = {parallel}'
-    #       f'\ndelay       = {delay}'
-    #       f'\ndelay_every = {delay_every}'
-    #       f'\nprogress    = {progress}')
+    if parallel is None:
+        parallel = 16
+    if delay is None:
+        delay = 20
+    if delay_every is None:
+        delay_every = 500
+    if progress is None:
+        progress = True
     total_share_count = len(shares)
     report_fields = ['ts_code', 'end_date']
-    # debug
-    # # print(f'in function get financial report type raw data, got htypes: \n{htypes}, \n'
-    # #       f'income fields will be {[htype for htype in htypes if htype in INCOME_TYPE_DATA]}')
-    # print(f'in function get financial report type raw data, got shares: \n{shares}')
-    # print(f'income fields will be {report_fields + [htype for htype in htypes if htype in INCOME_TYPE_DATA]}
     income_fields = list_to_str_format(report_fields + [htype for
                                                         htype in htypes
                                                         if htype in INCOME_TYPE_DATA])
@@ -1153,7 +1162,6 @@ def get_financial_report_type_raw_data(start: str,
     indicator_dfs = []
     balance_dfs = []
     cashflow_dfs = []
-    # print('htypes:', htypes, "\nreport fields: ", report_fields)
     i = 0
     if progress:
         progress_bar(i, total_share_count)
@@ -1229,7 +1237,15 @@ def get_financial_report_type_raw_data(start: str,
 
 
 # TODO: implement this function
-def get_composite_type_raw_data(start, end, shares, htypes, chanel):
+def get_composite_type_raw_data(start,
+                                end,
+                                shares,
+                                htypes,
+                                chanel,
+                                parallel: int = 0,
+                                delay=1.25,
+                                delay_every: int = 50,
+                                progress: bool = True):
     """
 
     :param start:
@@ -1239,7 +1255,16 @@ def get_composite_type_raw_data(start, end, shares, htypes, chanel):
     :param chanel:
     :return:
     """
-    raise NotImplementedError
+    if parallel is None:
+        parallel = 16
+    if delay is None:
+        delay = 20
+    if delay_every is None:
+        delay_every = 500
+    if progress is None:
+        progress = True
+
+    return None
 
 
 def regulate_financial_type_df(df):
