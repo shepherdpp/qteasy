@@ -92,7 +92,7 @@ class Log:
 # TODO: 1: 增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
 # TODO: 完善config字典的信息属性，使得用户可以快速了解当前配置
 # TODO: Config应该有一个保存功能，或至少有一个"read_last"功能，以便用户长期保存常用的上下文参数变量
-# TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升
+# TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
 def _loop_step(pre_cash: float,
                pre_amounts: np.ndarray,
                op: np.ndarray,
@@ -308,7 +308,11 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
-# TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升
+# TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
+# TODO: 增加功能：上一次信号执行结果确认：
+# TODO:         1, 如果上一次信号执行后有余量未完成，需要叠加到本次完成
+# TODO:         2, 如果上次信号执行后本次无需执行（如完全相同的卖出信号，无需重复执行）则跳过本次执行
+
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                cash_plan: CashPlan = None,
@@ -605,18 +609,6 @@ def configuration(mode=None, type=None, opti_method=None, level=0, info=False, v
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
-# TODO:
-# TODO: 发现一个问题需要改进：
-# TODO: 在进行优化的时候，实际的优化结果开始日期并不是设置好的invest_start
-# TODO: 或opti_start/test_start日期，而是包含一长段没有任何交易任务的空白期
-# TODO: 在显示优化结果的时候，需要将优化回测结果与ref数据对比，由于回测后的结果包含了一段
-# TODO: 空白期，因此ref结果包含了这一段空白期中的数据，实际就导致回测结果并未与
-# TODO: ref数据进行1:1的对比（注意，mode=1的回测不存在此问题）, 例如：
-# TODO: 一组策略的回测本应从2020-01-01开始，但是在回测后，实际的回测结果从2019-06-01开始
-# TODO: 了，且从2019-06-01到2020-01-01之间的数据都是空白（0），实际回测结果从2020-01-01
-# TODO: 开始的，然而ref数据也是从2019-06-01开始，因此所有的后续评价都是基于从2020-01-01的回测
-# TODO: 结果与2019-06-01开始的ref数据之间的比较开始的，因此各项指标都不尽正确
-# TODO: 同时图表输出的结果也不正确，在回测结果的最前头总有一段平直为0的直线，需要改进！！
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据
 

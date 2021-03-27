@@ -12,6 +12,7 @@
 import numpy as np
 import pandas as pd
 from os import path
+from qteasy import QT_ROOT_PATH
 
 from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
 from .utilfuncs import regulate_date_format, str_to_list, progress_bar, is_market_trade_day
@@ -25,6 +26,7 @@ LOCAL_DATA_FOLDER = 'qteasy/data/'
 LOCAL_DATA_FILE_EXT = '.csv'
 
 
+# TODO: ISSUE：改进文件处理部分，在example/文件夹中调用本地文件会失败
 class DataSource():
     """ The DataSource object manages data sources in a specific location that
     contains historical data.
@@ -140,7 +142,7 @@ class DataSource():
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        return path.exists(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        return path.exists(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
 
     def new_file(self, file_name, dataframe):
         """ create given dataframe into a new file with file_name
@@ -155,7 +157,7 @@ class DataSource():
 
         if self.file_exists(file_name):
             raise FileExistsError(f'the file with name {file_name} already exists!')
-        dataframe.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        dataframe.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
     def del_file(self, file_name):
@@ -175,9 +177,10 @@ class DataSource():
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         if not self.file_exists(file_name):
-            raise FileNotFoundError(f'File {LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT} not found!')
+            raise FileNotFoundError(f'File {QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT} '
+                                    f'not found!')
 
-        df = pd.read_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
+        df = pd.read_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
         df = self.validated_dataframe(df)
         return df
 
@@ -192,7 +195,7 @@ class DataSource():
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         df = self.validated_dataframe(df)
 
-        df.to_csv(LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        df.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
         return file_name
 
     # TODO: this function is way too slow, should investigate how to improve
@@ -311,7 +314,17 @@ class DataSource():
         :return:
         """
 
-    def get_and_update_data(self, start, end, freq, shares, htypes, asset_type: str = 'E'):
+    def get_and_update_data(self,
+                            start,
+                            end,
+                            freq,
+                            shares,
+                            htypes,
+                            asset_type: str = None,
+                            parallel=None,
+                            delay=None,
+                            delay_every=None,
+                            progress=None):
         """ the major work interface of DataSource object, extracts data directly from local
         files when all requested records exists locally. extract data online if they don't
         and merges online data back to local files.
@@ -322,15 +335,22 @@ class DataSource():
         :param shares:
         :param htypes:
         :param asset_type:
+        :param parallel:
+        :param delay:
+        :param delay_every:
+        :param progress:
         :return:
         """
-        #TODO: No file saving is needed if no new data is downloaded online
+        # TODO: No file saving is needed if no new data is downloaded online
         all_dfs = []
         if isinstance(htypes, str):
             htypes = str_to_list(input_string=htypes, sep_char=',')
         if isinstance(shares, str):
             shares = str_to_list(input_string=shares, sep_char=',')
         share_count = len(shares)
+        if asset_type is None:
+            asset_type = 'E'
+
         i = 0
         progress_count = len(htypes) * len(shares) + len(htypes)
         progress_bar(i, progress_count, f'total progress count: {progress_count}')
@@ -370,15 +390,20 @@ class DataSource():
                                                               shares=share,
                                                               htypes=htype,
                                                               asset_type=asset_type,
-                                                              parallel=4,
-                                                              progress=False)[0]
+                                                              parallel=parallel,
+                                                              delay=delay,
+                                                              delay_every=delay_every,
+                                                              progress=progress)[0]
 
                     elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
                                                                                 end=missing_data_end,
                                                                                 shares=share,
                                                                                 htypes=htype,
-                                                                                progress=False)
+                                                                                parallel=parallel,
+                                                                                delay=delay,
+                                                                                delay_every=delay_every,
+                                                                                progress=progress)
                         online_data = (inc + ind + blc + csh)[0]
 
                     # 按照原来的思路，下面的代码是将下载的数据（可能是稀疏数据）一个个写入到目标区域中，再将目标区域中的
@@ -387,7 +412,7 @@ class DataSource():
                     # 这里是整体覆盖的代码：
                     share_data[start:end] = online_data.reindex(share_data[start:end].index)[htype]
 
-                        # 这里是单独分别写入的代码：
+                    # 这里是单独分别写入的代码：
                     # if online_data.empty:
                     #     # 当下载的数据为空时，就不要改写任何数据
                     #     # (这点不一定，如果下载的是稀疏数据，可能这段时间本来就没有数据，这时应该写入空数据到数据库中

@@ -944,8 +944,16 @@ def get_history_panel(start,
     if chanel == 'local':
         from .database import DataSource
         ds = DataSource()
-        result_hp = ds.get_and_update_data(start=start, end=end, freq=freq,
-                                           shares=shares, htypes=htypes, asset_type=asset_type)
+        result_hp = ds.get_and_update_data(start=start,
+                                           end=end,
+                                           freq=freq,
+                                           shares=shares,
+                                           htypes=htypes,
+                                           asset_type=asset_type,
+                                           parallel=parallel,
+                                           delay=delay,
+                                           delay_every=delay_every,
+                                           progress=progress)
         return result_hp
     if chanel == 'online':
         result_hp = HistoryPanel()

@@ -9,6 +9,8 @@ from .built_in import *
 from .finance import *
 from ._arg_validators import QT_CONFIG
 
+from pathlib import Path
+
 # TODO: 仅需要导入用户可能会用到的类或函数即可，不需要导入所有的函数
 
 # TODO: *************************************************************
@@ -45,15 +47,14 @@ from ._arg_validators import QT_CONFIG
 # TODO: *
 # TODO: ************************************************************
 
-print(f'Module qteasy has been loaded successfully!, version: 0.1')
-print('tushare version:', ts.__version__)
-
-
 TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
 ts.set_token(TUSHARE_TOKEN)
 np.seterr(divide='ignore', invalid='ignore')
 
 PUBLIC_HOLIDAYS = []
+
+# QT_ROOT_PATH = str(Path('.').resolve()) + '/'
+QT_ROOT_PATH = '/Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/'
 
 # TODO: in future versions, Configurations can be loaded from local
 # TODO: files, thus previous configurations can be initialized at __init__()

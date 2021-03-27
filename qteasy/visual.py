@@ -434,6 +434,7 @@ def _plot_test_result(opti_eval_res: list,
 
     # 开始使用循环的方式逐个生成对比图表
     if compariable_indicator_count > 0:
+        # TODO: BUG: 当输入的数据中含有inf时，会无法生成某些图表（如histo），因此需要排除此类情况
         for ax, name in zip(compariable_plots, compariable_indicators):
             # 设置每一个对比图表的基本显示格式
             ax.spines['top'].set_visible(False)
