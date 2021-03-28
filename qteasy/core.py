@@ -518,7 +518,7 @@ def configure(**kwargs):
 
 
 def configuration(mode=None, type=None, opti_method=None, level=0, info=False, verbose=False):
-    """
+    """ 显示qt当前的环境变量，
 
     :param mode:
     :param type:

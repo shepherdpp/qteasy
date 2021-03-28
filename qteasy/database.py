@@ -184,9 +184,8 @@ class DataSource():
 
         # df = pd.read_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
         df = pd.read_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        df.index = df['Unnamed: 0']
-        df.index.name = 'date'
-        df.drop(columns=['Unnamed: 0'], inplace=True)
+        df.index = df['date']
+        df.drop(columns=['date'], inplace=True)
         df = self.validated_dataframe(df)
         return df
 
@@ -242,7 +241,6 @@ class DataSource():
 
         for col in new_columns:
             original_df[col].loc[new_index] = df[col].values
-
         self.overwrite_file(file_name, original_df)
 
     def extract_data(self, file_name, shares, start, end, freq: str = 'd'):
@@ -281,6 +279,7 @@ class DataSource():
         try:
             df.rename(index=pd.to_datetime, inplace=True)
             df.sort_index()
+            df.index.name='date'
         except:
             raise RuntimeError(f'Can not convert index of input data to datetime format!')
         return df

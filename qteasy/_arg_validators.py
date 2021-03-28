@@ -512,7 +512,7 @@ def _valid_qt_kwargs():
                                 'level':     0,
                                 'text':      '可用投资产品池，投资组合基于池中的产品创建'},
 
-        'asset_type':          {'Default':   'E',  #
+        'asset_type':          {'Default':   'I',  #
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _validate_asset_type(value),
                                 'level':     0,
@@ -681,7 +681,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '是否生成日志'},
 
-        'invest_start':        {'Default':   '20060403',
+        'invest_start':        {'Default':   '20160403',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
@@ -701,7 +701,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'invest_cash_dates':   {'Default':   '20060403',
+        'invest_cash_dates':   {'Default':   '20160405',
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value),
