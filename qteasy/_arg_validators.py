@@ -629,14 +629,14 @@ def _valid_qt_kwargs():
                                 'level':     2,
                                 'text':      '为True时在回测图表中用色带显示投资仓位'},
 
-        'cost_fixed_buy':      {'Default':   0,
+        'cost_fixed_buy':      {'Default':    0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     1,
                                 'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'
                                              '默认值为10元'},
 
-        'cost_fixed_sell':     {'Default':   0,
+        'cost_fixed_sell':     {'Default':    0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     1,
@@ -681,7 +681,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '是否生成日志'},
 
-        'invest_start':        {'Default':   '20160403',
+        'invest_start':        {'Default':   '20160405',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
@@ -701,20 +701,27 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'invest_cash_dates':   {'Default':   '20160405',
+        'invest_cash_dates':   {'Default':   None,
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value),
                                 'level':     1,
-                                'text':      '投资的日期，一个str或list'},
+                                'text':      '回测操作现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
+                                             '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
+                                             'invest_start\n'
+                                             '参数输入类型为str时，格式为"YYYYMMDD"\n'
+                                             '如果需要模拟现金多次定投投入，或者多次分散投入，则可以输入list类型或str类型\n'
+                                             '以下两种输入方式等效：\n'
+                                             '"20100104,20100202,20100304"'
+                                             '["20100104", "20100202", "20100304"]'},
 
-        'opti_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
+        'opti_start':          {'Default':   '20160405',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
                                 'text':      '优化模式下的策略优化区间开始日期'},
 
-        'opti_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
+        'opti_end':            {'Default':   '20191231',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
@@ -728,12 +735,19 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '优化模式投资的金额，一个tuple或list，每次投入资金的金额，多个数字表示多次投入'},
 
-        'opti_cash_dates':     {'Default':   '20060403',
+        'opti_cash_dates':     {'Default':   None,
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value),
                                 'level':     1,
-                                'text':      '优化模式投资的日期，一个str或list'},
+                                'text':      '策略优化区间现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
+                                             '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
+                                             'invest_start\n'
+                                             '参数输入类型为str时，格式为"YYYYMMDD"\n'
+                                             '如果需要模拟现金多次定投投入，或者多次分散投入，则可以输入list类型或str类型\n'
+                                             '以下两种输入方式等效：\n'
+                                             '"20100104,20100202,20100304"'
+                                             '["20100104", "20100202", "20100304"]'},
 
         'opti_type':           {'Default':   'single',
                                 'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
@@ -755,7 +769,7 @@ def _valid_qt_kwargs():
                                 'text':      '仅当优化类型为"multiple"时有效。每一个优化子区间长度占整个优化区间长度的比例'
                                              '例如，当优化区间长度为10年时，本参数为0.6代表每一个优化子区间长度为6年'},
 
-        'test_start':          {'Default':   (today - datetime.timedelta(1500)).strftime('%Y%m%d'),
+        'test_start':          {'Default':   '20200106',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
@@ -763,7 +777,7 @@ def _valid_qt_kwargs():
                                              '格式为"YYYYMMDD"'
                                              '字符串类型输入'},
 
-        'test_end':            {'Default':   (today - datetime.timedelta(500)).strftime('%Y%m%d'),
+        'test_end':            {'Default':   '20210201',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
                                 'level':     0,
@@ -781,15 +795,17 @@ def _valid_qt_kwargs():
                                              '模拟现金多次定投投入时，输入多个数字表示多次投入'
                                              '输入的数字的个数必须与cash_dates中的日期数量相同'},
 
-        'test_cash_dates':     {'Default':   '20140106',
+        'test_cash_dates':     {'Default':   None,
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value),
                                 'level':     1,
-                                'text':      '优化模式策略测试投资的日期，一个str或list'
-                                             'str类型输入时，格式为"YYYYMMDD"'
-                                             '如果需要模拟现金多次定投投入，或者多次分散投入，则可以输入list类型或str类型'
-                                             '以下两种输入方式等效：'
+                                'text':      '策略优化区间现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
+                                             '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
+                                             'invest_start参数\n'
+                                             '参数输入类型为str时，格式为"YYYYMMDD"\n'
+                                             '如果需要模拟现金多次定投投入，或者多次分散投入，则可以输入list类型或str类型\n'
+                                             '以下两种输入方式等效：\n'
                                              '"20100104,20100202,20100304"'
                                              '["20100104", "20100202", "20100304"]'},
 

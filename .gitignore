@@ -31,12 +31,13 @@ Backtest_plotting.ipynb
 *.csv
 *.pyc
 *.ipynb
+examples/*.ipynb
 examples/strategy_optimization.ipynb
 examples/basic.ipynb
 examples/strategy_optimization.ipynb
 examples/basic.ipynb
 examples/strategy_optimization.ipynb
 examples/strategy_optimization.ipynb
-*.dat
-*.dat
+qteasy/data/*.dat
+data/*.dat
 *.dat
