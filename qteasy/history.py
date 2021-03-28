@@ -881,8 +881,6 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     combined_index.sort()
     res_values = np.zeros(shape=(share_count, index_count, htype_count))
     res_values.fill(np.nan)
-    # debug
-    # print(f'In stack dataframe function, combined index is:\n{combined_index}\nlength: {len(combined_index)}')
     for df_id in range(len(dfs)):
         extended_df = dfs[df_id].reindex(combined_index)
         for col_name, series in extended_df.iteritems():

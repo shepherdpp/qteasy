@@ -501,7 +501,8 @@ def _plot_test_result(opti_eval_res: list,
 def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, history_data=None):
     """打印实时信号生成模式的运行结果
     """
-    print(f'\n      ====================================\n'
+    print(f'\n'
+          f'      ====================================\n'
           f'      |                                  |\n'
           f'      |       OPERATION SIGNALS          |\n'
           f'      |                                  |\n'
@@ -585,7 +586,8 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
     result = pd.DataFrame(result)
     first_res = result.iloc[0]
     ref_rtn, ref_annual_rtn = first_res['ref_rtn'], first_res['ref_annual_rtn']
-    print(f'==================================== \n'
+    print(f'\n'
+          f'==================================== \n'
           f'|                                  |\n'
           f'|       OPTIMIZATION RESULT        |\n'
           f'|                                  |\n'
@@ -626,7 +628,7 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                                    "Reference return",
                                    "MDD"],
                            formatters={'total_fee':   '{:,.2f}'.format,
-                                       'final_value': '{:,.2f}'.format,
+                                       'final_value':  '{:,.2f}'.format,
                                        'rtn':         '{:.1%}'.format,
                                        'mdd':         '{:.1%}'.format,
                                        'ref_rtn':     '{:.1%}'.format,

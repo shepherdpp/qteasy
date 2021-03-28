@@ -25,8 +25,9 @@ from ._arg_validators import COMPOSIT_TYPE_DATA
 LOCAL_DATA_FOLDER = 'qteasy/data/'
 LOCAL_DATA_FILE_EXT = '.dat'
 
-
-# TODO: ISSUE：改进文件处理部分，在example/文件夹中调用本地文件会失败
+# TODO: IMPROVE - 研究是否应该使用parquet文件格式取代feather：
+# TODO:           feather的读取和存储速度均比parquet更快：读取耗时少75%，写入耗时少50%
+# TODO:           但是parquet更适合于长期存储数据，feather适合于短期数据交换
 class DataSource():
     """ The DataSource object manages data sources in a specific location that
     contains historical data.

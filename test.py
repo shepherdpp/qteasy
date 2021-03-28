@@ -2063,13 +2063,6 @@ class TestSelStrategy(qt.SimpleSelecting):
         large2 = difper.argsort()[1:]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
-        # debug
-        # print(f'avg is \n{np.nanmean(hist_data, axis=(1, 2))}\n')
-        # print(f'last close price is\n{hist_data[:, :, 2]}\n')
-        # print(f'last close price difference is\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))}\n')
-        # print(f'selected largest two args: {large2} in'
-        #       f'\n{(hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))[:, -1] / avg}\n'
-        #       f'and got result chosen:\n{chosen}\n')
         return chosen
 
 
@@ -2133,8 +2126,6 @@ class TestSigStrategy(qt.SimpleTiming):
         sig = np.where((ratio < r) & (diff > price1),
                        1,
                        np.where((ratio < r) & (diff < price2), -1, 0))
-        # debug
-        # print(f'In TestSigStrategy: \nthe history data is\n{h}\nthe ratio is \n{ratio}\nthe diff is\n{diff}')
 
         return sig
 
@@ -2783,8 +2774,6 @@ class TestOperator(unittest.TestCase):
                            [0., 1., 1.],
                            [0., 1., 1.],
                            [0., 1., 1.]])
-        # debug
-        # print(f'output is\n{output}\n and lsmask target is\n{lsmask}')
         # TODO: Issue to be solved: the np.nan value are converted to 0 in the lsmask，这样做可能会有意想不到的后果
         # TODO: 需要解决nan值的问题
         self.assertEqual(output.shape, lsmask.shape)
@@ -2850,8 +2839,6 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0]])
-        # # debug
-        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask))
@@ -2912,8 +2899,6 @@ class TestOperator(unittest.TestCase):
                               [0.0, 0.0, 0.0],
                               [0.0, 1.0, 0.0]])
 
-        # debug
-        # print(f'the output is \n{pd.DataFrame(output)}\nand signal matrix is \n{pd.DataFrame(sigmatrix)}')
         side_by_side_array = np.array([[i, out_line, sig_line]
                                        for
                                        i, out_line, sig_line
@@ -2994,8 +2979,6 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0]])
-        # # debug
-        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask))
@@ -3055,8 +3038,6 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5]])
-        # # debug
-        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask))
@@ -3117,8 +3098,6 @@ class TestOperator(unittest.TestCase):
                             [0.33333, 0.66667, 0.00000],
                             [0.33333, 0.66667, 0.00000],
                             [0.33333, 0.66667, 0.00000]])
-        # # debug
-        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask))
@@ -3179,8 +3158,6 @@ class TestOperator(unittest.TestCase):
                             [0.08333, 0.91667, 0.00000],
                             [0.08333, 0.91667, 0.00000],
                             [0.08333, 0.91667, 0.00000]])
-        # # debug
-        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask, 0.001))
@@ -3241,8 +3218,6 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0]])
-        # # debug
-        # print(f'output is\n{pd.DataFrame(output)}\n and sel_mask target is\n{pd.DataFrame(selmask)}')
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask, 0.001))
