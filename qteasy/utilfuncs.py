@@ -103,7 +103,7 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
 
     :param t:  输入时间，单位为秒
     :param estimation:
-    :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XXsec", 为True时输出"XXD XXH XX'XX".XXX"
+    :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XX sec", 为True时输出"XXD XXH XX'XX".XXX"
     :return:
     """
     assert isinstance(t, float), f'TypeError: t should be a float number, got {type(t)}'
@@ -200,8 +200,6 @@ def list_or_slice(unknown_input: [slice, int, str, list], str_int_dict):
                 start, end = end, start
             return np.arange(start, end + 1)
         else:
-            # debug
-            # print(str_int_dict)
             return [str_int_dict[string_input]]
     elif isinstance(unknown_input, list):
         is_list_of_str = isinstance(unknown_input[0], str)
@@ -409,8 +407,9 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     """
     try:
         date = pd.to_datetime(date).date()
-    except:
-        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
+    except Exception as ex:
+        ex.extra_info = 'date is not a valid date time format, cannot be converted to timestamp'
+        raise
     if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
         return False
     if not isinstance(exchange, str) and exchange in ['SSE',
@@ -449,8 +448,9 @@ def prev_market_trade_day(date, exchange='SSE'):
     """
     try:
         date = pd.to_datetime(date).date()
-    except:
-        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
+    except Exception as ex:
+        ex.extra_info = 'date is not a valid date time format, cannot be converted to timestamp'
+        raise
     if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
         return None
     if is_market_trade_day(date, exchange):

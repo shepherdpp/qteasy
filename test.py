@@ -5521,7 +5521,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1,
                      visual=False,
                      print_backtest_log=True,
-                     invest_cash_dates='20080104', )
+                     invest_cash_dates='20100104', )
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):

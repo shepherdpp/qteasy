@@ -704,7 +704,7 @@ def _valid_qt_kwargs():
         'invest_cash_dates':   {'Default':   None,
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
-                                                                   for item in value),
+                                                                   for item in value) or value is None,
                                 'level':     1,
                                 'text':      '回测操作现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
                                              '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
@@ -738,7 +738,7 @@ def _valid_qt_kwargs():
         'opti_cash_dates':     {'Default':   None,
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
-                                                                   for item in value),
+                                                                   for item in value) or value is None,
                                 'level':     1,
                                 'text':      '策略优化区间现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
                                              '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
@@ -798,7 +798,7 @@ def _valid_qt_kwargs():
         'test_cash_dates':     {'Default':   None,
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
-                                                                   for item in value),
+                                                                   for item in value) or value is None,
                                 'level':     1,
                                 'text':      '策略优化区间现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
                                              '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'

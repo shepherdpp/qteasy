@@ -795,7 +795,8 @@ class Operator:
         # TODO: 相关参数即可，毋须责备求全。
         # TODO: 当运行模式为0时，不需要判断cash_pos与max_window_length的关系
         assert first_cash_pos >= self.max_window_length, \
-            f'InputError, Not enough history data records on first cash date {cash_plan.first_day}, ' \
+            f'InputError, History data starts on {hist_data.hdates[0]} does not have enough data to cover' \
+            f' first cash date {cash_plan.first_day}, ' \
             f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
         # 确保最后一个投资日也在输入的历史数据范围内
         # TODO: 这里应该提高容错度，如果某个投资日超出了历史数据范围，可以丢弃该笔投资，仅输出警告信息即可

@@ -14,13 +14,14 @@ import numpy as np
 import time
 import math
 import logging
+from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
-from .utilfuncs import is_market_trade_day, is_trade_day, weekday_name
+from .utilfuncs import is_market_trade_day, next_market_trade_day, prev_market_trade_day, weekday_name
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -610,11 +611,18 @@ def configuration(mode=None, type=None, opti_method=None, level=0, info=False, v
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 def check_and_prepare_hist_data(operator, config):
-    """ 根据config参数字典中的参数，下载或读取所需的历史数据
+    """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     :param: operator: Operator对象，
     :param: config, dict 参数字典
     :return:
+        hist_op:
+        hist_loop:
+        hist_opti:
+        hist_test:
+        hist_opti_loop:
+        hist_test_loop:
+
     """
     run_mode = config.mode
     # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
@@ -624,56 +632,78 @@ def check_and_prepare_hist_data(operator, config):
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.invest_cash_dates is None:
-        invest_start = config.invest_start
+        invest_start = next_market_trade_day(config.invest_start).strftime('%Y%m%d')
+        invest_cash_plan = CashPlan(invest_start,
+                                    config.invest_cash_amounts[0],
+                                    config.riskfree_ir)
     else:
-        try:
-            invest_cash_plan = CashPlan(dates=config.invest_cash_dates,
-                                        amounts=config.invest_cash_amounts,
-                                        interest_rate=config.riskfree_ir)
-        except Exception as e:
-            e.extra_info = f'invest cash amounts and invest cash dates do not match!'
-            raise
+        cash_dates = str_to_list(config.invest_cash_dates)
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        if adjusted_cash_dates != cash_dates:
+            warn(f'not all invest start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
+                 RuntimeWarning)
+        invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                    amounts=config.invest_cash_amounts,
+                                    interest_rate=config.riskfree_ir)
         invest_start = regulate_date_format(invest_cash_plan.first_day)
-        # TODO: 此处应该检查invest_start是否在config.invest_start与config.invest_end之间，否则raise
+        if pd.to_datetime(invest_start) != pd.to_datetime(config.invest_start):
+            warn(f'first cash investment on {invest_start} differ from invest_start {config.invest_start}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
         # TODO: 此处应检查invest_start是否与config.invest_start相同，否则Warning
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
+
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.opti_cash_dates is None:
-        opti_start = config.opti_start
+        opti_start = next_market_trade_day(config.opti_start).strftime('%Y%m%d')
+        opti_cash_plan = CashPlan(opti_start,
+                                  config.opti_cash_amounts[0],
+                                  config.riskfree_ir)
     else:
-        try:
-            opti_cash_plan = CashPlan(dates=config.opti_cash_dates,
-                                      amounts=config.opti_cash_amounts,
-                                      interest_rate=config.riskfree_ir)
-        except Exception as e:
-            e.extra_info = f'invest cash amounts and invest cash dates do not match!'
-            raise
+        cash_dates = str_to_list(config.opti_cash_dates)
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        if adjusted_cash_dates != cash_dates:
+            warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
+                 RuntimeWarning)
+        opti_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                  amounts=config.opti_cash_amounts,
+                                  interest_rate=config.riskfree_ir)
         opti_start = regulate_date_format(opti_cash_plan.first_day)
+        if pd.to_datetime(opti_start) != pd.to_datetime(config.opti_start):
+            warn(f'first cash investment on {opti_start} differ from invest_start {config.opti_start}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
         # TODO: 此处应该检查opti_start是否在config.opti_start与config.opti_end之间，否则raise
         # TODO: 此处应检查opti_start是否与config.opti_start相同，否则Warning
+
     # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.test_cash_dates is None:
-        test_start = config.test_start
+        test_start = next_market_trade_day(config.test_start).strftime('%Y%m%d')
+        test_cash_plan = CashPlan(test_start,
+                                  config.test_cash_amounts[0],
+                                  config.riskfree_ir)
     else:
-        try:
-            test_cash_plan = CashPlan(dates=config.test_cash_dates,
-                                      amounts=config.test_cash_amounts,
-                                      interest_rate=config.riskfree_ir)
-        except Exception as e:
-            e.extra_info = f'invest cash amounts and invest cash dates do not match!'
-            raise
+        cash_dates = str_to_list(config.test_cash_dates)
+        adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
+        if adjusted_cash_dates != cash_dates:
+            warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
+                 RuntimeWarning)
+        test_cash_plan = CashPlan(dates=adjusted_cash_dates,
+                                  amounts=config.test_cash_amounts,
+                                  interest_rate=config.riskfree_ir)
         test_start = regulate_date_format(test_cash_plan.first_day)
+        if pd.to_datetime(test_start) != pd.to_datetime(config.test_start):
+            warn(f'first cash investment on {test_start} differ from invest_start {config.test_start}, first cash'
+                 f' date will be used!',
+                 RuntimeWarning)
         # TODO: 此处应该检查test_start是否在config.test_start与config.test_end之间，否则raise
         # TODO: 此处应检查test_start是否与config.test_start相同，否则Warning
     # 设定投资结束日期
     if run_mode == 0:
-        if is_trade_day(current_date) and current_time.hour > 21:  # 交易日22:00以后
+        if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日22:00以后
             invest_end = regulate_date_format(current_date)
         else:  # 交易日17:00以前，查询到前一个交易日
-            prev = current_date - pd.Timedelta(1, 'd')
-            while not is_trade_day(prev):
-                prev = prev - pd.Timedelta(1, 'd')
-            invest_end = regulate_date_format(prev)
+            invest_end = regulate_date_format(prev_market_trade_day(current_date))
     else:
         invest_end = config.invest_end
     # 设置优化区间和测试区间的结束日期
@@ -749,7 +779,9 @@ def check_and_prepare_hist_data(operator, config):
                                         delay_every=config.hist_dnld_delay_evy,
                                         progress=config.hist_dnld_prog_bar)
                       ).to_dataframe(htype='close')
-    return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference
+
+    return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \
+           invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
 def run(operator, **kwargs):
@@ -940,8 +972,8 @@ def run(operator, **kwargs):
 
 
     return:
-        1, 在signal模式或模式0下: 返回None
-        2, 在back_test模式或模式1下: 返回None
+        1, 在signal模式或模式0下,返回: op_list
+        2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
     import time
@@ -973,32 +1005,21 @@ def run(operator, **kwargs):
     hist_reference:     评价参考价格，用于评价回测结果，大部分用于评价回测结果的alpha表现（取出无风险回报之后的表现）
                         相关的指标都需要用到参考价格;
     """
+    # 统一生成回测、优化、测试所需要的信号生成数据、回测数据以及投资金额数据（投资金额数据已调整为交易日）
     (hist_op,
      hist_loop,
      hist_opti,
      hist_test,
      hist_test_loop,
-     hist_reference) = check_and_prepare_hist_data(operator, config)
-    # 生成不同模式下回测所需要的投资计划对象和交易成本对象
-    # TODO: 需要进一步改进，此处为临时处理方式，这里的cash_plan并不参与具体计算，仅用来在prepare_data函数中提供开始日期，
-    # TODO: 应该改进prepare_data以消除对cash_plan的依赖，则这里的代码片可以省掉
-
-    invest_start_date = config.invest_start if config.invest_cash_dates is None else config.invest_cash_dates
-    cash_plan = CashPlan(invest_start_date,
-                         config.invest_cash_amounts[0])
-
-    opti_start_date = config.opti_start if config.opti_cash_dates is None else config.opti_cash_dates
-    opti_cash_plan = CashPlan(opti_start_date,
-                              config.opti_cash_amounts[0])
-
-    test_start_date = config.test_start if config.test_cash_dates is None else config.test_cash_dates
-    test_cash_plan = CashPlan(test_start_date,
-                              config.test_cash_amounts)
+     hist_reference,
+     invest_cash_plan,
+     opti_cash_plan,
+     test_cash_plan) = check_and_prepare_hist_data(operator, config)
 
     if run_mode == 0 or run_mode == 'signal':
         # 进入实时信号生成模式：
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)
+        operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
@@ -1008,18 +1029,12 @@ def run(operator, **kwargs):
                                 run_time_prepare_data=run_time_prepare_data,
                                 operator=operator,
                                 history_data=hist_op)
-        return None
+        return op_list
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式
-        # Temp test -------
-        # Create mock test data here just to visually see how one strategy performs for mock data
-        # hist_op = _create_mock_data(hist_op)
-        # hist_loop = hist_op.to_dataframe(htype='close')
-        # hist_reference = hist_op.to_dataframe(htype='close')
-        # -------------------------
 
-        operator.prepare_data(hist_data=hist_op, cash_plan=cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)  # 在生成交易信号之前准备历史数据
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
         loop_result = _evaluate_one_parameter(par=None,
@@ -1037,7 +1052,7 @@ def run(operator, **kwargs):
             # 格式化输出回测结果
             _print_loop_result(loop_result, config)
 
-        return None
+        return loop_result
 
     elif run_mode == 2 or run_mode == 'optimization':
         how = config.opti_method
@@ -1350,6 +1365,7 @@ def _evaluate_one_parameter(par: tuple,
     et = time.time()
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time
+    riskfree_ir = config.riskfree_ir
     if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         return res_dict
@@ -1396,6 +1412,7 @@ def _evaluate_one_parameter(par: tuple,
     # create list of start and end dates
     # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
     # used as the investment date for each sub-periods
+    invest_cash_dates = next_market_trade_day(invest_cash_dates).strftime('%Y%m%d')
     start_dates = []
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
@@ -1424,7 +1441,8 @@ def _evaluate_one_parameter(par: tuple,
         if stage != 'loop':
             invest_cash_dates = history_list_seg.index[0].strftime('%Y%m%d')
         cash_plan = CashPlan(invest_cash_dates,
-                             invest_cash_amounts)
+                             invest_cash_amounts,
+                             riskfree_ir)
         trade_cost = Cost(config.cost_fixed_buy,
                           config.cost_fixed_sell,
                           config.cost_rate_buy,
