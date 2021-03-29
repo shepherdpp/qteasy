@@ -479,6 +479,8 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     return list(share_basics['ts_code'].values)
 
 
+# TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
+# TODO: config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
 def is_ready(**kwargs):
     """ 检查QT_CONFIG以及Operator对象，确认qt.run()是否具备基本运行条件
 
@@ -639,9 +641,9 @@ def check_and_prepare_hist_data(operator, config):
     else:
         cash_dates = str_to_list(config.invest_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        if adjusted_cash_dates != cash_dates:
-            warn(f'not all invest start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
-                 RuntimeWarning)
+        # if adjusted_cash_dates != cash_dates:
+        #     warn(f'not all invest start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
+        #          RuntimeWarning)
         invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                     amounts=config.invest_cash_amounts,
                                     interest_rate=config.riskfree_ir)
@@ -662,9 +664,9 @@ def check_and_prepare_hist_data(operator, config):
     else:
         cash_dates = str_to_list(config.opti_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        if adjusted_cash_dates != cash_dates:
-            warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
-                 RuntimeWarning)
+        # if adjusted_cash_dates != cash_dates:
+        #     warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
+        #          RuntimeWarning)
         opti_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                   amounts=config.opti_cash_amounts,
                                   interest_rate=config.riskfree_ir)
@@ -685,9 +687,9 @@ def check_and_prepare_hist_data(operator, config):
     else:
         cash_dates = str_to_list(config.test_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        if adjusted_cash_dates != cash_dates:
-            warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
-                 RuntimeWarning)
+        # if adjusted_cash_dates != cash_dates:
+        #     warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
+        #          RuntimeWarning)
         test_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                   amounts=config.test_cash_amounts,
                                   interest_rate=config.riskfree_ir)
@@ -711,7 +713,7 @@ def check_and_prepare_hist_data(operator, config):
     test_end = config.test_end
     window_length = operator.max_window_length
     hist_op = get_history_panel(start=regulate_date_format(pd.to_datetime(invest_start) -
-                                                           pd.Timedelta(int(window_length * 1.5), 'd')),
+                                                           pd.Timedelta(int(window_length * 1.6), 'd')),
                                 end=invest_end,
                                 shares=config.asset_pool,
                                 htypes=operator.op_data_types,
@@ -731,7 +733,7 @@ def check_and_prepare_hist_data(operator, config):
 
     # 生成用于策略优化训练的训练历史数据集合
     hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(opti_start) -
-                                                             pd.Timedelta(int(window_length * 1.5), 'd')),
+                                                             pd.Timedelta(int(window_length * 1.6), 'd')),
                                   end=opti_end,
                                   shares=config.asset_pool,
                                   htypes=operator.op_data_types,
@@ -744,7 +746,7 @@ def check_and_prepare_hist_data(operator, config):
                                   progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
     hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) -
-                                                             pd.Timedelta(int(window_length * 1.5), 'd')),
+                                                             pd.Timedelta(int(window_length * 1.6), 'd')),
                                   end=test_end,
                                   shares=config.asset_pool,
                                   htypes=operator.op_data_types,
@@ -1372,17 +1374,19 @@ def _evaluate_one_parameter(par: tuple,
     # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数及回测参数
     if stage == 'loop':
         invest_cash_amounts = config.invest_cash_amounts
-        invest_cash_dates = config.invest_start if config.invest_cash_dates is None else config.invest_cash_dates
+        invest_cash_dates = pd.to_datetime(config.invest_start) if \
+            config.invest_cash_dates is None \
+            else pd.to_datetime(config.invest_cash_dates)
         period_util_type = 'single'
         indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
         print_backtest_log = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
     elif stage == 'optimize':
         invest_cash_amounts = config.opti_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
-        invest_cash_dates = pd.to_datetime(config.invest_start) if \
-            config.invest_cash_dates is None \
+        invest_cash_dates = pd.to_datetime(config.opti_start) if \
+            config.opti_cash_dates is None \
             else pd.to_datetime(config.opti_cash_dates)
-        period_util_type = config.config.opti_type
+        period_util_type = config.opti_type
         period_count = config.opti_sub_periods
         period_length = config.opti_sub_prd_length
         indicators = config.optimize_target
@@ -1412,7 +1416,7 @@ def _evaluate_one_parameter(par: tuple,
     # create list of start and end dates
     # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
     # used as the investment date for each sub-periods
-    invest_cash_dates = next_market_trade_day(invest_cash_dates).strftime('%Y%m%d')
+    invest_cash_dates = next_market_trade_day(invest_cash_dates)
     start_dates = []
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
@@ -1439,8 +1443,8 @@ def _evaluate_one_parameter(par: tuple,
         op_list_seg = op_list[start:end].copy()
         history_list_seg = loop_history_data[start:end].copy()
         if stage != 'loop':
-            invest_cash_dates = history_list_seg.index[0].strftime('%Y%m%d')
-        cash_plan = CashPlan(invest_cash_dates,
+            invest_cash_dates = history_list_seg.index[0]
+        cash_plan = CashPlan(invest_cash_dates.strftime('%Y%m%d'),
                              invest_cash_amounts,
                              riskfree_ir)
         trade_cost = Cost(config.cost_fixed_buy,

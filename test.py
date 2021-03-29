@@ -8,7 +8,7 @@ import itertools
 import datetime
 from qteasy.tafuncs import sma
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
-from qteasy.utilfuncs import is_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
+from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
 from qteasy.utilfuncs import next_market_trade_day
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, _create_mock_data
@@ -814,7 +814,7 @@ class TestCoreSubFuncs(unittest.TestCase):
     """Test all functions in core.py"""
 
     def setUp(self):
-        raise NotImplementedError
+        pass
 
     def test_input_to_list(self):
         print('Testing input_to_list() function')
@@ -1107,7 +1107,7 @@ class TestEvaluations(unittest.TestCase):
     def test_performance_stats(self):
         """test the function performance_statistics()
         """
-        raise NotImplementedError
+        pass
 
     def test_fv(self):
         print(f'test with test data and empty DataFrame')
@@ -1975,12 +1975,12 @@ class TestOperatorSubFuncs(unittest.TestCase):
     def test_sel_blend(self):
         """测试选股蒙板的混合器，包括所有的混合模式"""
         # step2, test blending of sel masks
-        raise NotImplementedError
+        pass
 
     def test_bs_blend(self):
         """测试买卖信号混合模式"""
         # step3, test blending of op signals
-        raise NotImplementedError
+        pass
 
     def test_unify(self):
         print('Testing Unify functions\n')
@@ -2021,7 +2021,7 @@ class TestLSStrategy(qt.RollingTiming):
                          data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
-        raise NotImplementedError
+        pass
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
         n, price = params
@@ -2053,7 +2053,7 @@ class TestSelStrategy(qt.SimpleSelecting):
                          data_freq='d',
                          sample_freq='10d',
                          window_length=5)
-        raise NotImplementedError
+        pass
 
     def _realize(self, hist_data: np.ndarray):
         avg = np.nanmean(hist_data, axis=(1, 2))
@@ -2084,7 +2084,7 @@ class TestSelStrategyDiffTime(qt.SimpleSelecting):
                          data_freq='d',
                          sample_freq='w',
                          window_length=2)
-        raise NotImplementedError
+        pass
 
     def _realize(self, hist_data: np.ndarray):
         avg = hist_data.mean(axis=1).squeeze()
@@ -2114,7 +2114,7 @@ class TestSigStrategy(qt.SimpleTiming):
                          par_bounds_or_enums=([2, 10], [0, 3], [0, 3]),
                          data_types='close, open, high, low',
                          window_length=2)
-        raise NotImplementedError
+        pass
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
         r, price1, price2 = params
@@ -2325,12 +2325,12 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
-        raise NotImplementedError
+        pass
         # print(f'operator is ready? "{self.op.ready}"')
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
-        raise NotImplementedError
+        pass
         # self.assertIsInstance(self.op, qt.Operator)
         # self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
         # self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
@@ -2373,7 +2373,7 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_remove_strategy(self):
         """test removing strategies from Operator"""
-        raise NotImplementedError
+        pass
         # self.op.remove_strategy(stg='macd')
 
     def test_property_get(self):
@@ -2436,7 +2436,7 @@ class TestOperator(unittest.TestCase):
         ric_hist_data = self.op._ricon_history_data[0]
         print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)
-        print('originally raise NotImplementedErrored data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
+        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
         self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
@@ -3225,16 +3225,16 @@ class TestOperator(unittest.TestCase):
 
 class TestLog(unittest.TestCase):
     def test_init(self):
-        raise NotImplementedError
+        pass
 
 
 class TestConfig(unittest.TestCase):
     """测试Config对象以及QT_CONFIG变量的设置和获取值"""
     def test_init(self):
-        raise NotImplementedError
+        pass
 
     def test_invest(self):
-        raise NotImplementedError
+        pass
 
 
 class TestHistoryPanel(unittest.TestCase):
@@ -3288,7 +3288,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(empty_hp.column_count, 0)
 
     def test_create_history_panel(self):
-        """ test the creation of a HistoryPanel object by raise NotImplementedErroring all data explicitly
+        """ test the creation of a HistoryPanel object by passing all data explicitly
 
         """
         self.assertIsInstance(self.hp, qt.HistoryPanel)
@@ -3500,10 +3500,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertRaises(AssertionError, temp_hp.re_label, htypes='wrong input!')
 
     def test_csv_to_hp(self):
-        raise NotImplementedError
+        pass
 
     def test_hdf_to_hp(self):
-        raise NotImplementedError
+        pass
 
     def test_hp_join(self):
         print(f'join two simple HistoryPanels with same shares')
@@ -3676,10 +3676,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp4.values, values2, equal_nan=True))
 
     def test_to_csv(self):
-        raise NotImplementedError
+        pass
 
     def test_to_hdf(self):
-        raise NotImplementedError
+        pass
 
     def test_fill_na(self):
         print(self.hp)
@@ -3695,7 +3695,7 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         # TODO: implement this test case
-        raise NotImplementedError
+        pass
 
     def test_get_price_type_raw_data(self):
         shares = '000039.SZ, 600748.SH, 000039.SZ'
@@ -3764,7 +3764,7 @@ class TestHistoryPanel(unittest.TestCase):
         df_list[11].info()
 
     def test_get_composite_type_raw_data(self):
-        raise NotImplementedError
+        pass
 
 
 class TestUtilityFuncs(unittest.TestCase):
@@ -3820,7 +3820,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertRaises(AssertionError, list_to_str_format, 123)
 
     def test_is_trade_day(self):
-        """test if the funcion is_trade_day() and is_market_trade_day() works properly
+        """test if the funcion maybe_trade_day() and is_market_trade_day() works properly
         """
         date_trade = '20210401'
         date_holiday = '20210102'
@@ -3830,13 +3830,13 @@ class TestUtilityFuncs(unittest.TestCase):
         date_too_late = '20230105'
         date_christmas = '20201225'
 
-        self.assertTrue(is_trade_day(date_trade))
-        self.assertFalse(is_trade_day(date_holiday))
-        self.assertFalse(is_trade_day(date_weekend))
-        self.assertTrue(is_trade_day(date_seems_trade_day))
-        self.assertTrue(is_trade_day(date_too_early))
-        self.assertTrue(is_trade_day(date_too_late))
-        self.assertTrue(is_trade_day(date_christmas))
+        self.assertTrue(maybe_trade_day(date_trade))
+        self.assertFalse(maybe_trade_day(date_holiday))
+        self.assertFalse(maybe_trade_day(date_weekend))
+        self.assertTrue(maybe_trade_day(date_seems_trade_day))
+        self.assertTrue(maybe_trade_day(date_too_early))
+        self.assertTrue(maybe_trade_day(date_too_late))
+        self.assertTrue(maybe_trade_day(date_christmas))
         self.assertTrue(is_market_trade_day(date_trade))
         self.assertFalse(is_market_trade_day(date_holiday))
         self.assertFalse(is_market_trade_day(date_weekend))
@@ -3850,9 +3850,9 @@ class TestUtilityFuncs(unittest.TestCase):
         date_holiday = pd.to_datetime('20210102')
         date_weekend = pd.to_datetime('20210424')
 
-        self.assertTrue(is_trade_day(date_trade))
-        self.assertFalse(is_trade_day(date_holiday))
-        self.assertFalse(is_trade_day(date_weekend))
+        self.assertTrue(maybe_trade_day(date_trade))
+        self.assertFalse(maybe_trade_day(date_holiday))
+        self.assertFalse(maybe_trade_day(date_weekend))
 
     def test_prev_trade_day(self):
         """test the function prev_trade_day()
@@ -5462,7 +5462,7 @@ class TestQT(unittest.TestCase):
                      asset_pool='000300.SH',
                      asset_type='I',
                      opti_output_count=50,
-                     invest_start='20020101',
+                     invest_start='20070110',
                      trade_batch_size=0,
                      parallel=True)
 
@@ -5535,7 +5535,7 @@ class TestQT(unittest.TestCase):
                print_backtest_log=False,
                buy_sell_points=False,
                show_positions=False,
-               invest_cash_dates='20070606')
+               invest_cash_dates='20070616')
 
         print(f'test plot with both buy-sell points and position indicators')
         qt.configuration(mode='all', level=1, info=True)
@@ -5557,8 +5557,8 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5570,8 +5570,8 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5583,8 +5583,8 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='multiple',
                test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5596,8 +5596,8 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='multiple',
                test_type='multiple',
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5615,10 +5615,10 @@ class TestQT(unittest.TestCase):
                opti_method=1,
                opti_type='single',
                test_type='single',
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20140601',
-               opti_cash_dates='20060307',
+               opti_cash_dates='20060407',
                test_start='20120604',
                test_end='20201130',
                test_cash_dates='20140604',
@@ -5639,7 +5639,7 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5652,7 +5652,7 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5665,7 +5665,7 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5678,7 +5678,7 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='multiple',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5696,7 +5696,7 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5709,7 +5709,7 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5722,7 +5722,7 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5735,7 +5735,7 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='multiple',
                opti_grid_size=128,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5751,11 +5751,11 @@ class TestQT(unittest.TestCase):
                mode=2,
                opti_method=2,
                opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=10,
                opti_min_volume=5E7,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5766,11 +5766,11 @@ class TestQT(unittest.TestCase):
                mode=2,
                opti_method=2,
                opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5783,11 +5783,11 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5800,11 +5800,11 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='multiple',
                opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5820,11 +5820,11 @@ class TestQT(unittest.TestCase):
                mode=2,
                opti_method=2,
                opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5837,11 +5837,11 @@ class TestQT(unittest.TestCase):
                opti_type='multiple',
                test_type='single',
                opti_r_sample_count=100,
-               opti_reduce_ratio=0.3,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5859,8 +5859,8 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='montecarlo',
                opti_output_count=20,
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5872,12 +5872,12 @@ class TestQT(unittest.TestCase):
                opti_method=2,
                opti_type='single',
                test_type='montecarlo',
-               opti_r_sample_count=200,
-               opti_reduce_ratio=0.3,
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5895,8 +5895,8 @@ class TestQT(unittest.TestCase):
                opti_type='single',
                test_type='montecarlo',
                opti_output_count=20,
-               opti_sample_count=900,
-               opti_start='20040104',
+               opti_sample_count=200,
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5908,12 +5908,12 @@ class TestQT(unittest.TestCase):
                opti_method=2,
                opti_type='single',
                test_type='montecarlo',
-               opti_r_sample_count=200,
-               opti_reduce_ratio=0.3,
+               opti_r_sample_count=100,
+               opti_reduce_ratio=0.2,
                opti_output_count=20,
                opti_max_rounds=50,
                opti_min_volume=5E9,
-               opti_start='20040104',
+               opti_start='20060404',
                opti_end='20141231',
                test_start='20120604',
                test_end='20201130',
@@ -5921,7 +5921,7 @@ class TestQT(unittest.TestCase):
                visual=True)
 
     def test_built_in_timing(self):
-        raise NotImplementedError
+        pass
 
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
@@ -5937,8 +5937,9 @@ class TestQT(unittest.TestCase):
                      reference_asset='000300.SH',
                      ref_asset_type='I',
                      opti_output_count=50,
-                     invest_start='20020101',
+                     invest_start='20070101',
                      invest_end='20181229',
+                     invest_cash_dates='20061128',
                      trade_batch_size=1.,
                      mode=1,
                      log=False)
@@ -5956,6 +5957,7 @@ class TestQT(unittest.TestCase):
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
+        qt.configuration()
         qt.run(op, visual=True, trade_batch_size=100)
         qt.run(op, visual=False, print_backtest_log=True, trade_batch_size=100)
 
@@ -5986,7 +5988,7 @@ class TestQT(unittest.TestCase):
                      reference_asset='000300.SH',
                      ref_asset_type='I',
                      opti_output_count=50,
-                     invest_start='20020101',
+                     invest_start='20070101',
                      invest_end='20181228',
                      trade_batch_size=1.,
                      mode=1,
@@ -6047,7 +6049,7 @@ class TestBuiltIns(unittest.TestCase):
         print(f'type of class: {type(stg)}')
 
     def test_second(self):
-        raise NotImplementedError
+        pass
 
 
 class TestFastExperiments(unittest.TestCase):

@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list, is_market_trade_day
+from .utilfuncs import str_to_list
 from .strategy import RollingTiming
 from .strategy import SimpleSelecting
 from .strategy import SimpleTiming

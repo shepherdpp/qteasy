@@ -329,7 +329,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bo
         sys.stdout.flush()
 
 
-def is_trade_day(date):
+def maybe_trade_day(date):
     """ 判断一个日期是否交易日（或然判断，只剔除明显不是交易日的日期）
     准确率有限但是效率高
 
@@ -359,12 +359,12 @@ def prev_trade_day(date):
     :param date:
     :return:
     """
-    if is_trade_day(date):
+    if maybe_trade_day(date):
         return date
     else:
         d = pd.to_datetime(date)
         prev = d - pd.Timedelta(1, 'd')
-        while not is_trade_day(prev):
+        while not maybe_trade_day(prev):
             prev = prev - pd.Timedelta(1, 'd')
         return prev
 
@@ -375,12 +375,12 @@ def next_trade_day(date):
     :param date:
     :return:
     """
-    if is_trade_day(date):
+    if maybe_trade_day(date):
         return date
     else:
         d = pd.to_datetime(date)
         next = d + pd.Timedelta(1, 'd')
-        while not is_trade_day(next):
+        while not maybe_trade_day(next):
             next = next + pd.Timedelta(1, 'd')
         return next
 
@@ -406,11 +406,12 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
     :return:
     """
     try:
-        date = pd.to_datetime(date).date()
+        _date = pd.to_datetime(date)
     except Exception as ex:
-        ex.extra_info = 'date is not a valid date time format, cannot be converted to timestamp'
+        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
-    if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
+    assert _date is not None, f'{date} is not a valide date'
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
         return False
     if not isinstance(exchange, str) and exchange in ['SSE',
                                                       'SZSE',
@@ -423,7 +424,7 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
                                                       'XHKG']:
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
     non_trade_days = qteasy.tsfuncs.trade_calendar(exchange=exchange, is_open=0)
-    return date not in non_trade_days
+    return _date not in non_trade_days
 
 
 def prev_market_trade_day(date, exchange='SSE'):
@@ -447,16 +448,17 @@ def prev_market_trade_day(date, exchange='SSE'):
     :return:
     """
     try:
-        date = pd.to_datetime(date).date()
+        _date = pd.to_datetime(date)
     except Exception as ex:
-        ex.extra_info = 'date is not a valid date time format, cannot be converted to timestamp'
+        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
-    if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
+    assert _date is not None, f'{date} is not a valide date'
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
         return None
-    if is_market_trade_day(date, exchange):
-        return date
+    if is_market_trade_day(_date, exchange):
+        return _date
     else:
-        prev = date - pd.Timedelta(1, 'd')
+        prev = _date - pd.Timedelta(1, 'd')
         while not is_market_trade_day(prev):
             prev = prev - pd.Timedelta(1, 'd')
         return prev
@@ -483,15 +485,16 @@ def next_market_trade_day(date, exchange='SSE'):
     :return:
     """
     try:
-        date = pd.to_datetime(date).date()
-    except:
-        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
-    if date < pd.to_datetime('19910101') or date > pd.to_datetime('20211231'):
+        _date = pd.to_datetime(date)
+    except Exception:
+        raise TypeError(f'{date} is not a valid date time format, cannot be converted to datetime')
+    assert _date is not None, f'{date} is not a valide date'
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
         return None
-    if is_market_trade_day(date, exchange):
-        return date
+    if is_market_trade_day(_date, exchange):
+        return _date
     else:
-        next = date + pd.Timedelta(1, 'd')
+        next = _date + pd.Timedelta(1, 'd')
         while not is_market_trade_day(next):
             next = next + pd.Timedelta(1, 'd')
         return next
