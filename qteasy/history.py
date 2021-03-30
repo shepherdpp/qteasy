@@ -13,7 +13,7 @@ import pandas as pd
 import tushare as ts
 import numpy as np
 from time import sleep
-
+from warnings import warn
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
@@ -1022,7 +1022,8 @@ def get_price_type_raw_data(start: str,
                             parallel: int = 16,
                             delay: float = 20,
                             delay_every: int = 500,
-                            progress: bool = True):
+                            progress: bool = True,
+                            prgrs_txt: str = ''):
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
@@ -1057,21 +1058,13 @@ def get_price_type_raw_data(start: str,
     i = 0
     total_share_count = len(shares)
     if progress:
-        progress_bar(i, total_share_count)
+        progress_bar(i, total_share_count, comments=prgrs_txt)
 
     if parallel > 1:  # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
         proc_pool = ProcessPoolExecutor(parallel)
         futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
                    shares}
-        print(f'process parameters submit to get_bar in parallel mode, with parameters:\n'
-              f'share = {shares}\n'
-              f'start = {start}\n'
-              f'end   = {end}\n'
-              f'asset_type = {asset_type}\n'
-              f'freq = {freq}')
         for f in as_completed(futures):
-            print(f'got result from futures, got f:\n'
-                  f'{f}')
             try:
                 raw_df = f.result()
             except Exception as ex:
@@ -1082,36 +1075,46 @@ def get_price_type_raw_data(start: str,
                                 f'asset_type = {asset_type}\n' \
                                 f'freq = {freq}'
                 raise
-
-            assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
-                                       f'{futures[f]} from {start} to {end} in frequency {freq}'
-            raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
-            raw_df.index = range(len(raw_df))
+            if raw_df is None:
+                raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,
+                                       [futures[f], end]+[np.nan]*9],
+                                      columns=["ts_code", "trade_date", "open", "high",
+                                               "low", "close", "pre_close", "change",
+                                               "pct_chg", "vol", "amount"])
+                warn(f'historical data {htypes} for {futures[f]} does not exist from {start} to '
+                     f'{end} in frequency {freq}', category=UserWarning)
             df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
 
             i += 1
             if progress:
-                progress_bar(i, total_share_count)
+                progress_bar(i, total_share_count, comments=prgrs_txt)
     else:
         for share in shares:
             if i % delay_every == 0 and delay > 0:
                 sleep(delay)
             raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
-            assert raw_df is not None, f'ValueError, something wrong downloading historical data {htypes} for share: ' \
-                                       f'{share} from {start} to {end} in frequency {freq}'
-            raw_df.drop_duplicates(subset=['ts_code', 'trade_date'], inplace=True)
-            raw_df.index = range(len(raw_df))
+            if raw_df is None:
+                # 当raw_df is None，说明该股票在指定的时段内没有数据，此时应该生成一个简单的空DataFrame，除
+                # 了share和date两列有数据以外，其他的数据全都是np.nan，这样就能在填充本地数据时，使用nan覆盖inf数据
+                raw_df = pd.DataFrame([[share, start]+[np.nan]*9,
+                                       [share, end]+[np.nan]*9],
+                                      columns=["ts_code", "trade_date", "open", "high",
+                                               "low", "close", "pre_close", "change",
+                                               "pct_chg", "vol", "amount"])
+                warn(f'historical data {htypes} for {share} does not exist from {start} to '
+                     f'{end} in frequency {freq}', category=UserWarning)
             df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
 
             i += 1
             if progress:
-                progress_bar(i, total_share_count)
+                progress_bar(i, total_share_count, comments=prgrs_txt)
 
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
-    for df in df_per_share:
-        df.index = pd.to_datetime(df.trade_date).sort_index()
-        df.drop(columns=columns_to_remove, inplace=True)
-        df.drop(columns=['ts_code', 'trade_date'], inplace=True)
+    if len(df_per_share) > 0:
+        for df in df_per_share:
+            df.index = pd.to_datetime(df.trade_date).sort_index()
+            df.drop(columns=columns_to_remove, inplace=True)
+            df.drop(columns=['ts_code', 'trade_date'], inplace=True)
     return df_per_share
 
 

@@ -2619,7 +2619,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.selecting_blender_expr, ['or', 'and', '0', '1', '2'])
         self.assertEqual(self.op.ricon_blender, 'add')
 
-        self.assertRaises(ValueError, self.op.set_blender, 'select', '0 and 1')
+        self.assertRaises(ValueError, self.op.set_blender, 'select', '0and1')
         self.assertRaises(TypeError, self.op.set_blender, 35, '0 and 1')
 
         self.assertEqual(self.op.opt_space_par,
@@ -5701,7 +5701,8 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=False,
-               visual=True)
+               visual=True,
+               indicator_plot_type=0)
         print(f'strategy optimization in grid search algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -5714,7 +5715,8 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=True,
-               visual=True)
+               visual=True,
+               indicator_plot_type=1)
         print(f'strategy optimization in grid search with multiple sub-range optimization')
         qt.run(self.op,
                mode=2,
@@ -5727,7 +5729,8 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=True,
-               visual=True)
+               visual=True,
+               indicator_plot_type=2)
         print(f'strategy optimization in grid search with multiple sub-range optimization')
         qt.run(self.op,
                mode=2,
@@ -5740,7 +5743,8 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                parallel=True,
-               visual=True)
+               visual=True,
+               indicator_plot_type=3)
 
     def test_run_mode_2_incremental(self):
         """测试策略的优化模式，使用递进步长网格寻优"""

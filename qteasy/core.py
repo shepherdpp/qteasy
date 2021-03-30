@@ -765,8 +765,8 @@ def check_and_prepare_hist_data(operator, config):
 
     # 生成参考历史数据，作为参考用于回测结果的评价
     # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
-    all_starts = [pd.to_datetime(date_str) for date_str in [config.invest_start, config.opti_start, config.test_start]]
-    all_ends = [pd.to_datetime(date_str) for date_str in [config.invest_end, config.opti_end, config.test_end]]
+    all_starts = [pd.to_datetime(date_str) for date_str in [invest_start, opti_start, test_start]]
+    all_ends = [pd.to_datetime(date_str) for date_str in [invest_end, opti_end, test_end]]
     refer_hist_start = regulate_date_format(min(all_starts))
     refer_hist_end = regulate_date_format(max(all_ends))
     hist_reference = (get_history_panel(start=refer_hist_start,

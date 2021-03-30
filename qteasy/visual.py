@@ -332,12 +332,12 @@ def _plot_test_result(opti_eval_res: list,
 
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
-    fig.text(0.07, 0.91, f'opti periods: {opti_eval_res[0]["years"]} years, '
+    fig.text(0.07, 0.91, f'opti periods: {opti_eval_res[0]["years"]:.1f} years, '
                          f'from: {opti_eval_res[0]["loop_start"].date()} to '
                          f'{opti_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:   signal creation: {time_str_format(opti_eval_res[0]["op_run_time"])};'
                          f'  back test:{time_str_format(opti_eval_res[0]["loop_run_time"])}\n'
-                         f'test periods: {test_eval_res[0]["years"]} years, '
+                         f'test periods: {test_eval_res[0]["years"]:.1f} years, '
                          f'from: {test_eval_res[0]["loop_start"].date()} to '
                          f'{test_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:   signal creation: {time_str_format(test_eval_res[0]["op_run_time"])};'
@@ -434,7 +434,6 @@ def _plot_test_result(opti_eval_res: list,
 
     # 开始使用循环的方式逐个生成对比图表
     if compariable_indicator_count > 0:
-        # TODO: BUG: 当输入的数据中含有inf时，会无法生成某些图表（如histo），因此需要排除此类情况
         for ax, name in zip(compariable_plots, compariable_indicators):
             # 设置每一个对比图表的基本显示格式
             ax.spines['top'].set_visible(False)
@@ -443,57 +442,66 @@ def _plot_test_result(opti_eval_res: list,
             ax.spines['left'].set_visible(False)
             ax.set_ylabel(f'{name}')
             ax.yaxis.tick_right()
-            # 根据config中设置的参数，选择生成三种不同类型的图表之一。
+            # 根据config中设置的参数，选择生成三种不同类型的图表之一
             p_type = config.indicator_plot_type
-            if p_type == 0 or p_type == 'errorbar':
-                max_v = opti_indicator_df[name].max()
-                min_v = opti_indicator_df[name].min()
-                mean = opti_indicator_df[name].mean()
-                std = opti_indicator_df[name].std()
-                ax.errorbar(1, mean, std, fmt='ok', lw=3)
-                ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
-                            label=f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}')
-                max_v = test_indicator_df[name].max()
-                min_v = test_indicator_df[name].min()
-                mean = test_indicator_df[name].mean()
-                std = test_indicator_df[name].std()
-                ax.errorbar(2, mean, std, fmt='ok', lw=3)
-                ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
-                            label=f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}')
-                ax.set_xlim(0, 3)
-                labels = ['opti', 'test']
-                ax.set_xticks(np.arange(1, len(labels) + 1))
-                ax.set_xticklabels(labels)
-                ax.set_xlim(0.25, len(labels) + 0.75)
-            elif p_type == 1 or p_type == 'scatter':
-                ax.scatter(opti_indicator_df[name],
-                           test_indicator_df[name],
-                           label=name, marker='^', alpha=0.9)
-                ax.set_xlabel('opti')
-                ax.set_ylabel('test')
-                ax.legend()
-            elif p_type == 2 or p_type == 'histo':
-                ax.hist(opti_indicator_df[name], bins=15, alpha=0.5,
-                        label=f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}')
-                ax.hist(test_indicator_df[name], bins=15, alpha=0.5,
-                        label=f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}')
-                ax.legend()
-            elif p_type == 3 or p_type == 'violin':
-                data_df = pd.DataFrame(np.array([opti_indicator_df[name], test_indicator_df[name]]).T,
-                                       columns=['opti', 'test'])
-                ax.violinplot(data_df)
-                labels = ['opti', 'test']
-                ax.set_xticks(np.arange(1, len(labels) + 1))
-                ax.set_xticklabels(labels)
-                ax.set_xlim(0.25, len(labels) + 0.75)
-            else:
-                data_df = pd.DataFrame(np.array([opti_indicator_df[name], test_indicator_df[name]]).T,
-                                       columns=['opti', 'test'])
-                ax.boxplot(data_df)
-                labels = ['opti', 'test']
-                ax.set_xticks(np.arange(1, len(labels) + 1))
-                ax.set_xticklabels(labels)
-                ax.set_xlim(0.25, len(labels) + 0.75)
+            # 在图表中应该舍去np.inf值，暂时将inf作为na值处理，因此可以使用dropna()去除inf值
+            with pd.option_context('mode.use_inf_as_na', True):
+                opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
+                test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
+                if p_type == 0 or p_type == 'errorbar':
+                    max_v = opti_indicator_df[name].max()
+                    min_v = opti_indicator_df[name].min()
+                    mean = opti_indicator_df[name].mean()
+                    std = opti_indicator_df[name].std()
+                    ax.errorbar(1, mean, std, fmt='ok', lw=3)
+                    ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
+                                label=opti_label)
+                    max_v = test_indicator_df[name].max()
+                    min_v = test_indicator_df[name].min()
+                    mean = test_indicator_df[name].mean()
+                    std = test_indicator_df[name].std()
+                    ax.errorbar(2, mean, std, fmt='ok', lw=3)
+                    ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
+                                label=test_label)
+                    ax.set_xlim(0, 3)
+                    labels = ['opti', 'test']
+                    ax.set_xticks(np.arange(1, len(labels) + 1))
+                    ax.set_xticklabels(labels)
+                    ax.set_xlim(0.25, len(labels) + 0.75)
+                    ax.legend()
+                elif p_type == 1 or p_type == 'scatter':
+                    ax.scatter(opti_indicator_df[name].fillna(np.nan),
+                               test_indicator_df[name].fillna(np.nan),
+                               label=name, marker='^', alpha=0.9)
+                    ax.set_title(opti_label)
+                    ax.set_ylabel(test_label)
+                    ax.legend()
+                elif p_type == 2 or p_type == 'histo':
+                    ax.hist(opti_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
+                            label=opti_label)
+                    ax.hist(test_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
+                            label=test_label)
+                    ax.legend()
+                elif p_type == 3 or p_type == 'violin':
+                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
+                                                     test_indicator_df[name].fillna(np.nan)]).T,
+                                           columns=[opti_label, test_label])
+                    ax.violinplot(data_df)
+                    labels = ['opti', 'test']
+                    ax.set_xticks(np.arange(1, len(labels) + 1))
+                    ax.set_xticklabels(labels)
+                    ax.set_xlim(0.25, len(labels) + 0.75)
+                    ax.legend()
+                else:
+                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
+                                                     test_indicator_df[name].fillna(np.nan)]).T,
+                                           columns=[opti_label, test_label])
+                    ax.boxplot(data_df)
+                    labels = ['opti', 'test']
+                    ax.set_xticks(np.arange(1, len(labels) + 1))
+                    ax.set_xticklabels(labels)
+                    ax.set_xlim(0.25, len(labels) + 0.75)
+                    ax.legend()
 
     plt.show()
 

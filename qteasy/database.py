@@ -398,7 +398,7 @@ class DataSource():
                                                               parallel=parallel,
                                                               delay=delay,
                                                               delay_every=delay_every,
-                                                              progress=progress)[0]
+                                                              progress=False)
 
                     elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
@@ -408,14 +408,15 @@ class DataSource():
                                                                                 parallel=parallel,
                                                                                 delay=delay,
                                                                                 delay_every=delay_every,
-                                                                                progress=progress)
-                        online_data = (inc + ind + blc + csh)[0]
+                                                                                progress=False)
+                        online_data = (inc + ind + blc + csh)
 
                     # 按照原来的思路，下面的代码是将下载的数据（可能是稀疏数据）一个个写入到目标区域中，再将目标区域中的
                     # np.inf逐个改写为np.nan。但是其实粗暴一点的做法是直接把下载的数据reindex，然后整体覆盖目标区域
                     # 就可以了。
                     # 这里是整体覆盖的代码：
-                    share_data[start:end] = online_data.reindex(share_data[start:end].index)[htype]
+                    if len(online_data) != 0:
+                        share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
 
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:
