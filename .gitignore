@@ -43,3 +43,5 @@ data/*.dat
 *.dat
 *.dat
 qteasy/data/close-I.dat
+qteasy/data/basic_eps.dat
+qteasy/data/close.dat

@@ -5943,7 +5943,7 @@ class TestQT(unittest.TestCase):
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181229',
-                     invest_cash_dates='20061128',
+                     invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
                      log=False)
@@ -5994,6 +5994,7 @@ class TestQT(unittest.TestCase):
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181228',
+                     invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
                      log=False)

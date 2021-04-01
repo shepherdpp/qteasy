@@ -487,6 +487,13 @@ def is_ready(**kwargs):
     :param kwargs:
     :return:
     """
+    # 检查各个cash_amounts与各个cash_dates是否能生成正确的CashPlan对象
+
+    # 检查invest(loop)、opti、test等几个start与end日期是否冲突
+
+    # 检查invest(loop)、opti、test等几个cash_dates是否冲突
+
+
     return True
 
 
@@ -641,9 +648,6 @@ def check_and_prepare_hist_data(operator, config):
     else:
         cash_dates = str_to_list(config.invest_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        # if adjusted_cash_dates != cash_dates:
-        #     warn(f'not all invest start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
-        #          RuntimeWarning)
         invest_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                     amounts=config.invest_cash_amounts,
                                     interest_rate=config.riskfree_ir)
@@ -652,7 +656,6 @@ def check_and_prepare_hist_data(operator, config):
             warn(f'first cash investment on {invest_start} differ from invest_start {config.invest_start}, first cash'
                  f' date will be used!',
                  RuntimeWarning)
-        # TODO: 此处应检查invest_start是否与config.invest_start相同，否则Warning
     # 按照同样的逻辑设置优化区间和测试区间的起止日期
 
     # 优化区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
@@ -664,9 +667,6 @@ def check_and_prepare_hist_data(operator, config):
     else:
         cash_dates = str_to_list(config.opti_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        # if adjusted_cash_dates != cash_dates:
-        #     warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
-        #          RuntimeWarning)
         opti_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                   amounts=config.opti_cash_amounts,
                                   interest_rate=config.riskfree_ir)
@@ -676,7 +676,6 @@ def check_and_prepare_hist_data(operator, config):
                  f' date will be used!',
                  RuntimeWarning)
         # TODO: 此处应该检查opti_start是否在config.opti_start与config.opti_end之间，否则raise
-        # TODO: 此处应检查opti_start是否与config.opti_start相同，否则Warning
 
     # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.test_cash_dates is None:
@@ -687,9 +686,6 @@ def check_and_prepare_hist_data(operator, config):
     else:
         cash_dates = str_to_list(config.test_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        # if adjusted_cash_dates != cash_dates:
-        #     warn(f'not all opti start dates are trade days, and are adjusted to next ones: {adjusted_cash_dates}',
-        #          RuntimeWarning)
         test_cash_plan = CashPlan(dates=adjusted_cash_dates,
                                   amounts=config.test_cash_amounts,
                                   interest_rate=config.riskfree_ir)
@@ -699,7 +695,6 @@ def check_and_prepare_hist_data(operator, config):
                  f' date will be used!',
                  RuntimeWarning)
         # TODO: 此处应该检查test_start是否在config.test_start与config.test_end之间，否则raise
-        # TODO: 此处应检查test_start是否与config.test_start相同，否则Warning
     # 设定投资结束日期
     if run_mode == 0:
         if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日22:00以后

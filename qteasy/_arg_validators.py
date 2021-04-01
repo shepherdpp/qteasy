@@ -977,7 +977,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     """
     COLUMN_W_KEY = 21
     COLUMN_W_CURRENT = 15
-    COLUMN_OFFSET_DESCRIPTION = 0
+    COLUMN_OFFSET_DESCRIPTION = 4
     vkwargs = _valid_qt_kwargs()
     output_strings = list()
     if info:
