@@ -18,7 +18,7 @@ import numpy as np
 from pandas.plotting import register_matplotlib_converters
 import datetime
 from .tsfuncs import get_bar, name_change
-from .utilfuncs import time_str_format
+from .utilfuncs import time_str_format, list_to_str_format
 
 
 # TODO: simplify and merge these three functions
@@ -144,12 +144,25 @@ def _plot_loop_result(loop_results: dict, config):
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
     months = mdates.MonthLocator()  # every month
+    weekdays = mdates.WeekdayLocator()  # every weekday
     years_fmt = mdates.DateFormatter('%Y')
+    month_fmt_none = mdates.DateFormatter('')
+    month_fmt_l = mdates.DateFormatter('%y/%m')
+    month_fmt_s = mdates.DateFormatter('%m')
 
     chart_width = 0.88
     # 显示投资回报评价信息
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    fig.suptitle('Back Testing Result - reference: 000300.SH', fontsize=14, fontweight=10)
+    if isinstance(config.asset_pool, str):
+        title_asset_pool = config.asset_pool
+    else:
+        if len(config.asset_pool) > 3:
+            title_asset_pool = list_to_str_format(config.asset_pool[:3]) + '...'
+        else:
+            title_asset_pool = list_to_str_format(config.asset_pool)
+    fig.suptitle(f'Back Testing Result {title_asset_pool} - reference: {config.reference_asset}',
+                 fontsize=14,
+                 fontweight=10)
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.93, f'periods: {loop_results["years"]} years, '
@@ -267,17 +280,28 @@ def _plot_loop_result(loop_results: dict, config):
         ax.grid(True)
 
     # format the ticks
-    ax1.xaxis.set_major_locator(years)
-    ax1.xaxis.set_major_formatter(years_fmt)
-    ax1.xaxis.set_minor_locator(months)
+    # major tick on year if span > 3 years, else on month
+    if loop_results['years'] > 4:
+        major_locator = years
+        major_formatter = years_fmt
+        minor_locator = months
+        minor_formatter = month_fmt_none
+    elif loop_results['years'] > 2:
+        major_locator = years
+        major_formatter = years_fmt
+        minor_locator = months
+        minor_formatter = month_fmt_s
+    else:
+        major_locator = months
+        major_formatter = month_fmt_l
+        minor_locator = weekdays
+        minor_formatter = month_fmt_none
 
-    ax2.xaxis.set_major_locator(years)
-    ax2.xaxis.set_major_formatter(years_fmt)
-    ax2.xaxis.set_minor_locator(months)
-
-    ax3.xaxis.set_major_locator(years)
-    ax3.xaxis.set_major_formatter(years_fmt)
-    ax3.xaxis.set_minor_locator(months)
+    for ax in [ax1, ax2, ax3]:
+        ax.xaxis.set_major_locator(major_locator)
+        ax.xaxis.set_major_formatter(major_formatter)
+        ax.xaxis.set_minor_locator(minor_locator)
+        ax.xaxis.set_minor_formatter(minor_formatter)
 
     plt.show()
 
@@ -286,7 +310,7 @@ def _plot_loop_result(loop_results: dict, config):
 # TODO: and commit comparison base on these two data sets
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
-                      config = None):
+                      config=None):
     """ plot test result of optimization results
 
     :param test_eval_res:
@@ -636,7 +660,7 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                                    "Reference return",
                                    "MDD"],
                            formatters={'total_fee':   '{:,.2f}'.format,
-                                       'final_value':  '{:,.2f}'.format,
+                                       'final_value': '{:,.2f}'.format,
                                        'rtn':         '{:.1%}'.format,
                                        'mdd':         '{:.1%}'.format,
                                        'ref_rtn':     '{:.1%}'.format,
