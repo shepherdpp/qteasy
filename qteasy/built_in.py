@@ -245,7 +245,7 @@ class SCRSSMA(stg.RollingTiming):
         - range - range of simple moving average
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -257,7 +257,7 @@ class SCRSSMA(stg.RollingTiming):
     def _realize(self, hist_data, params):
         r, = params
         h = hist_data.T
-        diff = sma(h[0], r) - h[0]
+        diff = (sma(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -271,7 +271,7 @@ class SCRSDEMA(stg.RollingTiming):
         - range - range of DEMA
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -284,7 +284,7 @@ class SCRSDEMA(stg.RollingTiming):
     def _realize(self, hist_data, params):
         r, = params
         h = hist_data.T
-        diff = dema(h[0], r) - h[0]
+        diff = (dema(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -298,7 +298,7 @@ class SCRSEMA(stg.RollingTiming):
         - range - range of EMA
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -311,7 +311,7 @@ class SCRSEMA(stg.RollingTiming):
     def _realize(self, hist_data, params):
         r, = params
         h = hist_data.T
-        diff = ema(h[0], r) - h[0]
+        diff = (ema(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -325,7 +325,7 @@ class SCRSHT(stg.RollingTiming):
         - range - range of ht
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -337,7 +337,7 @@ class SCRSHT(stg.RollingTiming):
 
     def _realize(self, hist_data, params):
         h = hist_data.T
-        diff = ht(h[0]) - h[0]
+        diff = (ht(h[0]) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -351,7 +351,7 @@ class SCRSKAMA(stg.RollingTiming):
         - range - range of KAMA
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -379,7 +379,7 @@ class SCRSMAMA(stg.RollingTiming):
         - slowlimit = slowlimit
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['conti', 'conti'],
@@ -407,7 +407,7 @@ class SCRSMAVP(stg.RollingTiming):
         - slowlimit = slowlimit
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['conti', 'conti'],
@@ -435,7 +435,7 @@ class SCRST3(stg.RollingTiming):
         - vfactor = vfactor
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['conti', 'conti'],
@@ -462,7 +462,7 @@ class SCRSTEMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['descr'],
@@ -489,7 +489,7 @@ class SCRSTRIMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['descr'],
@@ -516,7 +516,7 @@ class SCRSWMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['descr'],
@@ -552,19 +552,19 @@ class DCRSSMA(stg.RollingTiming):
     - slow
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti'],
-                         par_bounds_or_enums=[(3, 250), (-10., 10.)],
+                         par_bounds_or_enums=[(3, 250), (3, 250)],
                          stg_name='SINGLE CROSSLINE - SMA',
                          stg_text='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f, s = params
+        l, s = params
         h = hist_data.T
-        diff = sma(h[0], f) - sma(h[0], s)
+        diff = (sma(h[0], l) - sma(h[0], s))[-1]
         if diff < 0:
             return 1
         else:
@@ -578,7 +578,7 @@ class DCRSDEMA(stg.RollingTiming):
         - range - range of DEMA
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -589,9 +589,9 @@ class DCRSDEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
+        l, s = params
         h = hist_data.T
-        diff = dema(h[0], r) - h[0]
+        diff = (dema(h[0], l) - dema(h[0], s))[-1]
         if diff < 0:
             return 1
         else:
@@ -605,7 +605,7 @@ class DCRSEMA(stg.RollingTiming):
         - range - range of EMA
     """
 
-    def __init__(self, pars):
+    def __init__(self, pars=None):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -616,9 +616,9 @@ class DCRSEMA(stg.RollingTiming):
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        r, = params
+        l, s = params
         h = hist_data.T
-        diff = ema(h[0], r) - h[0]
+        diff = (ema(h[0], l) - ema(h[0], s))[-1]
         if diff < 0:
             return 1
         else:
@@ -1729,28 +1729,45 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
         return factors
 
 
-BUILT_IN_STRATEGY_DICT = {'crossline' : TimingCrossline,
-                          'macd'      : TimingMACD,
-                          'dma'       : TimingDMA,
-                          'trix'      : TimingTRIX,
-                          'cdl'       : TimingCDL,
-                          'bband'     : TimingBBand,
+BUILT_IN_STRATEGY_DICT = {'crossline':  TimingCrossline,
+                          'macd':       TimingMACD,
+                          'dma':        TimingDMA,
+                          'trix':       TimingTRIX,
+                          'cdl':        TimingCDL,
+                          'ema':        TimingEMA,
+                          'bband':      TimingBBand,
                           'ricon_none': RiconNone,
-                          'urgent'    : RiconUrgent,
-                          'long'      : TimingLong,
-                          'short'     : TimingShort,
-                          'zero'      : TimingZero,
-                          'all'       : SelectingAll,
-                          'none'      : SelectingNone,
-                          'random'    : SelectingRandom,
-                          'finance'   : SelectingFinanceIndicator,
-                          'last_open' : SelectingLastOpen,
+                          'urgent':     RiconUrgent,
+                          'long':       TimingLong,
+                          'short':      TimingShort,
+                          'zero':       TimingZero,
+                          'all':        SelectingAll,
+                          'none':       SelectingNone,
+                          'random':     SelectingRandom,
+                          'finance':     SelectingFinanceIndicator,
+                          'last_open':  SelectingLastOpen,
                           'last_close': SelectingLastClose,
-                          'last_high' : SelectingLastHigh,
-                          'last_low'  : SelectingLastLow,
-                          'avg_open'  : SelectingAvgOpen,
-                          'avg_close' : SelectingAvgClose,
-                          'avg_high'  : SelectingAvghigh,
-                          'avg_low'   : SelectingAvgLow}
+                          'last_high':  SelectingLastHigh,
+                          'last_low':   SelectingLastLow,
+                          'avg_open':   SelectingAvgOpen,
+                          'avg_close':  SelectingAvgClose,
+                          'avg_high':   SelectingAvghigh,
+                          'avg_low':    SelectingAvgLow,
+                          'ssma':       SCRSSMA,
+                          'sdema':      SCRSDEMA,
+                          'sema':       SCRSEMA,
+                          'sht':        SCRSHT,
+                          'skama':      SCRSKAMA,
+                          'smama':      SCRSMAMA,
+                          'smavp':      SCRSMAVP,
+                          'sst3':       SCRST3,
+                          'dsma':       DCRSSMA,
+                          'ddema':      DCRSDEMA,
+                          'dema':       DCRSEMA,
+                          'dht':        DCRSHT,
+                          'dkama':      DCRSKAMA,
+                          'dmama':      DCRSMAMA,
+                          'dmavp':      DCRSMAVP,
+                          'dst3':       DCRST3}
 
 AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()

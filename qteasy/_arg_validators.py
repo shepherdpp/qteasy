@@ -879,7 +879,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '为True时寻找目标值最大的策略，为False时寻找目标值最低的策略'},
 
-        'opti_method':         {'Default':   0,
+        'opti_method':         {'Default':   1,
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value <= 3,
                                 'level':     1,
@@ -932,7 +932,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量'},
 
-        'opti_output_count':   {'Default':   50,
+        'opti_output_count':   {'Default':   30,
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value > 0,
                                 'level':     1,

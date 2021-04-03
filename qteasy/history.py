@@ -1038,6 +1038,7 @@ def get_price_type_raw_data(start: str,
     :param progress: bool:
                     progress == True, Default 下载时显示进度条
                     progress == False  下载时不显示进度条
+    :param prgrs_txt:
     :return:
     """
     if htypes is None:
@@ -1075,6 +1076,7 @@ def get_price_type_raw_data(start: str,
                                 f'asset_type = {asset_type}\n' \
                                 f'freq = {freq}'
                 raise
+            # TODO: 应当采用同样的方法处理"get_financial_report_type_raw_data()"函数，以处理取到的空df
             if raw_df is None:
                 raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,
                                        [futures[f], end]+[np.nan]*9],
