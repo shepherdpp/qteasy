@@ -3,11 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="Realized Rolling Loop for timing strategies:&#10;tested with 2D data (single data type), not yet tested for 3D data">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/_arg_validators.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/_arg_validators.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/built_in.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/built_in.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/basic_eps.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/basic_eps.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/close.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/close.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/history.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/history.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -616,6 +612,7 @@
       <workItem from="1617380832909" duration="2247000" />
       <workItem from="1617386449258" duration="2292000" />
       <workItem from="1617458196992" duration="4059000" />
+      <workItem from="1617465497416" duration="4482000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>
