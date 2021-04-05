@@ -1024,7 +1024,6 @@ def run(operator, **kwargs):
         op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
-        # amounts = [0] * len(config.asset_pool)
         _print_operation_signal(op_list=op_list,
                                 run_time_prepare_data=run_time_prepare_data,
                                 operator=operator,
@@ -1056,9 +1055,9 @@ def run(operator, **kwargs):
 
     elif run_mode == 2 or run_mode == 'optimization':
         how = config.opti_method
-        assert operator.opt_space_par[0] is not None, \
-            f'ConfigError, none of the strategies is optimiziable, set opt_tag to be 1 or 2 to ' \
-            f'activate optimization in mode 2'
+        assert operator.opt_space_par[0] == [], \
+            f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
+            f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
         pars, perfs = optimization_methods[how](hist=hist_opti,
