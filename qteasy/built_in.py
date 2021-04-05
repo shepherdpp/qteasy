@@ -708,34 +708,6 @@ class DCRSFAMA(stg.RollingTiming):
             return 0
 
 
-class DCRSMAVP(stg.RollingTiming):
-    """ Double cross line strategy with MAVP line
-
-        two parameters:
-        - fastlimit - fastlimit
-        - slowlimit = slowlimit
-    """
-
-    def __init__(self, pars):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 20), (0, 20)],
-                         stg_name='DOUBLE CROSSLINE - MAMA',
-                         stg_text='Double moving average strategy that uses MAMA line as the '
-                                  'trade line ',
-                         data_types='close')
-
-    def _realize(self, hist_data, params):
-        f, s = params
-        h = hist_data.T
-        diff = (mavp(h[0], f, s) - h[0])[-1]
-        if diff < 0:
-            return 1
-        else:
-            return 0
-
-
 class DCRST3(stg.RollingTiming):
     """ Double cross line strategy with T3 line
 
