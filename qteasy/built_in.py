@@ -1752,7 +1752,6 @@ BUILT_IN_STRATEGY_DICT = {'crossline':  TimingCrossline,
                           'dema':       DCRSEMA,
                           'dkama':      DCRSKAMA,
                           'dmama':      DCRSMAMA,
-                          'dmavp':      DCRSMAVP,
                           'dst3':       DCRST3}
 
 AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()

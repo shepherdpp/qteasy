@@ -12,6 +12,7 @@ import mplfinance as mpf
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
+from mplfinance.original_flavor import candlestick_ohlc
 
 import pandas as pd
 import numpy as np
@@ -19,35 +20,50 @@ from pandas.plotting import register_matplotlib_converters
 import datetime
 from .tsfuncs import get_bar, name_change
 from .utilfuncs import time_str_format, list_to_str_format
+from .tafuncs import macd, dema, rsi
+
+ValidAddPlots = ['macd',
+                 'dma',
+                 'trix']
 
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None,
-           asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+           asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False, addplot_type=None,
+           addplot_par=None):
     """plot stock data or extracted data in candle form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='candle',
-                    no_visual=no_visual, figsize=figsize, mav=mav)
+                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=addplot_type,
+                    addplot_par=addplot_par)
 
 
 def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None,
-         asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+         asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False, addplot_type=None,
+         addplot_par=None):
     """plot stock data or extracted data in ohlc form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='ohlc',
-                    no_visual=no_visual, figsize=figsize, mav=mav)
+                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=addplot_type,
+                    addplot_par=addplot_par)
 
 
 def renko(stock=None, start=None, end=None, stock_data=None, share_name=None,
-          asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False):
+          asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False, addplot_type=None,
+          addplot_par=None):
     """plot stock data or extracted data in renko form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='renko',
-                    no_visual=no_visual, figsize=figsize, mav=mav)
+                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=addplot_type,
+                    addplot_par=addplot_par)
 
 
+# TODO: change the realization of candlestick plots to "original flavor" of matplotlib
+# TODO: meaning using plt.show() after settings of each axes one by one, so that
+# TODO: the appearance of the plots can be the same as loop and test plots
 def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
-             asset_type='E', plot_type=None, no_visual=False, **kwargs):
+             asset_type='E', plot_type=None, no_visual=False, addplot_type=None,
+             addplot_par=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     assert plot_type is not None
@@ -62,18 +78,50 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         has_volume = any(col in ['volume'] for col in stock_data.columns)
         if share_name is None:
             share_name = 'stock'
-    mc = mpf.make_marketcolors(up='r', down='g',
-                               volume='in')
-    s = mpf.make_mpf_style(marketcolors=mc)
+    mc = mpf.make_marketcolors(up='r', down='g', volume='in')
+    s = mpf.make_mpf_style(marketcolors=mc, facecolor='(0.82, 0.83, 0.85)')
     if not no_visual:
+        current_panel_count = 2 if has_volume else 1
+        add_plot = _add_mpl_plot(daily, addplot_type, addplot_par, panels=current_panel_count)
         mpf.plot(daily,
                  title=share_name,
                  volume=has_volume,
                  type=plot_type,
                  style=s,
-                 figscale=0.5,
+                 figscale=0.75,
+                 addplot=add_plot,
                  **kwargs)
     return daily
+
+
+def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
+    """ create and return addplot for mplfinance
+
+    :param plot_type:
+    :param pars:
+    :return:
+    """
+    adps = list()
+    if plot_type is None:
+        return adps
+    assert isinstance(plot_type, str), f'addplot type should be a string, got {type(plot_type)}'
+    if plot_type.lower() == 'dema':
+        d = dema(stock_data.close, *pars)
+        adps.append(mpf.make_addplot(d, panel=panels, ylabel=plot_type))
+    elif plot_type.lower() == 'macd':
+        m, s, h = macd(stock_data.close, *pars)
+        adps.append(mpf.make_addplot(m, panel=panels, ylabel=plot_type))
+        adps.append(mpf.make_addplot(s, panel=panels))
+        h_pos = np.where(h > 0, h, 0)
+        h_neg = np.where(h <= 0, h, 0)
+        adps.append(mpf.make_addplot(h_pos, type='bar', color='red', panel=panels))
+        adps.append(mpf.make_addplot(h_neg, type='bar', color='green', panel=panels))
+    elif plot_type.lower() == 'rsi':
+        d = rsi(stock_data.close, *pars)
+        adps.append(mpf.make_addplot([75] * len(d), panel=panels, color=(0.75, 0.6, 0.6), ylim=(0, 100)))
+        adps.append(mpf.make_addplot([30] * len(d), panel=panels, color=(0.6, 0.75, 0.6), ylim=(0, 100)))
+        adps.append(mpf.make_addplot(d, panel=panels, ylabel=plot_type, ylim=(0, 100)))
+    return adps
 
 
 def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
