@@ -299,13 +299,14 @@ def _plot_loop_result(loop_results: dict, config):
                     label='Sell', marker='v', alpha=0.9)
 
     # put arrow on where max draw down is
-    # ax1.annotate("max_drawdown",
-    #              xy=(loop_results["max_date"], return_rate[loop_results["low_date"]]),
-    #              xytext=(0.7, 0.0),
-    #              textcoords='axes fraction',
-    #              arrowprops=dict(facecolor='black', shrink=0.3),
-    #              horizontalalignment='right',
-    #              verticalalignment='top')
+    ax1.annotate("Max Drawdown",
+                 xy=(loop_results["low_date"], return_rate[loop_results["low_date"]]),
+                 xycoords='data',
+                 xytext=(loop_results["max_date"], return_rate[loop_results["max_date"]]),
+                 textcoords='data',
+                 arrowprops=dict(width=3, headwidth=5, facecolor='black', shrink=0.),
+                 ha='right',
+                 va='bottom')
     ax1.legend()
 
     ax2.set_position([0.05, 0.23, chart_width, 0.18])
