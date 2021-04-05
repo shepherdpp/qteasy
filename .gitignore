@@ -3,15 +3,10 @@ $cat gitignore
 # ignore all the informational hidden folders
 /.git
 /.idea
-qteasy/history.py
 qteasy/__pycache__/core.cpython-36.pyc
-*.pyc
-*.pyc
 *.pyc
 .idea/workspace.xml
 *.xml
-.idea/workspace.xml
-.idea/workspace.xml
 qt_test_temp.ipynb
 Untitled.ipynb
 .ipynb_checkpoints/Untitled-checkpoint.ipynb

@@ -421,7 +421,10 @@ class Operator:
                 # 所有的策略参数全部参与优化，但策略的所有参数组合作为枚举同时参与优化
                 ranges.append(stg.par_boes)
                 types.extend(['enum'])
-        return ranges, types
+        if len(ranges) == 0:
+            return None, None
+        else:
+            return ranges, types
 
     @property
     def opt_types(self):

@@ -49,6 +49,7 @@ class Space:
             无
         """
         self._axis = []
+        assert pars is not None, f'InputError, pars should be a list or tuple of items, got {pars}'
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
         pars = list(pars)
         par_dim = len(pars)

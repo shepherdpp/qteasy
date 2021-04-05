@@ -6061,53 +6061,14 @@ class TestFastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
     def setUp(self):
-        self.op = qt.Operator(timing_types=['dma'],
-                              selecting_types=['all'],
-                              ricon_types=['ricon_none'])
-
-        self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
-        self.op.set_parameter('t-0', opt_tag=0, pars=(81, 178, 17))
-        self.op.set_parameter('r-0', pars=(0, 0))
-
-        qt.configure(reference_asset = '000300.SH')
-        qt.configure(ref_asset_type = 'I')
-        qt.configure(asset_pool = '000300.SH')
-        qt.configure(asset_type = 'I')
-        qt.configure(opti_output_count = 50)
-        qt.configure(invest_start = '20020101')
-        qt.configure(invest_end = '2008-12-31')
-        qt.configure(trade_batch_size = 1)
-
-        qt.configure(parallel = True)
-        qt.configure(print_backtest_log = True)
-
-        # self.cont.cash_plan = qt.CashPlan(dates='20060406', amounts=[10000])
-        qt.configure(invest_cash_dates = '20061128')
-        qt.configure(invest_cash_amounts=[10000])
+        pass
 
     def test_configure_and_run(self):
-        print(f'test case fast experiment 1 is running!')
-        qt.configure(mode=1,
-                     log=False,
-                     visual=False)
-        qt.run(self.op)
-
-    def test_mock_data_generate(self):
-        print(f'experiment of generating mock data')
-        # 测试随机股票数据生成的效果和性能
-
-        # 载入一段5年长度的某股票的K线数据
-        data = qt.ohlc(stock='000300.SH', start='20100101', asset_type='I', no_visual=True)
-        data_hp = stack_dataframes([data], stack_along='shares', shares='000300.SH')
-        mock_data = _create_mock_data(data_hp)
-        mock_df = mock_data.to_dataframe(share='000300.SH')
-        qt.ohlc(stock_data=data, share_name='000300.SH')
-        qt.ohlc(stock_data=mock_df, share_name='mock share')
-        for col in ['open', 'high', 'low', 'close']:
-            data[col] = np.log(data[col] / data[col].shift(1))
-            mock_df[col] = np.log(mock_df[col] / mock_df[col].shift(1))
-        print(f'The real stock data is\n{data.head()}\nstatistics:\n{data.describe()}\n'
-              f'and synthetic stock data is \n{mock_df.head()}\nstatistics:\n{mock_df.describe()}')
+        op = qt.Operator(timing_types=['crossline'])
+        op.set_parameter('t-0', pars=(23, 150, 15, 'none'), opt_tag=1)
+        op.set_parameter('s-0', (0.5,))
+        op.set_parameter('r-0', (0, 0))
+        res = qt.run(op, mode=2, parallel=True)
 
 
 class TestDataBase(unittest.TestCase):

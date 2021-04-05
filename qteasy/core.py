@@ -988,7 +988,7 @@ def run(operator, **kwargs):
     config = QT_CONFIG
 
     # 赋值给参考数据和运行模式
-    reference_data = config.reference_asset
+    reference_data_type = config.reference_asset
     run_mode = config.mode
     """
     用于交易信号生成、数据回测、策略优化、结果测试以及结果评价参考的历史数据:
@@ -1001,6 +1001,9 @@ def run(operator, **kwargs):
     hist_test_loop:     检验回测价格，用于在optimization模式下在策略检验区间上回测交易结果
     hist_reference:     评价参考价格，用于评价回测结果，大部分用于评价回测结果的alpha表现（取出无风险回报之后的表现）
                         相关的指标都需要用到参考价格;
+    invest_cash_plan:
+    opti_cash_plan:
+    test_cssh_plan:
     """
     # 统一生成回测、优化、测试所需要的信号生成数据、回测数据以及投资金额数据（投资金额数据已调整为交易日）
     (hist_op,
@@ -1039,7 +1042,7 @@ def run(operator, **kwargs):
                                               op_history_data=hist_op,
                                               loop_history_data=hist_loop,
                                               reference_history_data=hist_reference,
-                                              reference_history_data_type=reference_data,
+                                              reference_history_data_type=reference_data_type,
                                               config=config,
                                               stage='loop')
         if config.visual:
@@ -1053,11 +1056,14 @@ def run(operator, **kwargs):
 
     elif run_mode == 2 or run_mode == 'optimization':
         how = config.opti_method
+        assert operator.opt_space_par[0] is not None, \
+            f'ConfigError, none of the strategies is optimiziable, set opt_tag to be 1 or 2 to ' \
+            f'activate optimization in mode 2'
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
         pars, perfs = optimization_methods[how](hist=hist_opti,
                                                 ref_hist=hist_reference,
-                                                ref_type=reference_data,
+                                                ref_type=reference_data_type,
                                                 op=operator,
                                                 config=config)
         # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
@@ -1068,7 +1074,7 @@ def run(operator, **kwargs):
                                                op_history_data=hist_opti,
                                                loop_history_data=hist_opti_loop,
                                                reference_history_data=hist_reference,
-                                               reference_history_data_type=reference_data,
+                                               reference_history_data_type=reference_data_type,
                                                config=config,
                                                stage='test-o')
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
@@ -1088,7 +1094,7 @@ def run(operator, **kwargs):
                                                    op_history_data=hist_test,
                                                    loop_history_data=hist_test_loop,
                                                    reference_history_data=hist_reference,
-                                                   reference_history_data_type=reference_data,
+                                                   reference_history_data_type=reference_data_type,
                                                    config=config,
                                                    stage='test-t')
 
@@ -1112,7 +1118,7 @@ def run(operator, **kwargs):
                                                        op_history_data=mock_hist,
                                                        loop_history_data=mock_hist_loop,
                                                        reference_history_data=mock_hist_loop,
-                                                       reference_history_data_type=reference_data,
+                                                       reference_history_data_type=reference_data_type,
                                                        config=config,
                                                        stage='test-t')
 
@@ -1142,36 +1148,29 @@ def _evaluate_all_parameters(par_generator,
         根据config中的配置参数，这里可以选择进行并行计算以充分利用多核处理器的全部算力以缩短运行时间。
 
     input:
-        :param par_generator:
-            :type par_generator: Generator
+        :param par_generator: Generator ->
             一个迭代器对象，生成所有需要迭代测试的策略参数
 
-        :param op:
-            :type op: qt.Operator
+        :param op: qt.Operator ->
             一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
 
-        :param op_history_data:
-            :type op_history_data: qt.HistoryPanel
+        :param op_history_data:  qt.HistoryPanel ->
             用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
             历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
             价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
-        :param loop_history_data:
-            :type loop_history_data: pd.DataFrame
+        :param loop_history_data: pd.DataFrame ->
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
             （假设交易价格为收盘价）
 
-        :param reference_history_data:
-            :type reference_history_data_type: pd.DataFrame
+        :param reference_history_data: pd.DataFrame ->
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
             产的价格，例如沪深300指数的价格。
 
-        :param reference_history_data_type:
-            :type reference_history_data: str
+        :param reference_history_data_type: str ->
             用于回测结果评价的参考历史数据种类，通常为收盘价close
 
-        :param config:
-            :type config: Config
+        :param config: Config ->
             参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
                 1, config.opti_output_count:
                     优化结果数量
@@ -1251,38 +1250,31 @@ def _evaluate_one_parameter(par: tuple,
         回测后返回多次回测的综合结果。
 
     input:
-        :param par:
-            :type par: tuple
+        :param par: tuple
             输入的策略参数组合，这些参数必须与operator运行器对象中的交易策略相匹配，且符合op对象中每个交易策
             略的优化标记设置，关于交易策略的优化标记如何影响参数导入，参见qt.operator.set_opt_par()的
             docstring
 
-        :param op:
-            :type op: qt.Operator
+        :param op: qt.Operator
             一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
 
-        :param op_history_data:
-            :type op_history_data: qt.HistoryPanel
+        :param op_history_data: qt.HistoryPanel
             用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
             历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
             价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
-        :param loop_history_data:
-            :type loop_history_data: pd.DataFrame
+        :param loop_history_data: pd.DataFrame
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
             （假设交易价格为收盘价）
 
-        :param reference_history_data:
-            :type reference_history_data: pd.DataFrame
+        :param reference_history_data: pd.DataFrame
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
             产的价格，例如沪深300指数的价格。
 
-        :param reference_history_data_type:
-            :type reference_history_data_type: str
+        :param reference_history_data_type: str
             用于回测结果评价的参考历史数据种类，通常为收盘价close
 
-        :param config:
-            :type config: Config:
+        :param config: Config:
             参数配置对象，用于保存相关配置，在所有的参数配置中，其作用的有下面N种：
                 1, config.opti_type/test_type:
                     优化或测试模式，决定如何利用回测区间
@@ -1306,8 +1298,7 @@ def _evaluate_one_parameter(par: tuple,
                     该数值是一个相对长度，取值在0～1之间，代表每个子区间的长度相对于整个区间的比例，
                     例如，0.5代表每个子区间的长度是整个区间的一半
 
-        :param stage:
-            :type stage: str:
+        :param stage: str:
             运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
                 1, 'loop':      运行模式为回测模式，在这种模式下：
                                 使用投资区间回测投资计划
@@ -1325,25 +1316,21 @@ def _evaluate_one_parameter(par: tuple,
                                 回测区间利用方式使用test_type的设置值
                                 回测区间分段数量和间隔使用test_sub_periods
     :return:
-        dict: 一个dict对象，存储该策略在使用par作为参数时的性能表现评分以及一些其他运行信息，允许对性能
+        dict:
+        一个dict对象，存储该策略在使用par作为参数时的性能表现评分以及一些其他运行信息，允许对性能
         表现进行多重指标评价，dict的指标类型为dict的键，评价结果为结果分值，dict不能为空，至少包含以下值：
-
-        'complete_value': 完整的回测结果清单，无结果时为None
-        'op_run_time':    交易清单生成耗时
-        'loop_run_time':  回测耗时
-        'final_value':    回测结果终值（默认评价指标）
-
+            'complete_value': 完整的回测结果清单，无结果时为None
+            'op_run_time':    交易清单生成耗时
+            'loop_run_time':  回测耗时
+            'final_value':    回测结果终值（默认评价指标）
         除了上述必须存在的项目以外，返回的res_dict还可以包含任意evaluation模块可以输出的评价值，例如：
-
-        {'final_value': 34567,
-         'sharp':       0.123}
-
+            {'final_value': 34567,
+             'sharp':       0.123}
         如果当前的策略不能生成有效的交易操作清单时，直接返回默认结果，其终值为负无穷大：
-
-        {'complete_values':  None,
-         'op_run_time':     0.0354675,
-         'loop_run_time':   None,
-         'final_value':     np.NINF}
+            {'complete_values':  None,
+             'op_run_time':     0.0354675,
+             'loop_run_time':   None,
+             'final_value':     np.NINF}
 
     """
     res_dict = {'par':             None,
@@ -1578,15 +1565,17 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
                         接近全局最优值
 
     input:
-        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param op，object，交易信号生成器对象
-        :param config, object 用于存储相关参数的上下文对象
+        :param hist: object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param ref_hist:
+        :param ref_type:
+        :param op: object，交易信号生成器对象
+        :param config: object 用于存储相关参数的上下文对象
     return: =====tuple对象，包含两个变量
         pool.items 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 """
-    s_range, s_type = op.opt_space_par
-    space = Space(s_range, s_type)  # 生成参数空间
+    # s_range, s_type = op.opt_space_par
+    space = Space(*op.opt_space_par)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
     par_generator, total = space.extract(config.opti_sample_count, how='rand')
     history_list = hist.to_dataframe(htype='close').fillna(0)

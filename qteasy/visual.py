@@ -334,10 +334,13 @@ def _plot_test_result(opti_eval_res: list,
         test_eval_res = []
     # 从opti和test评价结果列表中取出完整的回测曲线
     result_count = len(test_eval_res)
-    opti_complete_value_results = [result['complete_values'] for result in opti_eval_res]
-    test_complete_value_results = [result['complete_values'] for result in test_eval_res]
+    available_opti_eval_res = [item for item in opti_eval_res if not item['complete_values'] is None]
+    available_test_eval_res = [item for item in test_eval_res if not item['complete_values'] is None]
+    opti_complete_value_results = [result['complete_values'] for result in available_opti_eval_res]
+    test_complete_value_results = [result['complete_values'] for result in available_test_eval_res]
     first_opti_looped_values = opti_complete_value_results[0]
     first_test_looped_values = test_complete_value_results[0]
+    # import pdb;pdb.set_trace()
     opti_reference = first_opti_looped_values.reference
     test_reference = first_test_looped_values.reference
     complete_reference = opti_reference.reindex(opti_reference.index.union(test_reference.index))
@@ -345,9 +348,8 @@ def _plot_test_result(opti_eval_res: list,
     # matplotlib 所需固定操作
     register_matplotlib_converters()
     CHART_WIDTH = 0.9
-
     # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
-    compariable_indicators = [i for i in opti_eval_res[0].keys() if i in plot_compariables]
+    compariable_indicators = [i for i in available_opti_eval_res[0].keys() if i in plot_compariables]
     compariable_indicator_count = len(compariable_indicators)
 
     # 显示投资回报评价信息
@@ -356,11 +358,12 @@ def _plot_test_result(opti_eval_res: list,
 
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
-    fig.text(0.07, 0.91, f'opti periods: {opti_eval_res[0]["years"]:.1f} years, '
-                         f'from: {opti_eval_res[0]["loop_start"].date()} to '
-                         f'{opti_eval_res[0]["loop_end"].date()}  '
-                         f'time consumed:   signal creation: {time_str_format(opti_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(opti_eval_res[0]["loop_run_time"])}\n'
+    fig.text(0.07, 0.91, f'opti periods: {available_opti_eval_res[0]["years"]:.1f} years, '
+                         f'from: {available_opti_eval_res[0]["loop_start"].date()} to '
+                         f'{available_opti_eval_res[0]["loop_end"].date()}  '
+                         f'time consumed:'
+                         f'  signal creation: {time_str_format(available_opti_eval_res[0]["op_run_time"])};'
+                         f'  back test:{time_str_format(available_opti_eval_res[0]["loop_run_time"])}\n'
                          f'test periods: {test_eval_res[0]["years"]:.1f} years, '
                          f'from: {test_eval_res[0]["loop_start"].date()} to '
                          f'{test_eval_res[0]["loop_end"].date()}  '
@@ -427,15 +430,17 @@ def _plot_test_result(opti_eval_res: list,
                      facecolor=(0.8, 0.2, 0.0), alpha=0.35)
     # 逐个绘制所有的opti区间和test区间收益率曲线
     for cres in opti_complete_value_results:
-        start_value = cres.value.iloc[0]
-        values = (cres.value - start_value) / start_value * 100
-        ax1.plot(first_opti_looped_values.index, values, linestyle='-',
-                 color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
+        if cres is not None:
+            start_value = cres.value.iloc[0]
+            values = (cres.value - start_value) / start_value * 100
+            ax1.plot(first_opti_looped_values.index, values, linestyle='-',
+                     color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
     for cres in test_complete_value_results:
-        start_value = cres.value.iloc[0]
-        values = (cres.value - start_value) / start_value * 100
-        ax1.plot(first_test_looped_values.index, values, linestyle='-',
-                 color=(0.2, 0.6, 0.2), alpha=0.85, label='return')
+        if cres is not None:
+            start_value = cres.value.iloc[0]
+            values = (cres.value - start_value) / start_value * 100
+            ax1.plot(first_test_looped_values.index, values, linestyle='-',
+                     color=(0.2, 0.6, 0.2), alpha=0.85, label='return')
     # 设置历史曲线图表的绘制格式
     ax1.set_ylabel('Total return rate')
     ax1.grid(True)
@@ -449,12 +454,12 @@ def _plot_test_result(opti_eval_res: list,
     # 生成两个DataFrame，分别包含需要显示的对比数据，便于计算它们的统计值并绘制图表
     opti_indicator_df = pd.DataFrame([{key: result[key]
                                        for key in compariable_indicators}
-                                      for result in opti_eval_res],
-                                     index=[result['par'] for result in opti_eval_res])
+                                      for result in available_opti_eval_res],
+                                     index=[result['par'] for result in available_opti_eval_res])
     test_indicator_df = pd.DataFrame([{key: result[key]
                                        for key in compariable_indicators}
-                                      for result in test_eval_res],
-                                     index=[result['par'] for result in test_eval_res])
+                                      for result in available_test_eval_res],
+                                     index=[result['par'] for result in available_test_eval_res])
 
     # 开始使用循环的方式逐个生成对比图表
     if compariable_indicator_count > 0:

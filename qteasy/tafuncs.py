@@ -187,8 +187,6 @@ def mama(close, fastlimit=0, slowlimit=0):
     responds to price changes and holds the average value until the next
     bars close.
 
-
-
     input:
     :param close:
     :param fastlimit:
@@ -207,7 +205,7 @@ def mavp(close, periods, minperiod: int = 2, maxperiod: int = 30, matype: int = 
     :param periods:
     :param minperiod:
     :param maxperiod:
-    :param matype:
+    :param matype: 0 ~ 8
     :return:
     """
     return MAVP(close, periods, minperiod, maxperiod, matype)

@@ -896,7 +896,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '使用穷举法搜索最佳策略时有用，搜索步长'},
 
-        'opti_sample_count':   {'Default':   1000,
+        'opti_sample_count':   {'Default':   256,
                                 'Validator': lambda value: isinstance(value, int) and value > 0,
                                 'level':     1,
                                 'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
