@@ -383,7 +383,7 @@ class SCRSMAMA(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0.001, 1), (0.001, 1)],
+                         par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99)],
                          stg_name='SINGLE CROSSLINE - MAMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
@@ -411,8 +411,8 @@ class SCRSFAMA(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0.001, 1), (0.001, 1)],
-                         stg_name='SINGLE CROSSLINE - MAMA',
+                         par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99)],
+                         stg_name='SINGLE CROSSLINE - FAMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
@@ -439,7 +439,7 @@ class SCRST3(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti'],
-                         par_bounds_or_enums=[(1, 20), (0, 1)],
+                         par_bounds_or_enums=[(2, 20), (0, 1)],
                          stg_name='SINGLE CROSSLINE - MAMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
@@ -466,7 +466,7 @@ class SCRSTEMA(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
-                         par_bounds_or_enums=[(1, 20)],
+                         par_bounds_or_enums=[(2, 20)],
                          stg_name='SINGLE CROSSLINE - TEMA',
                          stg_text='Single moving average strategy that uses TEMA line as the '
                                   'trade line ',
@@ -483,7 +483,7 @@ class SCRSTEMA(stg.RollingTiming):
 
 
 class SCRSTRIMA(stg.RollingTiming):
-    """ Single cross line strategy with T3 line
+    """ Single cross line strategy with TRIMA line
 
         two parameters:
         - timeperiod - timeperiod
@@ -510,7 +510,7 @@ class SCRSTRIMA(stg.RollingTiming):
 
 
 class SCRSWMA(stg.RollingTiming):
-    """ Single cross line strategy with T3 line
+    """ Single cross line strategy with WMA line
 
         two parameters:
         - timeperiod - timeperiod
@@ -521,7 +521,7 @@ class SCRSWMA(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 200)],
-                         stg_name='SINGLE CROSSLINE - MAMA',
+                         stg_name='SINGLE CROSSLINE - WMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
@@ -664,7 +664,7 @@ class DCRSMAMA(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=4,
                          par_types=['conti', 'conti', 'conti', 'conti'],
-                         par_bounds_or_enums=[(0, 20), (0, 20), (0, 20), (0, 20)],
+                         par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
                          stg_name='DOUBLE CROSSLINE - MAMA',
                          stg_text='Double moving average strategy that uses MAMA line as the '
                                   'trade line ',
@@ -673,7 +673,35 @@ class DCRSMAMA(stg.RollingTiming):
     def _realize(self, hist_data, params):
         lf, ls, sf, ss = params
         h = hist_data.T
-        diff = (mama(h[0], lf, ls) - mama(h[0], sf, ss))[-1]
+        diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
+        if diff < 0:
+            return 1
+        else:
+            return 0
+
+
+class DCRSFAMA(stg.RollingTiming):
+    """ Double cross line strategy with FAMA line
+
+        two parameters:
+        - fastlimit - fastlimit
+        - slowlimit = slowlimit
+    """
+
+    def __init__(self, pars):
+        super().__init__(pars=pars,
+                         par_count=4,
+                         par_types=['conti', 'conti', 'conti', 'conti'],
+                         par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
+                         stg_name='DOUBLE CROSSLINE - FAMA',
+                         stg_text='Double moving average strategy that uses MAMA line as the '
+                                  'trade line ',
+                         data_types='close')
+
+    def _realize(self, hist_data, params):
+        lf, ls, sf, ss = params
+        h = hist_data.T
+        diff = (mama(h[0], lf, ls)[1] - mama(h[0], sf, ss)[1])[-1]
         if diff < 0:
             return 1
         else:
@@ -701,7 +729,7 @@ class DCRSMAVP(stg.RollingTiming):
     def _realize(self, hist_data, params):
         f, s = params
         h = hist_data.T
-        diff = mavp(h[0], f, s) - h[0]
+        diff = (mavp(h[0], f, s) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -719,17 +747,17 @@ class DCRST3(stg.RollingTiming):
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 20), (0, 20)],
-                         stg_name='DOUBLE CROSSLINE - MAMA',
+                         par_types=['discr', 'conti', 'discr', 'conti'],
+                         par_bounds_or_enums=[(0, 20), (0, 1), (0, 20), (0, 1)],
+                         stg_name='DOUBLE CROSSLINE - T3',
                          stg_text='Double moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        f, s = params
+        fp, fv, sp, sv = params
         h = hist_data.T
-        diff = t3(h[0], f, s) - h[0]
+        diff = (t3(h[0], fp, fv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
             return 1
         else:
@@ -737,7 +765,7 @@ class DCRST3(stg.RollingTiming):
 
 
 class DCRSTEMA(stg.RollingTiming):
-    """ Double cross line strategy with T3 line
+    """ Double cross line strategy with TEMA line
 
         two parameters:
         - timeperiod - timeperiod
@@ -746,17 +774,17 @@ class DCRSTEMA(stg.RollingTiming):
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['descr'],
-                         par_bounds_or_enums=[(3, 200)],
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(2, 20), (2, 20)],
                          stg_name='DOUBLE CROSSLINE - TEMA',
                          stg_text='Double moving average strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        p = params
+        fp, sp = params
         h = hist_data.T
-        diff = tema(h[0], p) - h[0]
+        diff = (tema(h[0], fp) - tema(h[0], sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -764,7 +792,7 @@ class DCRSTEMA(stg.RollingTiming):
 
 
 class DCRSTRIMA(stg.RollingTiming):
-    """ Double cross line strategy with T3 line
+    """ Double cross line strategy with TRIMA line
 
         two parameters:
         - timeperiod - timeperiod
@@ -773,17 +801,17 @@ class DCRSTRIMA(stg.RollingTiming):
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['descr'],
-                         par_bounds_or_enums=[(3, 200)],
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(3, 200), (3, 200)],
                          stg_name='DOUBLE CROSSLINE - TRIMA',
                          stg_text='Double moving average strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        p = params
+        fp, sp = params
         h = hist_data.T
-        diff = trima(h[0], p) - h[0]
+        diff = (trima(h[0], fp) - trima(h[0], sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -800,17 +828,17 @@ class DCRSWMA(stg.RollingTiming):
     def __init__(self, pars):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['descr'],
-                         par_bounds_or_enums=[(3, 200)],
-                         stg_name='DOUBLE CROSSLINE - MAMA',
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(3, 200), (3, 200)],
+                         stg_name='DOUBLE CROSSLINE - WMA',
                          stg_text='Double moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        p = params
+        fp, sp = params
         h = hist_data.T
-        diff = wma(h[0], p) - h[0]
+        diff = (wma(h[0], fp) - wma(h[0], sp))[-1]
         if diff < 0:
             return 1
         else:
@@ -819,10 +847,10 @@ class DCRSWMA(stg.RollingTiming):
 
 # Built-in Sloping strategies:
 # these strateges are basically adopting same philosaphy:
-# Their moving average values are calculated and slop is
-# calculated on the moving average line. signals are triggered
-# while the slop of moving average changes
-# moving averages.
+# the operation signals or long/short categorizations are
+# determined by the slop of price trend lines, which are
+# generated by different methodologies such as moving
+# average, or low-pass filtration
 
 
 class SLPSMA(stg.RollingTiming):
@@ -1130,6 +1158,16 @@ class SLPWMA(stg.RollingTiming):
             return 1
         else:
             return 0
+
+
+# momentum-based strategies:
+# this group of strategies are based on momentum of prices
+# the long/short positions or operation signals are generated
+# according to the momentum of prices calculated in different
+# methods
+
+class MOMMACD(stg.RollingTiming):
+    pass
 
 
 # Built-in Simple timing strategies:

@@ -334,10 +334,10 @@ def _plot_test_result(opti_eval_res: list,
         test_eval_res = []
     # 从opti和test评价结果列表中取出完整的回测曲线
     result_count = len(test_eval_res)
-    available_opti_eval_res = [item for item in opti_eval_res if not item['complete_values'] is None]
-    available_test_eval_res = [item for item in test_eval_res if not item['complete_values'] is None]
-    opti_complete_value_results = [result['complete_values'] for result in available_opti_eval_res]
-    test_complete_value_results = [result['complete_values'] for result in available_test_eval_res]
+    valid_opti_eval_res = [item for item in opti_eval_res if not item['complete_values'] is None]
+    valid_test_eval_res = [item for item in test_eval_res if not item['complete_values'] is None]
+    opti_complete_value_results = [result['complete_values'] for result in valid_opti_eval_res]
+    test_complete_value_results = [result['complete_values'] for result in valid_test_eval_res]
     first_opti_looped_values = opti_complete_value_results[0]
     first_test_looped_values = test_complete_value_results[0]
     # import pdb;pdb.set_trace()
@@ -349,7 +349,7 @@ def _plot_test_result(opti_eval_res: list,
     register_matplotlib_converters()
     CHART_WIDTH = 0.9
     # 计算在生成的评价指标清单中，有多少个可以进行优化-测试对比的评价指标，根据评价指标的数量生成多少个子图表
-    compariable_indicators = [i for i in available_opti_eval_res[0].keys() if i in plot_compariables]
+    compariable_indicators = [i for i in valid_opti_eval_res[0].keys() if i in plot_compariables]
     compariable_indicator_count = len(compariable_indicators)
 
     # 显示投资回报评价信息
@@ -358,17 +358,18 @@ def _plot_test_result(opti_eval_res: list,
 
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
-    fig.text(0.07, 0.91, f'opti periods: {available_opti_eval_res[0]["years"]:.1f} years, '
-                         f'from: {available_opti_eval_res[0]["loop_start"].date()} to '
-                         f'{available_opti_eval_res[0]["loop_end"].date()}  '
+    fig.text(0.07, 0.91, f'opti periods: {valid_opti_eval_res[0]["years"]:.1f} years, '
+                         f'from: {valid_opti_eval_res[0]["loop_start"].date()} to '
+                         f'{valid_opti_eval_res[0]["loop_end"].date()}  '
                          f'time consumed:'
-                         f'  signal creation: {time_str_format(available_opti_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(available_opti_eval_res[0]["loop_run_time"])}\n'
-                         f'test periods: {test_eval_res[0]["years"]:.1f} years, '
-                         f'from: {test_eval_res[0]["loop_start"].date()} to '
-                         f'{test_eval_res[0]["loop_end"].date()}  '
-                         f'time consumed:   signal creation: {time_str_format(test_eval_res[0]["op_run_time"])};'
-                         f'  back test:{time_str_format(test_eval_res[0]["loop_run_time"])}')
+                         f'  signal creation: {time_str_format(valid_opti_eval_res[0]["op_run_time"])};'
+                         f'  back test:{time_str_format(valid_opti_eval_res[0]["loop_run_time"])}\n'
+                         f'test periods: {valid_test_eval_res[0]["years"]:.1f} years, '
+                         f'from: {valid_test_eval_res[0]["loop_start"].date()} to '
+                         f'{valid_test_eval_res[0]["loop_end"].date()}  '
+                         f'time consumed:'
+                         f'  signal creation: {time_str_format(valid_test_eval_res[0]["op_run_time"])};'
+                         f'  back test:{time_str_format(valid_test_eval_res[0]["loop_run_time"])}')
 
     # 确定参考数据在起始日的数据，以便计算参考数据在整个历史区间内的原因
     ref_start_value = complete_reference.iloc[0]
@@ -454,12 +455,12 @@ def _plot_test_result(opti_eval_res: list,
     # 生成两个DataFrame，分别包含需要显示的对比数据，便于计算它们的统计值并绘制图表
     opti_indicator_df = pd.DataFrame([{key: result[key]
                                        for key in compariable_indicators}
-                                      for result in available_opti_eval_res],
-                                     index=[result['par'] for result in available_opti_eval_res])
+                                      for result in valid_opti_eval_res],
+                                     index=[result['par'] for result in valid_opti_eval_res])
     test_indicator_df = pd.DataFrame([{key: result[key]
                                        for key in compariable_indicators}
-                                      for result in available_test_eval_res],
-                                     index=[result['par'] for result in available_test_eval_res])
+                                      for result in valid_test_eval_res],
+                                     index=[result['par'] for result in valid_test_eval_res])
 
     # 开始使用循环的方式逐个生成对比图表
     if compariable_indicator_count > 0:
