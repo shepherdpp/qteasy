@@ -383,7 +383,7 @@ class SCRSMAMA(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 1), (0, 1)],
+                         par_bounds_or_enums=[(0.001, 1), (0.001, 1)],
                          stg_name='SINGLE CROSSLINE - MAMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
@@ -411,7 +411,7 @@ class SCRSFAMA(stg.RollingTiming):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
-                         par_bounds_or_enums=[(0, 1), (0, 1)],
+                         par_bounds_or_enums=[(0.001, 1), (0.001, 1)],
                          stg_name='SINGLE CROSSLINE - MAMA',
                          stg_text='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',

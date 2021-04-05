@@ -452,7 +452,7 @@ class Axis:
         if self._axis_type == 'discr':
             return np.random.randint(self._lbound, self._ubound + 1, size=qty)
         if self._axis_type == 'conti':
-            return self._lbound + np.random.random(size=qty) * (self._ubound - self._lbound)
+            return np.random.uniform(self._lbound, self._ubound, qty)
 
     def _extract_enum_interval(self, interval):
         """ 按照间隔方式从枚举型数轴中提取值
