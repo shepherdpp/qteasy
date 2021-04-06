@@ -1055,7 +1055,7 @@ def run(operator, **kwargs):
 
     elif run_mode == 2 or run_mode == 'optimization':
         how = config.opti_method
-        assert operator.opt_space_par[0] == [], \
+        assert operator.opt_space_par[0] != [], \
             f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
             f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据

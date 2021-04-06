@@ -5458,6 +5458,7 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
 
         qt.configure(reference_asset='000300.SH',
+                     mode=1,
                      ref_asset_type='I',
                      asset_pool='000300.SH',
                      asset_type='I',
@@ -6024,7 +6025,7 @@ class TestVisual(unittest.TestCase):
         qt.ohlc(stock='513100.SH', start='2020-04-01', asset_type='FD', no_visual=False)
         print(f'get data from mpf plot function')
         daily = qt.ohlc('513100.SH', start='2020-04-01', asset_type='FD', no_visual=False)
-        daily.drop(columns=['volume'], no_visual=False)
+        daily.drop(columns=['volume'], inplace=True)
         print(f'test plot mpf data directly from DataFrame without volume')
         qt.ohlc(stock_data=daily, no_visual=False)
 
