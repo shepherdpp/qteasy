@@ -11,8 +11,8 @@
 
 import numpy as np
 import qteasy.strategy as stg
-from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr
-from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext
+from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
+from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -1195,8 +1195,78 @@ class SLPWMA(stg.RollingTiming):
 # according to the momentum of prices calculated in different
 # methods
 
-class MOMMACD(stg.RollingTiming):
-    pass
+class ADX(stg.RollingTiming):
+    """ADX 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 35)],
+                         stg_name='ADX STRATEGY',
+                         stg_text='Average Directional Movement Index, determine buy/sell signals according to ADX Indicators',
+                         window_length=200,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+            u: number deviation up
+            d: number deviation down
+            m: ma type
+        """
+        p, = params
+        h = hist_data.T
+        res = adx(h[0], h[1], h[2], p)[-1]
+        # 策略:
+        # 指标比较复杂，需要深入研究一下
+        # 指标大于25时属于强趋势。。。未完待续
+        if res > 25:
+            cat = 1
+        elif res < 20:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class APO(stg.RollingTiming):
+    """APO 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(10, 100), (10, 100), (0, 8)],
+                         stg_name='APO STRATEGY',
+                         stg_text='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
+                         window_length=200,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+            u: number deviation up
+            d: number deviation down
+            m: ma type
+        """
+        f, s, m = params
+        h = hist_data.T
+        res = apo(h[0], f, s, m)[-1]
+        # 策略:
+        # 当指标大于0时，输出多头
+        # 当指标小于0时，输出空头
+        if res > 0:
+            cat = 1
+        elif res < 0:
+            cat = -1
+        else:
+            cat = 0
+        return cat
 
 
 # Built-in Simple timing strategies:
@@ -1774,7 +1844,6 @@ BUILT_IN_STRATEGY_DICT = {'crossline':  TimingCrossline,
                           'dma':        TimingDMA,
                           'trix':       TimingTRIX,
                           'cdl':        TimingCDL,
-                          'ema':        TimingEMA,
                           'bband':      TimingBBand,
                           'ricon_none': RiconNone,
                           'urgent':     RiconUrgent,
