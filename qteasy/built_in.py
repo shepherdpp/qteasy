@@ -12,7 +12,7 @@
 import numpy as np
 import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr
-from .tafuncs import ht, kama, mama, t3, tema, trima, wma
+from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -249,6 +249,43 @@ class TimingBBand(stg.RollingTiming):
         else:
             sig = 0
         return sig
+
+
+class TimingSAREXT(stg.RollingTiming):
+    """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'conti'],
+                         par_bounds_or_enums=[(-100, 100), (0, 5)],
+                         stg_name='Parabolic SAREXT STRATEGY',
+                         stg_text='Parabolic SAR Extended STRATEGY, determine buy/sell signals according to CDL Indicators',
+                         window_length=200,
+                         data_types='high, low')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+            u: number deviation up
+            d: number deviation down
+            m: ma type
+        """
+        a, m = params
+        h = hist_data.T
+        sar = sarext(h[0], h[1], a, m)[-1]
+        # 策略:
+        # 当指标大于0时，输出多头
+        # 当指标小于0时，输出空头
+        if sar > 0:
+            cat = 1
+        elif sar < 0:
+            cat = -1
+        else:
+            cat = 0
+        return cat
 
 
 # Built-in Single-cross-line strategies:

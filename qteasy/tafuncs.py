@@ -259,7 +259,7 @@ def sar(high, low, acceleration=0, maximum=0):
 def sarext(high, low, acceleration=0, maximum=0):
     """Parabolic SAR Extended 扩展抛物线SAR
 
-    he Parabolic SAR Extended is an indicator developed by PlayOptions
+    the Parabolic SAR Extended is an indicator developed by PlayOptions
     that derives from the classic Parabolic SAR. The interpretation is
     very simple.
     It is an indicator designed for optionists as it is reactive in
