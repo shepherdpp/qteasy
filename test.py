@@ -6035,14 +6035,14 @@ class TestVisual(unittest.TestCase):
         print(f'get data from mpf plot function')
         daily = qt.candle('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
         print(f'test plot mpf data with indicator macd')
-        qt.candle(stock_data=daily, no_visual=False, addplot_type='macd', addplot_par=(12, 26, 9))
+        qt.candle(stock_data=daily, no_visual=False, indicator='macd', indicator_par=(12, 26, 9))
         daily.drop(columns=['volume'], inplace=True)
         print(f'test plot mpf data directly from DataFrame without volume')
         qt.candle(stock_data=daily, no_visual=False)
         print(f'test plot mpf data with indicator dema')
-        qt.candle(stock_data=daily, no_visual=False, addplot_type='dema', addplot_par=(20,))
+        qt.candle(stock_data=daily, no_visual=False, indicator='dema', indicator_par=(20,))
         print(f'test plot mpf data with indicator macd')
-        qt.candle(stock_data=daily, no_visual=False, addplot_type='macd', addplot_par=(12, 26, 9))
+        qt.candle(stock_data=daily, no_visual=False, indicator='macd', indicator_par=(12, 26, 9))
 
     def test_renko(self):
         print(f'test mpf plot in renko form')
@@ -6055,11 +6055,11 @@ class TestVisual(unittest.TestCase):
 
     def test_indicators(self):
         print(f'test mpf plot in candle form with indicator dema')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', addplot_type='dema', addplot_par=(20,))
+        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='dema', indicator_par=(20,))
         print(f'test mpf plot in candle form with indicator rsi')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', addplot_type='rsi', addplot_par=(12,))
+        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='rsi', indicator_par=(12,))
         print(f'test mpf plot in candle form with indicator macd')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', addplot_type='macd', addplot_par=(12, 26, 9))
+        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='macd', indicator_par=(12, 26, 9))
 
 
 class TestBuiltIns(unittest.TestCase):

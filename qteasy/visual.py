@@ -28,34 +28,31 @@ ValidAddPlots = ['macd',
 
 
 # TODO: simplify and merge these three functions
-def candle(stock=None, start=None, end=None, stock_data=None, share_name=None,
-           asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False, addplot_type=None,
-           addplot_par=None):
+def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
+           mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None):
     """plot stock data or extracted data in candle form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='candle',
-                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=addplot_type,
-                    addplot_par=addplot_par)
+                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
+                    addplot_par=indicator_par)
 
 
-def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None,
-         asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False, addplot_type=None,
-         addplot_par=None):
+def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
+         mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None):
     """plot stock data or extracted data in ohlc form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='ohlc',
-                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=addplot_type,
-                    addplot_par=addplot_par)
+                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
+                    addplot_par=indicator_par)
 
 
-def renko(stock=None, start=None, end=None, stock_data=None, share_name=None,
-          asset_type='E', figsize=(10, 5), mav=(5, 10, 20, 30), no_visual=False, addplot_type=None,
-          addplot_par=None):
+def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
+          mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None):
     """plot stock data or extracted data in renko form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='renko',
-                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=addplot_type,
-                    addplot_par=addplot_par)
+                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
+                    addplot_par=indicator_par)
 
 
 # TODO: change the realization of candlestick plots to "original flavor" of matplotlib
