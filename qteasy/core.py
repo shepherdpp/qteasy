@@ -1055,6 +1055,7 @@ def run(operator, **kwargs):
 
     elif run_mode == 2 or run_mode == 'optimization':
         how = config.opti_method
+        # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
         assert operator.opt_space_par[0] != [], \
             f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
             f'activate optimization in mode 2, and make sure strategy has adjustable parameters'

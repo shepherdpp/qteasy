@@ -358,8 +358,6 @@ class Strategy:
             len(seg_lens): 分段的数量
             生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
         """
-        # assert isinstance(dates, list), \
-        #     f'TypeError, type list expected in method seg_periods, got {type(dates)} instead! '
         temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
         # 在这里发现一个错误，并已经修正：
         # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
@@ -377,20 +375,20 @@ class Strategy:
         seg_pos[1:-1] = np.searchsorted(dates, bnds)
         # 最后一个分隔位等于历史区间的总长度
         seg_pos[-1] = len(dates) - 1
-        # print('Results check, selecting - segment creation, segments:', seg_pos)
         # 计算每个分段的长度
         seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
-        # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一个分割位，因为这样会有两个
-        # [0]了，例子如下（为简单起见，例子中的日期都用整数代替）：
+        # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一
+        # 个分割位，因为这样会有两个[0]了，例子如下（为简单起见，例子中的日期都用整数代替）：
         # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
         # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
         # 第3天的位置为2，第6天的位置为5，第9天的位置为8
-        # 然而，为了确保在生成选股数据时，第一天也不会被落下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，这样才不会漏掉第一天和第二天
+        # 然而，为了确保在生成选股数据时，第一天也不会被落下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，
+        # 这样才不会漏掉第一天和第二天。
         # 以上是正常情况的处理方式
         # 如果分段的界限是[1,5,10]的时候，情况就不同了
-        # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成[0,0,4,9],会出现问题
-        # 因为系统会判断第一个分段起点为0，终点也为0，因此会传递一个空的ndarray到_realize()函数中，引发难以预料的错误
-        # 因此，出现这种情况时，要忽略最前面一位，返回时忽略第一位即可
+        # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成
+        # [0,0,4,9],会出现问题。因为系统会判断第一个分段起点为0，终点也为0，因此会传递一个空的ndarray到
+        # _realize()函数中，引发难以预料的错误，因此，出现这种情况时，返回时忽略第一位即可
         if seg_pos[1] == 0:
             return seg_pos[1:], seg_lens[1:], len(seg_pos) - 2
         else:
@@ -526,8 +524,6 @@ class RollingTiming(Strategy):
         :return:
             np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
-        # print(f'在Timing.generate_over()函数中取到历史数据切片hist_slice的shape为 {hist_slice.shape}, 参数为: {items}')
-        # print(f'first 20 rows of hist_price_slice got in Timing.generator_over() is:\n{hist_slice[:20]}')
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用_realize()函数
         # 由于输入的历史数据来自于HistoryPanel，因此总是三维数据的切片即二维数据，因此可以简化：
         no_nan = ~np.isnan(hist_slice[:, 0])
@@ -632,7 +628,7 @@ class SimpleSelecting(Strategy):
 
                 :input:
                 hist_data: ndarray, 3-dimensional
-                parames: tuple
+                params: tuple
 
                 :output
                 sel_vector: ndarray, 1-dimensional

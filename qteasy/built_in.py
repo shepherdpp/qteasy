@@ -33,6 +33,7 @@ def built_in_strategies(*args, **kwargs):
     return built_in_list(*args, **kwargs)
 
 
+# Basic technical analysis based Timing strategies
 class TimingCrossline(stg.RollingTiming):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
@@ -197,7 +198,7 @@ class TimingCDL(stg.RollingTiming):
                          par_types=None,
                          par_bounds_or_enums=None,
                          stg_name='CDL INDICATOR STRATEGY',
-                         stg_text='CDL Indicators, determine long/short position according to CDL Indicators',
+                         stg_text='CDL Indicators, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='open,high,low,close')
 
@@ -214,13 +215,40 @@ class TimingCDL(stg.RollingTiming):
         return float(cat[-1])
 
 
-class TimingEMA(stg.RollingTiming):
-    """
+class TimingBBand(stg.RollingTiming):
+    """布林带线择时策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空"""
 
-    """
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=4,
+                         par_types=['discr', 'conti', 'conti', 'discr'],
+                         par_bounds_or_enums=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
+                         stg_name='Boolinger Band STRATEGY',
+                         stg_text='BBand strategy, determine buy/sell signals according to CDL Indicators',
+                         window_length=200,
+                         data_types='close')
 
-    def __init__(self, pars):
-        super().__init__(pars=pars)
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+            u: number deviation up
+            d: number deviation down
+            m: ma type
+        """
+        p, u, d, m = params
+        h = hist_data.T
+        hi, mid, low = bbands(h[0], p, u, d, m)
+        # 策略:
+        # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
+        # 如果价格高于上轨，则逐步卖出，每次卖出投资总额的10%
+        if h[0][-1] < low:
+            sig = 0.1
+        elif h[0][-1] > hi:
+            sig = -0.333
+        else:
+            sig = 0
+        return sig
 
 
 # Built-in Single-cross-line strategies:
