@@ -13,6 +13,7 @@ import numpy as np
 import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
+from .tafuncs import aroon
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -215,7 +216,7 @@ class TimingCDL(stg.RollingTiming):
         return float(cat[-1])
 
 
-class TimingBBand(stg.RollingTiming):
+class SoftBBand(stg.RollingTiming):
     """布林带线择时策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空"""
 
     def __init__(self, pars=None):
@@ -249,6 +250,52 @@ class TimingBBand(stg.RollingTiming):
         else:
             sig = 0
         return sig
+
+
+class TimingBBand(stg.RollingTiming):
+    """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
+
+        数据类型：close 收盘价，单数据输入
+        数据分析频率：天
+        数据窗口长度：270天
+        策略使用2个参数，
+            span: int, 移动平均计算窗口宽度，单位为日
+            upper: float, 布林带的上边缘所处的标准差倍数
+            lower: float, 布林带的下边缘所处的标准差倍数
+        参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
+        """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'conti', 'conti'],
+                         par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
+                         stg_name='BBand STRATEGY',
+                         stg_text='BBand strategy, determine long/short position according to Bollinger bands',
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=270,
+                         data_types=['close', 'high', 'low'])
+
+    def _realize(self, hist_data, params):
+
+        span, upper, lower = params
+        # 计算指数的指数移动平均价格
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_data.T
+        avg_price = np.mean(h[0], 1)
+        upper, middle, lower = bbands(close=avg_price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
+
+        # 生成BBANDS操作信号判断：
+        # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
+        # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
+        # 3, 其余时刻不产生任何信号
+        if avg_price[-2] >= upper[-2] and avg_price[-1] < upper[-1]:
+            return -1
+        elif avg_price[-2] <= lower[-2] and avg_price[-1] > lower[-1]:
+            return +1
+        else:
+            return 0
 
 
 class TimingSAREXT(stg.RollingTiming):
@@ -1269,6 +1316,49 @@ class APO(stg.RollingTiming):
         return cat
 
 
+class AROON(stg.RollingTiming):
+    """APOON 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='AROON STRATEGY',
+                         stg_text='Aroon, determine buy/sell signals according to AROON Indicators',
+                         window_length=200,
+                         data_types='high, low')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+            u: number deviation up
+            d: number deviation down
+            m: ma type
+        """
+        p, = params
+        h = hist_data.T
+        ups, dns = aroon(h[0], p)
+        # 策略:
+        # 当up在dn的上方时，输出弱多头
+        # 当up位于dn下方时，输出弱空头
+        # 当up大于70且dn小于30时，输出强多头
+        # 当up小于30且dn大于70时，输出强多头
+        if ups[-1] > dns[-1]:
+            cat = 0.5
+        elif ups[-1] > 70 and dns[-1] < 30:
+            cat = 1
+        elif ups[-1] < dns[-1]:
+            cat = -0.5
+        elif ups[-1] < 30 and dns[-1] > 70:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
 # Built-in Simple timing strategies:
 
 class RiconNone(stg.SimpleTiming):
@@ -1385,53 +1475,6 @@ class TimingDMA(stg.SimpleTiming):
 
         cat = np.where(dma > ama, 1, 0)
         return cat
-
-
-# TODO: TimingBBands should be updated to return a vector of signals instead one single number
-class TimingBBand(stg.SimpleTiming):
-    """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
-
-        数据类型：close 收盘价，单数据输入
-        数据分析频率：天
-        数据窗口长度：270天
-        策略使用2个参数，
-            span: int, 移动平均计算窗口宽度，单位为日
-            upper: float, 布林带的上边缘所处的标准差倍数
-            lower: float, 布林带的下边缘所处的标准差倍数
-        参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
-        """
-
-    def __init__(self, pars=None):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['discr', 'conti', 'conti'],
-                         par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
-                         stg_name='BBand STRATEGY',
-                         stg_text='BBand strategy, determine long/short position according to Bollinger bands',
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=270,
-                         data_types=['close', 'high', 'low'])
-
-    def _realize(self, hist_data, params):
-
-        span, upper, lower = params
-        # 计算指数的指数移动平均价格
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
-        avg_price = np.mean(h[0], 1)
-        upper, middle, lower = bbands(close=avg_price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
-
-        # 生成BBANDS操作信号判断：
-        # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
-        # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
-        # 3, 其余时刻不产生任何信号
-        if avg_price[-2] >= upper[-2] and avg_price[-1] < upper[-1]:
-            return -1
-        elif avg_price[-2] <= lower[-2] and avg_price[-1] > lower[-1]:
-            return +1
-        else:
-            return 0
 
 
 class RiconUrgent(stg.SimpleTiming):

@@ -4,6 +4,7 @@
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="Realized Rolling Loop for timing strategies:&#10;tested with 2D data (single data type), not yet tested for 3D data">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/built_in.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/built_in.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/data/close-I.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/close-I.dat" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,6 +128,14 @@
         </map>
       </branch-storage>
     </excluded-from-favorite>
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -621,6 +630,7 @@
       <workItem from="1617783450338" duration="1552000" />
       <workItem from="1617806555586" duration="5417000" />
       <workItem from="1617813302317" duration="153000" />
+      <workItem from="1617894758498" duration="2159000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>
