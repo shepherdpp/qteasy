@@ -13,7 +13,7 @@ import numpy as np
 import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
-from .tafuncs import aroon
+from .tafuncs import aroon, aroonosc
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -1340,7 +1340,7 @@ class AROON(stg.RollingTiming):
         """
         p, = params
         h = hist_data.T
-        ups, dns = aroon(h[0], p)
+        ups, dns = aroon(h[0], h[1], p)
         # 策略:
         # 当up在dn的上方时，输出弱多头
         # 当up位于dn下方时，输出弱空头
@@ -1353,6 +1353,49 @@ class AROON(stg.RollingTiming):
         elif ups[-1] < dns[-1]:
             cat = -0.5
         elif ups[-1] < 30 and dns[-1] > 70:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class AROONOSC(stg.RollingTiming):
+    """APOON Oscilator 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='AROON Oscilator STRATEGY',
+                         stg_text='Aroon Oscilator, determine buy/sell signals according to AROON Indicators',
+                         window_length=200,
+                         data_types='high, low')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+            u: number deviation up
+            d: number deviation down
+            m: ma type
+        """
+        p, = params
+        h = hist_data.T
+        res = aroonosc(h[0], p)[-1]
+        # 策略:
+        # 当up在dn的上方时，输出弱多头
+        # 当up位于dn下方时，输出弱空头
+        # 当up大于70且dn小于30时，输出强多头
+        # 当up小于30且dn大于70时，输出强多头
+        if res > 0:
+            cat = 0.5
+        elif res > 500:
+            cat = 1
+        elif res < 0:
+            cat = -0.5
+        elif res < -50:
             cat = -1
         else:
             cat = 0
