@@ -13,7 +13,7 @@ import numpy as np
 import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
-from .tafuncs import aroon, aroonosc
+from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -1345,7 +1345,7 @@ class AROON(stg.RollingTiming):
         # 当up在dn的上方时，输出弱多头
         # 当up位于dn下方时，输出弱空头
         # 当up大于70且dn小于30时，输出强多头
-        # 当up小于30且dn大于70时，输出强多头
+        # 当up小于30且dn大于70时，输出强空头
         if ups[-1] > dns[-1]:
             cat = 0.5
         elif ups[-1] > 70 and dns[-1] < 30:
@@ -1360,7 +1360,7 @@ class AROON(stg.RollingTiming):
 
 
 class AROONOSC(stg.RollingTiming):
-    """APOON Oscilator 策略
+    """AROON Oscillator 策略
     """
 
     def __init__(self, pars=None):
@@ -1377,21 +1377,18 @@ class AROONOSC(stg.RollingTiming):
         """参数:
         input:
             p: period
-            u: number deviation up
-            d: number deviation down
-            m: ma type
         """
         p, = params
         h = hist_data.T
         res = aroonosc(h[0], p)[-1]
         # 策略:
-        # 当up在dn的上方时，输出弱多头
-        # 当up位于dn下方时，输出弱空头
-        # 当up大于70且dn小于30时，输出强多头
-        # 当up小于30且dn大于70时，输出强多头
+        # 当res大于0时，输出弱多头
+        # 当res小于0时，输出弱空头
+        # 当res大于50时，输出强多头
+        # 当res小于-50时，输出强空头
         if res > 0:
             cat = 0.5
-        elif res > 500:
+        elif res > 50:
             cat = 1
         elif res < 0:
             cat = -0.5
@@ -1400,6 +1397,155 @@ class AROONOSC(stg.RollingTiming):
         else:
             cat = 0
         return cat
+
+
+class CCI(stg.RollingTiming):
+    """CCI the Commodity Channel Index 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='CCI STRATEGY',
+                         stg_text='CCI, determine long/short positions according to CC Indicators',
+                         window_length=200,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+        """
+        p, = params
+        h = hist_data.T
+        res = cci(h[0], h[1], h[2], p)[-1]
+        # 策略:
+        # 当res大于0时输出多头，大于50时输出强多头
+        # 当res小于0时输出空头，小于-50时输出强空头
+        if res > 0:
+            cat = 0.5
+        elif res > 50:
+            cat = 1
+        elif res < 0:
+            cat = -0.5
+        elif res < -50:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class CMO(stg.RollingTiming):
+    """CMO Chande Momentum Oscillator 钱德动量振荡器 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='CMO STRATEGY',
+                         stg_text='CMO, determine long/short positions according to CMO Indicators',
+                         window_length=200,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+        """
+        p, = params
+        h = hist_data.T
+        res = cmo(h[0], p)[-1]
+        # 策略:
+        # 当res大于0时，输出弱多头
+        # 当res小于0时，输出弱空头
+        # 当res大于50时，输出强多头
+        # 当res小于-50时，输出强空头
+        if res > 0:
+            cat = 0.5
+        elif res > 50:
+            cat = 1
+        elif res < 0:
+            cat = -0.5
+        elif res < -50:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class MACDEXT(stg.RollingTiming):
+    """MACD Extention 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr', 'discr', 'discr', 'discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
+                         stg_name='MACD Extention STRATEGY',
+                         stg_text='MACD Extention, determine long/short position according to extended MACD Indicators',
+                         window_length=200,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            fp: fast periods
+            ft: fast ma type
+            sp: slow periods
+            st: slow ma type
+            s: signal periods
+            t: signal ma type
+        """
+        fp, ft, sp, st, p, t = params
+        h = hist_data.T
+        m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
+        # 策略:
+        # 当hist>0时输出多头
+        # 当hist<0时输出空头
+        if hist > 0:
+            cat = 1
+        else:
+            cat = 0
+        return cat
+
+
+class MFI(stg.RollingTiming):
+    """MFI money flow index 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='MFI STRATEGY',
+                         stg_text='MFI, determine buy/sell signals according to MFI Indicators',
+                         window_length=200,
+                         data_types='high, low, close, volume')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: period
+        """
+        p, = params
+        h = hist_data.T
+        res = mfi(h[0], h[1], h[2], h[3], p)[-1]
+        # 策略:
+        # 当res小于20时，分批买入
+        # 当res大于80时，分批卖出
+        if res > 20:
+            sig = 0.1
+        elif res < 80:
+            sig = -0.3
+        else:
+            sig = 0
+        return sig
 
 
 # Built-in Simple timing strategies:
