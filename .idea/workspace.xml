@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="Realized Rolling Loop for timing strategies:&#10;tested with 2D data (single data type), not yet tested for 3D data">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/built_in.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/built_in.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -634,7 +633,7 @@
       <workItem from="1617931570905" duration="275000" />
       <workItem from="1617953755169" duration="5484000" />
       <workItem from="1618016620786" duration="1278000" />
-      <workItem from="1618051421697" duration="3833000" />
+      <workItem from="1618051421697" duration="4592000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>

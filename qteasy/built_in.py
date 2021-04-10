@@ -1691,6 +1691,40 @@ class PPO(stg.RollingTiming):
         return cat
 
 
+class RSI(stg.RollingTiming):
+    """ RSI Relative Strength Index 策略
+    """
+
+    def __init__(self, pars=(12,)):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='RSI STRATEGY',
+                         stg_text='RSI, determine long/short positions according to RSI Indicators',
+                         window_length=100,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: periods
+        """
+        p, = params
+        h = hist_data.T
+        res = rsi(h[0], p)[-1]
+        # 策略:
+        # 当res小于40时，输出空头
+        # 当res大于60时，输出多头
+        if res > 60:
+            cat = 1
+        elif res < 40:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
 # Built-in Simple timing strategies:
 
 class RiconNone(stg.SimpleTiming):
