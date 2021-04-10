@@ -1725,6 +1725,45 @@ class RSI(stg.RollingTiming):
         return cat
 
 
+class STOCH(stg.RollingTiming):
+    """ Stochastic 策略
+    """
+
+    def __init__(self, pars=(12,)):
+        super().__init__(pars=pars,
+                         par_count=5,
+                         par_types=['discr', 'discr', 'discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)],
+                         stg_name='Stochastic STRATEGY',
+                         stg_text='Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         window_length=100,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            fk: periods
+            sk: slowk
+            skm: slowk ma type
+            sd: slow d
+            sdm: slow d ma type
+        """
+        fk, sk, skm, sd, sdm = params
+        h = hist_data.T
+        k, d = rsi(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
+        # 策略:
+        # 当k小于20时，逐步买进
+        # 当k大于80时，逐步卖出
+        # 当k与d背离的时候，同样会产生信号，需要研究
+        if k[-1] > 80:
+            sig = -0.3
+        elif k[-1] < 20:
+            sig = 0.1
+        else:
+            sig = 0
+        return sig
+
+
 # Built-in Simple timing strategies:
 
 class RiconNone(stg.SimpleTiming):
