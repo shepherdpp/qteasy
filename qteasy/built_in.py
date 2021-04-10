@@ -13,7 +13,8 @@ import numpy as np
 import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
-from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi
+from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
+from .tafuncs import plus_di, minus_dm, plus_dm
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -1546,6 +1547,112 @@ class MFI(stg.RollingTiming):
         else:
             sig = 0
         return sig
+
+
+class DI(stg.RollingTiming):
+    """DI index that uses both negtive and positive DI 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(1, 100), (1, 100)],
+                         stg_name='DI STRATEGY',
+                         stg_text='DI, determine long/short positions according to +/- DI Indicators',
+                         window_length=200,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            m: periods for negtive DI
+            p: periods for positive DI
+        """
+        m, p, = params
+        h = hist_data.T
+        ndi = minus_di(h[0], h[1], h[2], m)[-1]
+        pdi = plus_di(h[0], h[1], h[2], p)[-1]
+        # 策略:
+        # 当ndi小于pdi时，输出多头
+        # 当ndi大于pdi时，输出空头
+        if pdi > ndi:
+            cat = 1
+        elif ndi < pdi:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class DM(stg.RollingTiming):
+    """ DM index that uses both negtive and positive DM 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['discr', 'discr'],
+                         par_bounds_or_enums=[(1, 100), (1, 100)],
+                         stg_name='DM STRATEGY',
+                         stg_text='DM, determine long/short positions according to +/- DM Indicators',
+                         window_length=200,
+                         data_types='high, low')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            m: periods for negtive DM
+            p: periods for positive DM
+        """
+        m, p, = params
+        h = hist_data.T
+        ndm = minus_dm(h[0], h[1], m)[-1]
+        pdm = plus_dm(h[0], h[1], p)[-1]
+        # 策略:
+        # 当ndi小于pdi时，输出多头
+        # 当ndi大于pdi时，输出空头
+        if pdm > ndm:
+            cat = 1
+        elif ndm < pdm:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class MOM(stg.RollingTiming):
+    """ Momentum 策略
+    """
+
+    def __init__(self, pars=None):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(1, 100)],
+                         stg_name='MOM STRATEGY',
+                         stg_text='MOM, determine long/short positions according to MOM Indicators',
+                         window_length=100,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: periods
+        """
+        p, = params
+        h = hist_data.T
+        res = mom(h[0], p)[-1]
+        # 策略:
+        # 当res小于0时，输出空头
+        # 当res大于0时，输出多头
+        if res > 0:
+            cat = 1
+        elif res < 0:
+            cat = -1
+        else:
+            cat = 0
+        return cat
 
 
 # Built-in Simple timing strategies:
