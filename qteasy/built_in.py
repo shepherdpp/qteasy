@@ -14,7 +14,7 @@ import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
-from .tafuncs import plus_di, minus_dm, plus_dm
+from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -1643,6 +1643,42 @@ class MOM(stg.RollingTiming):
         p, = params
         h = hist_data.T
         res = mom(h[0], p)[-1]
+        # 策略:
+        # 当res小于0时，输出空头
+        # 当res大于0时，输出多头
+        if res > 0:
+            cat = 1
+        elif res < 0:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class PPO(stg.RollingTiming):
+    """ PPO 策略
+    """
+
+    def __init__(self, pars=(12, 26, 0)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(2, 100), (2, 100), (0, 8)],
+                         stg_name='PPO STRATEGY',
+                         stg_text='PPO, determine long/short positions according to PPO Indicators',
+                         window_length=100,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            fp: fast moving periods
+            sp: slow moving periods
+            m: ma type
+        """
+        fp, sp, m = params
+        h = hist_data.T
+        res = ppo(h[0], fp, sp, m)[-1]
         # 策略:
         # 当res小于0时，输出空头
         # 当res大于0时，输出多头
