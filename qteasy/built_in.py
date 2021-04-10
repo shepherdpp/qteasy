@@ -14,7 +14,8 @@ import qteasy.strategy as stg
 from .tafuncs import sma, ema, dema, trix, cdldoji, bbands, atr, apo
 from .tafuncs import ht, kama, mama, t3, tema, trima, wma, sarext, adx
 from .tafuncs import aroon, aroonosc, cci, cmo, macdext, mfi, minus_di
-from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi
+from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
+from .tafuncs import stochrsi, ultosc, willr
 
 
 # All following strategies can be used to create strategies by referring to its stragety ID
@@ -1729,7 +1730,7 @@ class STOCH(stg.RollingTiming):
     """ Stochastic 策略
     """
 
-    def __init__(self, pars=(12,)):
+    def __init__(self, pars=(5, 3, 0, 3, 0)):
         super().__init__(pars=pars,
                          par_count=5,
                          par_types=['discr', 'discr', 'discr', 'discr', 'discr'],
@@ -1750,7 +1751,7 @@ class STOCH(stg.RollingTiming):
         """
         fk, sk, skm, sd, sdm = params
         h = hist_data.T
-        k, d = rsi(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
+        k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
         # 策略:
         # 当k小于20时，逐步买进
         # 当k大于80时，逐步卖出
@@ -1758,6 +1759,153 @@ class STOCH(stg.RollingTiming):
         if k[-1] > 80:
             sig = -0.3
         elif k[-1] < 20:
+            sig = 0.1
+        else:
+            sig = 0
+        return sig
+
+
+class STOCHF(stg.RollingTiming):
+    """ Stochastic Fast 策略
+    """
+
+    def __init__(self, pars=(5, 3, 0)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(2, 100), (2, 100), (0, 8)],
+                         stg_name='Fast Stochastic STRATEGY',
+                         stg_text='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         window_length=100,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            fk: periods
+            fd: fast d
+            fdm: fast d ma type
+        """
+        fk, fd, fdm = params
+        h = hist_data.T
+        k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
+        # 策略:
+        # 当k小于20时，逐步买进
+        # 当k大于80时，逐步卖出
+        # 当k与d背离的时候，同样会产生信号，需要研究
+        if k[-1] > 80:
+            sig = -0.3
+        elif k[-1] < 20:
+            sig = 0.1
+        else:
+            sig = 0
+        return sig
+
+
+class STOCHRSI(stg.RollingTiming):
+    """ Stochastic Fast 策略
+    """
+
+    def __init__(self, pars=(14, 5, 3, 0)):
+        super().__init__(pars=pars,
+                         par_count=4,
+                         par_types=['discr', 'discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(2, 100), (2, 100), (2, 100), (0, 8)],
+                         stg_name='Fast Stochastic STRATEGY',
+                         stg_text='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         window_length=100,
+                         data_types='close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: periods
+            fk: fastk
+            sk: slowk
+            skm: slowk ma type
+            sd: slow d
+            sdm: slow d ma type
+        """
+        p, fk, fd, fdm = params
+        h = hist_data.T
+        k, d = stochrsi(h[0], p, fk, fd, fdm)
+        # 策略:
+        # 当k小于0.2时，逐步买进
+        # 当k大于0.8时，逐步卖出
+        # 当k与d背离的时候，同样会产生信号，需要研究
+        if k[-1] > 0.8:
+            sig = -0.3
+        elif k[-1] < 0.2:
+            sig = 0.1
+        else:
+            sig = 0
+        return sig
+
+
+class ULTOSC(stg.RollingTiming):
+    """ Ultimate Oscillator 策略
+    """
+
+    def __init__(self, pars=(7, 14, 28)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['discr', 'discr', 'discr'],
+                         par_bounds_or_enums=[(1, 100), (1, 100), (1, 100)],
+                         stg_name='Ultimate Oscillator STRATEGY',
+                         stg_text='Ultimate Oscillator, determine buy/sell signals according to Stochastic Indicator',
+                         window_length=100,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p1: time period 1
+            p2: time period 2
+            p3: time period 3
+        """
+        p1, p2, p3 = params
+        h = hist_data.T
+        res = stochf(h[0], h[1], h[2], p1, p2, p3)[-1]
+        # 策略:
+        # 当res小于30时，逐步买进
+        # 当res大于70时，逐步卖出
+        if res > 70:
+            sig = -0.3
+        elif res < 30:
+            sig = 0.1
+        else:
+            sig = 0
+        return sig
+
+
+class WILLR(stg.RollingTiming):
+    """ Williams' %R 策略
+    """
+
+    def __init__(self, pars=(14,)):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
+                         stg_name='Williams\' R STRATEGY',
+                         stg_text='Williams R, determine buy/sell signals according to Williams R',
+                         window_length=100,
+                         data_types='high, low, close')
+
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+        """参数:
+        input:
+            p: periods
+        """
+        p, = params
+        h = hist_data.T
+        res = stochf(h[0], h[1], h[2], p)
+        # 策略:
+        # 当res小于-80时，逐步买进
+        # 当res大于-20时，逐步卖出
+        if res > -20:
+            sig = -0.3
+        elif res < -80:
             sig = 0.1
         else:
             sig = 0
