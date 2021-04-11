@@ -52,7 +52,7 @@ class TimingCrossline(stg.RollingTiming):
 
     """
 
-    def __init__(self, pars: tuple = None):
+    def __init__(self, pars: tuple = (120, 35, 10, 'buy')):
         """Crossline交叉线策略只有一个动态属性，其余属性均不可变"""
         super().__init__(pars=pars,
                          par_count=4,
@@ -97,7 +97,7 @@ class TimingMACD(stg.RollingTiming):
     参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
     """
 
-    def __init__(self, pars: tuple = None):
+    def __init__(self, pars: tuple = (12, 26, 9)):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
