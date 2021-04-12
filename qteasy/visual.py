@@ -20,7 +20,7 @@ from pandas.plotting import register_matplotlib_converters
 import datetime
 from .tsfuncs import get_bar, name_change
 from .utilfuncs import time_str_format, list_to_str_format
-from .tafuncs import macd, dema, rsi
+from .tafuncs import macd, dema, rsi, bbands
 
 ValidAddPlots = ['macd',
                  'dma',
@@ -118,6 +118,11 @@ def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
         adps.append(mpf.make_addplot([75] * len(d), panel=panels, color=(0.75, 0.6, 0.6), ylim=(0, 100)))
         adps.append(mpf.make_addplot([30] * len(d), panel=panels, color=(0.6, 0.75, 0.6), ylim=(0, 100)))
         adps.append(mpf.make_addplot(d, panel=panels, ylabel=plot_type, ylim=(0, 100)))
+    elif plot_type.lower() == 'bbands':
+        u, m, l = bbands(stock_data.close, *pars)
+        adps.append(mpf.make_addplot(u, panel=panels, ylabel=plot_type))
+        adps.append(mpf.make_addplot(m, panel=panels, ylabel=plot_type))
+        adps.append(mpf.make_addplot(l, panel=panels, ylabel=plot_type))
     return adps
 
 

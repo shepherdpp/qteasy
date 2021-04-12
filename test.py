@@ -5513,8 +5513,12 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
+        op = qt.Operator(timing_types=['stema'])
+        op.set_parameter('t-0', pars=(6,))
+        op.set_parameter('s-0', (0.5,))
+        op.set_parameter('r-0', (0, 0))
         qt.QT_CONFIG.mode = 0
-        qt.run(self.op)
+        qt.run(op)
 
     def test_run_mode_1(self):
         """测试策略的回测模式,结果打印但不可视化"""
@@ -6060,6 +6064,8 @@ class TestVisual(unittest.TestCase):
         qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='rsi', indicator_par=(12,))
         print(f'test mpf plot in candle form with indicator macd')
         qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='macd', indicator_par=(12, 26, 9))
+        print(f'test mpf plot in candle form with indicator bbands')
+        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='bbands', indicator_par=(12, 26, 9))
 
 
 class TestBuiltIns(unittest.TestCase):
