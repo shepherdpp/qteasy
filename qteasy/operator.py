@@ -805,8 +805,6 @@ class Operator:
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
-        # TODO: 这个要求在实际应用中很容易产生过度要求，应该设法调整用户的输入，将非交易日的投资平移到最近的
-        # TODO: 交易日，而不是一味地要求用户输入的日期全部是交易日。
         invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
             np_dates_in_hist = np.array(invest_dates_in_hist)
@@ -814,7 +812,6 @@ class Operator:
             raise ValueError(f'Cash investment should be on trading days, '
                              f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数
-        # TODO：此处有问题，某些strategy本身就不需要参数，这时候强行要求所有strategy都有参数是没有必要的
         assert all(stg.has_pars for stg in self.strategies),\
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式

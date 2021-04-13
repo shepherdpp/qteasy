@@ -32,14 +32,14 @@ class Strategy:
     __mataclass__ = ABCMeta
 
     def __init__(self,
-                 pars: tuple = None,
+                 pars: tuple = (),
                  opt_tag: int = 0,
                  stg_type: str = 'strategy type',
                  stg_name: str = 'strategy name',
                  stg_text: str = 'intro text of strategy',
                  par_count: int = 0,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
+                 par_types: [list, str] = '',
+                 par_bounds_or_enums: [list, tuple] = '',
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
@@ -503,8 +503,10 @@ class RollingTiming(Strategy):
             qteasy系统会自行把适用于这个历史片段的策略，原样地推广到整个历史数据区间，同时推广到整个投资组合。并且根据投资组合管理
             策略（选股策略Selecting）中定义的选股方法确定每种投资产品的仓位比例。最终生成交易清单。
         input:
-            :param hist_data: ndarray，历史数据，策略的计算在历史数据基础上进行
-            :param params: tuple, 策略参数，具体的策略输出结果依靠参数给出
+            :param hist_data:
+                ndarray，历史数据，策略的计算在历史数据基础上进行
+            :param params:
+                tuple, 策略参数，具体的策略输出结果依靠参数给出
         return:
             :stg_output: float, 一个代表策略输出的数字，可以代表头寸位置，1代表多头，-1代表空头，0代表空仓，策略输出同样可以代表操作
             信号，1代表开多仓或平空仓，-1代表开空仓或平多仓，0代表不操作
@@ -673,12 +675,14 @@ class SimpleSelecting(Strategy):
         self._poq = proportion_or_quantity
 
     @abstractmethod
-    def _realize(self, hist_data: np.ndarray):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         """" SimpleSelecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
-            :param hist_data: type: numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史
-            数据片段
+            :param hist_data:
+                numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史数据片段
+            :param params:
+                tuple, 策略参数，具体的策略输出结果依靠参数给出
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
         """
@@ -731,7 +735,7 @@ class SimpleSelecting(Strategy):
         # TODO: 可以使用map函数生成分段
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(hist_data[:, sp - sl:sp, :])
+            share_sel = self._realize(hist_data[:, sp - sl:sp, :], self.pars)
             # assert isinstance(share_sel, np.ndarray)
             # assert len(share_sel) == len(shares)
             seg_end = seg_start + fill_len
@@ -826,7 +830,7 @@ class SimpleTiming(Strategy):
                          data_types=data_types)
 
     @abstractmethod
-    def _realize(self, hist_data: np.ndarray):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         """抽象方法，在实际实现SimpleTiming对象的时候必须实现这个方法，以实现策略的计算"""
         raise NotImplementedError
 
@@ -971,12 +975,14 @@ class FactoralSelecting(Strategy):
         self.weighting = weighting
 
     @abstractmethod
-    def _realize(self, hist_data: np.ndarray):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         """" SimpleSelecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
-            :param hist_data: type: numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史
-            数据片段
+            :param hist_data:
+                numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史数据片段
+            :param params:
+                tuple, 策略参数，具体的策略输出结果依靠参数给出
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票的选股因子，选股因子向量的元素数量必须与股票池中的股票数量相同
         """
@@ -1012,7 +1018,7 @@ class FactoralSelecting(Strategy):
         assert isinstance(hist_data, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
 
-        factors = self._realize(hist_data=hist_data)
+        factors = self._realize(hist_data=hist_data, params=self.pars)
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':

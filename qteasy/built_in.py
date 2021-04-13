@@ -149,7 +149,7 @@ class TimingTRIX(stg.RollingTiming):
     参数输入数据范围：[(10, 250), (10, 250)]
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(25, 125)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -195,7 +195,7 @@ class TimingCDL(stg.RollingTiming):
     参数数量：0个，参数类型：N/A，输入数据范围：N/A
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=None,
@@ -219,9 +219,9 @@ class TimingCDL(stg.RollingTiming):
 
 
 class SoftBBand(stg.RollingTiming):
-    """布林带线择时策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空"""
+    """布林带线择时策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空, 均线的种类可选"""
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(20, 2, 2, 0)):
         super().__init__(pars=pars,
                          par_count=4,
                          par_types=['discr', 'conti', 'conti', 'discr'],
@@ -267,7 +267,7 @@ class TimingBBand(stg.RollingTiming):
         参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
         """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(20, 2, 2)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti', 'conti'],
@@ -304,7 +304,7 @@ class TimingSAREXT(stg.RollingTiming):
     """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0, 3)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti'],
@@ -351,7 +351,7 @@ class SCRSSMA(stg.RollingTiming):
         - range - range of simple moving average
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -377,7 +377,7 @@ class SCRSDEMA(stg.RollingTiming):
         - range - range of DEMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -404,7 +404,7 @@ class SCRSEMA(stg.RollingTiming):
         - range - range of EMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -431,7 +431,7 @@ class SCRSHT(stg.RollingTiming):
         - range - range of ht
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -457,7 +457,7 @@ class SCRSKAMA(stg.RollingTiming):
         - range - range of KAMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -485,7 +485,7 @@ class SCRSMAMA(stg.RollingTiming):
         - slowlimit -> slowlimit, float between 0 and 1, not included
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
@@ -513,7 +513,7 @@ class SCRSFAMA(stg.RollingTiming):
         - slowlimit -> slowlimit, float between 0 and 1, not included
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
@@ -541,7 +541,7 @@ class SCRST3(stg.RollingTiming):
         - vfactor = vfactor
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(12, 0.5)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti'],
@@ -568,7 +568,7 @@ class SCRSTEMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(6,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -595,7 +595,7 @@ class SCRSTRIMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -622,7 +622,7 @@ class SCRSWMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -658,10 +658,10 @@ class DCRSSMA(stg.RollingTiming):
     - slow
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'conti'],
+                         par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 250), (3, 250)],
                          stg_name='SINGLE CROSSLINE - SMA',
                          stg_text='Single moving average strategy that uses simple moving average as the trade line ',
@@ -684,7 +684,7 @@ class DCRSDEMA(stg.RollingTiming):
         - range - range of DEMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -711,7 +711,7 @@ class DCRSEMA(stg.RollingTiming):
         - range - range of EMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(20, 5)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -738,7 +738,7 @@ class DCRSKAMA(stg.RollingTiming):
         - range - range of KAMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -766,7 +766,7 @@ class DCRSMAMA(stg.RollingTiming):
         - slowlimit = slowlimit
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
         super().__init__(pars=pars,
                          par_count=4,
                          par_types=['conti', 'conti', 'conti', 'conti'],
@@ -794,7 +794,7 @@ class DCRSFAMA(stg.RollingTiming):
         - slowlimit = slowlimit
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
         super().__init__(pars=pars,
                          par_count=4,
                          par_types=['conti', 'conti', 'conti', 'conti'],
@@ -822,7 +822,7 @@ class DCRST3(stg.RollingTiming):
         - vfactor = vfactor
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(20, 0.5, 5, 0.5)):
         super().__init__(pars=pars,
                          par_count=4,
                          par_types=['discr', 'conti', 'discr', 'conti'],
@@ -849,7 +849,7 @@ class DCRSTEMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(11, 6)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -876,7 +876,7 @@ class DCRSTRIMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -903,7 +903,7 @@ class DCRSWMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -936,7 +936,7 @@ class SLPSMA(stg.RollingTiming):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -963,7 +963,7 @@ class SLPDEMA(stg.RollingTiming):
         - range - range of DEMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -991,7 +991,7 @@ class SLPEMA(stg.RollingTiming):
         - range - range of EMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1019,7 +1019,7 @@ class SLPHT(stg.RollingTiming):
         - range - range of ht
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -1046,7 +1046,7 @@ class SLPKAMA(stg.RollingTiming):
         - range - range of KAMA
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1075,7 +1075,7 @@ class SLPMAMA(stg.RollingTiming):
         - slowlimit = slowlimit
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
@@ -1104,7 +1104,7 @@ class SLPFAMA(stg.RollingTiming):
         - slowlimit = slowlimit
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['conti', 'conti'],
@@ -1133,7 +1133,7 @@ class SLPT3(stg.RollingTiming):
         - vfactor = vfactor
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(12, 0.25)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti'],
@@ -1161,7 +1161,7 @@ class SLPTEMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(6,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1189,7 +1189,7 @@ class SLPTRIMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1217,7 +1217,7 @@ class SLPWMA(stg.RollingTiming):
         - timeperiod - timeperiod
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(125,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1248,7 +1248,7 @@ class ADX(stg.RollingTiming):
     """ADX 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1285,7 +1285,7 @@ class APO(stg.RollingTiming):
     """APO 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(12, 26, 0)):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
@@ -1322,7 +1322,7 @@ class AROON(stg.RollingTiming):
     """APOON 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1365,7 +1365,7 @@ class AROONOSC(stg.RollingTiming):
     """AROON Oscillator 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1405,7 +1405,7 @@ class CCI(stg.RollingTiming):
     """CCI the Commodity Channel Index 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1443,7 +1443,7 @@ class CMO(stg.RollingTiming):
     """CMO Chande Momentum Oscillator 钱德动量振荡器 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1483,7 +1483,7 @@ class MACDEXT(stg.RollingTiming):
     """MACD Extention 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(12, 0, 26, 0, 9, 0)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr', 'discr', 'discr', 'discr', 'discr', 'discr'],
@@ -1520,7 +1520,7 @@ class MFI(stg.RollingTiming):
     """MFI money flow index 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1554,7 +1554,7 @@ class DI(stg.RollingTiming):
     """DI index that uses both negtive and positive DI 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14, 14)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -1590,7 +1590,7 @@ class DM(stg.RollingTiming):
     """ DM index that uses both negtive and positive DM 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14, 14)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'discr'],
@@ -1626,7 +1626,7 @@ class MOM(stg.RollingTiming):
     """ Momentum 策略
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['discr'],
@@ -1917,12 +1917,12 @@ class WILLR(stg.RollingTiming):
 class RiconNone(stg.SimpleTiming):
     """无风险控制策略，不对任何风险进行控制"""
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          stg_name='NONE',
                          stg_text='Do not take any risk control activity')
 
-    def _realize(self, hist_data, params=None):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         return np.zeros_like(hist_data.squeeze())
 
 
@@ -1936,11 +1936,12 @@ class TimingLong(stg.SimpleTiming):
     参数输入数据范围：N/A
     """
 
-    def __init__(self):
-        super().__init__(stg_name='Long',
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         stg_name='Long',
                          stg_text='Simple Timing strategy, return constant long position on the whole history')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
         return np.ones_like(hist_data.squeeze())
@@ -1956,8 +1957,9 @@ class TimingShort(stg.SimpleTiming):
     参数输入数据范围：N/A
     """
 
-    def __init__(self):
-        super().__init__(stg_name='Short',
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         stg_name='Short',
                          stg_text='Simple Timing strategy, return constant Short position on the whole history')
 
     def _realize(self, hist_data, params):
@@ -1976,8 +1978,9 @@ class TimingZero(stg.SimpleTiming):
     参数输入数据范围：N/A
     """
 
-    def __init__(self):
-        super().__init__(stg_name='Zero',
+    def __init__(self, pars=()):
+        super().__init__(pars=pars,
+                         stg_name='Zero',
                          stg_text='Simple Timing strategy, return constant Zero position ratio on the whole history')
 
     def _realize(self, hist_data, params):
@@ -2003,7 +2006,7 @@ class TimingDMA(stg.SimpleTiming):
     参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(12, 26, 9)):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
@@ -2035,7 +2038,7 @@ class RiconUrgent(stg.SimpleTiming):
 
     # 跌幅控制策略，当N日跌幅超过p%的时候，强制生成卖出信号
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(0, 0)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['discr', 'conti'],
@@ -2077,12 +2080,12 @@ class RiconUrgent(stg.SimpleTiming):
 class SelectingAll(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          stg_name='SIMPLE SELECTING',
                          stg_text='SimpleSelecting all share and distribute weights evenly')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         # 所有股票全部被选中，投资比例平均分配
         share_count = hist_data.shape[0]
         return [1. / share_count] * share_count
@@ -2091,12 +2094,12 @@ class SelectingAll(stg.SimpleSelecting):
 class SelectingNone(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都不被选中，投资比例平均分配"""
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          stg_name='SIMPLE SELECTING',
                          stg_text='SimpleSelecting all share and distribute weights evenly')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         # 所有股票全部被选中，投资比例平均分配
         share_count = hist_data.shape[0]
         return [0.] * share_count
@@ -2105,12 +2108,12 @@ class SelectingNone(stg.SimpleSelecting):
 class SelectingRandom(stg.SimpleSelecting):
     """基础选股策略：在每个历史分段中，按照指定的概率（p<1时）随机抽取若干股票，或随机抽取指定数量（p>1）的股票进入投资组合，投资比例平均分配"""
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          stg_name='RANDOM SELECTING',
                          stg_text='SimpleSelecting share Randomly and distribute weights evenly')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         pct = self.pars[0]
         share_count = hist_data.shape[0]
         if pct < 1:
@@ -2130,7 +2133,7 @@ class SelectingFinanceIndicator(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(True, 'even', 'greater', 0, 0, 0.25)):
         super().__init__(pars=pars,
                          par_count=6,
                          par_types=['enum', 'enum', 'enum', 'conti', 'conti', 'conti'],
@@ -2147,7 +2150,7 @@ class SelectingFinanceIndicator(stg.FactoralSelecting):
                          window_length=90,
                          data_types='eps')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
@@ -2161,7 +2164,7 @@ class SelectingLastOpen(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -2173,7 +2176,7 @@ class SelectingLastOpen(stg.FactoralSelecting):
                          window_length=2,
                          data_types='open')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2187,7 +2190,7 @@ class SelectingLastClose(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -2199,7 +2202,7 @@ class SelectingLastClose(stg.FactoralSelecting):
                          window_length=2,
                          data_types='close')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2213,7 +2216,7 @@ class SelectingLastHigh(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -2225,7 +2228,7 @@ class SelectingLastHigh(stg.FactoralSelecting):
                          window_length=2,
                          data_types='high')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2239,7 +2242,7 @@ class SelectingLastLow(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          par_count=0,
                          par_types=[],
@@ -2251,7 +2254,7 @@ class SelectingLastLow(stg.FactoralSelecting):
                          window_length=2,
                          data_types='low')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2267,7 +2270,7 @@ class SelectingAvgOpen(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -2279,7 +2282,7 @@ class SelectingAvgOpen(stg.FactoralSelecting):
                          window_length=150,
                          data_types='open')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2296,7 +2299,7 @@ class SelectingAvgClose(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -2308,7 +2311,7 @@ class SelectingAvgClose(stg.FactoralSelecting):
                          window_length=150,
                          data_types='close')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2325,7 +2328,7 @@ class SelectingAvgLow(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -2337,7 +2340,7 @@ class SelectingAvgLow(stg.FactoralSelecting):
                          window_length=150,
                          data_types='low')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2354,7 +2357,7 @@ class SelectingAvghigh(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -2366,7 +2369,7 @@ class SelectingAvghigh(stg.FactoralSelecting):
                          window_length=150,
                          data_types='high')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2383,7 +2386,7 @@ class SelectingNDayChange(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -2395,7 +2398,7 @@ class SelectingNDayChange(stg.FactoralSelecting):
                          window_length=150,
                          data_types='close')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
@@ -2412,7 +2415,7 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
 
     """
 
-    def __init__(self, pars=None):
+    def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['int'],
@@ -2424,13 +2427,13 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
                          window_length=150,
                          data_types='high,low,close')
 
-    def _realize(self, hist_data):
+    def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
         n, = self.pars
         # TODO: not Implemented!
-        factors = atr(hist_data)
+        factors = atr(hist_data, n)
 
         return factors
 
