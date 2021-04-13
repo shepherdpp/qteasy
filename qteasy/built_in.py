@@ -52,7 +52,7 @@ class TimingCrossline(stg.RollingTiming):
 
     """
 
-    def __init__(self, pars: tuple = (120, 35, 10, 'buy')):
+    def __init__(self, pars: tuple = (35, 120, 10, 'buy')):
         """Crossline交叉线策略只有一个动态属性，其余属性均不可变"""
         super().__init__(pars=pars,
                          par_count=4,
@@ -2080,7 +2080,7 @@ class RiconUrgent(stg.SimpleTiming):
 class SelectingAll(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
-    def __init__(self, pars=()):
+    def __init__(self, pars=(0.5,)):
         super().__init__(pars=pars,
                          stg_name='SIMPLE SELECTING',
                          stg_text='SimpleSelecting all share and distribute weights evenly')
@@ -2108,7 +2108,7 @@ class SelectingNone(stg.SimpleSelecting):
 class SelectingRandom(stg.SimpleSelecting):
     """基础选股策略：在每个历史分段中，按照指定的概率（p<1时）随机抽取若干股票，或随机抽取指定数量（p>1）的股票进入投资组合，投资比例平均分配"""
 
-    def __init__(self, pars=()):
+    def __init__(self, pars=(0.5,)):
         super().__init__(pars=pars,
                          stg_name='RANDOM SELECTING',
                          stg_text='SimpleSelecting share Randomly and distribute weights evenly')

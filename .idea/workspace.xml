@@ -4,8 +4,7 @@
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="Realized Rolling Loop for timing strategies:&#10;tested with 2D data (single data type), not yet tested for 3D data">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/built_in.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/built_in.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/close-I.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/close-I.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/operator.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/operator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/core.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/core.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/strategy.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/strategy.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -303,7 +302,7 @@
       <recent name="$PROJECT_DIR$/qteasy/operator" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for test.TestQT.test_run_mode_2_montecarlo">
+  <component name="RunManager" selected="Python tests.Unittests for test.TestQT.test_multi_share_mode_1">
     <configuration default="true" type="PyLettuceRunConfigurationType" factoryName="Lettuce">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -552,9 +551,9 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python tests.Unittests for test.TestQT.test_run_mode_2_montecarlo" />
         <item itemvalue="Python tests.Unittests for test.TestQT.test_multi_share_mode_1" />
         <item itemvalue="Python tests.Unittests for test.TestQT.test_run_mode_1" />
+        <item itemvalue="Python tests.Unittests for test.TestQT.test_run_mode_2_montecarlo" />
         <item itemvalue="Python tests.Unittests for test.TestQT.test_run_mode_0" />
         <item itemvalue="Python tests.Unittests for test.TestVisual.test_indicators" />
       </list>
@@ -636,7 +635,7 @@
       <workItem from="1618131683881" duration="1397000" />
       <workItem from="1618199668775" duration="73000" />
       <workItem from="1618199949833" duration="5597000" />
-      <workItem from="1618295890355" duration="6257000" />
+      <workItem from="1618295890355" duration="8308000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>
@@ -833,10 +832,10 @@
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestTAFuncs.coverage" NAME="Unittests for test.TestTAFuncs Coverage Results" MODIFIED="1618233823659" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestTushare.coverage" NAME="Unittests for test.TestTushare Coverage Results" MODIFIED="1618239780628" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_run_mode_1.coverage" NAME="Unittests for test.TestQT.test_run_mode_1 Coverage Results" MODIFIED="1618325570360" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_run_mode_1.coverage" NAME="Unittests for test.TestQT.test_run_mode_1 Coverage Results" MODIFIED="1618328312258" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_run_mode_0.coverage" NAME="Unittests for test.TestQT.test_run_mode_0 Coverage Results" MODIFIED="1618325540144" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestVisual_test_indicators.coverage" NAME="Unittests for test.TestVisual.test_indicators Coverage Results" MODIFIED="1618242284820" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_multi_share_mode_1.coverage" NAME="Unittests for test.TestQT.test_multi_share_mode_1 Coverage Results" MODIFIED="1618326092762" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_multi_share_mode_1.coverage" NAME="Unittests for test.TestQT.test_multi_share_mode_1 Coverage Results" MODIFIED="1618328341973" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_run_mode_2_montecarlo.coverage" NAME="Unittests for test.TestQT.test_run_mode_2_montecarlo Coverage Results" MODIFIED="1618327393730" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$test.coverage" NAME="test Coverage Results" MODIFIED="1618228722209" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>

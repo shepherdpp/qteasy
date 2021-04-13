@@ -1235,7 +1235,7 @@ def _evaluate_all_parameters(par_generator,
     return pool
 
 
-def _evaluate_one_parameter(par: tuple,
+def _evaluate_one_parameter(par,
                             op: Operator,
                             op_history_data: HistoryPanel,
                             loop_history_data: [pd.DataFrame, pd.Series],

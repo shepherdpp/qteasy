@@ -397,7 +397,25 @@ class Strategy:
     @abstractmethod
     def generate(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
-        raise NotImplementedError
+        # check input data types
+        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
+        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
+        assert len(self.pars) == self.par_count, \
+            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
+        assert hist_data.ndim == 3, \
+            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
+        assert hist_data.shape[1] >= self._window_length, \
+            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
+            f' got {hist_data.shape[1]}'
+        assert isinstance(hist_data, np.ndarray), \
+            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
+        assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
+        assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
+        assert all([isinstance(share, str) for share in shares]), \
+            f'TypeError, all elements in shares should be str, got otherwise'
+        assert all([isinstance(date, pd.Timestamp) for date in dates]), \
+            f'TYpeError, all elements in dates should be Timestamp, got otherwise'
 
 
 # TODO: 在所有的generate()方法中应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
@@ -704,18 +722,7 @@ class SimpleSelecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
-        assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
-        assert isinstance(hist_data, np.ndarray), \
-            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
-        assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
-        assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
-        assert all([isinstance(share, str) for share in shares]), \
-            f'TypeError, all elements in shares should be str, got otherwise'
-        assert all([isinstance(date, pd.Timestamp) for date in dates]), \
-            f'TYpeError, all elements in dates should be Timestamp, got otherwise'
+        super().generate(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
@@ -809,7 +816,7 @@ class SimpleTiming(Strategy):
                  opt_tag: int = 0,
                  stg_name: str = 'NONE',
                  stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 2,
+                 par_count: int = 0,
                  par_types: [list, str] = None,
                  par_bounds_or_enums: [list, tuple] = None,
                  data_freq: str = 'd',
@@ -856,7 +863,7 @@ class SimpleTiming(Strategy):
         cat[nonan] = self._realize(hist_data=hist_nonan, params=pars)
         return cat
 
-    def generate(self, hist_data, shares=None, dates=None):
+    def generate(self, hist_data, shares=[], dates=[]):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
 
@@ -868,12 +875,7 @@ class SimpleTiming(Strategy):
         :param dates:
         :return:
         """
-        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert hist_data.ndim == 3, \
-            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        assert hist_data.shape[1] >= self._window_length, \
-            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-            f' got {hist_data.shape[1]}'
+        super().generate(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -1101,18 +1103,7 @@ class FactoralSelecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.items)}'
-        assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.items)} instead'
-        assert isinstance(hist_data, np.ndarray), \
-            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
-        assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
-        assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
-        assert all([isinstance(share, str) for share in shares]), \
-            f'TypeError, all elements in shares should be str, got otherwise'
-        assert all([isinstance(date, pd.Timestamp) for date in dates]), \
-            f'TYpeError, all elements in dates should be Timestamp, got otherwise'
+        super().generate(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
