@@ -160,7 +160,7 @@ def _plot_loop_result(loop_results: dict, config):
         raise TypeError('')
     looped_values = loop_results['complete_values']
     if looped_values.empty:
-        raise ValueError()
+        raise ValueError(f'No meaningful operation list is created in current period thus back looping is skipped!')
     # register matplotlib converters is requested in future matplotlib versions
     register_matplotlib_converters()
     # 计算在整个投资回测区间内每天的持股数量，通过持股数量的变化来推出买卖点

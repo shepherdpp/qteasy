@@ -2055,7 +2055,7 @@ class TestSelStrategy(qt.SimpleSelecting):
                          window_length=5)
         pass
 
-    def _realize(self, hist_data: np.ndarray):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         avg = np.nanmean(hist_data, axis=(1, 2))
         dif = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
@@ -2086,7 +2086,7 @@ class TestSelStrategyDiffTime(qt.SimpleSelecting):
                          window_length=2)
         pass
 
-    def _realize(self, hist_data: np.ndarray):
+    def _realize(self, hist_data: np.ndarray, params: tuple):
         avg = hist_data.mean(axis=1).squeeze()
         difper = (hist_data[:, :, 0] - np.roll(hist_data[:, :, 0], 1))[:, -1] / avg
         large2 = difper.argsort()[0:2]
@@ -2672,7 +2672,7 @@ class TestOperator(unittest.TestCase):
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '
-        self.pars = None
+        self.pars = (35, 120, 10, 'buy')
         self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
         self.par_count = 4
         self.par_types = ['discr', 'discr', 'conti', 'enum']
@@ -5516,7 +5516,7 @@ class TestQT(unittest.TestCase):
         op = qt.Operator(timing_types=['stema'])
         op.set_parameter('t-0', pars=(6,))
         op.set_parameter('s-0', (0.5,))
-        op.set_parameter('r-0', (0, 0))
+        op.set_parameter('r-0', ())
         qt.QT_CONFIG.mode = 0
         qt.run(op)
 
@@ -5952,7 +5952,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1.,
                      mode=1,
                      log=False)
-        op.set_parameter('t-0', pars=(0, 0))
+        op.set_parameter('t-0', pars=())
         op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
                          sample_freq='Q',
                          data_types='basic_eps',
@@ -5962,7 +5962,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          _poq=0.4)
-        op.set_parameter('r-0', pars=(0, 0))
+        op.set_parameter('r-0', pars=())
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
@@ -6004,7 +6004,7 @@ class TestQT(unittest.TestCase):
                      mode=1,
                      log=False)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
-        op.set_parameter('t-0', pars=(0, 0))
+        op.set_parameter('t-0', pars=())
         op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 30),
                          sample_freq='Q',
                          data_types='basic_eps',
@@ -6014,7 +6014,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          _poq=30)
-        op.set_parameter('r-0', pars=(0, 0))
+        op.set_parameter('r-0', pars=())
         op.set_blender('ls', 'avg')
         qt.run(op, visual=True, print_backtest_log=True)
 
@@ -6088,7 +6088,7 @@ class TestFastExperiments(unittest.TestCase):
         op = qt.Operator(timing_types=['crossline'])
         op.set_parameter('t-0', pars=(23, 150, 15, 'none'), opt_tag=1)
         op.set_parameter('s-0', (0.5,))
-        op.set_parameter('r-0', (0, 0))
+        op.set_parameter('r-0', ())
         res = qt.run(op, mode=2, parallel=True)
 
 

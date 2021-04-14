@@ -1352,6 +1352,7 @@ def _evaluate_one_parameter(par,
     riskfree_ir = config.riskfree_ir
     if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
+        res_dict['complete_values'] = pd.DataFrame()
         return res_dict
     # 根据stage的值选择使用投资金额种类以及运行类型（单区间运行或多区间运行）及区间参数及回测参数
     if stage == 'loop':

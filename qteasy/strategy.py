@@ -414,8 +414,8 @@ class Strategy:
         assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
         assert all([isinstance(share, str) for share in shares]), \
             f'TypeError, all elements in shares should be str, got otherwise'
-        assert all([isinstance(date, pd.Timestamp) for date in dates]), \
-            f'TYpeError, all elements in dates should be Timestamp, got otherwise'
+        # assert all([isinstance(date, pd.Timestamp) for date in dates]), \
+        #     f'TYpeError, all elements in dates should be Timestamp, got otherwise'
 
 
 # TODO: 在所有的generate()方法中应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
@@ -742,7 +742,7 @@ class SimpleSelecting(Strategy):
         # TODO: 可以使用map函数生成分段
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(hist_data[:, sp - sl:sp, :], self.pars)
+            share_sel = self._realize(hist_data=hist_data[:, sp - sl:sp, :], params=self.pars)
             # assert isinstance(share_sel, np.ndarray)
             # assert len(share_sel) == len(shares)
             seg_end = seg_start + fill_len
