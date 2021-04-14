@@ -525,7 +525,7 @@ def _valid_qt_kwargs():
         'trade_batch_size':    {'Default':   0.0,
                                 'Validator': lambda value: isinstance(value, (int, float))
                                                            and value >= 0,
-                                'level':     0,
+                                'level':     1,
                                 'text':      '投资产品的最小申购批量大小，浮点数，例如：\n'
                                              '0. : 可以购买任意份额的投资产品，包括小数份额\n'
                                              '1. : 只能购买整数份额的投资产品\n'
@@ -535,7 +535,7 @@ def _valid_qt_kwargs():
         'sell_batch_size':     {'Default':   0.0,
                                 'Validator': lambda value: isinstance(value, (int, float))
                                                            and value >= 0,
-                                'level':     0,
+                                'level':     1,
                                 'text':      '投资产品的最小卖出或赎回批量大小，浮点数，例如：\n'
                                              '0. : 可以购买任意份额的投资产品，包括小数份额\n'
                                              '1. : 只能购买整数份额的投资产品\n'
@@ -545,7 +545,7 @@ def _valid_qt_kwargs():
         'riskfree_ir':         {'Default':   0.0035,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 <= value < 1,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
 
         'parallel':            {'Default':   False,
@@ -555,46 +555,46 @@ def _valid_qt_kwargs():
 
         'hist_dnld_parallel':  {'Default':   0,
                                 'Validator': lambda value: isinstance(value, int) and value >= 0,
-                                'level':     3,
+                                'level':     4,
                                 'text':      '下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程'},
 
         'hist_dnld_delay':     {'Default':   None,
                                 'Validator': lambda value: isinstance(value, float) and value >= 0,
-                                'level':     3,
+                                'level':     4,
                                 'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒'},
 
         'hist_dnld_delay_evy': {'Default':   None,
                                 'Validator': lambda value: isinstance(value, int) and value >= 0,
-                                'level':     3,
+                                'level':     4,
                                 'text':      '为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。\n'
                                              '此参数为两次延迟之间的数据下载量'},
 
         'hist_dnld_prog_bar':  {'Default':   None,
                                 'Validator': lambda value: isinstance(value, bool),
-                                'level':     3,
+                                'level':     4,
                                 'text':      '下载历史数据时是否显示进度条'},
 
         'gpu':                 {'Default':   False,
                                 'Validator': lambda value: isinstance(value, bool),
-                                'level':     1,
+                                'level':     4,
                                 'text':      '如果True，策略参数寻优时使用GPU加速计算'},
 
         'hist_data_channel':   {'Default':   'local',
                                 'Validator': lambda value: isinstance(value, str) and value in ['local', 'online'],
-                                'level':     2,
+                                'level':     4,
                                 'text':      '确定如何获取历史数据：\n'
                                              'local   - 优先从本地读取历史数据，未存储在本地的数据再从网上下载，并确保本地数据更新\n'
                                              'online  - 从网上下载数据，不更新本地数据'},
 
         'print_backtest_log':  {'Default':   False,
                                 'Validator': lambda value: isinstance(value, bool),
-                                'level':     1,
+                                'level':     4,
                                 'text':      '如果True，在回测过程中会打印回测的详细交易记录'},
 
         'reference_asset':     {'Default':   '000300.SH',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _validate_asset_id(value),
-                                'level':     0,
+                                'level':     1,
                                 'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数'
                                              '参考价格用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的'
                                              '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会'
@@ -602,7 +602,7 @@ def _valid_qt_kwargs():
 
         'ref_asset_type':      {'Default':   'I',
                                 'Validator': lambda value: _validate_asset_type(value),
-                                'level':     0,
+                                'level':     1,
                                 'text':      '参考价格的资产类型，包括：\n'
                                              'I  : 指数\n'
                                              'E  : 股票\n'
@@ -611,42 +611,42 @@ def _valid_qt_kwargs():
 
         'ref_asset_dtype':     {'Default':   'close',
                                 'Validator': lambda value: value in PRICE_TYPE_DATA,
-                                'level':     0,
+                                'level':     1,
                                 'text':      '作为参考价格的资产的价格类型。'},
 
         'visual':              {'Default':   True,
                                 'Validator': lambda value: isinstance(value, bool),
-                                'level':     0,
+                                'level':     1,
                                 'text':      '为True时使用图表显示回测的结果'},
 
         'buy_sell_points':     {'Default':   True,
                                 'Validator': lambda value: isinstance(value, bool),
-                                'level':     2,
+                                'level':     4,
                                 'text':      '为True时在回测图表中显示买卖点，使用红色和绿色箭头标示出买卖点的位置'},
 
         'show_positions':      {'Default':   True,
                                 'Validator': lambda value: isinstance(value, bool),
-                                'level':     2,
+                                'level':     4,
                                 'text':      '为True时在回测图表中用色带显示投资仓位'},
 
-        'cost_fixed_buy':       {'Default':    0,
+        'cost_fixed_buy':       {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'
                                              '默认值为10元'},
 
-        'cost_fixed_sell':      {'Default':    0,
+        'cost_fixed_sell':      {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '卖出证券或资产时的固定成本或固定佣金，该金额不随卖出金额变化'
                                              '默认值为0'},
 
         'cost_rate_buy':       {'Default':   0.0003,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 <= value < 1,
-                                'level':     0,
+                                'level':     1,
                                 'text':      '买入证券或资产时的成本费率或佣金比率，以买入金额的比例计算'
                                              '默认值为万分之三'},
 
@@ -660,20 +660,20 @@ def _valid_qt_kwargs():
         'cost_min_buy':        {'Default':   5.0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '买入证券或资产时的最低成本或佣金，买入佣金只能大于或等于该最低金额'
                                              '默认值为5元'},
 
         'cost_min_sell':       {'Default':   0.0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '卖出证券或资产时的最低成本或佣金，卖出佣金只能大于或等于该最低金额'},
 
         'cost_slippage':       {'Default':   0.0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 <= value < 1,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
 
         'log':                 {'Default':   True,
@@ -705,7 +705,7 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value) or value is None,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '回测操作现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
                                              '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
                                              'invest_start\n'
@@ -739,7 +739,7 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value) or value is None,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '策略优化区间现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
                                              '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
                                              'invest_start\n'
@@ -751,7 +751,7 @@ def _valid_qt_kwargs():
 
         'opti_type':           {'Default':   'single',
                                 'Validator': lambda value: isinstance(value, str) and value in ['single', 'multiple'],
-                                'level':     2,
+                                'level':     3,
                                 'text':      '优化类型。指优化数据的利用方式:\n'
                                              '"single"   - 在每一回合的优化测试中，在优化区间上进行覆盖整个区间的单次回测并评价'
                                              '回测结果\n'
@@ -760,12 +760,12 @@ def _valid_qt_kwargs():
 
         'opti_sub_periods':    {'Default':   5,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,
-                                'level':     2,
+                                'level':     3,
                                 'text':      '仅对无监督优化有效。且仅当优化类型为"multiple"时有效。将优化区间切分为子区间的数量'},
 
         'opti_sub_prd_length': {'Default':   0.6,
                                 'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
-                                'level':     2,
+                                'level':     3,
                                 'text':      '仅当优化类型为"multiple"时有效。每一个优化子区间长度占整个优化区间长度的比例'
                                              '例如，当优化区间长度为10年时，本参数为0.6代表每一个优化子区间长度为6年'},
 
@@ -799,7 +799,7 @@ def _valid_qt_kwargs():
                                 'Validator': lambda value: isinstance(value, (str, list))
                                                            and all(isinstance(item, str)
                                                                    for item in value) or value is None,
-                                'level':     1,
+                                'level':     2,
                                 'text':      '策略优化区间现金投入的日期，一个str或list，多个日期表示多次现金投入。默认为None\n'
                                              '当此参数为None时，现金投入日期与invest_start相同，当参数不为None时，此参数覆盖\n'
                                              'invest_start参数\n'
@@ -812,7 +812,7 @@ def _valid_qt_kwargs():
         'test_type':           {'Default':   'single',
                                 'Validator': lambda value: isinstance(value, str) and
                                                            value in ['single', 'multiple', 'montecarlo'],
-                                'level':     2,
+                                'level':     3,
                                 'text':      '测试类型。指测试数据的利用方式:\n'
                                              '"single"     - 在每一回合的优化测试中，在测试区间上进行覆盖整个区间的单次回测并评价'
                                              '               回测结果\n'
@@ -853,18 +853,18 @@ def _valid_qt_kwargs():
 
         'test_sub_periods':    {'Default':   3,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,
-                                'level':     2,
+                                'level':     3,
                                 'text':      '仅当测试类型为"multiple"时有效。将测试区间切分为子区间的数量'},
 
         'test_sub_prd_length': {'Default':   0.75,
                                 'Validator': lambda value: isinstance(value, float) and 0 <= value <= 1.,
-                                'level':     2,
+                                'level':     3,
                                 'text':      '仅当测试类型为"multiple"时有效。每一个测试子区间长度占整个测试区间长度的比例'
                                              '例如，当测试区间长度为4年时，本参数0.75代表每个测试子区间长度为3年'},
 
         'test_cycle_count':    {'Default':   100,
                                 'Validator': lambda value: isinstance(value, int) and value >= 1,
-                                'level':     2,
+                                'level':     3,
                                 'text':      '仅当测试类型为"montecarlo"时有效。生成的模拟测试数据的数量。'
                                              '默认情况下生成100组模拟价格数据，并进行100次策略回测并评价其统计结果'},
 
@@ -893,49 +893,49 @@ def _valid_qt_kwargs():
 
         'opti_grid_size':      {'Default':   1,
                                 'Validator': lambda value: _num_or_seq_of_num(value) and value > 0,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '使用穷举法搜索最佳策略时有用，搜索步长'},
 
         'opti_sample_count':   {'Default':   256,
                                 'Validator': lambda value: isinstance(value, int) and value > 0,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '使用蒙特卡洛法搜索最佳策略时有用，在向量空间中采样的数量'},
 
         'opti_r_sample_count': {'Default':   16,
                                 'Validator': lambda value: _num_or_seq_of_num(value)
                                                            and value >= 0,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，每一轮随机取样的数量'},
 
         'opti_reduce_ratio':   {'Default':   0.1,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 < value < 1,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，\n'
                                              '每一轮随机取样后择优留用的比例，同样也是子空间缩小的比例\n'},
 
         'opti_max_rounds':     {'Default':   5,
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value > 1,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，多轮搜索的最大轮数，轮数大于该值时停止搜索'},
 
         'opti_min_volume':     {'Default':   1000,
                                 'Validator': lambda value: isinstance(value, (float, int))
                                                            and value > 0,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '在使用递进步长法搜索最佳策略时有用，空间最小体积，当空间volume低于该值时停止搜索'},
 
         'opti_population':     {'Default':   1000.0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '在使用遗传算法搜索最佳策略时有用，种群的数量'},
 
         'opti_output_count':   {'Default':   30,
                                 'Validator': lambda value: isinstance(value, int)
                                                            and value > 0,
-                                'level':     1,
+                                'level':     3,
                                 'text':      '策略参数优化后输出的最优参数数量'},
 
     }
@@ -970,14 +970,21 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         parameters. return a string with all formulated information
 
     :param kwargs: list or tuple, kwargs that are to be displayed
-    :param level:
+    :param level: int or list of ints, 所有需要输出的kwargs的层级
     :param info:
     :param verbose:
     :return:
     """
-    COLUMN_W_KEY = 21
-    COLUMN_W_CURRENT = 15
-    COLUMN_OFFSET_DESCRIPTION = 4
+    if isinstance(level, int):
+        levels = [level]
+    elif isinstance(level, list):
+        levels = level
+    else:
+        raise TypeError(f'level should be an integer or list of integers, got {type(level)}')
+    assert all(isinstance(item, int) for item in levels), f'TypeError, levels should be a list of integers'
+    column_w_key = 21
+    column_w_current = 15
+    column_offset_description = 4
     vkwargs = _valid_qt_kwargs()
     output_strings = list()
     if info:
@@ -993,16 +1000,16 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
             raise KeyError(f'Unrecognized kwarg={str(key)}')
         else:
             cur_level = vkwargs[key]['level']
-            if cur_level <= level:  # only display kwargs that are at higher level
+            if cur_level in levels:  # only display kwargs that are in the list of levels
                 cur_value = str(QT_CONFIG[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
-                output_strings.append(f'{str(key)}:{" "*(COLUMN_W_KEY - len(str(key)))}')
+                output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
                 if info:
-                    output_strings.append(f'{cur_value}{" "*(COLUMN_W_CURRENT - len(cur_value))}'
+                    output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
                                           f'<{default_value}>\n')
                     if verbose:
-                        output_strings.append(f'{" "*COLUMN_OFFSET_DESCRIPTION}{description}\n')
+                        output_strings.append(f'{" " * column_offset_description}{description}\n')
                 else:
                     output_strings.append(f'{cur_value}\n')
     return ''.join(output_strings)

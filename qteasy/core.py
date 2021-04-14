@@ -527,94 +527,26 @@ def configure(**kwargs):
         QT_CONFIG.__setattr__(key, value)
 
 
-def configuration(mode=None, type=None, opti_method=None, level=0, info=False, verbose=False):
+def configuration(level=0, up_to=0, default=False, verbose=False):
     """ 显示qt当前的环境变量，
 
-    :param mode:
-    :param type:
-    :param opti_method
     :param level:
-    :param info:
+    :param up_to
+    :param default:
     :param verbose:
     :return:
     """
-    AVAILABLE_TYPES = ['system',
-                       'cost',
-                       ]
-    if mode is None:
-        mode = QT_CONFIG.mode
-    kwargs = list()
-    if mode == 'all':
-        kwargs = ['mode',
-                  'trade_batch_size',
-                  'riskfree_ir',
-                  'visual',
-                  'log',
-                  'asset_pool',
-                  'asset_type',
-                  'invest_start',
-                  'invest_end',
-                  'cost_fixed_buy',
-                  'cost_fixed_sell',
-                  'cost_rate_buy',
-                  'cost_rate_sell',
-                  'cost_slippage',
-                  'invest_cash_amounts',
-                  'invest_cash_dates',
-                  'reference_asset',
-                  'ref_asset_type',
-                  'ref_asset_dtype',
-                  'opti_start',
-                  'opti_end',
-                  'opti_cash_amounts',
-                  'opti_cash_dates',
-                  'test_start',
-                  'test_end',
-                  'test_cash_amounts',
-                  'test_cash_dates',
-                  'opti_method']
-    elif mode == 0:
-        kwargs = ['mode',
-                  'asset_pool',
-                  'asset_type',
-                  'reference_asset',
-                  'ref_asset_type',
-                  'ref_asset_dtype']
-    elif mode == 1:
-        kwargs = ['mode',
-                  'trade_batch_size',
-                  'riskfree_ir',
-                  'visual',
-                  'log',
-                  'asset_pool',
-                  'asset_type',
-                  'invest_start',
-                  'invest_end',
-                  'cost_fixed_buy',
-                  'cost_fixed_sell',
-                  'invest_cash_amounts',
-                  'invest_cash_dates',
-                  'reference_asset',
-                  'ref_asset_type',
-                  'ref_asset_dtype']
-    elif mode == 2:
-        kwargs = ['mode',
-                  'trade_batch_size',
-                  'riskfree_ir',
-                  'visual',
-                  'log',
-                  'asset_pool',
-                  'asset_type',
-                  'opti_start',
-                  'opti_end',
-                  'opti_cash_amounts',
-                  'opti_cash_dates',
-                  'test_start',
-                  'test_end',
-                  'opti_method']
+    assert isinstance(level, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
+    assert isinstance(up_to, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
+    if up_to <= level:
+        up_to = level
+    if up_to == level:
+        level = level
     else:
-        raise KeyError(f'mode ({mode}) is not valid!')
-    print(_vkwargs_to_text(kwargs=kwargs, level=level, info=info, verbose=verbose))
+        level = list(range(level, up_to + 1))
+
+    kwargs = QT_CONFIG.keys()
+    print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
