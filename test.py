@@ -3556,14 +3556,16 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
-        self.assertTrue(np.allclose(self.hp[:, '000102'], df_test.values))
+        values = df_test.values
+        self.assertTrue(np.allclose(self.hp[:, '000102'], values))
 
         print(f'test DataFrame conversion with share == "000100"')
         df_test = self.hp.to_dataframe(share='000100')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
-        self.assertTrue(np.allclose(self.hp[:, '000100'], df_test.values))
+        values = df_test.values
+        self.assertTrue(np.allclose(self.hp[:, '000100'], values))
 
         print(f'test DataFrame conversion error: type incorrect')
         self.assertRaises(AssertionError, self.hp.to_dataframe, share=3.0)
@@ -3576,14 +3578,16 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
-        self.assertTrue(np.allclose(self.hp['close'].T, df_test.values))
+        values = df_test.values
+        self.assertTrue(np.allclose(self.hp['close'].T, values))
 
         print(f'test DataFrame conversion with htype == "high"')
         df_test = self.hp.to_dataframe(htype='high')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
-        self.assertTrue(np.allclose(self.hp['high'].T, df_test.values))
+        values = df_test.values
+        self.assertTrue(np.allclose(self.hp['high'].T, values))
 
         print(f'test DataFrame conversion error: type incorrect')
         self.assertRaises(AssertionError, self.hp.to_dataframe, htype=pd.DataFrame())
@@ -5496,20 +5500,20 @@ class TestQT(unittest.TestCase):
         """ 测试CONFIG的显示"""
         print(f'configuration without argument\n')
         qt.configuration()
-        print(f'configuration with mode=0\n')
-        qt.configuration(mode=0)
-        print(f'configuration with mode="all"\n')
-        qt.configuration(mode='all')
-        print(f'configuration with mode="all", level=1\n')
-        qt.configuration(mode='all',level=1)
-        print(f'configuration with mode="all", level=0\n')
-        qt.configuration(mode='all',level=0)
-        print(f'configuration with mode=0, level=1\n')
-        qt.configuration(mode=0, level=1)
+        print(f'configuration with level=1\n')
+        qt.configuration(level=1)
+        print(f'configuration with level2\n')
+        qt.configuration(level=2)
+        print(f'configuration with level3\n')
+        qt.configuration(level=3)
+        print(f'configuration with level4\n')
+        qt.configuration(level=4)
+        print(f'configuration with level=1, up_to=3\n')
+        qt.configuration(level=1, up_to=3)
         print(f'configuration with info=True\n')
-        qt.configuration(info=True)
+        qt.configuration(default=True)
         print(f'configuration with info=True, verbose=True\n')
-        qt.configuration(info=True, verbose=True)
+        qt.configuration(default=True, verbose=True)
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
@@ -5532,7 +5536,7 @@ class TestQT(unittest.TestCase):
     def test_run_mode_1_visual(self):
         """测试策略的回测模式，结果可视化但不打印"""
         print(f'test plot with no buy-sell points and position indicators')
-        qt.configuration(mode='all', level=1, info=True)
+        qt.configuration(up_to=1, default=True)
         qt.run(self.op,
                mode=1,
                trade_batch_size=1,
@@ -5543,7 +5547,7 @@ class TestQT(unittest.TestCase):
                invest_cash_dates='20070616')
 
         print(f'test plot with both buy-sell points and position indicators')
-        qt.configuration(mode='all', level=1, info=True)
+        qt.configuration(up_to=1, default=True)
         qt.run(self.op,
                mode=1,
                trade_batch_size=1,
@@ -5614,7 +5618,7 @@ class TestQT(unittest.TestCase):
         # TODO: investigate, function does not work while
         # TODO: setting parallel = True
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
-        qt.configuration(mode='all', level=1, info=True)
+        qt.configuration(up_to=1, default=True)
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -5631,7 +5635,7 @@ class TestQT(unittest.TestCase):
                indicator_plot_type='violin',
                parallel=True,
                visual=True)
-        qt.configuration(mode='all', level=1, info=True)
+        qt.configuration(up_to=1, default=True)
 
     def test_run_mode_2_grid(self):
         """测试策略的优化模式，使用网格寻优"""

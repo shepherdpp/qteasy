@@ -914,26 +914,32 @@ class Operator:
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
+        print(lst_out.head(30))
         return lst_out
 
     # ================================
     # 下面是Operation模块的私有方法
     # TODO: 改进Docstring
     def _set_ls_blender(self, ls_blender):
-        """设置多空蒙板的混合方式，混合方式包括pos-N-T, str-T, 及'avg'三种, 专门用于控制多空蒙板的混合方式。
+        """设置多空蒙板的混合方式，包括多种混合方式, 用于产生不同的混合效果。
 
         input:
-            :param ls_blender，str，合法的输入包括：
-                'combo':    
-                'none':
-                'str-T':    T为浮点数，取值区间为大于零的浮点数，当所有策略的多空信号强度之和大于T时，输出信号为1或-1，没有中间地带
-                'pos-N-T':  N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空，当策略的多空输出存在浮点数时，
-                T表示判断某个多空值为多的阈值，例如：
-                    'pos-2-0.2' 表示当至少有两个策略输出的多空值>0.2时，策略输出值为多，信号强度为所有多空信号之和。信号强度clip到(-1, 1)
-                'avg_pos-N-T':
-                'avg': 在每个策略发生反转时都会产生交易信号，总信号强度为所有策略信号强度的平均值
+            :param ls_blender:
+                str，合法的输入包括：
+                'combo':        combo表示……
+                'none':         None表示……
+                'str-T':        T为浮点数，取值区间为大于零的浮点数，当所有策略的多空信号强度之和大于T时，
+                                输出信号为1或-1，没有中间地带
+                'pos-N-T':      N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，
+                                则为空，当策略的多空输出存在浮点数时， T表示判断某个多空值为多的阈值，
+                                例如：
+                                    'pos-2-0.2' 表示当至少有两个策略输出的多空值>0.2时，策略输出值
+                                    为多，信号强度为所有多空信号之和。信号强度clip到(-1, 1)
+                'avg_pos-N-T':  表示……
+                'avg':          在每个策略发生反转时都会产生交易信号，总信号强度为所有策略信号强度的平均值
+
         return:=====
-            无
+            None
         """
         # TODO: 使用regex判断输入的ls_blender各式是否正确
         assert isinstance(ls_blender, str), f'TypeError, expecting string but got {type(ls_blender)}'

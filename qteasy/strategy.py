@@ -547,28 +547,20 @@ class RollingTiming(Strategy):
         # 获取输入的历史数据切片中的NaN值位置，提取出所有部位NAN的数据，应用_realize()函数
         # 由于输入的历史数据来自于HistoryPanel，因此总是三维数据的切片即二维数据，因此可以简化：
         no_nan = ~np.isnan(hist_slice[:, 0])
-        # 生成输出值一维向量
+        # 生成输出值一维向量，全部填充为NAN
         cat = np.zeros(hist_slice.shape[0])
+        cat.fill(np.nan)
         hist_nonan = hist_slice[no_nan]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
         if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
             return cat[self.window_length:]
 
         # 如果有足够的非nan数据，则开始进行历史数据的滚动展开
-        # ------------- The as_strided solution --------------------------------------
         hist_pack = as_strided(hist_nonan,
                                shape=(loop_count, *hist_nonan[:self._window_length].shape),
                                strides=(hist_nonan.strides[0], *hist_nonan.strides),
                                subok=False,
                                writeable=False)
-        # ------------- The numpy sliding_window_view solution -----------------------
-        # This solution will only be effective after numpy version 1.20
-        # NotImplemented
-        # ------------- The for-loop solution ----------------------------------------
-        # hist_pack = np.zeros((loop_count, *hist_nonan[:self._window_length].shape))
-        # for i in range(loop_count):
-        #     hist_pack[i] = hist_nonan[i:i + self._window_length]
-        # ----------------------------------------------------------------------------
         # 滚动展开完成，形成一个新的3D或2D矩阵
         # 开始将参数应用到策略实施函数generate中
         par_list = [pars] * loop_count
@@ -581,8 +573,12 @@ class RollingTiming(Strategy):
         # 生成的结果缺少最前面window_length那一段，因此需要补齐
         capping = np.zeros(self._window_length - 1)
         res = np.concatenate((capping, res), 0)
-        # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为0
+        # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为NAN
         cat[no_nan] = res
+        # 应该在nan值部分填充前面已经存在的值
+        # TODO: 填充停牌日之前的有效信号，先填充前一天的值，明天再研究如何填充N天前的值
+        cat[~no_nan] = cat[np.where(~no_nan)[0] - 1]
+        #
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
@@ -599,12 +595,7 @@ class RollingTiming(Strategy):
             L/S mask: ndarray, 所有股票在整个历史区间内的所有多空信号矩阵，包含M行N列，每行是一个时间点上的多空信号，每列一只股票
         """
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
-        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert hist_data.ndim == 3, \
-            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        assert hist_data.shape[1] >= self._window_length, \
-            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-            f' got {hist_data.shape[1]}'
+        super().generate(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -853,14 +844,18 @@ class SimpleTiming(Strategy):
             np.ndarray: 一维向量。根据策略，在历史上产生的多空信号，1表示多头、0或-1表示空头
         """
         nonan = ~np.isnan(hist_slice[:, 0])
-        # 生成输出值一维向量
+        # 生成输出值一维向量，全部填充为NAN
         cat = np.zeros(hist_slice.shape[0])
+        cat.fill(np.nan)
         hist_nonan = hist_slice[nonan]  # 仅针对非nan值计算，忽略股票停牌时期
         loop_count = len(hist_nonan) - self.window_length + 1
         if loop_count < 1:  # 在开始应用generate_one()前，检查是否有足够的非Nan数据，如果数据不够，则直接输出全0结果
             return cat
         # 将所有的非nan值（即hist_nonan）传入_realize()函数，并将结果填充到cat[nonan],从而让计算结果不受影响
         cat[nonan] = self._realize(hist_data=hist_nonan, params=pars)
+        # 应该在nan值部分填充前面已经存在的值
+        # TODO: 填充停牌日之前的有效信号，先填充前一天的值，明天再研究如何填充N天前的值
+        cat[~nonan] = cat[np.where(~nonan)[0] - 1]
         return cat
 
     def generate(self, hist_data, shares=[], dates=[]):
