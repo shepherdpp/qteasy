@@ -279,6 +279,7 @@ def _plot_loop_result(loop_results: dict, config):
             # 分别使用绿色、红色填充交易回测历史中的多头和空头区间
             if long_short > 0:
                 # 用不同深浅的绿色填充多头区间
+                if long_short > 1: long_short = 1
                 ax1.axvspan(first, second,
                             facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
                             alpha=0.2)

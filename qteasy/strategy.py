@@ -399,9 +399,11 @@ class Strategy:
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
         # check input data types
         assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, tuple), f'TypeError, strategy parameter should be a tuple, got {type(self.pars)}'
-        assert len(self.pars) == self.par_count, \
-            f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
+        assert isinstance(self.pars, (tuple, dict)), \
+            f'TypeError, strategy parameter should be a tuple or a dict, got {type(self.pars)}'
+        if isinstance(self.pars, tuple):
+            assert len(self.pars) == self.par_count, \
+                f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
         assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
         assert hist_data.ndim == 3, \
             f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
@@ -410,12 +412,14 @@ class Strategy:
             f' got {hist_data.shape[1]}'
         assert isinstance(hist_data, np.ndarray), \
             f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
-        assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
-        assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
-        assert all([isinstance(share, str) for share in shares]), \
-            f'TypeError, all elements in shares should be str, got otherwise'
-        # assert all([isinstance(date, pd.Timestamp) for date in dates]), \
-        #     f'TYpeError, all elements in dates should be Timestamp, got otherwise'
+        if shares is not None:
+            assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
+            assert all([isinstance(share, str) for share in shares]), \
+                f'TypeError, all elements in shares should be str, got otherwise'
+        if dates is not None:
+            assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
+            # assert all([isinstance(date, pd.Timestamp) for date in dates]), \
+            #     f'TYpeError, all elements in dates should be Timestamp, got otherwise'
 
 
 # TODO: 在所有的generate()方法中应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
@@ -575,10 +579,12 @@ class RollingTiming(Strategy):
         res = np.concatenate((capping, res), 0)
         # 将结果填入原始数据中不为Nan值的部分，原来为NAN值的部分保持为NAN
         cat[no_nan] = res
-        # 应该在nan值部分填充前面已经存在的值
-        # TODO: 填充停牌日之前的有效信号，先填充前一天的值，明天再研究如何填充N天前的值
-        cat[~no_nan] = cat[np.where(~no_nan)[0] - 1]
-        #
+        # 填充停牌日之前的有效信号
+        # TODO: 目前使用的算法是相对较快的纯numpy算法，但是可能还有优化的空间
+        mask = np.isnan(cat)
+        idx = np.where(~mask, np.arange(mask.shape[0]), 0)
+        np.maximum.accumulate(idx, out=idx)
+        cat = cat[idx]
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
@@ -854,8 +860,11 @@ class SimpleTiming(Strategy):
         # 将所有的非nan值（即hist_nonan）传入_realize()函数，并将结果填充到cat[nonan],从而让计算结果不受影响
         cat[nonan] = self._realize(hist_data=hist_nonan, params=pars)
         # 应该在nan值部分填充前面已经存在的值
-        # TODO: 填充停牌日之前的有效信号，先填充前一天的值，明天再研究如何填充N天前的值
-        cat[~nonan] = cat[np.where(~nonan)[0] - 1]
+        # TODO: 目前使用的算法是相对较快的纯numpy算法，但是可能还有优化的空间
+        mask = np.isnan(cat)
+        idx = np.where(~mask, np.arange(mask.shape[0]), 0)
+        np.maximum.accumulate(idx, out=idx)
+        cat = cat[idx]
         return cat
 
     def generate(self, hist_data, shares=[], dates=[]):

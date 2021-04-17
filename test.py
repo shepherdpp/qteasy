@@ -2569,7 +2569,9 @@ class TestOperator(unittest.TestCase):
               f'{dates_pairs}')
         print(f'signals side by side:\n'
               f'{signal_pairs}')
-        self.assertTrue(np.allclose(target_op.values, op_list.values))
+        print([item[2] for item in dates_pairs])
+        print([item[2] for item in signal_pairs])
+        self.assertTrue(np.allclose(target_op.values, op_list.values, equal_nan=True))
         self.assertTrue(all([date1 == date2
                              for date1, date2
                              in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]))

@@ -914,7 +914,6 @@ class Operator:
         lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
-        print(lst_out.head(30))
         return lst_out
 
     # ================================
