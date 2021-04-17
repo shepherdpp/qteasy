@@ -3232,6 +3232,7 @@ class TestLog(unittest.TestCase):
 
 class TestConfig(unittest.TestCase):
     """测试Config对象以及QT_CONFIG变量的设置和获取值"""
+
     def test_init(self):
         pass
 
@@ -3981,6 +3982,7 @@ class TestUtilityFuncs(unittest.TestCase):
 
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
+
     def setUp(self):
         pass
 
@@ -4468,6 +4470,7 @@ class TestTushare(unittest.TestCase):
 
 class TestTAFuncs(unittest.TestCase):
     """测试所有的TAlib函数输出正常"""
+
     def setUp(self):
         self.data_rows = 50
 
@@ -5633,7 +5636,8 @@ class TestQT(unittest.TestCase):
                test_start='20120604',
                test_end='20201130',
                test_cash_dates='20140604',
-               test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',  # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
+               test_indicators='years,fv,return,mdd,v,ref,alpha,beta,sharp,info',
+               # 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
                indicator_plot_type='violin',
                parallel=True,
                visual=True)
@@ -6075,13 +6079,274 @@ class TestVisual(unittest.TestCase):
 
 
 class TestBuiltIns(unittest.TestCase):
-    def test_first(self):
-        stg = qt.TimingCrossline()
-        self.assertIsInstance(stg, qt.built_in.TimingCrossline)
-        print(f'type of class: {type(stg)}')
+    """Test all built-in strategies
 
-    def test_second(self):
-        pass
+    """
+
+    def setUp(self):
+        qt.configure(invest_start='20200113',
+                     invest_end='20210413',
+                     asset_pool='000300.SH',
+                     asset_type='I',
+                     reference_asset='000300.SH')
+
+    def test_crossline(self):
+        op = qt.Operator(timing_types=['crossline'])
+        op.set_parameter('t-0', pars=(35, 120, 10, 'buy'))
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_macd(self):
+        op = qt.Operator(timing_types=['macd'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dma(self):
+        op = qt.Operator(timing_types=['dma'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_trix(self):
+        op = qt.Operator(timing_types=['trix'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_cdl(self):
+        op = qt.Operator(timing_types=['cdl'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        # built-in cdl is not optimizable
+
+    def test_ssma(self):
+        op = qt.Operator(timing_types=['ssma'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sdema(self):
+        op = qt.Operator(timing_types=['sdema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sema(self):
+        op = qt.Operator(timing_types=['sema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sht(self):
+        op = qt.Operator(timing_types=['sht'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        # built-in strategy sht is not optimizable
+
+    def test_skama(self):
+        op = qt.Operator(timing_types=['skama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_smama(self):
+        op = qt.Operator(timing_types=['smama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sfama(self):
+        op = qt.Operator(timing_types=['sfama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_st3(self):
+        op = qt.Operator(timing_types=['st3'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_stema(self):
+        op = qt.Operator(timing_types=['stema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_strima(self):
+        op = qt.Operator(timing_types=['strima'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_swma(self):
+        op = qt.Operator(timing_types=['swma'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dsma(self):
+        op = qt.Operator(timing_types=['dsma'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_ddema(self):
+        op = qt.Operator(timing_types=['ddema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dema(self):
+        op = qt.Operator(timing_types=['dema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dkama(self):
+        op = qt.Operator(timing_types=['dkama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dmama(self):
+        op = qt.Operator(timing_types=['dmama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dfama(self):
+        op = qt.Operator(timing_types=['dfama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dt3(self):
+        op = qt.Operator(timing_types=['dt3'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dtema(self):
+        op = qt.Operator(timing_types=['dtema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dtrima(self):
+        op = qt.Operator(timing_types=['dtrima'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_dwma(self):
+        op = qt.Operator(timing_types=['dwma'])
+        op.set_parameter('t-0', pars=(200, 22))
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slsma(self):
+        op = qt.Operator(timing_types=['slsma'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sldema(self):
+        op = qt.Operator(timing_types=['sldema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slema(self):
+        op = qt.Operator(timing_types=['slema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slht(self):
+        op = qt.Operator(timing_types=['slht'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        # built-in strategy slht is not optimizable
+
+    def test_slkama(self):
+        op = qt.Operator(timing_types=['slkama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slmama(self):
+        op = qt.Operator(timing_types=['slmama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slfama(self):
+        op = qt.Operator(timing_types=['slfama'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slt3(self):
+        op = qt.Operator(timing_types=['slt3'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sltema(self):
+        op = qt.Operator(timing_types=['sltema'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_sltrima(self):
+        op = qt.Operator(timing_types=['sltrima'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
+
+    def test_slwma(self):
+        op = qt.Operator(timing_types=['slwma'])
+        op.set_parameter('t-0', opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=2)
 
 
 class TestFastExperiments(unittest.TestCase):

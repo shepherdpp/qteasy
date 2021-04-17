@@ -386,13 +386,12 @@ def _plot_test_result(opti_eval_res: list,
         test_eval_res = []
     # 从opti和test评价结果列表中取出完整的回测曲线
     result_count = len(test_eval_res)
-    valid_opti_eval_res = [item for item in opti_eval_res if not item['complete_values'] is None]
-    valid_test_eval_res = [item for item in test_eval_res if not item['complete_values'] is None]
+    valid_opti_eval_res = [item for item in opti_eval_res if not item['complete_values'].empty]
+    valid_test_eval_res = [item for item in test_eval_res if not item['complete_values'].empty]
     opti_complete_value_results = [result['complete_values'] for result in valid_opti_eval_res]
     test_complete_value_results = [result['complete_values'] for result in valid_test_eval_res]
     first_opti_looped_values = opti_complete_value_results[0]
     first_test_looped_values = test_complete_value_results[0]
-    # import pdb;pdb.set_trace()
     opti_reference = first_opti_looped_values.reference
     test_reference = first_test_looped_values.reference
     complete_reference = opti_reference.reindex(opti_reference.index.union(test_reference.index))
@@ -483,13 +482,13 @@ def _plot_test_result(opti_eval_res: list,
                      facecolor=(0.8, 0.2, 0.0), alpha=0.35)
     # 逐个绘制所有的opti区间和test区间收益率曲线
     for cres in opti_complete_value_results:
-        if cres is not None:
+        if not cres.empty:
             start_value = cres.value.iloc[0]
             values = (cres.value - start_value) / start_value * 100
             ax1.plot(first_opti_looped_values.index, values, linestyle='-',
                      color=(0.8, 0.2, 0.0), alpha=0.85, label='return')
     for cres in test_complete_value_results:
-        if cres is not None:
+        if not cres.empty:
             start_value = cres.value.iloc[0]
             values = (cres.value - start_value) / start_value * 100
             ax1.plot(first_test_looped_values.index, values, linestyle='-',
