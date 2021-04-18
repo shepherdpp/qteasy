@@ -329,7 +329,8 @@ class DataSource():
                             parallel=None,
                             delay=None,
                             delay_every=None,
-                            progress=None):
+                            progress=None,
+                            refresh=False):
         """ the major work interface of DataSource object, extracts data directly from local
         files when all requested records exists locally. extract data online if they don't
         and merges online data back to local files.
@@ -344,6 +345,9 @@ class DataSource():
         :param delay:
         :param delay_every:
         :param progress:
+
+        :param refresh:
+            bool, 是否忽略已有的数据，重新下载最新数据，并覆盖已有的数据
         :return:
         """
         # TODO: No file saving is needed if no new data is downloaded online
@@ -360,6 +364,7 @@ class DataSource():
         progress_count = len(htypes) * len(shares) + len(htypes)
         progress_bar(i, progress_count, f'total progress count: {progress_count}')
         data_downloaded = False
+        # import pdb; pdb.set_trace()
         for htype in htypes:
             file_name = htype
             if freq.upper() != 'D':
@@ -369,7 +374,7 @@ class DataSource():
 
             i += 1
             progress_bar(i, progress_count, 'extracting local file')
-            if self.file_exists(file_name):
+            if self.file_exists(file_name) and (not refresh):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
@@ -379,7 +384,7 @@ class DataSource():
             index_count = len(df.index)
             for share, share_data in df.iteritems():
                 progress_bar(i, progress_count, 'searching for missing data')
-                missing_data = share_data.iloc[np.isinf(share_data).values]
+                missing_data = share_data.iloc[np.isinf(share_data.fillna(np.nan)).values]
                 i += 1
                 progress_bar(i, progress_count, 'downloading missing data')
                 if missing_data.count() > 0:
@@ -416,7 +421,10 @@ class DataSource():
                     # 就可以了。
                     # 这里是整体覆盖的代码：
                     if len(online_data) != 0:
-                        share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
+                        if not online_data[0].empty:
+                            share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
+                        else:
+                            print(f'Oops! online data for {share} is empty!')
 
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:

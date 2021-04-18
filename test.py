@@ -6088,7 +6088,8 @@ class TestBuiltIns(unittest.TestCase):
                      invest_end='20210413',
                      asset_pool='000300.SH',
                      asset_type='I',
-                     reference_asset='000300.SH')
+                     reference_asset='000300.SH',
+                     opti_sample_count=100)
 
     def test_crossline(self):
         op = qt.Operator(timing_types=['crossline'])
@@ -6096,6 +6097,8 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_macd(self):
@@ -6103,6 +6106,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dma(self):
@@ -6110,6 +6114,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_trix(self):
@@ -6117,6 +6122,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_cdl(self):
@@ -6130,6 +6136,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sdema(self):
@@ -6137,6 +6144,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sema(self):
@@ -6144,6 +6152,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sht(self):
@@ -6157,6 +6166,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_smama(self):
@@ -6164,6 +6174,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sfama(self):
@@ -6171,6 +6182,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_st3(self):
@@ -6178,6 +6190,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_stema(self):
@@ -6185,6 +6198,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_strima(self):
@@ -6192,6 +6206,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_swma(self):
@@ -6199,6 +6214,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dsma(self):
@@ -6206,6 +6222,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_ddema(self):
@@ -6213,6 +6230,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dema(self):
@@ -6220,6 +6238,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dkama(self):
@@ -6227,6 +6246,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dmama(self):
@@ -6234,6 +6254,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dfama(self):
@@ -6241,6 +6262,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dt3(self):
@@ -6248,6 +6270,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dtema(self):
@@ -6255,6 +6278,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dtrima(self):
@@ -6262,6 +6286,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_dwma(self):
@@ -6270,6 +6295,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slsma(self):
@@ -6277,6 +6303,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sldema(self):
@@ -6284,6 +6311,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slema(self):
@@ -6291,6 +6319,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slht(self):
@@ -6304,6 +6333,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slmama(self):
@@ -6311,6 +6341,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slfama(self):
@@ -6318,6 +6349,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slt3(self):
@@ -6325,6 +6357,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sltema(self):
@@ -6332,6 +6365,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_sltrima(self):
@@ -6339,6 +6373,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
     def test_slwma(self):
@@ -6346,6 +6381,7 @@ class TestBuiltIns(unittest.TestCase):
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
 
@@ -6402,7 +6438,8 @@ class TestDataBase(unittest.TestCase):
                                                                            market='主板,中小板'),
                                                   htypes=['close', 'open', 'high', 'low', 'net_profit',
                                                           'finan_exp', 'total_share', 'eps',
-                                                          'dt_eps', 'total_revenue_ps', 'cap_rese'])
+                                                          'dt_eps', 'total_revenue_ps', 'cap_rese'],
+                                                  parallel=1)
         hp.info()
 
 

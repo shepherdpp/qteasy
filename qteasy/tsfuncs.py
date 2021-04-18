@@ -59,10 +59,14 @@ def stock_basic(is_hs: str = None,
     if fields is None:
         fields = 'ts_code,symbol,name,area,industry,list_date'
     pro = ts.pro_api()
-    return pro.stock_basic(exchange=exchange,
-                           list_status=list_status,
-                           is_hs=is_hs,
-                           fields=fields)
+    try:
+        return pro.stock_basic(exchange=exchange,
+                               list_status=list_status,
+                               is_hs=is_hs,
+                               fields=fields)
+    except:
+        print(f'ERROR OCCURRED during acquiring basic share info, empty dataframe is created!')
+        return pd.DataFrame()
 
 
 @lru_cache(maxsize=16)
@@ -253,7 +257,7 @@ def get_bar(shares: object,
             start: object,
             end: object,
             asset_type: object = 'E',
-            adj: object = 'None',
+            adj: object = 'hfq',
             freq: object = 'D',
             ma: object = None) -> pd.DataFrame:
     """ 获取指数或股票的复权历史价格
@@ -295,13 +299,17 @@ def get_bar(shares: object,
     """
     if isinstance(shares, list):
         shares = list_to_str_format(shares)
-    return ts.pro_bar(ts_code=shares,
-                      start_date=start,
-                      end_date=end,
-                      asset=asset_type,
-                      adj=adj,
-                      freq=freq,
-                      ma=ma)
+    try:
+        return ts.pro_bar(ts_code=shares,
+                          start_date=start,
+                          end_date=end,
+                          asset=asset_type,
+                          adj=adj,
+                          freq=freq,
+                          ma=ma)
+    except:
+        print(f'ERROR OCCURS during downloading price/volume data for {shares}, empty dataframe is created!')
+        return pd.DataFrame()
 
 
 @lru_cache(maxsize=16)
@@ -452,7 +460,7 @@ def income(share: str,
                           comp_type=comp_type,
                           fields=fields)
     except:
-        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
         return pd.DataFrame()
 
 
@@ -654,7 +662,7 @@ def balance(share: str,
                                 comp_type=comp_type,
                                 fields=fields)
     except:
-        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
         return pd.DataFrame()
 
 
@@ -808,7 +816,7 @@ def cashflow(share: str,
                             comp_type=comp_type,
                             fields=fields)
     except:
-        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
         return pd.DataFrame()
 
 
@@ -1021,7 +1029,7 @@ def indicators(share: str,
                                   period=period,
                                   fields=fields)
     except:
-        print(f'ERROR OCCURS during downloading historical data for {share}, empty dataframe is created!')
+        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
         return pd.DataFrame()
 
 

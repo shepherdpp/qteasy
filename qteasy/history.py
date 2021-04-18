@@ -1063,7 +1063,7 @@ def get_price_type_raw_data(start: str,
 
     if parallel > 1:  # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
         proc_pool = ProcessPoolExecutor(parallel)
-        futures = {proc_pool.submit(get_bar, share, start, end, asset_type, None, freq): share for share in
+        futures = {proc_pool.submit(get_bar, share, start, end, asset_type, 'hfq', freq): share for share in
                    shares}
         for f in as_completed(futures):
             try:
@@ -1094,7 +1094,7 @@ def get_price_type_raw_data(start: str,
         for share in shares:
             if i % delay_every == 0 and delay > 0:
                 sleep(delay)
-            raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq)
+            raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq, adj='hfq')
             if raw_df is None:
                 # 当raw_df is None，说明该股票在指定的时段内没有数据，此时应该生成一个简单的空DataFrame，除
                 # 了share和date两列有数据以外，其他的数据全都是np.nan，这样就能在填充本地数据时，使用nan覆盖inf数据
