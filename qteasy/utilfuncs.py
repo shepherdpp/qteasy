@@ -516,6 +516,32 @@ def weekday_name(weekday: int):
     return weekday_names[weekday]
 
 
+def list_truncate(lst, trunc_size):
+    """ 将一个list切分成若干个等长的sublist，除最末一个列表以外，所有列表的元素数量都为trunc_size
+
+    :param lst:
+        list, 需要被切分的列表
+    :param trunc_size:
+        int, 列表中元素数量
+    :return:
+    """
+    assert isinstance(lst, list), f'first parameter should be a list, got {type(lst)}'
+    assert isinstance(trunc_size, int), f'second parameter should be an integer larger than 0'
+    assert trunc_size > 0, f'second parameter should be an integer larger than 0, got {trunc_size}'
+    total = len(lst)
+    if total <= trunc_size:
+        return [lst]
+    else:
+        sub_lists = []
+        begin = 0
+        end = trunc_size
+        while begin < total:
+            sub_lists.append(lst[begin:end])
+            begin += trunc_size
+            end += trunc_size
+        return sub_lists
+
+
 def function_debugger(func):
     """ a decorator that can be used to debug func during run time,
     print out extra information:

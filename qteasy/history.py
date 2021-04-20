@@ -16,7 +16,7 @@ from time import sleep
 from warnings import warn
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
+from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, list_truncate
 from .utilfuncs import list_to_str_format, progress_bar, next_trade_day, next_market_trade_day
 from .tsfuncs import get_bar, name_change
 from .tsfuncs import income, indicators, balance, cashflow
@@ -1063,33 +1063,41 @@ def get_price_type_raw_data(start: str,
 
     if parallel > 1:  # 同时开启线程数量大于1时，启动多线程，否则单线程，网络状态下16～32线程可以大大提升下载速度，但会受服务器端限制
         proc_pool = ProcessPoolExecutor(parallel)
-        futures = {proc_pool.submit(get_bar, share, start, end, asset_type, 'hfq', freq): share for share in
-                   shares}
-        for f in as_completed(futures):
-            try:
-                raw_df = f.result()
-            except Exception as ex:
-                ex.extra_info = f'bar_data downloading error @ parameters:\n' \
-                                f'share = {shares}\n' \
-                                f'start = {start}\n' \
-                                f'end   = {end}\n' \
-                                f'asset_type = {asset_type}\n' \
-                                f'freq = {freq}'
-                raise
-            # TODO: 应当采用同样的方法处理"get_financial_report_type_raw_data()"函数，以处理取到的空df
-            if raw_df is None:
-                raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,
-                                       [futures[f], end]+[np.nan]*9],
-                                      columns=["ts_code", "trade_date", "open", "high",
-                                               "low", "close", "pre_close", "change",
-                                               "pct_chg", "vol", "amount"])
-                warn(f'historical data {htypes} for {futures[f]} does not exist from {start} to '
-                     f'{end} in frequency {freq}', category=UserWarning)
-            df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
+        if delay > 0:
+            truncated_shares = list_truncate(shares, delay_every)
+        else:
+            truncated_shares = [shares]
+        for shares in truncated_shares:
+            futures = {proc_pool.submit(get_bar, share, start, end, asset_type, 'hfq', freq): share for share in
+                       shares}
+            for f in as_completed(futures):
+                try:
+                    raw_df = f.result()
+                except Exception as ex:
+                    ex.extra_info = f'bar_data downloading error @ parameters:\n' \
+                                    f'share = {shares}\n' \
+                                    f'start = {start}\n' \
+                                    f'end   = {end}\n' \
+                                    f'asset_type = {asset_type}\n' \
+                                    f'freq = {freq}'
+                    raise
+                # TODO: 应当采用同样的方法处理"get_financial_report_type_raw_data()"函数，以处理取到的空df
+                if raw_df is None:
+                    raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,
+                                           [futures[f], end]+[np.nan]*9],
+                                          columns=["ts_code", "trade_date", "open", "high",
+                                                   "low", "close", "pre_close", "change",
+                                                   "pct_chg", "vol", "amount"])
+                    warn(f'historical data {htypes} for {futures[f]} does not exist from {start} to '
+                         f'{end} in frequency {freq}', category=UserWarning)
+                df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
 
-            i += 1
-            if progress:
-                progress_bar(i, total_share_count, comments=prgrs_txt)
+                i += 1
+                if progress:
+                    progress_bar(i, total_share_count, comments=prgrs_txt)
+
+            if delay > 0:
+                sleep(delay)
     else:
         for share in shares:
             if i % delay_every == 0 and delay > 0:

@@ -192,9 +192,9 @@ def _plot_loop_result(loop_results: dict, config):
     ref_rate = (looped_values.reference - ref_start) / ref_start * 100
 
     # process plot figure and axes formatting
-    years = mdates.YearLocator()  # every year
-    months = mdates.MonthLocator()  # every month
-    weekdays = mdates.WeekdayLocator()  # every weekday
+    years = mdates.YearLocator()  # trunc_size year
+    months = mdates.MonthLocator()  # trunc_size month
+    weekdays = mdates.WeekdayLocator()  # trunc_size weekday
     years_fmt = mdates.DateFormatter('%Y')
     month_fmt_none = mdates.DateFormatter('')
     month_fmt_l = mdates.DateFormatter('%y/%m')
