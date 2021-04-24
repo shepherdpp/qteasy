@@ -183,8 +183,10 @@ def _loop_step(pre_cash: float,
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
-    pur_values = pre_value * op.clip(0)  # 使用clip来代替np.where，速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多
-    if print_log and pur_values.sum() > 0:
+    # pur_values = pre_value * op.clip(0)  # 使用clip比np.where速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多，但无法处理nan值
+    pur_values = pre_value * np.where(op > 0, op, 0)  # 使用clip比np.where速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多，但无法处理nan值
+    # if print_log and pur_values.sum() > 0:
+    if print_log:
         print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
