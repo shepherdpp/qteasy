@@ -437,11 +437,11 @@ def get_current_holdings() -> tuple:
     raise NotImplementedError
 
 
-def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
+def get_stock_pool(date: str = 'today', **kwargs) -> list:
     """根据输入的参数筛选出合适的初始股票清单
 
         可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
-            date:       根据上市日期选择，在改日期以前上市的股票将会被剔除：
+            date:       根据上市日期选择，在该日期以后上市的股票将会被剔除：
             index:      根据指数筛选，不含在指定的指数内的股票将会被剔除
             industry:   公司所处行业，只有列举出来的行业会被选中
             area:       公司所处省份，只有列举出来的省份的股票才会被选中
@@ -457,7 +457,7 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     try:
         date = pd.to_datetime(date)
     except:
-        date = pd.to_datetime('1970-01-01')
+        date = pd.to_datetime('today')
     # validate all input args:
     if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
         raise KeyError()
@@ -467,7 +467,7 @@ def get_stock_pool(date: str = '1970-01-01', **kwargs) -> list:
     #
     share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
-    share_basics = share_basics.loc[share_basics.list_date >= date]
+    share_basics = share_basics.loc[share_basics.list_date <= date]
 
     for column, targets in zip(kwargs.keys(), kwargs.values()):
         if column == 'index':
