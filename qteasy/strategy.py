@@ -422,7 +422,6 @@ class Strategy:
             #     f'TYpeError, all elements in dates should be Timestamp, got otherwise'
 
 
-# TODO: 在所有的generate()方法中应该对_realize()函数的输出进行基本检查，以提高自定义策略的用户友好度（在出现错误的定义时能够提供有意义的提示）
 class RollingTiming(Strategy):
     """择时策略的抽象基类，所有择时策略都继承自该抽象类，本类继承自策略基类，同时定义了generate_one()抽象方法，用于实现具体的择时策略
 
@@ -585,6 +584,8 @@ class RollingTiming(Strategy):
         idx = np.where(~mask, np.arange(mask.shape[0]), 0)
         np.maximum.accumulate(idx, out=idx)
         cat = cat[idx]
+        # 有些信号以nan打头，因此填充后仍然存在nan值，需要填充为0
+        cat[np.isnan(cat)] = 0
         return cat[self.window_length:]
 
     def generate(self, hist_data: np.ndarray, shares=None, dates=None):
@@ -865,6 +866,8 @@ class SimpleTiming(Strategy):
         idx = np.where(~mask, np.arange(mask.shape[0]), 0)
         np.maximum.accumulate(idx, out=idx)
         cat = cat[idx]
+        # 有些信号以nan打头，因此填充后仍然存在nan值，需要填充为0
+        cat[np.isnan(cat)] = 0
         return cat
 
     def generate(self, hist_data, shares=[], dates=[]):

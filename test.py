@@ -2726,7 +2726,6 @@ class TestOperator(unittest.TestCase):
                     '000300': (5, 6)}
         stg.set_pars(stg_pars)
         history_data = self.hp1.values
-        import pdb; pdb.set_trace()
         output = stg.generate(hist_data=history_data)
 
         self.assertIsInstance(output, np.ndarray)

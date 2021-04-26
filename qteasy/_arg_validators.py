@@ -553,7 +553,7 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
 
-        'hist_dnld_parallel':  {'Default':   0,
+        'hist_dnld_parallel':  {'Default':   16,
                                 'Validator': lambda value: isinstance(value, int) and value >= 0,
                                 'level':     4,
                                 'text':      '下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程'},

@@ -421,7 +421,10 @@ class DataSource():
                     # 就可以了。
                     # 这里是整体覆盖的代码：
                     if len(online_data) != 0:
-                        if not online_data[0].empty:
+                        if online_data[0] is not None:
+                            # 注意，必须确保输出数据中所有的np.inf都被覆盖掉，因为如果输出数据中含有np.inf，将会影响到
+                            # 非交易日的判断（目前非交易日是通过所有股价全部是np.nan来判断的），导致非交易日数据被输入到
+                            # op.generate中，导致产生大量异常交易信号和异常数据
                             share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
                         else:
                             print(f'Oops! online data for {share} is empty!')

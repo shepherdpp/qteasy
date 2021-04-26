@@ -61,3 +61,5 @@ qteasy/data/open.dat
 qteasy/data/total_revenue_ps.dat
 qteasy/data/total_share.dat
 qteasy/data/net_profit.dat
+qteasy/data/net_profit.dat
+*.dat
