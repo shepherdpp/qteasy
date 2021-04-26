@@ -6050,7 +6050,7 @@ class TestQT(unittest.TestCase):
         """
         print(f'test portfolio selection from large quantities of shares')
         op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
-        qt.configure(asset_pool=qt.get_stock_pool(date='19980101',
+        qt.configure(asset_pool=qt.get_stock_pool(date='20100101',
                                                   industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                             '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
                                                             '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
@@ -6073,11 +6073,12 @@ class TestQT(unittest.TestCase):
                      ref_asset_type='I',
                      opti_output_count=50,
                      invest_start='20070101',
-                     invest_end='20181228',
+                     invest_end='20101228',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     log=False)
+                     log=False,
+                     hist_dnld_parallel=0)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('t-0', pars=())
         op.set_parameter('s-0', pars=(True, 'proportion', 'greater', 0, 0, 30),
@@ -6471,12 +6472,15 @@ class TestDataBase(unittest.TestCase):
         self.data_source = DataSource()
 
     def test_get_and_update_data(self):
+        print(f'test download and refresh local data')
         hp = self.data_source.get_and_update_data(start='20200101',
                                                   end='20200801',
                                                   freq='d',
                                                   shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
                                                           '000001.SZ', '000002.SZ'],
-                                                  htypes=['close', 'open'])
+                                                  htypes=['close', 'open'],
+                                                  parallel=16,
+                                                  refresh=True)
         hp.info()
         print(f'test expanded date time range from 2019 07 01')
         hp = self.data_source.get_and_update_data(start='20190701',
@@ -6484,7 +6488,8 @@ class TestDataBase(unittest.TestCase):
                                                   freq='d',
                                                   shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
                                                           '000001.SZ', '000002.SZ'],
-                                                  htypes=['close', 'open'])
+                                                  htypes=['close', 'open'],
+                                                  adj='hfq')
         hp.info()
 
         print(f'test different share scope, added 000005.SZ')
@@ -6499,11 +6504,22 @@ class TestDataBase(unittest.TestCase):
         hp = self.data_source.get_and_update_data(start='20150101',
                                                   end='20200901',
                                                   freq='d',
-                                                  shares=qt.get_stock_pool(date='19980101',
+                                                  shares=qt.get_stock_pool(date='today',
                                                                            market='主板,中小板'),
                                                   htypes=['close', 'open', 'high', 'low', 'net_profit',
                                                           'finan_exp', 'total_share', 'eps',
                                                           'dt_eps', 'total_revenue_ps', 'cap_rese'],
+                                                  parallel=1)
+        hp.info()
+
+        print(f'test getting and updating adjusted price data')
+        hp = self.data_source.get_and_update_data(start='20150101',
+                                                  end='20200901',
+                                                  freq='d',
+                                                  shares=qt.get_stock_pool(date='today',
+                                                                           market='主板,中小板'),
+                                                  htypes=['close', 'open', 'high', 'low'],
+                                                  adj='hfq',
                                                   parallel=1)
         hp.info()
 

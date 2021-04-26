@@ -903,6 +903,7 @@ def get_history_panel(start,
                       shares,
                       htypes,
                       asset_type: str,
+                      adj:str,
                       chanel: str,
                       parallel: int = None,
                       delay: float = None,
@@ -948,10 +949,12 @@ def get_history_panel(start,
                                            shares=shares,
                                            htypes=htypes,
                                            asset_type=asset_type,
+                                           adj=adj,
                                            parallel=parallel,
                                            delay=delay,
                                            delay_every=delay_every,
-                                           progress=progress)
+                                           progress=progress,
+                                           refresh=False)
         return result_hp
     if chanel == 'online':
         result_hp = HistoryPanel()
@@ -1011,14 +1014,13 @@ def get_history_panel(start,
 
 
 # TODO: dynamically group shares thus data downloading can be less repetitive
-# TODO: remove parameter chanel, and add progress: bool, to determine if progress bar
-# TODO: should be displayed.
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
                             shares: [str, list],
                             htypes: [str, list],
                             asset_type: str = 'E',
+                            adj: str = 'none',
                             parallel: int = 16,
                             delay: float = 20,
                             delay_every: int = 500,
@@ -1027,18 +1029,42 @@ def get_price_type_raw_data(start: str,
     """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
+        str, 'YYYYMMDD' 格式的日期，历史数据开始的日期
+
     :param end:
+        str, 'YYYYMMDD' 格式的日期，历史数据结束的日期
+
     :param freq:
+        str, 历史数据的频率，如'd'， 'w', '30min'等
+
     :param htypes:
+        str or list, 历史数据的种类，如'close', 'open'等
+
     :param shares:
-    :param asset_type: type:string: one of {'E':股票, 'I':指数, 'F':期货, 'FD':基金}
-    :param parallel: int, 默认16，同时开启的线程数量，为0或1时为单线程
-    :param delay:   默认0，在两次请求网络数据之间需要延迟的时间长短，单位为秒
-    :param delay_every: int, 默认500，在两次delay之间允许下载的数量
+        str, 股票代码，必须是诸如'600748.SH'格式的代码
+
+    :param asset_type:
+        type:string: one of {'E':股票, 'I':指数, 'F':期货, 'FD':基金}
+
+    :param adj:
+        type: string, 是否下载复权数据，one of {'none': 不复权, 'hfq': 后复权, 'qfq': 前复权}
+
+    :param parallel:
+        int, 默认16，同时开启的线程数量，为0或1时为单线程
+
+    :param delay:
+        默认0，在两次请求网络数据之间需要延迟的时间长短，单位为秒
+
+    :param delay_every:
+        int, 默认500，在两次delay之间允许下载的数量
+
     :param progress: bool:
-                    progress == True, Default 下载时显示进度条
-                    progress == False  下载时不显示进度条
+        progress == True, Default 下载时显示进度条
+        progress == False  下载时不显示进度条
+
     :param prgrs_txt:
+        在进度条中显示的信息文本
+
     :return:
     """
     if htypes is None:
@@ -1050,6 +1076,8 @@ def get_price_type_raw_data(start: str,
     df_per_share = []
     if parallel is None:
         parallel = 16
+    if adj is None:
+        adj = 'none'
     if delay is None:
         delay = 20
     if delay_every is None:
@@ -1068,7 +1096,7 @@ def get_price_type_raw_data(start: str,
         else:
             truncated_shares = [shares]
         for shares in truncated_shares:
-            futures = {proc_pool.submit(get_bar, share, start, end, asset_type, 'hfq', freq): share for share in
+            futures = {proc_pool.submit(get_bar, share, start, end, asset_type, adj, freq): share for share in
                        shares}
             for f in as_completed(futures):
                 try:
@@ -1081,7 +1109,7 @@ def get_price_type_raw_data(start: str,
                                     f'asset_type = {asset_type}\n' \
                                     f'freq = {freq}'
                     raise
-                # TODO: 应当采用同样的方法处理"get_financial_report_type_raw_data()"函数，以处理取到的空df
+                # TODO: 应当仔细考察get_bar的错误模式，并根据错误模式生成不同类型的数据，便于后续函数判断如何处理
                 if raw_df is None:
                     raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,
                                            [futures[f], end]+[np.nan]*9],
@@ -1102,7 +1130,7 @@ def get_price_type_raw_data(start: str,
         for share in shares:
             if i % delay_every == 0 and delay > 0:
                 sleep(delay)
-            raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq, adj='hfq')
+            raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq, adj=adj)
             if raw_df is None:
                 # 当raw_df is None，说明该股票在指定的时段内没有数据，此时应该生成一个简单的空DataFrame，除
                 # 了share和date两列有数据以外，其他的数据全都是np.nan，这样就能在填充本地数据时，使用nan覆盖inf数据

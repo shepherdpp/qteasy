@@ -326,6 +326,7 @@ class DataSource():
                             shares,
                             htypes,
                             asset_type: str = None,
+                            adj=None,
                             parallel=None,
                             delay=None,
                             delay_every=None,
@@ -341,6 +342,7 @@ class DataSource():
         :param shares:
         :param htypes:
         :param asset_type:
+        :param adj:
         :param parallel:
         :param delay:
         :param delay_every:
@@ -350,27 +352,28 @@ class DataSource():
             bool, 是否忽略已有的数据，重新下载最新数据，并覆盖已有的数据
         :return:
         """
-        # TODO: No file saving is needed if no new data is downloaded online
         all_dfs = []
         if isinstance(htypes, str):
             htypes = str_to_list(input_string=htypes, sep_char=',')
         if isinstance(shares, str):
             shares = str_to_list(input_string=shares, sep_char=',')
-        share_count = len(shares)
         if asset_type is None:
             asset_type = 'E'
+        if adj is None:
+            adj = 'none'
 
         i = 0
         progress_count = len(htypes) * len(shares) + len(htypes)
         progress_bar(i, progress_count, f'total progress count: {progress_count}')
         data_downloaded = False
-        # import pdb; pdb.set_trace()
         for htype in htypes:
             file_name = htype
             if freq.upper() != 'D':
                 file_name = file_name + '-' + freq.upper()
             if asset_type.upper() != 'E':
                 file_name = file_name + '-' + asset_type.upper()
+            if asset_type.upper() == 'E' and adj != 'none':
+                file_name = file_name + '-FQ'
 
             i += 1
             progress_bar(i, progress_count, 'extracting local file')
@@ -380,8 +383,6 @@ class DataSource():
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
                 for share in [share for share in shares if share not in df.columns]:
                     df[share] = np.inf
-            data_index = df.index
-            index_count = len(df.index)
             for share, share_data in df.iteritems():
                 progress_bar(i, progress_count, 'searching for missing data')
                 missing_data = share_data.iloc[np.isinf(share_data.fillna(np.nan)).values]
@@ -400,10 +401,11 @@ class DataSource():
                                                               shares=share,
                                                               htypes=htype,
                                                               asset_type=asset_type,
+                                                              adj=adj,
                                                               parallel=parallel,
                                                               delay=delay,
                                                               delay_every=delay_every,
-                                                              progress=False)
+                                                              progress=progress)
 
                     elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
@@ -413,8 +415,10 @@ class DataSource():
                                                                                 parallel=parallel,
                                                                                 delay=delay,
                                                                                 delay_every=delay_every,
-                                                                                progress=False)
+                                                                                progress=progress)
                         online_data = (inc + ind + blc + csh)
+                    else:
+                        online_data = None
 
                     # 按照原来的思路，下面的代码是将下载的数据（可能是稀疏数据）一个个写入到目标区域中，再将目标区域中的
                     # np.inf逐个改写为np.nan。但是其实粗暴一点的做法是直接把下载的数据reindex，然后整体覆盖目标区域
@@ -427,7 +431,7 @@ class DataSource():
                             # op.generate中，导致产生大量异常交易信号和异常数据
                             share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
                         else:
-                            print(f'Oops! online data for {share} is empty!')
+                            print(f'Oops! htype {htype} is not recognized!')
 
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:
