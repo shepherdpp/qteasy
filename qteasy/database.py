@@ -384,6 +384,7 @@ class DataSource():
                 for share in [share for share in shares if share not in df.columns]:
                     df[share] = np.inf
             for share, share_data in df.iteritems():
+                # 此处由于不同的股票缺失数据起止时间点不同，因此对每种share分别单独下载其历史数据，此时下载的数据只有一个share，一种类型
                 progress_bar(i, progress_count, 'searching for missing data')
                 missing_data = share_data.iloc[np.isinf(share_data.fillna(np.nan)).values]
                 i += 1
@@ -403,9 +404,9 @@ class DataSource():
                                                               asset_type=asset_type,
                                                               adj=adj,
                                                               parallel=parallel,
-                                                              delay=delay,
+                                                              delay=0,
                                                               delay_every=delay_every,
-                                                              progress=progress)
+                                                              progress=False)
 
                     elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
                         inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
@@ -413,9 +414,9 @@ class DataSource():
                                                                                 shares=share,
                                                                                 htypes=htype,
                                                                                 parallel=parallel,
-                                                                                delay=delay,
+                                                                                delay=0,
                                                                                 delay_every=delay_every,
-                                                                                progress=progress)
+                                                                                progress=False)
                         online_data = (inc + ind + blc + csh)
                     else:
                         online_data = None
@@ -425,13 +426,13 @@ class DataSource():
                     # 就可以了。
                     # 这里是整体覆盖的代码：
                     if len(online_data) != 0:
-                        if online_data[0] is not None:
+                        if not online_data[0].empty:
                             # 注意，必须确保输出数据中所有的np.inf都被覆盖掉，因为如果输出数据中含有np.inf，将会影响到
                             # 非交易日的判断（目前非交易日是通过所有股价全部是np.nan来判断的），导致非交易日数据被输入到
                             # op.generate中，导致产生大量异常交易信号和异常数据
                             share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
                         else:
-                            print(f'Oops! htype {htype} is not recognized!')
+                            print(f'Oops! historical data {htype} for {share} is not downloaded!')
 
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:

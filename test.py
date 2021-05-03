@@ -4135,25 +4135,28 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
-        print(f'test type: multiple shares asset type E')
-        shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
-        start = '20180101'
-        end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='E')
+        print(f'test type: one share asset type E lots of data')
+        shares = '000001.SH'
+        start = '19910101'
+        end = '20211231'
+        df = get_bar(shares=shares, start=start, end=end, asset_type='I')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
+        self.assertEqual(len(df), 7413)
+        self.assertEqual(len(df.loc[np.isnan(df.close)]), 0)
+        self.assertEqual(len(df.loc[np.isnan(df.open)]), 0)
+        self.assertEqual(len(df.loc[np.isnan(df.high)]), 0)
+        self.assertEqual(len(df.loc[np.isnan(df.low)]), 0)
+        self.assertEqual(len(df.loc[np.isnan(df.pre_close)]), 0)
+        self.assertEqual(len(df.loc[np.isnan(df.change)]), 0)
         df.info()
         print(df.head(10))
 
-        print(f'test type: multiple shares asset type E, with adj = "qfq"')
+        print(f'test type: multiple shares asset type E, raise Error')
         shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
         start = '20180101'
         end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='E', adj='qfq')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
+        self.assertRaises(AssertionError, get_bar, shares=shares, start=start, end=end, asset_type='E')
 
         print(f'test type: multiple shares asset type E, with freq = "30min" -> authority issue!')
         shares = '000620.SZ,000667.SZ'
@@ -6014,9 +6017,11 @@ class TestQT(unittest.TestCase):
         # TODO: related to trade day calendar.
         op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
         all_shares = stock_basic()
-        shares_banking = list((all_shares.loc[all_shares.industry == '银行']['ts_code']).values)
+        shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
+        print('extracted banking share pool:')
+        print(all_shares.loc[all_shares.ts_code in shares_banking])
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
-        qt.configure(asset_pool=shares_banking[10:20],
+        qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
                      reference_asset='000300.SH',
                      ref_asset_type='I',
@@ -6050,7 +6055,7 @@ class TestQT(unittest.TestCase):
         """
         print(f'test portfolio selection from large quantities of shares')
         op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
-        qt.configure(asset_pool=qt.get_stock_pool(date='20100101',
+        qt.configure(asset_pool=qt.get_stock_pool(date='20070101',
                                                   industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                             '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
                                                             '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
@@ -6473,13 +6478,14 @@ class TestDataBase(unittest.TestCase):
 
     def test_get_and_update_data(self):
         print(f'test download and refresh local data')
+        # import pdb; pdb.set_trace()
         hp = self.data_source.get_and_update_data(start='20200101',
                                                   end='20200801',
                                                   freq='d',
                                                   shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
                                                           '000001.SZ', '000002.SZ'],
                                                   htypes=['close', 'open'],
-                                                  parallel=16,
+                                                  parallel=0,
                                                   refresh=True)
         hp.info()
         print(f'test expanded date time range from 2019 07 01')
@@ -6501,7 +6507,7 @@ class TestDataBase(unittest.TestCase):
         hp.info()
 
         print(f'test getting and updating lots of data')
-        hp = self.data_source.get_and_update_data(start='20150101',
+        hp = self.data_source.get_and_update_data(start='19950101',
                                                   end='20200901',
                                                   freq='d',
                                                   shares=qt.get_stock_pool(date='today',
@@ -6513,7 +6519,7 @@ class TestDataBase(unittest.TestCase):
         hp.info()
 
         print(f'test getting and updating adjusted price data')
-        hp = self.data_source.get_and_update_data(start='20150101',
+        hp = self.data_source.get_and_update_data(start='19950101',
                                                   end='20200901',
                                                   freq='d',
                                                   shares=qt.get_stock_pool(date='today',

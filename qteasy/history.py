@@ -1026,7 +1026,7 @@ def get_price_type_raw_data(start: str,
                             delay_every: int = 500,
                             progress: bool = True,
                             prgrs_txt: str = ''):
-    """ 在线获取普通类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
+    """ 在线获取价格和交易量类型历史数据，并且打包成包含date_by_row且htype_by_column的dataframe的列表
 
     :param start:
         str, 'YYYYMMDD' 格式的日期，历史数据开始的日期
@@ -1110,7 +1110,7 @@ def get_price_type_raw_data(start: str,
                                     f'freq = {freq}'
                     raise
                 # TODO: 应当仔细考察get_bar的错误模式，并根据错误模式生成不同类型的数据，便于后续函数判断如何处理
-                if raw_df is None:
+                if raw_df.empty:
                     raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,
                                            [futures[f], end]+[np.nan]*9],
                                           columns=["ts_code", "trade_date", "open", "high",
@@ -1131,7 +1131,7 @@ def get_price_type_raw_data(start: str,
             if i % delay_every == 0 and delay > 0:
                 sleep(delay)
             raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq, adj=adj)
-            if raw_df is None:
+            if raw_df.empty:
                 # 当raw_df is None，说明该股票在指定的时段内没有数据，此时应该生成一个简单的空DataFrame，除
                 # 了share和date两列有数据以外，其他的数据全都是np.nan，这样就能在填充本地数据时，使用nan覆盖inf数据
                 raw_df = pd.DataFrame([[share, start]+[np.nan]*9,
