@@ -4136,21 +4136,44 @@ class TestTushare(unittest.TestCase):
         print(df.head(10))
 
         print(f'test type: one share asset type E lots of data')
-        shares = '000001.SH'
+        shares = '000001.SZ'
         start = '19910101'
         end = '20211231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='I')
+        df = get_bar(shares=shares, start=start, end=end, asset_type='E')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-        self.assertEqual(len(df), 7413)
+        self.assertEqual(len(df), 7132)
         self.assertEqual(len(df.loc[np.isnan(df.close)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.open)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.high)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.low)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.pre_close)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.change)]), 0)
+        print(df.iloc[4987:4989])
+        self.assertEqual(df.iloc[4988].open, 389.916)
+        self.assertEqual(df.iloc[4988].high, 402.48)
+        self.assertEqual(df.iloc[4988].low, 382.5509)
+        self.assertEqual(df.iloc[4988].close, 400.747)
+        self.assertEqual(df.iloc[4988].pre_close, 387.5332)
+        self.assertEqual(df.iloc[4988].change, 13.213799999999992)
+        self.assertEqual(df.iloc[4987].open, 415.9104)
+        self.assertEqual(df.iloc[4987].high, 441.4716)
+        self.assertEqual(df.iloc[4987].low, 405.0794)
+        self.assertEqual(df.iloc[4987].close, 441.2549)
+        self.assertEqual(df.iloc[4987].pre_close, 400.747)
+        self.assertEqual(df.iloc[4987].change, 40.50790000000001)
+        # test all close prices are equal to next pre_close
+        for i in range(7131):
+            cur_close = df.iloc[i+1].close
+            pre_close = df.iloc[i].pre_close
+            if abs(cur_close - pre_close) > 1:
+                print(f'found discrepencies in close data:'
+                      f'cur_close: {cur_close}, pre_close: {pre_close} @ iloc[{i}]\n'
+                      f'{df.iloc[i:i+2]}')
         df.info()
-        print(df.head(10))
+        print(df)
+
+
 
         print(f'test type: multiple shares asset type E, raise Error')
         shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
@@ -6477,17 +6500,9 @@ class TestDataBase(unittest.TestCase):
         self.data_source = DataSource()
 
     def test_get_and_update_data(self):
-        print(f'test download and refresh local data')
-        # import pdb; pdb.set_trace()
-        hp = self.data_source.get_and_update_data(start='20200101',
-                                                  end='20200801',
-                                                  freq='d',
-                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
-                                                          '000001.SZ', '000002.SZ'],
-                                                  htypes=['close', 'open'],
-                                                  parallel=0,
-                                                  refresh=True)
-        hp.info()
+
+        import pdb; pdb.set_trace()
+
         print(f'test expanded date time range from 2019 07 01')
         hp = self.data_source.get_and_update_data(start='20190701',
                                                   end='20200801',
@@ -6527,6 +6542,17 @@ class TestDataBase(unittest.TestCase):
                                                   htypes=['close', 'open', 'high', 'low'],
                                                   adj='hfq',
                                                   parallel=1)
+        hp.info()
+
+        print(f'test download and refresh local data')
+        hp = self.data_source.get_and_update_data(start='20200101',
+                                                  end='20200801',
+                                                  freq='d',
+                                                  shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
+                                                          '000001.SZ', '000002.SZ'],
+                                                  htypes=['close', 'open'],
+                                                  parallel=0,
+                                                  refresh=True)
         hp.info()
 
 

@@ -308,7 +308,8 @@ def get_bar(shares: object,
     target_start_date = next_market_trade_day(start)
     acquired_start_date = pd.to_datetime(end)
     res_dfs = []
-    while acquired_start_date > target_start_date:
+    left_retry = 5
+    while left_retry > 0:
         try:
             df = ts.pro_bar(ts_code=shares,
                             start_date=start,
@@ -318,27 +319,37 @@ def get_bar(shares: object,
                             freq=freq,
                             ma=ma)
         except:
-            print(f'ERROR OCCURS during downloading price/volume data for {shares}, empty dataframe is created!')
+            print(f'ERROR OCCURS during downloading price/volume data for {shares}, None is created!')
             df = None
 
-        if df is None:
+        if df is None and (adj is not None):
             # 因为读取出错导致未取到数据，添加一个空的数据框占位，不改变参数重复读取直至读取到数据为止
+            # 当adj不为None时，pro_bar即使运行正确，也不会输出空DF，而是生成None，因此这种情况不属于出错情况，需要排除
             df = pd.DataFrame(columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
                                        'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
             res_dfs.append(df)
+            left_retry -= 1
+            continue
 
-        elif not df.empty:
+        if not df.empty:
             # 读取到了数据，且读取数据时未出错，确认数据是否完整
             # TODO: 此处需确认，仅通过close是否nan判断数据是否存在，可能存在漏洞，需要判断一行中任意数据是否存在nan值
             df_without_nan = df.loc[~np.isnan(df.close)]
             # 从已经获取的数据中，找到最早的一个时间点，计算它的前一天，这一天会成为下一次下载的时间终点
             acquired_start_date = pd.to_datetime(df_without_nan.trade_date.min()) - pd.Timedelta(1, 'd')
             res_dfs.append(df_without_nan)
-            # 下一次读取数据起点不变，终点变为前一次的起点的前一天
-            end = regulate_date_format(acquired_start_date)
+            # 判断数据是否完整读取
+            if len(df) == 5000 or acquired_start_date >= target_start_date:
+                # 本次读取的数据不完整，还有剩余的数据未读取
+                # 下一次读取数据起点不变，终点变为前一次的起点的前一天
+                end = regulate_date_format(acquired_start_date)
+            else:
+                # 数据已经读取完整
+                break
 
         else: # df.empty
             # 如果数据读取未出错，但读取的是空数据框，说明已经没有其他数据，则结束读取
+            res_dfs.append(df)
             break
 
     # 所有的数据读取到后，
