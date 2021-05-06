@@ -152,6 +152,11 @@ def _loop_step(pre_cash: float,
     pre_value = pre_cash + (pre_amounts * prices).sum()
     if print_log:
         # asset_array = np.array([pre_amounts, prices])
+        logging.info(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
+              f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
+              f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
+              f'本期资产价格:  {np.around(prices, 2)}\n'
+              f'本期交易信号:  {op}')
         print(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
               f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
               f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
@@ -464,8 +469,10 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
-    #
-    share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
+    FIELDS = 'ts_code,symbol,name,area,industry,market,list_date,exchange'
+    share_basics = stock_basic(fields=FIELDS)
+    if share_basics is None or share_basics.empty:
+        return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
     share_basics = share_basics.loc[share_basics.list_date <= date]
 

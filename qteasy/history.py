@@ -1099,16 +1099,7 @@ def get_price_type_raw_data(start: str,
             futures = {proc_pool.submit(get_bar, share, start, end, asset_type, adj, freq): share for share in
                        shares}
             for f in as_completed(futures):
-                try:
-                    raw_df = f.result()
-                except Exception as ex:
-                    ex.extra_info = f'bar_data downloading error @ parameters:\n' \
-                                    f'share = {shares}\n' \
-                                    f'start = {start}\n' \
-                                    f'end   = {end}\n' \
-                                    f'asset_type = {asset_type}\n' \
-                                    f'freq = {freq}'
-                    raise
+                raw_df = f.result()
                 # TODO: 应当仔细考察get_bar的错误模式，并根据错误模式生成不同类型的数据，便于后续函数判断如何处理
                 if raw_df.empty:
                     raw_df = pd.DataFrame([[futures[f], start]+[np.nan]*9,

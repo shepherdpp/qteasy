@@ -264,7 +264,8 @@ class DataSource():
                 df[col] = np.inf
 
         extracted = df[expected_columns].loc[expected_index]
-        extracted.dropna(how='all', inplace=True)
+        with pd.option_context('mode.use_inf_as_na', True):
+            extracted.dropna(how='all', inplace=True)
 
         return extracted
 
@@ -385,6 +386,7 @@ class DataSource():
                     df[share] = np.inf
             for share, share_data in df.iteritems():
                 # 此处由于不同的股票缺失数据起止时间点不同，因此对每种share分别单独下载其历史数据，此时下载的数据只有一个share，一种类型
+                # 无法充分利用get_price_type_raw_data()的并行下载优势，应改进
                 progress_bar(i, progress_count, 'searching for missing data')
                 missing_data = share_data.iloc[np.isinf(share_data.fillna(np.nan)).values]
                 i += 1
