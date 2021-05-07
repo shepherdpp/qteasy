@@ -6042,7 +6042,7 @@ class TestQT(unittest.TestCase):
         all_shares = stock_basic()
         shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
         print('extracted banking share pool:')
-        print(all_shares.loc[all_shares.ts_code in shares_banking])
+        print(all_shares.loc[all_shares['ts_code'].isin(shares_banking)])
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',

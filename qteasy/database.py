@@ -385,8 +385,16 @@ class DataSource():
                 for share in [share for share in shares if share not in df.columns]:
                     df[share] = np.inf
             for share, share_data in df.iteritems():
-                # 此处由于不同的股票缺失数据起止时间点不同，因此对每种share分别单独下载其历史数据，此时下载的数据只有一个share，一种类型
-                # 无法充分利用get_price_type_raw_data()的并行下载优势，应改进
+                # TODO: 此处由于不同的股票缺失数据起止时间点不同，因此对每种share分别单独下载其历史数据，此时下载的数据只有
+                # TODO: 一个share，一种类型无法充分利用get_price_type_raw_data()的并行下载优势，应改进
+                # TODO: 改进方向：
+                # TODO: 由于实际上获取历史数据的时候，往往所需的数据类型不同、股票代码不同，但是时间起止点是相同的，因此
+                # TODO: 将不同类型、不同股票代码的数据分别下载是没有必要的，get_xx_type_raw_data本身就带了并行下载
+                # TODO: 的功能，按照不同的股票代码和数据类型分别调用上述函数其实是自废武功
+                # TODO: 因此这里应该将所有不同的share都合并到一起，调用一次get_xx_type_raw_data来批量获取数据
+                # TODO: 而且，经过测试，发现并行下载所有数据更不容易产生错误，速度也快得多，同时多下载的冗余数据还有可能
+                # TODO: 覆盖本地数据中存在的小规模错误，因此
+                # TODO: 应该重构本函数，实施完全的批量下载
                 progress_bar(i, progress_count, 'searching for missing data')
                 missing_data = share_data.iloc[np.isinf(share_data.fillna(np.nan)).values]
                 i += 1
