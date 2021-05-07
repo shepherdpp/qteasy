@@ -1096,12 +1096,16 @@ def get_price_type_raw_data(start: str,
             truncated_shares = list_truncate(shares, delay_every)
         else:
             truncated_shares = [shares]
+            # TODO: CRITICAL!
+            # TODO: 一个关键错误！！
+            # TODO: 是用多线程并行下载的数据无法保持其返回的顺序一致，也就是说，返回的数据顺序会被打乱，这里使用list来保存
+            # TODO: 返回的历史数据结果就不合适了，因为在多线程返回的结果中，无法判断哪一组数据是属于哪一个股票代码的，应该
+            # TODO: 使用dict来保存所有的信息，这样才不会搞错数据。
         for shares in truncated_shares:
             futures = {proc_pool.submit(get_bar, share, start, end, asset_type, adj, freq): share for share in
                        shares}
             for f in as_completed(futures):
                 raw_df = f.result()
-                # TODO: 应当仔细考察get_bar的错误模式，并根据错误模式生成不同类型的数据，便于后续函数判断如何处理
                 if raw_df.empty:
                     raw_df = pd.DataFrame([[futures[f], start] + [np.nan] * 9,
                                            [futures[f], end] + [np.nan] * 9],
@@ -1207,6 +1211,11 @@ def get_financial_report_type_raw_data(start: str,
     if parallel > 1:  # only works when number of shares < 50 because currently only 50 downloads per min is allowed
         proc_pool = ProcessPoolExecutor()
         if len(str_to_list(income_fields)) > 2:
+            # TODO: CRITICAL!
+            # TODO: 一个关键错误！！
+            # TODO: 是用多线程并行下载的数据无法保持其返回的顺序一致，也就是说，返回的数据顺序会被打乱，这里使用list来保存
+            # TODO: 返回的历史数据结果就不合适了，因为在多线程返回的结果中，无法判断哪一组数据是属于哪一个股票代码的，应该
+            # TODO: 使用dict来保存所有的信息，这样才不会搞错数据。
             futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for
                        share in shares}
             for f in as_completed(futures):
