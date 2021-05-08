@@ -351,7 +351,9 @@ class DataSource():
 
         :param refresh:
             bool, 是否忽略已有的数据，重新下载最新数据，并覆盖已有的数据
+
         :return:
+            HistoryPanel
         """
         all_dfs = []
         if isinstance(htypes, str):

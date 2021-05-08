@@ -811,18 +811,27 @@ def dataframe_to_hp(df: pd.DataFrame,
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
-def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes=None):
-    """ 将多个dataframe组合成一个HistoryPanel
+def stack_dataframes(dfs: [list, dict], stack_along: str = 'shares', shares=None, htypes=None):
+    """ 将多个dataframe组合成一个HistoryPanel.
+
+    dfs可以是一个dict或一个list，如果是一个list，这个list包含需要组合的所有dataframe，如果是dict，这个dict的values包含
+    所有需要组合的dataframe，dict的key包含每一个dataframe的标签，这个标签可以被用作HistoryPanel的层（shares）或列
+    （htypes）标签。如果dfs是一个list，则组合后的行标签或列标签必须明确给出。
 
     组合的方式有两种，根据stack_along参数的值来确定采用哪一种组合方式：
     stack_along == 'shares'，
-    表示把DataFrame按照股票方式组合，假定每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
-    层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
-    在这种模式下，shares参数必须给出，且shares的数量必须与DataFrame的数量相同
+        表示把DataFrame按照股票方式组合，假定每个DataFrame代表一个share的数据，每一列代表一个htype。组合后的HP对象
+        层数与DataFrame的数量相同，而列数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
+        在这种模式下：
+        如果dfs是一个list，shares参数必须给出，且shares的数量必须与DataFrame的数量相同，作为HP的层标签
+        如果dfs是一个dict，shares参数不必给出，dfs的keys会被用于层标签，如果shares参数给出且符合要求，shares参数将取代dfs的keys参数
+
     stack_along == 'htypes'，
-    表示把DataFrame按照数据类型方式组合，假定每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象
-    列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
-    在这种模式下，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同
+        表示把DataFrame按照数据类型方式组合，假定每个DataFrame代表一个htype的数据，每一列代表一个share。组合后的HP对象
+        列数与DataFrame的数量相同，而层数等于所有DataFrame的列的并集，行标签也为所有DataFrame的行标签的并集
+        在这种模式下，
+        如果dfs是一个list，htypes参数必须给出，且htypes的数量必须与DataFrame的数量相同，作为HP的列标签
+        如果dfs是一个dict，htypes参数不必给出，dfs的keys会被用于列标签，如果htypes参数给出且符合要求，htypes参数将取代dfs的keys参数
 
     :param dfs: type list, containing multiple dataframes
     :param stack_along: type str, 'shares' 或 'htypes'
@@ -830,30 +839,37 @@ def stack_dataframes(dfs: list, stack_along: str = 'shares', shares=None, htypes
     :param htypes:
     :return:
     """
-    assert isinstance(dfs, list), f'TypeError, dfs should be a list of pandas DataFrames, got {type(dfs)} instead.'
+    assert isinstance(dfs, (list, dict)), \
+        f'TypeError, dfs should be a list of or a dict whose values are pandas DataFrames, got {type(dfs)} instead.'
     assert stack_along in ['shares', 'htypes'], \
         f'InputError, valid input for stack_along can only be \'shaers\' or \'htypes\''
     combined_index = []
     combined_shares = []
     combined_htypes = []
     if stack_along == 'shares':
-        assert shares is not None
-        assert htypes is None, \
-            f'ValueError, Only shares should be given if the dataframes shall be stacked along axis shares'
-        assert isinstance(shares, (list, str))
+        assert (shares is not None) or (isinstance(dfs, dict)), \
+            f'shares should be given if the dataframes are to be stacked along shares and they are not in a dict'
+        assert isinstance(shares, (list, str)) or (isinstance(dfs, dict))
         if isinstance(shares, str):
             shares = str_to_list(shares)
+        if isinstance(dfs, dict) and shares is None:
+            shares = dfs.keys()
         assert len(shares) == len(dfs)
         combined_shares.extend(shares)
     else:
-        assert htypes is not None
-        assert shares is None, \
-            f'ValueError, Only htypes should be given if the dataframes shall be stacked along axis htypes'
-        assert isinstance(htypes, (list, str))
+        assert (htypes is not None) or (isinstance(dfs, dict)), \
+            f'htypes should be given if the dataframes are to be stacked along htypes and they are not in a dict'
+        assert isinstance(htypes, (list, str)) or (isinstance(dfs, dict))
         if isinstance(htypes, str):
             htypes = str_to_list(htypes)
+        if isinstance(dfs, dict) and htypes is None:
+            htypes = dfs.keys()
         assert len(htypes) == len(dfs)
         combined_htypes.extend(htypes)
+
+    if isinstance(dfs, dict):
+        dfs = dfs.values()
+
     for df in dfs:
         assert isinstance(df, pd.DataFrame), \
             f'InputError, dfs should be a list of pandas DataFrame, got {type(df)} instead.'
@@ -936,7 +952,7 @@ def get_history_panel(start,
                             balance_type_data,
                             cashflow_type_data,
                             indicator_type_data]
-    dataframes_to_stack = []
+    dataframes_to_stack = {}
     if chanel == 'local':
         from .database import DataSource
         ds = DataSource()
@@ -956,7 +972,7 @@ def get_history_panel(start,
     if chanel == 'online':
         result_hp = HistoryPanel()
         if len(price_type_data) > 0:
-            dataframes_to_stack.extend(get_price_type_raw_data(start=start,
+            dataframes_to_stack.update(get_price_type_raw_data(start=start,
                                                                end=end,
                                                                freq=freq,
                                                                shares=shares,
@@ -969,8 +985,7 @@ def get_history_panel(start,
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
-                                                              stack_along='shares',
-                                                              shares=shares),
+                                                              stack_along='shares'),
                                        same_shares=True)
 
         for report_type in [t for t in finance_report_types if len(t) > 0]:
@@ -993,19 +1008,17 @@ def get_history_panel(start,
             for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):
                 if len(dfs) > 0:
                     result_hp = result_hp.join(other=stack_dataframes(dfs=dfs,
-                                                                      stack_along='shares',
-                                                                      shares=shares),
+                                                                      stack_along='shares'),
                                                same_shares=True)
 
         if len(composite_type_data) > 0:
-            dataframes_to_stack = get_composite_type_raw_data(start=start,
-                                                              end=end,
-                                                              shares=shares,
-                                                              htypes=composite_type_data,
-                                                              chanel=chanel)
+            dataframes_to_stack.update(get_composite_type_raw_data(start=start,
+                                                                   end=end,
+                                                                   shares=shares,
+                                                                   htypes=composite_type_data,
+                                                                   chanel=chanel))
             result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
-                                                              stack_along='shares',
-                                                              shares=str_to_list(shares)),
+                                                              stack_along='shares'),
                                        same_shares=True)
 
         return result_hp
@@ -1063,6 +1076,7 @@ def get_price_type_raw_data(start: str,
         在进度条中显示的信息文本
 
     :return:
+        dict, 一个包含所有下载的DataFrame的字典，字典的key是shares标签
     """
     if htypes is None:
         htypes = PRICE_TYPE_DATA
@@ -1070,7 +1084,8 @@ def get_price_type_raw_data(start: str,
         htypes = str_to_list(input_string=htypes, sep_char=',')
     if isinstance(shares, str):
         shares = str_to_list(input_string=shares, sep_char=',')
-    df_per_share = []
+    # 使用一个字典存储所有下载的股票数据
+    df_per_share = {}
     if parallel is None:
         parallel = 16
     if adj is None:
@@ -1110,7 +1125,7 @@ def get_price_type_raw_data(start: str,
                                                    "pct_chg", "vol", "amount"])
                     warn(f'historical data {htypes} for {futures[f]} does not exist from {start} to '
                          f'{end} in frequency {freq}', category=UserWarning)
-                df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == futures[f])])
+                df_per_share[futures[f]] = raw_df.loc[np.where(raw_df.ts_code == futures[f])]
 
                 i += 1
                 if progress:
@@ -1133,7 +1148,7 @@ def get_price_type_raw_data(start: str,
                                                "pct_chg", "vol", "amount"])
                 warn(f'historical data {htypes} for {share} does not exist from {start} to '
                      f'{end} in frequency {freq}', category=UserWarning)
-            df_per_share.append(raw_df.loc[np.where(raw_df.ts_code == share)])
+            df_per_share[share] = raw_df.loc[np.where(raw_df.ts_code == share)]
 
             i += 1
             if progress:
@@ -1141,7 +1156,7 @@ def get_price_type_raw_data(start: str,
 
     columns_to_remove = list(set(PRICE_TYPE_DATA) - set(htypes))
     if len(df_per_share) > 0:
-        for df in df_per_share:
+        for df in df_per_share.values():
             df.index = pd.to_datetime(df.trade_date).sort_index()
             df.drop(columns=columns_to_remove, inplace=True)
             df.drop(columns=['ts_code', 'trade_date'], inplace=True)
