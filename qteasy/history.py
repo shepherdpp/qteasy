@@ -704,10 +704,7 @@ def hdf_to_hp():
 def hp_join(*historypanels):
     """ 当元组*historypanels不是None，且内容全都是HistoryPanel对象时，将所有的HistoryPanel对象连接成一个HistoryPanel
 
-    :param same_shares:
-    :param same_htypes:
-    :param same_hdates:
-    :param *historypanels: tuple,
+    :param historypanels: 一个或多个HistoryPanel对象，他们将被组合成一个包含他们所有数据的HistoryPanel
     :return:
     """
     assert all(isinstance(hp, HistoryPanel) for hp in historypanels), \
@@ -1014,7 +1011,6 @@ def get_history_panel(start,
         return result_hp
 
 
-# TODO: dynamically group shares thus data downloading can be less repetitive
 def get_price_type_raw_data(start: str,
                             end: str,
                             freq: str,
