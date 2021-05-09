@@ -621,6 +621,7 @@ class HistoryPanel():
             :param inf_as_na:
                             Boolean，是否将inf值当成NaN值一同去掉，当dropna为False时无效
             :return:
+                pandas.DataFrame
 
         """
         if self.is_empty:
@@ -658,15 +659,34 @@ class HistoryPanel():
 
         return res_df
 
-    # TODO: implement this method
-    def to_df_dict(self, by):
+    def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
+
+        :param by: str, 'share' 或 'shares' 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
+                        它的keys是股票的代码，每个股票代码一个DataFrame
+                        'htype' 或 'htypes' 将HistoryPanel中的数据切成若干片，每一片转化成一个DataFrame，
+                        它的keys是历史数据类型，每种类型一个DataFrame
 
         :return:
             dict
         """
-        raise NotImplementedError
+        assert isinstance(by, str)
+        assert by.lower() in ['share', 'shares', 'htype', 'htypes']
+
+        df_dict = {}
+        if self.is_empty:
+            return df_dict
+
+        if by.lower() in ['share', 'shares']:
+            for share in self.shares:
+                df_dict[share] = self.to_dataframe(share=share)
+            return df_dict
+
+        if by.lower() in ['htype', 'htypes']:
+            for htype in self.htypes:
+                df_dict[htype] = self.to_dataframe(htype=htype)
+            return df_dict
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):

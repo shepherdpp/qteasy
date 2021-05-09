@@ -6,22 +6,21 @@ import numpy as np
 from numpy import int64
 import itertools
 import datetime
-from qteasy.tafuncs import sma
+
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
 from qteasy.utilfuncs import next_market_trade_day
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
-from qteasy.core import apply_loop, _create_mock_data
+from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator
 from qteasy.history import stack_dataframes
-from qteasy.tsfuncs import income, indicators, name_change, stock_company, get_bar
+from qteasy.tsfuncs import income, indicators, name_change, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
-from qteasy.tsfuncs import fund_net_value
 
-from qteasy.evaluate import evaluate, eval_alpha, eval_benchmark, eval_beta, eval_fv
-from qteasy.evaluate import eval_info_ratio, eval_max_drawdown, eval_operation, eval_sharp
+from qteasy.evaluate import eval_alpha, eval_benchmark, eval_beta, eval_fv
+from qteasy.evaluate import eval_info_ratio, eval_max_drawdown, eval_sharp
 from qteasy.evaluate import eval_volatility
 
 from qteasy.tafuncs import bbands, dema, ema, ht, kama, ma, mama, mavp, mid_point
@@ -3697,6 +3696,27 @@ class TestHistoryPanel(unittest.TestCase):
         print(f'Raises ValueError when both or none parameter is given')
         self.assertRaises(KeyError, self.hp.to_dataframe)
         self.assertRaises(KeyError, self.hp.to_dataframe, share='000100', htype='close')
+
+    def test_to_df_dict(self):
+        """测试HistoryPanel公有方法to_df_dict"""
+
+        print('test convert history panel slice by share')
+        df_dict = self.hp.to_df_dict('share')
+        self.assertEqual(self.hp.shares, list(df_dict.keys()))
+        df_dict = self.hp.to_df_dict()
+        self.assertEqual(self.hp.shares, list(df_dict.keys()))
+
+        print('test convert historypanel slice by htype ')
+        df_dict = self.hp.to_df_dict('htype')
+        self.assertEqual(self.hp.htypes, list(df_dict.keys()))
+
+        print('test raise assertion error')
+        self.assertRaises(AssertionError, self.hp.to_df_dict, by='random text')
+        self.assertRaises(AssertionError, self.hp.to_df_dict, by=3)
+
+        print('test empty hp')
+        df_dict = qt.HistoryPanel().to_df_dict('share')
+        self.assertEqual(df_dict, {})
 
     def test_stack_dataframes(self):
         print('test stack dataframes in a list')

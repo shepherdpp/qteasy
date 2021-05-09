@@ -301,7 +301,7 @@
       <recent name="$PROJECT_DIR$/qteasy/operator" />
     </key>
   </component>
-  <component name="RunManager" selected="Python tests.Unittests for test.TestHistoryPanel">
+  <component name="RunManager" selected="Python tests.Unittests for test.TestHistoryPanel.test_to_df_dict">
     <configuration default="true" type="PyLettuceRunConfigurationType" factoryName="Lettuce">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -443,21 +443,6 @@
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
-    <configuration name="Unittests for test.TestHistoryPanel.test_get_financial_report_type_raw_data" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
-      <module name="qteasy" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;test.TestHistoryPanel.test_get_financial_report_type_raw_data&quot;" />
-      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
-      <method v="2" />
-    </configuration>
     <configuration name="Unittests for test.TestHistoryPanel.test_to_dataframe" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
       <module name="qteasy" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -470,6 +455,21 @@
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="_new_additionalArguments" value="&quot;&quot;" />
       <option name="_new_target" value="&quot;test.TestHistoryPanel.test_to_dataframe&quot;" />
+      <option name="_new_targetType" value="&quot;PYTHON&quot;" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Unittests for test.TestHistoryPanel.test_to_df_dict" type="tests" factoryName="Unittests" temporary="true" nameIsGenerated="true">
+      <module name="qteasy" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="_new_additionalArguments" value="&quot;&quot;" />
+      <option name="_new_target" value="&quot;test.TestHistoryPanel.test_to_df_dict&quot;" />
       <option name="_new_targetType" value="&quot;PYTHON&quot;" />
       <method v="2" />
     </configuration>
@@ -543,18 +543,18 @@
     <list>
       <item itemvalue="Python tests.Nosetests for /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/test.py" />
       <item itemvalue="Python tests.Unittests for test.TestDataBase.test_get_and_update_data" />
-      <item itemvalue="Python tests.Unittests for test.TestHistoryPanel.test_get_financial_report_type_raw_data" />
       <item itemvalue="Python tests.Unittests for test.TestDataBase" />
       <item itemvalue="Python tests.Unittests for test.TestHistoryPanel.test_to_dataframe" />
       <item itemvalue="Python tests.Unittests for test.TestHistoryPanel" />
+      <item itemvalue="Python tests.Unittests for test.TestHistoryPanel.test_to_df_dict" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python tests.Unittests for test.TestHistoryPanel.test_to_df_dict" />
         <item itemvalue="Python tests.Unittests for test.TestHistoryPanel" />
         <item itemvalue="Python tests.Unittests for test.TestHistoryPanel.test_to_dataframe" />
         <item itemvalue="Python tests.Unittests for test.TestDataBase.test_get_and_update_data" />
         <item itemvalue="Python tests.Unittests for test.TestDataBase" />
-        <item itemvalue="Python tests.Unittests for test.TestHistoryPanel.test_get_financial_report_type_raw_data" />
       </list>
     </recent_temporary>
   </component>
@@ -666,7 +666,7 @@
       <workItem from="1620317415699" duration="1166000" />
       <workItem from="1620366550440" duration="412000" />
       <workItem from="1620399970051" duration="13347000" />
-      <workItem from="1620484595883" duration="30728000" />
+      <workItem from="1620484595883" duration="34828000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>
@@ -890,6 +890,7 @@
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_run_mode_0.coverage" NAME="Unittests for test.TestQT.test_run_mode_0 Coverage Results" MODIFIED="1618325540144" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestOperator.coverage" NAME="Unittests for test.TestOperator Coverage Results" MODIFIED="1619357849117" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestVisual_test_indicators.coverage" NAME="Unittests for test.TestVisual.test_indicators Coverage Results" MODIFIED="1618242284820" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestHistoryPanel_test_to_df_dict.coverage" NAME="Unittests for test.TestHistoryPanel.test_to_df_dict Coverage Results" MODIFIED="1620569241206" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestCoreSubFuncs.coverage" NAME="Unittests for test.TestCoreSubFuncs Coverage Results" MODIFIED="1618622195692" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestOperator_test_operator_generate.coverage" NAME="Unittests for test.TestOperator.test_operator_generate Coverage Results" MODIFIED="1618374972315" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/qteasy$Unittests_for_test_TestQT_test_multi_share_mode_1.coverage" NAME="Unittests for test.TestQT.test_multi_share_mode_1 Coverage Results" MODIFIED="1620018242004" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
