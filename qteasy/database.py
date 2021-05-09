@@ -244,6 +244,19 @@ class DataSource():
         self.overwrite_file(file_name, original_df)
 
     def extract_data(self, file_name, shares, start, end, freq: str = 'd'):
+        """ 从文件中读取数据片段，指定股票代码、开始日期、结束日期和数据频率（数据频率必须低于文件所含数据的频率，否则会缺失数据
+
+            数据中若存在NaN值，会原样返回
+
+        :param file_name:   文件名
+        :param shares:     需要读取的数据片段包含的股票代码
+        :param start:      读取数据的开始日期时间
+        :param end:        读取数据的结束日期时间
+        :param freq:       读取数据的时间频率，该频率应该低于文件中所存储的数据的时间频率，例如
+                                可以从频率为'd'的文件中读取'w'或者'q'的数据，反之则会出现缺失数据
+        :return:
+            DataFrame:     包含所需数据片段的DataFrame，行标签为日期时间，列标签为股票代码
+        """
         expected_index = pd.date_range(start=start, end=end, freq=freq)
         expected_columns = shares
 
@@ -264,8 +277,6 @@ class DataSource():
                 df[col] = np.inf
 
         extracted = df[expected_columns].loc[expected_index]
-        with pd.option_context('mode.use_inf_as_na', True):
-            extracted.dropna(how='all', inplace=True)
 
         return extracted
 
@@ -371,6 +382,10 @@ class DataSource():
             asset_type = 'E'
         if adj is None:
             adj = 'none'
+        if delay is None:
+            delay = 0
+        if progress is None:
+            progress = True
 
         i = 0
         progress_count = len(htypes) * len(shares) + len(htypes)
@@ -389,69 +404,48 @@ class DataSource():
             progress_bar(i, progress_count, 'extracting local file')
             if self.file_exists(file_name) and (not refresh):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
+                df.dropna(how='all', inplace=True)
             else:
                 df = pd.DataFrame(np.inf, index=pd.date_range(start=start, end=end, freq=freq), columns=shares)
                 for share in [share for share in shares if share not in df.columns]:
                     df[share] = np.inf
-            for share, share_data in df.iteritems():
-                # TODO: 此处由于不同的股票缺失数据起止时间点不同，因此对每种share分别单独下载其历史数据，此时下载的数据只有
-                # TODO: 一个share，一种类型无法充分利用get_price_type_raw_data()的并行下载优势，应改进
-                # TODO: 改进方向：
-                # TODO: 由于实际上获取历史数据的时候，往往所需的数据类型不同、股票代码不同，但是时间起止点是相同的，因此
-                # TODO: 将不同类型、不同股票代码的数据分别下载是没有必要的，get_xx_type_raw_data本身就带了并行下载
-                # TODO: 的功能，按照不同的股票代码和数据类型分别调用上述函数其实是自废武功
-                # TODO: 因此这里应该将所有不同的share都合并到一起，调用一次get_xx_type_raw_data来批量获取数据
-                # TODO: 而且，经过测试，发现并行下载所有数据更不容易产生错误，速度也快得多，同时多下载的冗余数据还有可能
-                # TODO: 覆盖本地数据中存在的小规模错误，因此
-                # TODO: 应该重构本函数，实施完全的批量下载
-                progress_bar(i, progress_count, 'searching for missing data')
-                missing_data = share_data.iloc[np.isinf(share_data.fillna(np.nan)).values]
-                i += 1
-                progress_bar(i, progress_count, 'downloading missing data')
-                if missing_data.count() > 0:
-                    data_downloaded = True
-                    missing_data_start = regulate_date_format(missing_data.index[0])
-                    missing_data_end = regulate_date_format(missing_data.index[-1])
-                    start = missing_data.index[0]
-                    end = missing_data.index[-1]
-                    if htype in PRICE_TYPE_DATA:
-                        online_data = get_price_type_raw_data(start=missing_data_start,
-                                                              end=missing_data_end,
-                                                              freq=freq,
-                                                              shares=share,
-                                                              htypes=htype,
-                                                              asset_type=asset_type,
-                                                              adj=adj,
-                                                              parallel=parallel,
-                                                              delay=0,
-                                                              delay_every=delay_every,
-                                                              progress=False)
-
-                    elif htype in CASHFLOW_TYPE_DATA + BALANCE_TYPE_DATA + INCOME_TYPE_DATA + INDICATOR_TYPE_DATA:
-                        inc, ind, blc, csh = get_financial_report_type_raw_data(start=missing_data_start,
-                                                                                end=missing_data_end,
-                                                                                shares=share,
-                                                                                htypes=htype,
-                                                                                parallel=parallel,
-                                                                                delay=0,
-                                                                                delay_every=delay_every,
-                                                                                progress=False)
-                        online_data = (inc + ind + blc + csh)
-                    else:
-                        online_data = None
-
-                    # 按照原来的思路，下面的代码是将下载的数据（可能是稀疏数据）一个个写入到目标区域中，再将目标区域中的
-                    # np.inf逐个改写为np.nan。但是其实粗暴一点的做法是直接把下载的数据reindex，然后整体覆盖目标区域
-                    # 就可以了。
-                    # 这里是整体覆盖的代码：
-                    if len(online_data) != 0:
-                        if not online_data[0].empty:
-                            # 注意，必须确保输出数据中所有的np.inf都被覆盖掉，因为如果输出数据中含有np.inf，将会影响到
-                            # 非交易日的判断（目前非交易日是通过所有股价全部是np.nan来判断的），导致非交易日数据被输入到
-                            # op.generate中，导致产生大量异常交易信号和异常数据
-                            share_data[start:end] = online_data[0].reindex(share_data[start:end].index)[htype]
-                        else:
-                            print(f'Oops! historical data {htype} for {share} is not downloaded!')
+            # 一次性下载所有缺数据的股票的历史数据
+            # 找到所有存在inf值的shares
+            shares_with_inf = df.columns[np.where(np.isinf(df).any())]
+            if len(shares_with_inf) > 0:
+                online_data = {}
+                data_downloaded = True
+                if htype in PRICE_TYPE_DATA:
+                    # get price type data online
+                    online_data = get_price_type_raw_data(start=start,
+                                                          end=end,
+                                                          freq=freq,
+                                                          shares=shares_with_inf,
+                                                          htypes=htype,
+                                                          asset_type=asset_type,
+                                                          adj=adj,
+                                                          parallel=parallel,
+                                                          delay=delay,
+                                                          delay_every=delay_every,
+                                                          progress=progress,
+                                                          prgrs_txt=f'Downloading {htype} data')
+                if htype in CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA:
+                    # download financial report type data
+                    inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
+                                                                            end=end,
+                                                                            shares=shares_with_inf,
+                                                                            htypes=htype,
+                                                                            parallel=parallel,
+                                                                            delay=delay,
+                                                                            delay_every=delay_every,
+                                                                            progress=progress,
+                                                                            prgrs_txt=f'Downloading {htype} data')
+                    online_data = [d for d in [inc, ind, blc, csh] if len(d) > 0][0]
+                # 现在所有所需的数据都已经下载下来了。且存储在一个dict中，且keys为股票代码
+                # 下面循环把所有下载下来的online_data 覆盖到下载下来的df中
+                for share_code in online_data:
+                    if not online_data[share_code].empty:
+                        df[share_code] = online_data[share_code]
 
             progress_bar(i, progress_count, 'Writing data to local files')
             if data_downloaded:
@@ -461,6 +455,8 @@ class DataSource():
                     self.new_file(file_name, df)
             progress_bar(i, progress_count, 'Extracting data')
             df = self.extract_data(file_name, shares=shares, start=start, end=end)
+            with pd.option_context('mode.use_inf_as_na', True):
+                df.dropna(how='all', inplace=True)
             all_dfs.append(df)
 
         hp = stack_dataframes(dfs=all_dfs, stack_along='htypes', htypes=htypes)

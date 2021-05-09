@@ -3725,9 +3725,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df3.rename(index=pd.to_datetime))
 
         hp1 = stack_dataframes([df1, df2, df3], stack_along='shares',
-                                  shares=['000100', '000200', '000300'])
+                               shares=['000100', '000200', '000300'])
         hp2 = stack_dataframes([df1, df2, df3], stack_along='shares',
-                                  shares='000100, 000300, 000200')
+                               shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
         self.assertEqual(hp1.htypes, ['a', 'b', 'c', 'd'])
@@ -3738,9 +3738,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = stack_dataframes([df1, df2, df3], stack_along='htypes',
-                                  htypes=['close', 'high', 'low'])
+                               htypes=['close', 'high', 'low'])
         hp4 = stack_dataframes([df1, df2, df3], stack_along='htypes',
-                                  htypes='open, close, high')
+                               htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
         self.assertEqual(hp3.htypes, ['close', 'high', 'low'])
@@ -3804,10 +3804,10 @@ class TestHistoryPanel(unittest.TestCase):
         print(df3.rename(index=pd.to_datetime))
 
         hp1 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                                  stack_along='shares')
+                               stack_along='shares')
         hp2 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                                  stack_along='shares',
-                                  shares='000100, 000300, 000200')
+                               stack_along='shares',
+                               shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
         self.assertEqual(hp1.htypes, ['a', 'b', 'c', 'd'])
@@ -3818,10 +3818,10 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = stack_dataframes(dfs={'close': df1, 'high': df2, 'low': df3},
-                                  stack_along='htypes')
+                               stack_along='htypes')
         hp4 = stack_dataframes(dfs={'close': df1, 'low': df2, 'high': df3},
-                                  stack_along='htypes',
-                                  htypes='open, close, high')
+                               stack_along='htypes',
+                               htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
         self.assertEqual(hp3.htypes, ['close', 'high', 'low'])
@@ -3860,26 +3860,26 @@ class TestHistoryPanel(unittest.TestCase):
         htypes = 'open, high, low, close'
 
         target_price_000039 = [[9.45, 9.49, 9.12, 9.17],
-                               [9.46, 9.56, 9.4 , 9.5 ],
-                               [9.7 , 9.76, 9.5 , 9.51],
-                               [9.7 , 9.75, 9.7 , 9.72],
-                               [9.73, 9.77, 9.7 , 9.73],
+                               [9.46, 9.56, 9.4, 9.5],
+                               [9.7, 9.76, 9.5, 9.51],
+                               [9.7, 9.75, 9.7, 9.72],
+                               [9.73, 9.77, 9.7, 9.73],
                                [9.83, 9.85, 9.71, 9.72],
                                [9.85, 9.85, 9.75, 9.79],
                                [9.96, 9.96, 9.83, 9.86],
                                [9.87, 9.94, 9.77, 9.93],
-                               [9.82, 9.9 , 9.76, 9.87],
-                               [9.8 , 9.85, 9.77, 9.82],
+                               [9.82, 9.9, 9.76, 9.87],
+                               [9.8, 9.85, 9.77, 9.82],
                                [9.84, 9.86, 9.71, 9.72],
                                [9.83, 9.93, 9.81, 9.86],
-                               [9.7 , 9.87, 9.7 , 9.82],
+                               [9.7, 9.87, 9.7, 9.82],
                                [9.83, 9.86, 9.69, 9.79],
-                               [9.8 , 9.94, 9.8 , 9.86]]
+                               [9.8, 9.94, 9.8, 9.86]]
 
         target_price_600748 = [[5.68, 5.68, 5.32, 5.37],
                                [5.62, 5.68, 5.46, 5.65],
                                [5.72, 5.72, 5.61, 5.62],
-                               [5.76, 5.77, 5.6 , 5.73],
+                               [5.76, 5.77, 5.6, 5.73],
                                [5.78, 5.84, 5.73, 5.75],
                                [5.89, 5.91, 5.76, 5.77],
                                [6.03, 6.04, 5.87, 5.89],
@@ -3887,26 +3887,26 @@ class TestHistoryPanel(unittest.TestCase):
                                [5.96, 5.98, 5.88, 5.97],
                                [6.04, 6.06, 5.95, 5.96],
                                [5.98, 6.04, 5.96, 6.03],
-                               [6.1 , 6.11, 5.89, 5.94],
-                               [6.02, 6.12, 6.  , 6.1 ],
+                               [6.1, 6.11, 5.89, 5.94],
+                               [6.02, 6.12, 6., 6.1],
                                [5.96, 6.05, 5.88, 6.01],
                                [6.03, 6.03, 5.95, 5.99],
                                [6.02, 6.12, 5.99, 5.99]]
 
         target_price_000040 = [[3.63, 3.83, 3.63, 3.65],
                                [3.99, 4.07, 3.97, 4.03],
-                               [4.1 , 4.11, 3.93, 3.95],
+                               [4.1, 4.11, 3.93, 3.95],
                                [4.12, 4.13, 4.06, 4.11],
                                [4.13, 4.19, 4.07, 4.13],
                                [4.27, 4.28, 4.11, 4.12],
                                [4.37, 4.38, 4.25, 4.29],
-                               [4.34, 4.5 , 4.32, 4.41],
-                               [4.28, 4.35, 4.2 , 4.34],
+                               [4.34, 4.5, 4.32, 4.41],
+                               [4.28, 4.35, 4.2, 4.34],
                                [4.41, 4.43, 4.29, 4.31],
                                [4.42, 4.45, 4.36, 4.41],
                                [4.51, 4.56, 4.33, 4.35],
                                [4.35, 4.55, 4.31, 4.55],
-                               [4.3 , 4.41, 4.22, 4.36],
+                               [4.3, 4.41, 4.22, 4.36],
                                [4.27, 4.44, 4.23, 4.34],
                                [4.23, 4.27, 4.18, 4.25]]
 
@@ -3939,26 +3939,26 @@ class TestHistoryPanel(unittest.TestCase):
         htypes = 'eps,basic_eps,diluted_eps,total_revenue,revenue,total_share,' \
                  'cap_rese,undistr_porfit,surplus_rese,net_profit'
 
-        target_eps_000039 = [[ 1.41  ],
-                             [ 0.1398],
+        target_eps_000039 = [[1.41],
+                             [0.1398],
                              [-0.0841],
                              [-0.1929],
-                             [ 0.37  ],
-                             [ 0.1357],
-                             [ 0.1618],
-                             [ 0.1191],
-                             [ 1.11  ],
-                             [ 0.759 ],
-                             [ 0.3061],
-                             [ 0.1409],
-                             [ 0.81  ],
-                             [ 0.4187],
-                             [ 0.2554],
-                             [ 0.1624],
-                             [ 0.14  ],
+                             [0.37],
+                             [0.1357],
+                             [0.1618],
+                             [0.1191],
+                             [1.11],
+                             [0.759],
+                             [0.3061],
+                             [0.1409],
+                             [0.81],
+                             [0.4187],
+                             [0.2554],
+                             [0.1624],
+                             [0.14],
                              [-0.0898],
                              [-0.1444],
-                             [ 0.1291]]
+                             [0.1291]]
         target_eps_600748 = [[0.41],
                              [0.22],
                              [0.22],
@@ -3980,46 +3980,46 @@ class TestHistoryPanel(unittest.TestCase):
                              [0.14],
                              [0.07]]
         target_eps_000040 = [[-0.6866],
-                             [-0.134 ],
-                             [-0.189 ],
-                             [-0.036 ],
+                             [-0.134],
+                             [-0.189],
+                             [-0.036],
                              [-0.6435],
-                             [ 0.05  ],
-                             [ 0.062 ],
-                             [ 0.0125],
-                             [ 0.8282],
-                             [ 1.05  ],
-                             [ 0.985 ],
-                             [ 0.811 ],
-                             [ 0.41  ],
-                             [ 0.242 ],
-                             [ 0.113 ],
-                             [ 0.027 ],
-                             [ 0.19  ],
-                             [ 0.17  ],
-                             [ 0.17  ],
-                             [ 0.064 ]]
+                             [0.05],
+                             [0.062],
+                             [0.0125],
+                             [0.8282],
+                             [1.05],
+                             [0.985],
+                             [0.811],
+                             [0.41],
+                             [0.242],
+                             [0.113],
+                             [0.027],
+                             [0.19],
+                             [0.17],
+                             [0.17],
+                             [0.064]]
 
-        target_basic_eps_000039 = [[ 1.3980000e-01,  1.3980000e-01,  6.3591954e+10,  6.3591954e+10],
-                                   [-8.4100000e-02, -8.4100000e-02,  3.9431807e+10,  3.9431807e+10],
-                                   [-1.9290000e-01, -1.9290000e-01,  1.5852177e+10,  1.5852177e+10],
-                                   [ 3.7000000e-01,  3.7000000e-01,  8.5815341e+10,  8.5815341e+10],
-                                   [ 1.3570000e-01,  1.3430000e-01,  6.1660271e+10,  6.1660271e+10],
-                                   [ 1.6180000e-01,  1.6040000e-01,  4.2717729e+10,  4.2717729e+10],
-                                   [ 1.1910000e-01,  1.1900000e-01,  1.9099547e+10,  1.9099547e+10],
-                                   [ 1.1100000e+00,  1.1000000e+00,  9.3497622e+10,  9.3497622e+10],
-                                   [ 7.5900000e-01,  7.5610000e-01,  6.6906147e+10,  6.6906147e+10],
-                                   [ 3.0610000e-01,  3.0380000e-01,  4.3560398e+10,  4.3560398e+10],
-                                   [ 1.4090000e-01,  1.4050000e-01,  1.9253639e+10,  1.9253639e+10],
-                                   [ 8.1000000e-01,  8.1000000e-01,  7.6299930e+10,  7.6299930e+10],
-                                   [ 4.1870000e-01,  4.1710000e-01,  5.3962706e+10,  5.3962706e+10],
-                                   [ 2.5540000e-01,  2.5440000e-01,  3.3387152e+10,  3.3387152e+10],
-                                   [ 1.6240000e-01,  1.6200000e-01,  1.4675987e+10,  1.4675987e+10],
-                                   [ 1.4000000e-01,  1.4000000e-01,  5.1111652e+10,  5.1111652e+10],
-                                   [-8.9800000e-02, -8.9800000e-02,  3.4982614e+10,  3.4982614e+10],
-                                   [-1.4440000e-01, -1.4440000e-01,  2.3542843e+10,  2.3542843e+10],
-                                   [ 1.2910000e-01,  1.2860000e-01,  1.0412416e+10,  1.0412416e+10],
-                                   [ 7.2000000e-01,  7.1000000e-01,  5.8685804e+10,  5.8685804e+10]]
+        target_basic_eps_000039 = [[1.3980000e-01, 1.3980000e-01, 6.3591954e+10, 6.3591954e+10],
+                                   [-8.4100000e-02, -8.4100000e-02, 3.9431807e+10, 3.9431807e+10],
+                                   [-1.9290000e-01, -1.9290000e-01, 1.5852177e+10, 1.5852177e+10],
+                                   [3.7000000e-01, 3.7000000e-01, 8.5815341e+10, 8.5815341e+10],
+                                   [1.3570000e-01, 1.3430000e-01, 6.1660271e+10, 6.1660271e+10],
+                                   [1.6180000e-01, 1.6040000e-01, 4.2717729e+10, 4.2717729e+10],
+                                   [1.1910000e-01, 1.1900000e-01, 1.9099547e+10, 1.9099547e+10],
+                                   [1.1100000e+00, 1.1000000e+00, 9.3497622e+10, 9.3497622e+10],
+                                   [7.5900000e-01, 7.5610000e-01, 6.6906147e+10, 6.6906147e+10],
+                                   [3.0610000e-01, 3.0380000e-01, 4.3560398e+10, 4.3560398e+10],
+                                   [1.4090000e-01, 1.4050000e-01, 1.9253639e+10, 1.9253639e+10],
+                                   [8.1000000e-01, 8.1000000e-01, 7.6299930e+10, 7.6299930e+10],
+                                   [4.1870000e-01, 4.1710000e-01, 5.3962706e+10, 5.3962706e+10],
+                                   [2.5540000e-01, 2.5440000e-01, 3.3387152e+10, 3.3387152e+10],
+                                   [1.6240000e-01, 1.6200000e-01, 1.4675987e+10, 1.4675987e+10],
+                                   [1.4000000e-01, 1.4000000e-01, 5.1111652e+10, 5.1111652e+10],
+                                   [-8.9800000e-02, -8.9800000e-02, 3.4982614e+10, 3.4982614e+10],
+                                   [-1.4440000e-01, -1.4440000e-01, 2.3542843e+10, 2.3542843e+10],
+                                   [1.2910000e-01, 1.2860000e-01, 1.0412416e+10, 1.0412416e+10],
+                                   [7.2000000e-01, 7.1000000e-01, 5.8685804e+10, 5.8685804e+10]]
         target_basic_eps_600748 = [[2.20000000e-01, 2.20000000e-01, 5.29423397e+09, 5.29423397e+09],
                                    [2.20000000e-01, 2.20000000e-01, 4.49275653e+09, 4.49275653e+09],
                                    [9.00000000e-02, 9.00000000e-02, 1.59067065e+09, 1.59067065e+09],
@@ -4040,26 +4040,26 @@ class TestHistoryPanel(unittest.TestCase):
                                    [1.40000000e-01, 1.40000000e-01, 2.22563924e+09, 2.22563924e+09],
                                    [7.00000000e-02, 7.00000000e-02, 8.96647052e+08, 8.96647052e+08],
                                    [4.80000000e-01, 4.80000000e-01, 6.61917508e+09, 6.61917508e+09]]
-        target_basic_eps_000040 = [[-1.34000000e-01, -1.34000000e-01,  2.50438755e+09, 2.50438755e+09],
-                                   [-1.89000000e-01, -1.89000000e-01,  1.32692347e+09, 1.32692347e+09],
-                                   [-3.60000000e-02, -3.60000000e-02,  5.59073338e+08, 5.59073338e+08],
-                                   [-6.43700000e-01, -6.43700000e-01,  6.80576162e+09, 6.80576162e+09],
-                                   [ 5.00000000e-02,  5.00000000e-02,  6.38891620e+09, 6.38891620e+09],
-                                   [ 6.20000000e-02,  6.20000000e-02,  5.23267082e+09, 5.23267082e+09],
-                                   [ 1.25000000e-02,  1.25000000e-02,  2.22420874e+09, 2.22420874e+09],
-                                   [ 8.30000000e-01,  8.30000000e-01,  8.67628947e+09, 8.67628947e+09],
-                                   [ 1.05000000e+00,  1.05000000e+00,  5.29431716e+09, 5.29431716e+09],
-                                   [ 9.85000000e-01,  9.85000000e-01,  3.56822382e+09, 3.56822382e+09],
-                                   [ 8.11000000e-01,  8.11000000e-01,  1.06613439e+09, 1.06613439e+09],
-                                   [ 4.10000000e-01,  4.10000000e-01,  8.13102532e+09, 8.13102532e+09],
-                                   [ 2.42000000e-01,  2.42000000e-01,  5.17971521e+09, 5.17971521e+09],
-                                   [ 1.13000000e-01,  1.13000000e-01,  3.21704120e+09, 3.21704120e+09],
-                                   [ 2.70000000e-02,  2.70000000e-02,  8.41966738e+08, 8.24272235e+08],
-                                   [ 1.90000000e-01,  1.90000000e-01,  3.77350171e+09, 3.77350171e+09],
-                                   [ 1.70000000e-01,  1.70000000e-01,  2.38643892e+09, 2.38643892e+09],
-                                   [ 1.70000000e-01,  1.70000000e-01,  1.29127117e+09, 1.29127117e+09],
-                                   [ 6.40000000e-02,  6.40000000e-02,  6.03256858e+08, 6.03256858e+08],
-                                   [ 1.30000000e-01,  1.30000000e-01,  1.66572918e+09, 1.66572918e+09]]
+        target_basic_eps_000040 = [[-1.34000000e-01, -1.34000000e-01, 2.50438755e+09, 2.50438755e+09],
+                                   [-1.89000000e-01, -1.89000000e-01, 1.32692347e+09, 1.32692347e+09],
+                                   [-3.60000000e-02, -3.60000000e-02, 5.59073338e+08, 5.59073338e+08],
+                                   [-6.43700000e-01, -6.43700000e-01, 6.80576162e+09, 6.80576162e+09],
+                                   [5.00000000e-02, 5.00000000e-02, 6.38891620e+09, 6.38891620e+09],
+                                   [6.20000000e-02, 6.20000000e-02, 5.23267082e+09, 5.23267082e+09],
+                                   [1.25000000e-02, 1.25000000e-02, 2.22420874e+09, 2.22420874e+09],
+                                   [8.30000000e-01, 8.30000000e-01, 8.67628947e+09, 8.67628947e+09],
+                                   [1.05000000e+00, 1.05000000e+00, 5.29431716e+09, 5.29431716e+09],
+                                   [9.85000000e-01, 9.85000000e-01, 3.56822382e+09, 3.56822382e+09],
+                                   [8.11000000e-01, 8.11000000e-01, 1.06613439e+09, 1.06613439e+09],
+                                   [4.10000000e-01, 4.10000000e-01, 8.13102532e+09, 8.13102532e+09],
+                                   [2.42000000e-01, 2.42000000e-01, 5.17971521e+09, 5.17971521e+09],
+                                   [1.13000000e-01, 1.13000000e-01, 3.21704120e+09, 3.21704120e+09],
+                                   [2.70000000e-02, 2.70000000e-02, 8.41966738e+08, 8.24272235e+08],
+                                   [1.90000000e-01, 1.90000000e-01, 3.77350171e+09, 3.77350171e+09],
+                                   [1.70000000e-01, 1.70000000e-01, 2.38643892e+09, 2.38643892e+09],
+                                   [1.70000000e-01, 1.70000000e-01, 1.29127117e+09, 1.29127117e+09],
+                                   [6.40000000e-02, 6.40000000e-02, 6.03256858e+08, 6.03256858e+08],
+                                   [1.30000000e-01, 1.30000000e-01, 1.66572918e+09, 1.66572918e+09]]
 
         target_total_share_000039 = [[3.5950140e+09, 4.8005360e+09, 2.1573660e+10, 3.5823430e+09],
                                      [3.5860750e+09, 4.8402300e+09, 2.0750827e+10, 3.5823430e+09],
@@ -4122,66 +4122,66 @@ class TestHistoryPanel(unittest.TestCase):
                                      [4.69593364e+08, 2.78355875e+08, 4.13430814e+08, 1.88489589e+08],
                                      [4.69593364e+08, 2.74235459e+08, 3.83557678e+08, 1.88489589e+08]]
 
-        target_net_profit_000039 = [[       np.nan],
-                                   [ 2.422180e+08],
-                                   [       np.nan],
-                                   [ 2.510113e+09],
-                                   [       np.nan],
-                                   [ 1.102220e+09],
-                                   [       np.nan],
-                                   [ 4.068455e+09],
-                                   [       np.nan],
-                                   [ 1.315957e+09],
-                                   [       np.nan],
-                                   [ 3.158415e+09],
-                                   [       np.nan],
-                                   [ 1.066509e+09],
-                                   [       np.nan],
-                                   [ 7.349830e+08],
-                                   [       np.nan],
-                                   [-5.411600e+08],
-                                   [       np.nan],
-                                   [ 2.271961e+09]]
-        target_net_profit_600748 = [[        np.nan],
-                                   [4.54341757e+08],
-                                   [        np.nan],
-                                   [9.14476670e+08],
-                                   [        np.nan],
-                                   [5.25360283e+08],
-                                   [        np.nan],
-                                   [9.24502415e+08],
-                                   [        np.nan],
-                                   [4.66560302e+08],
-                                   [        np.nan],
-                                   [9.15265285e+08],
-                                   [        np.nan],
-                                   [2.14639674e+08],
-                                   [        np.nan],
-                                   [7.45093049e+08],
-                                   [        np.nan],
-                                   [2.10967312e+08],
-                                   [        np.nan],
-                                   [6.04572711e+08]]
-        target_net_profit_000040 = [[         np.nan],
-                                   [-2.82458846e+08],
-                                   [         np.nan],
-                                   [-9.57130872e+08],
-                                   [         np.nan],
-                                   [ 9.22114527e+07],
-                                   [         np.nan],
-                                   [ 1.12643819e+09],
-                                   [         np.nan],
-                                   [ 1.31715269e+09],
-                                   [         np.nan],
-                                   [ 5.39940093e+08],
-                                   [         np.nan],
-                                   [ 1.51440838e+08],
-                                   [         np.nan],
-                                   [ 1.75339071e+08],
-                                   [         np.nan],
-                                   [ 8.04740415e+07],
-                                   [         np.nan],
-                                   [ 6.20445815e+07]]
+        target_net_profit_000039 = [[np.nan],
+                                    [2.422180e+08],
+                                    [np.nan],
+                                    [2.510113e+09],
+                                    [np.nan],
+                                    [1.102220e+09],
+                                    [np.nan],
+                                    [4.068455e+09],
+                                    [np.nan],
+                                    [1.315957e+09],
+                                    [np.nan],
+                                    [3.158415e+09],
+                                    [np.nan],
+                                    [1.066509e+09],
+                                    [np.nan],
+                                    [7.349830e+08],
+                                    [np.nan],
+                                    [-5.411600e+08],
+                                    [np.nan],
+                                    [2.271961e+09]]
+        target_net_profit_600748 = [[np.nan],
+                                    [4.54341757e+08],
+                                    [np.nan],
+                                    [9.14476670e+08],
+                                    [np.nan],
+                                    [5.25360283e+08],
+                                    [np.nan],
+                                    [9.24502415e+08],
+                                    [np.nan],
+                                    [4.66560302e+08],
+                                    [np.nan],
+                                    [9.15265285e+08],
+                                    [np.nan],
+                                    [2.14639674e+08],
+                                    [np.nan],
+                                    [7.45093049e+08],
+                                    [np.nan],
+                                    [2.10967312e+08],
+                                    [np.nan],
+                                    [6.04572711e+08]]
+        target_net_profit_000040 = [[np.nan],
+                                    [-2.82458846e+08],
+                                    [np.nan],
+                                    [-9.57130872e+08],
+                                    [np.nan],
+                                    [9.22114527e+07],
+                                    [np.nan],
+                                    [1.12643819e+09],
+                                    [np.nan],
+                                    [1.31715269e+09],
+                                    [np.nan],
+                                    [5.39940093e+08],
+                                    [np.nan],
+                                    [1.51440838e+08],
+                                    [np.nan],
+                                    [1.75339071e+08],
+                                    [np.nan],
+                                    [8.04740415e+07],
+                                    [np.nan],
+                                    [6.20445815e+07]]
 
         print('test get financial data, in multi thread mode')
         df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=4)
@@ -4191,7 +4191,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(len(df_list[1]), 3)
         self.assertEqual(len(df_list[2]), 3)
         self.assertEqual(len(df_list[3]), 3)
-        #检查确认所有数据类型正确
+        # 检查确认所有数据类型正确
         self.assertTrue(all(isinstance(item, pd.DataFrame) for subdict in df_list for item in subdict.values()))
         # 检查确认没有空数据
         self.assertFalse(any(item.empty for subdict in df_list for item in subdict.values()))
@@ -4220,7 +4220,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(len(df_list[1]), 3)
         self.assertEqual(len(df_list[2]), 3)
         self.assertEqual(len(df_list[3]), 3)
-        #检查确认所有数据类型正确
+        # 检查确认所有数据类型正确
         self.assertTrue(all(isinstance(item, pd.DataFrame) for subdict in df_list for item in subdict.values()))
         # 检查是否有空数据，因为网络问题，有可能会取到空数据
         # self.assertFalse(any(item.empty for subdict in df_list for item in subdict.values()))
@@ -4606,16 +4606,14 @@ class TestTushare(unittest.TestCase):
         self.assertEqual(df.iloc[4987].change, 40.50790000000001)
         # test all close prices are equal to next pre_close
         for i in range(7131):
-            cur_close = df.iloc[i+1].close
+            cur_close = df.iloc[i + 1].close
             pre_close = df.iloc[i].pre_close
             if abs(cur_close - pre_close) > 1:
                 print(f'found discrepencies in close data:'
                       f'cur_close: {cur_close}, pre_close: {pre_close} @ iloc[{i}]\n'
-                      f'{df.iloc[i:i+2]}')
+                      f'{df.iloc[i:i + 2]}')
         df.info()
         print(df)
-
-
 
         print(f'test type: multiple shares asset type E, raise Error')
         shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
@@ -6941,61 +6939,64 @@ class TestDataBase(unittest.TestCase):
     def setUp(self):
         self.data_source = DataSource()
 
-    # def test_get_and_update_data(self):
-    #
-    #     import pdb; pdb.set_trace()
-    #
-    #     print(f'test expanded date time range from 2019 07 01')
-    #     hp = self.data_source.get_and_update_data(start='20190701',
-    #                                               end='20200801',
-    #                                               freq='d',
-    #                                               shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
-    #                                                       '000001.SZ', '000002.SZ'],
-    #                                               htypes=['close', 'open'],
-    #                                               adj='hfq')
-    #     hp.info()
-    #
-    #     print(f'test different share scope, added 000005.SZ')
-    #     hp = self.data_source.get_and_update_data(start='20200101',
-    #                                               end='20200901',
-    #                                               freq='d',
-    #                                               shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
-    #                                               htypes=['close', 'open'])
-    #     hp.info()
-    #
-    #     print(f'test getting and updating lots of data')
-    #     hp = self.data_source.get_and_update_data(start='19950101',
-    #                                               end='20200901',
-    #                                               freq='d',
-    #                                               shares=qt.get_stock_pool(date='today',
-    #                                                                        market='主板,中小板'),
-    #                                               htypes=['close', 'open', 'high', 'low', 'net_profit',
-    #                                                       'finan_exp', 'total_share', 'eps',
-    #                                                       'dt_eps', 'total_revenue_ps', 'cap_rese'],
-    #                                               parallel=1)
-    #     hp.info()
-    #
-    #     print(f'test getting and updating adjusted price data')
-    #     hp = self.data_source.get_and_update_data(start='19950101',
-    #                                               end='20200901',
-    #                                               freq='d',
-    #                                               shares=qt.get_stock_pool(date='today',
-    #                                                                        market='主板,中小板'),
-    #                                               htypes=['close', 'open', 'high', 'low'],
-    #                                               adj='hfq',
-    #                                               parallel=1)
-    #     hp.info()
-    #
-    #     print(f'test download and refresh local data')
-    #     hp = self.data_source.get_and_update_data(start='20200101',
-    #                                               end='20200801',
-    #                                               freq='d',
-    #                                               shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
-    #                                                       '000001.SZ', '000002.SZ'],
-    #                                               htypes=['close', 'open'],
-    #                                               parallel=0,
-    #                                               refresh=True)
-    #     hp.info()
+    def test_get_and_update_data(self):
+        # import pdb;
+        # pdb.set_trace()
+
+        print(f'test expanded date time range from 2020 07 01')
+        ds = self.data_source
+        hp = ds.get_and_update_data(start='20200901',
+                                    end='20201231',
+                                    freq='d',
+                                    shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
+                                            '000001.SZ', '000002.SZ'],
+                                    htypes=['close'],
+                                    adj='hfq',
+                                    parallel=10)
+        hp.info()
+        print(hp)
+
+        # print(f'test different share scope, added 000005.SZ')
+        # hp = ds.get_and_update_data(start='20200101',
+        #                             end='20200901',
+        #                             freq='d',
+        #                             shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
+        #                             htypes=['close', 'open'])
+        # hp.info()
+
+        # print(f'test getting and updating lots of data')
+        # hp = ds.get_and_update_data(start='19950101',
+        #                                           end='20200901',
+        #                                           freq='d',
+        #                                           shares=qt.get_stock_pool(date='today',
+        #                                                                    market='主板,中小板'),
+        #                                           htypes=['close', 'open', 'high', 'low', 'net_profit',
+        #                                                   'finan_exp', 'total_share', 'eps',
+        #                                                   'dt_eps', 'total_revenue_ps', 'cap_rese'],
+        #                                           parallel=1)
+        # hp.info()
+
+        # print(f'test getting and updating adjusted price data')
+        # hp = ds.get_and_update_data(start='19950101',
+        #                             end='20200901',
+        #                             freq='d',
+        #                             shares=qt.get_stock_pool(date='today',
+        #                                                      market='主板,中小板'),
+        #                             htypes=['close', 'open', 'high', 'low'],
+        #                             adj='hfq',
+        #                             parallel=1)
+        hp.info()
+
+        # print(f'test download and refresh local data')
+        # hp = ds.get_and_update_data(start='20200101',
+        #                                           end='20200801',
+        #                                           freq='d',
+        #                                           shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
+        #                                                   '000001.SZ', '000002.SZ'],
+        #                                           htypes=['close', 'open'],
+        #                                           parallel=0,
+        #                                           refresh=True)
+        # hp.info()
 
 
 def test_suite(*args):

@@ -598,35 +598,60 @@ class HistoryPanel():
             self.values.astype(dtype)
         return self
 
-    def to_dataframe(self, htype: str = None, share: str = None) -> pd.DataFrame:
-        """将HistoryPanel对象中的指定片段转化为DataFrame
+    def to_dataframe(self,
+                     htype: (str, int) = None,
+                     share: (str, int) = None,
+                     dropna: bool = False,
+                     inf_as_na: bool = False) -> pd.DataFrame:
+        """ 将HistoryPanel对象中的指定片段转化为DataFrame
 
-        由于HistoryPanel对象包含三维数据，因此在转化时必须指定htype或者share参数中的一个
+            指定htype或者share，将这个htype或share对应的数据切片转化为一个DataFrame。
+            由于HistoryPanel对象包含三维数据，因此在转化时必须指定htype或者share参数中的一个
+
+            :param htype:   一个string或int，表示需要生成DataFrame的数据类型切片
+                            如果给出此参数，定位该htype对应的切片后，将该htype对应的所有股票所有日期的数据转化为一个DataFrame
+                            如果类型为str，表示htype的名称，如果类型为int，代表该htype所在的列序号
+
+            :param share:   一个string或int，表示需要生成DataFrame的股票代码切片
+                            如果给出此参数，定位该share对应的切片后，将该share对应的所有数据类型所有日期的数据转化为一个DataFrame
+                            如果类型为str，表示股票代码，如果类型为int，代表该share所在的层序号
+
+            :param dropna:  Boolean，是否去除NaN值
+
+            :param inf_as_na:
+                            Boolean，是否将inf值当成NaN值一同去掉，当dropna为False时无效
+            :return:
+
         """
         if self.is_empty:
             return pd.DataFrame()
-        else:
-            if all(par is not None for par in (htype, share)) or all(par is None for par in (htype, share)):
-                # 两个参数都是非None或都是None，应该弹出警告信息
-                raise KeyError(f'Only and exactly one of the parameters htype and share should be given, '
-                               f'got both or none')
-            if htype is not None:
-                assert isinstance(htype, (str, int)), f'htype must be a string or an integer, got {type(htype)}'
-                if htype in self.htypes:
-                    v = self[htype].T.squeeze()
+        if all(par is not None for par in (htype, share)) or all(par is None for par in (htype, share)):
+            # 两个参数都是非None或都是None，应该弹出警告信息
+            raise KeyError(f'Only and exactly one of the parameters htype and share should be given, '
+                           f'got both or none')
+        if htype is not None:
+            assert isinstance(htype, (str, int)), f'htype must be a string or an integer, got {type(htype)}'
+            if htype in self.htypes:
+                v = self[htype].T.squeeze()
+                if dropna:
+                    return pd.DataFrame(v, index=self.hdates, columns=self.shares).dropna(how='all')
+                else:
                     return pd.DataFrame(v, index=self.hdates, columns=self.shares)
+            else:
+                raise KeyError(f'htype {htype} is not found!')
+        if share is not None:
+            assert isinstance(share, (str, int)), f'share must be a string or an integer, got {type(share)}'
+            if share in self.shares:
+                v = self[:, share].squeeze()
+                if dropna:
+                    return pd.DataFrame(v, index=self.hdates, columns=self.htypes).dropna(how='all')
                 else:
-                    raise KeyError(f'htype {htype} is not found!')
-            if share is not None:
-                assert isinstance(share, (str, int)), f'share must be a string or an integer, got {type(share)}'
-                if share in self.shares:
-                    v = self[:, share].squeeze()
                     return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
-                else:
-                    raise KeyError(f'share {share} is not found!')
+            else:
+                raise KeyError(f'share {share} is not found!')
 
     # TODO: implement this method
-    def to_df_dict(self):
+    def to_df_dict(self, by):
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
 
