@@ -629,26 +629,34 @@ class HistoryPanel():
             # 两个参数都是非None或都是None，应该弹出警告信息
             raise KeyError(f'Only and exactly one of the parameters htype and share should be given, '
                            f'got both or none')
+
+        res_df = pd.DataFrame()
         if htype is not None:
             assert isinstance(htype, (str, int)), f'htype must be a string or an integer, got {type(htype)}'
-            if htype in self.htypes:
-                v = self[htype].T.squeeze()
-                if dropna:
-                    return pd.DataFrame(v, index=self.hdates, columns=self.shares).dropna(how='all')
-                else:
-                    return pd.DataFrame(v, index=self.hdates, columns=self.shares)
-            else:
+            if isinstance(htype, int):
+                htype = self.htypes[htype]
+            if not htype in self.htypes:
                 raise KeyError(f'htype {htype} is not found!')
+
+            v = self[htype].T.squeeze()
+            res_df = pd.DataFrame(v, index=self.hdates, columns=self.shares)
+
         if share is not None:
             assert isinstance(share, (str, int)), f'share must be a string or an integer, got {type(share)}'
-            if share in self.shares:
-                v = self[:, share].squeeze()
-                if dropna:
-                    return pd.DataFrame(v, index=self.hdates, columns=self.htypes).dropna(how='all')
-                else:
-                    return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
-            else:
+            if isinstance(share, int):
+                share = self.shares[share]
+            if not share in self.shares:
                 raise KeyError(f'share {share} is not found!')
+            v = self[:, share].squeeze()
+            res_df = pd.DataFrame(v, index=self.hdates, columns=self.htypes)
+
+        if dropna and inf_as_na:
+            with pd.option_context('mode.use_inf_as_na', True):
+                return res_df.dropna(how='all')
+        if dropna:
+            return res_df.dropna(how='all')
+
+        return res_df
 
     # TODO: implement this method
     def to_df_dict(self, by):
