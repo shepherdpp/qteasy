@@ -319,6 +319,7 @@ class DataSource():
         :param share:
         :return:
         """
+        raise NotImplementedError
 
     def get_and_update_data(self,
                             start,
@@ -333,24 +334,30 @@ class DataSource():
                             delay_every=None,
                             progress=None,
                             refresh=False):
-        """ the major work interface of DataSource object, extracts data directly from local
-        files when all requested records exists locally. extract data online if they don't
-        and merges online data back to local files.
+        """ 临时函数，根据需要从本地文件中读取股票的历史数据，并检查数据是否存在，如果数据在指定的区间不存在，则
+        从网上下载数据并合并到本地文件中。
 
-        :param start:
-        :param end:
-        :param freq:
-        :param shares:
-        :param htypes:
+            目前临时使用，效率极低，且不符合单一功能原则，将过多功能揉杂在此，本函数需要重构
+
+        :param start:   需要获取的历史数据时间起点
+        :param end:     需要获取的历史数据时间终点
+        :param freq:    需要获取的历史数据的时间频率，'d', 'q' 等
+        :param shares:  需要获取的历史数据的股票代码或资产代码
+        :param htypes:  需要获取的历史数据类型
         :param asset_type:
-        :param adj:
-        :param parallel:
-        :param delay:
+                        需要获取历史数据的股票或投资产品类型
+                            'E'
+                            'I'
+                            'FD'
+                            'F'
+        :param adj:     价格数据复权方式，'none'
+        :param parallel:在线获取数据时的工作线程数量
+        :param delay:   在线获取数据的工作延迟时间
         :param delay_every:
-        :param progress:
+                        在线获取数据时的工作延迟间隔
+        :param progress:是否显示工作进度条
 
-        :param refresh:
-            bool, 是否忽略已有的数据，重新下载最新数据，并覆盖已有的数据
+        :param refresh: bool, 是否强制在线获取数据，为True时重新下载最新数据，并覆盖已有的数据
 
         :return:
             HistoryPanel

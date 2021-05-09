@@ -498,9 +498,9 @@ class HistoryPanel():
             连接时可以指定两个HistoryPanel之间共享的标签类型，如
 
         :param other: type: HistoryPanel 需要合并的另一个HistoryPanel
-        :param same_shares: 两个HP的shares是否相同，如果相同，可以省去shares纬度的标签合并。默认False，
-        :param same_htypes: 两个HP的htypes是否相同，如果相同，可以省去htypes纬度的标签合并。默认False，
-        :param same_hdates: 两个HP的hdates是否相同，如果相同，可以省去hdates纬度的标签合并。默认False，
+        :param same_shares: 两个HP的shares是否相同，如果相同，可以省去shares维度的标签合并，以节省时间。默认False，
+        :param same_htypes: 两个HP的htypes是否相同，如果相同，可以省去htypes维度的标签合并，以节省时间。默认False，
+        :param same_hdates: 两个HP的hdates是否相同，如果相同，可以省去hdates维度的标签合并，以节省时间。默认False，
         :param fill_value:  空数据填充值，当组合后的HP存在空数据时，应该以什么值填充，默认为np.nan
         :return:
         一个新的History Panel对象
@@ -624,6 +624,16 @@ class HistoryPanel():
                     return pd.DataFrame(v, index=self.hdates, columns=self.htypes)
                 else:
                     raise KeyError(f'share {share} is not found!')
+
+    # TODO: implement this method
+    def to_df_dict(self):
+        """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
+            这些数据以DataFrame的格式存储
+
+        :return:
+            dict
+        """
+        raise NotImplementedError
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):
@@ -1171,7 +1181,13 @@ def get_financial_report_type_raw_data(start: str,
                                        delay=1.25,
                                        delay_every: int = 50,
                                        progress: bool = True):
-    """ 在线获取财报类历史数据
+    """ 在线获取财报类历史数据，目前支持四大类历史数据，分别是：
+            income      利润表项目数据
+            indicator   关键财务指标
+            balance     资产负债表项目数据
+            cashflow     现金流量表项目数据
+        四大类数据的获取后分别保存在四个不同的字典中返回，每个字典包含所有所需股票的数据，这些数据以DataFrame的形式
+        存储在字典的values中，每个DF的键值是其股票的代码
 
     :param start:
     :param end:
@@ -1184,6 +1200,7 @@ def get_financial_report_type_raw_data(start: str,
                     progress == True, Default 下载时显示进度条
                     progress == False  下载时不显示进度条
     :return:
+        tuple, 包含四个字典元素，每个字典元素中包含所需下载的股票的数据
     """
     if isinstance(htypes, str):
         htypes = str_to_list(input_string=htypes, sep_char=',')
@@ -1212,10 +1229,10 @@ def get_financial_report_type_raw_data(start: str,
     cashflow_fields = list_to_str_format(report_fields + [htype for
                                                           htype in htypes
                                                           if htype in CASHFLOW_TYPE_DATA])
-    income_dfs = []
-    indicator_dfs = []
-    balance_dfs = []
-    cashflow_dfs = []
+    income_dfs = {}
+    indicator_dfs = {}
+    balance_dfs = {}
+    cashflow_dfs = {}
     i = 0
     if progress:
         progress_bar(i, total_share_count)
@@ -1230,7 +1247,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                income_dfs.append(regulate_financial_type_df(f.result()))
+                income_dfs[futures[f]] = (regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1240,7 +1257,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(indicators, share, None, start, end, None, indicator_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                indicator_dfs.append(regulate_financial_type_df(f.result()))
+                indicator_dfs[futures[f]] = (regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1250,7 +1267,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(balance, share, None, start, end, None, None, None, balance_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                balance_dfs.append(regulate_financial_type_df(f.result()))
+                balance_dfs[futures[f]] = (regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1260,7 +1277,7 @@ def get_financial_report_type_raw_data(start: str,
             futures = {proc_pool.submit(cashflow, share, None, start, end, None, None, None, cashflow_fields): share for
                        share in shares}
             for f in as_completed(futures):
-                cashflow_dfs.append(regulate_financial_type_df(f.result()))
+                cashflow_dfs[futures[f]] = (regulate_financial_type_df(f.result()))
 
                 i += 1
                 if progress:
@@ -1275,19 +1292,19 @@ def get_financial_report_type_raw_data(start: str,
             # TODO: if it is added, then the program runs, but WHY??
             if len(str_to_list(income_fields)) > 2:
                 df = income(start=start, end=end, share=share, fields=income_fields).sort_index()
-                income_dfs.append(regulate_financial_type_df(df))
+                income_dfs[share] = (regulate_financial_type_df(df))
 
             if len(str_to_list(indicator_fields)) > 2:
                 df = indicators(start=start, end=end, share=share, fields=indicator_fields).sort_index()
-                indicator_dfs.append(regulate_financial_type_df(df))
+                indicator_dfs[share] = (regulate_financial_type_df(df))
 
             if len(str_to_list(balance_fields)) > 2:
                 df = balance(start=start, end=end, share=share, fields=balance_fields).sort_index()
-                balance_dfs.append(regulate_financial_type_df(df))
+                balance_dfs[share] = (regulate_financial_type_df(df))
 
             if len(str_to_list(cashflow_fields)) > 2:
                 df = cashflow(start=start, end=end, share=share, fields=cashflow_fields).sort_index()
-                cashflow_dfs.append(regulate_financial_type_df(df))
+                cashflow_dfs[share] = (regulate_financial_type_df(df))
 
             i += 1
             if progress:
