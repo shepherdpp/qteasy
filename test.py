@@ -7060,15 +7060,17 @@ class TestDataBase(unittest.TestCase):
         #                                           parallel=1)
         # hp.info()
 
-        # print(f'test getting and updating adjusted price data')
-        # hp = ds.get_and_update_data(start='19950101',
-        #                             end='20200901',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['close', 'open', 'high', 'low'],
-        #                             adj='hfq',
-        #                             parallel=1)
+        print(f'test getting and updating adjusted price data')
+        hp = ds.get_and_update_data(start='19950101',
+                                    end='20200901',
+                                    freq='d',
+                                    shares=qt.get_stock_pool(date='today',
+                                                             market='主板,中小板')[:160],
+                                    htypes=['close', 'open', 'high', 'low'],
+                                    adj='hfq',
+                                    parallel=16,
+                                    delay=120,
+                                    delay_every=80)
         hp.info()
 
         # print(f'test download and refresh local data')

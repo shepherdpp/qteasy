@@ -352,7 +352,7 @@ def get_bar(shares: object,
             res_dfs.append(df)
             break
 
-    # 所有的数据读取到后，
+    # 所有的数据读取到后，完成数据连接
     res = pd.concat(res_dfs, axis=0)
 
     return res

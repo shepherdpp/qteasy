@@ -1170,11 +1170,6 @@ def get_price_type_raw_data(start: str,
             truncated_shares = list_truncate(shares, delay_every)
         else:
             truncated_shares = [shares]
-            # TODO: CRITICAL!
-            # TODO: 一个关键错误！！
-            # TODO: 是用多线程并行下载的数据无法保持其返回的顺序一致，也就是说，返回的数据顺序会被打乱，这里使用list来保存
-            # TODO: 返回的历史数据结果就不合适了，因为在多线程返回的结果中，无法判断哪一组数据是属于哪一个股票代码的，应该
-            # TODO: 使用dict来保存所有的信息，这样才不会搞错数据。
         for shares in truncated_shares:
             futures = {proc_pool.submit(get_bar, share, start, end, asset_type, adj, freq): share for share in
                        shares}
@@ -1195,10 +1190,12 @@ def get_price_type_raw_data(start: str,
                     progress_bar(i, total_share_count, comments=prgrs_txt)
 
             if delay > 0:
+                progress_bar(i, total_share_count, comments=prgrs_txt + f'delaying {delay} Sec...')
                 sleep(delay)
     else:
         for share in shares:
             if i % delay_every == 0 and delay > 0:
+                progress_bar(i, total_share_count, comments=prgrs_txt + f'delaying {delay} Sec...')
                 sleep(delay)
             raw_df = get_bar(shares=share, start=start, asset_type=asset_type, end=end, freq=freq, adj=adj)
             if raw_df.empty:
@@ -1223,6 +1220,7 @@ def get_price_type_raw_data(start: str,
             df.index = pd.to_datetime(df.trade_date).sort_index()
             df.drop(columns=columns_to_remove, inplace=True)
             df.drop(columns=['ts_code', 'trade_date'], inplace=True)
+            df.dropna(how='all', inplace=True)
     return df_per_share
 
 
