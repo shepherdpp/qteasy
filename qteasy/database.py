@@ -388,8 +388,7 @@ class DataSource():
             progress = True
 
         i = 0
-        progress_count = len(htypes) * len(shares) + len(htypes)
-        progress_bar(i, progress_count, f'total progress count: {progress_count}')
+        progress_bar(i, len(htypes), f'total progress count: {progress_count}')
         data_downloaded = False
         for htype in htypes:
             file_name = htype
@@ -401,7 +400,7 @@ class DataSource():
                 file_name = file_name + '-FQ'
 
             i += 1
-            progress_bar(i, progress_count, 'extracting local file')
+            progress_bar(i, len(htypes), 'extracting local file')
             if self.file_exists(file_name) and (not refresh):
                 df = self.extract_data(file_name, shares=shares, start=start, end=end)
                 df.dropna(how='all', inplace=True)
@@ -443,18 +442,19 @@ class DataSource():
                     online_data = [d for d in [inc, ind, blc, csh] if len(d) > 0][0]
                 # 现在所有所需的数据都已经下载下来了。且存储在一个dict中，且keys为股票代码
                 # 下面循环把所有下载下来的online_data 覆盖到下载下来的df中
-                import pdb; pdb.set_trace()
+                j = 0
                 for share_code in online_data:
+                    progress_bar(j, len(online_data), f'Writing online data: {share_code}')
                     if not online_data[share_code].empty:
                         df[share_code] = online_data[share_code]
 
-            progress_bar(i, progress_count, 'Writing data to local files')
+            progress_bar(i, len(htypes), 'Writing data to local files')
             if data_downloaded:
                 if self.file_exists(file_name):
                     self.merge_file(file_name, df)
                 else:
                     self.new_file(file_name, df)
-            progress_bar(i, progress_count, 'Extracting data')
+            progress_bar(i, len(htypes), 'Extracting data')
             df = self.extract_data(file_name, shares=shares, start=start, end=end)
             with pd.option_context('mode.use_inf_as_na', True):
                 df.dropna(how='all', inplace=True)

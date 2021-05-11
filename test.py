@@ -7065,7 +7065,7 @@ class TestDataBase(unittest.TestCase):
                                     end='20200901',
                                     freq='d',
                                     shares=qt.get_stock_pool(date='today',
-                                                             market='主板,中小板')[:160],
+                                                             market='主板,中小板'),
                                     htypes=['close', 'open', 'high', 'low'],
                                     adj='hfq',
                                     parallel=16,
