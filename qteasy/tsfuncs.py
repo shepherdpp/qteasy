@@ -347,7 +347,7 @@ def get_bar(shares: object,
                 # 数据已经读取完整
                 break
 
-        else: # df.empty
+        else:  # df.empty
             # 如果数据读取未出错，但读取的是空数据框，说明已经没有其他数据，则结束读取
             res_dfs.append(df)
             break
@@ -505,8 +505,8 @@ def income(share: str,
                          report_type=report_type,
                          comp_type=comp_type,
                          fields=fields)
-        if res is not None:
-            return res
+        if isinstance(res, pd.DataFrame):
+            return res.astype('float')
         else:
             return pd.DataFrame()
     except:
@@ -711,8 +711,8 @@ def balance(share: str,
                                report_type=report_type,
                                comp_type=comp_type,
                                fields=fields)
-        if res is not None:
-            return res
+        if isinstance(res, pd.DataFrame):
+            return res.astype('float')
         else:
             return pd.DataFrame()
     except:
@@ -862,15 +862,15 @@ def cashflow(share: str,
     end = regulate_date_format(end)
     try:
         res = pro.cashflow(ts_code=share,
-                          ann_date=rpt_date,
-                          start_date=start,
-                          end_date=end,
-                          period=period,
-                          report_type=report_type,
-                          comp_type=comp_type,
-                          fields=fields)
-        if res is not None:
-            return res
+                           ann_date=rpt_date,
+                           start_date=start,
+                           end_date=end,
+                           period=period,
+                           report_type=report_type,
+                           comp_type=comp_type,
+                           fields=fields)
+        if isinstance(res, pd.DataFrame):
+            return res.astype('float')
         else:
             return pd.DataFrame()
     except:
@@ -1081,13 +1081,13 @@ def indicators(share: str,
     pro = ts.pro_api()
     try:
         res = pro.fina_indicator(ts_code=share,
-                                ann_date=rpt_date,
-                                start_date=start,
-                                end_date=end,
-                                period=period,
-                                fields=fields)
-        if res is not None:
-            return res
+                                 ann_date=rpt_date,
+                                 start_date=start,
+                                 end_date=end,
+                                 period=period,
+                                 fields=fields)
+        if isinstance(res, pd.DataFrame):
+            return res.astype('float')
         else:
             return pd.DataFrame()
     except:

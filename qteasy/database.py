@@ -388,7 +388,7 @@ class DataSource():
             progress = True
 
         i = 0
-        progress_bar(i, len(htypes), f'total progress count: {progress_count}')
+        progress_bar(i, len(htypes), f'total htype count: {len(htypes)}')
         data_downloaded = False
         for htype in htypes:
             file_name = htype
@@ -396,7 +396,7 @@ class DataSource():
                 file_name = file_name + '-' + freq.upper()
             if asset_type.upper() != 'E':
                 file_name = file_name + '-' + asset_type.upper()
-            if asset_type.upper() == 'E' and adj != 'none':
+            if asset_type.upper() == 'E' and adj != 'none' and htype in ['open', 'high', 'low', 'close']:
                 file_name = file_name + '-FQ'
 
             i += 1
@@ -410,7 +410,7 @@ class DataSource():
                     df[share] = np.inf
             # 一次性下载所有缺数据的股票的历史数据
             # 找到所有存在inf值的shares
-            shares_with_inf = list(df.columns[np.where(np.isinf(df).any())])
+            shares_with_inf = list(df.columns[np.where(np.isinf(df.astype('float')).any())])
             if len(shares_with_inf) > 0:
                 online_data = {}
                 data_downloaded = True
@@ -427,7 +427,8 @@ class DataSource():
                                                           delay=delay,
                                                           delay_every=delay_every,
                                                           progress=progress,
-                                                          prgrs_txt=f'Downloading data: "{htype}"')
+                                                          prgrs_txt=f'Downloading {len(shares_with_inf)} '
+                                                                    f'missing data: "{htype}"')
                 if htype in CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA:
                     # download financial report type data
                     inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
@@ -438,7 +439,9 @@ class DataSource():
                                                                             delay=delay,
                                                                             delay_every=delay_every,
                                                                             progress=progress,
-                                                                            prgrs_txt=f'Downloading data: "{htype}"')
+                                                                            prgrs_txt=f'Downloading '
+                                                                                      f'{len(shares_with_inf)} '
+                                                                                      f'missing data: "{htype}"')
                     online_data = [d for d in [inc, ind, blc, csh] if len(d) > 0][0]
                 # 现在所有所需的数据都已经下载下来了。且存储在一个dict中，且keys为股票代码
                 # 下面循环把所有下载下来的online_data 覆盖到下载下来的df中

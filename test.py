@@ -7040,49 +7040,54 @@ class TestDataBase(unittest.TestCase):
         hp.info()
         print(hp)
 
-        # print(f'test different share scope, added 000005.SZ')
-        # hp = ds.get_and_update_data(start='20200101',
-        #                             end='20200901',
-        #                             freq='d',
-        #                             shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
-        #                             htypes=['close', 'open'])
-        # hp.info()
+        print(f'test different share scope, added 000005.SZ')
+        hp = ds.get_and_update_data(start='20200101',
+                                    end='20200901',
+                                    freq='d',
+                                    shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
+                                    htypes=['close', 'open'],
+                                    parallel=0)
+        hp.info()
 
-        # print(f'test getting and updating lots of data')
-        # hp = ds.get_and_update_data(start='19950101',
-        #                                           end='20200901',
-        #                                           freq='d',
-        #                                           shares=qt.get_stock_pool(date='today',
-        #                                                                    market='主板,中小板'),
-        #                                           htypes=['close', 'open', 'high', 'low', 'net_profit',
-        #                                                   'finan_exp', 'total_share', 'eps',
-        #                                                   'dt_eps', 'total_revenue_ps', 'cap_rese'],
-        #                                           parallel=1)
-        # hp.info()
+        print(f'test getting and updating lots of mixed data')
+        hp = ds.get_and_update_data(start='19950101',
+                                    end='20200901',
+                                    freq='d',
+                                    shares=qt.get_stock_pool(date='today',
+                                                             market='主板,中小板')[:100],
+                                    htypes=['close', 'open', 'high', 'low', 'net_profit',
+                                            'finan_exp', 'total_share', 'eps',
+                                            'dt_eps', 'total_revenue_ps', 'cap_rese'],
+                                    parallel=10,
+                                    delay=125,
+                                    delay_every=80)
+        hp.info()
 
         print(f'test getting and updating adjusted price data')
         hp = ds.get_and_update_data(start='19950101',
                                     end='20200901',
                                     freq='d',
                                     shares=qt.get_stock_pool(date='today',
-                                                             market='主板,中小板'),
+                                                             market='主板,中小板')[:100],
                                     htypes=['close', 'open', 'high', 'low'],
                                     adj='hfq',
                                     parallel=16,
-                                    delay=120,
+                                    delay=125,
                                     delay_every=80)
         hp.info()
 
-        # print(f'test download and refresh local data')
-        # hp = ds.get_and_update_data(start='20200101',
-        #                                           end='20200801',
-        #                                           freq='d',
-        #                                           shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
-        #                                                   '000001.SZ', '000002.SZ'],
-        #                                           htypes=['close', 'open'],
-        #                                           parallel=0,
-        #                                           refresh=True)
-        # hp.info()
+        print(f'test getting and updating refresh data')
+        hp = ds.get_and_update_data(start='19950101',
+                                    end='20200901',
+                                    freq='d',
+                                    shares=qt.get_stock_pool(date='today',
+                                                             market='主板,中小板')[:100],
+                                    htypes=['close', 'open'],
+                                    refresh=True,
+                                    parallel=10,
+                                    delay=125,
+                                    delay_every=80)
+        hp.info()
 
 
 def test_suite(*args):

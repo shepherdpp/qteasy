@@ -1231,7 +1231,8 @@ def get_financial_report_type_raw_data(start: str,
                                        parallel: int = 0,
                                        delay=1.25,
                                        delay_every: int = 50,
-                                       progress: bool = True):
+                                       progress: bool = True,
+                                       prgrs_txt: str = ''):
     """ 在线获取财报类历史数据，目前支持四大类历史数据，分别是：
             income      利润表项目数据
             indicator   关键财务指标
@@ -1250,6 +1251,8 @@ def get_financial_report_type_raw_data(start: str,
     :param progress: bool:
                     progress == True, Default 下载时显示进度条
                     progress == False  下载时不显示进度条
+    :param prgrs_txt: object
+
     :return:
         tuple, 包含四个字典元素，每个字典元素中包含所需下载的股票的数据
     """
@@ -1286,15 +1289,10 @@ def get_financial_report_type_raw_data(start: str,
     cashflow_dfs = {}
     i = 0
     if progress:
-        progress_bar(i, total_share_count)
+        progress_bar(i, total_share_count, prgrs_txt)
     if parallel > 1:  # only works when number of shares < 50 because currently only 50 downloads per min is allowed
         proc_pool = ProcessPoolExecutor()
         if len(str_to_list(income_fields)) > 2:
-            # TODO: CRITICAL!
-            # TODO: 一个关键错误！！
-            # TODO: 是用多线程并行下载的数据无法保持其返回的顺序一致，也就是说，返回的数据顺序会被打乱，这里使用list来保存
-            # TODO: 返回的历史数据结果就不合适了，因为在多线程返回的结果中，无法判断哪一组数据是属于哪一个股票代码的，应该
-            # TODO: 使用dict来保存所有的信息，这样才不会搞错数据。
             futures = {proc_pool.submit(income, share, None, start, end, None, None, None, income_fields): share for
                        share in shares}
             for f in as_completed(futures):
@@ -1302,7 +1300,7 @@ def get_financial_report_type_raw_data(start: str,
 
                 i += 1
                 if progress:
-                    progress_bar(i, total_share_count)
+                    progress_bar(i, total_share_count, prgrs_txt)
 
         if len(str_to_list(indicator_fields)) > 2:
             futures = {proc_pool.submit(indicators, share, None, start, end, None, indicator_fields): share for
@@ -1312,7 +1310,7 @@ def get_financial_report_type_raw_data(start: str,
 
                 i += 1
                 if progress:
-                    progress_bar(i, total_share_count)
+                    progress_bar(i, total_share_count, prgrs_txt)
 
         if len(str_to_list(balance_fields)) > 2:
             futures = {proc_pool.submit(balance, share, None, start, end, None, None, None, balance_fields): share for
@@ -1322,7 +1320,7 @@ def get_financial_report_type_raw_data(start: str,
 
                 i += 1
                 if progress:
-                    progress_bar(i, total_share_count)
+                    progress_bar(i, total_share_count, prgrs_txt)
 
         if len(str_to_list(cashflow_fields)) > 2:
             futures = {proc_pool.submit(cashflow, share, None, start, end, None, None, None, cashflow_fields): share for
@@ -1332,7 +1330,7 @@ def get_financial_report_type_raw_data(start: str,
 
                 i += 1
                 if progress:
-                    progress_bar(i, total_share_count)
+                    progress_bar(i, total_share_count, prgrs_txt)
 
     else:
         for share in shares:
@@ -1359,7 +1357,7 @@ def get_financial_report_type_raw_data(start: str,
 
             i += 1
             if progress:
-                progress_bar(i, total_share_count)
+                progress_bar(i, total_share_count, prgrs_txt)
     return income_dfs, indicator_dfs, balance_dfs, cashflow_dfs
 
 
