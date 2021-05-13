@@ -4668,7 +4668,7 @@ class TestTushare(unittest.TestCase):
         df = get_bar(shares=shares, start=start, end=end, asset_type='E')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-        self.assertEqual(len(df), 7132)
+        self.assertEqual(len(df), 7137)
         self.assertEqual(len(df.loc[np.isnan(df.close)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.open)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.high)]), 0)
@@ -4676,18 +4676,18 @@ class TestTushare(unittest.TestCase):
         self.assertEqual(len(df.loc[np.isnan(df.pre_close)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.change)]), 0)
         print(df.iloc[4987:4989])
-        self.assertEqual(df.iloc[4988].open, 389.916)
-        self.assertEqual(df.iloc[4988].high, 402.48)
-        self.assertEqual(df.iloc[4988].low, 382.5509)
-        self.assertEqual(df.iloc[4988].close, 400.747)
-        self.assertEqual(df.iloc[4988].pre_close, 387.5332)
-        self.assertEqual(df.iloc[4988].change, 13.213799999999992)
-        self.assertEqual(df.iloc[4987].open, 415.9104)
-        self.assertEqual(df.iloc[4987].high, 441.4716)
-        self.assertEqual(df.iloc[4987].low, 405.0794)
-        self.assertEqual(df.iloc[4987].close, 441.2549)
-        self.assertEqual(df.iloc[4987].pre_close, 400.747)
-        self.assertEqual(df.iloc[4987].change, 40.50790000000001)
+        self.assertEqual(df.iloc[4987].open, 389.916)
+        self.assertEqual(df.iloc[4987].high, 402.48)
+        self.assertEqual(df.iloc[4987].low, 382.5509)
+        self.assertEqual(df.iloc[4987].close, 400.747)
+        self.assertEqual(df.iloc[4987].pre_close, 387.5332)
+        self.assertEqual(df.iloc[4987].change, 13.213799999999992)
+        self.assertEqual(df.iloc[4986].open, 415.9104)
+        self.assertEqual(df.iloc[4986].high, 441.4716)
+        self.assertEqual(df.iloc[4986].low, 405.0794)
+        self.assertEqual(df.iloc[4986].close, 441.2549)
+        self.assertEqual(df.iloc[4986].pre_close, 400.747)
+        self.assertEqual(df.iloc[4986].change, 40.50790000000001)
         # test all close prices are equal to next pre_close
         for i in range(7131):
             cur_close = df.iloc[i + 1].close
@@ -6625,7 +6625,7 @@ class TestQT(unittest.TestCase):
                      ref_asset_type='I',
                      opti_output_count=50,
                      invest_start='20070101',
-                     invest_end='20101228',
+                     invest_end='20171228',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
@@ -7054,7 +7054,7 @@ class TestDataBase(unittest.TestCase):
                                     end='20200901',
                                     freq='d',
                                     shares=qt.get_stock_pool(date='today',
-                                                             market='主板,中小板')[:100],
+                                                             market='主板,中小板'),
                                     htypes=['close', 'open', 'high', 'low', 'net_profit',
                                             'finan_exp', 'total_share', 'eps',
                                             'dt_eps', 'total_revenue_ps', 'cap_rese'],
@@ -7080,8 +7080,7 @@ class TestDataBase(unittest.TestCase):
         hp = ds.get_and_update_data(start='19950101',
                                     end='20200901',
                                     freq='d',
-                                    shares=qt.get_stock_pool(date='today',
-                                                             market='主板,中小板')[:100],
+                                    shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ'],
                                     htypes=['close', 'open'],
                                     refresh=True,
                                     parallel=10,
