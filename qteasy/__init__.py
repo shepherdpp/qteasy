@@ -47,14 +47,14 @@ from pathlib import Path
 # TODO: *
 # TODO: ************************************************************
 
-TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
-ts.set_token(TUSHARE_TOKEN)
-np.seterr(divide='ignore', invalid='ignore')
-
 PUBLIC_HOLIDAYS = []
 
 # QT_ROOT_PATH = str(Path('.').resolve()) + '/'
 QT_ROOT_PATH = '/Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/'
+
+# TUSHARE_TOKEN = Load_tushare_token()
+# ts.set_token(TUSHARE_TOKEN)
+np.seterr(divide='ignore', invalid='ignore')
 
 # TODO: in future versions, Configurations can be loaded from local
 # TODO: files, thus previous configurations can be initialized at __init__()
