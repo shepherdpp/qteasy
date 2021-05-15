@@ -7028,7 +7028,7 @@ class TestDataBase(unittest.TestCase):
         # pdb.set_trace()
 
         # print(f'test expanded date time range from 2020 07 01')
-        # ds = self.data_source
+        ds = self.data_source
         # hp = ds.get_and_update_data(start='20200901',
         #                             end='20201231',
         #                             freq='d',
@@ -7081,7 +7081,7 @@ class TestDataBase(unittest.TestCase):
                                     freq='d',
                                     shares=qt.get_stock_pool(date='today',
                                                              market='主板,中小板'),
-                                    htypes=['high', 'low'],
+                                    htypes=['close', 'open', 'high', 'low'],
                                     refresh=True,
                                     parallel=10,
                                     delay=125,

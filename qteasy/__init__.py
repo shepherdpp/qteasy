@@ -64,11 +64,10 @@ except:
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
 # config = value
 for line in config_lines:
-    line = line.replace(' ', '')
     line = line.split('=')
     if len(line) == 2:
-        arg_name = line[0]
-        arg_value = line[1]
+        arg_name = line[0].strip()
+        arg_value = line[1].strip()
         qt_local_configs[arg_name] = arg_value
 
 # 读取tushare token，如果读取失败，抛出warning
