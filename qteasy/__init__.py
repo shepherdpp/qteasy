@@ -47,16 +47,41 @@ from pathlib import Path
 # TODO: *
 # TODO: ************************************************************
 
-PUBLIC_HOLIDAYS = []
+qt_local_configs = {}  # 存储本地配置文件的配置
 
-# QT_ROOT_PATH = str(Path('.').resolve()) + '/'
-QT_ROOT_PATH = '/Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/'
+# 解析qteasy的本地安装路径
+QT_ROOT_PATH = str(Path('.').resolve()) + '/'
+# 读取configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
+try:
+    with open(QT_ROOT_PATH+'qteasy/configurations.txt') as f:
+        config_lines = f.readlines()
+except:
+    # 新建文件：
+    f = open(QT_ROOT_PATH + 'qteasy/configurations.txt', 'w')
+    f.close()
+    config_lines = []  # 本地配置文件行
 
-# TUSHARE_TOKEN = Load_tushare_token()
-# ts.set_token(TUSHARE_TOKEN)
+# 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
+# config = value
+for line in config_lines:
+    line = line.replace(' ', '')
+    line = line.split('=')
+    if len(line) == 2:
+        arg_name = line[0]
+        arg_value = line[1]
+        qt_local_configs[arg_name] = arg_value
+
+# 读取tushare token，如果读取失败，抛出warning
+try:
+    TUSHARE_TOKEN = qt_local_configs['tushare_token']
+    ts.set_token(TUSHARE_TOKEN)
+except:
+    warn('tushare token was not loaded, features might not work properly!',
+         RuntimeWarning)
+
+# 读取其他本地配置属性，更新QT_CONFIG
+configure(**qt_local_configs)
+
 np.seterr(divide='ignore', invalid='ignore')
-
-# TODO: in future versions, Configurations can be loaded from local
-# TODO: files, thus previous configurations can be initialized at __init__()
 
 

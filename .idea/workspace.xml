@@ -2,17 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="75394a47-6cd2-446f-929e-a0a7affc6456" name="Default" comment="Realized Rolling Loop for timing strategies:&#10;tested with 2D data (single data type), not yet tested for 3D data">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/_arg_validators.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/_arg_validators.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/built_in.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/built_in.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/core.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/core.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/data/close.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/close.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/dt_eps.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/dt_eps.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/eps.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/eps.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/finan_exp.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/finan_exp.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/high.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/high.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/low.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/low.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/net_profit.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/net_profit.dat" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/qteasy/data/open.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/open.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/total_revenue_ps.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/total_revenue_ps.dat" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/qteasy/data/total_share.dat" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/data/total_share.dat" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/qteasy/tafuncs.py" beforeDir="false" afterPath="$PROJECT_DIR$/qteasy/tafuncs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -678,7 +676,7 @@
       <workItem from="1620484595883" duration="45328000" />
       <workItem from="1620661264493" duration="18106000" />
       <workItem from="1620915698289" duration="894000" />
-      <workItem from="1620920928111" duration="5670000" />
+      <workItem from="1620920928111" duration="18594000" />
     </task>
     <task id="LOCAL-00001" summary="first commit from pyCharm">
       <created>1581480029737</created>

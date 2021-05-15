@@ -1015,7 +1015,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     return ''.join(output_strings)
 
 
-def _process_kwargs(kwargs, vkwargs):
+def _initialize_config_kwargs(kwargs, vkwargs):
     """ Given a "valid kwargs table" and some kwargs, verify that each key-word
         is valid per the kwargs table, and that the value of the kwarg is the
         correct type.  Fill a configuration dictionary with the default value
@@ -1025,6 +1025,7 @@ def _process_kwargs(kwargs, vkwargs):
     :param kwargs: keywords that is given by user
     :param vkwargs: valid keywords table usd for validating given kwargs
     :return:
+        config: ConfigDict
     """
     # initialize configuration from valid_kwargs_table:
     config = ConfigDict()
@@ -1033,12 +1034,49 @@ def _process_kwargs(kwargs, vkwargs):
 
     # now validate kwargs, and for any valid kwargs
     #  replace the appropriate value in config:
-    for key in kwargs.keys():
-        value = kwargs[key]
-        _validate_key_and_value(key, value)
-        config[key] = value
+    config = _update_config_kwargs(config, kwargs)
+    # for key in kwargs.keys():
+    #     value = kwargs[key]
+    #     _validate_key_and_value(key, value)
+    #     config[key] = value
 
     return config
+
+
+def _update_config_kwargs(config, kwargs):
+    """ given existing configuration dict, verify that all kwargs are valid
+        per kwargs table, and update the configuration dictionary
+
+    :param config: configuration dictionary to be updated
+    :param kwargs: kwargs that are to be updated
+    :param vkwargs: valid keywords table used for validating given kwargs
+    :return:
+        config ConfigDict
+    """
+    vkwargs = _valid_qt_kwargs()
+    for key in kwargs.keys():
+        value = kwargs[key]
+        if _validate_key_and_value(key, value):
+            config[key] = _parse_string_to_type(value, key, vkwargs)
+
+    return config
+
+
+def _parse_string_to_type(value, key, vkwargs):
+    """ correct the type of value to the same of default type
+
+    :param value:
+    :param key:
+    :param vkwargs:
+    :return:
+    """
+    # 为防止value的类型不正确，将value修改为正确的类型，与 vkwargs 的
+    # Default value 的类型相同
+    default_value = vkwargs[key]['Default']
+    if not isinstance(default_value, str):
+        import ast
+        value = ast.literal_eval(value)
+    return value
 
 
 def _validate_key_and_value(key, value):
@@ -1052,8 +1090,9 @@ def _validate_key_and_value(key, value):
     """
     vkwargs = _valid_qt_kwargs()
     if key not in vkwargs:
-        raise KeyError(f'Unrecognized kwarg={str(key)}')
+        return False
     else:
+        value = _parse_string_to_type(value, key, vkwargs)
         try:
             valid = vkwargs[key]['Validator'](value)
         except Exception as ex:
@@ -1063,7 +1102,7 @@ def _validate_key_and_value(key, value):
             import inspect
             v = inspect.getsource(vkwargs[key]['Validator']).strip()
             raise TypeError(
-                    f'kwarg {key} validator returned False for value: {str(value)}\n'
+                    f'kwarg {key} validator returned False for value: {str(value)} of type {type(value)}\n'
                     f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
             # ---------------------------------------------------------------
             #      At this point , if we have not raised an exception,
@@ -1137,4 +1176,4 @@ def _validate_asset_pool(kwargs):
     return True
 
 
-QT_CONFIG = _process_kwargs({}, _valid_qt_kwargs())
+QT_CONFIG = _initialize_config_kwargs({}, _valid_qt_kwargs())

@@ -28,7 +28,7 @@ from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
     _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
-from ._arg_validators import _validate_key_and_value
+from ._arg_validators import _validate_key_and_value, _update_config_kwargs
 from .tsfuncs import stock_basic
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
@@ -530,10 +530,11 @@ def configure(**kwargs):
     :param kwargs:
     :return:
     """
-    for key in kwargs.keys():
-        value = kwargs[key]
-        _validate_key_and_value(key, value)
-        QT_CONFIG.__setattr__(key, value)
+    _update_config_kwargs(QT_CONFIG, kwargs)
+    # for key in kwargs.keys():
+    #     value = kwargs[key]
+    #     if _validate_key_and_value(key, value):
+    #         QT_CONFIG.__setattr__(key, value)
 
 
 def configuration(level=0, up_to=0, default=False, verbose=False):

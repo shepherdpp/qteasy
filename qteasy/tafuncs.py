@@ -35,7 +35,7 @@ def bbands(close, timeperiod: int = 20, nbdevup: int = 2, nbdevdn: int = 2, maty
 
         Bollinger Bands® are a technical analysis tool developed by John Bollinger
         for generating oversold or overbought signals.
-        There are three lines that compose Bollinger Bands: A simple moving average
+        There are three config_lines that compose Bollinger Bands: A simple moving average
         (middle band) and an upper and lower band.
         The upper and lower bands are typically 2 standard deviations ± from a
         20-day simple moving average, but can be modified.
@@ -574,7 +574,7 @@ def cmo(close, timeperiod=14):
 
     - CMO often forms chart patterns which may not show on the
     underlying price chart, such as double tops and bottoms and
-    trend lines. Also look for support or resistance on the CMO.
+    trend config_lines. Also look for support or resistance on the CMO.
 
     - If underlying prices make a new high or low that is not
     confirmed by the CMO, the divergence can signal a price reversal.
@@ -604,7 +604,7 @@ def dx(high, low, close, timeperiod=14):
     is trending and attempts to measure the strength of the trend. The DMI
     disregards the direction of the security. It only attempts to determine
     if there is a trend and that trends strength.
-    The indicator is made up of four indicator lines:
+    The indicator is made up of four indicator config_lines:
 
     - Positive Directional Indicator (+DMI) shows the difference between today’s
     high price and yesterday’s high price. These values are then added up from
@@ -626,7 +626,7 @@ def dx(high, low, close, timeperiod=14):
     Typically if the ADX is below 20 it indicates a trendless market.
 
     - A buy signal is given when DMI+ crosses above DMI-. A sell signal is given
-    when DMI- crosses above DMI+. The ADX and ADXR lines are then used to measure
+    when DMI- crosses above DMI+. The ADX and ADXR config_lines are then used to measure
     the strength of these signals.
 
     Calculation
@@ -685,8 +685,8 @@ def macd(close, fastperiod=12, slowperiod=26, signalperiod=9):
     The Moving Average Convergence/Divergence indicator is a momentum oscillator
     primarily used to trade trends. Although it is an oscillator, it is not
     typically used to identify over bought or oversold conditions. It appears on
-    the chart as two lines which oscillate without boundaries. The crossover of
-    the two lines give trading signals similar to a two moving average system.
+    the chart as two config_lines which oscillate without boundaries. The crossover of
+    the two config_lines give trading signals similar to a two moving average system.
 
     - MACD crossing above zero is considered bullish, while crossing below zero
     is bearish. Secondly, when MACD turns up from below zero it is considered
@@ -773,7 +773,7 @@ def mfi(high, low, close, volume, timeperiod=14):
 
     - Oversold levels typically occur below 20 and overbought levels typically
     occur above 80. These levels may change depending on market conditions.
-    Level lines should cut across the highest peaks and the lowest troughs.
+    Level config_lines should cut across the highest peaks and the lowest troughs.
     Oversold/Overbought levels are generally not reason enough to buy/sell; and
     traders should consider additional technical analysis or research to confirm
     the security's turning point. Keep in mind, during strong trends, the MFI
@@ -862,13 +862,13 @@ def minus_dm(high, low, timeperiod=14):
 
     The Directional Movement Index, or DMI, is an indicator developed by J. Welles
     Wilder in 1978 that identifies in which direction the price of an asset is moving.
-    The indicator does this by comparing prior highs and lows and drawing two lines: a
+    The indicator does this by comparing prior highs and lows and drawing two config_lines: a
     positive directional movement line (+DI) and a negative directional movement line
     (-DI). An optional third line, called directional movement (DX) shows the
-    difference between the lines. When +DI is above -DI, there is more upward pressure
+    difference between the config_lines. When +DI is above -DI, there is more upward pressure
     than downward pressure in the price. If -DI is above +DI, then there is more
     downward pressure in the price. This indicator may help traders assess the trend
-    direction. Crossovers between the lines are also sometimes used as trade signals
+    direction. Crossovers between the config_lines are also sometimes used as trade signals
     to buy or sell.
 
     - A +DI line above the -DI line means there is more upward movement than downward movement.
@@ -878,7 +878,7 @@ def minus_dm(high, low, timeperiod=14):
     - Crossovers can be used to signal emerging trends. For example, the +DI crossing above
     the -DI may signal the start of an uptrend in price.
 
-    - The larger the spread between the two lines, the stronger the price trend. If +DI is way
+    - The larger the spread between the two config_lines, the stronger the price trend. If +DI is way
     above -DI the price trend is strongly up. If -DI is way above +DI then the price trend is
     strongly down.
 
@@ -1029,7 +1029,7 @@ def ppo(close, fastperiod=12, slowperiod=26, matype=0):
     absolute (dollar) difference. Some traders prefer the PPO because readings are
     comparable between assets with different prices, whereas MACD readings are not comparable.
 
-    - The PPO typical contains two lines, the PPO line, and the signal line. The signal line
+    - The PPO typical contains two config_lines, the PPO line, and the signal line. The signal line
     is an EMA of PPO, so it moves slower than the PPO.
 
     - The PPO crossing the signal line is used by some traders as a trade signal. When it
@@ -1049,7 +1049,7 @@ def ppo(close, fastperiod=12, slowperiod=26, matype=0):
     nine-period EMA of the PPO.
     - To generate a histogram reading, subtract the current PPO value from the current signal
     line value. The histogram is an optional visual representation of the distance between
-    these two lines.
+    these two config_lines.
 
     :param close:
     :param fastperiod:
@@ -1130,7 +1130,7 @@ def stoch(high, low, close, fastk_period=5, slowk_period=3, slowk_matype=0, slow
     range. The indicator measures momentum by comparing the closing price with the previous
     trading range over a specific period of time.
 
-    The stochastic indicator is widely used in the Forex community. It consists of two lines:
+    The stochastic indicator is widely used in the Forex community. It consists of two config_lines:
     the indicator line %K, and the signal or trigger line %D. The stochastic indicator can be
     used to identify oversold and overbought conditions, as well as to spot divergences between
     the price and the indicator.
@@ -2051,7 +2051,7 @@ def cdlbreakaway(opn, high, low, close):
     Forecast: bearish reversal
     Trend prior to the pattern: uptrend
     Opposite pattern: Bullish Breakaway
-    Number of candle lines: 5
+    Number of candle config_lines: 5
 
     Construction:
 
@@ -2110,7 +2110,7 @@ def cdlconcealbabyswall(opn, high, low, close):
     Forecast: bullish reversal
     Trend prior to the pattern: downtrend
     Opposite pattern: none
-    Number of candle lines: 4
+    Number of candle config_lines: 4
 
     Construction:
 
@@ -2140,7 +2140,7 @@ def cdlconcealbabyswall(opn, high, low, close):
 def cdlcounterattack(opn, high, low, close):
     """Counterattack:
 
-    The counterattack lines pattern is a two-candle reversal pattern that appears on
+    The counterattack config_lines pattern is a two-candle reversal pattern that appears on
     candlestick charts. It can occur during an uptrend or downtrend.
 
     - For a bullish reversal during a downtrend, the first candle is a long black (down)
@@ -2387,9 +2387,9 @@ def cdleveningstar(opn, high, low, close):
 
 
 def cdlgapsidesidewhite(opn, high, low, close):
-    """Up/Down-gap side-by-side white lines:
+    """Up/Down-gap side-by-side white config_lines:
 
-    The side-by-side white lines pattern is a three-candle continuation pattern that
+    The side-by-side white config_lines pattern is a three-candle continuation pattern that
     occurs on candlestick charts. The up version is a large up (white or green) candle
     followed by a gap and then two more white candles of similar size to each other. The
     down version is a large down (black or red) candle followed by two white candles of
