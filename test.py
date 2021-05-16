@@ -7038,6 +7038,7 @@ class TestDataBase(unittest.TestCase):
         #                             adj='hfq',
         #                             parallel=10)
         # hp.info()
+        # hp = qt.HistoryPanel()
         # print(hp)
         #
         # print(f'test different share scope, added 000005.SZ')
@@ -7048,6 +7049,7 @@ class TestDataBase(unittest.TestCase):
         #                             htypes=['close', 'open'],
         #                             parallel=0)
         # hp.info()
+        # hp = qt.HistoryPanel()
         #
         # print(f'test getting and updating adjusted price data')
         # hp = ds.get_and_update_data(start='20180101',
@@ -7061,6 +7063,7 @@ class TestDataBase(unittest.TestCase):
         #                             delay=180,
         #                             delay_every=80)
         # hp.info()
+        # hp = qt.HistoryPanel()
 
         print(f'test getting and updating refresh data')
         hp = ds.get_and_update_data(start='19950101',
@@ -7068,12 +7071,12 @@ class TestDataBase(unittest.TestCase):
                                     freq='d',
                                     shares=qt.get_stock_pool(date='today',
                                                              market='主板,中小板'),
-                                    htypes=['high', 'low'],
-                                    refresh=True,
+                                    htypes=['vol'],
                                     parallel=10,
                                     delay=125,
                                     delay_every=80)
         hp.info()
+        hp = qt.HistoryPanel()
 
         print(f'test getting and updating refresh data')
         hp = ds.get_and_update_data(start='20060101',
@@ -7081,12 +7084,12 @@ class TestDataBase(unittest.TestCase):
                                     freq='d',
                                     shares=qt.get_stock_pool(date='today',
                                                              market='主板,中小板'),
-                                    htypes=['close', 'open', 'high', 'low'],
-                                    refresh=True,
+                                    htypes=['vol'],
                                     parallel=10,
                                     delay=125,
                                     delay_every=80)
         hp.info()
+        hp = qt.HistoryPanel()
 
         # print(f'test getting and updating lots of mixed data')
         # hp = ds.get_and_update_data(start='19950101',
@@ -7101,6 +7104,7 @@ class TestDataBase(unittest.TestCase):
         #                             delay=125,
         #                             delay_every=80)
         # hp.info()
+        # hp = qt.HistoryPanel()
 
 
 def test_suite(*args):

@@ -34,3 +34,4 @@ examples/strategy_optimization.ipynb
 **/data/
 configurations.txt
 *.dat
+qteasy/data/close.dat
