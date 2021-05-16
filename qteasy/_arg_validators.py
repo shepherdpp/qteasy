@@ -1035,10 +1035,6 @@ def _initialize_config_kwargs(kwargs, vkwargs):
     # now validate kwargs, and for any valid kwargs
     #  replace the appropriate value in config:
     config = _update_config_kwargs(config, kwargs)
-    # for key in kwargs.keys():
-    #     value = kwargs[key]
-    #     _validate_key_and_value(key, value)
-    #     config[key] = value
 
     return config
 
@@ -1055,14 +1051,14 @@ def _update_config_kwargs(config, kwargs):
     """
     vkwargs = _valid_qt_kwargs()
     for key in kwargs.keys():
-        value = kwargs[key]
+        value = _parse_string_kwargs(kwargs[key], key, vkwargs)
         if _validate_key_and_value(key, value):
-            config[key] = _parse_string_to_type(value, key, vkwargs)
+            config[key] = value
 
     return config
 
 
-def _parse_string_to_type(value, key, vkwargs):
+def _parse_string_kwargs(value, key, vkwargs):
     """ correct the type of value to the same of default type
 
     :param value:
@@ -1072,6 +1068,8 @@ def _parse_string_to_type(value, key, vkwargs):
     """
     # 为防止value的类型不正确，将value修改为正确的类型，与 vkwargs 的
     # Default value 的类型相同
+    if key not in vkwargs:
+        return value
     if not isinstance(value, str):
         return value
     default_value = vkwargs[key]['Default']
@@ -1094,7 +1092,6 @@ def _validate_key_and_value(key, value):
     if key not in vkwargs:
         return False
     else:
-        value = _parse_string_to_type(value, key, vkwargs)
         try:
             valid = vkwargs[key]['Validator'](value)
         except Exception as ex:

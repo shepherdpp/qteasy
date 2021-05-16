@@ -57,6 +57,8 @@ from qteasy.history import get_financial_report_type_raw_data, get_price_type_ra
 
 from qteasy.database import DataSource
 
+from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
+
 
 class TestCost(unittest.TestCase):
     def setUp(self):
@@ -3302,6 +3304,9 @@ class TestConfig(unittest.TestCase):
 
     def test_invest(self):
         pass
+
+    def test_pars_string_to_type(self):
+        _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())
 
 
 class TestHistoryPanel(unittest.TestCase):
