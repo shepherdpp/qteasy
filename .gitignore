@@ -36,3 +36,4 @@ configurations.txt
 *.dat
 qteasy/data/close.dat
 qteasy/.DS_Store
+.DS_Store

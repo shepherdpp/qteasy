@@ -531,10 +531,6 @@ def configure(**kwargs):
     :return:
     """
     _update_config_kwargs(QT_CONFIG, kwargs)
-    # for key in kwargs.keys():
-    #     value = kwargs[key]
-    #     if _validate_key_and_value(key, value):
-    #         QT_CONFIG.__setattr__(key, value)
 
 
 def configuration(level=0, up_to=0, default=False, verbose=False):

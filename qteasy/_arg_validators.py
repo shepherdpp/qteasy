@@ -836,7 +836,7 @@ def _valid_qt_kwargs():
                                              '"sharp"       - sharp rate\n'
                                              '"info"        - info rate'},
 
-        'indicator_plot_type': {'Default':   2,
+        'indicator_plot_type': {'Default':   'histo',
                                 'Validator': lambda value: isinstance(value, (int, str)) and
                                                            ((value in ['errorbar',
                                                                        'scatter',
@@ -1072,8 +1072,10 @@ def _parse_string_to_type(value, key, vkwargs):
     """
     # 为防止value的类型不正确，将value修改为正确的类型，与 vkwargs 的
     # Default value 的类型相同
+    if not isinstance(value, str):
+        return value
     default_value = vkwargs[key]['Default']
-    if not isinstance(default_value, str):
+    if (not isinstance(default_value, str)) and (default_value is not None):
         import ast
         value = ast.literal_eval(value)
     return value
