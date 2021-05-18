@@ -567,8 +567,6 @@ class RollingTiming(Strategy):
         # 滚动展开完成，形成一个新的3D或2D矩阵
         # 开始将参数应用到策略实施函数generate中
         par_list = [pars] * loop_count
-        # TODO: 因为在generate_over()函数中接受的参数都只会是一个个股的数据，因此不存在par_list会不同的情况，因此不需要使用map，
-        # TODO: 可以使用apply_along_axis()从而进一步提高效率
         res = np.array(list(map(self._realize,
                                 hist_pack,
                                 par_list)))
