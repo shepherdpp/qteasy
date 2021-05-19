@@ -6668,9 +6668,9 @@ class TestVisual(unittest.TestCase):
 
     def test_candle(self):
         print(f'test mpf plot in candle form')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=True)
         print(f'get data from mpf plot function')
-        daily = qt.candle('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        daily = qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=True)
         print(f'test plot mpf data with indicator macd')
         qt.candle(stock_data=daily, no_visual=False, indicator='macd', indicator_par=(12, 26, 9))
         daily.drop(columns=['volume'], inplace=True)

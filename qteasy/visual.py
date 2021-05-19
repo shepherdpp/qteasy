@@ -18,6 +18,8 @@ import pandas as pd
 import numpy as np
 from pandas.plotting import register_matplotlib_converters
 import datetime
+
+from .history import get_history_panel
 from .tsfuncs import get_bar, name_change
 from .utilfuncs import time_str_format, list_to_str_format
 from .tafuncs import macd, dema, rsi, bbands
@@ -75,7 +77,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         has_volume = any(col in ['volume'] for col in stock_data.columns)
         if share_name is None:
             share_name = 'stock'
-    mc = mpf.make_marketcolors(up='r', down='g', volume='in')
+    mc = mpf.make_marketcolors(up='r', down='g', edge='inherit', volume='in')
     s = mpf.make_mpf_style(marketcolors=mc, facecolor='(0.82, 0.83, 0.85)')
     if not no_visual:
         current_panel_count = 2 if has_volume else 1
@@ -126,7 +128,7 @@ def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
     return adps
 
 
-def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
+def _prepare_mpf_data(stock, start=None, end=None, asset_type='E', adj='none', freq='d'):
     today = datetime.datetime.today()
     if end is None:
         end = today.strftime('%Y-%m-%d')
@@ -135,8 +137,10 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
             start = (pd.Timestamp(end) - pd.Timedelta(30, 'd')).strftime('%Y-%m-%d')
         except:
             start = today - pd.Timedelta(30, 'd')
-
-    data = get_bar(shares=stock, start=start, end=end, asset_type=asset_type)
+    # TODO: should use get_history_panel()
+    data = get_history_panel(start=start, end=end, freq=freq, shares=stock,
+                             htypes='close,high,low,open,vol', asset_type=asset_type,
+                             adj=adj, chanel='local').to_dataframe(share=stock)
     if asset_type == 'E':
         share_basic = name_change(shares=stock, fields='ts_code,name,start_date,end_date,change_reason')
         if share_basic.empty:
@@ -144,13 +148,8 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E'):
         share_name = stock + ' - ' + share_basic.name[0]
     else:
         share_name = stock + ' - ' + asset_type
-    # data.info()
-    daily = data[['open', 'high', 'low', 'close', 'vol']]
-    daily.columns = ['open', 'high', 'low', 'close', 'volume']
-    daily.index = data['trade_date']
-    daily = daily.rename(index=pd.Timestamp).sort_index()
-    # manipulating of mpf:
-    return daily, share_name
+    data = data.rename({'vol': 'volume'}, axis='columns')
+    return data, share_name
 
 
 def _plot_loop_result(loop_results: dict, config):

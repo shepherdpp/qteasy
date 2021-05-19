@@ -760,9 +760,9 @@ class SimpleTiming(Strategy):
 
 
         在择时类策略中，generate方法接受的历史数据片段hist_data为一个M * N * L的ndarray, 来自HistoryPanel对象，其定义是：
-            M: axis 1: 层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
-            N: axis 2: 行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
-            L: axis 3: 列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
+            M: axis 0: 层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
+            N: axis 1: 行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
+            L: axis 2: 列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
 
         在SimpleTiming的generate()函数中，每一个个股的历史数据被逐个取出，并送入generate_over()函数进行处理，消除掉N/A值之后，传入
         generate()函数，针对每个个股进行逐个计算，并将最终的结果组合成一个2D的矩阵输出
@@ -868,7 +868,7 @@ class SimpleTiming(Strategy):
         cat[np.isnan(cat)] = 0
         return cat
 
-    def generate(self, hist_data, shares=[], dates=[]):
+    def generate(self, hist_data, shares, dates):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
 
