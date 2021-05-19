@@ -1043,6 +1043,7 @@ def get_history_panel(start,
                                                                asset_type=asset_type,
                                                                parallel=parallel,
                                                                delay=delay,
+                                                               adj=adj,
                                                                delay_every=delay_every,
                                                                progress=progress))
             if isinstance(shares, str):

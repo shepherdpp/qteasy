@@ -31,35 +31,32 @@ ValidAddPlots = ['macd',
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
-           mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None):
+           mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in candle form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='candle',
                     no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
-                    addplot_par=indicator_par)
+                    addplot_par=indicator_par, **kwargs)
 
 
 def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
-         mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None):
+         mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in ohlc form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='ohlc',
                     no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
-                    addplot_par=indicator_par)
+                    addplot_par=indicator_par, **kwargs)
 
 
 def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
-          mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None):
+          mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='renko',
                     no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
-                    addplot_par=indicator_par)
+                    addplot_par=indicator_par, **kwargs)
 
 
-# TODO: change the realization of candlestick plots to "original flavor" of matplotlib
-# TODO: meaning using plt.show() after settings of each axes one by one, so that
-# TODO: the appearance of the plots can be the same as loop and test plots
 def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
              asset_type='E', plot_type=None, no_visual=False, addplot_type=None,
              addplot_par=None, **kwargs):
@@ -68,7 +65,12 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
     assert plot_type is not None
     if stock_data is None:
         assert stock is not None
-        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type)
+        if 'adj' in kwargs:
+            adj = kwargs['adj']
+        else:
+            adj = 'none'
+        # import pdb; pdb.set_trace()
+        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type, adj=adj)
         has_volume = True
     else:
         assert isinstance(stock_data, pd.DataFrame)
@@ -77,8 +79,14 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         has_volume = any(col in ['volume'] for col in stock_data.columns)
         if share_name is None:
             share_name = 'stock'
-    mc = mpf.make_marketcolors(up='r', down='g', edge='inherit', volume='in')
-    s = mpf.make_mpf_style(marketcolors=mc, facecolor='(0.82, 0.83, 0.85)')
+    mc = mpf.make_marketcolors(up='r',
+                               down='g',
+                               edge='inherit',
+                               wick='inherit',
+                               volume='inherit')
+    s = mpf.make_mpf_style(marketcolors=mc,
+                           figcolor='(0.82, 0.83, 0.85)',
+                           gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
         current_panel_count = 2 if has_volume else 1
         add_plot = _add_mpl_plot(daily, addplot_type, addplot_par, panels=current_panel_count)
@@ -137,10 +145,9 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E', adj='none', f
             start = (pd.Timestamp(end) - pd.Timedelta(30, 'd')).strftime('%Y-%m-%d')
         except:
             start = today - pd.Timedelta(30, 'd')
-    # TODO: should use get_history_panel()
     data = get_history_panel(start=start, end=end, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
-                             adj=adj, chanel='local').to_dataframe(share=stock)
+                             adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
     if asset_type == 'E':
         share_basic = name_change(shares=stock, fields='ts_code,name,start_date,end_date,change_reason')
         if share_basic.empty:
