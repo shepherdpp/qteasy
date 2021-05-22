@@ -42,7 +42,7 @@ class ZoomPan:
         self.xpress = None
         self.ypress = None
 
-    def zoom_factory(self, ax, base_scale = 2.):
+    def zoom_factory(self, ax, base_scale=2.):
         def zoom(event):
             cur_xlim = ax.get_xlim()
             cur_ylim = ax.get_ylim()
@@ -165,24 +165,27 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         has_volume = any(col in ['volume'] for col in stock_data.columns)
         if share_name is None:
             share_name = 'stock'
-    mc = mpf.make_marketcolors(up='r',
+    my_color = mpf.make_marketcolors(up='r',
                                down='g',
                                edge='inherit',
                                wick='inherit',
                                volume='inherit')
-    s = mpf.make_mpf_style(marketcolors=mc,
+    my_style = mpf.make_mpf_style(marketcolors=my_color,
                            figcolor='(0.82, 0.83, 0.85)',
                            gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
         current_panel_count = 2 if has_volume else 1
+        fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+        ax1 = fig.add_subplot(2,1,1)
+        ax2 = fig.add_subplot(2,2,1)
         add_plot = _add_mpl_plot(daily, addplot_type, addplot_par, panels=current_panel_count)
         mpf.plot(daily,
                  title=share_name,
-                 volume=has_volume,
+                 ax=ax1,
+                 volume=ax2,
                  type=plot_type,
-                 style=s,
+                 style=my_style,
                  figscale=0.75,
-                 addplot=add_plot,
                  **kwargs)
     return daily
 
