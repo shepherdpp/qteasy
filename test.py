@@ -16,9 +16,9 @@ from qteasy.built_in import SelectingFinanceIndicator
 from qteasy.history import stack_dataframes
 from qteasy.tsfuncs import income, indicators, name_change, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
-from qteasy.tsfuncs import balance, cashflow, top_list, index_basic, composite
+from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
-from qteasy.tsfuncs import fund_basic, fund_net_value
+from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic
 
 from qteasy.evaluate import eval_alpha, eval_benchmark, eval_beta, eval_fv
 from qteasy.evaluate import eval_info_ratio, eval_max_drawdown, eval_sharp
@@ -4643,8 +4643,6 @@ class TestTushare(unittest.TestCase):
         # df.info()
         # print(df.head(10))
 
-    # TODO: solve this problem: for authority issue, only 5 calls of
-    # TODO: get_bar freq higher than a day can be done in one day
     def test_get_bar(self):
         print(f'test tushare function: get_bar')
         print(f'test type: one share asset type E')
@@ -4876,7 +4874,31 @@ class TestTushare(unittest.TestCase):
         self.assertTrue(df.empty)
 
     def test_index_basic(self):
-        print(f'test tushare function: index_basic')
+        """test function index_basic"""
+        print(f'test tushare function: index_basic\n'
+              f'=======================================')
+        print(f'test 1: basic usage of the function')
+        df = index_basic()
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 2: get all information of index with market')
+        df = index_basic(market='SSE')
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+        print(f'test 3: thrown error on bad parameters')
+        df = index_basic()
+        print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+
+
+    def test_index_indicators(self):
+        print(f'test tushare function: index_indicators\n'
+              f'=======================================')
         index = '000300.SH'
         trade_date = '20180104'
         start = '20180101'
@@ -4884,29 +4906,29 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: test single index single date\n'
               f'=====================================')
-        df = index_basic(trade_date=trade_date, index=index)
+        df = index_indicators(trade_date=trade_date, index=index)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
         print(f'test 2: test single index in date range\n'
               f'=======================================')
-        df = index_basic(index=index, start=start, end=end)
+        df = index_indicators(index=index, start=start, end=end)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
         print(f'test 3: test multiple specific indices in single date\n'
               f'=====================================================')
-        index = '000300.SH, 000001.SH'  # tushare does not support multiple indices in index_basic
-        df = index_basic(trade_date=trade_date, index=index)
+        index = '000300.SH, 000001.SH'  # tushare does not support multiple indices in index_indicators
+        df = index_indicators(trade_date=trade_date, index=index)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
 
         print(f'test 4: test all indices in single date\n'
               f'=======================================')
-        df = index_basic(trade_date=trade_date)
+        df = index_indicators(trade_date=trade_date)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -4993,7 +5015,6 @@ class TestTushare(unittest.TestCase):
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIs(df, None)
         self.assertrue(df.empty)
-
 
     def test_fund_net_value(self):
         print(f'test tushare function: fund_net_value\n'
@@ -6702,9 +6723,9 @@ class TestVisual(unittest.TestCase):
 
     def test_candle(self):
         print(f'test mpf plot in candle form')
-        qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=True)
+        qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
         print(f'get data from mpf plot function')
-        daily = qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=True)
+        daily = qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
         print(f'get data from mpf plot function for adj = "none"')
         daily = qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', no_visual=True, adj='none')
         print(f'get data from mpf plot function for adj = "hfq"')
@@ -6737,6 +6758,12 @@ class TestVisual(unittest.TestCase):
         qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='macd', indicator_par=(12, 26, 9))
         print(f'test mpf plot in candle form with indicator bbands')
         qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='bbands', indicator_par=(12, 26, 9))
+
+    def test_prepare_mpf_data(self):
+        """
+
+        :return:
+        """
 
 
 class TestBuiltIns(unittest.TestCase):
@@ -7053,11 +7080,9 @@ class TestFastExperiments(unittest.TestCase):
         pass
 
     def test_configure_and_run(self):
-        op = qt.Operator(timing_types=['crossline'])
-        op.set_parameter('t-0', pars=(23, 150, 15, 'none'), opt_tag=1)
-        op.set_parameter('s-0', (0.5,))
-        op.set_parameter('r-0', ())
-        res = qt.run(op, mode=2, parallel=True)
+        qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
+        qt.ohlc('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
+        qt.renko('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
 
 
 class TestDataBase(unittest.TestCase):

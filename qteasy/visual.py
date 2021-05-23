@@ -16,13 +16,15 @@ from mplfinance.original_flavor import candlestick_ohlc
 
 import pandas as pd
 import numpy as np
-from pandas.plotting import register_matplotlib_converters
 import datetime
 
 from .history import get_history_panel
-from .tsfuncs import index_basic, stock_basic, fund_basic, future_basic
+from .tsfuncs import stock_basic, fund_basic, future_basic, index_basic
 from .utilfuncs import time_str_format, list_to_str_format
 from .tafuncs import macd, dema, rsi, bbands, ma
+
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 ValidAddPlots = ['macd',
                  'dma',
@@ -116,39 +118,42 @@ class ZoomPan:
 
 
 # TODO: simplify and merge these three functions
-def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
+def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
            mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in candle form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                    end=end, asset_type=asset_type, plot_type='candle',
-                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
-                    addplot_par=indicator_par, **kwargs)
+                    end=end, asset_type=asset_type, plot_type='candle', no_visual=no_visual,
+                    mav=mav, addplot_type=indicator, addplot_par=indicator_par, **kwargs)
 
 
-def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
+def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
          mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in ohlc form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                    end=end, asset_type=asset_type, plot_type='ohlc',
-                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
-                    addplot_par=indicator_par, **kwargs)
+                    end=end, asset_type=asset_type, plot_type='ohlc', no_visual=no_visual,
+                    mav=mav, addplot_type=indicator, addplot_par=indicator_par, **kwargs)
 
 
-def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E', figsize=(10, 5),
+def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
           mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                    end=end, asset_type=asset_type, plot_type='renko',
-                    no_visual=no_visual, figsize=figsize, mav=mav, addplot_type=indicator,
-                    addplot_par=indicator_par, **kwargs)
+                    end=end, asset_type=asset_type, plot_type='renko', no_visual=no_visual,
+                    mav=mav, addplot_type=indicator, addplot_par=indicator_par, **kwargs)
 
 
 def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
              asset_type='E', plot_type=None, no_visual=False, addplot_type=None,
-             addplot_par=None, mav=None, indicator=None, **kwargs):
+             addplot_par=None, mav=None, indicator=None, indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     assert plot_type is not None
+    if end is None:
+        end = pd.to_datetime('today')
+    if start is None:
+        start = end - pd.Timedelta(20, 'd')
+    end = pd.to_datetime(end)
+    start = pd.to_datetime(start)
     if stock_data is None:
         assert stock is not None
         if 'adj' in kwargs:
@@ -162,7 +167,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                               asset_type=asset_type,
                                               adj=adj,
                                               mav=mav,
-                                              indicator=indicator)
+                                              indicator=indicator,
+                                              indicator_par=indicator_par)
         has_volume = True
     else:
         assert isinstance(stock_data, pd.DataFrame)
@@ -182,17 +188,18 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
     if not no_visual:
         current_panel_count = 2 if has_volume else 1
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-        ax1 = fig.add_subplot(2,1,1)
-        ax2 = fig.add_subplot(2,2,1)
-        add_plot = _add_mpl_plot(daily, addplot_type, addplot_par, panels=current_panel_count)
-        mpf.plot(daily,
-                 title=share_name,
+        ax1 = fig.add_axes([0.06, 0.27, 0.88, 0.65])
+        ax1.set_title(share_name)
+        ax2 = fig.add_axes([0.06, 0.08, 0.88, 0.19], sharex=ax1)
+        plot_daily = daily[start:end]
+        mpf.plot(plot_daily,
                  ax=ax1,
                  volume=ax2,
                  type=plot_type,
                  style=my_style,
-                 figscale=0.75,
-                 **kwargs)
+                 datetime_format='%Y-%m',
+                 xrotation=0)
+        plt.show()
     return daily
 
 
@@ -231,12 +238,10 @@ def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
     return adps
 
 
-def _prepare_mpf_data(stock, start=None, end=None, asset_type='E', adj='none', freq='d', mav=None, indicator=None):
+def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicator=None, indicator_par=None):
     """ 返回一只股票在全部历史区间上的价格数据，同时计算移动平均线以及相应的指标数据。
 
     :param stock: 股票代码
-    :param start: 开始日期（其实可以删除）
-    :param end: 结束日期（其实可以删除）
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
     :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
     :param freq: 价格周期，d——日K线，5min——五分钟k线
@@ -245,42 +250,50 @@ def _prepare_mpf_data(stock, start=None, end=None, asset_type='E', adj='none', f
     :return:
     """
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
-    start_date = ''
-    end_date = ''
-    name = ''
-    fullname = ''
     if asset_type == 'E':
         basic_info = stock_basic(fields='ts_code,symbol,name,fullname,area,industry,list_date')
-        this_stock = basic_info.loc[basic_info.ts_code == stock]
-        start_date = pd.to_datetime(this_stock.list_date.values[0]).strftime('%Y-%m-%d')
-        end_date = pd.to_datetime('today').strftime('%Y-%m-%d')
-        name = this_stock.name.values[0]
-        fullname = this_stock.fullname.values[0]
     elif asset_type == 'I':
-        # get index basic via index_basic()
+        # 获取指数的基本信息
         basic_info = index_basic()
     elif asset_type == 'F':
-        # get future basic via future_basic()
+        # 获取期货的基本信息
         basic_info = future_basic()
     elif asset_type == 'FD':
-        # get fund basic bas fund_basic()
+        # 获取基金的基本信息
         basic_info = fund_basic()
+    else:
+        raise KeyError(f'Wrong asset type: [{asset_type}]')
+    this_stock = basic_info.loc[basic_info.ts_code == stock]
+    start_date = pd.to_datetime(this_stock.list_date.values[0]).strftime('%Y-%m-%d')
+    end_date = pd.to_datetime('today').strftime('%Y-%m-%d')
+    name = this_stock.name.values[0]
+    # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
                              adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
     # 返回股票的名称和全称
-    share_name = stock + ' - ' + asset_type + name + ' - ' + fullname
+    share_name = stock + ' - ' + asset_type + name
     data = data.rename({'vol': 'volume'}, axis='columns')
 
     # 在DataFrame中增加均线信息：
     if mav is not None:
-        assert isinstance(mav, list)
+        assert isinstance(mav, (list, tuple))
         assert all(isinstance(item, int) for item in mav)
         for value in mav:
             data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
 
     # 添加不同的indicator
+    if indicator is None:
+        indicator = ''
+    if indicator.lower() == 'dema':
+        data['dema'] = dema(data.close, *indicator_par)
+    elif indicator.lower() == 'macd':
+        data[['m', 's', 'h']] = macd(data.close, *indicator_par)
+    elif indicator.lower() == 'rsi':
+        data['d'] = rsi(data.close, *indicator_par)
+    elif indicator.lower() == 'bbands':
+        data['u', 'm', 'l'] = bbands(data.close, *indicator_par)
 
     return data, share_name
 

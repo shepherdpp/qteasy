@@ -53,10 +53,10 @@ class DataSource():
         pass
 
     def __str__(self):
-        raise NotImplementedError
+        return 'data source object'
 
     def __repr__(self):
-        raise NotImplementedError
+        return 'data source object'
 
     def __contains__(self, item):
         """ checks if elements are contained in datasource
