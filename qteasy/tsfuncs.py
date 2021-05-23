@@ -1145,12 +1145,86 @@ def top_list(trade_date: str = None,
 # Index Data
 # ==================
 @lru_cache(maxsize=16)
-def index_basic(trade_date: str = None,
-                index: str = None,
-                start: str = None,
-                end: str = None,
-                fields: str = None) -> pd.DataFrame:
-    """ 大盘指数每日指标, 目前只提供上证综指，深证成指，上证50，中证500，中小板指，创业板指的每日指标数据
+def index_basic(fund: str = None,
+                name: str = None,
+                market: str = None,
+                publisher: str = None,
+                category: str = None) -> pd.DataFrame:
+    """ 获取大盘指数的基本信息如名称代码等
+
+    :param fund: 指数代码
+    :param name: 指数简称
+    :param market: 交易所或服务商(默认SSE)，包括：
+                    MSCI:    MSCI指数
+                    CSI:     中证指数
+                    SSE:     上交所指数
+                    SZSE:    深交所指数
+                    CICC:    中金指数
+                    SW:      申万指数
+                    OTH:     其他指数
+    :param publisher: 发布商
+    :param category: 指数类别
+    :return: pd.DataFrame
+        column          type    description
+        ts_code		    str	    TS代码
+        name            str     简称
+        management      str     发行方公司
+        custodian       str     托管方
+        fund_type       str     基金类型
+        found_date      str     成立日期
+        due_date        str     退市日期
+        list_date       str     上市日期
+        issue_date      str     发行日期
+        delist_date     str     退市日期
+        issue_amount    str     发行量
+        m_fee           str     管理费
+        c_fee           str     托管费
+        duration_year   str     运行时长
+        p_value         str     发行净值
+        min_amount      str     最小交易量
+        exp_return      str     期望回报
+        benchmark       str     业绩基准
+        status          str     状态
+        invest_type     str     投资类型
+        type            str     类型
+        trustee         str     受托人
+        purc_startdate  str     pure开始日期
+        redm_startdate  str     redm开始日期
+        market          str     市场
+    example:
+        index_basic(market='SW')
+    output:
+               ts_code    name         market     publisher   category     base_date  base_point  \
+                5         801010.SI    农林牧渔        SW申万       一级行业指数      19991230      1000.0
+                6         801011.SI    林业Ⅱ          SW申万         二级行业指数  19991230      1000.0
+                7         801012.SI    农产品加工      SW申万      二级行业指数  19991230      1000.0
+                8         801013.SI    农业综合Ⅱ       SW申万      二级行业指数  19991230      1000.0
+                9         801014.SI    饲料Ⅱ          SW申万       二级行业指数  19991230      1000.0
+                10        801015.SI    渔业           SW申万       二级行业指数  19991230      1000.0
+                11        801016.SI    种植业         SW申万      二级行业指数  19991230      1000.0
+                12        801017.SI    畜禽养殖Ⅱ       SW申万       二级行业指数  20111010      1000.0
+                13        801018.SI    动物保健Ⅱ       SW申万研     二级行业指数  19991230      1000.0
+                14        801020.SI    采掘           SW申万     一级行业指数  19991230      1000.0
+                15        801021.SI    煤炭开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
+                16        801022.SI    其他采掘Ⅱ       SW申万      二级行业指数  19991230      1000.0
+                17        801023.SI    石油开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
+                18        801024.SI    采掘服务Ⅱ       SW申万      二级行业指数  19991230      1000.0
+    """
+    pro = ts.pro_api()
+    return pro.index_basic(ts_code=fund,
+                           name=name,
+                           market=market,
+                           publisher=publisher,
+                           category=category)
+
+
+@lru_cache(maxsize=16)
+def index_indicators(trade_date: str = None,
+                     index: str = None,
+                     start: str = None,
+                     end: str = None,
+                     fields: str = None) -> pd.DataFrame:
+    """ 大盘指数每日指标如市盈率等, 目前只提供上证综指，深证成指，上证50，中证500，中小板指，创业板指的每日指标数据
         支持两三种数据获取方式：
             1，给定特定的trade_date和index，获取当天的指定index的数据
             2，给定特定的trade_date，获取当天所有index的数据
@@ -1166,7 +1240,7 @@ def index_basic(trade_date: str = None,
         ts_code		    str	    Y	    TS代码
         trade_date	    str	    Y	    交易日期
         total_mv	    float	Y	    当日总市值（元）
-        float_mv	    float	Y	    当日流通市值（元）
+        float_mv	        float	Y	    当日流通市值（元）
         total_share     float	Y	    当日总股本（股）
         float_share	    float	Y	    当日流通股本（股）
         free_share	    float	Y	    当日自由流通股本（股）
@@ -1176,7 +1250,7 @@ def index_basic(trade_date: str = None,
         pe_ttm		    float	Y	    市盈率TTM
         pb		        float	Y	    市净率
     example:
-        index_basic(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
+        index_indicators(trade_date='20181018', fields='ts_code,trade_date,turnover_rate,pe')
     output:
             ts_code  trade_date  turnover_rate     pe
         0  000001.SH   20181018           0.38  11.92
