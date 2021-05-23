@@ -20,9 +20,9 @@ from pandas.plotting import register_matplotlib_converters
 import datetime
 
 from .history import get_history_panel
-from .tsfuncs import get_bar, name_change
+from .tsfuncs import index_basic, stock_basic, fund_basic, future_basic
 from .utilfuncs import time_str_format, list_to_str_format
-from .tafuncs import macd, dema, rsi, bbands
+from .tafuncs import macd, dema, rsi, bbands, ma
 
 ValidAddPlots = ['macd',
                  'dma',
@@ -145,7 +145,7 @@ def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, as
 
 def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
              asset_type='E', plot_type=None, no_visual=False, addplot_type=None,
-             addplot_par=None, **kwargs):
+             addplot_par=None, mav=None, indicator=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     assert plot_type is not None
@@ -155,8 +155,14 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
             adj = kwargs['adj']
         else:
             adj = 'none'
-        # import pdb; pdb.set_trace()
-        daily, share_name = _prepare_mpf_data(stock=stock, start=start, end=end, asset_type=asset_type, adj=adj)
+        # 准备股票数据，为了实现动态图表，应该获取一只股票在全历史周期内的所有价格数据，并且在全周期上计算
+        # 所需的均线以及指标数据，显示的时候只显示其中一部分即可，并且可以使用鼠标缩放平移
+        # 因此_prepare_mpf_data()函数应该返回一个包含所有历史价格以及相关指标的DataFrame
+        daily, share_name = _prepare_mpf_data(stock=stock,
+                                              asset_type=asset_type,
+                                              adj=adj,
+                                              mav=mav,
+                                              indicator=indicator)
         has_volume = True
     else:
         assert isinstance(stock_data, pd.DataFrame)
@@ -166,13 +172,13 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         if share_name is None:
             share_name = 'stock'
     my_color = mpf.make_marketcolors(up='r',
-                               down='g',
-                               edge='inherit',
-                               wick='inherit',
-                               volume='inherit')
+                                     down='g',
+                                     edge='inherit',
+                                     wick='inherit',
+                                     volume='inherit')
     my_style = mpf.make_mpf_style(marketcolors=my_color,
-                           figcolor='(0.82, 0.83, 0.85)',
-                           gridcolor='(0.82, 0.83, 0.85)')
+                                  figcolor='(0.82, 0.83, 0.85)',
+                                  gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
         current_panel_count = 2 if has_volume else 1
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
@@ -225,26 +231,57 @@ def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
     return adps
 
 
-def _prepare_mpf_data(stock, start=None, end=None, asset_type='E', adj='none', freq='d'):
-    today = datetime.datetime.today()
-    if end is None:
-        end = today.strftime('%Y-%m-%d')
-    if start is None:
-        try:
-            start = (pd.Timestamp(end) - pd.Timedelta(30, 'd')).strftime('%Y-%m-%d')
-        except:
-            start = today - pd.Timedelta(30, 'd')
-    data = get_history_panel(start=start, end=end, freq=freq, shares=stock,
+def _prepare_mpf_data(stock, start=None, end=None, asset_type='E', adj='none', freq='d', mav=None, indicator=None):
+    """ 返回一只股票在全部历史区间上的价格数据，同时计算移动平均线以及相应的指标数据。
+
+    :param stock: 股票代码
+    :param start: 开始日期（其实可以删除）
+    :param end: 结束日期（其实可以删除）
+    :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
+    :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
+    :param freq: 价格周期，d——日K线，5min——五分钟k线
+    :param ma: 移动平均线，一个tuple，包含数个integer，代表均线周期
+    :param indicator: str，指标，如MACD等
+    :return:
+    """
+    # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
+    start_date = ''
+    end_date = ''
+    name = ''
+    fullname = ''
+    if asset_type == 'E':
+        basic_info = stock_basic(fields='ts_code,symbol,name,fullname,area,industry,list_date')
+        this_stock = basic_info.loc[basic_info.ts_code == stock]
+        start_date = pd.to_datetime(this_stock.list_date.values[0]).strftime('%Y-%m-%d')
+        end_date = pd.to_datetime('today').strftime('%Y-%m-%d')
+        name = this_stock.name.values[0]
+        fullname = this_stock.fullname.values[0]
+    elif asset_type == 'I':
+        # get index basic via index_basic()
+        basic_info = index_basic()
+    elif asset_type == 'F':
+        # get future basic via future_basic()
+        basic_info = future_basic()
+    elif asset_type == 'FD':
+        # get fund basic bas fund_basic()
+        basic_info = fund_basic()
+    # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
+    data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
                              adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
-    if asset_type == 'E':
-        share_basic = name_change(shares=stock, fields='ts_code,name,start_date,end_date,change_reason')
-        if share_basic.empty:
-            raise ValueError(f'stock {stock} can not be found or does not exist!')
-        share_name = stock + ' - ' + share_basic.name[0]
-    else:
-        share_name = stock + ' - ' + asset_type
+    # 返回股票的名称和全称
+    share_name = stock + ' - ' + asset_type + name + ' - ' + fullname
     data = data.rename({'vol': 'volume'}, axis='columns')
+
+    # 在DataFrame中增加均线信息：
+    if mav is not None:
+        assert isinstance(mav, list)
+        assert all(isinstance(item, int) for item in mav)
+        for value in mav:
+            data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
+
+    # 添加不同的indicator
+
     return data, share_name
 
 
