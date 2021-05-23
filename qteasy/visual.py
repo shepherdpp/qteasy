@@ -192,13 +192,28 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         ax1.set_title(share_name)
         ax2 = fig.add_axes([0.06, 0.08, 0.88, 0.19], sharex=ax1)
         plot_daily = daily[start:end]
-        mpf.plot(plot_daily,
-                 ax=ax1,
-                 volume=ax2,
-                 type=plot_type,
-                 style=my_style,
-                 datetime_format='%Y-%m',
-                 xrotation=0)
+        # 添加移动均线
+        if mav is not None:
+            ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
+            ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
+        if plot_type != 'renko': # 'renko'型图不支持addplot
+            # 添加MA线
+            mpf.plot(plot_daily,
+                     ax=ax1,
+                     volume=ax2,
+                     addplot=ap,
+                     type=plot_type,
+                     style=my_style,
+                     datetime_format='%Y-%m',
+                     xrotation=0)
+        else:
+            mpf.plot(plot_daily,
+                     ax=ax1,
+                     volume=ax2,
+                     type=plot_type,
+                     style=my_style,
+                     datetime_format='%Y-%m',
+                     xrotation=0)
         plt.show()
     return daily
 

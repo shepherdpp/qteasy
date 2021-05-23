@@ -7080,9 +7080,9 @@ class TestFastExperiments(unittest.TestCase):
         pass
 
     def test_configure_and_run(self):
-        qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
-        qt.ohlc('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
-        qt.renko('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
+        qt.candle('513100.SH', start='2020-12-01', asset_type='FD')
+        qt.ohlc('513100.SH', start='2020-07-01', end='2020-12-31', asset_type='FD')
+        qt.renko('513100.SH', start='2020-12-01', asset_type='FD')
 
 
 class TestDataBase(unittest.TestCase):
