@@ -411,13 +411,23 @@ class DataSource():
             # 一次性下载所有缺数据的股票的历史数据
             # 找到所有存在inf值的shares
             shares_with_inf = list(df.columns[np.where(np.isinf(df.astype('float')).any())])
+            # TODO: 另外，需要检查股票的上市日期，将上市日期以前的数据全部置为零
             if len(shares_with_inf) > 0:
                 online_data = {}
                 data_downloaded = True
+                # TODO: 找到存在inf值的数据起止区间，并仅下载起止区间内的数据，常见的情况是绝大部分历史数据都已经在local，仅缺最近的数据
+                # TODO: 重复下载已经在本地的数据没有必要
+                inf_start = pd.to_datetime(end)
+                inf_end = pd.to_datetime(start)
+                for share in shares_with_inf:
+                    share_data = df[share]
+                    inf_data = df.loc[np.isinf(share_data)]
+                    if inf_data.index[0] < inf_start: inf_start = inf_data.index[0]
+                    if inf_data.index[-1] > inf_end: inf_end = inf_data.index[-1]
                 if htype in PRICE_TYPE_DATA:
                     # get price type data online
-                    online_data = get_price_type_raw_data(start=start,
-                                                          end=end,
+                    online_data = get_price_type_raw_data(start=inf_start.strftime('%Y-%m-%d'),
+                                                          end=inf_end.strftime('%Y-%m-%d'),
                                                           freq=freq,
                                                           shares=shares_with_inf,
                                                           htypes=htype,

@@ -151,7 +151,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
     if end is None:
         end = pd.to_datetime('today')
     if start is None:
-        start = end - pd.Timedelta(20, 'd')
+        start = end - pd.Timedelta(60, 'd')
     end = pd.to_datetime(end)
     start = pd.to_datetime(start)
     if stock_data is None:
@@ -279,6 +279,8 @@ def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, ind
     else:
         raise KeyError(f'Wrong asset type: [{asset_type}]')
     this_stock = basic_info.loc[basic_info.ts_code == stock]
+    if this_stock.empty:
+        raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type}!')
     start_date = pd.to_datetime(this_stock.list_date.values[0]).strftime('%Y-%m-%d')
     end_date = pd.to_datetime('today').strftime('%Y-%m-%d')
     name = this_stock.name.values[0]
