@@ -3905,6 +3905,7 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         # TODO: implement this test case
+        # test get only one line of data
         pass
 
     def test_get_price_type_raw_data(self):
@@ -4668,38 +4669,44 @@ class TestTushare(unittest.TestCase):
         print(f'test type: one share asset type E lots of data')
         shares = '000001.SZ'
         start = '19910101'
-        end = '20211231'
+        end = '20201231'
         df = get_bar(shares=shares, start=start, end=end, asset_type='E')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-        self.assertEqual(len(df), 7137)
+        self.assertEqual(len(df), 7053)
         self.assertEqual(len(df.loc[np.isnan(df.close)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.open)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.high)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.low)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.pre_close)]), 0)
         self.assertEqual(len(df.loc[np.isnan(df.change)]), 0)
-        print(df.iloc[4987:4989])
-        self.assertEqual(df.iloc[4987].open, 389.916)
-        self.assertEqual(df.iloc[4987].high, 402.48)
-        self.assertEqual(df.iloc[4987].low, 382.5509)
-        self.assertEqual(df.iloc[4987].close, 400.747)
-        self.assertEqual(df.iloc[4987].pre_close, 387.5332)
-        self.assertEqual(df.iloc[4987].change, 13.213799999999992)
-        self.assertEqual(df.iloc[4986].open, 415.9104)
-        self.assertEqual(df.iloc[4986].high, 441.4716)
-        self.assertEqual(df.iloc[4986].low, 405.0794)
-        self.assertEqual(df.iloc[4986].close, 441.2549)
-        self.assertEqual(df.iloc[4986].pre_close, 400.747)
-        self.assertEqual(df.iloc[4986].change, 40.50790000000001)
+        print(df.iloc[4986])
+        print(df.iloc[4987])
+        self.assertEqual(df.iloc[4986].trade_date, "19991008")
+        self.assertAlmostEqual(df.iloc[4986].open, 485.235, 2)
+        self.assertAlmostEqual(df.iloc[4986].high, 490.296, 2)
+        self.assertAlmostEqual(df.iloc[4986].low, 474.691, 2)
+        self.assertAlmostEqual(df.iloc[4986].close, 477.221, 2)
+        self.assertAlmostEqual(df.iloc[4986].pre_close, 491.139, 2)
+        self.assertAlmostEqual(df.iloc[4986].change, -13.9181, 2)
+        self.assertEqual(df.iloc[4987].trade_date, "19990930")
+        self.assertAlmostEqual(df.iloc[4987].open, 499.786, 2)
+        self.assertAlmostEqual(df.iloc[4987].high, 505.901, 2)
+        self.assertAlmostEqual(df.iloc[4987].low, 488.82, 2)
+        self.assertAlmostEqual(df.iloc[4987].close, 491.139, 2)
+        self.assertAlmostEqual(df.iloc[4987].pre_close, 499.575, 2)
+        self.assertAlmostEqual(df.iloc[4987].change, -8.4352, 2)
         # test all close prices are equal to next pre_close
-        for i in range(7131):
+        total_unfit = 0
+        for i in range(7052):
             cur_close = df.iloc[i + 1].close
             pre_close = df.iloc[i].pre_close
             if abs(cur_close - pre_close) > 1:
                 print(f'found discrepencies in close data:'
                       f'cur_close: {cur_close}, pre_close: {pre_close} @ iloc[{i}]\n'
                       f'{df.iloc[i:i + 2]}')
+                total_unfit += 1
+        self.assertLessEqual(total_unfit, 5)
         df.info()
         print(df)
 
@@ -5013,8 +5020,7 @@ class TestTushare(unittest.TestCase):
         print(f'test4, test error thrown out due to bad parameter')
         df = fund_basic(market=3)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
-        self.assertIs(df, None)
-        self.assertrue(df.empty)
+        self.assertTrue(df.empty)
 
     def test_fund_net_value(self):
         print(f'test tushare function: fund_net_value\n'
@@ -5058,7 +5064,7 @@ class TestTushare(unittest.TestCase):
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
-        self.assertEqual(list(df.ts_code.unique()), str_to_list(fund))
+        self.assertEqual(set(df.ts_code.unique()), set(str_to_list(fund)))
         print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
               f'they are: \n{list(df.trade_date.unique())}')
 
@@ -7083,7 +7089,30 @@ class TestFastExperiments(unittest.TestCase):
         # qt.candle('513100.SH', start='2020-12-01', asset_type='FD')
         # qt.ohlc('513100.SH', start='2020-07-01', end='2020-12-31', asset_type='FD', mav=[5, 20, 120])
         # qt.renko('513100.SH', start='2020-12-01', asset_type='FD')
-        qt.candle('002790.SZ')
+        qt.candle('000812.SZ')
+        shares = ['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ', '000001.SZ',
+                  '000002.SZ', '000005.SZ', '000065.SZ', '000070.SZ', '000078.SZ',
+                  '000089.SZ', '000090.SZ', '000096.SZ', '000099.SZ', '000100.SZ',
+                  '000150.SZ', '000151.SZ', '000153.SZ', '000155.SZ', '000156.SZ',
+                  '000157.SZ', '000158.SZ', '000159.SZ', '000166.SZ', '000301.SZ',
+                  '000333.SZ', '000338.SZ', '000429.SZ', '000488.SZ', '000581.SZ',
+                  '000725.SZ', '000726.SZ', '000761.SZ', '000790.SZ', '000798.SZ',
+                  '000801.SZ', '000802.SZ', '000803.SZ', '000806.SZ', '000807.SZ',
+                  '000809.SZ', '000810.SZ', '000811.SZ', '000812.SZ', '000813.SZ',
+                  '000815.SZ', '000820.SZ', '000821.SZ', '000822.SZ', '000825.SZ',
+                  '000826.SZ', '000830.SZ', '000831.SZ', '000833.SZ', '000835.SZ',
+                  '000837.SZ', '000850.SZ', '000851.SZ', '000852.SZ', '000856.SZ',
+                  '000858.SZ', '000859.SZ', '000860.SZ', '000861.SZ', '000862.SZ',
+                  '000869.SZ', '000875.SZ', '000876.SZ', '000877.SZ', '000878.SZ',
+                  '000880.SZ', '000881.SZ', '000882.SZ', '000883.SZ', '000885.SZ',
+                  '000886.SZ', '000887.SZ', '000890.SZ', '000892.SZ', '000893.SZ',
+                  '000895.SZ', '000897.SZ', '000900.SZ', '000901.SZ', '000902.SZ',
+                  '000903.SZ', '000905.SZ', '000906.SZ', '000908.SZ', '000909.SZ',
+                  '000910.SZ', '000911.SZ', '000912.SZ', '000913.SZ', '000915.SZ',
+                  '000917.SZ', '000918.SZ', '000919.SZ', '000920.SZ', '000921.SZ']
+        for share in shares:
+            qt.candle(share)
+            print(share)
 
 
 class TestDataBase(unittest.TestCase):

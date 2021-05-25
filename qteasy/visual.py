@@ -149,7 +149,11 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
     """
     assert plot_type is not None
     if end is None:
-        end = pd.to_datetime('today')
+        now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
+        if now.hour >= 23:
+            end = pd.to_datetime('today')
+        else:
+            end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
     if start is None:
         start = end - pd.Timedelta(60, 'd')
     end = pd.to_datetime(end)
@@ -281,8 +285,16 @@ def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, ind
     this_stock = basic_info.loc[basic_info.ts_code == stock]
     if this_stock.empty:
         raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type}!')
+    # 设置历史数据获取区间的开始日期为股票上市第一天
     start_date = pd.to_datetime(this_stock.list_date.values[0]).strftime('%Y-%m-%d')
-    end_date = pd.to_datetime('today').strftime('%Y-%m-%d')
+    # 设置历史数据获取最后一天，只有现在的时间在23:00以后时才设置为今天，否则就设置为昨天
+    # now获取的日期时间是格林尼治标准时间，计算中国的时间需要加8小时（中国在东八区）
+    now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
+    if now.hour >= 23:
+        end = pd.to_datetime('today')
+    else:
+        end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
+    end_date = end.strftime('%Y-%m-%d')
     name = this_stock.name.values[0]
     # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据

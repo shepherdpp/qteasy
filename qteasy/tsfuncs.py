@@ -9,6 +9,7 @@
 
 import pandas as pd
 import numpy as np
+import time
 import tushare as ts
 from functools import lru_cache
 from .utilfuncs import regulate_date_format, list_to_str_format, str_to_list, next_market_trade_day
@@ -300,13 +301,19 @@ def get_bar(shares: object,
     """
     if isinstance(shares, list):
         shares = list_to_str_format(shares)
-    # 尽管get_bar函数支持多个shares的数据批量下载，但是批量下载存在诸多问题，建议分别下载
+    # 尽管get_bar函数支持多个shares的数据批量下载，但是批量下载存在诸多问题，因此不支持同时下载多个股票的数据
     assert isinstance(shares, str)
     assert len(str_to_list(shares)) == 1, \
         f'Should download data for one and only one share at a time, got {len(str_to_list(shares))} shares'
-    # 单个股票的数据量不会超过5000，如果超过5000，需要分批下载，且数据量接近5000时会发生错误，因此需要去除nan值
-    target_start_date = next_market_trade_day(start)
-    acquired_start_date = pd.to_datetime(end)
+    # TODO: 单个股票的数据量太大时，需要分批下载，当单个股票的需求数据量超过十年时，将数据切成十年长的数个分段，分别下载
+    start_date = next_market_trade_day(start)
+    end_date = pd.to_datetime(end)
+    history_date_list = [start_date]
+    ten_year_after_start = start_date + pd.Timedelta(3650, 'd')
+    while ten_year_after_start < end_date:
+        history_date_list.append(ten_year_after_start)
+        ten_year_after_start = ten_year_after_start + pd.Timedelta(3650, 'd')
+    history_date_list.append(end_date)
     res_dfs = []
     left_retry = 5
     while left_retry > 0:
@@ -339,7 +346,7 @@ def get_bar(shares: object,
             acquired_start_date = pd.to_datetime(df_without_nan.trade_date.min()) - pd.Timedelta(1, 'd')
             res_dfs.append(df_without_nan)
             # 判断数据是否完整读取
-            if len(df) == 5000 or acquired_start_date >= target_start_date:
+            if len(df) == 5000 or acquired_start_date >= start_date:
                 # 本次读取的数据不完整，还有剩余的数据未读取
                 # 下一次读取数据起点不变，终点变为前一次的起点的前一天
                 end = regulate_date_format(acquired_start_date)

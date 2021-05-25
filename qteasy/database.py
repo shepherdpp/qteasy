@@ -424,10 +424,12 @@ class DataSource():
                     inf_data = df.loc[np.isinf(share_data)]
                     if inf_data.index[0] < inf_start: inf_start = inf_data.index[0]
                     if inf_data.index[-1] > inf_end: inf_end = inf_data.index[-1]
+                inf_start = inf_start.strftime('%Y-%m-%d')
+                inf_end = inf_end.strftime('%Y-%m-%d')
                 if htype in PRICE_TYPE_DATA:
                     # get price type data online
-                    online_data = get_price_type_raw_data(start=inf_start.strftime('%Y-%m-%d'),
-                                                          end=inf_end.strftime('%Y-%m-%d'),
+                    online_data = get_price_type_raw_data(start=inf_start,
+                                                          end=inf_end,
                                                           freq=freq,
                                                           shares=shares_with_inf,
                                                           htypes=htype,
@@ -438,7 +440,8 @@ class DataSource():
                                                           delay_every=delay_every,
                                                           progress=progress,
                                                           prgrs_txt=f'Downloading {len(shares_with_inf)} '
-                                                                    f'missing data: "{htype}"')
+                                                                    f'data: "{htype}" from {inf_start} to '
+                                                                    f'{inf_end}')
                 if htype in CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA:
                     # download financial report type data
                     inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
@@ -451,7 +454,9 @@ class DataSource():
                                                                             progress=progress,
                                                                             prgrs_txt=f'Downloading '
                                                                                       f'{len(shares_with_inf)} '
-                                                                                      f'missing data: "{htype}"')
+                                                                                      f'missing data: "{htype}" '
+                                                                                      f'from {inf_start} to '
+                                                                                      f'{inf_end}')
                     online_data = [d for d in [inc, ind, blc, csh] if len(d) > 0][0]
                 # 现在所有所需的数据都已经下载下来了。且存储在一个dict中，且keys为股票代码
                 # 下面循环把所有下载下来的online_data 覆盖到下载下来的df中
