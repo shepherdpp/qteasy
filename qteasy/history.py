@@ -630,7 +630,6 @@ class HistoryPanel():
             # 两个参数都是非None或都是None，应该弹出警告信息
             raise KeyError(f'Only and exactly one of the parameters htype and share should be given, '
                            f'got both or none')
-
         res_df = pd.DataFrame()
         if htype is not None:
             assert isinstance(htype, (str, int)), f'htype must be a string or an integer, got {type(htype)}'
@@ -638,8 +637,9 @@ class HistoryPanel():
                 htype = self.htypes[htype]
             if not htype in self.htypes:
                 raise KeyError(f'htype {htype} is not found!')
-
-            v = self[htype].T.squeeze()
+            # 在生成DataFrame之前，需要把数据降低一个维度，例如shape(1, 24, 5) -> shape(24, 5)
+            v = self[htype].T
+            v = v.reshape(v.shape[-2:])
             res_df = pd.DataFrame(v, index=self.hdates, columns=self.shares)
 
         if share is not None:
@@ -648,7 +648,9 @@ class HistoryPanel():
                 share = self.shares[share]
             if not share in self.shares:
                 raise KeyError(f'share {share} is not found!')
-            v = self[:, share].squeeze()
+            # 在生成DataFrame之前，需要把数据降低一个维度，例如shape(1, 24, 5) -> shape(24, 5)
+            v = self[:, share]
+            v = v.reshape(v.shape[-2:])
             res_df = pd.DataFrame(v, index=self.hdates, columns=self.htypes)
 
         if dropna and inf_as_na:
