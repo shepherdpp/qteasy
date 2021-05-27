@@ -193,7 +193,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         current_panel_count = 2 if has_volume else 1
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         ax1 = fig.add_axes([0.06, 0.27, 0.88, 0.65])
-        ax1.set_title(share_name)
+        ax1.set_title(f'{share_name}: {start} - {end}')
         ax2 = fig.add_axes([0.06, 0.08, 0.88, 0.19], sharex=ax1)
         plot_daily = daily[start:end]
         # 添加移动均线
@@ -304,6 +304,7 @@ def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, ind
     # 返回股票的名称和全称
     share_name = stock + ' - ' + asset_type + name
     data = data.rename({'vol': 'volume'}, axis='columns')
+    print(f'got data for candle plot: start: {start_date}, end:{end_date}\n{data.info()}')
 
     # 在DataFrame中增加均线信息：
     if mav is not None:

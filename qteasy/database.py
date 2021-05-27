@@ -390,6 +390,7 @@ class DataSource():
         i = 0
         progress_bar(i, len(htypes), f'total htype count: {len(htypes)}')
         data_downloaded = False
+        # TODO: 应改造这里的实现方式，将不同的htypes分类同时获取，如所有的price type应该同时获取，否则效率太低
         for htype in htypes:
             file_name = htype
             if freq.upper() != 'D':
@@ -417,19 +418,23 @@ class DataSource():
                 data_downloaded = True
                 # TODO: 找到存在inf值的数据起止区间，并仅下载起止区间内的数据，常见的情况是绝大部分历史数据都已经在local，仅缺最近的数据
                 # TODO: 重复下载已经在本地的数据没有必要
-                inf_start = pd.to_datetime(end)
-                inf_end = pd.to_datetime(start)
-                for share in shares_with_inf:
-                    share_data = df[share]
-                    inf_data = df.loc[np.isinf(share_data)]
-                    if inf_data.index[0] < inf_start: inf_start = inf_data.index[0]
-                    if inf_data.index[-1] > inf_end: inf_end = inf_data.index[-1]
-                inf_start = inf_start.strftime('%Y-%m-%d')
-                inf_end = inf_end.strftime('%Y-%m-%d')
+                # inf_start = pd.to_datetime(start)
+                # inf_end = pd.to_datetime(end)
+                # 暂时把这一段注释掉，原本这一段的目的是在下载数据时，检查inf数据的起止区间，并仅下载这一部分区间
+                # 的数据，以便减少数据下载量。但是如果仅下载最近一天的数据，在将数据覆盖回去的时候，会把已经存在的数据
+                # 全部改写为Nan值，因此暂时退回到更新："improved missing historical data downloading process"
+                # 之前的状态。基本保持可用，待本地数据存储方式大更新
+                # for share in shares_with_inf:
+                #     share_data = df[share]
+                #     inf_data = df.loc[np.isinf(share_data)]
+                #     if inf_data.index[0] < inf_start: inf_start = inf_data.index[0]
+                #     if inf_data.index[-1] > inf_end: inf_end = inf_data.index[-1]
+                # inf_start = inf_start.strftime('%Y-%m-%d')
+                # inf_end = inf_end.strftime('%Y-%m-%d')
                 if htype in PRICE_TYPE_DATA:
                     # get price type data online
-                    online_data = get_price_type_raw_data(start=inf_start,
-                                                          end=inf_end,
+                    online_data = get_price_type_raw_data(start=start,
+                                                          end=end,
                                                           freq=freq,
                                                           shares=shares_with_inf,
                                                           htypes=htype,
@@ -440,8 +445,8 @@ class DataSource():
                                                           delay_every=delay_every,
                                                           progress=progress,
                                                           prgrs_txt=f'Downloading {len(shares_with_inf)} '
-                                                                    f'data: "{htype}" from {inf_start} to '
-                                                                    f'{inf_end}')
+                                                                    f'data: "{htype}" from {start} to '
+                                                                    f'{end}')
                 if htype in CASHFLOW_TYPE_DATA + INDICATOR_TYPE_DATA + BALANCE_TYPE_DATA + CASHFLOW_TYPE_DATA:
                     # download financial report type data
                     inc, ind, blc, csh = get_financial_report_type_raw_data(start=start,
@@ -455,8 +460,8 @@ class DataSource():
                                                                             prgrs_txt=f'Downloading '
                                                                                       f'{len(shares_with_inf)} '
                                                                                       f'missing data: "{htype}" '
-                                                                                      f'from {inf_start} to '
-                                                                                      f'{inf_end}')
+                                                                                      f'from {start} to '
+                                                                                      f'{end}')
                     online_data = [d for d in [inc, ind, blc, csh] if len(d) > 0][0]
                 # 现在所有所需的数据都已经下载下来了。且存储在一个dict中，且keys为股票代码
                 # 下面循环把所有下载下来的online_data 覆盖到下载下来的df中

@@ -403,7 +403,8 @@ class HistoryPanel():
             print(f'Empty History Panel at {hex(id(self))}')
         else:
             print(f'History Panel at {hex(id(self))}')
-            print(f'Datetime Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
+            if self.row_count != 0:
+                print(f'Datetime Range: {self.row_count} entries, {self.hdates[0]} to {self.hdates[-1]}')
             print(f'Historical Data Types (total {self.column_count} data types):')
             if self.column_count <= 10:
                 print(f'{self.htypes}')
