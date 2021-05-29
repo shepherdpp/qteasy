@@ -4780,7 +4780,7 @@ class TestTushare(unittest.TestCase):
         print(f'Test income: extracted multiple share income with end date = today: \n{df}')
         self.assertFalse(df.empty)
 
-        # test long range data extraction:
+        # test long idx_range data extraction:
         shares = '000039.SZ'
         start = '20080101'
         end = '20201231'
@@ -4918,7 +4918,7 @@ class TestTushare(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
-        print(f'test 2: test single index in date range\n'
+        print(f'test 2: test single index in date idx_range\n'
               f'=======================================')
         df = index_indicators(index=index, start=start, end=end)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
@@ -6272,7 +6272,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in Montecarlo with multiple sub-range optimization')
+        print(f'strategy optimization in Montecarlo with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -6285,7 +6285,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in Montecarlo with multiple sub-range testing')
+        print(f'strategy optimization in Montecarlo with multiple sub-idx_range testing')
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -6354,7 +6354,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in grid search with multiple sub-range optimization')
+        print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=0,
@@ -6367,7 +6367,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in grid search with multiple sub-range optimization')
+        print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=0,
@@ -6413,7 +6413,7 @@ class TestQT(unittest.TestCase):
                parallel=True,
                visual=True,
                indicator_plot_type=1)
-        print(f'strategy optimization in grid search with multiple sub-range optimization')
+        print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=0,
@@ -6427,7 +6427,7 @@ class TestQT(unittest.TestCase):
                parallel=True,
                visual=True,
                indicator_plot_type=2)
-        print(f'strategy optimization in grid search with multiple sub-range optimization')
+        print(f'strategy optimization in grid search with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=0,
@@ -6476,7 +6476,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in incremental with multiple sub-range optimization')
+        print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=2,
@@ -6493,7 +6493,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=False)
-        print(f'strategy optimization in incremental with multiple sub-range testing')
+        print(f'strategy optimization in incremental with multiple sub-idx_range testing')
         qt.run(self.op,
                mode=2,
                opti_method=2,
@@ -6530,7 +6530,7 @@ class TestQT(unittest.TestCase):
                test_end='20201130',
                parallel=True,
                visual=True)
-        print(f'strategy optimization in incremental with multiple sub-range optimization')
+        print(f'strategy optimization in incremental with multiple sub-idx_range optimization')
         qt.run(self.op,
                mode=2,
                opti_method=2,
@@ -7116,7 +7116,7 @@ class TestDataBase(unittest.TestCase):
         # import pdb;
         # pdb.set_trace()
 
-        # print(f'test expanded date time range from 2020 07 01')
+        # print(f'test expanded date time idx_range from 2020 07 01')
         ds = self.data_source
         # hp = ds.get_and_update_data(start='20200901',
         #                             end='20201231',

@@ -35,72 +35,82 @@ ValidAddPlots = ['macd',
 class ZoomPan:
     def __init__(self):
         self.press = None
-        self.cur_xlim = None
-        self.cur_ylim = None
         self.x0 = None
         self.y0 = None
         self.x1 = None
         self.y1 = None
         self.xpress = None
         self.ypress = None
-        self.istart = None
-        self.range = None
+        self.idx_start = None
+        self.idx_range = None
         self.data = None
 
-    def zoom_factory(self, ax, base_scale=2.):
+    def zoom_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav):
         def zoom(event):
-            cur_xlim = ax.get_xlim()
-            cur_ylim = ax.get_ylim()
 
-            xdata = event.xdata # get event x location
-            ydata = event.ydata # get event y location
+            if event.inaxes != ax1:
+                return
+            if self.idx_start is None:
+                self.idx_start = idx_start
+            if self.idx_range is None:
+                self.idx_range = idx_range
+            if self.data is None:
+                self.data = data
 
             if event.button == 'down':
                 # deal with zoom in
-                scale_factor = 1 / base_scale
+                scale_factor = 1 / 1.2
             elif event.button == 'up':
                 # deal with zoom out
-                scale_factor = base_scale
+                scale_factor = 1.2
             else:
                 # deal with something that should never happen
                 scale_factor = 1
                 print(event.button)
 
-            new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
-            new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+            self.idx_range = int(self.idx_range * scale_factor)
+            ax1.clear()
+            ax2.clear()
+            all_data = self.data
+            plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
 
-            relx = (cur_xlim[1] - xdata)/(cur_xlim[1] - cur_xlim[0])
-            rely = (cur_ylim[1] - ydata)/(cur_ylim[1] - cur_ylim[0])
+            date_start = plot_data.index[0].date()
+            date_end = plot_data.index[-1].date()
 
-            ax.set_xlim([xdata - new_width * (1-relx), xdata + new_width * (relx)])
-            ax.set_ylim([ydata - new_height * (1-rely), ydata + new_height * (rely)])
-            ax.figure.canvas.draw()
+            ax1.set_title(f'scale factor: {scale_factor}, new range: {date_start} - {date_end}')
+            ap = mpf.make_addplot(plot_data[mav], ax=ax1)
+            mpf.plot(plot_data,
+                     ax=ax1,
+                     volume=ax2,
+                     addplot=ap,
+                     type=plot_type,
+                     style=style,
+                     datetime_format='%Y-%m',
+                     xrotation=0)
 
-        fig = ax.get_figure() # get the figure of interest
+        fig = ax1.get_figure() # get the figure of interest
         fig.canvas.mpl_connect('scroll_event', zoom)
 
         return zoom
 
-    def pan_factory(self, ax1, ax2, data, istart, range, style, plot_type, mav):
+    def pan_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav):
 
         def on_press(event):
             if event.inaxes != ax1:
                 return
-            if self.istart is None:
-                self.istart = istart
-            if self.range is None:
-                self.range = range
+            if self.idx_start is None:
+                self.idx_start = idx_start
+            if self.idx_range is None:
+                self.idx_range = idx_range
             if self.data is None:
                 self.data = data
-            self.cur_xlim = ax1.get_xlim()
-            self.cur_ylim = ax1.get_ylim()
             self.press = self.x0, self.y0, event.xdata, event.ydata
             self.x0, self.y0, self.xpress, self.ypress = self.press
 
         def on_release(event):
             self.press = None
             dx = int(event.xdata - self.xpress)
-            self.istart -= dx
+            self.idx_start -= dx
 
         def on_motion(event):
             if self.press is None:
@@ -108,11 +118,11 @@ class ZoomPan:
             if event.inaxes != ax1:
                 return
             dx = int(event.xdata - self.xpress)
-            idx_start = self.istart - dx
+            new_start = self.idx_start - dx
             ax1.clear()
             ax2.clear()
             all_data = self.data
-            plot_data = all_data.iloc[idx_start: idx_start + self.range]
+            plot_data = all_data.iloc[new_start: new_start + self.idx_range]
 
             date_start = plot_data.index[0].date()
             date_end = plot_data.index[-1].date()
@@ -217,15 +227,15 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
         zp = ZoomPan()
-        current_panel_count = 2 if has_volume else 1
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         ax1 = fig.add_axes([0.06, 0.27, 0.88, 0.65])
         ax1.set_title(f'{share_name}: {start.date()} - {end.date()}')
         ax2 = fig.add_axes([0.06, 0.08, 0.88, 0.19], sharex=ax1)
-        istart = np.searchsorted(daily.index, start)
-        range = (end - start).days
+        idx_start = np.searchsorted(daily.index, start)
+        idx_end = np.searchsorted(daily.index, end)
+        idx_range = idx_end - idx_start
         # plot_daily = daily[start:end]
-        plot_daily = daily.iloc[istart: istart+range]
+        plot_daily = daily.iloc[idx_start: idx_start + idx_range]
         # 添加移动均线
         ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
         ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
@@ -249,7 +259,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                      datetime_format='%Y-%m',
                      xrotation=0)
 
-        zp.pan_factory(ax1, ax2, daily, istart, range, my_style, plot_type, ma_columns)
+        zp.pan_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns)
+        zp.zoom_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns)
 
         plt.show()
     return daily
