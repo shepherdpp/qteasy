@@ -6729,22 +6729,13 @@ class TestVisual(unittest.TestCase):
 
     def test_candle(self):
         print(f'test mpf plot in candle form')
-        qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
-        print(f'get data from mpf plot function')
-        daily = qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
-        print(f'get data from mpf plot function for adj = "none"')
-        daily = qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', no_visual=True, adj='none')
-        print(f'get data from mpf plot function for adj = "hfq"')
-        daily = qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', no_visual=True, adj='hfq')
+        self.data = qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
+        # print(f'get data from mpf plot function for adj = "none"')
+        # qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', no_visual=True, adj='none')
+        # print(f'get data from mpf plot function for adj = "hfq"')
+        # qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', no_visual=True, adj='hfq')
         print(f'test plot mpf data with indicator macd')
-        qt.candle(stock_data=daily, no_visual=False, indicator='macd', indicator_par=(12, 26, 9))
-        daily.drop(columns=['volume'], inplace=True)
-        print(f'test plot mpf data directly from DataFrame without volume')
-        qt.candle(stock_data=daily, no_visual=False)
-        print(f'test plot mpf data with indicator dema')
-        qt.candle(stock_data=daily, no_visual=False, indicator='dema', indicator_par=(20,))
-        print(f'test plot mpf data with indicator macd')
-        qt.candle(stock_data=daily, no_visual=False, indicator='macd', indicator_par=(12, 26, 9))
+        qt.candle(stock_data=self.data, indicator='macd', indicator_par=(12, 26, 9))
 
     def test_renko(self):
         print(f'test mpf plot in renko form')
@@ -7163,19 +7154,19 @@ class TestDataBase(unittest.TestCase):
         # hp.info()
         # hp = qt.HistoryPanel()
 
-        print(f'test getting and updating refresh data')
-        hp = ds.get_and_update_data(start='19950101',
-                                    end='20211231',
-                                    freq='d',
-                                    shares=['000812.SZ', '600748.SH', '000616.SZ',
-                                            '000620.SZ', '000667.SZ', '000001.SZ'],
-                                    htypes='open, high, low, close, vol',
-                                    refresh=True,
-                                    parallel=10,
-                                    delay=125,
-                                    delay_every=80)
-        hp.info()
-        hp = qt.HistoryPanel()
+        # print(f'test getting and updating refresh data')
+        # hp = ds.get_and_update_data(start='19950101',
+        #                             end='20211231',
+        #                             freq='d',
+        #                             shares=['000812.SZ', '600748.SH', '000616.SZ',
+        #                                     '000620.SZ', '000667.SZ', '000001.SZ'],
+        #                             htypes='open, high, low, close, vol',
+        #                             refresh=True,
+        #                             parallel=10,
+        #                             delay=125,
+        #                             delay_every=80)
+        # hp.info()
+        # hp = qt.HistoryPanel()
 
         # print(f'test getting and updating refresh data')
         # hp = ds.get_and_update_data(start='20060101',

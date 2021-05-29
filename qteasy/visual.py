@@ -43,6 +43,9 @@ class ZoomPan:
         self.y1 = None
         self.xpress = None
         self.ypress = None
+        self.istart = None
+        self.range = None
+        self.data = None
 
     def zoom_factory(self, ax, base_scale=2.):
         def zoom(event):
@@ -78,40 +81,60 @@ class ZoomPan:
 
         return zoom
 
-    def pan_factory(self, ax):
+    def pan_factory(self, ax1, ax2, data, istart, range, style, plot_type, mav):
 
         def on_press(event):
-            if event.inaxes != ax:
+            if event.inaxes != ax1:
                 return
-            self.cur_xlim = ax.get_xlim()
-            self.cur_ylim = ax.get_ylim()
+            if self.istart is None:
+                self.istart = istart
+            if self.range is None:
+                self.range = range
+            if self.data is None:
+                self.data = data
+            self.cur_xlim = ax1.get_xlim()
+            self.cur_ylim = ax1.get_ylim()
             self.press = self.x0, self.y0, event.xdata, event.ydata
             self.x0, self.y0, self.xpress, self.ypress = self.press
 
         def on_release(event):
             self.press = None
-            ax.figure.canvas.draw()
+            dx = int(event.xdata - self.xpress)
+            self.istart -= dx
 
         def on_motion(event):
             if self.press is None:
                 return
-            if event.inaxes != ax:
+            if event.inaxes != ax1:
                 return
-            dx = event.xdata - self.xpress
-            dy = event.ydata - self.ypress
-            self.cur_xlim -= dx
-            self.cur_ylim -= dy
-            ax.set_xlim(self.cur_xlim)
-            ax.set_ylim(self.cur_ylim)
+            dx = int(event.xdata - self.xpress)
+            idx_start = self.istart - dx
+            ax1.clear()
+            ax2.clear()
+            all_data = self.data
+            plot_data = all_data.iloc[idx_start: idx_start + self.range]
 
-            ax.figure.canvas.draw()
+            date_start = plot_data.index[0].date()
+            date_end = plot_data.index[-1].date()
 
-        fig = ax.get_figure() # get the figure of interest
+            ax1.set_title(f'dx: {dx}, new range: {date_start} - {date_end}')
+            ap = mpf.make_addplot(plot_data[mav], ax=ax1)
+            mpf.plot(plot_data,
+                     ax=ax1,
+                     volume=ax2,
+                     addplot=ap,
+                     type=plot_type,
+                     style=style,
+                     datetime_format='%Y-%m',
+                     xrotation=0)
+
+
+        fig = ax1.get_figure() # get the figure of interest
 
         # attach the call back
-        fig.canvas.mpl_connect('button_press_event',on_press)
-        fig.canvas.mpl_connect('button_release_event',on_release)
-        fig.canvas.mpl_connect('motion_notify_event',on_motion)
+        fig.canvas.mpl_connect('button_press_event', on_press)
+        fig.canvas.mpl_connect('button_release_event', on_release)
+        fig.canvas.mpl_connect('motion_notify_event', on_motion)
 
         #return the function
         return on_motion
@@ -119,27 +142,27 @@ class ZoomPan:
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
-           mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
+           no_visual=False, **kwargs):
     """plot stock data or extracted data in candle form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='candle', no_visual=no_visual,
-                    mav=mav, addplot_type=indicator, addplot_par=indicator_par, **kwargs)
+                    **kwargs)
 
 
 def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
-         mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
+         no_visual=False, **kwargs):
     """plot stock data or extracted data in ohlc form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='ohlc', no_visual=no_visual,
-                    mav=mav, addplot_type=indicator, addplot_par=indicator_par, **kwargs)
+                    **kwargs)
 
 
 def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
-          mav=(5, 10, 20, 30), no_visual=False, indicator=None, indicator_par=None, **kwargs):
+          no_visual=False, **kwargs):
     """plot stock data or extracted data in renko form"""
     return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
                     end=end, asset_type=asset_type, plot_type='renko', no_visual=no_visual,
-                    mav=mav, addplot_type=indicator, addplot_par=indicator_par, **kwargs)
+                    **kwargs)
 
 
 def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
@@ -167,20 +190,23 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         # 准备股票数据，为了实现动态图表，应该获取一只股票在全历史周期内的所有价格数据，并且在全周期上计算
         # 所需的均线以及指标数据，显示的时候只显示其中一部分即可，并且可以使用鼠标缩放平移
         # 因此_prepare_mpf_data()函数应该返回一个包含所有历史价格以及相关指标的DataFrame
-        daily, share_name = _prepare_mpf_data(stock=stock,
-                                              asset_type=asset_type,
-                                              adj=adj,
-                                              mav=mav,
-                                              indicator=indicator,
-                                              indicator_par=indicator_par)
+        daily, share_name = _get_mpf_data(stock=stock,
+                                          asset_type=asset_type,
+                                          adj=adj,
+                                          mav=mav,
+                                          indicator=indicator,
+                                          indicator_par=indicator_par)
         has_volume = True
     else:
         assert isinstance(stock_data, pd.DataFrame)
-        assert all(col in ['open', 'high', 'low', 'close', 'volume'] for col in stock_data.columns)
+        assert all(col in stock_data.columns for col in ['open', 'high', 'low', 'close'])
         daily = stock_data
-        has_volume = any(col in ['volume'] for col in stock_data.columns)
+        has_volume = 'volume' in stock_data.columns
         if share_name is None:
             share_name = 'stock'
+
+    daily = _add_indicators(daily, mav=mav)
+
     my_color = mpf.make_marketcolors(up='r',
                                      down='g',
                                      edge='inherit',
@@ -190,16 +216,20 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
+        zp = ZoomPan()
         current_panel_count = 2 if has_volume else 1
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         ax1 = fig.add_axes([0.06, 0.27, 0.88, 0.65])
-        ax1.set_title(f'{share_name}: {start} - {end}')
+        ax1.set_title(f'{share_name}: {start.date()} - {end.date()}')
         ax2 = fig.add_axes([0.06, 0.08, 0.88, 0.19], sharex=ax1)
-        plot_daily = daily[start:end]
+        istart = np.searchsorted(daily.index, start)
+        range = (end - start).days
+        # plot_daily = daily[start:end]
+        plot_daily = daily.iloc[istart: istart+range]
         # 添加移动均线
-        if mav is not None:
-            ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
-            ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
+        ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
+        ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
+
         if plot_type != 'renko': # 'renko'型图不支持addplot
             # 添加MA线
             mpf.plot(plot_daily,
@@ -218,6 +248,9 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                      style=my_style,
                      datetime_format='%Y-%m',
                      xrotation=0)
+
+        zp.pan_factory(ax1, ax2, daily, istart, range, my_style, plot_type, ma_columns)
+
         plt.show()
     return daily
 
@@ -257,8 +290,9 @@ def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
     return adps
 
 
-def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicator=None, indicator_par=None):
-    """ 返回一只股票在全部历史区间上的价格数据，同时计算移动平均线以及相应的指标数据。
+def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicator=None, indicator_par=None):
+    """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
+        并返回股票的名称。
 
     :param stock: 股票代码
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
@@ -267,6 +301,7 @@ def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, ind
     :param ma: 移动平均线，一个tuple，包含数个integer，代表均线周期
     :param indicator: str，指标，如MACD等
     :return:
+        tuple：(pd.DataFrame, share_name)
     """
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
     if asset_type == 'E':
@@ -306,26 +341,44 @@ def _prepare_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, ind
     data = data.rename({'vol': 'volume'}, axis='columns')
     print(f'got data for candle plot: start: {start_date}, end:{end_date}\n{data.info()}')
 
+    return data, share_name
+
+
+def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=None, rsi_par=None, dema_par=None):
+    """ data是一只股票的历史K线数据，包括O/H/L/C/V五组数据或者O/H/L/C四组数据
+        并根据这些数据生成以下数据，加入到data中：
+
+        1, Moving Average
+        2, Bband
+        3, macd
+        4, kdj
+        5, dma
+        6, rsi
+
+    :param data:
+    :return: pd.DataFrame
+    """
+    if mav is None:
+        mav = (5, 10, 20)
+    # 其他indicator的parameter使用默认值
+
     # 在DataFrame中增加均线信息：
-    if mav is not None:
-        assert isinstance(mav, (list, tuple))
-        assert all(isinstance(item, int) for item in mav)
-        for value in mav:
-            data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
+    assert isinstance(mav, (list, tuple))
+    assert all(isinstance(item, int) for item in mav)
+    for value in mav:
+        data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
 
     # 添加不同的indicator
-    if indicator is None:
-        indicator = ''
-    if indicator.lower() == 'dema':
-        data['dema'] = dema(data.close, *indicator_par)
-    elif indicator.lower() == 'macd':
-        data[['m', 's', 'h']] = macd(data.close, *indicator_par)
-    elif indicator.lower() == 'rsi':
-        data['d'] = rsi(data.close, *indicator_par)
-    elif indicator.lower() == 'bbands':
-        data['u', 'm', 'l'] = bbands(data.close, *indicator_par)
+    if dema_par is None: dema_par = (30,)
+    data['dema'] = dema(data.close, *dema_par)
+    if macd_par is None: macd_par = (9, 12, 26)
+    data['macd-m'], data['macd-s'], data['macd-h'] = macd(data.close, *macd_par)
+    if rsi_par is None: rsi_par = (14,)
+    data['rsi'] = rsi(data.close, *rsi_par)
+    if bb_par is None: bb_par = (20, 2, 2, 0)
+    data['bb-u'], data['bb-m'], data['bb-l'] = bbands(data.close, *bb_par)
 
-    return data, share_name
+    return data
 
 
 def _plot_loop_result(loop_results: dict, config):
