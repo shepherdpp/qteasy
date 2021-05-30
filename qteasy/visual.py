@@ -1,7 +1,8 @@
 # coding=utf-8
+# -*- coding: utf-8 -*-
 # visual.py
 
-# ======================================
+# =====================================4
 # This file contains components for the qt
 # to establish visual outputs of price data
 # loop result and strategy optimization
@@ -13,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
 from mplfinance.original_flavor import candlestick_ohlc
-from matplotlib.font_manager import FontProperties
+from matplotlib.font_manager import FontProperties, FontManager
 
 import pandas as pd
 import numpy as np
@@ -86,7 +87,6 @@ class MPFManipulator:
             date_start = plot_data.index[0].date()
             date_end = plot_data.index[-1].date()
 
-            ax1.set_title(f'zooming: {scale_factor}, new range: {date_start} - {date_end}')
             ap = mpf.make_addplot(plot_data[mav], ax=ax1)
             mpf.plot(plot_data,
                      ax=ax1,
@@ -136,7 +136,6 @@ class MPFManipulator:
             date_start = plot_data.index[0].date()
             date_end = plot_data.index[-1].date()
 
-            ax1.set_title(f'panning: {dx}, new range: {date_start} - {date_end}')
             ap = mpf.make_addplot(plot_data[mav], ax=ax1)
             mpf.plot(plot_data,
                      ax=ax1,
@@ -236,6 +235,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
+        # plt.rcParams['font.sans-serif'] = ['SimHei']
         zp = MPFManipulator()
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         ax1 = fig.add_axes([0.06, 0.25, 0.88, 0.60])
@@ -251,59 +251,69 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
         ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
 
-        last_info = plot_daily.iloc[0]
-        font = FontProperties()
-        font.set_size('xx-large')
-        title_font = {'fontname':           'Arial',
-                      'size':               '16',
-                      'color':              'black',
-                      'weight':             'bold',
-                      'verticalalignment':  'bottom'}
+        fontprop = FontProperties()
+        fontprop.set_family('Source Han Sans CN')
+
+        title_font = {'fontname':   'pingfang HK',
+                      'size':       '16',
+                      'color':      'black',
+                      'weight':     'bold',
+                      'va':         'bottom',
+                      'ha':         'center'}
         large_red_font = {'fontname':           'Arial',
                           'size':               '24',
                           'color':              'red',
                           'weight':             'bold',
-                          'verticalalignment':  'bottom'}
+                          'va':  'bottom'}
         large_green_font = {'fontname':           'Arial',
                             'size':               '24',
                             'color':              'green',
                             'weight':             'bold',
-                            'verticalalignment':  'bottom'}
+                            'va':  'bottom'}
         small_red_font = {'fontname':           'Arial',
                           'size':               '12',
                           'color':              'red',
                           'weight':             'bold',
-                          'verticalalignment':  'bottom'}
+                          'va':  'bottom'}
         small_green_font = {'fontname':           'Arial',
                             'size':               '12',
                             'color':              'red',
                             'weight':             'bold',
-                            'verticalalignment':  'bottom'}
+                            'va':  'bottom'}
+        normal_label_font = {'fontname':           'Arial',
+                             'size':               '12',
+                             'color':              'black',
+                             'weight':             'normal',
+                             'va':  'bottom',
+                             'ha': 'right'}
         normal_font = {'fontname':           'Arial',
                        'size':               '12',
                        'color':              'black',
                        'weight':             'normal',
-                       'verticalalignment':  'bottom'}
+                       'va':  'bottom',
+                       'ha': 'left'}
 
         # title of figure
-        fig.text(0.35, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
-        fig.text(0.07, 0.90, 'date', **normal_font)
-        fig.text(0.12, 0.88, f'{display_daily["open"]} / {display_daily["close"]}', **large_red_font)
-        fig.text(0.12, 0.86, f'{np.round(display_daily["change"],3)}', **small_red_font)
+        fig.text(0.50, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
+        fig.text(0.12, 0.90, 'date: ', **normal_label_font)
+        fig.text(0.14, 0.88, f'{display_daily["open"]} / {display_daily["close"]}', **large_red_font)
+        fig.text(0.14, 0.86, f'{np.round(display_daily["change"],3)}', **small_red_font)
         fig.text(0.22, 0.86, f'[{display_daily["pct_change"] * 100}%]', **small_red_font)
-        fig.text(0.05, 0.86, f'{display_daily.name.date()}', **normal_font)
-        fig.text(0.26, 0.90, 'high', **normal_font)
-        fig.text(0.30, 0.90, f'{display_daily["high"]}', **small_red_font)
-        fig.text(0.26, 0.86, 'low', **normal_font)
-        fig.text(0.30, 0.86, f'{display_daily["low"]}', **small_green_font)
-        fig.text(0.36, 0.86, 'volume', **normal_font)
-        fig.text(0.40, 0.86, f'{display_daily["volume"]}', **small_red_font)
-        fig.text(0.46, 0.86, 'value', **normal_font)
-        fig.text(0.50, 0.86, f'{display_daily["value"]}', **small_green_font)
-        fig.text(0.56, 0.86, 'upper lim', **normal_font)
-        fig.text(0.60, 0.86, f'{display_daily["upper_lim"]}', **small_red_font)
-        fig.text(0.66, 0.86, 'lower lim', **normal_font)
-        fig.text(0.70, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
+        fig.text(0.12, 0.86, f'{display_daily.name.date()}', **normal_label_font)
+        fig.text(0.40, 0.90, 'high: ', **normal_label_font)
+        fig.text(0.40, 0.90, f'{display_daily["high"]}', **small_red_font)
+        fig.text(0.40, 0.86, 'low: ', **normal_label_font)
+        fig.text(0.40, 0.86, f'{display_daily["low"]}', **small_green_font)
+        fig.text(0.50, 0.86, 'volume: ', **normal_label_font)
+        fig.text(0.50, 0.86, f'{display_daily["volume"]}', **small_red_font)
+        fig.text(0.61, 0.86, 'value: ', **normal_label_font)
+        fig.text(0.61, 0.86, f'{display_daily["value"]}', **small_green_font)
+        fig.text(0.75, 0.86, 'upper lim: ', **normal_label_font)
+        fig.text(0.75, 0.86, f'{display_daily["upper_lim"]}', **small_red_font)
+        fig.text(0.86, 0.86, 'lower lim: ', **normal_label_font)
+        fig.text(0.86, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
+
+        print(f'{share_name}: {start.date()} - {end.date()}')
 
         if plot_type != 'renko': # 'renko'型图不支持addplot
             # 添加MA线
@@ -380,6 +390,10 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
         tuple：(pd.DataFrame, share_name)
     """
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
+    name_of = {'E':  'Stock 股票',
+               'I':  'Index 指数',
+               'F':  'Futures 期货',
+               'FD': 'Fund 基金'}
     if asset_type == 'E':
         basic_info = stock_basic(fields='ts_code,symbol,name,fullname,area,industry,list_date')
     elif asset_type == 'I':
@@ -413,9 +427,8 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
                              htypes='close,high,low,open,vol', asset_type=asset_type,
                              adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
     # 返回股票的名称和全称
-    share_name = stock + ' - ' + asset_type + name
+    share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
     data = data.rename({'vol': 'volume'}, axis='columns')
-    print(f'got data for candle plot: start: {start_date}, end:{end_date}\n{data.info()}')
 
     return data, share_name
 
@@ -426,6 +439,8 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
 
         - Moving Average
         - change and percent change
+        - average
+        - last close
         - Bband
         - macd
         - kdj
@@ -449,6 +464,8 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
     data['value'] = np.round(data['close'] * data['volume'], 2)
     data['upper_lim'] = np.round(data['close'] * 1.1, 3)
     data['lower_lim'] = np.round(data['close'] * 0.9, 3)
+    data['last_close'] = data['close'].shift(1)
+    data['average'] = data[['open', 'close', 'high', 'low']].mean(axis=1)
     # 添加不同的indicator
     if dema_par is None: dema_par = (30,)
     data['dema'] = dema(data.close, *dema_par)
