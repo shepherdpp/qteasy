@@ -6729,7 +6729,7 @@ class TestVisual(unittest.TestCase):
 
     def test_candle(self):
         print(f'test mpf plot in candle form')
-        self.data = qt.candle('513100.SH', start='2020-12-01', asset_type='FD', no_visual=False)
+        self.data = qt.candle('513100.SH', start='2020-12-01', asset_type='FD')
         # print(f'get data from mpf plot function for adj = "none"')
         # qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', no_visual=True, adj='none')
         # print(f'get data from mpf plot function for adj = "hfq"')

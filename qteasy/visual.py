@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
 from mplfinance.original_flavor import candlestick_ohlc
+from matplotlib.font_manager import FontProperties
 
 import pandas as pd
 import numpy as np
@@ -32,7 +33,7 @@ ValidAddPlots = ['macd',
 
 
 # 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
-class ZoomPan:
+class MPFManipulator:
     def __init__(self):
         self.press = None
         self.x0 = None
@@ -44,6 +45,14 @@ class ZoomPan:
         self.idx_start = None
         self.idx_range = None
         self.data = None
+
+    def pick_factory(self, ax1, ax2, data):
+        def pick():
+            pass
+
+    def single_click_factory(self, ax1, ax2, data):
+        def on_press():
+            pass
 
     def zoom_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav):
         def zoom(event):
@@ -77,7 +86,7 @@ class ZoomPan:
             date_start = plot_data.index[0].date()
             date_end = plot_data.index[-1].date()
 
-            ax1.set_title(f'scale factor: {scale_factor}, new range: {date_start} - {date_end}')
+            ax1.set_title(f'zooming: {scale_factor}, new range: {date_start} - {date_end}')
             ap = mpf.make_addplot(plot_data[mav], ax=ax1)
             mpf.plot(plot_data,
                      ax=ax1,
@@ -127,7 +136,7 @@ class ZoomPan:
             date_start = plot_data.index[0].date()
             date_end = plot_data.index[-1].date()
 
-            ax1.set_title(f'dx: {dx}, new range: {date_start} - {date_end}')
+            ax1.set_title(f'panning: {dx}, new range: {date_start} - {date_end}')
             ap = mpf.make_addplot(plot_data[mav], ax=ax1)
             mpf.plot(plot_data,
                      ax=ax1,
@@ -149,6 +158,7 @@ class ZoomPan:
         #return the function
         return on_motion
 
+# 定义用于可视化图表的所有字体和字号
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
@@ -226,19 +236,74 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
-        zp = ZoomPan()
+        zp = MPFManipulator()
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-        ax1 = fig.add_axes([0.06, 0.27, 0.88, 0.65])
-        ax1.set_title(f'{share_name}: {start.date()} - {end.date()}')
-        ax2 = fig.add_axes([0.06, 0.08, 0.88, 0.19], sharex=ax1)
+        ax1 = fig.add_axes([0.06, 0.25, 0.88, 0.60])
+        # ax1.set_title(f'{share_name}: {start.date()} - {end.date()}')
+        ax2 = fig.add_axes([0.06, 0.15, 0.88, 0.10], sharex=ax1)
+        ax3 = fig.add_axes([0.06, 0.05, 0.88, 0.10], sharex=ax1)
         idx_start = np.searchsorted(daily.index, start)
         idx_end = np.searchsorted(daily.index, end)
         idx_range = idx_end - idx_start
-        # plot_daily = daily[start:end]
         plot_daily = daily.iloc[idx_start: idx_start + idx_range]
+        display_daily = daily.iloc[idx_start + idx_range - 5]
         # 添加移动均线
         ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
         ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
+
+        last_info = plot_daily.iloc[0]
+        font = FontProperties()
+        font.set_size('xx-large')
+        title_font = {'fontname':           'Arial',
+                      'size':               '16',
+                      'color':              'black',
+                      'weight':             'bold',
+                      'verticalalignment':  'bottom'}
+        large_red_font = {'fontname':           'Arial',
+                          'size':               '24',
+                          'color':              'red',
+                          'weight':             'bold',
+                          'verticalalignment':  'bottom'}
+        large_green_font = {'fontname':           'Arial',
+                            'size':               '24',
+                            'color':              'green',
+                            'weight':             'bold',
+                            'verticalalignment':  'bottom'}
+        small_red_font = {'fontname':           'Arial',
+                          'size':               '12',
+                          'color':              'red',
+                          'weight':             'bold',
+                          'verticalalignment':  'bottom'}
+        small_green_font = {'fontname':           'Arial',
+                            'size':               '12',
+                            'color':              'red',
+                            'weight':             'bold',
+                            'verticalalignment':  'bottom'}
+        normal_font = {'fontname':           'Arial',
+                       'size':               '12',
+                       'color':              'black',
+                       'weight':             'normal',
+                       'verticalalignment':  'bottom'}
+
+        # title of figure
+        fig.text(0.35, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
+        fig.text(0.07, 0.90, 'date', **normal_font)
+        fig.text(0.12, 0.88, f'{display_daily["open"]} / {display_daily["close"]}', **large_red_font)
+        fig.text(0.12, 0.86, f'{np.round(display_daily["change"],3)}', **small_red_font)
+        fig.text(0.22, 0.86, f'[{display_daily["pct_change"] * 100}%]', **small_red_font)
+        fig.text(0.05, 0.86, f'{display_daily.name.date()}', **normal_font)
+        fig.text(0.26, 0.90, 'high', **normal_font)
+        fig.text(0.30, 0.90, f'{display_daily["high"]}', **small_red_font)
+        fig.text(0.26, 0.86, 'low', **normal_font)
+        fig.text(0.30, 0.86, f'{display_daily["low"]}', **small_green_font)
+        fig.text(0.36, 0.86, 'volume', **normal_font)
+        fig.text(0.40, 0.86, f'{display_daily["volume"]}', **small_red_font)
+        fig.text(0.46, 0.86, 'value', **normal_font)
+        fig.text(0.50, 0.86, f'{display_daily["value"]}', **small_green_font)
+        fig.text(0.56, 0.86, 'upper lim', **normal_font)
+        fig.text(0.60, 0.86, f'{display_daily["upper_lim"]}', **small_red_font)
+        fig.text(0.66, 0.86, 'lower lim', **normal_font)
+        fig.text(0.70, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
 
         if plot_type != 'renko': # 'renko'型图不支持addplot
             # 添加MA线
@@ -359,12 +424,13 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
     """ data是一只股票的历史K线数据，包括O/H/L/C/V五组数据或者O/H/L/C四组数据
         并根据这些数据生成以下数据，加入到data中：
 
-        1, Moving Average
-        2, Bband
-        3, macd
-        4, kdj
-        5, dma
-        6, rsi
+        - Moving Average
+        - change and percent change
+        - Bband
+        - macd
+        - kdj
+        - dma
+        - rsi
 
     :param data:
     :return: pd.DataFrame
@@ -378,7 +444,11 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
     assert all(isinstance(item, int) for item in mav)
     for value in mav:
         data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
-
+    data['change'] = np.round(data['close'] - data['close'].shift(1),3)
+    data['pct_change'] = np.round(data['change'] / data['close'], 4)
+    data['value'] = np.round(data['close'] * data['volume'], 2)
+    data['upper_lim'] = np.round(data['close'] * 1.1, 3)
+    data['lower_lim'] = np.round(data['close'] * 0.9, 3)
     # 添加不同的indicator
     if dema_par is None: dema_par = (30,)
     data['dema'] = dema(data.close, *dema_par)
