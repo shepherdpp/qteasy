@@ -31,7 +31,44 @@ register_matplotlib_converters()
 ValidAddPlots = ['macd',
                  'dma',
                  'trix']
-
+title_font = {'fontname': 'pingfang HK',
+              'size':     '16',
+              'color':    'black',
+              'weight':   'bold',
+              'va':       'bottom',
+              'ha':       'center'}
+large_red_font = {'fontname': 'Arial',
+                  'size':     '24',
+                  'color':    'red',
+                  'weight':   'bold',
+                  'va':       'bottom'}
+large_green_font = {'fontname': 'Arial',
+                    'size':     '24',
+                    'color':    'green',
+                    'weight':   'bold',
+                    'va':       'bottom'}
+small_red_font = {'fontname': 'Arial',
+                  'size':     '12',
+                  'color':    'red',
+                  'weight':   'bold',
+                  'va':       'bottom'}
+small_green_font = {'fontname': 'Arial',
+                    'size':     '12',
+                    'color':    'red',
+                    'weight':   'bold',
+                    'va':       'bottom'}
+normal_label_font = {'fontname': 'Arial',
+                     'size':     '12',
+                     'color':    'black',
+                     'weight':   'normal',
+                     'va':       'bottom',
+                     'ha':       'right'}
+normal_font = {'fontname': 'Arial',
+               'size':     '12',
+               'color':    'black',
+               'weight':   'normal',
+               'va':       'bottom',
+               'ha':       'left'}
 
 # 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
 class MPFManipulator:
@@ -55,7 +92,7 @@ class MPFManipulator:
         def on_press():
             pass
 
-    def zoom_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav):
+    def zoom_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav, texts):
         def zoom(event):
 
             if event.inaxes != ax1:
@@ -97,12 +134,12 @@ class MPFManipulator:
                      datetime_format='%Y-%m',
                      xrotation=0)
 
-        fig = ax1.get_figure() # get the figure of interest
+        fig = ax1.get_figure()
         fig.canvas.mpl_connect('scroll_event', zoom)
 
         return zoom
 
-    def pan_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav):
+    def pan_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav, texts):
 
         def on_press(event):
             if event.inaxes != ax1:
@@ -145,9 +182,21 @@ class MPFManipulator:
                      style=style,
                      datetime_format='%Y-%m',
                      xrotation=0)
+            display_daily = plot_data.iloc[-1]
+            # texts[0].set_text()
+            texts[1].set_text(f'{display_daily["open"]} / {display_daily["close"]}')
+            texts[1].set_color('green')
+            texts[2].set_text(f'{display_daily["change"]}')
+            texts[3].set_text(f'[{display_daily["pct_change"] * 100}%]')
+            texts[4].set_text(f'{display_daily.name.date()}')
+            texts[5].set_text(f'{display_daily["high"]}')
+            texts[6].set_text(f'{display_daily["low"]}')
+            texts[7].set_text(f'{display_daily["volume"]}')
+            texts[8].set_text(f'{display_daily["value"]}')
+            texts[9].set_text(f'{display_daily["upper_lim"]}')
+            texts[10].set_text(f'{display_daily["lower_lim"]}')
 
-
-        fig = ax1.get_figure() # get the figure of interest
+        fig = ax1.get_figure()
 
         # attach the call back
         fig.canvas.mpl_connect('button_press_event', on_press)
@@ -254,64 +303,26 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         fontprop = FontProperties()
         fontprop.set_family('Source Han Sans CN')
 
-        title_font = {'fontname':   'pingfang HK',
-                      'size':       '16',
-                      'color':      'black',
-                      'weight':     'bold',
-                      'va':         'bottom',
-                      'ha':         'center'}
-        large_red_font = {'fontname':           'Arial',
-                          'size':               '24',
-                          'color':              'red',
-                          'weight':             'bold',
-                          'va':  'bottom'}
-        large_green_font = {'fontname':           'Arial',
-                            'size':               '24',
-                            'color':              'green',
-                            'weight':             'bold',
-                            'va':  'bottom'}
-        small_red_font = {'fontname':           'Arial',
-                          'size':               '12',
-                          'color':              'red',
-                          'weight':             'bold',
-                          'va':  'bottom'}
-        small_green_font = {'fontname':           'Arial',
-                            'size':               '12',
-                            'color':              'red',
-                            'weight':             'bold',
-                            'va':  'bottom'}
-        normal_label_font = {'fontname':           'Arial',
-                             'size':               '12',
-                             'color':              'black',
-                             'weight':             'normal',
-                             'va':  'bottom',
-                             'ha': 'right'}
-        normal_font = {'fontname':           'Arial',
-                       'size':               '12',
-                       'color':              'black',
-                       'weight':             'normal',
-                       'va':  'bottom',
-                       'ha': 'left'}
+        t1 = fig.text(0.50, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
+        t2 = fig.text(0.12, 0.90, 'date: ', **normal_label_font)
+        t3 = fig.text(0.14, 0.88, f'{display_daily["open"]} / {display_daily["close"]}', **large_red_font)
+        t4 = fig.text(0.14, 0.86, f'{display_daily["change"]}', **small_red_font)
+        t5 = fig.text(0.22, 0.86, f'[{display_daily["pct_change"] * 100}%]', **small_red_font)
+        t6 = fig.text(0.12, 0.86, f'{display_daily.name.date()}', **normal_label_font)
+        t7 = fig.text(0.40, 0.90, 'high: ', **normal_label_font)
+        t8 = fig.text(0.40, 0.90, f'{display_daily["high"]}', **small_red_font)
+        t9 = fig.text(0.40, 0.86, 'low: ', **normal_label_font)
+        t10 = fig.text(0.40, 0.86, f'{display_daily["low"]}', **small_green_font)
+        t11 = fig.text(0.50, 0.86, 'volume: ', **normal_label_font)
+        t12 = fig.text(0.50, 0.86, f'{display_daily["volume"]}', **small_red_font)
+        t13 = fig.text(0.61, 0.86, 'value: ', **normal_label_font)
+        t14 = fig.text(0.61, 0.86, f'{display_daily["value"]}', **small_green_font)
+        t15 = fig.text(0.75, 0.86, 'upper lim: ', **normal_label_font)
+        t16 = fig.text(0.75, 0.86, f'{display_daily["upper_lim"]}', **small_red_font)
+        t17 = fig.text(0.86, 0.86, 'lower lim: ', **normal_label_font)
+        t18 = fig.text(0.86, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
 
-        # title of figure
-        fig.text(0.50, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
-        fig.text(0.12, 0.90, 'date: ', **normal_label_font)
-        fig.text(0.14, 0.88, f'{display_daily["open"]} / {display_daily["close"]}', **large_red_font)
-        fig.text(0.14, 0.86, f'{np.round(display_daily["change"],3)}', **small_red_font)
-        fig.text(0.22, 0.86, f'[{display_daily["pct_change"] * 100}%]', **small_red_font)
-        fig.text(0.12, 0.86, f'{display_daily.name.date()}', **normal_label_font)
-        fig.text(0.40, 0.90, 'high: ', **normal_label_font)
-        fig.text(0.40, 0.90, f'{display_daily["high"]}', **small_red_font)
-        fig.text(0.40, 0.86, 'low: ', **normal_label_font)
-        fig.text(0.40, 0.86, f'{display_daily["low"]}', **small_green_font)
-        fig.text(0.50, 0.86, 'volume: ', **normal_label_font)
-        fig.text(0.50, 0.86, f'{display_daily["volume"]}', **small_red_font)
-        fig.text(0.61, 0.86, 'value: ', **normal_label_font)
-        fig.text(0.61, 0.86, f'{display_daily["value"]}', **small_green_font)
-        fig.text(0.75, 0.86, 'upper lim: ', **normal_label_font)
-        fig.text(0.75, 0.86, f'{display_daily["upper_lim"]}', **small_red_font)
-        fig.text(0.86, 0.86, 'lower lim: ', **normal_label_font)
-        fig.text(0.86, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
+        changeable_texts = (t1, t3, t4, t5, t6, t8, t10, t12, t14, t16, t18)
 
         print(f'{share_name}: {start.date()} - {end.date()}')
 
@@ -334,8 +345,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                      datetime_format='%Y-%m',
                      xrotation=0)
 
-        zp.pan_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns)
-        zp.zoom_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns)
+        zp.pan_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
+        zp.zoom_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
 
         plt.show()
     return daily
