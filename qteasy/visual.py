@@ -57,7 +57,7 @@ small_green_font = {'fontname': 'Arial',
                     'color':    'red',
                     'weight':   'bold',
                     'va':       'bottom'}
-normal_label_font = {'fontname': 'Arial',
+normal_label_font = {'fontname': 'pingfang HK',
                      'size':     '12',
                      'color':    'black',
                      'weight':   'normal',
@@ -184,16 +184,18 @@ class MPFManipulator:
                      xrotation=0)
             display_daily = plot_data.iloc[-1]
             # texts[0].set_text()
-            texts[1].set_text(f'{display_daily["open"]} / {display_daily["close"]}')
+            texts[1].set_text(f'{np.round(display_daily["open"],3)} / {np.round(display_daily["close"],3)}')
             texts[1].set_color('green')
             texts[2].set_text(f'{display_daily["change"]}')
-            texts[3].set_text(f'[{display_daily["pct_change"] * 100}%]')
+            texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
             texts[4].set_text(f'{display_daily.name.date()}')
             texts[5].set_text(f'{display_daily["high"]}')
             texts[6].set_text(f'{display_daily["low"]}')
-            texts[7].set_text(f'{display_daily["volume"]}')
+            texts[7].set_text(f'{np.round(display_daily["volume"] / 10000, 3)}')
             texts[8].set_text(f'{display_daily["value"]}')
             texts[9].set_text(f'{display_daily["upper_lim"]}')
+            texts[10].set_text(f'{display_daily["lower_lim"]}')
+            texts[9].set_text(f'{np.round(display_daily["average"], 3)}')
             texts[10].set_text(f'{display_daily["lower_lim"]}')
 
         fig = ax1.get_figure()
@@ -304,25 +306,30 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         fontprop.set_family('Source Han Sans CN')
 
         t1 = fig.text(0.50, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
-        t2 = fig.text(0.12, 0.90, 'date: ', **normal_label_font)
-        t3 = fig.text(0.14, 0.88, f'{display_daily["open"]} / {display_daily["close"]}', **large_red_font)
+        t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
+        t3 = fig.text(0.14, 0.88, f'{np.round(display_daily["open"],3)} / {np.round(display_daily["close"],3)}',
+                      **large_red_font)
         t4 = fig.text(0.14, 0.86, f'{display_daily["change"]}', **small_red_font)
-        t5 = fig.text(0.22, 0.86, f'[{display_daily["pct_change"] * 100}%]', **small_red_font)
+        t5 = fig.text(0.22, 0.86, f'[{np.round(display_daily["pct_change"], 2)}%]', **small_red_font)
         t6 = fig.text(0.12, 0.86, f'{display_daily.name.date()}', **normal_label_font)
-        t7 = fig.text(0.40, 0.90, 'high: ', **normal_label_font)
+        t7 = fig.text(0.40, 0.90, '高: ', **normal_label_font)
         t8 = fig.text(0.40, 0.90, f'{display_daily["high"]}', **small_red_font)
-        t9 = fig.text(0.40, 0.86, 'low: ', **normal_label_font)
+        t9 = fig.text(0.40, 0.86, '低: ', **normal_label_font)
         t10 = fig.text(0.40, 0.86, f'{display_daily["low"]}', **small_green_font)
-        t11 = fig.text(0.50, 0.86, 'volume: ', **normal_label_font)
-        t12 = fig.text(0.50, 0.86, f'{display_daily["volume"]}', **small_red_font)
-        t13 = fig.text(0.61, 0.86, 'value: ', **normal_label_font)
-        t14 = fig.text(0.61, 0.86, f'{display_daily["value"]}', **small_green_font)
-        t15 = fig.text(0.75, 0.86, 'upper lim: ', **normal_label_font)
-        t16 = fig.text(0.75, 0.86, f'{display_daily["upper_lim"]}', **small_red_font)
-        t17 = fig.text(0.86, 0.86, 'lower lim: ', **normal_label_font)
-        t18 = fig.text(0.86, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
+        t11 = fig.text(0.55, 0.90, '量(万手): ', **normal_label_font)
+        t12 = fig.text(0.55, 0.90, f'{np.round(display_daily["volume"] / 10000, 3)}', **small_red_font)
+        t13 = fig.text(0.55, 0.86, '额(亿元): ', **normal_label_font)
+        t14 = fig.text(0.55, 0.86, f'{display_daily["value"]}', **small_green_font)
+        t15 = fig.text(0.70, 0.90, '涨停: ', **normal_label_font)
+        t16 = fig.text(0.70, 0.90, f'{display_daily["upper_lim"]}', **small_red_font)
+        t17 = fig.text(0.70, 0.86, '跌停: ', **normal_label_font)
+        t18 = fig.text(0.70, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
+        t19 = fig.text(0.85, 0.90, '均价: ', **normal_label_font)
+        t20 = fig.text(0.85, 0.90, f'{np.round(display_daily["average"], 3)}', **small_red_font)
+        t21 = fig.text(0.85, 0.86, '量比: ', **normal_label_font)
+        t22 = fig.text(0.85, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
 
-        changeable_texts = (t1, t3, t4, t5, t6, t8, t10, t12, t14, t16, t18)
+        changeable_texts = (t1, t3, t4, t5, t6, t8, t10, t12, t14, t16, t18, t20, t22)
 
         print(f'{share_name}: {start.date()} - {end.date()}')
 
@@ -471,12 +478,13 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
     for value in mav:
         data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
     data['change'] = np.round(data['close'] - data['close'].shift(1),3)
-    data['pct_change'] = np.round(data['change'] / data['close'], 4)
-    data['value'] = np.round(data['close'] * data['volume'], 2)
+    data['pct_change'] = np.round(data['change'] / data['close'] * 100, 2)
+    data['value'] = np.round(data['close'] * data['volume'] / 1000000, 2)
     data['upper_lim'] = np.round(data['close'] * 1.1, 3)
     data['lower_lim'] = np.round(data['close'] * 0.9, 3)
     data['last_close'] = data['close'].shift(1)
     data['average'] = data[['open', 'close', 'high', 'low']].mean(axis=1)
+    data['volrate'] = data['volume']
     # 添加不同的indicator
     if dema_par is None: dema_par = (30,)
     data['dema'] = dema(data.close, *dema_par)
