@@ -92,7 +92,7 @@ class MPFManipulator:
         def on_press():
             pass
 
-    def zoom_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav, texts):
+    def zoom_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, texts):
         def zoom(event):
 
             if event.inaxes != ax1:
@@ -118,6 +118,7 @@ class MPFManipulator:
             self.idx_range = int(self.idx_range * scale_factor)
             ax1.clear()
             ax2.clear()
+            ax3.clear()
             all_data = self.data
             plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
 
@@ -139,7 +140,7 @@ class MPFManipulator:
 
         return zoom
 
-    def pan_factory(self, ax1, ax2, data, idx_start, idx_range, style, plot_type, mav, texts):
+    def pan_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, texts):
 
         def on_press(event):
             if event.inaxes != ax1:
@@ -167,13 +168,12 @@ class MPFManipulator:
             new_start = self.idx_start - dx
             ax1.clear()
             ax2.clear()
+            ax3.clear()
             all_data = self.data
             plot_data = all_data.iloc[new_start: new_start + self.idx_range]
 
-            date_start = plot_data.index[0].date()
-            date_end = plot_data.index[-1].date()
-
-            ap = mpf.make_addplot(plot_data[mav], ax=ax1)
+            ap = [mpf.make_addplot(plot_data[mav], ax=ax1),
+                  mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax3)]
             mpf.plot(plot_data,
                      ax=ax1,
                      volume=ax2,
@@ -193,8 +193,8 @@ class MPFManipulator:
             texts[8].set_text(f'{display_daily["value"]}')
             texts[9].set_text(f'{display_daily["upper_lim"]}')
             texts[10].set_text(f'{display_daily["lower_lim"]}')
-            texts[9].set_text(f'{np.round(display_daily["average"], 3)}')
-            texts[10].set_text(f'{display_daily["lower_lim"]}')
+            texts[11].set_text(f'{np.round(display_daily["average"], 3)}')
+            texts[12].set_text(f'{display_daily["last_close"]}')
             if display_daily['change'] > 0:
                 close_number_color = 'red'
             elif display_daily['change'] < 0:
@@ -297,18 +297,21 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         zp = MPFManipulator()
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         ax1 = fig.add_axes([0.06, 0.25, 0.88, 0.60])
-        # ax1.set_title(f'{share_name}: {start.date()} - {end.date()}')
         ax2 = fig.add_axes([0.06, 0.15, 0.88, 0.10], sharex=ax1)
+        ax2.set_ylabel('volume')
         ax3 = fig.add_axes([0.06, 0.05, 0.88, 0.10], sharex=ax1)
+        ax3.set_ylabel('bbands')
         idx_start = np.searchsorted(daily.index, start)
         idx_end = np.searchsorted(daily.index, end)
         idx_range = idx_end - idx_start
         plot_daily = daily.iloc[idx_start: idx_start + idx_range]
         display_daily = daily.iloc[idx_start + idx_range - 5]
-        # 添加移动均线
+        # 添加移动均线和默认指标数据
         ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
-        ap = mpf.make_addplot(plot_daily[ma_columns], ax=ax1)
+        ap = [mpf.make_addplot(plot_daily[ma_columns], ax=ax1),
+              mpf.make_addplot(plot_daily[['bb-u', 'bb-m', 'bb-l']], ax=ax3)]
 
+        # 准备价格信息显示
         fontprop = FontProperties()
         fontprop.set_family('Source Han Sans CN')
 
@@ -368,8 +371,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                      datetime_format='%Y-%m',
                      xrotation=0)
 
-        zp.pan_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
-        zp.zoom_factory(ax1, ax2, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
+        zp.pan_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
+        zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
 
         plt.show()
     return daily
