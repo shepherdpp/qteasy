@@ -83,16 +83,22 @@ class MPFManipulator:
         self.idx_start = None
         self.idx_range = None
         self.data = None
+        self.indicator = None
+        self.mav = None
 
-    def pick_factory(self, ax1, ax2, data):
+    def pick_factory(self, ax1, ax2, ax3, data):
         def pick():
             pass
 
-    def single_click_factory(self, ax1, ax2, data):
+    def single_click_factory(self, ax1, ax2, ax3, data):
         def on_press():
             pass
 
-    def zoom_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, texts):
+    def double_click_factory(self, ax1, ax2, ax3, data):
+        def on_press():
+            pass
+
+    def zoom_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
         def zoom(event):
 
             if event.inaxes != ax1:
@@ -122,10 +128,22 @@ class MPFManipulator:
             all_data = self.data
             plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
 
-            date_start = plot_data.index[0].date()
-            date_end = plot_data.index[-1].date()
-
-            ap = mpf.make_addplot(plot_data[mav], ax=ax1)
+            ap = []
+            # 添加K线图重叠均线或布林线
+            if self.mav is not None:
+                ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
+            else:
+                ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+            # 添加指标
+            if self.indicator.lower() == 'macd':
+                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
+                bar_r = np.where(plot_data['macd-s'] > 0, plot_data['macd-s'], 0)
+                bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
+                ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
+                ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+            elif indicator.lower() == 'dmi':
+                pass
+            
             mpf.plot(plot_data,
                      ax=ax1,
                      volume=ax2,
@@ -134,13 +152,35 @@ class MPFManipulator:
                      style=style,
                      datetime_format='%Y-%m',
                      xrotation=0)
+            display_daily = plot_data.iloc[-1]
+            texts[1].set_text(f'{np.round(display_daily["open"],3)} / {np.round(display_daily["close"],3)}')
+            texts[2].set_text(f'{display_daily["change"]}')
+            texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
+            texts[4].set_text(f'{display_daily.name.date()}')
+            texts[5].set_text(f'{display_daily["high"]}')
+            texts[6].set_text(f'{display_daily["low"]}')
+            texts[7].set_text(f'{np.round(display_daily["volume"] / 10000, 3)}')
+            texts[8].set_text(f'{display_daily["value"]}')
+            texts[9].set_text(f'{display_daily["upper_lim"]}')
+            texts[10].set_text(f'{display_daily["lower_lim"]}')
+            texts[11].set_text(f'{np.round(display_daily["average"], 3)}')
+            texts[12].set_text(f'{display_daily["last_close"]}')
+            if display_daily['change'] > 0:
+                close_number_color = 'red'
+            elif display_daily['change'] < 0:
+                close_number_color = 'green'
+            else:
+                close_number_color = 'black'
+            texts[1].set_color(close_number_color)
+            texts[2].set_color(close_number_color)
+            texts[3].set_color(close_number_color)
 
         fig = ax1.get_figure()
         fig.canvas.mpl_connect('scroll_event', zoom)
 
         return zoom
 
-    def pan_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, texts):
+    def pan_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
 
         def on_press(event):
             if event.inaxes != ax1:
@@ -151,6 +191,10 @@ class MPFManipulator:
                 self.idx_range = idx_range
             if self.data is None:
                 self.data = data
+            if self.mav is None:
+                self.mav = mav
+            if self.indicator is None:
+                self.indicator = indicator
             self.press = self.x0, self.y0, event.xdata, event.ydata
             self.x0, self.y0, self.xpress, self.ypress = self.press
 
@@ -172,8 +216,21 @@ class MPFManipulator:
             all_data = self.data
             plot_data = all_data.iloc[new_start: new_start + self.idx_range]
 
-            ap = [mpf.make_addplot(plot_data[mav], ax=ax1),
-                  mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax3)]
+            ap = []
+            # 添加K线图重叠均线或布林线
+            if self.mav is not None:
+                ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
+            else:
+                ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+            # 添加指标
+            if self.indicator.lower() == 'macd':
+                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
+                bar_r = np.where(plot_data['macd-s'] > 0, plot_data['macd-s'], 0)
+                bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
+                ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
+                ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+            elif indicator.lower() == 'dmi':
+                pass
             mpf.plot(plot_data,
                      ax=ax1,
                      volume=ax2,
@@ -243,8 +300,8 @@ def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, as
 
 
 def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
-             asset_type='E', plot_type=None, no_visual=False, addplot_type=None,
-             addplot_par=None, mav=None, indicator=None, indicator_par=None, **kwargs):
+             asset_type='E', plot_type=None, no_visual=False, mav=None, indicator=None,
+             indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     assert plot_type is not None
@@ -308,8 +365,24 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         display_daily = daily.iloc[idx_start + idx_range - 5]
         # 添加移动均线和默认指标数据
         ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
-        ap = [mpf.make_addplot(plot_daily[ma_columns], ax=ax1),
-              mpf.make_addplot(plot_daily[['bb-u', 'bb-m', 'bb-l']], ax=ax3)]
+        ap = []
+        # 添加K线图重叠均线或布林线
+        if mav is not None:
+            ap.append(mpf.make_addplot(plot_daily[ma_columns], ax=ax1))
+        else:
+            ap.append(mpf.make_addplot(plot_daily[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+        # 添加指标
+        if indicator is None:
+            indicator = 'macd'
+        if indicator.lower() == 'macd':
+            ap.append(mpf.make_addplot(plot_daily[['macd-m', 'macd-h']], ax=ax3))
+            bar_r = np.where(plot_daily['macd-s'] > 0, plot_daily['macd-s'], 0)
+            bar_g = np.where(plot_daily['macd-s'] <= 0, plot_daily['macd-s'], 0)
+            ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
+            ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+        elif indicator.lower() == 'dmi':
+            pass
+
 
         # 准备价格信息显示
         fontprop = FontProperties()
@@ -371,8 +444,10 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                      datetime_format='%Y-%m',
                      xrotation=0)
 
-        zp.pan_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
-        zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style, plot_type, ma_columns, changeable_texts)
+        zp.pan_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
+                       plot_type, ma_columns, indicator, changeable_texts)
+        zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
+                        plot_type, ma_columns, indicator, changeable_texts)
 
         plt.show()
     return daily
