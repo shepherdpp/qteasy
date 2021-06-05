@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
 from mplfinance.original_flavor import candlestick_ohlc
-from matplotlib.font_manager import FontProperties, FontManager
+from matplotlib.backend_bases import MouseButton
+from matplotlib.font_manager import FontProperties
 
 import pandas as pd
 import numpy as np
-import datetime
 
 from .history import get_history_panel
 from .tsfuncs import stock_basic, fund_basic, future_basic, index_basic
@@ -26,6 +26,7 @@ from .utilfuncs import time_str_format, list_to_str_format
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
+
 register_matplotlib_converters()
 
 ValidAddPlots = ['macd',
@@ -70,6 +71,7 @@ normal_font = {'fontname': 'Arial',
                'va':       'bottom',
                'ha':       'left'}
 
+
 # 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
 class MPFManipulator:
     def __init__(self):
@@ -85,6 +87,7 @@ class MPFManipulator:
         self.data = None
         self.indicator = None
         self.mav = None
+        self.ax1_ap = None
 
     def pick_factory(self, ax1, ax2, ax3, data):
         def pick():
@@ -94,9 +97,60 @@ class MPFManipulator:
         def on_press():
             pass
 
-    def double_click_factory(self, ax1, ax2, ax3, data):
-        def on_press():
-            pass
+    def double_click_factory(self, ax1, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator):
+        def on_press(event):
+            if event.inaxes != ax1 and event.inaxes != ax3:
+                return
+            if event.dblclick == 0:
+                return
+            if event.button != 1:
+                return
+            if self.indicator is None:
+                self.indicator = indicator
+            if self.mav is None:
+                self.mav = mav
+            if self.ax1_ap is None:
+                if mav is None:
+                    self.ax1_ap = 'bb'
+                else:
+                    self.ax1_ap = 'ma'
+            if self.idx_start is None:
+                self.idx_start = idx_start
+            if self.idx_range is None:
+                self.idx_range = idx_range
+            if self.data is None:
+                self.data = data
+            # 切换当前mav或indicator
+            if event.inaxes == ax1 and event.dblclick == 1:
+                if self.ax1_ap is 'ma':
+                    self.ax1_ap = 'bb'
+                else:
+                    self.ax1_ap = 'ma'
+
+                all_data = self.data
+                plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
+
+                # 添加K线图重叠均线或布林线
+                if self.ax1_ap == 'ma':
+                    ap = mpf.make_addplot(plot_data[mav], ax=ax1)
+                else:
+                    ap = mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1)
+
+                ax1.clear()
+                mpf.plot(plot_data,
+                         ax=ax1,
+                         addplot=ap,
+                         type=plot_type,
+                         style=style,
+                         datetime_format='%Y-%m',
+                         xrotation=0)
+
+        fig = ax1.get_figure()
+
+        # attach the call back
+        fig.canvas.mpl_connect('button_press_event', on_press)
+
+        return on_press
 
     def zoom_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
         def zoom(event):
@@ -130,7 +184,7 @@ class MPFManipulator:
 
             ap = []
             # 添加K线图重叠均线或布林线
-            if self.mav is not None:
+            if self.ax1_ap == 'ma':
                 ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
             else:
                 ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
@@ -143,7 +197,7 @@ class MPFManipulator:
                 ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
             elif indicator.lower() == 'dmi':
                 pass
-            
+
             mpf.plot(plot_data,
                      ax=ax1,
                      volume=ax2,
@@ -153,7 +207,7 @@ class MPFManipulator:
                      datetime_format='%Y-%m',
                      xrotation=0)
             display_daily = plot_data.iloc[-1]
-            texts[1].set_text(f'{np.round(display_daily["open"],3)} / {np.round(display_daily["close"],3)}')
+            texts[1].set_text(f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}')
             texts[2].set_text(f'{display_daily["change"]}')
             texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
             texts[4].set_text(f'{display_daily.name.date()}')
@@ -218,7 +272,7 @@ class MPFManipulator:
 
             ap = []
             # 添加K线图重叠均线或布林线
-            if self.mav is not None:
+            if self.ax1_ap == 'ma':
                 ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
             else:
                 ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
@@ -240,7 +294,7 @@ class MPFManipulator:
                      datetime_format='%Y-%m',
                      xrotation=0)
             display_daily = plot_data.iloc[-1]
-            texts[1].set_text(f'{np.round(display_daily["open"],3)} / {np.round(display_daily["close"],3)}')
+            texts[1].set_text(f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}')
             texts[2].set_text(f'{display_daily["change"]}')
             texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
             texts[4].set_text(f'{display_daily.name.date()}')
@@ -269,8 +323,9 @@ class MPFManipulator:
         fig.canvas.mpl_connect('button_release_event', on_release)
         fig.canvas.mpl_connect('motion_notify_event', on_motion)
 
-        #return the function
+        # return the function
         return on_motion
+
 
 # 定义用于可视化图表的所有字体和字号
 
@@ -313,6 +368,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
             end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
     if start is None:
         start = end - pd.Timedelta(60, 'd')
+    if mav is None:
+        mav = [5, 10, 20, 60]
     end = pd.to_datetime(end)
     start = pd.to_datetime(start)
     if stock_data is None:
@@ -350,7 +407,6 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
-        # plt.rcParams['font.sans-serif'] = ['SimHei']
         zp = MPFManipulator()
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         ax1 = fig.add_axes([0.06, 0.25, 0.88, 0.60])
@@ -366,11 +422,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         # 添加移动均线和默认指标数据
         ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
         ap = []
-        # 添加K线图重叠均线或布林线
-        if mav is not None:
-            ap.append(mpf.make_addplot(plot_daily[ma_columns], ax=ax1))
-        else:
-            ap.append(mpf.make_addplot(plot_daily[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+        # 添加K线图重叠均线
+        ap.append(mpf.make_addplot(plot_daily[ma_columns], ax=ax1))
         # 添加指标
         if indicator is None:
             indicator = 'macd'
@@ -380,9 +433,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
             bar_g = np.where(plot_daily['macd-s'] <= 0, plot_daily['macd-s'], 0)
             ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
             ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-        elif indicator.lower() == 'dmi':
+        elif indicator.lower() == 'dma':
             pass
-
 
         # 准备价格信息显示
         fontprop = FontProperties()
@@ -396,7 +448,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
             close_number_color = 'black'
         t1 = fig.text(0.50, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
         t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
-        t3 = fig.text(0.14, 0.89, f'{np.round(display_daily["open"],3)} / {np.round(display_daily["close"],3)}',
+        t3 = fig.text(0.14, 0.89, f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}',
                       **large_red_font)
         t4 = fig.text(0.14, 0.86, f'{display_daily["change"]}', **small_red_font)
         t5 = fig.text(0.22, 0.86, f'[{np.round(display_daily["pct_change"], 2)}%]', **small_red_font)
@@ -425,7 +477,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
 
         print(f'{share_name}: {start.date()} - {end.date()}')
 
-        if plot_type != 'renko': # 'renko'型图不支持addplot
+        if plot_type != 'renko':  # 'renko'型图不支持addplot
             # 添加MA线
             mpf.plot(plot_daily,
                      ax=ax1,
@@ -448,6 +500,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                        plot_type, ma_columns, indicator, changeable_texts)
         zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
                         plot_type, ma_columns, indicator, changeable_texts)
+        zp.double_click_factory(ax1, ax3, daily, idx_start, idx_range, my_style,
+                        plot_type, ma_columns, indicator)
 
         plt.show()
     return daily
@@ -527,10 +581,10 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     # 设置历史数据获取最后一天，只有现在的时间在23:00以后时才设置为今天，否则就设置为昨天
     # now获取的日期时间是格林尼治标准时间，计算中国的时间需要加8小时（中国在东八区）
     now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
-    if now.hour >= 23:
+    if now.hour >= 23 and now.weekday() < 5:
         end = pd.to_datetime('today')
     else:
-        end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
+        end = pd.to_datetime('today') - pd.Timedelta(now.weekday() - 4, 'd')
     end_date = end.strftime('%Y-%m-%d')
     name = this_stock.name.values[0]
     # fullname = this_stock.fullname.values[0]
@@ -570,8 +624,8 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
     assert isinstance(mav, (list, tuple))
     assert all(isinstance(item, int) for item in mav)
     for value in mav:
-        data['MA'+str(value)] = ma(data.close, timeperiod=value) # 以后还可以加上不同的ma_type
-    data['change'] = np.round(data['close'] - data['close'].shift(1),3)
+        data['MA' + str(value)] = ma(data.close, timeperiod=value)  # 以后还可以加上不同的ma_type
+    data['change'] = np.round(data['close'] - data['close'].shift(1), 3)
     data['pct_change'] = np.round(data['change'] / data['close'] * 100, 2)
     data['value'] = np.round(data['close'] * data['volume'] / 1000000, 2)
     data['upper_lim'] = np.round(data['close'] * 1.1, 3)
@@ -580,13 +634,17 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=No
     data['average'] = data[['open', 'close', 'high', 'low']].mean(axis=1)
     data['volrate'] = data['volume']
     # 添加不同的indicator
-    if dema_par is None: dema_par = (30,)
+    if dema_par is None:
+        dema_par = (30,)
     data['dema'] = dema(data.close, *dema_par)
-    if macd_par is None: macd_par = (9, 12, 26)
+    if macd_par is None:
+        macd_par = (9, 12, 26)
     data['macd-m'], data['macd-s'], data['macd-h'] = macd(data.close, *macd_par)
-    if rsi_par is None: rsi_par = (14,)
+    if rsi_par is None:
+        rsi_par = (14,)
     data['rsi'] = rsi(data.close, *rsi_par)
-    if bb_par is None: bb_par = (20, 2, 2, 0)
+    if bb_par is None:
+        bb_par = (20, 2, 2, 0)
     data['bb-u'], data['bb-m'], data['bb-l'] = bbands(data.close, *bb_par)
 
     return data
@@ -718,7 +776,8 @@ def _plot_loop_result(loop_results: dict, config):
             # 分别使用绿色、红色填充交易回测历史中的多头和空头区间
             if long_short > 0:
                 # 用不同深浅的绿色填充多头区间
-                if long_short > 1: long_short = 1
+                if long_short > 1:
+                    long_short = 1
                 ax1.axvspan(first, second,
                             facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
                             alpha=0.2)
