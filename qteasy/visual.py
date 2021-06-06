@@ -93,65 +93,6 @@ class MPFManipulator:
         def pick():
             pass
 
-    def single_click_factory(self, ax1, ax2, ax3, data):
-        def on_press():
-            pass
-
-    def double_click_factory(self, ax1, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator):
-        def on_press(event):
-            if event.inaxes != ax1 and event.inaxes != ax3:
-                return
-            if event.dblclick == 0:
-                return
-            if event.button != 1:
-                return
-            if self.indicator is None:
-                self.indicator = indicator
-            if self.mav is None:
-                self.mav = mav
-            if self.ax1_ap is None:
-                if mav is None:
-                    self.ax1_ap = 'bb'
-                else:
-                    self.ax1_ap = 'ma'
-            if self.idx_start is None:
-                self.idx_start = idx_start
-            if self.idx_range is None:
-                self.idx_range = idx_range
-            if self.data is None:
-                self.data = data
-            # 切换当前mav或indicator
-            if event.inaxes == ax1 and event.dblclick == 1:
-                if self.ax1_ap is 'ma':
-                    self.ax1_ap = 'bb'
-                else:
-                    self.ax1_ap = 'ma'
-
-                all_data = self.data
-                plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
-
-                # 添加K线图重叠均线或布林线
-                if self.ax1_ap == 'ma':
-                    ap = mpf.make_addplot(plot_data[mav], ax=ax1)
-                else:
-                    ap = mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1)
-
-                ax1.clear()
-                mpf.plot(plot_data,
-                         ax=ax1,
-                         addplot=ap,
-                         type=plot_type,
-                         style=style,
-                         datetime_format='%Y-%m',
-                         xrotation=0)
-
-        fig = ax1.get_figure()
-
-        # attach the call back
-        fig.canvas.mpl_connect('button_press_event', on_press)
-
-        return on_press
-
     def zoom_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
         def zoom(event):
 
@@ -176,6 +117,11 @@ class MPFManipulator:
                 print(event.button)
 
             self.idx_range = int(self.idx_range * scale_factor)
+            data_length = len(self.data)
+            if self.idx_range >= data_length - self.idx_start:
+                self.idx_range = data_length - self.idx_start
+            if self.idx_range <= 30:
+                self.idx_range = 30
             ax1.clear()
             ax2.clear()
             ax3.clear()
@@ -195,6 +141,7 @@ class MPFManipulator:
                 bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
                 ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
                 ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+                ax3.set_ylabel('macd')
             elif indicator.lower() == 'dmi':
                 pass
 
@@ -237,7 +184,9 @@ class MPFManipulator:
     def pan_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
 
         def on_press(event):
-            if event.inaxes != ax1:
+            if not event.inaxes in [ax1, ax2, ax3]:
+                return
+            if event.button != 1:
                 return
             if self.idx_start is None:
                 self.idx_start = idx_start
@@ -249,33 +198,46 @@ class MPFManipulator:
                 self.mav = mav
             if self.indicator is None:
                 self.indicator = indicator
+            if self.ax1_ap is None:
+                if mav is None:
+                    self.ax1_ap = 'bb'
+                else:
+                    self.ax1_ap = 'ma'
             self.press = self.x0, self.y0, event.xdata, event.ydata
             self.x0, self.y0, self.xpress, self.ypress = self.press
 
-        def on_release(event):
-            self.press = None
-            dx = int(event.xdata - self.xpress)
-            self.idx_start -= dx
+            # 切换当前ma类型, 在ma、bb、none之间循环
+            if event.inaxes == ax1 and event.dblclick == 1:
+                if self.ax1_ap == 'ma':
+                    self.ax1_ap = 'bb'
+                elif self.ax1_ap == 'bb':
+                    self.ax1_ap = 'none'
+                else:
+                    self.ax1_ap = 'ma'
+            # 切换当前indicator类型，在macd/dma/rsi/kdj之间循环
+            if event.inaxes == ax3 and event.dblclick == 1:
+                if self.indicator == 'macd':
+                    self.indicator = 'dma'
+                elif self.indicator == 'dma':
+                    self.indicator = 'rsi'
+                elif self.indicator == 'rsi':
+                    self.indicator = 'kdj'
+                else:
+                    self.indicator = 'macd'
 
-        def on_motion(event):
-            if self.press is None:
-                return
-            if event.inaxes != ax1:
-                return
-            dx = int(event.xdata - self.xpress)
-            new_start = self.idx_start - dx
             ax1.clear()
             ax2.clear()
             ax3.clear()
             all_data = self.data
-            plot_data = all_data.iloc[new_start: new_start + self.idx_range]
-
+            plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
             ap = []
             # 添加K线图重叠均线或布林线
             if self.ax1_ap == 'ma':
                 ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
-            else:
+            elif self.ax1_ap == 'bb':
                 ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+            else:
+                pass
             # 添加指标
             if self.indicator.lower() == 'macd':
                 ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
@@ -283,8 +245,65 @@ class MPFManipulator:
                 bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
                 ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
                 ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+                ax3.set_ylabel('macd')
             elif indicator.lower() == 'dmi':
                 pass
+
+            mpf.plot(plot_data,
+                     ax=ax1,
+                     volume=ax2,
+                     addplot=ap,
+                     type=plot_type,
+                     style=style,
+                     datetime_format='%Y-%m',
+                     xrotation=0)
+
+        def on_release(event):
+            self.press = None
+            dx = int(event.xdata - self.xpress)
+            self.idx_start -= dx
+            if self.idx_start <= 0:
+                self.idx_start = 0
+            if self.idx_start >= len(self.data) - self.idx_range:
+                self.idx_start = len(self.data) - self.idx_range
+
+        def on_motion(event):
+            if self.press is None:
+                return
+            if not event.inaxes in [ax1, ax2, ax3]:
+                return
+            dx = int(event.xdata - self.xpress)
+            new_start = self.idx_start - dx
+            # 设定平移的左右界限，如果平移后超出界限，则不再平移
+            if new_start <= 0:
+                new_start = 0
+            if new_start >= len(self.data) - self.idx_range:
+                new_start = len(self.data) - self.idx_range
+
+            ax1.clear()
+            ax2.clear()
+            ax3.clear()
+            all_data = self.data
+            plot_data = all_data.iloc[new_start: new_start + self.idx_range]
+            ap = []
+            # 添加K线图重叠均线或布林线
+            if self.ax1_ap == 'ma':
+                ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
+            elif self.ax1_ap == 'bb':
+                ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+            else:
+                pass
+            # 添加指标
+            if self.indicator.lower() == 'macd':
+                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
+                bar_r = np.where(plot_data['macd-s'] > 0, plot_data['macd-s'], 0)
+                bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
+                ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
+                ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+                ax3.set_ylabel('macd')
+            elif indicator.lower() == 'dmi':
+                pass
+
             mpf.plot(plot_data,
                      ax=ax1,
                      volume=ax2,
@@ -500,8 +519,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                        plot_type, ma_columns, indicator, changeable_texts)
         zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
                         plot_type, ma_columns, indicator, changeable_texts)
-        zp.double_click_factory(ax1, ax3, daily, idx_start, idx_range, my_style,
-                        plot_type, ma_columns, indicator)
+        # zp.double_click_factory(ax1, ax3, daily, idx_start, idx_range, my_style,
+        #                 plot_type, ma_columns, indicator)
 
         plt.show()
     return daily
