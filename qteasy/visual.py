@@ -89,6 +89,78 @@ class MPFManipulator:
         self.mav = None
         self.ax1_ap = None
 
+    def _refresh_plot(self, ax1, ax2, ax3, idx_start, idx_range, plot_type, style):
+        """ 根据最新的参数，重新绘制整个图表
+
+        :param ax1:
+        :param ax2:
+        :param ax3:
+        :return:
+        """
+        ax1.clear()
+        ax2.clear()
+        ax3.clear()
+        all_data = self.data
+        plot_data = all_data.iloc[idx_start: idx_start + idx_range]
+
+        ap = []
+        # 添加K线图重叠均线或布林线
+        if self.ax1_ap == 'ma':
+            ap.append(mpf.make_addplot(plot_data[self.mav], ax=ax1))
+        else:
+            ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
+        # 添加指标
+        if self.indicator.lower() == 'macd':
+            ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
+            bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+            bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
+            ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
+            ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
+            ax3.set_ylabel('macd')
+        elif self.indicator.lower() == 'dmi':
+            pass
+
+        mpf.plot(plot_data,
+                 ax=ax1,
+                 volume=ax2,
+                 addplot=ap,
+                 type=plot_type,
+                 style=style,
+                 datetime_format='%Y-%m',
+                 xrotation=0)
+
+    def _refresh_texts(self, texts):
+        """ 更新K线图上的价格文本
+
+        :param texts:
+        :return:
+        """
+        all_data = self.data
+        plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
+        display_daily = plot_data.iloc[-1]
+        texts[1].set_text(f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}')
+        texts[2].set_text(f'{display_daily["change"]}')
+        texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
+        texts[4].set_text(f'{display_daily.name.date()}')
+        texts[5].set_text(f'{display_daily["high"]}')
+        texts[6].set_text(f'{display_daily["low"]}')
+        texts[7].set_text(f'{np.round(display_daily["volume"] / 10000, 3)}')
+        texts[8].set_text(f'{display_daily["value"]}')
+        texts[9].set_text(f'{display_daily["upper_lim"]}')
+        texts[10].set_text(f'{display_daily["lower_lim"]}')
+        texts[11].set_text(f'{np.round(display_daily["average"], 3)}')
+        texts[12].set_text(f'{display_daily["last_close"]}')
+        if display_daily['change'] > 0:
+            close_number_color = 'red'
+        elif display_daily['change'] < 0:
+            close_number_color = 'green'
+        else:
+            close_number_color = 'black'
+        texts[1].set_color(close_number_color)
+        texts[2].set_color(close_number_color)
+        texts[3].set_color(close_number_color)
+
+
     def pick_factory(self, ax1, ax2, ax3, data):
         def pick():
             pass
@@ -122,59 +194,9 @@ class MPFManipulator:
                 self.idx_range = data_length - self.idx_start
             if self.idx_range <= 30:
                 self.idx_range = 30
-            ax1.clear()
-            ax2.clear()
-            ax3.clear()
-            all_data = self.data
-            plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
 
-            ap = []
-            # 添加K线图重叠均线或布林线
-            if self.ax1_ap == 'ma':
-                ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
-            else:
-                ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
-            # 添加指标
-            if self.indicator.lower() == 'macd':
-                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
-                bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-                bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-                ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
-                ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-                ax3.set_ylabel('macd')
-            elif indicator.lower() == 'dmi':
-                pass
-
-            mpf.plot(plot_data,
-                     ax=ax1,
-                     volume=ax2,
-                     addplot=ap,
-                     type=plot_type,
-                     style=style,
-                     datetime_format='%Y-%m',
-                     xrotation=0)
-            display_daily = plot_data.iloc[-1]
-            texts[1].set_text(f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}')
-            texts[2].set_text(f'{display_daily["change"]}')
-            texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
-            texts[4].set_text(f'{display_daily.name.date()}')
-            texts[5].set_text(f'{display_daily["high"]}')
-            texts[6].set_text(f'{display_daily["low"]}')
-            texts[7].set_text(f'{np.round(display_daily["volume"] / 10000, 3)}')
-            texts[8].set_text(f'{display_daily["value"]}')
-            texts[9].set_text(f'{display_daily["upper_lim"]}')
-            texts[10].set_text(f'{display_daily["lower_lim"]}')
-            texts[11].set_text(f'{np.round(display_daily["average"], 3)}')
-            texts[12].set_text(f'{display_daily["last_close"]}')
-            if display_daily['change'] > 0:
-                close_number_color = 'red'
-            elif display_daily['change'] < 0:
-                close_number_color = 'green'
-            else:
-                close_number_color = 'black'
-            texts[1].set_color(close_number_color)
-            texts[2].set_color(close_number_color)
-            texts[3].set_color(close_number_color)
+            self._refresh_plot(ax1, ax2, ax3, self.idx_start, self.idx_range, plot_type, style)
+            self._refresh_texts(texts)
 
         fig = ax1.get_figure()
         fig.canvas.mpl_connect('scroll_event', zoom)
@@ -225,38 +247,7 @@ class MPFManipulator:
                 else:
                     self.indicator = 'macd'
 
-            ax1.clear()
-            ax2.clear()
-            ax3.clear()
-            all_data = self.data
-            plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
-            ap = []
-            # 添加K线图重叠均线或布林线
-            if self.ax1_ap == 'ma':
-                ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
-            elif self.ax1_ap == 'bb':
-                ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
-            else:
-                pass
-            # 添加指标
-            if self.indicator.lower() == 'macd':
-                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
-                bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-                bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-                ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
-                ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-                ax3.set_ylabel('macd')
-            elif indicator.lower() == 'dmi':
-                pass
-
-            mpf.plot(plot_data,
-                     ax=ax1,
-                     volume=ax2,
-                     addplot=ap,
-                     type=plot_type,
-                     style=style,
-                     datetime_format='%Y-%m',
-                     xrotation=0)
+            self._refresh_plot(ax1, ax2, ax3, self.idx_start, self.idx_range, plot_type, style)
 
         def on_release(event):
             self.press = None
@@ -280,60 +271,8 @@ class MPFManipulator:
             if new_start >= len(self.data) - self.idx_range:
                 new_start = len(self.data) - self.idx_range
 
-            ax1.clear()
-            ax2.clear()
-            ax3.clear()
-            all_data = self.data
-            plot_data = all_data.iloc[new_start: new_start + self.idx_range]
-            ap = []
-            # 添加K线图重叠均线或布林线
-            if self.ax1_ap == 'ma':
-                ap.append(mpf.make_addplot(plot_data[mav], ax=ax1))
-            elif self.ax1_ap == 'bb':
-                ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
-            else:
-                pass
-            # 添加指标
-            if self.indicator.lower() == 'macd':
-                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
-                bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-                bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-                ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
-                ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-                ax3.set_ylabel('macd')
-            elif indicator.lower() == 'dmi':
-                pass
-
-            mpf.plot(plot_data,
-                     ax=ax1,
-                     volume=ax2,
-                     addplot=ap,
-                     type=plot_type,
-                     style=style,
-                     datetime_format='%Y-%m',
-                     xrotation=0)
-            display_daily = plot_data.iloc[-1]
-            texts[1].set_text(f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}')
-            texts[2].set_text(f'{display_daily["change"]}')
-            texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
-            texts[4].set_text(f'{display_daily.name.date()}')
-            texts[5].set_text(f'{display_daily["high"]}')
-            texts[6].set_text(f'{display_daily["low"]}')
-            texts[7].set_text(f'{np.round(display_daily["volume"] / 10000, 3)}')
-            texts[8].set_text(f'{display_daily["value"]}')
-            texts[9].set_text(f'{display_daily["upper_lim"]}')
-            texts[10].set_text(f'{display_daily["lower_lim"]}')
-            texts[11].set_text(f'{np.round(display_daily["average"], 3)}')
-            texts[12].set_text(f'{display_daily["last_close"]}')
-            if display_daily['change'] > 0:
-                close_number_color = 'red'
-            elif display_daily['change'] < 0:
-                close_number_color = 'green'
-            else:
-                close_number_color = 'black'
-            texts[1].set_color(close_number_color)
-            texts[2].set_color(close_number_color)
-            texts[3].set_color(close_number_color)
+            self._refresh_plot(ax1, ax2, ax3, new_start, self.idx_range, plot_type, style)
+            self._refresh_texts(texts)
 
         fig = ax1.get_figure()
 
@@ -456,8 +395,6 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
             pass
 
         # 准备价格信息显示
-        fontprop = FontProperties()
-        fontprop.set_family('Source Han Sans CN')
 
         if display_daily['change'] > 0:
             close_number_color = 'red'
