@@ -136,9 +136,9 @@ class MPFManipulator:
                 ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
             # 添加指标
             if self.indicator.lower() == 'macd':
-                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
-                bar_r = np.where(plot_data['macd-s'] > 0, plot_data['macd-s'], 0)
-                bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
+                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
+                bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+                bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
                 ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
                 ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
                 ax3.set_ylabel('macd')
@@ -240,9 +240,9 @@ class MPFManipulator:
                 pass
             # 添加指标
             if self.indicator.lower() == 'macd':
-                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
-                bar_r = np.where(plot_data['macd-s'] > 0, plot_data['macd-s'], 0)
-                bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
+                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
+                bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+                bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
                 ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
                 ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
                 ax3.set_ylabel('macd')
@@ -295,9 +295,9 @@ class MPFManipulator:
                 pass
             # 添加指标
             if self.indicator.lower() == 'macd':
-                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-h']], ax=ax3))
-                bar_r = np.where(plot_data['macd-s'] > 0, plot_data['macd-s'], 0)
-                bar_g = np.where(plot_data['macd-s'] <= 0, plot_data['macd-s'], 0)
+                ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
+                bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+                bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
                 ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
                 ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
                 ax3.set_ylabel('macd')
@@ -432,7 +432,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         ax2 = fig.add_axes([0.06, 0.15, 0.88, 0.10], sharex=ax1)
         ax2.set_ylabel('volume')
         ax3 = fig.add_axes([0.06, 0.05, 0.88, 0.10], sharex=ax1)
-        ax3.set_ylabel('bbands')
+        ax3.set_ylabel('macd')
         idx_start = np.searchsorted(daily.index, start)
         idx_end = np.searchsorted(daily.index, end)
         idx_range = idx_end - idx_start
@@ -447,9 +447,9 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         if indicator is None:
             indicator = 'macd'
         if indicator.lower() == 'macd':
-            ap.append(mpf.make_addplot(plot_daily[['macd-m', 'macd-h']], ax=ax3))
-            bar_r = np.where(plot_daily['macd-s'] > 0, plot_daily['macd-s'], 0)
-            bar_g = np.where(plot_daily['macd-s'] <= 0, plot_daily['macd-s'], 0)
+            ap.append(mpf.make_addplot(plot_daily[['macd-m', 'macd-s']], ax=ax3))
+            bar_r = np.where(plot_daily['macd-h'] > 0, plot_daily['macd-h'], 0)
+            bar_g = np.where(plot_daily['macd-h'] <= 0, plot_daily['macd-h'], 0)
             ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
             ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
         elif indicator.lower() == 'dma':
@@ -613,7 +613,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
                              adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
     # 返回股票的名称和全称
     share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
-    data = data.rename({'vol': 'volume'}, axis='columns')
+    data.rename({'vol': 'volume'}, axis='columns', inplace=True)
 
     return data, share_name
 
