@@ -72,6 +72,100 @@ normal_font = {'fontname': 'Arial',
                'ha':       'left'}
 
 
+class InterCandle():
+    def __init__(self, data, my_style):
+        # 初始化交互式K线图对象，历史数据作为唯一的参数用于初始化对象
+        self.data = data
+        self.style = my_style
+        # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
+        self.idx_start = 0
+
+        # 初始化figure对象，在figure上建立三个Axes对象并分别设置好它们的位置和基本属性
+        self.fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+        fig = self.fig
+        self.ax1 = fig.add_axes([0.08, 0.25, 0.88, 0.60])
+        self.ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=self.ax1)
+        self.ax2.set_ylabel('volume')
+        self.ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=self.ax1)
+        self.ax3.set_ylabel('macd')
+        # 初始化figure对象，在figure上预先放置文本并设置格式，文本内容根据需要显示的数据实时更新
+        self.t1 = fig.text(0.50, 0.94, 'TITLE', **title_font)
+        self.t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
+        self.t3 = fig.text(0.14, 0.89, f'', **large_red_font)
+        self.t4 = fig.text(0.14, 0.86, f'', **small_red_font)
+        self.t5 = fig.text(0.22, 0.86, f'', **small_red_font)
+        self.t6 = fig.text(0.12, 0.86, f'', **normal_label_font)
+        self.t7 = fig.text(0.40, 0.90, '高: ', **normal_label_font)
+        self.t8 = fig.text(0.40, 0.90, f'', **small_red_font)
+        self.t9 = fig.text(0.40, 0.86, '低: ', **normal_label_font)
+        self.t10 = fig.text(0.40, 0.86, f'', **small_green_font)
+        self.t11 = fig.text(0.55, 0.90, '量(万手): ', **normal_label_font)
+        self.t12 = fig.text(0.55, 0.90, f'', **normal_font)
+        self.t13 = fig.text(0.55, 0.86, '额(亿元): ', **normal_label_font)
+        self.t14 = fig.text(0.55, 0.86, f'', **normal_font)
+        self.t15 = fig.text(0.70, 0.90, '涨停: ', **normal_label_font)
+        self.t16 = fig.text(0.70, 0.90, f'', **small_red_font)
+        self.t17 = fig.text(0.70, 0.86, '跌停: ', **normal_label_font)
+        self.t18 = fig.text(0.70, 0.86, f'', **small_green_font)
+        self.t19 = fig.text(0.85, 0.90, '均价: ', **normal_label_font)
+        self.t20 = fig.text(0.85, 0.90, f'', **normal_font)
+        self.t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
+        self.t22 = fig.text(0.85, 0.86, f'', **normal_font)
+
+    def refresh_plot(self, idx_start):
+        """ 根据最新的参数，重新绘制整个图表
+        """
+        all_data = self.data
+        plot_data = all_data.iloc[idx_start: idx_start + 100]
+
+        ap = []
+        # 添加K线图重叠均线
+        ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
+        # 添加指标MACD
+        ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=self.ax3))
+        bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+        bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
+        ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
+        ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
+        # 绘制图表
+        mpf.plot(plot_data,
+                 ax=self.ax1,
+                 volume=self.ax2,
+                 addplot=ap,
+                 type='candle',
+                 style=self.style,
+                 datetime_format='%Y-%m',
+                 xrotation=0)
+        self.fig.show()
+
+    def refresh_texts(self, display_data):
+        """ 更新K线图上的价格文本
+        """
+        # display_data是一个交易日内的所有数据，将这些数据分别填入figure对象上的文本中
+        self.t1.set_text(f'{np.round(display_data["open"], 3)} / {np.round(display_data["close"], 3)}')
+        self.t2.set_text(f'{display_data["change"]}')
+        self.t3.set_text(f'[{np.round(display_data["pct_change"], 2)}%]')
+        self.t4.set_text(f'{display_data.name.date()}')
+        self.t5.set_text(f'{display_data["high"]}')
+        self.t6.set_text(f'{display_data["low"]}')
+        self.t7.set_text(f'{np.round(display_data["volume"] / 10000, 3)}')
+        self.t8.set_text(f'{display_data["value"]}')
+        self.t9.set_text(f'{display_data["upper_lim"]}')
+        self.t10.set_text(f'{display_data["lower_lim"]}')
+        self.t11.set_text(f'{np.round(display_data["average"], 3)}')
+        self.t12.set_text(f'{display_data["last_close"]}')
+        # 根据本交易日的价格变动值确定开盘价、收盘价的显示颜色
+        if display_data['change'] > 0:  # 如果今日变动额大于0，即今天价格高于昨天，今天价格显示为红色
+            close_number_color = 'red'
+        elif display_data['change'] < 0:  # 如果今日变动额小于0，即今天价格低于昨天，今天价格显示为绿色
+            close_number_color = 'green'
+        else:
+            close_number_color = 'black'
+        self.t1.set_color(close_number_color)
+        self.t2.set_color(close_number_color)
+        self.t3.set_color(close_number_color)
+
+
 # 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
 class MPFManipulator:
     def __init__(self):
@@ -160,7 +254,6 @@ class MPFManipulator:
         texts[2].set_color(close_number_color)
         texts[3].set_color(close_number_color)
 
-
     def pick_factory(self, ax1, ax2, ax3, data):
         def pick():
             pass
@@ -176,6 +269,10 @@ class MPFManipulator:
                 self.idx_range = idx_range
             if self.data is None:
                 self.data = data
+            if self.mav is None:
+                self.mav = mav
+            if self.indicator is None:
+                self.indicator = indicator
 
             if event.button == 'down':
                 # deal with zoom in
