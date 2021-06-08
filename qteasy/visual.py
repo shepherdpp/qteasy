@@ -74,6 +74,9 @@ normal_font = {'fontname': 'Arial',
 
 class InterCandle():
     def __init__(self, data, my_style):
+        self.pressed = False
+        self.xpress = None
+
         # 初始化交互式K线图对象，历史数据作为唯一的参数用于初始化对象
         self.data = data
         self.style = my_style
@@ -111,6 +114,10 @@ class InterCandle():
         self.t20 = fig.text(0.85, 0.90, f'', **normal_font)
         self.t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
         self.t22 = fig.text(0.85, 0.86, f'', **normal_font)
+
+        fig.canvas.mpl_connect('button_press_event', self.on_press)
+        fig.canvas.mpl_connect('button_release_event', self.on_release)
+        fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
 
     def refresh_plot(self, idx_start):
         """ 根据最新的参数，重新绘制整个图表
@@ -164,6 +171,39 @@ class InterCandle():
         self.t1.set_color(close_number_color)
         self.t2.set_color(close_number_color)
         self.t3.set_color(close_number_color)
+
+    def on_press(self, event):
+        if not event.inaxes == self.ax1:
+            return
+        if event.button != 1:
+            return
+        self.pressed = True
+        self.xpress = event.xdata
+
+    def on_release(self, event):
+        self.pressed = False
+        dx = int(event.xdata - self.xpress)
+        self.idx_start -= dx
+        if self.idx_start <= 0:
+            self.idx_start = 0
+        if self.idx_start >= len(self.data) - 100:
+            self.idx_start = len(self.data) - 100
+
+    def on_motion(self, event):
+        if not self.pressed:
+            return
+        if not event.inaxes == self.ax1:
+            return
+        dx = int(event.xdata - self.xpress)
+        new_start = self.idx_start - dx
+        # 设定平移的左右界限，如果平移后超出界限，则不再平移
+        if new_start <= 0:
+            new_start = 0
+        if new_start >= len(self.data) - 100:
+            new_start = len(self.data) - 100
+
+        self.refresh_texts(self.data.iloc[new_start])
+        self.refresh_plot(new_start)
 
 
 # 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
