@@ -13,9 +13,6 @@ import mplfinance as mpf
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
-from mplfinance.original_flavor import candlestick_ohlc
-from matplotlib.backend_bases import MouseButton
-from matplotlib.font_manager import FontProperties
 
 import pandas as pd
 import numpy as np
@@ -82,6 +79,7 @@ class InterCandle():
         self.style = my_style
         # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
         self.idx_start = 0
+        self.idx_range = 100
 
         # 初始化figure对象，在figure上建立三个Axes对象并分别设置好它们的位置和基本属性
         self.fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
@@ -118,12 +116,13 @@ class InterCandle():
         fig.canvas.mpl_connect('button_press_event', self.on_press)
         fig.canvas.mpl_connect('button_release_event', self.on_release)
         fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
+        fig.canvas.mpl_connect('scroll_event', self.on_scroll)
 
-    def refresh_plot(self, idx_start):
+    def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
         """
         all_data = self.data
-        plot_data = all_data.iloc[idx_start: idx_start + 100]
+        plot_data = all_data.iloc[idx_start: idx_start + idx_range]
 
         ap = []
         # 添加K线图重叠均线
@@ -151,16 +150,16 @@ class InterCandle():
         # display_data是一个交易日内的所有数据，将这些数据分别填入figure对象上的文本中
         self.t1.set_text(f'{np.round(display_data["open"], 3)} / {np.round(display_data["close"], 3)}')
         self.t2.set_text(f'{display_data["change"]}')
-        self.t3.set_text(f'[{np.round(display_data["pct_change"], 2)}%]')
+        self.t3.set_text(f'[{np.round(display_data["pct_change"], 3)}%]')
         self.t4.set_text(f'{display_data.name.date()}')
-        self.t5.set_text(f'{display_data["high"]}')
-        self.t6.set_text(f'{display_data["low"]}')
+        self.t5.set_text(f'{np.round(display_data["high"], 3)}')
+        self.t6.set_text(f'{np.round(display_data["low"], 3)}')
         self.t7.set_text(f'{np.round(display_data["volume"] / 10000, 3)}')
         self.t8.set_text(f'{display_data["value"]}')
-        self.t9.set_text(f'{display_data["upper_lim"]}')
-        self.t10.set_text(f'{display_data["lower_lim"]}')
+        self.t9.set_text(f'{np.round(display_data["upper_lim"], 3)}')
+        self.t10.set_text(f'{np.round(display_data["lower_lim"], 3)}')
         self.t11.set_text(f'{np.round(display_data["average"], 3)}')
-        self.t12.set_text(f'{display_data["last_close"]}')
+        self.t12.set_text(f'{np.round(display_data["last_close"], 3)}')
         # 根据本交易日的价格变动值确定开盘价、收盘价的显示颜色
         if display_data['change'] > 0:  # 如果今日变动额大于0，即今天价格高于昨天，今天价格显示为红色
             close_number_color = 'red'
@@ -202,8 +201,41 @@ class InterCandle():
         if new_start >= len(self.data) - 100:
             new_start = len(self.data) - 100
 
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax3.clear()
         self.refresh_texts(self.data.iloc[new_start])
-        self.refresh_plot(new_start)
+        self.refresh_plot(new_start, self.idx_range)
+
+    def on_scroll(self, event):
+
+        if event.inaxes != self.ax1:
+            return
+
+        if event.button == 'down':
+            # 缩小20%显示范围
+            scale_factor = 0.8
+        elif event.button == 'up':
+            # 放大20%显示范围
+            scale_factor = 1.2
+        else:
+            # 特殊情况处理
+            scale_factor = 1
+            print(event.button)
+
+        self.idx_range = int(self.idx_range * scale_factor)
+
+        data_length = len(self.data)
+        if self.idx_range >= data_length - self.idx_start:
+            self.idx_range = data_length - self.idx_start
+        if self.idx_range <= 30:
+            self.idx_range = 30
+
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax3.clear()
+        self.refresh_texts(self.data.iloc[self.idx_start])
+        self.refresh_plot(self.idx_start, self.idx_range)
 
 
 # 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
@@ -250,9 +282,12 @@ class MPFManipulator:
             bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
             ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
             ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-            ax3.set_ylabel('macd')
-        elif self.indicator.lower() == 'dmi':
-            pass
+        elif self.indicator.lower() == 'rsi':
+            ap.append(mpf.make_addplot([75] * len(plot_data), color='(0.75, 0.6, 0.6)', ax=ax3))
+            ap.append(mpf.make_addplot([30] * len(plot_data), color='(0.6, 0.75, 0.6)', ax=ax3))
+            ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=ax3))
+        else:  # indicator == 'dema'
+            ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=ax3))
 
         mpf.plot(plot_data,
                  ax=ax1,
@@ -504,10 +539,10 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
     if not no_visual:
         zp = MPFManipulator()
         fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-        ax1 = fig.add_axes([0.06, 0.25, 0.88, 0.60])
-        ax2 = fig.add_axes([0.06, 0.15, 0.88, 0.10], sharex=ax1)
+        ax1 = fig.add_axes([0.08, 0.25, 0.88, 0.60])
+        ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=ax1)
         ax2.set_ylabel('volume')
-        ax3 = fig.add_axes([0.06, 0.05, 0.88, 0.10], sharex=ax1)
+        ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=ax1)
         ax3.set_ylabel('macd')
         idx_start = np.searchsorted(daily.index, start)
         idx_end = np.searchsorted(daily.index, end)
@@ -528,8 +563,12 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
             bar_g = np.where(plot_daily['macd-h'] <= 0, plot_daily['macd-h'], 0)
             ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
             ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-        elif indicator.lower() == 'dma':
-            pass
+        elif indicator.lower() == 'rsi':
+            ap.append(mpf.make_addplot([75] * len(plot_daily), color='(0.75, 0.6, 0.6)', ax=ax3))
+            ap.append(mpf.make_addplot([30] * len(plot_daily), color='(0.6, 0.75, 0.6)', ax=ax3))
+            ap.append(mpf.make_addplot(plot_daily['rsi'], ylabel='rsi', ax=ax3))
+        else:  # indicator == 'dema'
+            ap.append(mpf.make_addplot(plot_daily['dema'], ylabel='dema', ax=ax3))
 
         # 准备价格信息显示
 
@@ -593,47 +632,9 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                        plot_type, ma_columns, indicator, changeable_texts)
         zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
                         plot_type, ma_columns, indicator, changeable_texts)
-        # zp.double_click_factory(ax1, ax3, daily, idx_start, idx_range, my_style,
-        #                 plot_type, ma_columns, indicator)
 
         plt.show()
     return daily
-
-
-def _add_mpl_plot(stock_data, plot_type: str, pars, panels=0):
-    """ create and return addplot for mplfinance
-
-    :param plot_type:
-    :param pars:
-    :return:
-    """
-    adps = list()
-    if plot_type is None:
-        return adps
-    assert isinstance(plot_type, str), f'addplot type should be a string, got {type(plot_type)}'
-    if plot_type.lower() == 'dema':
-        d = dema(stock_data.close, *pars)
-        adps.append(mpf.make_addplot(d, panel=panels, ylabel=plot_type))
-    elif plot_type.lower() == 'macd':
-        m, s, h = macd(stock_data.close, *pars)
-        adps.append(mpf.make_addplot(m, panel=panels, ylabel=plot_type))
-        adps.append(mpf.make_addplot(s, panel=panels))
-        h_pos = np.where(h > 0, h, 0)
-        h_neg = np.where(h <= 0, h, 0)
-        adps.append(mpf.make_addplot(h_pos, type='bar', color='red', panel=panels))
-        adps.append(mpf.make_addplot(h_neg, type='bar', color='green', panel=panels))
-    elif plot_type.lower() == 'rsi':
-        d = rsi(stock_data.close, *pars)
-        adps.append(mpf.make_addplot([75] * len(d), panel=panels, color=(0.75, 0.6, 0.6), ylim=(0, 100)))
-        adps.append(mpf.make_addplot([30] * len(d), panel=panels, color=(0.6, 0.75, 0.6), ylim=(0, 100)))
-        adps.append(mpf.make_addplot(d, panel=panels, ylabel=plot_type, ylim=(0, 100)))
-    elif plot_type.lower() == 'bbands':
-        u, m, l = bbands(stock_data.close, *pars)
-        adps.append(mpf.make_addplot(u, panel=panels, ylabel=plot_type))
-        adps.append(mpf.make_addplot(m, panel=panels, ylabel=plot_type))
-        adps.append(mpf.make_addplot(l, panel=panels, ylabel=plot_type))
-    return adps
-
 
 def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicator=None, indicator_par=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
@@ -692,7 +693,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     return data, share_name
 
 
-def _add_indicators(data, mav=None, bb_par=None, macd_par=None, kdj=None, dma=None, rsi_par=None, dema_par=None):
+def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, dema_par=None):
     """ data是一只股票的历史K线数据，包括O/H/L/C/V五组数据或者O/H/L/C四组数据
         并根据这些数据生成以下数据，加入到data中：
 
