@@ -69,20 +69,25 @@ normal_font = {'fontname': 'Arial',
                'ha':       'left'}
 
 
-class InterCandle():
-    def __init__(self, data, my_style):
+# 动态交互式蜡烛图类
+class InterCandle:
+    def __init__(self, data, stock_name, style):
         self.pressed = False
         self.xpress = None
 
         # 初始化交互式K线图对象，历史数据作为唯一的参数用于初始化对象
         self.data = data
-        self.style = my_style
+        self.style = style
+        self.stock_name = stock_name
         # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
         self.idx_start = 0
         self.idx_range = 100
+        # 设置ax1图表中显示的均线类型
+        self.avg_type = 'ma'
+        self.indicator = 'macd'
 
         # 初始化figure对象，在figure上建立三个Axes对象并分别设置好它们的位置和基本属性
-        self.fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+        self.fig = mpf.figure(style=style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         fig = self.fig
         self.ax1 = fig.add_axes([0.08, 0.25, 0.88, 0.60])
         self.ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=self.ax1)
@@ -90,7 +95,7 @@ class InterCandle():
         self.ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=self.ax1)
         self.ax3.set_ylabel('macd')
         # 初始化figure对象，在figure上预先放置文本并设置格式，文本内容根据需要显示的数据实时更新
-        self.t1 = fig.text(0.50, 0.94, 'TITLE', **title_font)
+        self.t1 = fig.text(0.50, 0.94, f'{self.stock_name}', **title_font)
         self.t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
         self.t3 = fig.text(0.14, 0.89, f'', **large_red_font)
         self.t4 = fig.text(0.14, 0.86, f'', **small_red_font)
@@ -125,14 +130,24 @@ class InterCandle():
         plot_data = all_data.iloc[idx_start: idx_start + idx_range]
 
         ap = []
-        # 添加K线图重叠均线
-        ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
-        # 添加指标MACD
-        ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=self.ax3))
-        bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-        bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-        ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
-        ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
+        # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
+        if self.avg_type == 'ma':
+            ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
+        elif self.avg_type == 'bb':
+            ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
+        # 添加指标，根据指标类型添加MACD或RSI或DEMA
+        if self.indicator == 'macd':
+            ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ylabel='macd', ax=self.ax3))
+            bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+            bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
+            ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
+            ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
+        elif self.indicator == 'rsi':
+            ap.append(mpf.make_addplot([75] * len(plot_data), color=(0.75, 0.6, 0.6), ax=self.ax3))
+            ap.append(mpf.make_addplot([30] * len(plot_data), color=(0.6, 0.75, 0.6), ax=self.ax3))
+            ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=self.ax3))
+        else:  # indicator == 'dema'
+            ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
         # 绘制图表
         mpf.plot(plot_data,
                  ax=self.ax1,
@@ -142,24 +157,25 @@ class InterCandle():
                  style=self.style,
                  datetime_format='%Y-%m',
                  xrotation=0)
-        self.fig.show()
+        # self.fig.show()
+        plt.show()
 
     def refresh_texts(self, display_data):
         """ 更新K线图上的价格文本
         """
         # display_data是一个交易日内的所有数据，将这些数据分别填入figure对象上的文本中
-        self.t1.set_text(f'{np.round(display_data["open"], 3)} / {np.round(display_data["close"], 3)}')
-        self.t2.set_text(f'{display_data["change"]}')
-        self.t3.set_text(f'[{np.round(display_data["pct_change"], 3)}%]')
-        self.t4.set_text(f'{display_data.name.date()}')
-        self.t5.set_text(f'{np.round(display_data["high"], 3)}')
-        self.t6.set_text(f'{np.round(display_data["low"], 3)}')
-        self.t7.set_text(f'{np.round(display_data["volume"] / 10000, 3)}')
-        self.t8.set_text(f'{display_data["value"]}')
-        self.t9.set_text(f'{np.round(display_data["upper_lim"], 3)}')
-        self.t10.set_text(f'{np.round(display_data["lower_lim"], 3)}')
-        self.t11.set_text(f'{np.round(display_data["average"], 3)}')
-        self.t12.set_text(f'{np.round(display_data["last_close"], 3)}')
+        self.t3.set_text(f'{np.round(display_data["open"], 3)} / {np.round(display_data["close"], 3)}')
+        self.t4.set_text(f'{display_data["change"]}')
+        self.t5.set_text(f'[{np.round(display_data["pct_change"], 3)}%]')
+        self.t6.set_text(f'{display_data.name.date()}')
+        self.t8.set_text(f'{np.round(display_data["high"], 3)}')
+        self.t10.set_text(f'{np.round(display_data["low"], 3)}')
+        self.t12.set_text(f'{np.round(display_data["volume"] / 10000, 3)}')
+        self.t14.set_text(f'{display_data["value"]}')
+        self.t16.set_text(f'{np.round(display_data["upper_lim"], 3)}')
+        self.t18.set_text(f'{np.round(display_data["lower_lim"], 3)}')
+        self.t20.set_text(f'{np.round(display_data["average"], 3)}')
+        self.t22.set_text(f'{np.round(display_data["last_close"], 3)}')
         # 根据本交易日的价格变动值确定开盘价、收盘价的显示颜色
         if display_data['change'] > 0:  # 如果今日变动额大于0，即今天价格高于昨天，今天价格显示为红色
             close_number_color = 'red'
@@ -167,9 +183,9 @@ class InterCandle():
             close_number_color = 'green'
         else:
             close_number_color = 'black'
-        self.t1.set_color(close_number_color)
-        self.t2.set_color(close_number_color)
         self.t3.set_color(close_number_color)
+        self.t4.set_color(close_number_color)
+        self.t5.set_color(close_number_color)
 
     def on_press(self, event):
         if not event.inaxes == self.ax1:
@@ -178,6 +194,30 @@ class InterCandle():
             return
         self.pressed = True
         self.xpress = event.xdata
+
+        # 切换当前ma类型, 在ma、bb、none之间循环
+        if event.inaxes == self.ax1 and event.dblclick == 1:
+            if self.avg_type == 'ma':
+                self.avg_type = 'bb'
+            elif self.avg_type == 'bb':
+                self.avg_type = 'none'
+            else:
+                self.avg_type = 'ma'
+        # 切换当前indicator类型，在macd/dma/rsi/kdj之间循环
+        if event.inaxes == self.ax3 and event.dblclick == 1:
+            if self.indicator == 'macd':
+                self.indicator = 'dma'
+            elif self.indicator == 'dma':
+                self.indicator = 'rsi'
+            elif self.indicator == 'rsi':
+                self.indicator = 'kdj'
+            else:
+                self.indicator = 'macd'
+
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax3.clear()
+        self.refresh_plot(self.idx_start, self.idx_range)
 
     def on_release(self, event):
         self.pressed = False
@@ -237,227 +277,6 @@ class InterCandle():
         self.refresh_texts(self.data.iloc[self.idx_start])
         self.refresh_plot(self.idx_start, self.idx_range)
 
-
-# 专门用来处理动态图表鼠标拖动和滚轮操作的事件处理类
-class MPFManipulator:
-    def __init__(self):
-        self.press = None
-        self.x0 = None
-        self.y0 = None
-        self.x1 = None
-        self.y1 = None
-        self.xpress = None
-        self.ypress = None
-        self.idx_start = None
-        self.idx_range = None
-        self.data = None
-        self.indicator = None
-        self.mav = None
-        self.ax1_ap = None
-
-    def _refresh_plot(self, ax1, ax2, ax3, idx_start, idx_range, plot_type, style):
-        """ 根据最新的参数，重新绘制整个图表
-
-        :param ax1:
-        :param ax2:
-        :param ax3:
-        :return:
-        """
-        ax1.clear()
-        ax2.clear()
-        ax3.clear()
-        all_data = self.data
-        plot_data = all_data.iloc[idx_start: idx_start + idx_range]
-
-        ap = []
-        # 添加K线图重叠均线或布林线
-        if self.ax1_ap == 'ma':
-            ap.append(mpf.make_addplot(plot_data[self.mav], ax=ax1))
-        else:
-            ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=ax1))
-        # 添加指标
-        if self.indicator.lower() == 'macd':
-            ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ax=ax3))
-            bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-            bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-            ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
-            ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-        elif self.indicator.lower() == 'rsi':
-            ap.append(mpf.make_addplot([75] * len(plot_data), color='(0.75, 0.6, 0.6)', ax=ax3))
-            ap.append(mpf.make_addplot([30] * len(plot_data), color='(0.6, 0.75, 0.6)', ax=ax3))
-            ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=ax3))
-        else:  # indicator == 'dema'
-            ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=ax3))
-
-        mpf.plot(plot_data,
-                 ax=ax1,
-                 volume=ax2,
-                 addplot=ap,
-                 type=plot_type,
-                 style=style,
-                 datetime_format='%Y-%m',
-                 xrotation=0)
-
-    def _refresh_texts(self, texts):
-        """ 更新K线图上的价格文本
-
-        :param texts:
-        :return:
-        """
-        all_data = self.data
-        plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
-        display_daily = plot_data.iloc[-1]
-        texts[1].set_text(f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}')
-        texts[2].set_text(f'{display_daily["change"]}')
-        texts[3].set_text(f'[{np.round(display_daily["pct_change"], 2)}%]')
-        texts[4].set_text(f'{display_daily.name.date()}')
-        texts[5].set_text(f'{display_daily["high"]}')
-        texts[6].set_text(f'{display_daily["low"]}')
-        texts[7].set_text(f'{np.round(display_daily["volume"] / 10000, 3)}')
-        texts[8].set_text(f'{display_daily["value"]}')
-        texts[9].set_text(f'{display_daily["upper_lim"]}')
-        texts[10].set_text(f'{display_daily["lower_lim"]}')
-        texts[11].set_text(f'{np.round(display_daily["average"], 3)}')
-        texts[12].set_text(f'{display_daily["last_close"]}')
-        if display_daily['change'] > 0:
-            close_number_color = 'red'
-        elif display_daily['change'] < 0:
-            close_number_color = 'green'
-        else:
-            close_number_color = 'black'
-        texts[1].set_color(close_number_color)
-        texts[2].set_color(close_number_color)
-        texts[3].set_color(close_number_color)
-
-    def pick_factory(self, ax1, ax2, ax3, data):
-        def pick():
-            pass
-
-    def zoom_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
-        def zoom(event):
-
-            if event.inaxes != ax1:
-                return
-            if self.idx_start is None:
-                self.idx_start = idx_start
-            if self.idx_range is None:
-                self.idx_range = idx_range
-            if self.data is None:
-                self.data = data
-            if self.mav is None:
-                self.mav = mav
-            if self.indicator is None:
-                self.indicator = indicator
-
-            if event.button == 'down':
-                # deal with zoom in
-                scale_factor = 1 / 1.2
-            elif event.button == 'up':
-                # deal with zoom out
-                scale_factor = 1.2
-            else:
-                # deal with something that should never happen
-                scale_factor = 1
-                print(event.button)
-
-            self.idx_range = int(self.idx_range * scale_factor)
-            data_length = len(self.data)
-            if self.idx_range >= data_length - self.idx_start:
-                self.idx_range = data_length - self.idx_start
-            if self.idx_range <= 30:
-                self.idx_range = 30
-
-            self._refresh_plot(ax1, ax2, ax3, self.idx_start, self.idx_range, plot_type, style)
-            self._refresh_texts(texts)
-
-        fig = ax1.get_figure()
-        fig.canvas.mpl_connect('scroll_event', zoom)
-
-        return zoom
-
-    def pan_factory(self, ax1, ax2, ax3, data, idx_start, idx_range, style, plot_type, mav, indicator, texts):
-
-        def on_press(event):
-            if not event.inaxes in [ax1, ax2, ax3]:
-                return
-            if event.button != 1:
-                return
-            if self.idx_start is None:
-                self.idx_start = idx_start
-            if self.idx_range is None:
-                self.idx_range = idx_range
-            if self.data is None:
-                self.data = data
-            if self.mav is None:
-                self.mav = mav
-            if self.indicator is None:
-                self.indicator = indicator
-            if self.ax1_ap is None:
-                if mav is None:
-                    self.ax1_ap = 'bb'
-                else:
-                    self.ax1_ap = 'ma'
-            self.press = self.x0, self.y0, event.xdata, event.ydata
-            self.x0, self.y0, self.xpress, self.ypress = self.press
-
-            # 切换当前ma类型, 在ma、bb、none之间循环
-            if event.inaxes == ax1 and event.dblclick == 1:
-                if self.ax1_ap == 'ma':
-                    self.ax1_ap = 'bb'
-                elif self.ax1_ap == 'bb':
-                    self.ax1_ap = 'none'
-                else:
-                    self.ax1_ap = 'ma'
-            # 切换当前indicator类型，在macd/dma/rsi/kdj之间循环
-            if event.inaxes == ax3 and event.dblclick == 1:
-                if self.indicator == 'macd':
-                    self.indicator = 'dma'
-                elif self.indicator == 'dma':
-                    self.indicator = 'rsi'
-                elif self.indicator == 'rsi':
-                    self.indicator = 'kdj'
-                else:
-                    self.indicator = 'macd'
-
-            self._refresh_plot(ax1, ax2, ax3, self.idx_start, self.idx_range, plot_type, style)
-
-        def on_release(event):
-            self.press = None
-            dx = int(event.xdata - self.xpress)
-            self.idx_start -= dx
-            if self.idx_start <= 0:
-                self.idx_start = 0
-            if self.idx_start >= len(self.data) - self.idx_range:
-                self.idx_start = len(self.data) - self.idx_range
-
-        def on_motion(event):
-            if self.press is None:
-                return
-            if not event.inaxes in [ax1, ax2, ax3]:
-                return
-            dx = int(event.xdata - self.xpress)
-            new_start = self.idx_start - dx
-            # 设定平移的左右界限，如果平移后超出界限，则不再平移
-            if new_start <= 0:
-                new_start = 0
-            if new_start >= len(self.data) - self.idx_range:
-                new_start = len(self.data) - self.idx_range
-
-            self._refresh_plot(ax1, ax2, ax3, new_start, self.idx_range, plot_type, style)
-            self._refresh_texts(texts)
-
-        fig = ax1.get_figure()
-
-        # attach the call back
-        fig.canvas.mpl_connect('button_press_event', on_press)
-        fig.canvas.mpl_connect('button_release_event', on_release)
-        fig.canvas.mpl_connect('motion_notify_event', on_motion)
-
-        # return the function
-        return on_motion
-
-
-# 定义用于可视化图表的所有字体和字号
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
@@ -537,104 +356,16 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
-        zp = MPFManipulator()
-        fig = mpf.figure(style=my_style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-        ax1 = fig.add_axes([0.08, 0.25, 0.88, 0.60])
-        ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=ax1)
-        ax2.set_ylabel('volume')
-        ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=ax1)
-        ax3.set_ylabel('macd')
+        # import pdb; pdb.set_trace()
         idx_start = np.searchsorted(daily.index, start)
-        idx_end = np.searchsorted(daily.index, end)
-        idx_range = idx_end - idx_start
-        plot_daily = daily.iloc[idx_start: idx_start + idx_range]
-        display_daily = daily.iloc[idx_start + idx_range - 5]
-        # 添加移动均线和默认指标数据
-        ma_columns = [n for n in plot_daily.columns if n[:2] == 'MA']
-        ap = []
-        # 添加K线图重叠均线
-        ap.append(mpf.make_addplot(plot_daily[ma_columns], ax=ax1))
-        # 添加指标
-        if indicator is None:
-            indicator = 'macd'
-        if indicator.lower() == 'macd':
-            ap.append(mpf.make_addplot(plot_daily[['macd-m', 'macd-s']], ax=ax3))
-            bar_r = np.where(plot_daily['macd-h'] > 0, plot_daily['macd-h'], 0)
-            bar_g = np.where(plot_daily['macd-h'] <= 0, plot_daily['macd-h'], 0)
-            ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=ax3))
-            ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=ax3))
-        elif indicator.lower() == 'rsi':
-            ap.append(mpf.make_addplot([75] * len(plot_daily), color='(0.75, 0.6, 0.6)', ax=ax3))
-            ap.append(mpf.make_addplot([30] * len(plot_daily), color='(0.6, 0.75, 0.6)', ax=ax3))
-            ap.append(mpf.make_addplot(plot_daily['rsi'], ylabel='rsi', ax=ax3))
-        else:  # indicator == 'dema'
-            ap.append(mpf.make_addplot(plot_daily['dema'], ylabel='dema', ax=ax3))
-
-        # 准备价格信息显示
-
-        if display_daily['change'] > 0:
-            close_number_color = 'red'
-        elif display_daily['change'] < 0:
-            close_number_color = 'green'
-        else:
-            close_number_color = 'black'
-        t1 = fig.text(0.50, 0.94, f'{share_name}: {start.date()} - {end.date()}', **title_font)
-        t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
-        t3 = fig.text(0.14, 0.89, f'{np.round(display_daily["open"], 3)} / {np.round(display_daily["close"], 3)}',
-                      **large_red_font)
-        t4 = fig.text(0.14, 0.86, f'{display_daily["change"]}', **small_red_font)
-        t5 = fig.text(0.22, 0.86, f'[{np.round(display_daily["pct_change"], 2)}%]', **small_red_font)
-        t6 = fig.text(0.12, 0.86, f'{display_daily.name.date()}', **normal_label_font)
-        t3.set_color(close_number_color)
-        t4.set_color(close_number_color)
-        t5.set_color(close_number_color)
-        t7 = fig.text(0.40, 0.90, '高: ', **normal_label_font)
-        t8 = fig.text(0.40, 0.90, f'{display_daily["high"]}', **small_red_font)
-        t9 = fig.text(0.40, 0.86, '低: ', **normal_label_font)
-        t10 = fig.text(0.40, 0.86, f'{display_daily["low"]}', **small_green_font)
-        t11 = fig.text(0.55, 0.90, '量(万手): ', **normal_label_font)
-        t12 = fig.text(0.55, 0.90, f'{np.round(display_daily["volume"] / 10000, 3)}', **normal_font)
-        t13 = fig.text(0.55, 0.86, '额(亿元): ', **normal_label_font)
-        t14 = fig.text(0.55, 0.86, f'{display_daily["value"]}', **normal_font)
-        t15 = fig.text(0.70, 0.90, '涨停: ', **normal_label_font)
-        t16 = fig.text(0.70, 0.90, f'{display_daily["upper_lim"]}', **small_red_font)
-        t17 = fig.text(0.70, 0.86, '跌停: ', **normal_label_font)
-        t18 = fig.text(0.70, 0.86, f'{display_daily["lower_lim"]}', **small_green_font)
-        t19 = fig.text(0.85, 0.90, '均价: ', **normal_label_font)
-        t20 = fig.text(0.85, 0.90, f'{np.round(display_daily["average"], 3)}', **normal_font)
-        t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
-        t22 = fig.text(0.85, 0.86, f'{display_daily["last_close"]}', **normal_font)
-
-        changeable_texts = (t1, t3, t4, t5, t6, t8, t10, t12, t14, t16, t18, t20, t22)
-
-        print(f'{share_name}: {start.date()} - {end.date()}')
-
-        if plot_type != 'renko':  # 'renko'型图不支持addplot
-            # 添加MA线
-            mpf.plot(plot_daily,
-                     ax=ax1,
-                     volume=ax2,
-                     addplot=ap,
-                     type=plot_type,
-                     style=my_style,
-                     datetime_format='%Y-%m',
-                     xrotation=0)
-        else:
-            mpf.plot(plot_daily,
-                     ax=ax1,
-                     volume=ax2,
-                     type=plot_type,
-                     style=my_style,
-                     datetime_format='%Y-%m',
-                     xrotation=0)
-
-        zp.pan_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
-                       plot_type, ma_columns, indicator, changeable_texts)
-        zp.zoom_factory(ax1, ax2, ax3, daily, idx_start, idx_range, my_style,
-                        plot_type, ma_columns, indicator, changeable_texts)
-
-        plt.show()
+        idx_range = np.searchsorted(daily.index, end) - idx_start
+        my_candle = InterCandle(data=daily, stock_name=share_name, style=my_style)
+        my_candle.idx_start = idx_start
+        my_candle.idx_range = idx_range
+        my_candle.refresh_texts(daily.iloc[idx_start + idx_range - 1])
+        my_candle.refresh_plot(idx_start, idx_range)
     return daily
+
 
 def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicator=None, indicator_par=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
