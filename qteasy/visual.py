@@ -142,12 +142,15 @@ class InterCandle:
             bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
             ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
             ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
+            self.ax3.set_ylabel('macd')
         elif self.indicator == 'rsi':
             ap.append(mpf.make_addplot([75] * len(plot_data), color=(0.75, 0.6, 0.6), ax=self.ax3))
             ap.append(mpf.make_addplot([30] * len(plot_data), color=(0.6, 0.75, 0.6), ax=self.ax3))
             ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=self.ax3))
+            self.ax3.set_ylabel('rsi')
         else:  # indicator == 'dema'
             ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
+            self.ax3.set_ylabel('dema')
         # 绘制图表
         mpf.plot(plot_data,
                  ax=self.ax1,
@@ -188,38 +191,41 @@ class InterCandle:
         self.t5.set_color(close_number_color)
 
     def on_press(self, event):
-        if not event.inaxes == self.ax1:
+        # 如果点击范围不在ax1或ax3范围内则退出
+        if not (event.inaxes == self.ax1) or (event.inaxes == self.ax3):
             return
         if event.button != 1:
             return
         self.pressed = True
         self.xpress = event.xdata
 
-        # 切换当前ma类型, 在ma、bb、none之间循环
-        if event.inaxes == self.ax1 and event.dblclick == 1:
-            if self.avg_type == 'ma':
-                self.avg_type = 'bb'
-            elif self.avg_type == 'bb':
-                self.avg_type = 'none'
-            else:
-                self.avg_type = 'ma'
-        # 切换当前indicator类型，在macd/dma/rsi/kdj之间循环
-        if event.inaxes == self.ax3 and event.dblclick == 1:
-            if self.indicator == 'macd':
-                self.indicator = 'dma'
-            elif self.indicator == 'dma':
-                self.indicator = 'rsi'
-            elif self.indicator == 'rsi':
-                self.indicator = 'kdj'
-            else:
-                self.indicator = 'macd'
-
-        self.ax1.clear()
-        self.ax2.clear()
-        self.ax3.clear()
-        self.refresh_plot(self.idx_start, self.idx_range)
+        # 当当前鼠标点击模式为双击时，继续检查更新K线图
+        if event.dblclick == 1:
+            # 当点击位置在ax1中时，切换当前ma类型, 在ma、bb、none之间循环
+            if event.inaxes == self.ax1:
+                if self.avg_type == 'ma':
+                    self.avg_type = 'bb'
+                elif self.avg_type == 'bb':
+                    self.avg_type = 'none'
+                else:
+                    self.avg_type = 'ma'
+                # 更新K线图
+            # 当点击位置在ax3范围内时，切换当前indicator类型，在macd/dma/rsi/kdj之间循环
+            else:  # event.inaxes == self.ax3
+                if self.indicator == 'macd':
+                    self.indicator = 'dma'
+                elif self.indicator == 'dma':
+                    self.indicator = 'rsi'
+                else:
+                    self.indicator = 'macd'
+            # 更新K线图
+            self.ax1.clear()
+            self.ax2.clear()
+            self.ax3.clear()
+            self.refresh_plot(self.idx_start, self.idx_range)
 
     def on_release(self, event):
+        """当释放鼠标按键时，更新新的K线起点"""
         self.pressed = False
         dx = int(event.xdata - self.xpress)
         self.idx_start -= dx
@@ -229,10 +235,12 @@ class InterCandle:
             self.idx_start = len(self.data) - 100
 
     def on_motion(self, event):
+        """当鼠标移动时，如果鼠标已经按下，计算鼠标水平移动距离，并根据水平距离计算K线平移距离"""
         if not self.pressed:
             return
         if not event.inaxes == self.ax1:
             return
+        # 计算鼠标的水平移动距离
         dx = int(event.xdata - self.xpress)
         new_start = self.idx_start - dx
         # 设定平移的左右界限，如果平移后超出界限，则不再平移
@@ -240,7 +248,7 @@ class InterCandle:
             new_start = 0
         if new_start >= len(self.data) - 100:
             new_start = len(self.data) - 100
-
+        # 根据水平距离重新绘制K线图
         self.ax1.clear()
         self.ax2.clear()
         self.ax3.clear()
@@ -248,10 +256,10 @@ class InterCandle:
         self.refresh_plot(new_start, self.idx_range)
 
     def on_scroll(self, event):
-
+        """当鼠标滚轮滚动时，更新K线图的显示范围"""
         if event.inaxes != self.ax1:
             return
-
+        # 确认是否是正确的滚轮滚动
         if event.button == 'down':
             # 缩小20%显示范围
             scale_factor = 0.8
@@ -262,15 +270,15 @@ class InterCandle:
             # 特殊情况处理
             scale_factor = 1
             print(event.button)
-
+        # 更新K线图显示范围
         self.idx_range = int(self.idx_range * scale_factor)
-
+        # 确认显示范围是否超出允许范围：最小30、最大不超过当前起点到终点的距离
         data_length = len(self.data)
         if self.idx_range >= data_length - self.idx_start:
             self.idx_range = data_length - self.idx_start
         if self.idx_range <= 30:
             self.idx_range = 30
-
+        # 更新K线图
         self.ax1.clear()
         self.ax2.clear()
         self.ax3.clear()
