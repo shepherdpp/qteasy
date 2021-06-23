@@ -17,8 +17,8 @@ from warnings import warn
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, list_truncate
-from .utilfuncs import list_to_str_format, progress_bar, next_trade_day, next_market_trade_day
-from .tsfuncs import get_bar, name_change
+from .utilfuncs import list_to_str_format, progress_bar, next_market_trade_day
+from .tsfuncs import get_bar
 from .tsfuncs import income, indicators, balance, cashflow
 
 from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
@@ -335,6 +335,9 @@ class HistoryPanel():
             key_is_number = isinstance(keys, int)
 
             # first make sure that htypes, share_pool, and hdates are either slice or list
+            htype_slice = []
+            share_slice = []
+            hdate_slice = []
             if key_is_tuple:
                 if len(keys) == 2:
                     htype_slice, share_slice = keys
@@ -816,6 +819,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     # TODO: by the input combination of shares and htypes
     if column_type is None:
         if shares is None:
+            htype_list = []
             if htypes is None:
                 raise KeyError(f'shares and htypes can not both be None if column_type is not given!')
             if isinstance(htypes, str):
@@ -828,6 +832,7 @@ def dataframe_to_hp(df: pd.DataFrame,
             except:
                 raise ValueError(f'htypes should be a list or a string, got {type(htypes)} instead')
         else:
+            share_list = []
             if shares is None:
                 raise KeyError(f'shares and htypes can not both be None if column_type is not given!')
             if isinstance(shares, str):

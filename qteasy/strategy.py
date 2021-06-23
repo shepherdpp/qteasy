@@ -868,7 +868,7 @@ class SimpleTiming(Strategy):
         cat[np.isnan(cat)] = 0
         return cat
 
-    def generate(self, hist_data, shares=[], dates=[]):
+    def generate(self, hist_data, shares=None, dates=None):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
 
@@ -880,6 +880,10 @@ class SimpleTiming(Strategy):
         :param dates:
         :return:
         """
+        if shares is None:
+            shares = []
+        if dates is None:
+            dates = []
         super().generate(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型

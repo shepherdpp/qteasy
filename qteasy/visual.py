@@ -135,6 +135,8 @@ class InterCandle:
             ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
         elif self.avg_type == 'bb':
             ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
+        else:
+            pass  # 不添加任何均线
         # 添加指标，根据指标类型添加MACD或RSI或DEMA
         if self.indicator == 'macd':
             ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ylabel='macd', ax=self.ax3))
@@ -192,7 +194,7 @@ class InterCandle:
 
     def on_press(self, event):
         # 如果点击范围不在ax1或ax3范围内则退出
-        if not (event.inaxes == self.ax1) or (event.inaxes == self.ax3):
+        if not (event.inaxes == self.ax1 or event.inaxes == self.ax3):
             return
         if event.button != 1:
             return
@@ -227,6 +229,8 @@ class InterCandle:
     def on_release(self, event):
         """当释放鼠标按键时，更新新的K线起点"""
         self.pressed = False
+        if self.xpress is None:
+            return
         dx = int(event.xdata - self.xpress)
         self.idx_start -= dx
         if self.idx_start <= 0:
