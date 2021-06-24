@@ -8,11 +8,11 @@
 
 import numpy as np
 import pandas as pd
-from .utilfuncs import function_debugger
 
 from .utilfuncs import str_to_list
 
 
+# TODO: 改进evaluate：生成完整的evaluate参数DataFrame
 def performance_statistics(performances: list, stats='mean'):
     """ 输入几个不同的评价指标，对它们进行统计分析，并输出统计分析的结果
         所有输入侧评价指标存储在一个列表中，每个指标都必须是dict类型，且所有的dict结构相同，例如：
@@ -46,7 +46,7 @@ def performance_statistics(performances: list, stats='mean'):
     """
     assert isinstance(performances, list), \
         f'performance dicts should be a list of dicts, got {type(performances)} instead'
-    assert all(isinstance(perf, dict) for perf in performances),\
+    assert all(isinstance(perf, dict) for perf in performances), \
         f'One or more of the performances dicts is not dict'
     assert any(bool(perf) for perf in performances), \
         f'One or more of the performance dicts is empty!\n' \
@@ -100,6 +100,30 @@ def performance_statistics(performances: list, stats='mean'):
 def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, indicators: str = 'final_value'):
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
         返回一个dict，包含所有需要的indicators
+
+        这里生成的indicators包含：
+        - final_value:        回测区间最后一天的总资产金额
+        - loop_start:        回测区间起始日
+        - loop_end:          回测区间终止日
+        - complete_values:   完整的回测历史价格记录  TODO：在完整的历史回测记录中增加各个评价指标的历史值）
+        - years:             回测历史周期年份数
+        - oper_count         操作数量
+        - total_invest       总投入资金数量
+        - total_fee          总交易费用
+        - rtn:               回测的总回报率
+        - annual_rtn:        回测的年均回报率
+        - mdd:               最大回测  TODO: 应该增强DD的判断，输出前五个最大的DD区间，增加"recover_date"
+        - max_date:          最大回测峰值日期
+        - low_date:          最大回测谷值日期
+        - volatility:        回测区间波动率（最后一日波动率）TODO: 将滚动波动率加入complete_values中
+        - ref_rtn:           benchmark参照指标的回报率
+        - ref_annual_rtn:    benchmark参照指标的年均回报率
+        - beta:              回测区间的beta值            TODO: 将rolling beta写入complete_value中
+        - sharp:             回测区间的夏普率             TODO: 将rolling sharp写入complete_value中
+        - alpha:             回测区间的阿尔法值           TODO: 将rolling alpha写入complete_value中
+        - info:              回测区间的信息比率           TODO: 将rolling info写入complete_value中
+        TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk、
+        TODO: 增加worst drawdown analysis（DF）
 
     :param op_list: operator对象生成的交易清单
     :param hist_reference: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
@@ -232,7 +256,7 @@ def eval_beta(looped_value, reference_value, reference_data):
         raise TypeError(f'reference value should be pandas DataFrame, got {type(reference_value)} instead!')
     if not isinstance(looped_value, pd.DataFrame):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
-    if not reference_data in reference_value.columns:
+    if reference_data not in reference_value.columns:
         raise KeyError(f'reference data type \'{reference_data}\' can not be found in reference data')
     ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
     ret_dev = ret.var()
@@ -390,5 +414,3 @@ def eval_operation(op_list, looped_value, cash_plan):
     total_investment = cash_plan.total
     # 返回所有输出变量
     return total_year, op_counts, total_investment, total_op_fee
-
-
