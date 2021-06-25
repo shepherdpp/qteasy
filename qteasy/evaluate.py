@@ -323,9 +323,15 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
 
 def eval_max_drawdown(looped_value):
     """ 最大回撤。描述策略可能出现的最糟糕的情况。具体计算方法为 max(1 - 策略当日价值 / 当日之前虚拟账户最高价值)
+    TODO: 应该寻找所有的drawdown，并列出前五个
+    TODO: 生成underwater图
 
-    :param looped_value:
+    :param looped_value: pd.DataFrame, 完整的回测历史价值数据，包括价格、现金、总价值
     :return:
+        - max_drawdown: 最大回撤
+        - peak_date: 峰值日期
+        - valley_date: 谷值日期
+        - recover_date: 回撤恢复日期
     """
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
@@ -334,8 +340,10 @@ def eval_max_drawdown(looped_value):
         drawdown = 0.
         max_drawdown = 0.
         current_max_date = 0.
-        max_value_date = 0.
-        max_drawdown_date = 0.
+        peak_date = 0.
+        valley_date = 0.
+        recover_date = 0.
+        recovered = True
         for date, value in looped_value.value.iteritems():
             if value > max_val:
                 max_val = value
@@ -344,9 +352,14 @@ def eval_max_drawdown(looped_value):
                 drawdown = 1 - value / max_val
             if drawdown > max_drawdown:
                 max_drawdown = drawdown
-                max_drawdown_date = date
-                max_value_date = current_max_date
-        return max_drawdown, max_value_date, max_drawdown_date
+                valley_date = date
+                peak_date = current_max_date
+                recovered = False
+            if not recovered:
+                recover_date = date
+                if drawdown == 0:
+                    recovered = True
+        return max_drawdown, peak_date, valley_date, recover_date
     else:
         return -np.inf
 
