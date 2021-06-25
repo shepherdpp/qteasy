@@ -70,12 +70,14 @@ def performance_statistics(performances: list, stats='mean'):
         res['oper_count'] = res['oper_count'] / len(performances)
         res['sell_count'] = res['oper_count'].sell.sum()
         res['buy_count'] = res['oper_count'].buy.sum()
-    if 'max_date' in performances[0]:
-        res['max_date'] = performances[0]['max_date']
-        res['low_date'] = performances[0]['low_date']
+    if 'peak_date' in performances[0]:
+        res['peak_date'] = performances[0]['peak_date']
+        res['valley_date'] = performances[0]['valley_date']
+        res['recover_date'] = performances[0]['recover_date']
     keys_to_process = [perf for perf in performances[0] if perf not in ['oper_count',
-                                                                        'max_date',
-                                                                        'low_date',
+                                                                        'peak_date',
+                                                                        'valley_date',
+                                                                        'recover_date',
                                                                         'loop_start',
                                                                         'loop_end',
                                                                         'complete_values']]
@@ -113,8 +115,8 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         - rtn:               回测的总回报率
         - annual_rtn:        回测的年均回报率
         - mdd:               最大回测  TODO: 应该增强DD的判断，输出前五个最大的DD区间，增加"recover_date"
-        - max_date:          最大回测峰值日期
-        - low_date:          最大回测谷值日期
+        - peak_date:         最大回测峰值日期
+        - valley_date:       最大回测谷值日期
         - volatility:        回测区间波动率（最后一日波动率）TODO: 将滚动波动率加入complete_values中
         - ref_rtn:           benchmark参照指标的回报率
         - ref_annual_rtn:    benchmark参照指标的年均回报率
@@ -153,10 +155,11 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         performance_dict['annual_rtn'] = (performance_dict['rtn'] + 1) ** (1 / years) - 1
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
     if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
-        mdd, max_date, low_date = eval_max_drawdown(looped_values)
+        mdd, peak_date, valley_date, recover_date = eval_max_drawdown(looped_values)
         performance_dict['mdd'] = mdd
-        performance_dict['max_date'] = max_date
-        performance_dict['low_date'] = low_date
+        performance_dict['peak_date'] = peak_date
+        performance_dict['valley_date'] = valley_date
+        performance_dict['recover_date'] = recover_date
     # 评价回测结果——计算投资期间的波动率系数
     if any(indicator in indicator_list for indicator in ['volatility', 'v']):
         performance_dict['volatility'] = eval_volatility(looped_values)

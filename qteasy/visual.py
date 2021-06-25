@@ -572,7 +572,7 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["ref_rtn"] * 100:.2f}%    \n'
                          f'{loop_results["ref_annual_rtn"] * 100:.2f}%\n'
                          f'{loop_results["mdd"] * 100:.3f}%'
-                         f' on {loop_results["low_date"]}')
+                         f' on {loop_results["valley_date"]}')
     fig.text(0.82, 0.82, f'alpha:\n'
                          f'Beta:\n'
                          f'Sharp ratio:\n'
@@ -638,9 +638,9 @@ def _plot_loop_result(loop_results: dict, config):
 
     # put arrow on where max draw down is
     ax1.annotate("Max Drawdown",
-                 xy=(loop_results["low_date"], return_rate[loop_results["low_date"]]),
+                 xy=(loop_results["valley_date"], return_rate[loop_results["valley_date"]]),
                  xycoords='data',
-                 xytext=(loop_results["max_date"], return_rate[loop_results["max_date"]]),
+                 xytext=(loop_results["peak_date"], return_rate[loop_results["peak_date"]]),
                  textcoords='data',
                  arrowprops=dict(width=3, headwidth=5, facecolor='black', shrink=0.),
                  ha='right',
