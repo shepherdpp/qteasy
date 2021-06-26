@@ -15,12 +15,11 @@ from os import path
 from qteasy import QT_ROOT_PATH
 
 from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
-from .utilfuncs import regulate_date_format, str_to_list, progress_bar, is_market_trade_day
+from .utilfuncs import str_to_list, progress_bar
 
-from ._arg_validators import PRICE_TYPE_DATA, INCOME_TYPE_DATA
+from ._arg_validators import PRICE_TYPE_DATA
 from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
 from ._arg_validators import INDICATOR_TYPE_DATA
-from ._arg_validators import COMPOSIT_TYPE_DATA
 
 LOCAL_DATA_FOLDER = 'qteasy/data/'
 LOCAL_DATA_FILE_EXT = '.dat'

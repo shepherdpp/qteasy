@@ -212,27 +212,38 @@ class InterCandle:
         #          xrotation=0)
         plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
         if self.avg_type == 'ma':
-            ax1_data = plot_data[['open', 'high', 'low', 'close', 'MA5', 'MA10', 'MA20', 'MA60']].values
+            ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
+        elif self.avg_type == 'bb':
+            ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
         else:
-            ax1_data = plot_data[['open', 'high', 'low', 'close', 'bb-u', 'bb-m', 'bb-l']].values
-        ax1_max = np.nanmax(ax1_data)
-        ax1_min = np.nanmin(ax1_data)
-        ax2_data = plot_data['volume'].values
-        ax2_max = np.nanmax(ax2_data)
-        ax2_min = np.nanmin(ax2_data)
+            pass  # 不添加任何均线
+        # 添加指标，根据指标类型添加MACD或RSI或DEMA
         if self.indicator == 'macd':
-            ax3_data = plot_data[['macd-m', 'macd-h', 'macd-s']].values
+            ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ylabel='macd', ax=self.ax3))
+            bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+            bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
+            ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
+            ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
+            self.ax3.set_ylabel('macd')
         elif self.indicator == 'rsi':
-            ax3_data = plot_data['rsi'].values
-        else:
-            ax3_data = plot_data['dema'].values
-        ax3_max = np.nanmax(ax3_data)
-        ax3_min = np.nanmin(ax3_data)
-        self.ax1.set_xbound(idx_start - 1, idx_start + idx_range)
-        self.ax1.set_ylim(ax1_min, ax1_max)
-        self.ax2.set_ylim(ax2_min, ax2_max)
-        self.ax3.set_ylim(ax3_min, ax3_max)
-        self.fig.canvas.draw()
+            ap.append(mpf.make_addplot([75] * len(plot_data), color=(0.75, 0.6, 0.6), ax=self.ax3))
+            ap.append(mpf.make_addplot([30] * len(plot_data), color=(0.6, 0.75, 0.6), ax=self.ax3))
+            ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=self.ax3))
+            self.ax3.set_ylabel('rsi')
+        else:  # indicator == 'dema'
+            ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
+            self.ax3.set_ylabel('dema')
+        # 绘制图表
+        mpf.plot(plot_data,
+                 ax=self.ax1,
+                 volume=self.ax2,
+                 addplot=ap,
+                 type='candle',
+                 style=self.style,
+                 datetime_format='%Y-%m',
+                 xrotation=0)
+        # self.fig.show()
+        plt.show()
 
     def refresh_texts(self, display_data):
         """ 更新K线图上的价格文本
@@ -263,7 +274,8 @@ class InterCandle:
         plt.show()
 
     def on_press(self, event):
-        if not event.inaxes == self.ax1:
+        # 如果点击范围不在ax1或ax3范围内则退出
+        if not (event.inaxes == self.ax1 or event.inaxes == self.ax3):
             return
         if event.button != 1:
             return
@@ -272,27 +284,36 @@ class InterCandle:
         self.cur_xlim = self.ax1.get_xlim()
         print(f'cur_xlim is {self.cur_xlim}')
 
-        # 切换当前ma类型, 在ma、bb、none之间循环
-        if event.inaxes == self.ax1 and event.dblclick == 1:
-            if self.avg_type == 'ma':
-                self.avg_type = 'bb'
-            elif self.avg_type == 'bb':
-                self.avg_type = 'none'
-            else:
-                self.avg_type = 'ma'
-        # 切换当前indicator类型，在macd/dma/rsi/kdj之间循环
-        if event.inaxes == self.ax3 and event.dblclick == 1:
-            if self.indicator == 'macd':
-                self.indicator = 'dma'
-            elif self.indicator == 'dma':
-                self.indicator = 'rsi'
-            elif self.indicator == 'rsi':
-                self.indicator = 'kdj'
-            else:
-                self.indicator = 'macd'
+        # 当当前鼠标点击模式为双击时，继续检查更新K线图
+        if event.dblclick == 1:
+            # 当点击位置在ax1中时，切换当前ma类型, 在ma、bb、none之间循环
+            if event.inaxes == self.ax1:
+                if self.avg_type == 'ma':
+                    self.avg_type = 'bb'
+                elif self.avg_type == 'bb':
+                    self.avg_type = 'none'
+                else:
+                    self.avg_type = 'ma'
+                # 更新K线图
+            # 当点击位置在ax3范围内时，切换当前indicator类型，在macd/dma/rsi/kdj之间循环
+            else:  # event.inaxes == self.ax3
+                if self.indicator == 'macd':
+                    self.indicator = 'dma'
+                elif self.indicator == 'dma':
+                    self.indicator = 'rsi'
+                else:
+                    self.indicator = 'macd'
+            # 更新K线图
+            self.ax1.clear()
+            self.ax2.clear()
+            self.ax3.clear()
+            self.refresh_plot(self.idx_start, self.idx_range)
 
     def on_release(self, event):
+        """当释放鼠标按键时，更新新的K线起点"""
         self.pressed = False
+        if self.xpress is None:
+            return
         dx = int(event.xdata - self.xpress)
         self.idx_start -= dx
         if self.idx_start <= 0:
@@ -301,28 +322,31 @@ class InterCandle:
             self.idx_start = len(self.data) - 100
 
     def on_motion(self, event):
+        """当鼠标移动时，如果鼠标已经按下，计算鼠标水平移动距离，并根据水平距离计算K线平移距离"""
         if not self.pressed:
             return
         if not event.inaxes == self.ax1:
             return
-        dx = event.xdata - self.xpress
-        prev_start = self.idx_start
-        self.idx_start -= int(dx)
-        print(f'delta x is {event.xdata} - {self.xpress} = {dx}, will move start from {self.idx_start} to {self.idx_start}')
+        # 计算鼠标的水平移动距离
+        dx = int(event.xdata - self.xpress)
+        new_start = self.idx_start - dx
         # 设定平移的左右界限，如果平移后超出界限，则不再平移
-        if self.idx_start <= 0:
-            self.idx_start = 0
-        if self.idx_start >= len(self.data) - 100:
-            self.idx_start = len(self.data) - 100
-        print(f'is about to update the plot with new start and range: {self.idx_start}, {self.idx_range}')
-        self.refresh_plot(self.idx_start, self.idx_range)
-
+        if new_start <= 0:
+            new_start = 0
+        if new_start >= len(self.data) - 100:
+            new_start = len(self.data) - 100
+        # 根据水平距离重新绘制K线图
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax3.clear()
+        self.refresh_texts(self.data.iloc[new_start])
+        self.refresh_plot(new_start, self.idx_range)
 
     def on_scroll(self, event):
-
+        """当鼠标滚轮滚动时，更新K线图的显示范围"""
         if event.inaxes != self.ax1:
             return
-
+        # 确认是否是正确的滚轮滚动
         if event.button == 'down':
             # 缩小20%显示范围
             scale_factor = 0.8
@@ -333,15 +357,15 @@ class InterCandle:
             # 特殊情况处理
             scale_factor = 1
             print(event.button)
-
+        # 更新K线图显示范围
         self.idx_range = int(self.idx_range * scale_factor)
-
+        # 确认显示范围是否超出允许范围：最小30、最大不超过当前起点到终点的距离
         data_length = len(self.data)
         if self.idx_range >= data_length - self.idx_start:
             self.idx_range = data_length - self.idx_start
         if self.idx_range <= 30:
             self.idx_range = 30
-
+        # 更新K线图
         self.ax1.clear()
         self.ax2.clear()
         self.ax3.clear()
@@ -630,7 +654,7 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["ref_rtn"] * 100:.2f}%    \n'
                          f'{loop_results["ref_annual_rtn"] * 100:.2f}%\n'
                          f'{loop_results["mdd"] * 100:.3f}%'
-                         f' on {loop_results["low_date"]}')
+                         f' on {loop_results["valley_date"]}')
     fig.text(0.82, 0.82, f'alpha:\n'
                          f'Beta:\n'
                          f'Sharp ratio:\n'
@@ -696,9 +720,9 @@ def _plot_loop_result(loop_results: dict, config):
 
     # put arrow on where max draw down is
     ax1.annotate("Max Drawdown",
-                 xy=(loop_results["low_date"], return_rate[loop_results["low_date"]]),
+                 xy=(loop_results["valley_date"], return_rate[loop_results["valley_date"]]),
                  xycoords='data',
-                 xytext=(loop_results["max_date"], return_rate[loop_results["max_date"]]),
+                 xytext=(loop_results["peak_date"], return_rate[loop_results["peak_date"]]),
                  textcoords='data',
                  arrowprops=dict(width=3, headwidth=5, facecolor='black', shrink=0.),
                  ha='right',
