@@ -1071,8 +1071,9 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'Sharp ratio:              {loop_results["sharp"]:13.3f}\n'
           f'Info ratio:               {loop_results["info"]:13.3f}\n'
           f'250 day volatility:       {loop_results["volatility"]:13.3f}\n'
-          f'Max drawdown:             {loop_results["mdd"] * 100:13.3f}% '
-          f'from {loop_results["max_date"].date()} to {loop_results["low_date"].date()}')
+          f'Max drawdown:             {loop_results["mdd"] * 100:13.3f}% \n'
+          f'    from:                 {loop_results["peak_date"].date()} to {loop_results["valley_date"].date()}\n'
+          f'    recovered on:         {loop_results["recover_date"].date()}')
     print(f'\n===========END OF REPORT=============\n')
 
 
