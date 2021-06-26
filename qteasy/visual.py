@@ -626,7 +626,7 @@ def _plot_loop_result(loop_results: dict, config):
             title_asset_pool = list_to_str_format(config.asset_pool[:3]) + '...'
         else:
             title_asset_pool = list_to_str_format(config.asset_pool)
-    fig.suptitle(f'Back Testing Result {title_asset_pool} - reference: {config.reference_asset}',
+    fig.suptitle(f'Back Testing Result {title_asset_pool} - benchmark: {config.reference_asset}',
                  fontsize=14,
                  fontweight=10)
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
