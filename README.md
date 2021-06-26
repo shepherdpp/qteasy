@@ -55,7 +55,7 @@ With `qteasy`, historical stock price data can be easily loaded and displayed, w
 qt.candle('513100.SZ', start='2020-12-01', asset_type='FD')
 ```
 a dynamic candle chart of stock 000300 will be displayed, you can drag the candle plots over to view wider span of data, zoom
-in and out with scrolling of your mouse, and switching bewteen multiple indicator lines by double clicking the chart
+in and out with scrolling of your mouse, and switching bewteen multiple indicator lines by double-clicking the chart
 
 生成的K线图是一个交互式动态K线图，用户可以用鼠标在图表上拖动，移动K线图显示更早或更晚的K线，也可以通过鼠标滚轮缩放K线。另外，在K线图上双击鼠标，可以切换不同的
 均线或指标
@@ -65,11 +65,11 @@ in and out with scrolling of your mouse, and switching bewteen multiple indicato
 ### Create and running of investment strategy sessions  创建一个投资策略，进行回测评价并优化其表现
 
 There are multiple internally preset strategies such as crossline timing strategy or DMA timing strategy provided in
- qteasy, a strategy should be created with an Operator object, the Operator is the container of strategies, and provides
+ `qteasy`, a strategy should be created with an `Operator` object, the `Operator` is the container of strategies, and provides
  multiple methods to utilize and operate on these strategies.
 
-queasy提供了多种内置交易策略可供用户使用，因此用户不需要手工创建这些策略，直接使用即可。复合策略可以通过多个简单的策略混合而成。当复合策略无法达到
-预计的效果时，可以通过qteasy.strategy类来自定义一个策略。
+`queasy`提供了多种内置交易策略可供用户使用，因此用户不需要手工创建这些策略，直接使用即可。复合策略可以通过多个简单的策略混合而成。当复合策略无法达到
+预计的效果时，可以通过`qteasy.Strategy`类来自定义一个策略。
  
 ### Create a DMA timing strategy  生成一个DMA均线择时交易策略
 
@@ -86,7 +86,7 @@ op = qt.Operator(timing_types='DMA')
 ```
 
 DMA是一个内置的均线择时策略，它通过计算股票每日收盘价的快、慢两根移动均线的差值DMA与其移动平均值AMA之间的交叉情况来确定多空或买卖
-点，这个策略需要三个参数（s,l,d），公式如下：
+点，这个策略需要三个参数`(s,l,d)`，公式如下：
 
 - DMA = 股价的s日均线 - 股价的l日均线
 - AMA = DMA的d日均线
@@ -96,8 +96,8 @@ DMA是一个内置的均线择时策略，它通过计算股票每日收盘价�
         1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线，由空变多，产生买入信号
         2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线，由多变空，产生卖出信号
 
-在默认情况下，三个参数为：（12,26,9）, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
-不同的策略运行周期。除了DMA策略以外，qteasy还提供了其他择时策略，详细的列表可以参见qteasy的手册。
+在默认情况下，三个参数为：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
+不同的策略运行周期。除了DMA策略以外，`qteasy`还提供了其他择时策略，详细的列表可以参见`qteasy`的手册。
 
 传递策略参数到op对象中：
 
@@ -110,8 +110,7 @@ op.set_parameter('r-0', ())
 上面的带把把参数`pars=(23, 166, 196)`传递给DMA策略，`op.set_parameter()`的详细使用方法见手册。
 
 
-#### Back-test strategy
-#### 回测并评价交易策略的性能表现
+#### Back-test strategy  回测并评价交易策略的性能表现
 
 使用默认参数回测策略在历史数据上的表现，请使用`qteasy.run()`，`mode=1`表示进入回测模式，传入参数`visual=False`以文本形式打印结果
 `qteasy.run()`的其他可选参数参见手册
