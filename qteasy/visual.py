@@ -10,6 +10,7 @@
 # ======================================
 
 import mplfinance as mpf
+from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
@@ -23,7 +24,6 @@ from .utilfuncs import time_str_format, list_to_str_format
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
-
 register_matplotlib_converters()
 
 ValidAddPlots = ['macd',
@@ -71,7 +71,7 @@ normal_font = {'fontname': 'Arial',
 
 # 动态交互式蜡烛图类
 class InterCandle:
-    def __init__(self, data, stock_name, style):
+    def __init__(self, data, stock_name, style, idx_start=0, idx_range=100):
         self.pressed = False
         self.xpress = None
 
@@ -80,16 +80,20 @@ class InterCandle:
         self.style = style
         self.stock_name = stock_name
         # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
-        self.idx_start = 0
-        self.idx_range = 100
+        self.idx_start = idx_start
+        self.idx_range = idx_range
         # 设置ax1图表中显示的均线类型
         self.avg_type = 'ma'
         self.indicator = 'macd'
+
+        self.cur_xlim = None
 
         # 初始化figure对象，在figure上建立三个Axes对象并分别设置好它们的位置和基本属性
         self.fig = mpf.figure(style=style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         fig = self.fig
         self.ax1 = fig.add_axes([0.08, 0.25, 0.88, 0.60])
+        self.ax1.set_xbound(0, 100)
+        # self.ax1.set_xticklabels(data.index)
         self.ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=self.ax1)
         self.ax2.set_ylabel('volume')
         self.ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=self.ax1)
@@ -118,6 +122,55 @@ class InterCandle:
         self.t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
         self.t22 = fig.text(0.85, 0.86, f'', **normal_font)
 
+        all_data = self.data
+        # plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
+        plot_data = all_data
+        data_len = len(plot_data)
+
+        # 绘制图表:
+        # 绘制K线图
+        self.lines, self.polys = candlestick2_ohlc(self.ax1,
+                                                   plot_data.open,
+                                                   plot_data.high,
+                                                   plot_data.low,
+                                                   plot_data.close, width=0.6, colorup='r', colordown='g')
+        # 区分红色和绿色K线，分别绘制红色和绿色的交易量柱子
+        volume_up = np.where(plot_data.open > plot_data.close, plot_data.volume, 0)
+        volume_down = np.where(plot_data.open <= plot_data.close, plot_data.volume, 0)
+        self.vup = self.ax2.bar(np.arange(data_len),
+                                volume_up, width=0.8, color='r')
+        self.vdn = self.ax2.bar(np.arange(data_len),
+                                volume_down, width=0.8, color='g')
+
+        # 生成移动均线，并绘制四条移动均线
+        self.ma1, self.ma2, self.ma3, self.ma4 = self.ax1.plot(np.arange(data_len),
+                                                               plot_data[['MA5', 'MA10', 'MA20', 'MA60']])
+        # 生成布林带线，并绘制三条布林带线，初始状态下，设置布林带线不可见
+        self.bbu, self.bbm, self.bbl = self.ax1.plot(np.arange(data_len),
+                                                     plot_data[['bb-u', 'bb-m', 'bb-l']])
+        self.bbu.set_visible(False)
+        self.bbm.set_visible(False)
+        self.bbl.set_visible(False)
+        # 生成macd线和柱，初始状态下，MACD线可见
+        self.macd_m, self.macd_s = self.ax3.plot(np.arange(data_len), plot_data[['macd-m', 'macd-s']])
+        # MACD线的红绿两色柱子需要分别生成并绘制
+        macd_bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+        macd_bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
+        self.macd_rbars = self.ax3.bar(np.arange(data_len), macd_bar_r, color='r')
+        self.macd_gbars = self.ax3.bar(np.arange(data_len), macd_bar_g, color='g')
+        # 生成rsi线和上下界，并设置RSI线不可见
+        self.rsi_up, = self.ax3.plot(np.arange(data_len), [75] * len(plot_data), color=(0.75, 0.5, 0.5))
+        self.rsi_dn, = self.ax3.plot(np.arange(data_len), [30] * len(plot_data), color=(0.5, 0.75, 0.5))
+        self.rsi, = self.ax3.plot(np.arange(data_len), plot_data['rsi'])
+        self.rsi_up.set_visible(False)
+        self.rsi_dn.set_visible(False)
+        self.rsi.set_visible(False)
+        # 生成dema线，并设置DEMA线不可见
+        self.dema, = self.ax3.plot(np.arange(data_len), plot_data['dema'])
+        self.dema.set_visible(False)
+
+        # 设置三张图表的显示界限
+
         fig.canvas.mpl_connect('button_press_event', self.on_press)
         fig.canvas.mpl_connect('button_release_event', self.on_release)
         fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
@@ -126,11 +179,38 @@ class InterCandle:
     def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
         """
-        all_data = self.data
-        plot_data = all_data.iloc[idx_start: idx_start + idx_range]
-
-        ap = []
-        # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
+        # all_data = self.data
+        # plot_data = all_data.iloc[idx_start: idx_start + idx_range]
+        #
+        # ap = []
+        # # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
+        # if self.avg_type == 'ma':
+        #     ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
+        # elif self.avg_type == 'bb':
+        #     ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
+        # # 添加指标，根据指标类型添加MACD或RSI或DEMA
+        # if self.indicator == 'macd':
+        #     ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ylabel='macd', ax=self.ax3))
+        #     bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
+        #     bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
+        #     ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
+        #     ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
+        # elif self.indicator == 'rsi':
+        #     ap.append(mpf.make_addplot([75] * len(plot_data), color=(0.75, 0.6, 0.6), ax=self.ax3))
+        #     ap.append(mpf.make_addplot([30] * len(plot_data), color=(0.6, 0.75, 0.6), ax=self.ax3))
+        #     ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=self.ax3))
+        # else:  # indicator == 'dema'
+        #     ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
+        # # 绘制图表
+        # mpf.plot(plot_data,
+        #          ax=self.ax1,
+        #          volume=self.ax2,
+        #          addplot=ap,
+        #          type='candle',
+        #          style=self.style,
+        #          datetime_format='%Y-%m',
+        #          xrotation=0)
+        plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
         if self.avg_type == 'ma':
             ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
         elif self.avg_type == 'bb':
@@ -170,7 +250,7 @@ class InterCandle:
         """
         # display_data是一个交易日内的所有数据，将这些数据分别填入figure对象上的文本中
         self.t3.set_text(f'{np.round(display_data["open"], 3)} / {np.round(display_data["close"], 3)}')
-        self.t4.set_text(f'{display_data["change"]}')
+        self.t4.set_text(f'{np.round(display_data["change"], 3)}')
         self.t5.set_text(f'[{np.round(display_data["pct_change"], 3)}%]')
         self.t6.set_text(f'{display_data.name.date()}')
         self.t8.set_text(f'{np.round(display_data["high"], 3)}')
@@ -191,6 +271,7 @@ class InterCandle:
         self.t3.set_color(close_number_color)
         self.t4.set_color(close_number_color)
         self.t5.set_color(close_number_color)
+        plt.show()
 
     def on_press(self, event):
         # 如果点击范围不在ax1或ax3范围内则退出
@@ -200,6 +281,8 @@ class InterCandle:
             return
         self.pressed = True
         self.xpress = event.xdata
+        self.cur_xlim = self.ax1.get_xlim()
+        print(f'cur_xlim is {self.cur_xlim}')
 
         # 当当前鼠标点击模式为双击时，继续检查更新K线图
         if event.dblclick == 1:
@@ -371,9 +454,8 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         # import pdb; pdb.set_trace()
         idx_start = np.searchsorted(daily.index, start)
         idx_range = np.searchsorted(daily.index, end) - idx_start
-        my_candle = InterCandle(data=daily, stock_name=share_name, style=my_style)
-        my_candle.idx_start = idx_start
-        my_candle.idx_range = idx_range
+        my_candle = InterCandle(data=daily, stock_name=share_name, style=my_style,
+                                idx_start=idx_start, idx_range=idx_range)
         my_candle.refresh_texts(daily.iloc[idx_start + idx_range - 1])
         my_candle.refresh_plot(idx_start, idx_range)
     return daily
