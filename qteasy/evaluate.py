@@ -9,6 +9,7 @@
 import numpy as np
 import pandas as pd
 
+import qteasy
 from .utilfuncs import str_to_list
 
 
@@ -99,7 +100,7 @@ def performance_statistics(performances: list, stats='mean'):
     return res
 
 
-def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, indicators: str = 'final_value'):
+def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, indicators: str = 'final_value'):
     """ 根据args获取相应的性能指标，所谓性能指标是指根据生成的交易清单、回测结果、参考数据类型及投资计划输出各种性能指标
         返回一个dict，包含所有需要的indicators
 
@@ -108,6 +109,8 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         - loop_start:        回测区间起始日
         - loop_end:          回测区间终止日
         - complete_values:   完整的回测历史价格记录  TODO：在完整的历史回测记录中增加各个评价指标的历史值）
+        - days:              回测历史周期总天数
+        - months:            回测历史周期总月数
         - years:             回测历史周期年份数
         - oper_count         操作数量
         - total_invest       总投入资金数量
@@ -128,8 +131,8 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         TODO: 增加worst drawdown analysis（DF）
 
     :param op_list: operator对象生成的交易清单
-    :param hist_reference: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
-    :param reference_data: 参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
+    :param hist_benchmark: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
+    :param benchmark_data: 参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
     :param cash_plan: 投资计划
     :param indicators: 评价指标，逗号分隔的多个评价指标
     :return:
@@ -153,8 +156,9 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
     performance_dict['total_fee'] = total_fee
     # 评价回测结果——计算总投资收益率
     if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
-        performance_dict['rtn'] = eval_fv(looped_val=looped_values) / total_invest - 1
-        performance_dict['annual_rtn'] = (performance_dict['rtn'] + 1) ** (1 / years) - 1
+        rtn, annual_rtn = eval_return(looped_values, cash_plan)
+        performance_dict['rtn'] = rtn
+        performance_dict['annual_rtn'] = annual_rtn
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
     if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
         mdd, peak_date, valley_date, recover_date = eval_max_drawdown(looped_values)
@@ -167,21 +171,21 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
         performance_dict['volatility'] = eval_volatility(looped_values)
     # 评价回测结果——计算参考数据收益率以及平均年化收益率
     if any(indicator in indicator_list for indicator in ['ref', 'ref_rtn', 'reference', 'ref_annual_rtn']):
-        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_reference, reference_data)
+        ref_rtn, ref_annual_rtn = eval_benchmark(looped_values, hist_benchmark, benchmark_data)
         performance_dict['ref_rtn'] = ref_rtn
         performance_dict['ref_annual_rtn'] = ref_annual_rtn
     # 评价回测结果——计算投资期间的beta贝塔系数
     if 'beta' in indicator_list:
-        performance_dict['beta'] = eval_beta(looped_values, hist_reference, reference_data)
+        performance_dict['beta'] = eval_beta(looped_values, hist_benchmark, benchmark_data)
     # 评价回测结果——计算投资期间的夏普率
     if 'sharp' in indicator_list:
         performance_dict['sharp'] = eval_sharp(looped_values, total_invest, 0.035)
     # 评价回测结果——计算投资期间的alpha阿尔法系数
     if 'alpha' in indicator_list:
-        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_reference, reference_data)
+        performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark, benchmark_data)
     # 评价回测结果——计算投资回报的信息比率
     if 'info' in indicator_list:
-        performance_dict['info'] = eval_info_ratio(looped_values, hist_reference, reference_data)
+        performance_dict['info'] = eval_info_ratio(looped_values, hist_benchmark, benchmark_data)
     if bool(performance_dict):
         return performance_dict
     else:
@@ -382,14 +386,38 @@ def eval_fv(looped_val):
 """
     assert isinstance(looped_val, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
-    if not looped_val.empty:
-        try:
-            perf = looped_val['value'].iloc[-1]
-            return perf
-        except:
-            raise KeyError(f'the key \'value\' can not be found in given looped value!')
-    else:
+    if looped_val.empty:
         return -np.inf
+    try:
+        perf = looped_val['value'].iloc[-1]
+        return perf
+    except:
+        raise KeyError(f'the key \'value\' can not be found in given looped value!')
+
+
+def eval_return(looped_val, cash_plan):
+    """ 评价函数 Return Rate 收益率评价，在looped_value中补充完整的收益率和年化收益率数据
+
+    '滚动计算回测收益的年化收益率和总收益率，输出最后一天的总收益率和年化收益率
+
+    :param looped_val:
+    :return: tuple
+        total_return, yearly_return
+    """
+    assert isinstance(looped_val, pd.DataFrame), \
+        f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
+    assert isinstance(cash_plan, qteasy.CashPlan), \
+        f'TypeError, cash plan type not valid, got {type(cash_plan)} instead'
+    if looped_val.empty:
+        return -np.inf, -np.inf
+    invest_plan = cash_plan.plan
+    looped_val['invest'] = invest_plan.amount
+    looped_val = looped_val.fillna(0)
+    looped_val['invest'] = looped_val.invest.cumsum()
+    looped_val['rtn'] = looped_val.value / looped_val['invest'] - 1
+    ys = (looped_val.index - looped_val.index[0]).days / 365.
+    looped_val['annual_rtn'] = (looped_val.rtn + 1) ** (1 / ys) - 1
+    return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1]
 
 
 def eval_operation(op_list, looped_value, cash_plan):
@@ -405,8 +433,8 @@ def eval_operation(op_list, looped_value, cash_plan):
     :param cash_plan:
     :return:
     """
-    total_days = (op_list.index[-1] - looped_value.index[0]).days
-    total_years = np.round(total_days / 365., 1)
+    total_days = (looped_value.index[-1] - looped_value.index[0]).days
+    total_years = total_days / 365.
     total_months = int(np.round(total_days / 30))
     sell_counts = []
     buy_counts = []

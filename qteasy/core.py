@@ -65,30 +65,7 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 
-# TODO: 使用logging模块来管理logs
-class Log:
-    """ 数据记录类，策略选股、择时、风险控制、交易信号生成、回测等过程中的记录的基类
-
-    记录各个主要过程中的详细信息，并写入内存
-    """
-
-    def __init__(self):
-        """
-
-        """
-        self.record = None
-        raise NotImplementedError
-
-    def write_record(self, *args):
-        """
-
-        :param args:
-        :return:
-        """
-
-        raise NotImplementedError
-
-
+# TODO: 使用一个大的DataFrame存储整个回测过程的所有参数，作为回测记录
 # TODO: Usability improvements:
 # TODO: 1: 增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
 # TODO: 完善config字典的信息属性，使得用户可以快速了解当前配置
@@ -255,7 +232,11 @@ def _get_complete_hist(looped_value: pd.DataFrame,
 
     return: =====
         pandas.DataFrame:
-        重新填充的完整历史交易日资产总价值清单
+        重新填充的完整历史交易日资产总价值清单，包含以下列：
+        - [share-x]:        多列，每种投资产品的持有份额数量
+        - cash:             期末现金金额
+        - fee:              当期交易费用（交易成本）
+        - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
     # 获取价格清单中的投资产品列表
     shares = h_list.columns  # 获取资产清单
@@ -284,7 +265,6 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
         share_price_column_names = [name + '_p' for name in shares]
         looped_value[share_price_column_names] = looped_history[shares]
-    # print(looped_value.tail(10))
     return looped_value
 
 
@@ -343,8 +323,11 @@ def apply_loop(op_list: pd.DataFrame,
         :param print_log: bool: 设置为True将打印回测详细日志
 
     output：=====
-        Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单
-
+        Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单包含以下列：
+        - [share-x]:        多列，每种投资产品的持有份额数量
+        - cash:             期末现金金额
+        - fee:              当期交易费用（交易成本）
+        - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
     assert not op_list.empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
@@ -941,7 +924,7 @@ def run(operator, **kwargs):
                         而是在optimize的时候生成，实际上应该提前生成
     hist_test:          策略检验数据，数据的类型与信号生成数据一样，同样取自专门的独立区间用于策略参数的性能检测
     hist_test_loop:     检验回测价格，用于在optimization模式下在策略检验区间上回测交易结果
-    hist_reference:     评价参考价格，用于评价回测结果，大部分用于评价回测结果的alpha表现（取出无风险回报之后的表现）
+    hist_benchmark:     评价参考价格，用于评价回测结果，大部分用于评价回测结果的alpha表现（取出无风险回报之后的表现）
                         相关的指标都需要用到参考价格;
     invest_cash_plan:
     opti_cash_plan:
@@ -1392,8 +1375,8 @@ def _evaluate_one_parameter(par,
                                              with_price=False)
         perf = evaluate(op_list=op_list_seg,
                         looped_values=complete_values,
-                        hist_reference=reference_history_data,
-                        reference_data=reference_history_data_type,
+                        hist_benchmark=reference_history_data,
+                        benchmark_data=reference_history_data_type,
                         cash_plan=cash_plan,
                         indicators=indicators)
         perf_list.append(perf)

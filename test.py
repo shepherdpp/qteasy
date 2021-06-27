@@ -702,6 +702,9 @@ class TestCashPlan(unittest.TestCase):
         self.assertAlmostEqual(self.cp1.closing_value, 34200)
         self.assertAlmostEqual(self.cp2.closing_value, 10000)
         self.assertAlmostEqual(self.cp3.closing_value, 220385.3483685)
+        self.assertIsInstance(self.cp1.plan, pd.DataFrame)
+        self.assertIsInstance(self.cp2.plan, pd.DataFrame)
+        self.assertIsInstance(self.cp3.plan, pd.DataFrame)
 
     def test_operation(self):
         cp_self_add = self.cp1 + self.cp1
@@ -1314,6 +1317,9 @@ class TestEvaluations(unittest.TestCase):
         tr, yr = eval_benchmark(self.test_data7, reference, 'value')
         self.assertAlmostEqual(tr, 0.19509091)
         self.assertAlmostEqual(yr, 0.929154957)
+
+    def test_evaluate(self):
+        pass
 
 
 class TestLoop(unittest.TestCase):
