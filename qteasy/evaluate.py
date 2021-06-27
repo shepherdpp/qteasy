@@ -142,9 +142,11 @@ def evaluate(op_list, looped_values, hist_reference, reference_data, cash_plan, 
     performance_dict['loop_start'] = op_list.index[0]
     performance_dict['loop_end'] = looped_values.index[-1]
     performance_dict['complete_values'] = looped_values
-    years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
-                                                                looped_value=looped_values,
-                                                                cash_plan=cash_plan)
+    days, months, years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,
+                                                                              looped_value=looped_values,
+                                                                              cash_plan=cash_plan)
+    performance_dict['days'] = days
+    performance_dict['months'] = months
     performance_dict['years'] = years
     performance_dict['oper_count'] = oper_count
     performance_dict['total_invest'] = total_invest
@@ -397,13 +399,15 @@ def eval_operation(op_list, looped_value, cash_plan):
     1，总交易次数：买入操作次数、卖出操作次数，总操作次数。由于针对不同的股票分别统计，因此操作次数并不是一个数字，而是一个DataFrame
     2，总投资额
     3，总交易费用
-    4，回测时间长度
+    4，回测时间长度, 分别用年、月、日数表示，年的类型为float，月和日的类型都是int
 
     :param looped_value:
     :param cash_plan:
     :return:
     """
-    total_year = np.round((op_list.index[-1] - looped_value.index[0]).days / 365., 1)
+    total_days = (op_list.index[-1] - looped_value.index[0]).days
+    total_years = np.round(total_days / 365., 1)
+    total_months = int(np.round(total_days / 30))
     sell_counts = []
     buy_counts = []
     # 循环统计op_list交易清单中每个个股
@@ -429,4 +433,4 @@ def eval_operation(op_list, looped_value, cash_plan):
     total_op_fee = looped_value.fee.sum()
     total_investment = cash_plan.total
     # 返回所有输出变量
-    return total_year, op_counts, total_investment, total_op_fee
+    return total_days, total_months, total_years, op_counts, total_investment, total_op_fee

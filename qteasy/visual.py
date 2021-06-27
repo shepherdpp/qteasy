@@ -122,9 +122,7 @@ class InterCandle:
         self.t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
         self.t22 = fig.text(0.85, 0.86, f'', **normal_font)
 
-        all_data = self.data
-        # plot_data = all_data.iloc[self.idx_start: self.idx_start + self.idx_range]
-        plot_data = all_data
+        plot_data = self.data
         data_len = len(plot_data)
 
         # 绘制图表:
@@ -179,37 +177,8 @@ class InterCandle:
     def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
         """
-        # all_data = self.data
-        # plot_data = all_data.iloc[idx_start: idx_start + idx_range]
-        #
-        # ap = []
-        # # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
-        # if self.avg_type == 'ma':
-        #     ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
-        # elif self.avg_type == 'bb':
-        #     ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
-        # # 添加指标，根据指标类型添加MACD或RSI或DEMA
-        # if self.indicator == 'macd':
-        #     ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ylabel='macd', ax=self.ax3))
-        #     bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-        #     bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-        #     ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
-        #     ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
-        # elif self.indicator == 'rsi':
-        #     ap.append(mpf.make_addplot([75] * len(plot_data), color=(0.75, 0.6, 0.6), ax=self.ax3))
-        #     ap.append(mpf.make_addplot([30] * len(plot_data), color=(0.6, 0.75, 0.6), ax=self.ax3))
-        #     ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=self.ax3))
-        # else:  # indicator == 'dema'
-        #     ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
-        # # 绘制图表
-        # mpf.plot(plot_data,
-        #          ax=self.ax1,
-        #          volume=self.ax2,
-        #          addplot=ap,
-        #          type='candle',
-        #          style=self.style,
-        #          datetime_format='%Y-%m',
-        #          xrotation=0)
+        ap = []
+        # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
         plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
         if self.avg_type == 'ma':
             ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
@@ -242,25 +211,24 @@ class InterCandle:
                  style=self.style,
                  datetime_format='%Y-%m',
                  xrotation=0)
-        # self.fig.show()
         plt.show()
 
     def refresh_texts(self, display_data):
         """ 更新K线图上的价格文本
         """
         # display_data是一个交易日内的所有数据，将这些数据分别填入figure对象上的文本中
-        self.t3.set_text(f'{np.round(display_data["open"], 3)} / {np.round(display_data["close"], 3)}')
-        self.t4.set_text(f'{np.round(display_data["change"], 3)}')
-        self.t5.set_text(f'[{np.round(display_data["pct_change"], 3)}%]')
+        self.t3.set_text(f'{display_data["open"]:.3f} / {display_data["close"]:.3f}')
+        self.t4.set_text(f'{display_data["change"]:.3f}')
+        self.t5.set_text(f'[{display_data["pct_change"]:.3f}%]')
         self.t6.set_text(f'{display_data.name.date()}')
-        self.t8.set_text(f'{np.round(display_data["high"], 3)}')
-        self.t10.set_text(f'{np.round(display_data["low"], 3)}')
-        self.t12.set_text(f'{np.round(display_data["volume"] / 10000, 3)}')
-        self.t14.set_text(f'{display_data["value"]}')
-        self.t16.set_text(f'{np.round(display_data["upper_lim"], 3)}')
-        self.t18.set_text(f'{np.round(display_data["lower_lim"], 3)}')
-        self.t20.set_text(f'{np.round(display_data["average"], 3)}')
-        self.t22.set_text(f'{np.round(display_data["last_close"], 3)}')
+        self.t8.set_text(f'{display_data["high"]:.3f}')
+        self.t10.set_text(f'{display_data["low"]:.3f}')
+        self.t12.set_text(f'{display_data["volume"] / 10000:.3f}')
+        self.t14.set_text(f'{display_data["value"]:.3f}')
+        self.t16.set_text(f'{display_data["upper_lim"]:.3f}')
+        self.t18.set_text(f'{display_data["lower_lim"]:.3f}')
+        self.t20.set_text(f'{display_data["average"]:.3f}')
+        self.t22.set_text(f'{display_data["last_close"]:.3f}')
         # 根据本交易日的价格变动值确定开盘价、收盘价的显示颜色
         if display_data['change'] > 0:  # 如果今日变动额大于0，即今天价格高于昨天，今天价格显示为红色
             close_number_color = 'red'
@@ -469,8 +437,9 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
     :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
     :param freq: 价格周期，d——日K线，5min——五分钟k线
-    :param ma: 移动平均线，一个tuple，包含数个integer，代表均线周期
+    :param mav: 移动平均线，一个tuple，包含数个integer，代表均线周期
     :param indicator: str，指标，如MACD等
+    :param indicator_par:
     :return:
         tuple：(pd.DataFrame, share_name)
     """
@@ -538,7 +507,14 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     if mav is None:
         mav = (5, 10, 20)
     # 其他indicator的parameter使用默认值
-
+    if dema_par is None:
+        dema_par = (30,)
+    if macd_par is None:
+        macd_par = (9, 12, 26)
+    if rsi_par is None:
+        rsi_par = (14,)
+    if bb_par is None:
+        bb_par = (20, 2, 2, 0)
     # 在DataFrame中增加均线信息：
     assert isinstance(mav, (list, tuple))
     assert all(isinstance(item, int) for item in mav)
@@ -553,17 +529,9 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     data['average'] = data[['open', 'close', 'high', 'low']].mean(axis=1)
     data['volrate'] = data['volume']
     # 添加不同的indicator
-    if dema_par is None:
-        dema_par = (30,)
     data['dema'] = dema(data.close, *dema_par)
-    if macd_par is None:
-        macd_par = (9, 12, 26)
     data['macd-m'], data['macd-s'], data['macd-h'] = macd(data.close, *macd_par)
-    if rsi_par is None:
-        rsi_par = (14,)
     data['rsi'] = rsi(data.close, *rsi_par)
-    if bb_par is None:
-        bb_par = (20, 2, 2, 0)
     data['bb-u'], data['bb-m'], data['bb-l'] = bbands(data.close, *bb_par)
 
     return data
