@@ -419,7 +419,6 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     if not no_visual:
-        # import pdb; pdb.set_trace()
         idx_start = np.searchsorted(daily.index, start)
         idx_range = np.searchsorted(daily.index, end) - idx_start
         my_candle = InterCandle(data=daily, stock_name=share_name, style=my_style,
@@ -1012,7 +1011,10 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     :param formatter:
     :return:
     """
+    if loop_results is None:
+        return
     looped_values = loop_results['complete_values']
+    worst_drawdowns = loop_results['worst_drawdowns']
     print(f'\n     ==================================== \n'
           f'     |                                  |\n'
           f'     |       BACK TESTING RESULT        |\n'
@@ -1028,20 +1030,22 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'{loop_results["oper_count"]}\n'
           f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
     print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
-          f'final value:             ¥{loop_results["final_value"]:12,.2f}')
-    print(f'Total return:             {loop_results["rtn"] * 100:12.2f}% \n'
-          f'Avg Yearly return:        {loop_results["annual_rtn"] * 100:12.2f}%')
-    print(f'Reference return:         {loop_results["ref_rtn"] * 100:12.2f}% \n'
-          f'Reference Yearly return:  {loop_results["ref_annual_rtn"] * 100:12.2f}%')
+          f'final value:              ¥{loop_results["final_value"]:12,.2f}')
+    print(f'Total return:             {loop_results["rtn"]:13.2%} \n'
+          f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}')
+    print(f'Reference return:         {loop_results["ref_rtn"]:13.2%} \n'
+          f'Reference Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}')
     print(f'------strategy loop_results indicators------ \n'
           f'alpha:                    {loop_results["alpha"]:13.3f}\n'
           f'Beta:                     {loop_results["beta"]:13.3f}\n'
           f'Sharp ratio:              {loop_results["sharp"]:13.3f}\n'
           f'Info ratio:               {loop_results["info"]:13.3f}\n'
           f'250 day volatility:       {loop_results["volatility"]:13.3f}\n'
-          f'Max drawdown:             {loop_results["mdd"] * 100:13.3f}% \n'
-          f'    from:                 {loop_results["peak_date"].date()} to {loop_results["valley_date"].date()}\n'
-          f'    recovered on:         {loop_results["recover_date"].date()}')
+          f'Max drawdown:             {loop_results["mdd"]:13.2%} \n'
+          f'    peak / valley:        {loop_results["peak_date"].date()} / {loop_results["valley_date"].date()}\n'
+          f'    recovered on:         {loop_results["recover_date"].date()}\n'
+          f'Worst 5 drawdonws:        \n')
+    print(worst_drawdowns.to_string(formatters={'drawdown': '{:.2%}'.format}))
     print(f'\n===========END OF REPORT=============\n')
 
 
@@ -1072,13 +1076,13 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
           f'Total looped periods: {result.years[0]:.1f} years.')
     print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
     print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
-          f'Total reference return: {ref_rtn * 100:.3f}% \n'
-          f'Average Yearly reference return rate: {ref_annual_rtn * 100:.3f}%')
+          f'Total reference return: {ref_rtn :.2%} \n'
+          f'Average Yearly reference return rate: {ref_annual_rtn:.2%}')
     print(f'statistical analysis of optimal strategy messages indicators: \n'
-          f'total return:        {result.rtn.mean() * 100:.3f}% ±'
-          f' {result.rtn.std() * 100:.3f}%\n'
-          f'annual return:       {result.annual_rtn.mean() * 100:.3f}% ±'
-          f' {result.annual_rtn.std() * 100:.3f}%\n'
+          f'total return:        {result.rtn.mean():.2%} ±'
+          f' {result.rtn.std():.2%}\n'
+          f'annual return:       {result.annual_rtn.mean():.2%} ±'
+          f' {result.annual_rtn.std():.2%}\n'
           f'alpha:               {result.alpha.mean():.3f} ± {result.alpha.std():.3f}\n'
           f'Beta:                {result.beta.mean():.3f} ± {result.beta.std():.3f}\n'
           f'Sharp ratio:         {result.sharp.mean():.3f} ± {result.sharp.std():.3f}\n'

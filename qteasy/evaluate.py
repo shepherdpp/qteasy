@@ -11,6 +11,7 @@ import pandas as pd
 
 import qteasy
 from .utilfuncs import str_to_list
+from .space import ResultPool
 
 
 # TODO: 改进evaluate：生成完整的evaluate参数DataFrame
@@ -64,6 +65,7 @@ def performance_statistics(performances: list, stats='mean'):
     res['loop_end'] = performances[-1]['loop_end']
     # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法
     res['complete_values'] = performances[0]['complete_values']
+    res['worst_drawdowns'] = performances[0]['worst_drawdowns']
     if 'oper_count' in performances[0]:
         res['oper_count'] = 0
         for perf in performances:
@@ -81,7 +83,8 @@ def performance_statistics(performances: list, stats='mean'):
                                                                         'recover_date',
                                                                         'loop_start',
                                                                         'loop_end',
-                                                                        'complete_values']]
+                                                                        'complete_values',
+                                                                        'worst_drawdowns']]
     for key in keys_to_process:
         values = np.array([perf[key] for perf in performances])
         if stats == 'mean':
@@ -161,11 +164,12 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
         performance_dict['annual_rtn'] = annual_rtn
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
     if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
-        mdd, peak_date, valley_date, recover_date = eval_max_drawdown(looped_values)
+        mdd, peak_date, valley_date, recover_date, drawdown_list = eval_max_drawdown(looped_values)
         performance_dict['mdd'] = mdd
         performance_dict['peak_date'] = peak_date
         performance_dict['valley_date'] = valley_date
         performance_dict['recover_date'] = recover_date
+        performance_dict['worst_drawdowns'] = drawdown_list
     # 评价回测结果——计算投资期间的波动率系数
     if any(indicator in indicator_list for indicator in ['volatility', 'v']):
         performance_dict['volatility'] = eval_volatility(looped_values)
@@ -332,8 +336,8 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
 
 def eval_max_drawdown(looped_value):
     """ 最大回撤。描述策略可能出现的最糟糕的情况。具体计算方法为 max(1 - 策略当日价值 / 当日之前虚拟账户最高价值)
-    TODO: 应该寻找所有的drawdown，并列出前五个
-    TODO: 生成underwater图
+        除了计算最大回撤以外，同时还找到最大的五个回撤区间，分别找到他们的峰值日期、谷值日期、回撤率、回复日期
+        并将上述信息放入一个DataFrame中与最大回撤相关数据一起返回
 
     :param looped_value: pd.DataFrame, 完整的回测历史价值数据，包括价格、现金、总价值
     :return:
@@ -341,36 +345,42 @@ def eval_max_drawdown(looped_value):
         - peak_date: 峰值日期
         - valley_date: 谷值日期
         - recover_date: 回撤恢复日期
+        - dd_df:   完整的DataFrame，包含最大的五个回撤区间的全部信息
     """
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
-    if not looped_value.empty:
-        max_val = 0.
-        drawdown = 0.
-        max_drawdown = 0.
-        current_max_date = 0.
-        peak_date = 0.
-        valley_date = 0.
-        recover_date = 0.
-        recovered = True
-        for date, value in looped_value.value.iteritems():
-            if value > max_val:
-                max_val = value
-                current_max_date = date
-            if max_val != 0:
-                drawdown = 1 - value / max_val
-            if drawdown > max_drawdown:
-                max_drawdown = drawdown
-                valley_date = date
-                peak_date = current_max_date
-                recovered = False
-            if not recovered:
-                recover_date = date
-                if drawdown == 0:
-                    recovered = True
-        return max_drawdown, peak_date, valley_date, recover_date
-    else:
+    if looped_value.empty:
         return -np.inf
+    cummax = looped_value['value'].cummax()
+    looped_value['underwater'] = (looped_value['value'] - cummax) / cummax
+    drawdown_sign = np.sign(looped_value.underwater)
+    diff = drawdown_sign - drawdown_sign.shift(1)
+    drawdown_starts = np.where(diff == -1)[0]
+    drawdown_ends = np.where(diff == 1)[0]
+    drawdown_count = min(len(drawdown_starts), len(drawdown_ends))
+    dd_pool = ResultPool(5)
+    for i_start, i_end in zip(drawdown_starts[:drawdown_count], drawdown_ends[:drawdown_count]):
+        dd_start = looped_value.index[i_start]
+        dd_end = looped_value.index[i_end]
+        dd_min = looped_value['underwater'].iloc[i_start:i_end].idxmin()
+        dd = looped_value['underwater'].loc[dd_min]
+        dd_pool.in_pool((dd_start, dd_min, dd_end, dd), dd)
+    if len(drawdown_starts) > drawdown_count:
+        dd_start = looped_value.index[drawdown_starts[-1]]
+        dd_end = np.nan
+        dd_min = looped_value['underwater'].iloc[drawdown_starts[-1]:].idxmin()
+        dd = looped_value['underwater'].loc[dd_min]
+        dd_pool.in_pool((dd_start, dd_min, dd_end, dd), dd)
+    dd_pool.cut(keep_largest=False)
+    # 生成包含所有dd的DataFrame
+    dd_df = pd.DataFrame(dd_pool.items, columns=['peak_date', 'valley_date', 'recover_date', 'drawdown'])
+    dd_df.sort_values(by='drawdown', inplace=True)
+    mdd = dd_df.loc[0]
+    max_drawdown = mdd.drawdown
+    peak_date = mdd.peak_date
+    valley_date = mdd.valley_date
+    recover_date = mdd.recover_date
+    return max_drawdown, peak_date, valley_date, recover_date, dd_df
 
 
 def eval_fv(looped_val):
