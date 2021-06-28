@@ -311,9 +311,12 @@ def eval_volatility(looped_value, logarithm: bool = True):
             ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
         if len(ret) > 250:
             volatility = ret.rolling(250).std() * np.sqrt(250)
+            looped_value['volatility'] = volatility
             return volatility.iloc[-1]
         else:
             volatility = ret.std() * np.sqrt(250)
+            looped_value['volatility'] = np.nan
+            looped_value['volatility'].iloc[-1] = volatility
             return volatility
     else:
         return -np.inf
