@@ -112,6 +112,9 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
         - loop_start:        回测区间起始日
         - loop_end:          回测区间终止日
         - complete_values:   完整的回测历史价格记录  TODO：在完整的历史回测记录中增加各个评价指标的历史值）
+                             此DF包含的数据如下：
+                             - prices:
+                             -
         - days:              回测历史周期总天数
         - months:            回测历史周期总月数
         - years:             回测历史周期年份数
@@ -123,15 +126,15 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
         - mdd:               最大回测  TODO: 应该增强DD的判断，输出前五个最大的DD区间，增加"recover_date"
         - peak_date:         最大回测峰值日期
         - valley_date:       最大回测谷值日期
-        - volatility:        回测区间波动率（最后一日波动率）TODO: 将滚动波动率加入complete_values中
+        - volatility:        回测区间波动率（最后一日波动率）
         - ref_rtn:           benchmark参照指标的回报率
         - ref_annual_rtn:    benchmark参照指标的年均回报率
         - beta:              回测区间的beta值            TODO: 将rolling beta写入complete_value中
         - sharp:             回测区间的夏普率             TODO: 将rolling sharp写入complete_value中
         - alpha:             回测区间的阿尔法值           TODO: 将rolling alpha写入complete_value中
         - info:              回测区间的信息比率           TODO: 将rolling info写入complete_value中
-        TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk、
-        TODO: 增加worst drawdown analysis（DF）
+        - worst_drawdowns    一个DataFrame，五次最大的回撤记录
+        TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
 
     :param op_list: operator对象生成的交易清单
     :param hist_benchmark: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
@@ -271,13 +274,19 @@ def eval_beta(looped_value, reference_value, reference_data):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
     if reference_data not in reference_value.columns:
         raise KeyError(f'reference data type \'{reference_data}\' can not be found in reference data')
-    ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ret_dev = ret.var()
+    if 'pct_change' not in looped_value.columns:
+        looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
+    ret_dev = looped_value['pct_change'].var()
     ref = reference_value[reference_data]
     ref_ret = (ref / ref.shift(1)) - 1
-    looped_value['ref'] = ref_ret
-    looped_value['ret'] = ret
-    return looped_value.ref.cov(looped_value.ret) / ret_dev
+    if len(looped_value) > 250:
+        looped_value['beta'] = looped_value['pct_change'].rolling(250).cov(ref_ret) / ret_dev
+        return looped_value['beta'].iloc[-1]
+    else:
+        beta = looped_value['pct_change'].cov(ref_ret) / ret_dev
+        looped_value['beta'] = np.nan
+        looped_value['beta'].iloc[-1] = beta
+        return beta
 
 
 def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035):
@@ -307,22 +316,21 @@ def eval_volatility(looped_value, logarithm: bool = True):
     """
     assert isinstance(looped_value, pd.DataFrame), \
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_value)} instead'
-    if not looped_value.empty:
-        if logarithm:
-            ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
-        else:
-            ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-        if len(ret) > 250:
-            volatility = ret.rolling(250).std() * np.sqrt(250)
-            looped_value['volatility'] = volatility
-            return volatility.iloc[-1]
-        else:
-            volatility = ret.std() * np.sqrt(250)
-            looped_value['volatility'] = np.nan
-            looped_value['volatility'].iloc[-1] = volatility
-            return volatility
-    else:
+    if looped_value.empty:
         return -np.inf
+    if logarithm:
+        ret = np.log(looped_value['value'] / looped_value['value'].shift(1))
+    else:
+        ret = (looped_value['value'] / looped_value['value'].shift(1)) - 1
+    if len(ret) > 250:
+        volatility = ret.rolling(250).std() * np.sqrt(250)
+        looped_value['volatility'] = volatility
+        return volatility.iloc[-1]
+    else:
+        volatility = ret.std() * np.sqrt(250)
+        looped_value['volatility'] = np.nan
+        looped_value['volatility'].iloc[-1] = volatility
+        return volatility
 
 
 def eval_info_ratio(looped_value, reference_value, reference_data):
@@ -436,6 +444,7 @@ def eval_return(looped_val, cash_plan):
     looped_val['rtn'] = looped_val.value / looped_val['invest'] - 1
     ys = (looped_val.index - looped_val.index[0]).days / 365.
     looped_val['annual_rtn'] = (looped_val.rtn + 1) ** (1 / ys) - 1
+    looped_val['pct_change'] = looped_val.value / looped_val.value.shift(1) - 1
     return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1]
 
 
