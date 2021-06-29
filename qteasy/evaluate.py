@@ -65,7 +65,6 @@ def performance_statistics(performances: list, stats='mean'):
     res['loop_end'] = performances[-1]['loop_end']
     # TODO: 想一个更好的处理多重回测后多重回测数据的处理办法
     res['complete_values'] = performances[0]['complete_values']
-    res['worst_drawdowns'] = performances[0]['worst_drawdowns']
     if 'oper_count' in performances[0]:
         res['oper_count'] = 0
         for perf in performances:
@@ -77,6 +76,7 @@ def performance_statistics(performances: list, stats='mean'):
         res['peak_date'] = performances[0]['peak_date']
         res['valley_date'] = performances[0]['valley_date']
         res['recover_date'] = performances[0]['recover_date']
+        res['worst_drawdowns'] = performances[0]['worst_drawdowns']
     keys_to_process = [perf for perf in performances[0] if perf not in ['oper_count',
                                                                         'peak_date',
                                                                         'valley_date',
@@ -284,6 +284,9 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
+    TODO: 这里的计算有误，应该改进。夏普率的定义是年化收益跟波动率的比值（波动率是收益率的滚动标准差）
+    TODO: 既然波动率是收益率的250天滚动标准差，那么用整体收益率与波动率比较就没有意义，应该使用250天
+    TODO: 的滚动收益率与250天的收益率标准差比较才有意义，因此应该滚动计算，而不是下面的整体收益率算法
 
     :param looped_value:
     :return:
@@ -363,13 +366,13 @@ def eval_max_drawdown(looped_value):
     drawdown_count = min(len(drawdown_starts), len(drawdown_ends))
     dd_pool = ResultPool(5)
     for i_start, i_end in zip(drawdown_starts[:drawdown_count], drawdown_ends[:drawdown_count]):
-        dd_start = looped_value.index[i_start]
+        dd_start = looped_value.index[i_start - 1]
         dd_end = looped_value.index[i_end]
         dd_min = looped_value['underwater'].iloc[i_start:i_end].idxmin()
         dd = looped_value['underwater'].loc[dd_min]
         dd_pool.in_pool((dd_start, dd_min, dd_end, dd), dd)
     if len(drawdown_starts) > drawdown_count:
-        dd_start = looped_value.index[drawdown_starts[-1]]
+        dd_start = looped_value.index[drawdown_starts[-1] - 1]
         dd_end = np.nan
         dd_min = looped_value['underwater'].iloc[drawdown_starts[-1]:].idxmin()
         dd = looped_value['underwater'].loc[dd_min]
@@ -378,12 +381,15 @@ def eval_max_drawdown(looped_value):
     # 生成包含所有dd的DataFrame
     dd_df = pd.DataFrame(dd_pool.items, columns=['peak_date', 'valley_date', 'recover_date', 'drawdown'])
     dd_df.sort_values(by='drawdown', inplace=True)
-    mdd = dd_df.loc[0]
-    max_drawdown = mdd.drawdown
-    peak_date = mdd.peak_date
-    valley_date = mdd.valley_date
-    recover_date = mdd.recover_date
-    return max_drawdown, peak_date, valley_date, recover_date, dd_df
+    if dd_df.empty:
+        return np.nan, np.nan, np.nan, np.nan, dd_df
+    else:
+        mdd = dd_df.loc[0]
+        max_drawdown = -mdd.drawdown
+        peak_date = mdd.peak_date
+        valley_date = mdd.valley_date
+        recover_date = mdd.recover_date
+        return max_drawdown, peak_date, valley_date, recover_date, dd_df
 
 
 def eval_fv(looped_val):

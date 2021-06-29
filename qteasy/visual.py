@@ -384,6 +384,7 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         mav = [5, 10, 20, 60]
     end = pd.to_datetime(end)
     start = pd.to_datetime(start)
+    # 当stock_data没有给出时，则从网上或本地获取股票数据
     if stock_data is None:
         assert stock is not None
         if 'adj' in kwargs:
@@ -407,7 +408,9 @@ def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
         has_volume = 'volume' in stock_data.columns
         if share_name is None:
             share_name = 'stock'
-
+    # 如果给出或获取的数据没有volume列，则生成空数据列
+    if 'volume' not in daily.columns:
+        daily['volume'] = np.nan
     daily = _add_indicators(daily, mav=mav)
 
     my_color = mpf.make_marketcolors(up='r',
