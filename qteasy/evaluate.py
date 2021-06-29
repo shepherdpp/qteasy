@@ -129,9 +129,9 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
         - volatility:        回测区间波动率（最后一日波动率）
         - ref_rtn:           benchmark参照指标的回报率
         - ref_annual_rtn:    benchmark参照指标的年均回报率
-        - beta:              回测区间的beta值            TODO: 将rolling beta写入complete_value中
+        - beta:              回测区间的beta值
         - sharp:             回测区间的夏普率             TODO: 将rolling sharp写入complete_value中
-        - alpha:             回测区间的阿尔法值           TODO: 将rolling alpha写入complete_value中
+        - alpha:             回测区间的阿尔法值
         - info:              回测区间的信息比率           TODO: 将rolling info写入complete_value中
         - worst_drawdowns    一个DataFrame，五次最大的回撤记录
         TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
@@ -252,12 +252,26 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     :param reference_data:
     :return:
     """
-    total_year = _get_yearly_span(looped_value)
-    final_value = eval_fv(looped_value)
-    strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
-    b = eval_beta(looped_value, reference_value, reference_data)
-    return (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
+    loop_len = len(looped_value)
+    bench_len = len(reference_value)
+    assert loop_len == bench_len, f'ValueError, the length of looped values should be same as reference values'
+    # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
+    if loop_len <= 250:
+        total_year = _get_yearly_span(looped_value)
+        final_value = eval_fv(looped_value)
+        strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
+        reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
+        b = eval_beta(looped_value, reference_value, reference_data)
+        alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
+    else:  # loop_len > 250
+        year_ret = looped_value.value / looped_value['value'].shift(250) - 1
+        bench = reference_value[reference_data]
+        bench_ret = (bench / bench.shift(1)) - 1
+        if 'beta' not in looped_value.columns:
+            b = eval_beta(looped_value, reference_value, reference_data)
+        looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
+        alpha = looped_value['alpha'].iloc[-1]
+    return alpha
 
 
 def eval_beta(looped_value, reference_value, reference_data):
@@ -274,6 +288,7 @@ def eval_beta(looped_value, reference_value, reference_data):
         raise TypeError(f'looped value should be pandas DataFrame, got {type(looped_value)} instead')
     if reference_data not in reference_value.columns:
         raise KeyError(f'reference data type \'{reference_data}\' can not be found in reference data')
+    # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
     ret_dev = looped_value['pct_change'].var()
@@ -426,6 +441,7 @@ def eval_return(looped_val, cash_plan):
     """ 评价函数 Return Rate 收益率评价，在looped_value中补充完整的收益率和年化收益率数据
 
     '滚动计算回测收益的年化收益率和总收益率，输出最后一天的总收益率和年化收益率
+    TODO: 输出一个DF，包含每年每个月的月度收益率，每年年度收益率以便可视化输出
 
     :param looped_val:
     :return: tuple
