@@ -203,6 +203,7 @@ class InterCandle:
             ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
             self.ax3.set_ylabel('dema')
         # 绘制图表
+        import pdb; pdb.set_trace()
         mpf.plot(plot_data,
                  ax=self.ax1,
                  volume=self.ax2,

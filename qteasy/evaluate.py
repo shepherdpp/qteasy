@@ -254,7 +254,9 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     """
     loop_len = len(looped_value)
     bench_len = len(reference_value)
-    assert loop_len == bench_len, f'ValueError, the length of looped values should be same as reference values'
+    assert loop_len == bench_len, \
+        f'ValueError, {loop_len} != {bench_len}:' \
+        f'the length of looped values {loop_len} not equal to reference values {bench_len}'
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
     if loop_len <= 250:
         total_year = _get_yearly_span(looped_value)
@@ -266,7 +268,7 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     else:  # loop_len > 250
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
         bench = reference_value[reference_data]
-        bench_ret = (bench / bench.shift(1)) - 1
+        bench_ret = (bench / bench.shift(250)) - 1
         if 'beta' not in looped_value.columns:
             b = eval_beta(looped_value, reference_value, reference_data)
         looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
@@ -291,13 +293,14 @@ def eval_beta(looped_value, reference_value, reference_data):
     # 计算或获取每日收益率
     if 'pct_change' not in looped_value.columns:
         looped_value['pct_change'] = (looped_value['value'] / looped_value['value'].shift(1)) - 1
-    ret_dev = looped_value['pct_change'].var()
     ref = reference_value[reference_data]
     ref_ret = (ref / ref.shift(1)) - 1
     if len(looped_value) > 250:
+        ret_dev = looped_value['pct_change'].rolling(250).var()
         looped_value['beta'] = looped_value['pct_change'].rolling(250).cov(ref_ret) / ret_dev
-        return looped_value['beta'].iloc[-1]
+        return looped_value['beta'].mean()
     else:
+        ret_dev = looped_value['pct_change'].var()
         beta = looped_value['pct_change'].cov(ref_ret) / ret_dev
         looped_value['beta'] = np.nan
         looped_value['beta'].iloc[-1] = beta
