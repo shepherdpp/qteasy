@@ -247,16 +247,12 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
     :param risk_free_ror: 无风险利率，默认值设置为0.35%
     :param looped_value:
-    :param total_invest:
+    :param total_invest: float 总投资金额
     :param reference_value:
     :param reference_data:
     :return:
     """
     loop_len = len(looped_value)
-    bench_len = len(reference_value)
-    # assert loop_len == bench_len, \
-    #     f'ValueError, {loop_len} != {bench_len}:' \
-    #     f'the length of looped values {loop_len} not equal to reference values {bench_len}'
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
     if loop_len <= 250:
         total_year = _get_yearly_span(looped_value)
@@ -272,7 +268,7 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
         if 'beta' not in looped_value.columns:
             b = eval_beta(looped_value, reference_value, reference_data)
         looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
-        alpha = looped_value['alpha'].iloc[-1]
+        alpha = looped_value['alpha'].mean()
     return alpha
 
 
