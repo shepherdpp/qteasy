@@ -314,11 +314,19 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035
     :param looped_value:
     :return:
     """
-    total_year = _get_yearly_span(looped_value)
-    final_value = eval_fv(looped_value)
-    strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-    volatility = eval_volatility(looped_value, logarithm=False)
-    return (strategy_return - riskfree_interest_rate) / volatility
+    loop_len = len(looped_value)
+    # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
+    if 'volatility' not in looped_value.columns:
+        volatility = eval_volatility(looped_value, logarithm=False)
+    if loop_len <= 250:
+        total_year = _get_yearly_span(looped_value)
+        final_value = eval_fv(looped_value)
+        strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
+        return (strategy_return - riskfree_interest_rate) / volatility
+    else:  # loop_len > 250
+        year_ret = looped_value.value / looped_value['value'].shift(250) - 1
+        looped_value['sharp'] = (year_ret - riskfree_interest_rate) / looped_value['volatility']
+        return looped_value['sharp'].mean()
 
 
 def eval_volatility(looped_value, logarithm: bool = True):
@@ -339,7 +347,7 @@ def eval_volatility(looped_value, logarithm: bool = True):
     if len(ret) > 250:
         volatility = ret.rolling(250).std() * np.sqrt(250)
         looped_value['volatility'] = volatility
-        return volatility.iloc[-1]
+        return volatility.mean()
     else:
         volatility = ret.std() * np.sqrt(250)
         looped_value['volatility'] = np.nan
