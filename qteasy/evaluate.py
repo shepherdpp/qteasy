@@ -254,9 +254,9 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     """
     loop_len = len(looped_value)
     bench_len = len(reference_value)
-    assert loop_len == bench_len, \
-        f'ValueError, {loop_len} != {bench_len}:' \
-        f'the length of looped values {loop_len} not equal to reference values {bench_len}'
+    # assert loop_len == bench_len, \
+    #     f'ValueError, {loop_len} != {bench_len}:' \
+    #     f'the length of looped values {loop_len} not equal to reference values {bench_len}'
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
     if loop_len <= 250:
         total_year = _get_yearly_span(looped_value)
