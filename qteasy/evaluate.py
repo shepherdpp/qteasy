@@ -318,6 +318,8 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
     if 'volatility' not in looped_value.columns:
         volatility = eval_volatility(looped_value, logarithm=False)
+    else:
+        volatility = looped_value['volatility'].mean()
     if loop_len <= 250:
         total_year = _get_yearly_span(looped_value)
         final_value = eval_fv(looped_value)
