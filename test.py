@@ -1503,16 +1503,118 @@ class TestEvaluations(unittest.TestCase):
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
     def test_sharp(self):
-        self.assertAlmostEqual(eval_sharp(self.test_data1, 5, 0.5), 1.296801489)
-        self.assertAlmostEqual(eval_sharp(self.test_data2, 5, 0.5), 15.38063209)
-        self.assertAlmostEqual(eval_sharp(self.test_data3, 5, 0.5), 2.85119536)
-        self.assertAlmostEqual(eval_sharp(self.test_data4, 5, 0.5), 9.758931719)
-        self.assertAlmostEqual(eval_sharp(self.test_data5, 5, 0.92), -1.088214637)
-        self.assertAlmostEqual(eval_sharp(self.test_data6, 5, 0.92), -0.809892945)
-        self.assertAlmostEqual(eval_sharp(self.test_data7, 5, 0.92), -0.889228124)
+        self.assertAlmostEqual(eval_sharp(self.test_data1, 5, 0), 0.06135557)
+        self.assertAlmostEqual(eval_sharp(self.test_data2, 5, 0), 0.167858667)
+        self.assertAlmostEqual(eval_sharp(self.test_data3, 5, 0), 0.09950547)
+        self.assertAlmostEqual(eval_sharp(self.test_data4, 5, 0), 0.154928241)
+        self.assertAlmostEqual(eval_sharp(self.test_data5, 5, 0.002), 0.007868673)
+        self.assertAlmostEqual(eval_sharp(self.test_data6, 5, 0.002), 0.018306537)
+        self.assertAlmostEqual(eval_sharp(self.test_data7, 5, 0.002), 0.006259971)
 
         # 测试长数据的sharp率计算
-        expected_sharp = np.array([])
+        expected_sharp = np.array([     np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                        np.nan,      np.nan,      np.nan,      np.nan,      np.nan,
+                                   -0.02346815, -0.02618783, -0.03763912, -0.03296276, -0.03085698,
+                                   -0.02851101, -0.02375842, -0.02016746, -0.01107885, -0.01426613,
+                                   -0.00787204, -0.01135784, -0.01164232, -0.01003481, -0.00022512,
+                                   -0.00046792, -0.01209378, -0.01278892, -0.01298135, -0.01938214,
+                                   -0.01671044, -0.02120509, -0.0244281 , -0.02416067, -0.02763238,
+                                   -0.027579  , -0.02372774, -0.02215294, -0.02467094, -0.02091266,
+                                   -0.02590194, -0.03049876, -0.02077131, -0.01483653, -0.02488144,
+                                   -0.02671638, -0.02561547, -0.01957986, -0.02479803, -0.02703162,
+                                   -0.02658087, -0.01641755, -0.01946472, -0.01647757, -0.01280889,
+                                   -0.00893643, -0.00643275, -0.00698457, -0.00549962, -0.00654677,
+                                   -0.00494757, -0.0035633 , -0.00109037,  0.00750654,  0.00451208,
+                                    0.00625502,  0.01221367,  0.01326454,  0.01535037,  0.02269538,
+                                    0.02028715,  0.02127712,  0.02333264,  0.02273159,  0.01670643,
+                                    0.01376513,  0.01265342,  0.02211647,  0.01612449,  0.00856706,
+                                   -0.00077147, -0.00268848,  0.00210993, -0.00443934, -0.00411912,
+                                   -0.0018756 , -0.00867461, -0.00581601, -0.00660835, -0.00861137,
+                                   -0.00678614, -0.01188408, -0.00589617, -0.00244323, -0.00201891,
+                                   -0.01042846, -0.01471016, -0.02167034, -0.02258554, -0.01306809,
+                                   -0.00909086, -0.01233746, -0.00595166, -0.00184208,  0.00750497,
+                                    0.01481886,  0.01761972,  0.01562886,  0.01446414,  0.01285826,
+                                    0.01357719,  0.00967613,  0.01636272,  0.01458437,  0.02280183,
+                                    0.02151903,  0.01700276,  0.01597368,  0.02114336,  0.02233297,
+                                    0.02585631,  0.02768459,  0.03519235,  0.04204535,  0.04328161,
+                                    0.04672855,  0.05046191,  0.04619848,  0.04525853,  0.05381529,
+                                    0.04598861,  0.03947394,  0.04665006,  0.05586077,  0.05617728,
+                                    0.06495018,  0.06205172,  0.05665466,  0.06500615,  0.0632062 ,
+                                    0.06084328,  0.05851466,  0.05659229,  0.05159347,  0.0432977 ,
+                                    0.0474047 ,  0.04231723,  0.03613176,  0.03618391,  0.03591012,
+                                    0.03885674,  0.0402686 ,  0.03846423,  0.04534014,  0.04721458,
+                                    0.05130912,  0.05026281,  0.05394312,  0.05529349,  0.05949243,
+                                    0.05463304,  0.06195165,  0.06767606,  0.06880985,  0.07048996,
+                                    0.07078815,  0.07420767,  0.06773439,  0.0658441 ,  0.06470875,
+                                    0.06302349,  0.06456876,  0.06411282,  0.06216669,  0.067094  ,
+                                    0.07055075,  0.07254976,  0.07119253,  0.06173308,  0.05393352,
+                                    0.05681246,  0.05250643,  0.06099845,  0.0655544 ,  0.06977334,
+                                    0.06636514,  0.06177949,  0.06869908,  0.06719767,  0.06178738,
+                                    0.05915714,  0.06882277,  0.06756821,  0.06507994,  0.06489791,
+                                    0.06553941,  0.073123  ,  0.07576757,  0.06805446,  0.06063571,
+                                    0.05033801,  0.05206971,  0.05540306,  0.05249118,  0.05755587,
+                                    0.0586174 ,  0.05051288,  0.0564852 ,  0.05757284,  0.06358355,
+                                    0.06130082,  0.04925482,  0.03834472,  0.04163981,  0.04648316,
+                                    0.04457858,  0.04324626,  0.04328791,  0.04156207,  0.04818652,
+                                    0.04972634,  0.06024123,  0.06489556,  0.06255485,  0.06069815,
+                                    0.06466389,  0.07081163,  0.07895358,  0.0881782 ,  0.09374151,
+                                    0.08336506,  0.08764795,  0.09080174,  0.08808926,  0.08641158,
+                                    0.07811943,  0.06885318,  0.06479503,  0.06851185,  0.07382819,
+                                    0.07047903,  0.06658251,  0.07638379,  0.08667974,  0.08867918,
+                                    0.08245323,  0.08961866,  0.09905298,  0.0961908 ,  0.08562706,
+                                    0.0839014 ,  0.0849072 ,  0.08338395,  0.08783487,  0.09463609,
+                                    0.10332336,  0.11806497,  0.11220297,  0.11589097,  0.11678405])
+        test_sharp = eval_sharp(self.long_data, 5, 0.00035)
+        self.assertAlmostEqual(np.nanmean(expected_sharp), test_sharp)
+        self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
     def test_beta(self):
         reference = self.test_data1

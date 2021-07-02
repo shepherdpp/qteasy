@@ -307,27 +307,22 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.035
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。
-    TODO: 这里的计算有误，应该改进。夏普率的定义是年化收益跟波动率的比值（波动率是收益率的滚动标准差）
-    TODO: 既然波动率是收益率的250天滚动标准差，那么用整体收益率与波动率比较就没有意义，应该使用250天
-    TODO: 的滚动收益率与250天的收益率标准差比较才有意义，因此应该滚动计算，而不是下面的整体收益率算法
 
     :param looped_value:
     :return:
     """
     loop_len = len(looped_value)
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
-    if 'volatility' not in looped_value.columns:
-        volatility = eval_volatility(looped_value, logarithm=False)
-    else:
-        volatility = looped_value['volatility'].mean()
+    ret = looped_value['value'] / looped_value['value'].shift(1) - 1
     if loop_len <= 250:
-        total_year = _get_yearly_span(looped_value)
-        final_value = eval_fv(looped_value)
-        strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
-        return (strategy_return - riskfree_interest_rate) / volatility
+        ret_mean = ret.mean()
+        ret_std = ret.std(ddof=1)
+        sharp = (ret_mean - riskfree_interest_rate) / ret_std
+        return sharp
     else:  # loop_len > 250
-        year_ret = looped_value.value / looped_value['value'].shift(250) - 1
-        looped_value['sharp'] = (year_ret - riskfree_interest_rate) / looped_value['volatility']
+        ret_mean = ret.rolling(250).mean()
+        ret_std = ret.rolling(250).std(ddof=1)
+        looped_value['sharp'] = (ret_mean - riskfree_interest_rate) / ret_std
         return looped_value['sharp'].mean()
 
 
