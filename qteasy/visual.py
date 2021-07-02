@@ -551,7 +551,9 @@ def _plot_loop_result(loop_results: dict, config):
     register_matplotlib_converters()
     # 计算在整个投资回测区间内每天的持股数量，通过持股数量的变化来推出买卖点
     result_columns = looped_values.columns
-    fixed_column_items = ['fee', 'cash', 'value', 'reference', 'ref', 'ret']
+    fixed_column_items = ['fee', 'cash', 'value', 'reference', 'ref', 'ret',
+                          'invest', 'underwater', 'volatility', 'pct_change',
+                          'beta', 'sharp', 'alpha']
     stock_holdings = [item for
                       item in
                       result_columns if
@@ -571,8 +573,11 @@ def _plot_loop_result(loop_results: dict, config):
     ref_start = looped_values['reference'].iloc[0]
     # 计算回测结果的每日回报率
     ret = looped_values['value'] - looped_values['value'].shift(1)
-    # 计算每日的持仓仓位
     position = 1 - (looped_values['cash'] / looped_values['value'])
+    beta = looped_values['beta']
+    alpha = looped_values['alpha']
+    volatility = looped_values['volatility']
+    sharp = looped_values['sharp']
     # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
     ref_rate = (looped_values.reference - ref_start) / ref_start * 100
@@ -588,7 +593,7 @@ def _plot_loop_result(loop_results: dict, config):
 
     chart_width = 0.88
     # 显示投资回报评价信息
-    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
     if isinstance(config.asset_pool, str):
         title_asset_pool = config.asset_pool
     else:
@@ -699,18 +704,25 @@ def _plot_loop_result(loop_results: dict, config):
                  va='bottom')
     ax1.legend()
 
-    ax2.set_position([0.05, 0.23, chart_width, 0.18])
-    ax2.plot(looped_values.index, position)
-    ax2.set_ylabel('Amount bought / sold')
+    ax2.set_position([0.05, 0.29, chart_width, 0.12])
+    ax2.plot(looped_values.index, beta)
+    ax2.plot(looped_values.index, alpha)
+    ax2.set_ylabel('rolling beta / alpha')
     ax2.set_xlabel(None)
 
-    ax3.set_position([0.05, 0.05, chart_width, 0.18])
+    ax3.set_position([0.05, 0.17, chart_width, 0.12])
     ax3.bar(looped_values.index, ret)
     ax3.set_ylabel('Daily return')
     ax3.set_xlabel('date')
 
+    ax4.set_position([0.05, 0.05, chart_width, 0.12])
+    ax4.bar(looped_values.index, volatility)
+    ax4.bar(looped_values.index, sharp)
+    ax4.set_ylabel('Rolling Volatility')
+    ax4.set_xlabel('date')
+
     # 设置所有图表的基本格式:
-    for ax in [ax1, ax2, ax3]:
+    for ax in [ax1, ax2, ax3, ax4]:
         ax.yaxis.tick_right()
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -736,7 +748,7 @@ def _plot_loop_result(loop_results: dict, config):
         minor_locator = weekdays
         minor_formatter = month_fmt_none
 
-    for ax in [ax1, ax2, ax3]:
+    for ax in [ax1, ax2, ax3, ax4]:
         ax.xaxis.set_major_locator(major_locator)
         ax.xaxis.set_major_formatter(major_formatter)
         ax.xaxis.set_minor_locator(minor_locator)
