@@ -716,8 +716,8 @@ def _plot_loop_result(loop_results: dict, config):
     ax3.set_xlabel('date')
 
     ax4.set_position([0.05, 0.05, chart_width, 0.12])
-    ax4.bar(looped_values.index, volatility)
-    ax4.bar(looped_values.index, sharp)
+    ax4.plot(looped_values.index, volatility)
+    ax4.plot(looped_values.index, sharp)
     ax4.set_ylabel('Rolling Volatility')
     ax4.set_xlabel('date')
 

@@ -186,13 +186,15 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
         performance_dict['beta'] = eval_beta(looped_values, hist_benchmark, benchmark_data)
     # 评价回测结果——计算投资期间的夏普率
     if 'sharp' in indicator_list:
-        performance_dict['sharp'] = eval_sharp(looped_values, total_invest, 0.035)
+        performance_dict['sharp'] = eval_sharp(looped_values, total_invest)
     # 评价回测结果——计算投资期间的alpha阿尔法系数
     if 'alpha' in indicator_list:
         performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark, benchmark_data)
     # 评价回测结果——计算投资回报的信息比率
     if 'info' in indicator_list:
         performance_dict['info'] = eval_info_ratio(looped_values, hist_benchmark, benchmark_data)
+    if 'calmar' in indicator_list:
+        performance_dict['info'] = eval_calmar(looped_values)
     if bool(performance_dict):
         return performance_dict
     else:
@@ -318,6 +320,8 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.003
         ret_mean = ret.mean()
         ret_std = ret.std(ddof=1)
         sharp = (ret_mean - riskfree_interest_rate / 250) / ret_std
+        looped_value['sharp'] = np.nan
+        looped_value['sharp'].iloc[-1] = sharp
         return sharp
     else:  # loop_len > 250
         ret_mean = ret.rolling(250).mean()
@@ -365,6 +369,27 @@ def eval_info_ratio(looped_value, reference_value, reference_data):
     track_error = (ref_ret - ret).std(
             ddof=0)  # set ddof=0 to calculate population standard deviation, or 1 for sample deviation
     return (ret.mean() - ref_ret.mean()) / track_error
+
+
+def eval_calmar(looped_value):
+    """ Calmar ratio, 卡尔玛比率，定义为平均年化收益率与最大回撤比率的比值，定义每一份回撤获得多大的年化收益
+
+    :param looped_value:
+    :return:
+    """
+    value = looped_value['value']
+    cummax = value.cummax()
+    drawdown = (cummax - value) / cummax
+    if len(looped_value) > 250:
+        ret = value / value.shift(250) - 1
+        looped_value['calmar'] = ret / drawdown.rolling(250).max()
+        return looped_value['calmar'].mean()
+    else:  # len(looped_value <= 250
+        ret = value[-1] / value[0] - 1
+        calmar = ret / drawdown.max()
+        looped_value['calmar'] = np.nan
+        looped_value['calmar'].iloc[-1] = calmar
+        return calmar
 
 
 def eval_max_drawdown(looped_value):
