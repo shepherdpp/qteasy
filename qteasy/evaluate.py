@@ -318,14 +318,14 @@ def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.003
     ret = looped_value['value'] / looped_value['value'].shift(1) - 1
     if loop_len <= 250:
         ret_mean = ret.mean()
-        ret_std = ret.std(ddof=1)
-        sharp = (ret_mean - riskfree_interest_rate / 250) / ret_std
+        ret_std = ret.std()
+        sharp = (ret_mean - riskfree_interest_rate / loop_len) / ret_std
         looped_value['sharp'] = np.nan
         looped_value['sharp'].iloc[-1] = sharp
         return sharp
     else:  # loop_len > 250
         ret_mean = ret.rolling(250).mean()
-        ret_std = ret.rolling(250).std(ddof=1)
+        ret_std = ret.rolling(250).std()
         looped_value['sharp'] = (ret_mean - riskfree_interest_rate / 250) / ret_std
         return looped_value['sharp'].mean()
 
@@ -468,6 +468,13 @@ def eval_fv(looped_val):
 
 def eval_return(looped_val, cash_plan):
     """ 评价函数 Return Rate 收益率评价，在looped_value中补充完整的收益率和年化收益率数据
+        在looped_val中添加以下数据：
+        - invest:       每个交易日累计投入资金总额
+        - rtn:          计算investment return投资回报率，也就是资产总额和投资总额的比率
+        - annual_rtn:   年化投资收益率，每个交易日累计投资收益率的年化收益
+        - pct_change:   每日收益率，也就是今天资产相对于昨天增值的比例
+        - skew:         峰度
+        - kurtosis:     偏度
 
     '滚动计算回测收益的年化收益率和总收益率，输出最后一天的总收益率和年化收益率
     TODO: 输出一个DF，包含每年每个月的月度收益率，每年年度收益率以便可视化输出
@@ -490,7 +497,29 @@ def eval_return(looped_val, cash_plan):
     ys = (looped_val.index - looped_val.index[0]).days / 365.
     looped_val['annual_rtn'] = (looped_val.rtn + 1) ** (1 / ys) - 1
     looped_val['pct_change'] = looped_val.value / looped_val.value.shift(1) - 1
-    return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1]
+    looped_val['skew'] = looped_val.value
+    looped_val['kurtosis'] = looped_val.value
+
+    first_yaear = looped_val.index[0].year
+    last_year = looped_val.index[-1].year
+    starts = pd.date_range(start=str(first_yaear-1)+'1231', end=str(last_year)+'1130', freq='M') + pd.Timedelta(1,'d')
+    ends = pd.date_range(start=str(first_yaear)+'0101', end=str(last_year)+'1231', freq='M')
+    # 计算每个月的收益率
+    monthly_returns = []
+    for start, end in zip(starts, ends):
+        val = looped_val['value']
+        monthly_returns.append(val.loc[start] / val.loc[end])
+    year_count = len(monthly_returns) / 12
+    monthly_returns = np.array(monthly_returns).reshape(year_count, 12)
+    monthly_return_df = pd.DataFrame(monthly_returns,
+                                     columns=['Jan', 'Feb', 'Mar', 'Apr',
+                                              'May', 'Jun', 'Jul', 'Aug',
+                                              'Sep', 'Oct', 'Nov', 'Dec'],
+                                     index=range(first_yaear, last_year + 1))
+    # 计算每年的收益率
+
+    # 组装出月度、年度收益率矩阵
+    return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], monthly_return_df
 
 
 def eval_operation(op_list, looped_value, cash_plan):

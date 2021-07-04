@@ -1850,6 +1850,10 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEqual(test_alpha_mean, np.nanmean(expected_alpha))
         self.assertTrue(np.allclose(test_alpha_roll, expected_alpha, equal_nan=True))
 
+    def test_calmar(self):
+        """test evaluate function eval_calmar()"""
+        pass
+
     def test_benchmark(self):
         reference = self.test_data1
         tr, yr = eval_benchmark(self.test_data2, reference, 'value')
@@ -6782,7 +6786,7 @@ class TestQT(unittest.TestCase):
                      trade_batch_size=1,
                      visual=False,
                      print_backtest_log=True,
-                     invest_cash_dates='20100104', )
+                     invest_cash_dates='20070604', )
         qt.run(self.op)
 
     def test_run_mode_1_visual(self):
