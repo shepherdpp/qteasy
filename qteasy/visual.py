@@ -1065,19 +1065,19 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'\n--------------Worst 5 drawdonws:-------------\n')
     print(worst_drawdowns.to_string(formatters={'drawdown': '{:.2%}'.format}))
     print(f'\n---------monthly returns in history:---------\n')
-    print(return_df.to_string(formatters={'Jan': '{:.2%}'.format,
-                                          'Feb': '{:.2%}'.format,
-                                          'Mar': '{:.2%}'.format,
-                                          'Apr': '{:.2%}'.format,
-                                          'May': '{:.2%}'.format,
-                                          'Jun': '{:.2%}'.format,
-                                          'Jul': '{:.2%}'.format,
-                                          'Aug': '{:.2%}'.format,
-                                          'Sep': '{:.2%}'.format,
-                                          'Oct': '{:.2%}'.format,
-                                          'Nov': '{:.2%}'.format,
-                                          'Dec': '{:.2%}'.format,
-                                          'y-return': '{:.2%}'.format}))
+    print(return_df.to_string(formatters={'Jan': '{:.1%}'.format,
+                                          'Feb': '{:.1%}'.format,
+                                          'Mar': '{:.1%}'.format,
+                                          'Apr': '{:.1%}'.format,
+                                          'May': '{:.1%}'.format,
+                                          'Jun': '{:.1%}'.format,
+                                          'Jul': '{:.1%}'.format,
+                                          'Aug': '{:.1%}'.format,
+                                          'Sep': '{:.1%}'.format,
+                                          'Oct': '{:.1%}'.format,
+                                          'Nov': '{:.1%}'.format,
+                                          'Dec': '{:.1%}'.format,
+                                          'y-cum': '{:.1%}'.format}))
     print(f'\n===========END OF REPORT=============\n')
 
 

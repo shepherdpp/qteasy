@@ -544,7 +544,7 @@ def eval_return(looped_val, cash_plan):
             yearly_returns.append(val.iloc[-1] / val.iloc[0] - 1)
         else:
             yearly_returns.append(np.nan)
-    monthly_return_df['y-return'] = yearly_returns
+    monthly_return_df['y-cum'] = yearly_returns
     return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], skewness, kurtosis, monthly_return_df
 
 
