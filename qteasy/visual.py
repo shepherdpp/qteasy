@@ -14,6 +14,7 @@ from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
+from matplotlib.ticker import StrMethodFormatter
 
 import pandas as pd
 import numpy as np
@@ -593,11 +594,12 @@ def _plot_loop_result(loop_results: dict, config):
 
     chart_width = 0.88
     # 显示投资回报评价信息
-    fig = plt.figure(figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
-    ax1 = fig.add_axes([0.05, 0.41, chart_width, 0.40])
-    ax2 = fig.add_axes([0.05, 0.29, chart_width, 0.12], sharex=ax1)
-    ax3 = fig.add_axes([0.05, 0.17, chart_width, 0.12], sharex=ax1)
-    ax4 = fig.add_axes([0.05, 0.05, chart_width, 0.12], sharex=ax1)
+    fig = plt.figure(figsize=(12, 12), facecolor=(0.82, 0.83, 0.85))
+    ax1 = fig.add_axes([0.05, 0.55, chart_width, 0.26])
+    ax2 = fig.add_axes([0.05, 0.47, chart_width, 0.08], sharex=ax1)
+    ax3 = fig.add_axes([0.05, 0.39, chart_width, 0.08], sharex=ax1)
+    ax4 = fig.add_axes([0.05, 0.31, chart_width, 0.08], sharex=ax1)
+    ax5 = fig.add_axes([0.05, 0.05, 0.25, 0.21])
     if isinstance(config.asset_pool, str):
         title_asset_pool = config.asset_pool
     else:
@@ -720,6 +722,22 @@ def _plot_loop_result(loop_results: dict, config):
     ax4.plot(looped_values.index, sharp)
     ax4.set_ylabel('Rolling Volatility')
     ax4.set_xlabel('date')
+
+    monthly_return_df = loop_results['return_df'][['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                                                   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']]
+    return_years = monthly_return_df.index
+    return_months = monthly_return_df.columns
+    return_values = monthly_return_df.values
+    ax5.imshow(return_values)
+    ax5.set_xticks(np.arange(len(return_months)))
+    ax5.set_yticks(np.arange(len(return_years)))
+    ax5.set_xticklabels(return_months)
+    ax5.set_yticklabels(return_years)
+    # valfmt = StrMethodFormatter('{:.2f}')
+    # for i in range(len(return_years)):
+    #     for j in range(len(return_months)):
+    #         ax5.text(j, i, valfmt(return_values[i, j]),
+    #                  ha="center", va="center", color="w")
 
     # 设置所有图表的基本格式:
     for ax in [ax1, ax2, ax3, ax4]:
