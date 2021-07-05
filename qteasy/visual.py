@@ -593,7 +593,11 @@ def _plot_loop_result(loop_results: dict, config):
 
     chart_width = 0.88
     # 显示投资回报评价信息
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+    fig = plt.figure(figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
+    ax1 = fig.add_axes([0.05, 0.41, chart_width, 0.40])
+    ax2 = fig.add_axes([0.05, 0.29, chart_width, 0.12], sharex=ax1)
+    ax3 = fig.add_axes([0.05, 0.17, chart_width, 0.12], sharex=ax1)
+    ax4 = fig.add_axes([0.05, 0.05, chart_width, 0.12], sharex=ax1)
     if isinstance(config.asset_pool, str):
         title_asset_pool = config.asset_pool
     else:
@@ -641,7 +645,6 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["info"]:.3f}  \n'
                          f'{loop_results["volatility"]:.3f}')
 
-    ax1.set_position([0.05, 0.41, chart_width, 0.40])
     # 绘制参考数据的收益率曲线图
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Reference')
@@ -704,18 +707,15 @@ def _plot_loop_result(loop_results: dict, config):
                  va='bottom')
     ax1.legend()
 
-    ax2.set_position([0.05, 0.29, chart_width, 0.12])
     ax2.plot(looped_values.index, beta)
     ax2.plot(looped_values.index, alpha)
     ax2.set_ylabel('rolling beta / alpha')
     ax2.set_xlabel(None)
 
-    ax3.set_position([0.05, 0.17, chart_width, 0.12])
     ax3.bar(looped_values.index, ret)
     ax3.set_ylabel('Daily return')
     ax3.set_xlabel('date')
 
-    ax4.set_position([0.05, 0.05, chart_width, 0.12])
     ax4.plot(looped_values.index, volatility)
     ax4.plot(looped_values.index, sharp)
     ax4.set_ylabel('Rolling Volatility')
@@ -1030,6 +1030,7 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
         return
     looped_values = loop_results['complete_values']
     worst_drawdowns = loop_results['worst_drawdowns']
+    return_df = loop_results['return_df']
     print(f'\n     ==================================== \n'
           f'     |                                  |\n'
           f'     |       BACK TESTING RESULT        |\n'
@@ -1041,16 +1042,18 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     print(f'investment starts on      {looped_values.index[0]}\n'
           f'ends on                   {looped_values.index[-1]}\n'
           f'Total looped periods:     {loop_results["years"]:.1f} years.')
-    print(f'-----------operation summary:-----------\n '
+    print(f'\n-------------operation summary:------------ \n '
           f'{loop_results["oper_count"]}\n'
           f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
     print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
           f'final value:              ¥{loop_results["final_value"]:12,.2f}')
     print(f'Total return:             {loop_results["rtn"]:13.2%} \n'
-          f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}')
-    print(f'Reference return:         {loop_results["ref_rtn"]:13.2%} \n'
-          f'Reference Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}')
-    print(f'------strategy loop_results indicators------ \n'
+          f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}\n'
+          f'Skewness:                 {loop_results["skew"]:13.2%}\n'
+          f'Kurtosis:                 {loop_results["kurtosis"]:13.2%}')
+    print(f'Benchmark return:         {loop_results["ref_rtn"]:13.2%} \n'
+          f'Benchmark Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}')
+    print(f'\n------strategy loop_results indicators------ \n'
           f'alpha:                    {loop_results["alpha"]:13.3f}\n'
           f'Beta:                     {loop_results["beta"]:13.3f}\n'
           f'Sharp ratio:              {loop_results["sharp"]:13.3f}\n'
@@ -1059,8 +1062,22 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'Max drawdown:             {loop_results["mdd"]:13.2%} \n'
           f'    peak / valley:        {loop_results["peak_date"].date()} / {loop_results["valley_date"].date()}\n'
           f'    recovered on:         {loop_results["recover_date"].date()}\n'
-          f'Worst 5 drawdonws:        \n')
+          f'\n--------------Worst 5 drawdonws:-------------\n')
     print(worst_drawdowns.to_string(formatters={'drawdown': '{:.2%}'.format}))
+    print(f'\n---------monthly returns in history:---------\n')
+    print(return_df.to_string(formatters={'Jan': '{:.2%}'.format,
+                                          'Feb': '{:.2%}'.format,
+                                          'Mar': '{:.2%}'.format,
+                                          'Apr': '{:.2%}'.format,
+                                          'May': '{:.2%}'.format,
+                                          'Jun': '{:.2%}'.format,
+                                          'Jul': '{:.2%}'.format,
+                                          'Aug': '{:.2%}'.format,
+                                          'Sep': '{:.2%}'.format,
+                                          'Oct': '{:.2%}'.format,
+                                          'Nov': '{:.2%}'.format,
+                                          'Dec': '{:.2%}'.format,
+                                          'y-return': '{:.2%}'.format}))
     print(f'\n===========END OF REPORT=============\n')
 
 

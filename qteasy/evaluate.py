@@ -77,6 +77,8 @@ def performance_statistics(performances: list, stats='mean'):
         res['valley_date'] = performances[0]['valley_date']
         res['recover_date'] = performances[0]['recover_date']
         res['worst_drawdowns'] = performances[0]['worst_drawdowns']
+    if 'rtn' in performances[0]:
+        res['return_df'] = performances[0]['return_df']
     keys_to_process = [perf for perf in performances[0] if perf not in ['oper_count',
                                                                         'peak_date',
                                                                         'valley_date',
@@ -84,7 +86,8 @@ def performance_statistics(performances: list, stats='mean'):
                                                                         'loop_start',
                                                                         'loop_end',
                                                                         'complete_values',
-                                                                        'worst_drawdowns']]
+                                                                        'worst_drawdowns',
+                                                                        'return_df']]
     for key in keys_to_process:
         values = np.array([perf[key] for perf in performances])
         if stats == 'mean':
@@ -162,9 +165,12 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
     performance_dict['total_fee'] = total_fee
     # 评价回测结果——计算总投资收益率
     if any(indicator in indicator_list for indicator in ['return', 'rtn', 'total_return']):
-        rtn, annual_rtn = eval_return(looped_values, cash_plan)
+        rtn, annual_rtn, skewness, kurtosis, rtn_df = eval_return(looped_values, cash_plan)
         performance_dict['rtn'] = rtn
         performance_dict['annual_rtn'] = annual_rtn
+        performance_dict['skew'] = skewness
+        performance_dict['kurtosis'] = kurtosis
+        performance_dict['return_df'] = rtn_df
     # 评价回测结果——计算最大回撤比例以及最大回撤发生日期
     if any(indicator in indicator_list for indicator in ['mdd', 'max_drawdown']):
         mdd, peak_date, valley_date, recover_date, drawdown_list = eval_max_drawdown(looped_values)
@@ -459,11 +465,11 @@ def eval_fv(looped_val):
         f'TypeError, looped value should be pandas DataFrame, got {type(looped_val)} instead'
     if looped_val.empty:
         return -np.inf
-    try:
-        perf = looped_val['value'].iloc[-1]
-        return perf
-    except:
+    if 'value' not in looped_val:
         raise KeyError(f'the key \'value\' can not be found in given looped value!')
+
+    perf = looped_val['value'].iloc[-1]
+    return perf
 
 
 def eval_return(looped_val, cash_plan):
@@ -477,9 +483,9 @@ def eval_return(looped_val, cash_plan):
         - kurtosis:     偏度
 
     '滚动计算回测收益的年化收益率和总收益率，输出最后一天的总收益率和年化收益率
-    TODO: 输出一个DF，包含每年每个月的月度收益率，每年年度收益率以便可视化输出
 
     :param looped_val:
+    :param cash_plan:
     :return: tuple
         total_return, yearly_return
     """
@@ -488,7 +494,7 @@ def eval_return(looped_val, cash_plan):
     assert isinstance(cash_plan, qteasy.CashPlan), \
         f'TypeError, cash plan type not valid, got {type(cash_plan)} instead'
     if looped_val.empty:
-        return -np.inf, -np.inf
+        return -np.inf, -np.inf, np.nan, np.nan, pd.DataFrame()
     invest_plan = cash_plan.plan
     looped_val['invest'] = invest_plan.amount
     looped_val = looped_val.fillna(0)
@@ -497,29 +503,49 @@ def eval_return(looped_val, cash_plan):
     ys = (looped_val.index - looped_val.index[0]).days / 365.
     looped_val['annual_rtn'] = (looped_val.rtn + 1) ** (1 / ys) - 1
     looped_val['pct_change'] = looped_val.value / looped_val.value.shift(1) - 1
-    looped_val['skew'] = looped_val.value
-    looped_val['kurtosis'] = looped_val.value
+    skewness = looped_val['pct_change'].skew()
+    kurtosis = looped_val['pct_change'].kurtosis()
 
-    first_yaear = looped_val.index[0].year
+    first_year = looped_val.index[0].year
     last_year = looped_val.index[-1].year
-    starts = pd.date_range(start=str(first_yaear-1)+'1231', end=str(last_year)+'1130', freq='M') + pd.Timedelta(1,'d')
-    ends = pd.date_range(start=str(first_yaear)+'0101', end=str(last_year)+'1231', freq='M')
+    starts = pd.date_range(start=str(first_year - 1) + '1231',
+                           end=str(last_year) + '1130',
+                           freq='M') + pd.Timedelta(1, 'd')
+    ends = pd.date_range(start=str(first_year) + '0101',
+                         end=str(last_year) + '1231',
+                         freq='M')
     # 计算每个月的收益率
-    monthly_returns = []
+    monthly_returns = list()
     for start, end in zip(starts, ends):
-        val = looped_val['value']
-        monthly_returns.append(val.loc[start] / val.loc[end])
-    year_count = len(monthly_returns) / 12
+        val = looped_val['value'].loc[start:end]
+        if len(val) > 0:
+            monthly_returns.append(val.iloc[-1] / val.iloc[0] - 1)
+        else:
+            monthly_returns.append(np.nan)
+    year_count = len(monthly_returns) // 12
     monthly_returns = np.array(monthly_returns).reshape(year_count, 12)
     monthly_return_df = pd.DataFrame(monthly_returns,
                                      columns=['Jan', 'Feb', 'Mar', 'Apr',
                                               'May', 'Jun', 'Jul', 'Aug',
                                               'Sep', 'Oct', 'Nov', 'Dec'],
-                                     index=range(first_yaear, last_year + 1))
+                                     index=range(first_year, last_year + 1))
     # 计算每年的收益率
-
+    starts = pd.date_range(start=str(first_year - 1) + '1231',
+                           end=str(last_year) + '1130',
+                           freq='Y') + pd.Timedelta(1, 'd')
+    ends = pd.date_range(start=str(first_year) + '0101',
+                         end=str(last_year) + '1231',
+                         freq='Y')
     # 组装出月度、年度收益率矩阵
-    return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], monthly_return_df
+    yearly_returns = list()
+    for start, end in zip(starts, ends):
+        val = looped_val['value'].loc[start:end]
+        if len(val) > 0:
+            yearly_returns.append(val.iloc[-1] / val.iloc[0] - 1)
+        else:
+            yearly_returns.append(np.nan)
+    monthly_return_df['y-return'] = yearly_returns
+    return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], skewness, kurtosis, monthly_return_df
 
 
 def eval_operation(op_list, looped_value, cash_plan):
