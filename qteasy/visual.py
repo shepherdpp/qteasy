@@ -579,6 +579,7 @@ def _plot_loop_result(loop_results: dict, config):
     alpha = looped_values['alpha']
     volatility = looped_values['volatility']
     sharp = looped_values['sharp']
+    underwater = looped_values['underwater']
     # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
     ref_rate = (looped_values.reference - ref_start) / ref_start * 100
@@ -596,10 +597,11 @@ def _plot_loop_result(loop_results: dict, config):
     # 显示投资回报评价信息
     fig = plt.figure(figsize=(12, 12), facecolor=(0.82, 0.83, 0.85))
     ax1 = fig.add_axes([0.05, 0.60, chart_width, 0.26])
-    ax2 = fig.add_axes([0.05, 0.51, chart_width, 0.08], sharex=ax1)
-    ax3 = fig.add_axes([0.05, 0.43, chart_width, 0.08], sharex=ax1)
-    ax4 = fig.add_axes([0.05, 0.35, chart_width, 0.08], sharex=ax1)
-    ax5 = fig.add_axes([0.02, 0.05, 0.38, 0.21])
+    ax2 = fig.add_axes([0.05, 0.525, chart_width, 0.075], sharex=ax1)
+    ax3 = fig.add_axes([0.05, 0.450, chart_width, 0.075], sharex=ax1)
+    ax4 = fig.add_axes([0.05, 0.375, chart_width, 0.075], sharex=ax1)
+    ax5 = fig.add_axes([0.05, 0.300, chart_width, 0.075], sharex=ax1)
+    ax6 = fig.add_axes([0.02, 0.05, 0.38, 0.20])
     if isinstance(config.asset_pool, str):
         title_asset_pool = config.asset_pool
     else:
@@ -720,29 +722,39 @@ def _plot_loop_result(loop_results: dict, config):
     ax4.plot(looped_values.index, volatility, label='volatility')
     ax4.plot(looped_values.index, sharp, label='sharp')
     ax4.set_ylabel('Volatility\nsharp')
-    ax4.set_xlabel('date')
     ax4.legend()
 
+    # 绘制underwater图（drawdown可视化图表）
+    ax5.plot(underwater, label='underwater')
+    ax5.set_ylabel('underwater')
+    ax5.set_xlabel('date')
+    ax5.set_ylim(-1, 0)
+    ax5.fill_between(looped_values.index, 0, underwater,
+                    where=underwater < 0,
+                    facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+
+    # 绘制收益率热力图
     monthly_return_df = loop_results['return_df'][['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                                                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']]
     return_years = monthly_return_df.index
     return_months = monthly_return_df.columns
     return_values = monthly_return_df.values
-    c = ax5.imshow(return_values, cmap='RdYlGn')
-    ax5.set_title('monthly returns')
-    ax5.set_xticks(np.arange(len(return_months)))
-    ax5.set_yticks(np.arange(len(return_years)))
-    ax5.set_xticklabels(return_months)
-    ax5.set_yticklabels(return_years)
-    ax5.set_aspect(0.65)
-    fig.colorbar(c, ax=ax5)
-    # for i in range(len(return_years)):
-    #     for j in range(len(return_months)):
-    #         ax5.text(j, i, f'{return_values[i, j]:1.1f}',
-    #                  ha="center", va="center", color="w" )
+    c = ax6.imshow(return_values, cmap='RdYlGn')
+    ax6.set_title('monthly returns')
+    ax6.set_xticks(np.arange(len(return_months)))
+    ax6.set_yticks(np.arange(len(return_years)))
+    ax6.set_xticklabels(return_months)
+    ax6.set_yticklabels(return_years)
+    base_aspect_ratio = 0.72
+    if len(return_years) <= 12:
+        aspect_ratio = base_aspect_ratio
+    else:
+        aspect_ratio = base_aspect_ratio * 12 / len(return_years)
+    ax6.set_aspect(aspect_ratio)
+    fig.colorbar(c, ax=ax6)
 
     # 设置所有图表的基本格式:
-    for ax in [ax1, ax2, ax3, ax4]:
+    for ax in [ax1, ax2, ax3, ax4, ax5]:
         ax.yaxis.tick_right()
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -767,12 +779,11 @@ def _plot_loop_result(loop_results: dict, config):
         major_formatter = month_fmt_l
         minor_locator = weekdays
         minor_formatter = month_fmt_none
-
-    for ax in [ax1, ax2, ax3, ax4]:
-        ax.xaxis.set_major_locator(major_locator)
-        ax.xaxis.set_major_formatter(major_formatter)
-        ax.xaxis.set_minor_locator(minor_locator)
-        ax.xaxis.set_minor_formatter(minor_formatter)
+    # 前五个主表的时间轴共享，因此只需要设置最下方表的时间轴即可
+    ax5.xaxis.set_major_locator(major_locator)
+    ax5.xaxis.set_major_formatter(major_formatter)
+    ax5.xaxis.set_minor_locator(minor_locator)
+    ax5.xaxis.set_minor_formatter(minor_formatter)
 
     plt.show()
 
