@@ -601,7 +601,9 @@ def _plot_loop_result(loop_results: dict, config):
     ax3 = fig.add_axes([0.05, 0.450, chart_width, 0.075], sharex=ax1)
     ax4 = fig.add_axes([0.05, 0.375, chart_width, 0.075], sharex=ax1)
     ax5 = fig.add_axes([0.05, 0.300, chart_width, 0.075], sharex=ax1)
-    ax6 = fig.add_axes([0.02, 0.05, 0.38, 0.20])
+    ax6 = fig.add_axes([0.02, 0.04, 0.38, 0.20])
+    ax7 = fig.add_axes([0.43, 0.04, 0.15, 0.20])
+    ax8 = fig.add_axes([0.64, 0.04, 0.29, 0.20])
     if isinstance(config.asset_pool, str):
         title_asset_pool = config.asset_pool
     else:
@@ -700,15 +702,30 @@ def _plot_loop_result(loop_results: dict, config):
         ax1.scatter(looped_values.index, sell_points, color='red',
                     label='Sell', marker='v', alpha=0.9)
 
-    # put arrow on where max draw down is
-    ax1.annotate("Max Drawdown",
+    # 使用箭头标记最大回撤区间，箭头从最高起点开始，指向最低点，第二个箭头从最低点开始，指向恢复点
+    ax1.annotate(f"{loop_results['peak_date'].date()}",
                  xy=(loop_results["valley_date"], return_rate[loop_results["valley_date"]]),
                  xycoords='data',
                  xytext=(loop_results["peak_date"], return_rate[loop_results["peak_date"]]),
                  textcoords='data',
-                 arrowprops=dict(width=3, headwidth=5, facecolor='black', shrink=0.),
+                 arrowprops=dict(width=1, headwidth=3, facecolor='black', shrink=0.),
                  ha='right',
                  va='bottom')
+    if pd.notna(loop_results["recover_date"]):
+        ax1.annotate(f"-{loop_results['mdd']:.1%}\n{loop_results['valley_date'].date()}",
+                     xy=(loop_results["recover_date"], return_rate[loop_results["recover_date"]]),
+                     xycoords='data',
+                     xytext=(loop_results["valley_date"], return_rate[loop_results["valley_date"]]),
+                     textcoords='data',
+                     arrowprops=dict(width=1, headwidth=3, facecolor='black', shrink=0.),
+                     ha='right',
+                     va='top')
+    else:
+        ax1.text(x=loop_results["valley_date"],
+                 y=return_rate[loop_results["valley_date"]],
+                 s=f"-{loop_results['mdd']:.1%}\nnot recovered",
+                 ha='right',
+                 va='top')
     ax1.legend()
 
     ax2.plot(looped_values.index, beta, label='beta')
@@ -743,7 +760,7 @@ def _plot_loop_result(loop_results: dict, config):
     ax6.set_title('monthly returns')
     ax6.set_xticks(np.arange(len(return_months)))
     ax6.set_yticks(np.arange(len(return_years)))
-    ax6.set_xticklabels(return_months)
+    ax6.set_xticklabels(return_months, rotation=45)
     ax6.set_yticklabels(return_years)
     base_aspect_ratio = 0.72
     if len(return_years) <= 12:
@@ -753,16 +770,30 @@ def _plot_loop_result(loop_results: dict, config):
     ax6.set_aspect(aspect_ratio)
     fig.colorbar(c, ax=ax6)
 
+    # 绘制年度收益率柱状图
+    y_cum = loop_results['return_df']['y-cum']
+    y_count = len(return_years)
+    pos_y_cum = np.where(y_cum >= 0, y_cum, 0)
+    neg_y_cum = np.where(y_cum < 0, y_cum, 0)
+    return_years = y_cum.index
+    ax7.barh(np.arange(y_count), pos_y_cum, 1, align='center', facecolor='green', alpha=0.85)
+    ax7.barh(np.arange(y_count), neg_y_cum, 1, align='center', facecolor='red', alpha=0.85)
+    ax7.set_yticks(np.arange(y_count))
+    ax7.set_ylim(y_count - 0.5, -0.5)
+    ax7.set_yticklabels(list(return_years))
+    ax7.set_title('Yearly returns')
+
     # 设置所有图表的基本格式:
     for ax in [ax1, ax2, ax3, ax4, ax5]:
         ax.yaxis.tick_right()
+        ax.xaxis.set_visible(False)
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
         ax.spines['left'].set_visible(False)
         ax.grid(True)
 
-    # format the ticks
+    # 调整主图表的日期格式
     # major tick on year if span > 3 years, else on month
     if loop_results['years'] > 4:
         major_locator = years
@@ -784,6 +815,7 @@ def _plot_loop_result(loop_results: dict, config):
     ax5.xaxis.set_major_formatter(major_formatter)
     ax5.xaxis.set_minor_locator(minor_locator)
     ax5.xaxis.set_minor_formatter(minor_formatter)
+    ax5.xaxis.set_visible(True)
 
     plt.show()
 
