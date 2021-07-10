@@ -783,6 +783,11 @@ def _plot_loop_result(loop_results: dict, config):
     ax7.set_yticklabels(list(return_years))
     ax7.set_title('Yearly returns')
 
+    # 绘制月度收益率Histo直方图
+    ax8.set_title('monthly returns histo')
+    ax8.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
+                            label='monthly returns')
+
     # 设置所有图表的基本格式:
     for ax in [ax1, ax2, ax3, ax4, ax5]:
         ax.yaxis.tick_right()
