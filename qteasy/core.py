@@ -706,6 +706,7 @@ def check_and_prepare_hist_data(operator, config):
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+# TODO: 根据最新的qteasy基础模块设计更新docstring并更新函数
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
@@ -723,7 +724,7 @@ def run(operator, **kwargs):
              1，交易品种：str，需要交易的目标投资产品，可能为股票、基金、期货或其他，根据建立或设置的投资组合产品池确定
              2，交易位置：int，分别为多头头寸：1，或空头仓位： -1 （空头头寸只有在期货或期权交易时才会涉及到）
              3，交易方向：int，分别为开仓：1， 平仓：0 （股票和基金的交易只能开多头（买入）和平多头（卖出），基金可以开、平空头）
-             4，交易类型：int，分为市价单：0，限价单：0
+             4，交易类型：int，分为市价单：1，限价单：0
              5，交易价格：float，仅当交易类型为限价单时有效，市价单
              6，交易量：float，当交易方向为开仓（买入）时，交易量代表计划现金投入量，当交易方向为平仓（卖出）时，交易量代表卖出的产品份额
 
@@ -969,12 +970,12 @@ def run(operator, **kwargs):
                                               reference_history_data_type=reference_data_type,
                                               config=config,
                                               stage='loop')
+        # 格式化输出回测结果
+        _print_loop_result(loop_result, config)
         if config.visual:
+            # 如果config.visual == True，则：
             # 图表输出投资回报历史曲线
             _plot_loop_result(loop_result, config)
-        else:
-            # 格式化输出回测结果
-            _print_loop_result(loop_result, config)
 
         return loop_result
 
@@ -1004,11 +1005,10 @@ def run(operator, **kwargs):
                                                stage='test-o')
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
+        _print_test_result(opti_eval_res, config=config)
         if config.visual:
             pass
             # _plot_test_result(opti_eval_res, config=config)
-        else:
-            _print_test_result(opti_eval_res, config=config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
@@ -1025,10 +1025,10 @@ def run(operator, **kwargs):
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
             test_eval_res = result_pool.extra
+            _print_test_result(test_eval_res, config)
             if config.visual:
                 _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
-            else:
-                _print_test_result(test_eval_res, config)
+
         elif config.test_type == 'montecarlo':
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
@@ -1049,10 +1049,9 @@ def run(operator, **kwargs):
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
                 test_eval_res = result_pool.extra
-                if config.visual:
+                _print_test_result(test_eval_res, config)
+                if config.visual:  # 如果config.visual == True
                     pass
-                else:
-                    _print_test_result(test_eval_res, config)
 
         return pars
 

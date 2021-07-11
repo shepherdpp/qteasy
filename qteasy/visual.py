@@ -1117,8 +1117,8 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'final value:              ¥{loop_results["final_value"]:12,.2f}')
     print(f'Total return:             {loop_results["rtn"]:13.2%} \n'
           f'Avg Yearly return:        {loop_results["annual_rtn"]:13.2%}\n'
-          f'Skewness:                 {loop_results["skew"]:13.2%}\n'
-          f'Kurtosis:                 {loop_results["kurtosis"]:13.2%}')
+          f'Skewness:                 {loop_results["skew"]:13.2f}\n'
+          f'Kurtosis:                 {loop_results["kurtosis"]:13.2f}')
     print(f'Benchmark return:         {loop_results["ref_rtn"]:13.2%} \n'
           f'Benchmark Yearly return:  {loop_results["ref_annual_rtn"]:13.2%}')
     print(f'\n------strategy loop_results indicators------ \n'
