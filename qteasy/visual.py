@@ -583,6 +583,9 @@ def _plot_loop_result(loop_results: dict, config):
     # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
     ref_rate = (looped_values.reference - ref_start) / ref_start * 100
+    # 将benchmark的起始资产总额调整到与回测资金初始值一致，一遍生成可以比较的benchmark资金曲线
+    # 这个资金曲线用于显示"以对数比例显示的资金变化曲线"图
+    adjusted_bench_start = looped_values.reference / ref_start * start_point
 
     # process plot figure and axes formatting
     years = mdates.YearLocator()  # every year
@@ -595,15 +598,16 @@ def _plot_loop_result(loop_results: dict, config):
 
     chart_width = 0.88
     # 显示投资回报评价信息
-    fig = plt.figure(figsize=(12, 12), facecolor=(0.82, 0.83, 0.85))
-    ax1 = fig.add_axes([0.05, 0.60, chart_width, 0.26])
-    ax2 = fig.add_axes([0.05, 0.525, chart_width, 0.075], sharex=ax1)
-    ax3 = fig.add_axes([0.05, 0.450, chart_width, 0.075], sharex=ax1)
-    ax4 = fig.add_axes([0.05, 0.375, chart_width, 0.075], sharex=ax1)
-    ax5 = fig.add_axes([0.05, 0.300, chart_width, 0.075], sharex=ax1)
-    ax6 = fig.add_axes([0.02, 0.04, 0.38, 0.20])
-    ax7 = fig.add_axes([0.43, 0.04, 0.15, 0.20])
-    ax8 = fig.add_axes([0.64, 0.04, 0.29, 0.20])
+    fig = plt.figure(figsize=(12, 15), facecolor=(0.82, 0.83, 0.85))
+    ax1 = fig.add_axes([0.05, 0.69, chart_width, 0.20])
+    ax2 = fig.add_axes([0.05, 0.49, chart_width, 0.20], sharex=ax1)
+    ax3 = fig.add_axes([0.05, 0.43, chart_width, 0.06], sharex=ax1)
+    ax4 = fig.add_axes([0.05, 0.37, chart_width, 0.06], sharex=ax1)
+    ax5 = fig.add_axes([0.05, 0.31, chart_width, 0.06], sharex=ax1)
+    ax6 = fig.add_axes([0.05, 0.25, chart_width, 0.06], sharex=ax1)
+    ax7 = fig.add_axes([0.02, 0.04, 0.38, 0.16])
+    ax8 = fig.add_axes([0.43, 0.04, 0.15, 0.16])
+    ax9 = fig.add_axes([0.64, 0.04, 0.29, 0.16])
     if isinstance(config.asset_pool, str):
         title_asset_pool = config.asset_pool
     else:
@@ -616,36 +620,36 @@ def _plot_loop_result(loop_results: dict, config):
                  fontweight=10)
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
-    fig.text(0.07, 0.94, f'periods: {loop_results["years"]:3.1f} years, '
+    fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
                          f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
                          f'  back test:{time_str_format(loop_results["loop_run_time"])}')
-    fig.text(0.21, 0.87, f'Operation summary:\n\n'
+    fig.text(0.21, 0.90, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
                          f'final value:', ha='right')
-    fig.text(0.23, 0.87, f'{loop_results["oper_count"].buy.sum()}     buys \n'
+    fig.text(0.23, 0.90, f'{loop_results["oper_count"].buy.sum()}     buys \n'
                          f'{loop_results["oper_count"].sell.sum()}     sells\n'
                          f'¥{loop_results["total_fee"]:13,.2f}\n'
                          f'¥{loop_results["total_invest"]:13,.2f}\n'
                          f'¥{loop_results["final_value"]:13,.2f}')
-    fig.text(0.50, 0.87, f'Total return:\n'
+    fig.text(0.50, 0.90, f'Cumulative return:\n'
                          f'Avg annual return:\n'
-                         f'ref return:\n'
+                         f'Benchmark return:\n'
                          f'Avg annual ref return:\n'
                          f'Max drawdown:', ha='right')
-    fig.text(0.52, 0.87, f'{loop_results["rtn"] * 100:.2f}%    \n'
-                         f'{loop_results["annual_rtn"] * 100: .2f}%    \n'
-                         f'{loop_results["ref_rtn"] * 100:.2f}%    \n'
-                         f'{loop_results["ref_annual_rtn"] * 100:.2f}%\n'
-                         f'{loop_results["mdd"] * 100:.3f}%'
-                         f' on {loop_results["valley_date"]}')
-    fig.text(0.82, 0.87, f'alpha:\n'
+    fig.text(0.52, 0.90, f'{loop_results["rtn"]:.2%}    \n'
+                         f'{loop_results["annual_rtn"]: .2%}    \n'
+                         f'{loop_results["ref_rtn"]:.2%}    \n'
+                         f'{loop_results["ref_annual_rtn"]:.2%}\n'
+                         f'{loop_results["mdd"]:.1%}'
+                         f' on {loop_results["valley_date"].date()}')
+    fig.text(0.82, 0.90, f'alpha:\n'
                          f'Beta:\n'
                          f'Sharp ratio:\n'
                          f'Info ratio:\n'
                          f'250-day volatility:', ha='right')
-    fig.text(0.84, 0.87, f'{loop_results["alpha"]:.3f}  \n'
+    fig.text(0.84, 0.90, f'{loop_results["alpha"]:.3f}  \n'
                          f'{loop_results["beta"]:.3f}  \n'
                          f'{loop_results["sharp"]:.3f}  \n'
                          f'{loop_results["info"]:.3f}  \n'
@@ -653,12 +657,12 @@ def _plot_loop_result(loop_results: dict, config):
 
     # 绘制参考数据的收益率曲线图
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
-             color=(0.4, 0.6, 0.8), alpha=0.85, label='Reference')
+             color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
 
     # 绘制回测结果的收益率曲线图
     ax1.plot(looped_values.index, return_rate, linestyle='-',
              color=(0.8, 0.2, 0.0), alpha=0.85, label='Return')
-    ax1.set_ylabel('Cumulative return')
+    ax1.set_ylabel('Cumulative Return')
     ax1.yaxis.set_major_formatter(mtick.PercentFormatter())
     # 填充参考收益率的正负区间，绿色填充正收益率，红色填充负收益率
     ax1.fill_between(looped_values.index, 0, ref_rate,
@@ -728,25 +732,37 @@ def _plot_loop_result(loop_results: dict, config):
                  va='top')
     ax1.legend()
 
-    ax2.plot(looped_values.index, beta, label='beta')
-    ax2.plot(looped_values.index, alpha, label='alpha')
-    ax2.set_ylabel('rolling\nbeta/alpha')
+    # 绘制参考数据的收益率曲线图
+    ax2.plot(looped_values.index, adjusted_bench_start, linestyle='-',
+             color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
+
+    # 绘制回测结果的收益率曲线图
+    ax2.plot(looped_values.index, looped_values.value, linestyle='-',
+             color=(0.8, 0.2, 0.0), alpha=0.85, label='Cum Value')
+    ax2.set_ylabel('Cumulative Value\n in logarithm scale')
+    ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
+    ax2.set_yscale('log')
     ax2.legend()
 
-    ax3.bar(looped_values.index, ret)
-    ax3.set_ylabel('return')
+    ax3.plot(looped_values.index, beta, label='beta')
+    ax3.plot(looped_values.index, alpha, label='alpha')
+    ax3.set_ylabel('rolling\nbeta/alpha')
+    ax3.legend()
 
-    ax4.plot(looped_values.index, volatility, label='volatility')
-    ax4.plot(looped_values.index, sharp, label='sharp')
-    ax4.set_ylabel('Volatility\nsharp')
-    ax4.legend()
+    ax4.bar(looped_values.index, ret)
+    ax4.set_ylabel('return')
+
+    ax5.plot(looped_values.index, volatility, label='volatility')
+    ax5.plot(looped_values.index, sharp, label='sharp')
+    ax5.set_ylabel('Volatility\nsharp')
+    ax5.legend()
 
     # 绘制underwater图（drawdown可视化图表）
-    ax5.plot(underwater, label='underwater')
-    ax5.set_ylabel('underwater')
-    ax5.set_xlabel('date')
-    ax5.set_ylim(-1, 0)
-    ax5.fill_between(looped_values.index, 0, underwater,
+    ax6.plot(underwater, label='underwater')
+    ax6.set_ylabel('underwater')
+    ax6.set_xlabel('date')
+    ax6.set_ylim(-1, 0)
+    ax6.fill_between(looped_values.index, 0, underwater,
                     where=underwater < 0,
                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
 
@@ -756,19 +772,19 @@ def _plot_loop_result(loop_results: dict, config):
     return_years = monthly_return_df.index
     return_months = monthly_return_df.columns
     return_values = monthly_return_df.values
-    c = ax6.imshow(return_values, cmap='RdYlGn')
-    ax6.set_title('monthly returns')
-    ax6.set_xticks(np.arange(len(return_months)))
-    ax6.set_yticks(np.arange(len(return_years)))
-    ax6.set_xticklabels(return_months, rotation=45)
-    ax6.set_yticklabels(return_years)
+    c = ax7.imshow(return_values, cmap='RdYlGn')
+    ax7.set_title('monthly returns')
+    ax7.set_xticks(np.arange(len(return_months)))
+    ax7.set_yticks(np.arange(len(return_years)))
+    ax7.set_xticklabels(return_months, rotation=45)
+    ax7.set_yticklabels(return_years)
     base_aspect_ratio = 0.72
     if len(return_years) <= 12:
         aspect_ratio = base_aspect_ratio
     else:
         aspect_ratio = base_aspect_ratio * 12 / len(return_years)
-    ax6.set_aspect(aspect_ratio)
-    fig.colorbar(c, ax=ax6)
+    ax7.set_aspect(aspect_ratio)
+    fig.colorbar(c, ax=ax7)
 
     # 绘制年度收益率柱状图
     y_cum = loop_results['return_df']['y-cum']
@@ -776,22 +792,22 @@ def _plot_loop_result(loop_results: dict, config):
     pos_y_cum = np.where(y_cum >= 0, y_cum, 0)
     neg_y_cum = np.where(y_cum < 0, y_cum, 0)
     return_years = y_cum.index
-    ax7.barh(np.arange(y_count), pos_y_cum, 1, align='center', facecolor='green', alpha=0.85)
-    ax7.barh(np.arange(y_count), neg_y_cum, 1, align='center', facecolor='red', alpha=0.85)
-    ax7.set_yticks(np.arange(y_count))
-    ax7.set_ylim(y_count - 0.5, -0.5)
-    ax7.set_yticklabels(list(return_years))
-    ax7.set_title('Yearly returns')
+    ax8.barh(np.arange(y_count), pos_y_cum, 1, align='center', facecolor='green', alpha=0.85)
+    ax8.barh(np.arange(y_count), neg_y_cum, 1, align='center', facecolor='red', alpha=0.85)
+    ax8.set_yticks(np.arange(y_count))
+    ax8.set_ylim(y_count - 0.5, -0.5)
+    ax8.set_yticklabels(list(return_years))
+    ax8.set_title('Yearly returns')
 
     # 绘制月度收益率Histo直方图
-    ax8.set_title('monthly returns histo')
-    ax8.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
+    ax9.set_title('monthly returns histo')
+    ax9.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
                             label='monthly returns')
 
     # 设置所有图表的基本格式:
-    for ax in [ax1, ax2, ax3, ax4, ax5]:
+    for ax in [ax1, ax2, ax3, ax4, ax5, ax6]:
         ax.yaxis.tick_right()
-        ax.xaxis.set_visible(False)
+        ax.xaxis.set_ticklabels([])
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
@@ -816,11 +832,10 @@ def _plot_loop_result(loop_results: dict, config):
         minor_locator = weekdays
         minor_formatter = month_fmt_none
     # 前五个主表的时间轴共享，因此只需要设置最下方表的时间轴即可
-    ax5.xaxis.set_major_locator(major_locator)
-    ax5.xaxis.set_major_formatter(major_formatter)
-    ax5.xaxis.set_minor_locator(minor_locator)
-    ax5.xaxis.set_minor_formatter(minor_formatter)
-    ax5.xaxis.set_visible(True)
+    ax6.xaxis.set_major_locator(major_locator)
+    ax6.xaxis.set_major_formatter(major_formatter)
+    ax6.xaxis.set_minor_locator(minor_locator)
+    ax6.xaxis.set_minor_formatter(minor_formatter)
 
     plt.show()
 
@@ -1099,7 +1114,8 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     looped_values = loop_results['complete_values']
     worst_drawdowns = loop_results['worst_drawdowns']
     return_df = loop_results['return_df']
-    print(f'\n     ==================================== \n'
+    print(f'\n'
+          f'     ====================================\n'
           f'     |                                  |\n'
           f'     |       BACK TESTING RESULT        |\n'
           f'     |                                  |\n'
@@ -1129,23 +1145,23 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'250 day volatility:       {loop_results["volatility"]:13.3f}\n'
           f'Max drawdown:             {loop_results["mdd"]:13.2%} \n'
           f'    peak / valley:        {loop_results["peak_date"].date()} / {loop_results["valley_date"].date()}\n'
-          f'    recovered on:         {loop_results["recover_date"].date()}\n'
-          f'\n--------------Worst 5 drawdonws:-------------\n')
-    print(worst_drawdowns.to_string(formatters={'drawdown': '{:.2%}'.format}))
-    print(f'\n---------monthly returns in history:---------\n')
-    print(return_df.to_string(formatters={'Jan': '{:.1%}'.format,
-                                          'Feb': '{:.1%}'.format,
-                                          'Mar': '{:.1%}'.format,
-                                          'Apr': '{:.1%}'.format,
-                                          'May': '{:.1%}'.format,
-                                          'Jun': '{:.1%}'.format,
-                                          'Jul': '{:.1%}'.format,
-                                          'Aug': '{:.1%}'.format,
-                                          'Sep': '{:.1%}'.format,
-                                          'Oct': '{:.1%}'.format,
-                                          'Nov': '{:.1%}'.format,
-                                          'Dec': '{:.1%}'.format,
-                                          'y-cum': '{:.1%}'.format}))
+          f'    recovered on:         {loop_results["recover_date"].date()}\n')
+    # print(f'\n--------------Worst 5 drawdonws:-------------\n')
+    # print(worst_drawdowns.to_string(formatters={'drawdown': '{:.2%}'.format}))
+    # print(f'\n---------monthly returns in history:---------\n')
+    # print(return_df.to_string(formatters={'Jan': '{:.1%}'.format,
+    #                                       'Feb': '{:.1%}'.format,
+    #                                       'Mar': '{:.1%}'.format,
+    #                                       'Apr': '{:.1%}'.format,
+    #                                       'May': '{:.1%}'.format,
+    #                                       'Jun': '{:.1%}'.format,
+    #                                       'Jul': '{:.1%}'.format,
+    #                                       'Aug': '{:.1%}'.format,
+    #                                       'Sep': '{:.1%}'.format,
+    #                                       'Oct': '{:.1%}'.format,
+    #                                       'Nov': '{:.1%}'.format,
+    #                                       'Dec': '{:.1%}'.format,
+    #                                       'y-cum': '{:.1%}'.format}))
     print(f'\n===========END OF REPORT=============\n')
 
 
