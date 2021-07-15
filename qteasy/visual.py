@@ -580,6 +580,7 @@ def _plot_loop_result(loop_results: dict, config):
     volatility = looped_values['volatility']
     sharp = looped_values['sharp']
     underwater = looped_values['underwater']
+    drawdowns = loop_results['worst_drawdowns']
     # 回测结果和参考指数的总体回报率曲线
     return_rate = (looped_values.value - start_point) / start_point * 100
     ref_rate = (looped_values.reference - ref_start) / ref_start * 100
@@ -599,11 +600,11 @@ def _plot_loop_result(loop_results: dict, config):
     chart_width = 0.88
     # 显示投资回报评价信息
     fig = plt.figure(figsize=(12, 15), facecolor=(0.82, 0.83, 0.85))
-    ax1 = fig.add_axes([0.05, 0.69, chart_width, 0.20])
-    ax2 = fig.add_axes([0.05, 0.49, chart_width, 0.20], sharex=ax1)
-    ax3 = fig.add_axes([0.05, 0.43, chart_width, 0.06], sharex=ax1)
-    ax4 = fig.add_axes([0.05, 0.37, chart_width, 0.06], sharex=ax1)
-    ax5 = fig.add_axes([0.05, 0.31, chart_width, 0.06], sharex=ax1)
+    ax1 = fig.add_axes([0.05, 0.67, chart_width, 0.20])
+    ax2 = fig.add_axes([0.05, 0.57, chart_width, 0.08], sharex=ax1)
+    ax3 = fig.add_axes([0.05, 0.49, chart_width, 0.06], sharex=ax1)
+    ax4 = fig.add_axes([0.05, 0.41, chart_width, 0.06], sharex=ax1)
+    ax5 = fig.add_axes([0.05, 0.33, chart_width, 0.06], sharex=ax1)
     ax6 = fig.add_axes([0.05, 0.25, chart_width, 0.06], sharex=ax1)
     ax7 = fig.add_axes([0.02, 0.04, 0.38, 0.16])
     ax8 = fig.add_axes([0.43, 0.04, 0.15, 0.16])
@@ -656,6 +657,7 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["volatility"]:.3f}')
 
     # 绘制参考数据的收益率曲线图
+    ax1.set_title('cum-return, benchmark and history operations')
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
 
@@ -733,6 +735,7 @@ def _plot_loop_result(loop_results: dict, config):
     ax1.legend()
 
     # 绘制参考数据的收益率曲线图
+    ax2.set_title('benchmark and cumulative value in Logarithm scale')
     ax2.plot(looped_values.index, adjusted_bench_start, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
 
@@ -744,20 +747,24 @@ def _plot_loop_result(loop_results: dict, config):
     ax2.set_yscale('log')
     ax2.legend()
 
+    ax3.set_title('Rolling beta and alpha')
     ax3.plot(looped_values.index, beta, label='beta')
     ax3.plot(looped_values.index, alpha, label='alpha')
     ax3.set_ylabel('rolling\nbeta/alpha')
     ax3.legend()
 
+    ax4.set_title('returns')
     ax4.bar(looped_values.index, ret)
     ax4.set_ylabel('return')
 
+    ax5.set_title('Rolling volatility and sharp')
     ax5.plot(looped_values.index, volatility, label='volatility')
     ax5.plot(looped_values.index, sharp, label='sharp')
     ax5.set_ylabel('Volatility\nsharp')
     ax5.legend()
 
     # 绘制underwater图（drawdown可视化图表）
+    ax6.set_title('underwater plot and 5 worst drawdowns')
     ax6.plot(underwater, label='underwater')
     ax6.set_ylabel('underwater')
     ax6.set_xlabel('date')
@@ -765,6 +772,29 @@ def _plot_loop_result(loop_results: dict, config):
     ax6.fill_between(looped_values.index, 0, underwater,
                     where=underwater < 0,
                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+    dd_starts = drawdowns['peak_date'].values
+    dd_ends = drawdowns['recover_date'].values
+    dd_valley = drawdowns['valley_date'].values
+    dd_value = drawdowns['drawdown'].values
+    for start, end, valley, dd in zip(dd_starts, dd_ends, dd_valley, dd_value):
+        if np.isnan(end):
+            end = looped_values.index[-1]
+        ax6.axvspan(start, end,
+                    facecolor='grey',
+                    alpha=0.3)
+        if dd > -0.6:
+            ax6.text(x=valley,
+                     y=dd - 0.05,
+                     s=f"-{dd:.1%}\n",
+                     ha='center',
+                     va='top')
+        else:
+            ax6.text(x=valley,
+                     y=dd + 0.15,
+                     s=f"-{dd:.1%}\n",
+                     ha='center',
+                     va='bottom')
+
 
     # 绘制收益率热力图
     monthly_return_df = loop_results['return_df'][['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -784,6 +814,7 @@ def _plot_loop_result(loop_results: dict, config):
     else:
         aspect_ratio = base_aspect_ratio * 12 / len(return_years)
     ax7.set_aspect(aspect_ratio)
+    ax7.grid(False)
     fig.colorbar(c, ax=ax7)
 
     # 绘制年度收益率柱状图
@@ -798,11 +829,13 @@ def _plot_loop_result(loop_results: dict, config):
     ax8.set_ylim(y_count - 0.5, -0.5)
     ax8.set_yticklabels(list(return_years))
     ax8.set_title('Yearly returns')
+    ax8.grid(False)
 
     # 绘制月度收益率Histo直方图
     ax9.set_title('monthly returns histo')
     ax9.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
                             label='monthly returns')
+    ax9.grid(False)
 
     # 设置所有图表的基本格式:
     for ax in [ax1, ax2, ax3, ax4, ax5, ax6]:
@@ -836,6 +869,10 @@ def _plot_loop_result(loop_results: dict, config):
     ax6.xaxis.set_major_formatter(major_formatter)
     ax6.xaxis.set_minor_locator(minor_locator)
     ax6.xaxis.set_minor_formatter(minor_formatter)
+    # 隐藏除ax6以外的其他ax的ticklabel, 因为ax1到ax6共享xaxis，因此不能用：
+    # ax1.xaxis.set_ticklabels([])
+    for ax in [ax1, ax2, ax3, ax4, ax5]:
+        plt.setp(ax.get_xticklabels(), visible=False)
 
     plt.show()
 
