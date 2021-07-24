@@ -20,6 +20,44 @@ from .built_in import AVAILABLE_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
 from .utilfuncs import unify, mask_to_signal
 
+
+class Signal:
+    """ 交易信号类，包含相关的属性和完整的交易信号清单。完整的交易信号包括以下属性：
+
+        signal_type:    信号类型，
+                            PT-仓位目标信号
+                            PS-比例交易信号
+                            VS-数量交易信号
+        price_type:     价格类型：
+                            0 - 市价交易信号
+                            1 - 定价交易信号
+        signal_matrix:  交易信号清单
+        price_matrix:   交易价格清单，
+                            当价格类型为0时，使用回测时的市场价格交易，价格清单中的数字代表市场价格类型
+                            当价格类型为1时，使用固定的交易价格交易，价格清单中的数字代表给定的交易价格
+
+        包含的方法有：
+
+        merge:
+
+    """
+    def __init__(self, sig_type, price_type, sig_matrix, price_matrix):
+        """ 创建一个新的signal对象
+
+        :param sig_type:
+        :param price_type:
+        :param sig_matrix:
+        :param price_matrix:
+        """
+        # 检查输入数据是否符合要求，否则报错：
+
+        # 属性赋值
+        self.signal_type = sig_type
+        self.price_type = price_type
+        self.signal_matrix = sig_matrix
+        self.price_matrix = price_matrix
+
+
 # TODO：
 # TODO：作为完整的交易信号，为了实现更加贴近实际的交易信号，交易信号应该包括交易方向和头寸位置两个主要参数（对于股票来说
 # TODO：只有多头头寸）
@@ -505,7 +543,7 @@ class Operator:
 
         :return:
         """
-        raise NotImplementedError
+        return True
 
     def add_strategy(self, stg, usage):
         """add strategy"""

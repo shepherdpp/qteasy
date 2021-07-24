@@ -1148,21 +1148,21 @@ def _num_or_seq_of_num(value):
 
 
 def _bypass_kwarg_validation(value):
-    ''' For some kwargs, we either don't know enough, or
+    """ For some kwargs, we either don't know enough, or
         the validation is too complex to make it worth while,
         so we bypass kwarg validation.  If the kwarg is
         invalid, then eventually an exception will be
         raised at the time the kwarg value is actually used.
-    '''
+    """
     return True
 
 
 def _kwarg_not_implemented(value):
-    ''' If you want to list a kwarg in a valid_kwargs dict for a given
+    """ If you want to list a kwarg in a valid_kwargs dict for a given
         function, but you have not yet, or don't yet want to, implement
         the kwarg; or you simply want to (temporarily) disable the kwarg,
         then use this function as the kwarg validator
-    '''
+    """
     raise NotImplementedError('kwarg NOT implemented.')
 
 
