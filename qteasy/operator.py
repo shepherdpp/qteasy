@@ -408,7 +408,7 @@ class Operator:
         return len(self.strategies)
 
     @property
-    def strategy_benders(self):
+    def strategy_benlders(self):
         return [self.ls_blender, self.selecting_blender, self.ricon_blender]
 
     @property
@@ -740,7 +740,7 @@ class Operator:
 
     # =================================================
     # 下面是Operation模块的公有方法：
-    def info(self, verbose = False):
+    def info(self, verbose=False):
         """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
             如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
             在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息

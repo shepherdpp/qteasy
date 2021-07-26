@@ -629,14 +629,14 @@ def _valid_qt_kwargs():
                                 'level':     4,
                                 'text':      '为True时在回测图表中用色带显示投资仓位'},
 
-        'cost_fixed_buy':       {'Default':   0,
+        'cost_fixed_buy':      {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     2,
                                 'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'
                                              '默认值为10元'},
 
-        'cost_fixed_sell':      {'Default':   0,
+        'cost_fixed_sell':     {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     2,
@@ -837,12 +837,7 @@ def _valid_qt_kwargs():
                                              '"info"        - info rate'},
 
         'indicator_plot_type': {'Default':   'histo',
-                                'Validator': lambda value: isinstance(value, (int, str)) and
-                                                           ((value in ['errorbar',
-                                                                       'scatter',
-                                                                       'histo',
-                                                                       'violin',
-                                                                       'box']) or (0 <= value <= 4)),
+                                'Validator': lambda value: _validate_indicator_plot_type(value),
                                 'level':     2,
                                 'text':      '优化或测试结果评价指标的可视化图表类型:\n'
                                              '0  - errorbar 类型\n'
@@ -1116,6 +1111,34 @@ def _validate_asset_id(value):
     :param value:
     :return:
     """
+    return True
+
+
+def _validate_indicator_plot_type(value):
+    """ validate the value of indicator plot types, which include:
+
+    '优化或测试结果评价指标的可视化图表类型:\n'
+         '0  - errorbar 类型\n'
+         '1  - scatter 类型\n'
+         '2  - histo 类型\n'
+         '3  - violin 类型\n'
+         '4  - box 类型'
+
+    :param value:
+    :return: Boolean
+    """
+    if not isinstance(value, (int, str)):
+        return False
+    if isinstance(value, int):
+        if not (0 <= value <= 4):
+            return False
+    else:
+        if value not in ['errorbar',
+                         'scatter',
+                         'histo',
+                         'violin',
+                         'box']:
+            return False
     return True
 
 
