@@ -346,30 +346,30 @@ class InterCandle:
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
            no_visual=False, **kwargs):
     """plot stock data or extracted data in candle form"""
-    return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                    end=end, asset_type=asset_type, plot_type='candle', no_visual=no_visual,
-                    **kwargs)
+    return _mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
+                     end=end, asset_type=asset_type, plot_type='candle', no_visual=no_visual,
+                     **kwargs)
 
 
 def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
          no_visual=False, **kwargs):
     """plot stock data or extracted data in ohlc form"""
-    return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                    end=end, asset_type=asset_type, plot_type='ohlc', no_visual=no_visual,
-                    **kwargs)
+    return _mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
+                     end=end, asset_type=asset_type, plot_type='ohlc', no_visual=no_visual,
+                     **kwargs)
 
 
 def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
           no_visual=False, **kwargs):
     """plot stock data or extracted data in renko form"""
-    return mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                    end=end, asset_type=asset_type, plot_type='renko', no_visual=no_visual,
-                    **kwargs)
+    return _mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
+                     end=end, asset_type=asset_type, plot_type='renko', no_visual=no_visual,
+                     **kwargs)
 
 
-def mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
-             asset_type='E', plot_type=None, no_visual=False, mav=None, indicator=None,
-             indicator_par=None, **kwargs):
+def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
+              asset_type='E', plot_type=None, no_visual=False, mav=None, indicator=None,
+              indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     assert plot_type is not None
@@ -1149,8 +1149,6 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     if loop_results is None:
         return
     looped_values = loop_results['complete_values']
-    worst_drawdowns = loop_results['worst_drawdowns']
-    return_df = loop_results['return_df']
     print(f'\n'
           f'     ====================================\n'
           f'     |                                  |\n'

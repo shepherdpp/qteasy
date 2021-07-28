@@ -9,8 +9,8 @@ from .core import run
 from .history import HistoryPanel
 from .history import csv_to_hp, hdf_to_hp, dataframe_to_hp, stack_dataframes
 from .operator import Operator
-# from .strategy import *
-# from .visual import *
+from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSelecting, ReferenceTiming
+from .visual import candle, ohlc, renko
 from .built_in import *
 from .finance import CashPlan
 from ._arg_validators import QT_CONFIG

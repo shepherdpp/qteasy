@@ -244,10 +244,10 @@ class SoftBBand(stg.RollingTiming):
         hi, mid, low = bbands(h[0], p, u, d, m)
         # 策略:
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
-        # 如果价格高于上轨，则逐步卖出，每次卖出投资总额的10%
-        if h[0][-1] < low:
+        # 如果价格高于上轨，则逐步卖出，每次卖出投资总额的33.3%
+        if h[0][-1] < low[-1]:
             sig = 0.1
-        elif h[0][-1] > hi:
+        elif h[0][-1] > hi[-1]:
             sig = -0.333
         else:
             sig = 0
@@ -269,7 +269,7 @@ class TimingBBand(stg.RollingTiming):
 
     def __init__(self, pars=(20, 2, 2)):
         super().__init__(pars=pars,
-                         par_count=2,
+                         par_count=3,
                          par_types=['discr', 'conti', 'conti'],
                          par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
                          stg_name='BBand STRATEGY',
@@ -277,27 +277,26 @@ class TimingBBand(stg.RollingTiming):
                          data_freq='d',
                          sample_freq='d',
                          window_length=270,
-                         data_types=['close', 'high', 'low'])
+                         data_types=['close'])
 
-    def _realize(self, hist_data, params):
+    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
 
         span, upper, lower = params
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = hist_data.T
-        avg_price = np.mean(h[0], 1)
-        upper, middle, lower = bbands(close=avg_price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
-
+        price = h[0]
+        upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
         # 生成BBANDS操作信号判断：
         # 1, 当avg_price从上至下穿过布林带上缘时，产生空头建仓或平多仓信号 -1
         # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
         # 3, 其余时刻不产生任何信号
-        if avg_price[-2] >= upper[-2] and avg_price[-1] < upper[-1]:
-            return -1
-        elif avg_price[-2] <= lower[-2] and avg_price[-1] > lower[-1]:
-            return +1
+        if price[-2] >= upper[-2] and price[-1] < upper[-1]:
+            return -1.
+        elif price[-2] <= lower[-2] and price[-1] > lower[-1]:
+            return +1.
         else:
-            return 0
+            return 0.
 
 
 class TimingSAREXT(stg.RollingTiming):
@@ -2444,6 +2443,8 @@ BUILT_IN_STRATEGY_DICT = {'crossline':  TimingCrossline,
                           'trix':       TimingTRIX,
                           'cdl':        TimingCDL,
                           'bband':      TimingBBand,
+                          's-bband':    SoftBBand,
+                          'sarext':     TimingSAREXT,
                           'ricon_none': RiconNone,
                           'urgent':     RiconUrgent,
                           'long':       TimingLong,
