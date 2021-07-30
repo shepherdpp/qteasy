@@ -261,20 +261,25 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     :return:
     """
     loop_len = len(looped_value)
-    # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
+    # 计算alpha的过程需要用到beta，如果beta不存在则需要先计算beta
+    if 'beta' not in looped_value.columns:
+        b = eval_beta(looped_value, reference_value, reference_data)
     if loop_len <= 250:
+        # 计算年化收益，如果回测期间小于一年，直接计算平均年收益率
         total_year = _get_yearly_span(looped_value)
         final_value = eval_fv(looped_value)
         strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
         reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
         b = eval_beta(looped_value, reference_value, reference_data)
         alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
+        # 当回测期间小于1年时，填充空白alpha值
+        looped_value['alpha'] = np.nan
+        looped_value['alpha'].iloc[-1] = alpha
     else:  # loop_len > 250
+        # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
         bench = reference_value[reference_data]
         bench_ret = (bench / bench.shift(250)) - 1
-        if 'beta' not in looped_value.columns:
-            b = eval_beta(looped_value, reference_value, reference_data)
         looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
         alpha = looped_value['alpha'].mean()
     return alpha
