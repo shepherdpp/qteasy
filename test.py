@@ -9,7 +9,7 @@ import datetime
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
-from qteasy.utilfuncs import next_market_trade_day
+from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_or_slice, labels_to_dict
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator
@@ -2622,22 +2622,22 @@ class TestOperatorSubFuncs(unittest.TestCase):
     def test_unify(self):
         print('Testing Unify functions\n')
         l1 = np.array([[3, 2, 5], [5, 3, 2]])
-        res = qt.unify(l1)
+        res = unify(l1)
         target = np.array([[0.3, 0.2, 0.5], [0.5, 0.3, 0.2]])
 
         self.assertIs(np.allclose(res, target), True, 'sum of all elements is 1')
         l1 = np.array([[1, 1, 1, 1, 1], [2, 2, 2, 2, 2]])
-        res = qt.unify(l1)
+        res = unify(l1)
         target = np.array([[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2]])
 
         self.assertIs(np.allclose(res, target), True, 'sum of all elements is 1')
 
     def test_mask_to_signal(self):
-        signal = qt.mask_to_signal(self.mask)
+        signal = mask_to_signal(self.mask)
         print(f'Test A: single mask to signal, result: \n{signal}')
         self.assertTrue(np.allclose(signal, self.correct_signal))
 
-        signal = qt.mask_to_signal(self.multi_mask)
+        signal = mask_to_signal(self.multi_mask)
         print(f'Test A: single mask to signal, result: \n{signal}')
         self.assertTrue(np.allclose(signal, self.correct_multi_signal))
 
@@ -4160,9 +4160,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(f'test converting DataFrame to HistoryPanel')
         data = np.random.randint(10, size=(10, 5))
         df1 = pd.DataFrame(data)
-        df2 = pd.DataFrame(data, columns=qt.str_to_list(self.shares))
+        df2 = pd.DataFrame(data, columns=str_to_list(self.shares))
         df3 = pd.DataFrame(data[:, 0:4])
-        df4 = pd.DataFrame(data[:, 0:4], columns=qt.str_to_list(self.htypes))
+        df4 = pd.DataFrame(data[:, 0:4], columns=str_to_list(self.htypes))
         hp = qt.dataframe_to_hp(df1, htypes='close')
         self.assertIsInstance(hp, qt.HistoryPanel)
         self.assertEqual(hp.shares, [0, 1, 2, 3, 4])
@@ -4179,7 +4179,7 @@ class TestHistoryPanel(unittest.TestCase):
                                      pd.Timestamp('1970-01-01 00:00:00.000000009')])
         hp = qt.dataframe_to_hp(df2, shares=self.shares, htypes='close')
         self.assertIsInstance(hp, qt.HistoryPanel)
-        self.assertEqual(hp.shares, qt.str_to_list(self.shares))
+        self.assertEqual(hp.shares, str_to_list(self.shares))
         self.assertEqual(hp.htypes, ['close'])
         hp = qt.dataframe_to_hp(df3, shares='000100', column_type='htypes')
         self.assertIsInstance(hp, qt.HistoryPanel)
@@ -4188,7 +4188,7 @@ class TestHistoryPanel(unittest.TestCase):
         hp = qt.dataframe_to_hp(df4, shares='000100', htypes=self.htypes, column_type='htypes')
         self.assertIsInstance(hp, qt.HistoryPanel)
         self.assertEqual(hp.shares, ['000100'])
-        self.assertEqual(hp.htypes, qt.str_to_list(self.htypes))
+        self.assertEqual(hp.htypes, str_to_list(self.htypes))
         hp.info()
         self.assertRaises(KeyError, qt.dataframe_to_hp, df1)
 
@@ -4953,24 +4953,24 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_list_or_slice(self):
         str_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
-        self.assertEqual(qt.list_or_slice(slice(1, 2, 1), str_dict), slice(1, 2, 1))
-        self.assertEqual(qt.list_or_slice('open', str_dict), [1])
-        self.assertEqual(list(qt.list_or_slice('close, high, low', str_dict)), [0, 2, 3])
-        self.assertEqual(list(qt.list_or_slice('close:high', str_dict)), [0, 1, 2])
-        self.assertEqual(list(qt.list_or_slice(['open'], str_dict)), [1])
-        self.assertEqual(list(qt.list_or_slice(['open', 'high'], str_dict)), [1, 2])
-        self.assertEqual(list(qt.list_or_slice(0, str_dict)), [0])
-        self.assertEqual(list(qt.list_or_slice([0, 2], str_dict)), [0, 2])
-        self.assertEqual(list(qt.list_or_slice([True, False, True, False], str_dict)), [0, 2])
+        self.assertEqual(list_or_slice(slice(1, 2, 1), str_dict), slice(1, 2, 1))
+        self.assertEqual(list_or_slice('open', str_dict), [1])
+        self.assertEqual(list(list_or_slice('close, high, low', str_dict)), [0, 2, 3])
+        self.assertEqual(list(list_or_slice('close:high', str_dict)), [0, 1, 2])
+        self.assertEqual(list(list_or_slice(['open'], str_dict)), [1])
+        self.assertEqual(list(list_or_slice(['open', 'high'], str_dict)), [1, 2])
+        self.assertEqual(list(list_or_slice(0, str_dict)), [0])
+        self.assertEqual(list(list_or_slice([0, 2], str_dict)), [0, 2])
+        self.assertEqual(list(list_or_slice([True, False, True, False], str_dict)), [0, 2])
 
     def test_label_to_dict(self):
         target_list = [0, 1, 10, 100]
         target_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
         target_dict2 = {'close': 0, 'open': 2, 'high': 1, 'low': 3}
-        self.assertEqual(qt.labels_to_dict('close, open, high, low', target_list), target_dict)
-        self.assertEqual(qt.labels_to_dict(['close', 'open', 'high', 'low'], target_list), target_dict)
-        self.assertEqual(qt.labels_to_dict('close, high, open, low', target_list), target_dict2)
-        self.assertEqual(qt.labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
+        self.assertEqual(labels_to_dict('close, open, high, low', target_list), target_dict)
+        self.assertEqual(labels_to_dict(['close', 'open', 'high', 'low'], target_list), target_dict)
+        self.assertEqual(labels_to_dict('close, high, open, low', target_list), target_dict2)
+        self.assertEqual(labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
 
     def test_regulate_date_format(self):
         self.assertEqual(regulate_date_format('2019/11/06'), '20191106')
