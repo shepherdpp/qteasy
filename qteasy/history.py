@@ -302,6 +302,10 @@ class HistoryPanel():
         """获取HistoryPanel的各个维度的尺寸"""
         return self._l_count, self._r_count, self._c_count
 
+    def __len__(self):
+        """获取HistoryPanel的历史数据长度"""
+        return self._r_count
+
     def __getitem__(self, keys=None):
         """获取历史数据的一个切片，给定一个type、日期或股票代码, 输出相应的数据
 
