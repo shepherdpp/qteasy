@@ -6815,8 +6815,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -6871,8 +6869,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_montecarlo_visual(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
         qt.configuration(up_to=1, default=True)
         qt.run(self.op,
@@ -6896,8 +6892,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_grid(self):
         """测试策略的优化模式，使用网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -6953,8 +6947,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_grid_visual(self):
         """测试策略的优化模式，使用网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -7014,8 +7006,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_incremental(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -7083,8 +7073,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_incremental_visual(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -7120,8 +7108,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_predict(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
@@ -7156,8 +7142,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_predict_visual(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
@@ -7196,8 +7180,6 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
-        # TODO: Investigate, error when invest_end being set to "20181231", problem probably
-        # TODO: related to trade day calendar.
         op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
         all_shares = stock_basic()
         shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
@@ -7210,7 +7192,7 @@ class TestQT(unittest.TestCase):
                      ref_asset_type='I',
                      opti_output_count=50,
                      invest_start='20070101',
-                     invest_end='20181229',
+                     invest_end='20181231',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
