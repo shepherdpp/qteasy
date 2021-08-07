@@ -629,14 +629,14 @@ def _valid_qt_kwargs():
                                 'level':     4,
                                 'text':      '为True时在回测图表中用色带显示投资仓位'},
 
-        'cost_fixed_buy':      {'Default':   0,
+        'cost_fixed_buy':       {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     2,
                                 'text':      '买入证券或资产时的固定成本或固定佣金，该金额不随买入金额变化'
                                              '默认值为10元'},
 
-        'cost_fixed_sell':     {'Default':   0,
+        'cost_fixed_sell':      {'Default':   0,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and value >= 0,
                                 'level':     2,
@@ -681,6 +681,12 @@ def _valid_qt_kwargs():
                                 'level':     1,
                                 'text':      '是否生成日志'},
 
+        'trade_log':           {'Default':   True,
+                                'Validator': lambda value: isinstance(value, bool),
+                                'level':     1,
+                                'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
+                                             '包括交易信号以及每一步骤的交易结果'},
+
         'invest_start':        {'Default':   '20160405',
                                 'Validator': lambda value: isinstance(value, str)
                                                            and _is_datelike(value),
@@ -714,6 +720,63 @@ def _valid_qt_kwargs():
                                              '以下两种输入方式等效：\n'
                                              '"20100104,20100202,20100304"'
                                              '["20100104", "20100202", "20100304"]'},
+
+        'PT_buy_threashold':   {'Default':   0.03,
+                                'Validator': lambda value: isinstance(value, float)
+                                                           and value >= 0 and value < 1,
+                                'level':     3,
+                                'text':      '回测信号模式为PT（position target）时，触发买入信号的仓位差异阈值\n'
+                                             '在这种模式下，当持有的投资产品的仓位与目标仓位高，且差额超过阈值时，触发买入信号\n'
+                                             '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
+                                             '该百分比必须为正'},
+
+        'PT_sell_threashold':  {'Default':   -0.03,
+                                'Validator':  lambda value: isinstance(value, float)
+                                                           and value > -1 and value <= 0,
+                                'level':      3,
+                                'text':       '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
+                                              '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发卖出信号\n'
+                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
+                                              '该百分比必须为负'},
+
+        'price_priority_OHLC': {'Default':   'OHLC',
+                                'Validator':  lambda value: isinstance(value, str)
+                                                            and all(item in ['O', 'H', 'L', 'C'
+                                                                             'o', 'h', 'l', 'c']
+                                                                    for item in value)
+                                                            and not any(item not in ['O', 'H', 'L', 'C'
+                                                                                     'o', 'h', 'l', 'c']
+                                                                        for item in value),
+                                'level':      3,
+                                'text':       '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
+                                              '不同的价格信号的优先级。\n'
+                                              '输入类型为字符串，包括O、H、L、C四个字母的所有可能组合'},
+
+        'price_priority_quote':{'Default':   'normal',
+                                'Validator':  lambda value: isinstance(value, str)
+                                                            and value in ['normal', 'reverse'],
+                                'level':      3,
+                                'text':       '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为实时报价时，回测程序处理\n'
+                                              '不同的价格信号的优先级。\n'
+                                              '输入包括"normal" 以及 "reverse"两种，分别表示：\n'
+                                              '- "normal"：  优先处理更接近成交价的报价，如卖1/买1等\n'
+                                              '- "reverse"： 优先处理更远离成交价的报价，如卖5/买5等'},
+
+        'cash_delivery_time':  {'Default':   'T+0',
+                                'Validator':  lambda value: isinstance(value, str)
+                                                            and value in ['T+0', 'T+1', 'T+2', 'T+3', 'T+4'],
+                                'level':      3,
+                                'text':       '回测时卖出股票获得现金的交割周期，T代表交易日，T+N中的数字N代表交易日后第N天\n'
+                                              '可以获得现金交割。\n'
+                                              '获得现金后立即计入总资产计算，但在途资金（尚未交割的资金）不能用于下一笔交易'},
+
+        'stock_delivery_time': {'Default':   'T+1',
+                                'Validator':  lambda value: isinstance(value, str)
+                                                            and value in ['T+0', 'T+1', 'T+2', 'T+3', 'T+4'],
+                                'level':      3,
+                                'text':       '回测时买入股票后的股票交割周期，T代表交易日，T+N中的数字N代表交易日后第N天\n'
+                                              '可以获得股票交割。\n'
+                                              '获得股票后立即计入总资产计算，但尚未交割的股票不能用于下一笔交易'},
 
         'opti_start':          {'Default':   '20160405',
                                 'Validator': lambda value: isinstance(value, str)
