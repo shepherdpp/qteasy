@@ -723,7 +723,7 @@ def _valid_qt_kwargs():
 
         'PT_buy_threashold':   {'Default':   0.03,
                                 'Validator': lambda value: isinstance(value, float)
-                                                           and value >= 0 and value < 1,
+                                                           and 0 <= value < 1,
                                 'level':     3,
                                 'text':      '回测信号模式为PT（position target）时，触发买入信号的仓位差异阈值\n'
                                              '在这种模式下，当持有的投资产品的仓位与目标仓位高，且差额超过阈值时，触发买入信号\n'
@@ -731,26 +731,26 @@ def _valid_qt_kwargs():
                                              '该百分比必须为正'},
 
         'PT_sell_threashold':  {'Default':   -0.03,
-                                'Validator':  lambda value: isinstance(value, float)
-                                                           and value > -1 and value <= 0,
-                                'level':      3,
-                                'text':       '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
-                                              '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发卖出信号\n'
-                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
-                                              '该百分比必须为负'},
+                                'Validator': lambda value: isinstance(value, float)
+                                                            and -1 < value <= 0,
+                                'level':     3,
+                                'text':      '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
+                                             '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发卖出信号\n'
+                                             '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
+                                             '该百分比必须为负'},
 
         'price_priority_OHLC': {'Default':   'OHLC',
-                                'Validator':  lambda value: isinstance(value, str)
+                                'Validator': lambda value: isinstance(value, str)
                                                             and all(item in ['O', 'H', 'L', 'C'
                                                                              'o', 'h', 'l', 'c']
                                                                     for item in value)
                                                             and not any(item not in ['O', 'H', 'L', 'C'
                                                                                      'o', 'h', 'l', 'c']
                                                                         for item in value),
-                                'level':      3,
-                                'text':       '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
-                                              '不同的价格信号的优先级。\n'
-                                              '输入类型为字符串，包括O、H、L、C四个字母的所有可能组合'},
+                                'level':     3,
+                                'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
+                                             '不同的价格信号的优先级。\n'
+                                             '输入类型为字符串，包括O、H、L、C四个字母的所有可能组合'},
 
         'price_priority_quote':{'Default':   'normal',
                                 'Validator':  lambda value: isinstance(value, str)

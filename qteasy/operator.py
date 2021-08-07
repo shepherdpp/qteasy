@@ -41,7 +41,7 @@ class Signal:
         merge:
 
     """
-    def __init__(self, sig_type, price_type, sig_matrix, price_matrix):
+    def __init__(self, sig_type, price_type, op_matrix, price_matrix = None):
         """ 创建一个新的signal对象
 
         :param sig_type:
@@ -52,11 +52,82 @@ class Signal:
         # 检查输入数据是否符合要求，否则报错：
 
         # 属性赋值
-        self.signal_type = sig_type
-        self.price_type = price_type
-        self.signal_matrix = sig_matrix
-        self.price_matrix = price_matrix
+        self._signal_type = sig_type
+        self._price_type = price_type
+        self._op_matrix = op_matrix
+        if price_type == 'fixed':
+            self._price_matrix = price_matrix
+        else:
+            self._price_matrix = None
 
+    @property
+    def signal_type(self):
+        return self._signal_type
+
+    @signal_type.setter
+    def signal_type(self, value):
+        self._signal_type = value
+
+    @property
+    def price_type(self):
+        return self._price_type
+
+    @property
+    def op(self):
+        return self._op_matrix
+
+    @property
+    def prices(self):
+        return self._price_matrix
+
+    def blend(self, other, blend_type):
+        """ blend self with other signal object
+
+        :param blend_type:
+        :return:
+        """
+        if not isinstance(other, Signal):
+            raise TypeError(f'other should be another Signal object')
+        if self.signal_type != other.signal_type:
+            raise TypeError('Two signals should be of the same type')
+        if self.price_type == 'fixed':
+            raise ValueError(f'Only market price types can be blended')
+        if self.price_type != other.price_type:
+            raise ValueError(f'Two signals should have same type of market price')
+        # depending on the signal type of self
+        if self.signal_type == 'PT':
+            return self._blend_pt(other, blend_type)
+        if self.signal_type == 'PS':
+            return self._blend_ps(other, blend_type)
+        if self.signal_type == 'vs':
+            return self._blend_vs(other, blend_type)
+
+    def _blend_pt(self, other, blend_type):
+        """ blend position target type of signals
+
+        :param other:
+        :param blend_type:
+        :return:
+        """
+        raise NotImplementedError
+
+    def _blend_ps(self, other, blend_type):
+        """ blend prop-signal type of signals
+
+        :param other:
+        :param blend_type:
+        :return:
+        """
+        raise NotImplementedError
+
+    def _blend_vs(self, other, blend_type):
+        """ blend volume signal type of signals
+
+        :param other:
+        :param blend_type:
+        :return:
+        """
+        raise NotImplementedError
 
 # TODO：
 # TODO：作为完整的交易信号，为了实现更加贴近实际的交易信号，交易信号应该包括交易方向和头寸位置两个主要参数（对于股票来说
@@ -91,13 +162,13 @@ class Operator:
 
         在同一个Operator对象中，不同生成类型的策略可以被用于不同的用途，具体如下：
 
-         usage \ generator | RollingTiming | SimpleSelecting | Simple_Timing | FactoralSelecting | ReferenceTiming |
+         Gen  \  strategy  | RollingTiming | SimpleSelecting | Simple_Timing | FactoralSelecting | ReferenceTiming |
          ==================|===============|=================|===============|===================|=================|
-         long/short mask   |       Yes     |        Yes      |       Yes     |        Yes        |       Yes       |
+         Positional target |       Yes     |        Yes      |       Yes     |        Yes        |       Yes       |
          ------------------|---------------|-----------------|---------------|-------------------|-----------------|
-         Portfolio mask    |       No      |        Yes      |       No      |        Yes        |       Yes       |
+         proportion signal |       No      |        Yes      |       No      |        Yes        |       Yes       |
          ------------------|---------------|-----------------|---------------|-------------------|-----------------|
-         signal matrix     |       Yes     |        No       |       Yes     |        No         |       Yes       |
+         volume signal     |       Yes     |        No       |       Yes     |        No         |       Yes       |
 
         ==五种策略信号生成器==
 
