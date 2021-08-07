@@ -43,7 +43,10 @@ class Strategy:
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: [str, list] = ''):
+                 data_types: [str, list] = '',
+                 bt_price_types: [str, list] = '',
+                 reference_data: str = 'none',
+                 reference_data_types: [str, list] = ''):
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
 
         input:
@@ -101,6 +104,13 @@ class Strategy:
             data_types = str_to_list(data_types, ',')
         assert isinstance(data_types, list), f'TypeError, data type should be a list, got {type(data_types)} instead'
         self._data_types = data_types
+        if isinstance(bt_price_types, str):
+            bt_price_types = str_to_list(bt_price_types, ',')
+        self._bt_price_types = bt_price_types
+        self._reference_data = reference_data
+        if isinstance(reference_data_types, str):
+            reference_data_types = str_to_list(reference_data_types, ',')
+        self._reference_data_types = reference_data_types
 
     @property
     def stg_type(self):
@@ -1141,14 +1151,3 @@ class FactoralSelecting(Strategy):
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         return sel_mask[self.window_length:]
-
-
-class ReferenceTiming(Strategy):
-    """ 根据参考数据对一批股票进行集合择时操作，生成操作模版
-
-    """
-    def __init__(self):
-        super().__init__()
-
-    def generate(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
-        raise NotImplementedError

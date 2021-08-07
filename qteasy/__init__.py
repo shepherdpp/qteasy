@@ -1,6 +1,5 @@
 # coding=utf-8
 
-import numpy as np
 import tushare as ts
 
 from .core import get_current_holdings, get_stock_pool
