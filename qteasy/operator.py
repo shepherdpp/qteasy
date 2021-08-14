@@ -41,7 +41,8 @@ class Signal:
         merge:
 
     """
-    def __init__(self, sig_type, price_type, op_matrix, price_matrix = None):
+
+    def __init__(self, sig_type, price_type, op_matrix, price_matrix=None):
         """ 创建一个新的signal对象
 
         :param sig_type:
@@ -102,33 +103,31 @@ class Signal:
         if self.signal_type == 'vs':
             return self._blend_vs(other, blend_type)
 
-    def _blend_pt(self, other, blend_type):
-        """ blend position target type of signals
+    def __and__(self, other):
+        """ 最基本的信号混合方法之一： 与，数值上等于两个信号矩阵相乘（PT或PS）
 
-        :param other:
-        :param blend_type:
-        :return:
         """
         raise NotImplementedError
 
-    def _blend_ps(self, other, blend_type):
-        """ blend prop-signal type of signals
+    def __or__(self, other):
+        """ 最基本的信号混合方法之一：或。数值上等于两个信号矩阵之和
 
-        :param other:
-        :param blend_type:
-        :return:
         """
         raise NotImplementedError
 
-    def _blend_vs(self, other, blend_type):
-        """ blend volume signal type of signals
+    def __mul__(self, other):
+        """ 最基本的信号混合方法之一；__and__()的别名
 
-        :param other:
-        :param blend_type:
-        :return:
         """
-        raise NotImplementedError
+        return self.__and__(other)
 
+    def __add__(self, other):
+        """ 最基本的信号混合方法之一：__or__()的别名
+
+        """
+        return self.__or__(other)
+
+    def
 
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
@@ -542,7 +541,7 @@ class Operator:
             :rtype: list: 前缀表达式
         """
         # TODO: extract expression with re module
-        prio = {'or' : 0,
+        prio = {'or':  0,
                 'and': 1}
         # 定义两个队列作为操作堆栈
         s1 = []  # 运算符栈
@@ -793,7 +792,7 @@ class Operator:
 
     # =================================================
     # 下面是Operation模块的公有方法：
-    def info(self, verbose = False):
+    def info(self, verbose=False):
         """ 打印出当前交易操作对象的信息，包括选股、择时策略的类型，策略混合方法、风险控制策略类型等等信息
             如果策略包含更多的信息，还会打印出策略的一些具体信息，如选股策略的信息等
             在这里调用了私有属性对象的私有属性，不应该直接调用，应该通过私有属性的公有方法打印相关信息
@@ -901,7 +900,7 @@ class Operator:
             raise ValueError(f'Cash investment should be on trading days, '
                              f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数
-        assert all(stg.has_pars for stg in self.strategies),\
+        assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式
         assert self.selecting_blender != ''
@@ -920,12 +919,6 @@ class Operator:
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
     # TODO: 1，Buy-开多仓，2，sell-平多仓，3，sel_short-开空仓，4，buy_to_cover-平空仓
     # TODO: 应该创建标准的交易订单模式，并且通过一个函数把交易信号转化为交易订单，以供回测或实盘交易使用
-
-    # TODO: 交易信号生成和回测模块需改进：
-    # TODO: 在交易信号生成模块不再仅仅生成+1/-1交易信号，而是同时生成交易信号
-    # TODO: 和多空目标位置，这样至少可以避免以下问题：当MOQ存在时，在逐步减仓的情况下，每次加仓的交易信号强度可能
-    # TODO: 都不足以买到一手股票，那么所有逐步加仓的信号都会失效。
-    # TODO: 另外，将交易信号和仓位信号分开也能更好地支持交易信号型策略和仓位变化型策略
 
     # TODO: 需要调查：
     # TODO: 为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
@@ -1045,9 +1038,10 @@ class Operator:
             try:
                 self._selecting_blender = self._exp_to_blender
             except:
-                raise ValueError(f'SimpleSelecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
-                                 f', all elements should be separated by blank space, for example: '
-                                 f'\' 0 and ( 1 or 2 )\'')
+                raise ValueError(
+                        f'SimpleSelecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
+                        f', all elements should be separated by blank space, for example: '
+                        f'\' 0 and ( 1 or 2 )\'')
 
     def _set_ricon_blender(self, ricon_blender):
         self._ricon_blender = ricon_blender
@@ -1121,7 +1115,7 @@ class Operator:
             f'extracted blender \'{blndr[0]}\' can not be recognized, make sure ' \
             f'your input is like "str-T", "avg_pos-N-T", "pos-N-T", "combo", "none" or "avg"'
         l_m = ls_masks
-        l_m_sum = np.sum(l_m, 0) # 计算所有多空模版的和
+        l_m_sum = np.sum(l_m, 0)  # 计算所有多空模版的和
         l_count = ls_masks.shape[0]
         # 根据多空蒙板混合字符串对多空模板进行混合
         if blndr[0] == 'none':
@@ -1193,3 +1187,11 @@ class Operator:
             return ricon_mats.sum(axis=0)
         raise NotImplementedError(f'ricon singal blender method ({self._ricon_blender}) is not supported!')
 
+    def blender_parser(self, blender_string: str = None): -> list
+        """ 最关键的信号混合引擎的核心，将一个合法的混合字符串解析为一个可以被混合引擎调用的混合方法组
+        
+            混合方法组blenders是一个list，里面按照执行顺序放置了所有的混合运算
+            Operator核心根据清单中的混合运算类型，将所有生成的运行交易信号混合起来
+            形成一组最终的混合信号
+        
+        """
