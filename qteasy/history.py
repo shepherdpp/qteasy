@@ -603,7 +603,7 @@ class HistoryPanel():
         if not self.is_empty:
             assert isinstance(dtype, str), f'InputError, dtype should be a string, got {type(dtype)}'
             assert dtype in ALL_DTYPES, f'data type {dtype} is not recognized or not supported!'
-            self.values.astype(dtype)
+            self._values = self.values.astype(dtype)
         return self
 
     def to_dataframe(self,
