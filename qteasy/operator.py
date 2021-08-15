@@ -127,7 +127,7 @@ class Signal:
         """
         return self.__or__(other)
 
-    def
+    # def
 
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
@@ -1187,7 +1187,7 @@ class Operator:
             return ricon_mats.sum(axis=0)
         raise NotImplementedError(f'ricon singal blender method ({self._ricon_blender}) is not supported!')
 
-    def blender_parser(self, blender_string: str = None): -> list
+    def blender_parser(self, blender_string: str = None) -> list:
         """ 最关键的信号混合引擎的核心，将一个合法的混合字符串解析为一个可以被混合引擎调用的混合方法组
         
             混合方法组blenders是一个list，里面按照执行顺序放置了所有的混合运算
@@ -1195,3 +1195,4 @@ class Operator:
             形成一组最终的混合信号
         
         """
+        raise NotImplementedError
