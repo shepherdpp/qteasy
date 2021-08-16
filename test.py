@@ -60,6 +60,8 @@ from qteasy.database import DataSource
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
+from qteasy.parser import blender_evaluate
+
 
 class TestCost(unittest.TestCase):
     def setUp(self):
@@ -3860,6 +3862,19 @@ class TestOperator(unittest.TestCase):
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask, 0.001))
+
+    def test_parser(self):
+        """test blender parser"""
+        self.assertEqual(blender_evaluate("1 + 2 * 3"), 7)
+        self.assertEqual(blender_evaluate("(1 + 2) * 3"), 9)
+        self.assertEqual(blender_evaluate("-(1 + 2) * 3"), -9)
+        self.assertAlmostEqual(blender_evaluate("(1-2)/3.0 + 0.0000"), -0.33333333)
+        self.assertAlmostEqual(blender_evaluate("1 + pi / 4"), 1.78539816)
+        self.assertEqual(blender_evaluate("(a + b) / c", {'a': 1, 'b': 2, 'c': 3}), 1)
+        self.assertEqual(blender_evaluate("(x + e * 10) / 10", {'x': 3}), 3.0182818284590454)
+        self.assertEqual(blender_evaluate("1.0 / 3 * 6"), 2)
+        self.assertEqual(blender_evaluate("(1 - 1 + -1) * pi"), -3.141592653589793)
+        self.assertEqual(blender_evaluate("pi * e"), 8.539734222673566)
 
 
 class TestLog(unittest.TestCase):
