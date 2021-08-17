@@ -3875,6 +3875,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(blender_evaluate("1.0 / 3 * 6"), 2)
         self.assertEqual(blender_evaluate("(1 - 1 + -1) * pi"), -3.141592653589793)
         self.assertEqual(blender_evaluate("pi * e"), 8.539734222673566)
+        self.assertEqual(blender_evaluate("sin(pi) + 2.14"), 2.14)
+        self.assertEqual(blender_evaluate("sqrt(2)"), 1.4142135623730951)
+        self.assertEqual(blender_evaluate("abs(5-sqrt(2) /  cos(pi))"), 6.414213562373095)
 
 
 class TestLog(unittest.TestCase):

@@ -10,16 +10,49 @@
 # all operator strategies
 # ======================================
 
+import math
+
+
+_FUNCTIONS = {
+    'abs': abs,
+    'acos': math.acos,
+    'asin': math.asin,
+    'atan': math.atan,
+    'atan2': math.atan2,
+    'ceil': math.ceil,
+    'cos': math.cos,
+    'cosh': math.cosh,
+    'degrees': math.degrees,
+    'exp': math.exp,
+    'fabs': math.fabs,
+    'floor': math.floor,
+    'fmod': math.fmod,
+    'frexp': math.frexp,
+    'hypot': math.hypot,
+    'ldexp': math.ldexp,
+    'log': math.log,
+    'log10': math.log10,
+    'modf': math.modf,
+    'pow': math.pow,
+    'radians': math.radians,
+    'sin': math.sin,
+    'sinh': math.sinh,
+    'sqrt': math.sqrt,
+    'tan': math.tan,
+    'tanh': math.tanh
+}
+
+
 class Parser:
     def __init__(self, string, vars={}):
         self.string = string
         self.index = 0
         self.vars = {
-            'pi': 3.141592653589793,
-            'e':  2.718281828459045
+            'pi': math.pi,
+            'e':  math.e
         }
         for var in vars.keys():
-            if self.vars.get(var) != None:
+            if self.vars.get(var) is not None:
                 raise Exception("Cannot redefine the value of " + var)
             self.vars[var] = vars[var]
 
@@ -39,6 +72,19 @@ class Parser:
 
     def has_next(self):
         return self.index < len(self.string)
+
+    def is_next(self, value):
+        return self.string[self.index:self.index+len(value)] == value
+
+    def pop_if_next(self, value):
+        if self.is_next(value):
+            self.index += len(value)
+            return True
+        return False
+
+    def pop_expected(self, value):
+        if not self.pop_if_next(value):
+            raise Exception("Expected '" + value + "' at index " + str(self.index))
 
     def skip_whitespace(self):
         while self.has_next():
@@ -113,9 +159,22 @@ class Parser:
             self.index += 1
             return -1 * self.parse_parenthesis()
         else:
-            return self.parseValue()
+            return self.parse_value()
 
-    def parseValue(self):
+    def parse_arguments(self):
+        args = []
+        self.skip_whitespace()
+        self.pop_expected('(')
+        while not self.pop_if_next(')'):
+            self.skip_whitespace()
+            if len(args) > 0:
+                self.pop_expected(',')
+                self.skip_whitespace()
+            args.append(self.parse_expression())
+            self.skip_whitespace()
+        return args
+
+    def parse_value(self):
         self.skip_whitespace()
         char = self.peek()
         if char in '0123456789.':
@@ -134,13 +193,19 @@ class Parser:
             else:
                 break
 
+        function = _FUNCTIONS.get(var.lower())
+        if function is not None:
+            args = self.parse_arguments()
+            return float(function(*args))
+
         value = self.vars.get(var, None)
-        if value == None:
-            raise Exception(
-                    "Unrecognized variable: '" +
-                    var +
-                    "'")
-        return float(value)
+        if value is not None:
+            return float(value)
+
+        raise Exception(
+                "Unrecognized variable or function: '" +
+                var +
+                "'")
 
     def parse_number(self):
         self.skip_whitespace()
