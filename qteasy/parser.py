@@ -12,6 +12,11 @@
 
 import math
 
+_CONSTANTS = {
+              'pi': math.pi,
+              'e':  math.e,
+              'phi': (1 + 5 ** .5) / 2
+             }
 
 _FUNCTIONS = {
     'abs': abs,
@@ -44,17 +49,13 @@ _FUNCTIONS = {
 
 
 class Parser:
-    def __init__(self, string, vars={}):
+    def __init__(self, string, variables=None):
         self.string = string
         self.index = 0
-        self.vars = {
-            'pi': math.pi,
-            'e':  math.e
-        }
-        for var in vars.keys():
-            if self.vars.get(var) is not None:
-                raise Exception("Cannot redefine the value of " + var)
-            self.vars[var] = vars[var]
+        self.vars = {} if variables is None else variables.copy()
+        for con in _CONSTANTS.keys():
+            if self.vars.get(con) is not None:
+                raise Exception("Cannot redefine the value of " + con)
 
     def get_value(self):
         value = self.parse_expression()
@@ -196,11 +197,13 @@ class Parser:
         function = _FUNCTIONS.get(var.lower())
         if function is not None:
             args = self.parse_arguments()
-            return float(function(*args))
+            # return float(function(*args))
+            return function(*args)
 
         value = self.vars.get(var, None)
         if value is not None:
-            return float(value)
+            # return float(value)
+            return value
 
         raise Exception(
                 "Unrecognized variable or function: '" +
@@ -248,18 +251,21 @@ def blender_evaluate(expression, vars={}):
         p = Parser(expression, vars)
         value = p.get_value()
     except Exception as ex:
+        if isinstance(ex, TypeError):
+            raise ex
         msg = ex.message
         raise Exception(msg)
 
-    # Return an integer type if the answer is an integer 
-    if int(value) == value:
-        return int(value)
+    if isinstance(value, (float, int)):
+        # Return an integer type if the answer is an integer
+        if int(value) == value:
+            return int(value)
 
-    # If Python made some silly precision error 
-    # like x.99999999999996, just return x + 1 as an integer 
-    epsilon = 0.0000000001
-    if int(value + epsilon) != int(value):
-        return int(value + epsilon)
-    elif int(value - epsilon) != int(value):
-        return int(value)
+        # If Python made some silly precision error
+        # like x.99999999999996, just return x + 1 as an integer
+        epsilon = 0.0000000001
+        if int(value + epsilon) != int(value):
+            return int(value + epsilon)
+        elif int(value - epsilon) != int(value):
+            return int(value)
     return value

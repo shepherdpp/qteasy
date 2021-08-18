@@ -3878,6 +3878,12 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(blender_evaluate("sin(pi) + 2.14"), 2.14)
         self.assertEqual(blender_evaluate("sqrt(2)"), 1.4142135623730951)
         self.assertEqual(blender_evaluate("abs(5-sqrt(2) /  cos(pi))"), 6.414213562373095)
+        var1 = np.array([[1,2],[3,4]])
+        var2 = np.array([[3,4], [4,5]])
+        res1 = np.array([[4,6],[7,9]])
+        res2 = np.array([[3,8],[12,20]])
+        self.assertTrue(np.allclose(blender_evaluate("a+b", {'a': var1, 'b': var2}), res1))
+        self.assertTrue(np.allclose(blender_evaluate("a*b", {'a': var1, 'b': var2}), res2))
 
 
 class TestLog(unittest.TestCase):
