@@ -3867,6 +3867,8 @@ class TestOperator(unittest.TestCase):
         """test blender parser"""
         self.assertEqual(blender_evaluate("1 + 2 * 3"), 7)
         self.assertEqual(blender_evaluate("(1 + 2) * 3"), 9)
+        self.assertEqual(blender_evaluate("(1+2) * 3"), 9)
+        self.assertEqual(blender_evaluate("(1 + 2)   * 3"), 9)
         self.assertEqual(blender_evaluate("-(1 + 2) * 3"), -9)
         self.assertAlmostEqual(blender_evaluate("(1-2)/3.0 + 0.0000"), -0.33333333)
         self.assertAlmostEqual(blender_evaluate("1 + pi / 4"), 1.78539816)

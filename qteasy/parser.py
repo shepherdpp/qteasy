@@ -56,6 +56,7 @@ class Parser:
         for con in _CONSTANTS.keys():
             if self.vars.get(con) is not None:
                 raise Exception("Cannot redefine the value of " + con)
+            self.vars[con] = _CONSTANTS[con]
 
     def get_value(self):
         value = self.parse_expression()
