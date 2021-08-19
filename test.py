@@ -61,6 +61,7 @@ from qteasy.database import DataSource
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
 from qteasy.parser import blender_evaluate
+from qteasy.parser2 import parse, compute
 
 
 class TestCost(unittest.TestCase):
@@ -3886,6 +3887,24 @@ class TestOperator(unittest.TestCase):
         res2 = np.array([[3,8],[12,20]])
         self.assertTrue(np.allclose(blender_evaluate("a+b", {'a': var1, 'b': var2}), res1))
         self.assertTrue(np.allclose(blender_evaluate("a*b", {'a': var1, 'b': var2}), res2))
+
+    def test_parser2(self):
+        """test blender parser 2"""
+        self.assertEqual(compute(parse('1+1')), 2)
+        self.assertEqual(compute(parse('1-1')), 0)
+        self.assertEqual(compute(parse('3-2+1')), 2)
+        self.assertEqual(compute(parse('8/4/2')), 1)
+        self.assertEqual(compute(parse('1*2')), 2)
+        self.assertEqual(compute(parse('(1+7)*(9+2)')), 88)
+        self.assertEqual(compute(parse('(2+7)/4')), 2.25)
+        self.assertEqual(compute(parse('7/4')), 1.75)
+        self.assertEqual(compute(parse('2*3+4')), 10)
+        self.assertEqual(compute(parse('2*(3+4)')), 14)
+        self.assertEqual(compute(parse('2+3*4')), 14)
+        self.assertEqual(compute(parse('2+(3*4)')), 14)
+        self.assertEqual(compute(parse('2-(3*4+1)')), -11)
+        self.assertEqual(compute(parse('2*(3*4+1)')), 26)
+        self.assertEqual(compute(parse('8/((1+3)*2)')), 1)
 
 
 class TestLog(unittest.TestCase):
