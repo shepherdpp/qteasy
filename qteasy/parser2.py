@@ -12,8 +12,6 @@
 
 import enum
 import re
-import operator
-import parser
 
 
 class TokenType(enum.Enum):
@@ -105,16 +103,8 @@ def parse(inputstring):
     match(tokens, TokenType.T_END)
     return ast
 
-
-operations = {
-    TokenType.T_PLUS: operator.add,
-    TokenType.T_MINUS: operator.sub,
-    TokenType.T_MULT: operator.mul,
-    TokenType.T_DIV: operator.truediv
-}
-
-
 def compute(node):
+    """利用递归的方法计算计算树的值"""
     if node.token_type == TokenType.T_NUM:
         return node.value
     left_result = compute(node.children[0])

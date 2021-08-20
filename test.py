@@ -3906,6 +3906,13 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(compute(parse('2*(3*4+1)')), 26)
         self.assertEqual(compute(parse('8/((1+3)*2)')), 1)
 
+    def test_tokenizer(self):
+        print(self.op._exp_to_token('(1 - 1 + -1) * pi'))
+        print(self.op._exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
+        print(self.op._exp_to_token('sin(pi) + 2.14'))
+        print(self.op._exp_to_token('(1-2)/3.0 + 0.0000'))
+        print(self.op._exp_to_token('-(1 + 2) * 3'))
+
 
 class TestLog(unittest.TestCase):
     def test_init(self):

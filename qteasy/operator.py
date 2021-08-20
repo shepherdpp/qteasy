@@ -129,6 +129,7 @@ class Signal:
 
     # def
 
+
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
 
@@ -546,9 +547,10 @@ class Operator:
         # 定义两个队列作为操作堆栈
         s1 = []  # 运算符栈
         s2 = []  # 结果栈
-        # 读取字符串并读取字符串中的各个元素（操作数和操作符），当前使用str对象的split()方法进行，要
-        # 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
-        # 字符串进行分割
+        # TODO:
+        # TODO: 读取字符串并读取字符串中的各个元素（操作数和操作符），当前使用str对象的split()方法进行，要
+        # TODO: 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
+        # TODO: 字符串进行分割
         exp_list = self._selecting_blender_string.split()
         # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
         # exp_list = list(self._selecting_blender_string.
@@ -588,6 +590,77 @@ class Operator:
             s2.append(s1.pop())
         s2.reverse()  # 表达式解析完成，生成前缀表达式
         return s2
+
+    def _exp_to_token(self, string):
+        """ 将输入的blender-exp裁切成不同的元素(token)，包括数字、符号、函数等
+
+        :return:
+        """
+        if not isinstance(string, str):
+            raise TypeError()
+        token_types = {'operation': 0,
+                       'number': 1,
+                       'function': 2,
+                       'perenthesis': 3}
+        tokens = []
+        string = string.replace(' ', '')
+        string = string.replace('\t', '')
+        string = string.replace('\n', '')
+        string = string.replace('\r', '')
+        cur_token = ''
+        prev_token_type = None
+        cur_token_type = None
+        for ch in string:
+            if ch in '+*/^':
+                cur_token_type = token_types['operation']
+            if ch in '-':
+                if prev_token_type == token_types['operation']:
+                    cur_token_type = token_types['number']
+                else:
+                    cur_token_type = token_types['operation']
+            if ch in '0123456789':
+                # current token type will not change in this case
+                cur_token_type = cur_token_type
+            if ch in '.':
+                # dots in numbers
+                cur_token_type = token_types['number']
+            if ch in 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                cur_token_type = token_types['function']
+            if ch in '()':
+                cur_token_type = token_types['perenthesis']
+            if ch in ',':
+                cur_token_type = None
+
+            cur_token += ch
+            if cur_token_type != prev_token_type:
+                # new token to be added to list, and refresh prev/cur token types
+                tokens.append(cur_token)
+                prev_token_type = cur_token_type
+                cur_token = ''
+
+        return tokens
+
+    def is_number(self, s):
+        """ 判断一个字符串是否是一个合法的数字
+
+        :param s:
+        :return:
+        """
+        if not isinstance(s, str):
+            return False
+        if len(s) == 0:
+            return False
+        if all(ch in '-0123456789.' for ch in s):
+            if s.count('.') + s.count('.') == len(s):
+                return False
+            if s.count('.') > 1 or s.count('-') > 1:
+                return False
+            if s.count('-') == 1 and s[0] != '-':
+                return False
+            if s[0] == '0' and s[1] != '.':
+                return False
+            return True
+        return False
 
     @property
     def ready(self):
