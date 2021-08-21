@@ -601,7 +601,7 @@ class Operator:
         token_types = {'operation': 0,
                        'number': 1,
                        'function': 2,
-                       'perenthesis': 3}
+                       'parenthesis': 3}
         tokens = []
         string = string.replace(' ', '')
         string = string.replace('\t', '')
@@ -614,30 +614,35 @@ class Operator:
             if ch in '+*/^':
                 cur_token_type = token_types['operation']
             if ch in '-':
-                if prev_token_type == token_types['operation']:
+                if prev_token_type == token_types['operation'] or \
+                        prev_token_type == token_types['parenthesis']:
                     cur_token_type = token_types['number']
                 else:
                     cur_token_type = token_types['operation']
             if ch in '0123456789':
-                # current token type will not change in this case
-                cur_token_type = cur_token_type
+                # current token type will not change if numbers following function name
+                if prev_token_type != token_types['function']:
+                    cur_token_type = token_types['number']
             if ch in '.':
                 # dots in numbers
                 cur_token_type = token_types['number']
             if ch in 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                 cur_token_type = token_types['function']
             if ch in '()':
-                cur_token_type = token_types['perenthesis']
+                cur_token_type = token_types['parenthesis']
             if ch in ',':
                 cur_token_type = None
 
-            cur_token += ch
-            if cur_token_type != prev_token_type:
+            if cur_token_type != prev_token_type or cur_token_type == token_types['parenthesis']:
                 # new token to be added to list, and refresh prev/cur token types
                 tokens.append(cur_token)
                 prev_token_type = cur_token_type
                 cur_token = ''
-
+            if cur_token_type is not None:
+                cur_token += ch
+        # append the last token, and remove all the empty tokens
+        tokens.append(cur_token)
+        tokens = [item for item in tokens if item != '']
         return tokens
 
     def is_number(self, s):
