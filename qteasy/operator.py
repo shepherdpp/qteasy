@@ -547,11 +547,7 @@ class Operator:
         # 定义两个队列作为操作堆栈
         s1 = []  # 运算符栈
         s2 = []  # 结果栈
-        # TODO:
-        # TODO: 读取字符串并读取字符串中的各个元素（操作数和操作符），当前使用str对象的split()方法进行，要
-        # TODO: 求字符串中个元素之间用空格或其他符号分割，应该考虑写一个self.__split()方法，不依赖空格对
-        # TODO: 字符串进行分割
-        exp_list = self._selecting_blender_string.split()
+        exp_list = self._exp_to_token(self._selecting_blender_string)
         # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
         # exp_list = list(self._selecting_blender_string.
         #                 replace(' ', '').
@@ -610,39 +606,44 @@ class Operator:
         cur_token = ''
         prev_token_type = None
         cur_token_type = None
+        # 逐个扫描字符，判断每个字符代表的token类型，当token类型发生变化时，将当前token压入tokens栈
         for ch in string:
             if ch in '+*/^':
                 cur_token_type = token_types['operation']
             if ch in '-':
+                # '-'号出现在括号或另一个符号以后，应被识别为负号，成为数字的一部分
                 if prev_token_type == token_types['operation'] or \
                         prev_token_type == token_types['parenthesis']:
                     cur_token_type = token_types['number']
                 else:
+                    # 否则被识别为一个操作符
                     cur_token_type = token_types['operation']
             if ch in '0123456789':
-                # current token type will not change if numbers following function name
+                # 如果数字跟在字母的后面，则被识别为字母的一部分，否则被识别为数字
                 if prev_token_type != token_types['function']:
                     cur_token_type = token_types['number']
             if ch in '.':
-                # dots in numbers
+                # 小数点应被识别为数字
                 cur_token_type = token_types['number']
-            if ch in 'abcdefghijklmnopqrstuvwxyz_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+            if ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                # 字母和下划线应被识别为变量或函数名
                 cur_token_type = token_types['function']
             if ch in '()':
                 cur_token_type = token_types['parenthesis']
             if ch in ',':
+                # ','逗号被用来分割函数的参数，实际应被忽略
                 cur_token_type = None
 
             if cur_token_type != prev_token_type or cur_token_type == token_types['parenthesis']:
-                # new token to be added to list, and refresh prev/cur token types
-                tokens.append(cur_token)
+                # 当发现当前字符被判定为新的token类型时，说明当前token已经完整，将该token压入tokens栈
+                # 并重置token类型、重置当前token，将当前字符赋予当前token
+                if cur_token != '':
+                    tokens.append(cur_token)
                 prev_token_type = cur_token_type
                 cur_token = ''
             if cur_token_type is not None:
                 cur_token += ch
-        # append the last token, and remove all the empty tokens
         tokens.append(cur_token)
-        tokens = [item for item in tokens if item != '']
         return tokens
 
     def is_number(self, s):
