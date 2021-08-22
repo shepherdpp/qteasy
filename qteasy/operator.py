@@ -130,6 +130,30 @@ class Signal:
     # def
 
 
+def is_number(s):
+    """ 判断一个字符串是否是一个合法的数字
+
+    :param s:
+    :return:
+    """
+    if not isinstance(s, str):
+        return False
+    if len(s) == 0:
+        return False
+    if all(ch in '-0123456789.' for ch in s):
+        if s.count('.') + s.count('-') == len(s):
+            return False
+        if s.count('.') > 1 or s.count('-') > 1:
+            return False
+        if s.count('-') == 1 and s[0] != '-':
+            return False
+        if len(s) >= 2:
+            if s[0] == '0' and s[1] != '.':
+                return False
+        return True
+    return False
+
+
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
 
@@ -542,11 +566,23 @@ class Operator:
             :rtype: list: 前缀表达式
         """
         # TODO: extract expression with re module
-        prio = {'or':  0,
-                'and': 1}
+        prio = {'|':  0,
+                'or': 0,
+                '&': 1,
+                'and': 1,
+                'not': 1,
+                '+': 0,
+                '-': 0,
+                '*': 1,
+                '/': 1,
+                '^': 2,
+                'abs': 3,
+                'sqrt': 3,
+                'cos': 3,
+                'max': 3}
         # 定义两个队列作为操作堆栈
-        s1 = []  # 运算符栈
-        s2 = []  # 结果栈
+        op_stack = []  # 运算符栈
+        output = []  # 结果栈
         exp_list = self._exp_to_token(self._selecting_blender_string)
         # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
         # exp_list = list(self._selecting_blender_string.
@@ -555,37 +591,53 @@ class Operator:
         #                 replace('.', '').
         #                 replace('-', ''))
         # 开始循环读取所有操作元素
+        # import pdb; pdb.set_trace()
         while exp_list:
+            print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
+                  f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
             s = exp_list.pop()
             # 从右至左逐个读取表达式中的元素（数字或操作符）
             # 并按照以下算法处理
-            if s.isdigit():
-                # 1，如果元素是数字则压入结果栈
-                s2.append(s)
-
-            elif s == ')':
-                # 2，如果元素是反括号则压入运算符栈
-                s1.append(s)
+            if is_number(s):
+                # 1，如果元素是数字则进入结果队列
+                output.append(s)
+                print(f'got number token, put to output list')
             elif s == '(':
+                # 2，如果元素是反括号则压入运算符栈
+                op_stack.append(s)
+                print(f'got "(" token, put to op stack')
+            elif s == ')':
                 # 3，扫描到（时，依次弹出所有运算符直到遇到），并把该）弹出
-                while s1[-1] != ')':
-                    s2.append(s1.pop())
-                s1.pop()
+                while op_stack[-1] != '(':
+                    output.append(op_stack.pop())
+                op_stack.pop()
+                print(f'got ")" token, poped all ops before "(" to output, and removed "("')
+                if len(op_stack) > 0:
+                    if op_stack[-1] not in '+-*/&|^': # op_stack 中还有一个函数需要弹出
+                        output.append(op_stack.pop())
+                        print(f'there\'s function in op stack, poped function')
             elif s in prio.keys():
-                # 4，扫描到运算符时：
-                if s1 == [] or s1[-1] == ')' or prio[s] >= prio[s1[-1]]:
-                    # 如果这三种情况则直接入栈
-                    s1.append(s)
+                # 4，扫描到运算符时
+                print(f'got op type token')
+                if len(op_stack) > 0:
+                    if (op_stack[-1] in '+-*/&|^') and (prio[s] <= prio[op_stack[-1]]):
+                        print(f'op stack has op {op_stack[-1]}, which is higher than current token {s}, poped!\n'
+                              f'current token {s} will be put back to exp for next try')
+                        output.append(op_stack.pop())
+                        exp_list.append(s)
+                    else:
+                        op_stack.append(s)
                 else:
-                    # 否则就弹出s1中的符号压入s2，并将元素放回队列
-                    s2.append(s1.pop())
-                    exp_list.append(s)
-            else:
+                    # 如果op栈为空，直接将token压入op栈
+                    op_stack.append(s)
+
+            else: # 扫描到不合法输入
                 raise ValueError(f'unidentified characters found in blender string: \'{s}\'')
-        while s1:
-            s2.append(s1.pop())
-        s2.reverse()  # 表达式解析完成，生成前缀表达式
-        return s2
+            print(f'step ends: output list is {output}, op_stack is {op_stack}')
+        while op_stack:
+            output.append(op_stack.pop())
+        output.reverse()  # 表达式解析完成，生成前缀表达式
+        return output
 
     def _exp_to_token(self, string):
         """ 将输入的blender-exp裁切成不同的元素(token)，包括数字、符号、函数等
@@ -597,7 +649,8 @@ class Operator:
         token_types = {'operation': 0,
                        'number': 1,
                        'function': 2,
-                       'parenthesis': 3}
+                       'open_parenthesis': 3,
+                       'close_parenthesis': 4}
         tokens = []
         string = string.replace(' ', '')
         string = string.replace('\t', '')
@@ -608,12 +661,12 @@ class Operator:
         cur_token_type = None
         # 逐个扫描字符，判断每个字符代表的token类型，当token类型发生变化时，将当前token压入tokens栈
         for ch in string:
-            if ch in '+*/^':
+            if ch in '+*/^&|':
                 cur_token_type = token_types['operation']
             if ch in '-':
-                # '-'号出现在括号或另一个符号以后，应被识别为负号，成为数字的一部分
+                # '-'号出现在左括号或另一个符号以后，应被识别为负号，成为数字的一部分
                 if prev_token_type == token_types['operation'] or \
-                        prev_token_type == token_types['parenthesis']:
+                        prev_token_type == token_types['open_parenthesis']:
                     cur_token_type = token_types['number']
                 else:
                     # 否则被识别为一个操作符
@@ -628,13 +681,17 @@ class Operator:
             if ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                 # 字母和下划线应被识别为变量或函数名
                 cur_token_type = token_types['function']
-            if ch in '()':
-                cur_token_type = token_types['parenthesis']
+            if ch in '(':
+                cur_token_type = token_types['open_parenthesis']
+            if ch in ')':
+                cur_token_type = token_types['close_parenthesis']
             if ch in ',':
                 # ','逗号被用来分割函数的参数，实际应被忽略
                 cur_token_type = None
 
-            if cur_token_type != prev_token_type or cur_token_type == token_types['parenthesis']:
+            if cur_token_type != prev_token_type or \
+                    cur_token_type == token_types['open_parenthesis'] or \
+                    cur_token_type == token_types['close_parenthesis']:
                 # 当发现当前字符被判定为新的token类型时，说明当前token已经完整，将该token压入tokens栈
                 # 并重置token类型、重置当前token，将当前字符赋予当前token
                 if cur_token != '':
@@ -644,29 +701,7 @@ class Operator:
             if cur_token_type is not None:
                 cur_token += ch
         tokens.append(cur_token)
-        return tokens
-
-    def is_number(self, s):
-        """ 判断一个字符串是否是一个合法的数字
-
-        :param s:
-        :return:
-        """
-        if not isinstance(s, str):
-            return False
-        if len(s) == 0:
-            return False
-        if all(ch in '-0123456789.' for ch in s):
-            if s.count('.') + s.count('.') == len(s):
-                return False
-            if s.count('.') > 1 or s.count('-') > 1:
-                return False
-            if s.count('-') == 1 and s[0] != '-':
-                return False
-            if s[0] == '0' and s[1] != '.':
-                return False
-            return True
-        return False
+        return tokens[::-1]
 
     @property
     def ready(self):
@@ -1119,8 +1154,9 @@ class Operator:
             except:
                 raise ValueError(
                         f'SimpleSelecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
-                        f', all elements should be separated by blank space, for example: '
-                        f'\' 0 and ( 1 or 2 )\'')
+                        f', the expression might contain unidentified operator, a valid expression contains only \n'
+                        f'numbers, function or variable names and operations such as "+-*/^&|", for example: '
+                        f'\' 0 & ( 1 | 2 )\'')
 
     def _set_ricon_blender(self, ricon_blender):
         self._ricon_blender = ricon_blender
@@ -1237,8 +1273,11 @@ class Operator:
         while exp:  # 等同于但是更好: while exp != []
             if exp[-1].isdigit():
                 s.append(sel_masks[int(exp.pop())])
+                print(f'calculating: puting number {s[-1]} into s, gets {s}')
             else:
+                print(f'calculating: taking {s[-1]} and {s[-2]} and eval {s[-2]} {exp[-1]} {s[-1]}')
                 s.append(self._blend(s.pop(), s.pop(), exp.pop()))
+                print(f'gets result {s[-1]}')
         return unify(s[0])
 
     def _blend(self, n1, n2, op):
@@ -1252,12 +1291,17 @@ class Operator:
             :return: np.ndarray
 
         """
-        if op == 'or':
-            return n1 + n2
-        elif op == 'and':
-            return n1 * n2
-        elif op == 'orr':
-            return 1 - (1 - n1) * (1 - n2)
+        # import pdb; pdb.set_trace()
+        if op == '+':
+            return n2 + n1
+        elif op == 'and' or op == '&' or op == '*':
+            return n2 * n1
+        elif op == '-':
+            return n2 - n1
+        elif op == '/':
+            return n2 / n1
+        elif op == 'or' or op == '|':
+            return 1 - (1 - n2) * (1 - n1)
         else:
             raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
 

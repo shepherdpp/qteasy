@@ -92,10 +92,13 @@ def unify(arr):
     :param arr: type: np.ndarray
     :return: ndarray
     """
-    assert isinstance(arr, np.ndarray), f'InputError: Input should be ndarray! got {type(arr)}'
-    s = arr.sum(1)
-    shape = (s.shape[0], 1)
-    return arr / s.reshape(shape)
+    if isinstance(arr, np.ndarray): #Input should be ndarray! got {type(arr)}'
+        s = arr.sum(1)
+        shape = (s.shape[0], 1)
+        return arr / s.reshape(shape)
+    if isinstance(arr, (int, float)):
+        return arr
+    raise TypeError(f'Input should be ndarray! got {type(arr)}')
 
 
 def time_str_format(t: float, estimation: bool = False, short_form: bool = False):

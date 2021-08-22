@@ -44,7 +44,8 @@ _FUNCTIONS = {
     'sinh': math.sinh,
     'sqrt': math.sqrt,
     'tan': math.tan,
-    'tanh': math.tanh
+    'tanh': math.tanh,
+    'max': max
 }
 
 
