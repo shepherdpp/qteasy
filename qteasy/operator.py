@@ -583,46 +583,38 @@ class Operator:
         # 定义两个队列作为操作堆栈
         op_stack = []  # 运算符栈
         output = []  # 结果栈
-        exp_list = self._exp_to_token(self._selecting_blender_string)
-        # 使用list()的问题是，必须确保表达式中不存在超过一位数字的数，如12等，同时需要去除字符串中的特殊字符如空格等
-        # exp_list = list(self._selecting_blender_string.
-        #                 replace(' ', '').
-        #                 replace('_', '').
-        #                 replace('.', '').
-        #                 replace('-', ''))
-        # 开始循环读取所有操作元素
-        # import pdb; pdb.set_trace()
+        exp_list = self._exp_to_token(self._selecting_blender_string)[::-1]
         while exp_list:
-            print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
-                  f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
+            # print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
+            #       f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
             s = exp_list.pop()
             # 从右至左逐个读取表达式中的元素（数字或操作符）
             # 并按照以下算法处理
             if is_number(s):
                 # 1，如果元素是数字则进入结果队列
                 output.append(s)
-                print(f'got number token, put to output list')
+                # print(f'got number token, put to output list')
             elif s == '(':
                 # 2，如果元素是反括号则压入运算符栈
                 op_stack.append(s)
-                print(f'got "(" token, put to op stack')
+                # print(f'got "(" token, put to op stack')
             elif s == ')':
                 # 3，扫描到（时，依次弹出所有运算符直到遇到），并把该）弹出
                 while op_stack[-1] != '(':
                     output.append(op_stack.pop())
                 op_stack.pop()
-                print(f'got ")" token, poped all ops before "(" to output, and removed "("')
+                # print(f'got ")" token, poped all ops before "(" to output, and removed "("')
                 if len(op_stack) > 0:
                     if op_stack[-1] not in '+-*/&|^': # op_stack 中还有一个函数需要弹出
                         output.append(op_stack.pop())
-                        print(f'there\'s function in op stack, poped function')
+                        # print(f'there\'s function in op stack, poped function')
             elif s in prio.keys():
                 # 4，扫描到运算符时
-                print(f'got op type token')
+                # print(f'got op type token')
                 if len(op_stack) > 0:
                     if (op_stack[-1] in '+-*/&|^') and (prio[s] <= prio[op_stack[-1]]):
-                        print(f'op stack has op {op_stack[-1]}, which is higher than current token {s}, poped!\n'
-                              f'current token {s} will be put back to exp for next try')
+                        # print(f'op stack has op {op_stack[-1]}, which is higher than current token {s}, poped!\n'
+                        #       f'current token {s} will be put back to exp for next try')
                         output.append(op_stack.pop())
                         exp_list.append(s)
                     else:
@@ -633,7 +625,7 @@ class Operator:
 
             else: # 扫描到不合法输入
                 raise ValueError(f'unidentified characters found in blender string: \'{s}\'')
-            print(f'step ends: output list is {output}, op_stack is {op_stack}')
+            # print(f'step ends: output list is {output}, op_stack is {op_stack}')
         while op_stack:
             output.append(op_stack.pop())
         output.reverse()  # 表达式解析完成，生成前缀表达式
@@ -650,20 +642,22 @@ class Operator:
                        'number': 1,
                        'function': 2,
                        'open_parenthesis': 3,
-                       'close_parenthesis': 4}
+                       'close_parenthesis': 4,
+                       'comma': 5}
         tokens = []
         string = string.replace(' ', '')
         string = string.replace('\t', '')
         string = string.replace('\n', '')
         string = string.replace('\r', '')
         cur_token = ''
+        next_token = False  # 如果需要强行分开两个相同类型的token，则将next_token设置为True
         prev_token_type = None
         cur_token_type = None
         # 逐个扫描字符，判断每个字符代表的token类型，当token类型发生变化时，将当前token压入tokens栈
         for ch in string:
             if ch in '+*/^&|':
                 cur_token_type = token_types['operation']
-            if ch in '-':
+            elif ch in '-':
                 # '-'号出现在左括号或另一个符号以后，应被识别为负号，成为数字的一部分
                 if prev_token_type == token_types['operation'] or \
                         prev_token_type == token_types['open_parenthesis']:
@@ -671,37 +665,61 @@ class Operator:
                 else:
                     # 否则被识别为一个操作符
                     cur_token_type = token_types['operation']
-            if ch in '0123456789':
-                # 如果数字跟在字母的后面，则被识别为字母的一部分，否则被识别为数字
-                if prev_token_type != token_types['function']:
+            elif ch in '0123456789':
+                if cur_token == '':
                     cur_token_type = token_types['number']
-            if ch in '.':
+                else:
+                    # 如果数字跟在function的后面，则被识别为字母（function）的一部分，否则被识别为数字
+                    # 但数字被识别为function一部分的前提是function还没有以左括号结尾
+                    if prev_token_type == token_types['function'] and cur_token[-1] != '(':
+                        cur_token_type = token_types['function']
+                    else:
+                        cur_token_type = token_types['number']
+            elif ch in '.':
                 # 小数点应被识别为数字
                 cur_token_type = token_types['number']
-            if ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-                # 字母和下划线应被识别为变量或函数名
-                cur_token_type = token_types['function']
-            if ch in '(':
-                cur_token_type = token_types['open_parenthesis']
-            if ch in ')':
+            elif ch.upper() in '_ABCDEFGHIJKLMNOPQRSTUVWXYZ':
+                # 字母和下划线应被识别为变量或函数名,
+                if cur_token == '':
+                    cur_token_type = token_types['function']
+                else: # 如果前一个token已经为function且已经完整，则强行分割token
+                    if cur_token_type == token_types['function'] and cur_token[-1] == '(':
+                        next_token = True
+                    cur_token_type = token_types['function']
+            elif ch in '(':
+                if cur_token == '':
+                    cur_token_type = token_types['open_parenthesis']
+                else:
+                    # 如果左括号出现在function的后面，则是function的一部分，否则被识别为左括号
+                    # 例外情况是前一个function已经以一个左括号结尾了，此时仍然应被识别为左括号
+                    if prev_token_type == token_types['function'] and cur_token[-1] != '(':
+                        cur_token_type = token_types['function']
+                    else:
+                        cur_token_type = token_types['open_parenthesis']
+            elif ch in ')':
                 cur_token_type = token_types['close_parenthesis']
-            if ch in ',':
+            elif ch in ',':
                 # ','逗号被用来分割函数的参数，实际应被忽略
-                cur_token_type = None
+                cur_token_type = token_types['comma']
+            else:
+                # 某种没有预料到的字符出现在表达式中：
+                raise TypeError(f'character in expression \'{ch}\' is not valid!')
 
             if cur_token_type != prev_token_type or \
                     cur_token_type == token_types['open_parenthesis'] or \
-                    cur_token_type == token_types['close_parenthesis']:
+                    cur_token_type == token_types['close_parenthesis'] or \
+                    next_token:
                 # 当发现当前字符被判定为新的token类型时，说明当前token已经完整，将该token压入tokens栈
                 # 并重置token类型、重置当前token，将当前字符赋予当前token
                 if cur_token != '':
                     tokens.append(cur_token)
                 prev_token_type = cur_token_type
                 cur_token = ''
+                next_token = False
             if cur_token_type is not None:
                 cur_token += ch
         tokens.append(cur_token)
-        return tokens[::-1]
+        return tokens
 
     @property
     def ready(self):
@@ -1273,11 +1291,11 @@ class Operator:
         while exp:  # 等同于但是更好: while exp != []
             if exp[-1].isdigit():
                 s.append(sel_masks[int(exp.pop())])
-                print(f'calculating: puting number {s[-1]} into s, gets {s}')
+                # print(f'calculating: puting number {s[-1]} into s, gets {s}')
             else:
-                print(f'calculating: taking {s[-1]} and {s[-2]} and eval {s[-2]} {exp[-1]} {s[-1]}')
+                # print(f'calculating: taking {s[-1]} and {s[-2]} and eval {s[-2]} {exp[-1]} {s[-1]}')
                 s.append(self._blend(s.pop(), s.pop(), exp.pop()))
-                print(f'gets result {s[-1]}')
+                # print(f'gets result {s[-1]}')
         return unify(s[0])
 
     def _blend(self, n1, n2, op):

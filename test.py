@@ -3969,25 +3969,25 @@ class TestOperator(unittest.TestCase):
                              ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
         print(self.op._exp_to_token('(1 - 1 + -1) * pi'))
         self.assertListEqual(self.op._exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
-                             ['abs', '(', '5', '-', 'sqrt', '(', '2', ')', '/', 'cos', '(', 'pi', ')', ')'])
+                             ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
         print(self.op._exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
         self.assertListEqual(self.op._exp_to_token('sin(pi) + 2.14'),
-                             ['sin', '(', 'pi', ')', '+', '2.14'])
+                             ['sin(', 'pi', ')', '+', '2.14'])
         print(self.op._exp_to_token('sin(pi) + 2.14'))
         self.assertListEqual(self.op._exp_to_token('(1-2)/3.0 + 0.0000'),
                              ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
         print(self.op._exp_to_token('(1-2)/3.0 + 0.0000'))
         self.assertListEqual(self.op._exp_to_token('-(1. + .2) * max(1, 3, 5)'),
-                             ['-', '(', '1.', '+', '.2', ')', '*', 'max', '(', '1', '3', '5', ')'])
+                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
         print(self.op._exp_to_token('-(1. + .2) * max(1, 3, 5)'))
         self.assertListEqual(self.op._exp_to_token('(x + e * 10) / 10'),
                              ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
         print(self.op._exp_to_token('(x + e * 10) / 10'))
         self.assertListEqual(self.op._exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
-                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3', '(', '3', '4', '5', ')', ')', '*', '0.12', ')'])
+                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12', ')'])
         print(self.op._exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
         self.assertListEqual(self.op._exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
-                             ['8.2', '/', 'abs3', '(', '3', '4', '25.34', '+', '5', ')', '*', '0.12'])
+                             ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
         print(self.op._exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
 
 
