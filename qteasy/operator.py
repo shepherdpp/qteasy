@@ -565,7 +565,8 @@ class Operator:
         return：===== s2: 前缀表达式
             :rtype: list: 前缀表达式
         """
-        # TODO: extract expression with re module
+        # TODO: 将所有与表达式解析相关的函数移到新的parser模块中
+        # TODO: 建立新的相关类，如表达式类、token类、function类、stack类等方便运算
         prio = {'|':  0,
                 'or': 0,
                 '&': 1,
@@ -575,56 +576,77 @@ class Operator:
                 '-': 0,
                 '*': 1,
                 '/': 1,
-                '^': 2,
-                'abs': 3,
-                'sqrt': 3,
-                'cos': 3,
-                'max': 3}
+                '^': 2}
+        functions = {'sum(': np.sum,
+                     'abs(': np.abs,
+                     'sqrt(': np.sqrt,
+                     'cos(': np.cos,
+                     'max(': np.maximum}
         # 定义两个队列作为操作堆栈
         op_stack = []  # 运算符栈
-        output = []  # 结果栈
+        arg_count_stack = []  # 函数的参数个数栈
+        output = []  # 结果队列
         exp_list = self._exp_to_token(self._selecting_blender_string)[::-1]
         while exp_list:
             # print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
             #       f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
-            s = exp_list.pop()
+            token = exp_list.pop()
             # 从右至左逐个读取表达式中的元素（数字或操作符）
             # 并按照以下算法处理
-            if is_number(s):
+            if is_number(token):
                 # 1，如果元素是数字则进入结果队列
-                output.append(s)
+                output.append(token)
                 # print(f'got number token, put to output list')
-            elif s == '(':
+            elif token == '(':
                 # 2，如果元素是反括号则压入运算符栈
-                op_stack.append(s)
+                op_stack.append(token)
                 # print(f'got "(" token, put to op stack')
-            elif s == ')':
-                # 3，扫描到（时，依次弹出所有运算符直到遇到），并把该）弹出
-                while op_stack[-1] != '(':
-                    output.append(op_stack.pop())
-                op_stack.pop()
-                # print(f'got ")" token, poped all ops before "(" to output, and removed "("')
-                if len(op_stack) > 0:
-                    if op_stack[-1] not in '+-*/&|^': # op_stack 中还有一个函数需要弹出
+            elif token == ')':
+                # 3，扫描到")"时，依次弹出所有运算符直到遇到"("或一个函数，并根据遇到的token类型（函数/右括号）来确定下一步
+                while op_stack[-1][-1] != '(':
+                    try:
                         output.append(op_stack.pop())
-                        # print(f'there\'s function in op stack, poped function')
-            elif s in prio.keys():
+                    except:  # 如果右括号没有与之配对的左括号，则报错
+                        raise InputError(f'Invalid expression, missing opening parenthesis!')
+                if op_stack[-1] == '(':  # 如果剩余右括号，则弹出右括号，并丢弃这对括号
+                    op_stack.pop()
+                else:  # 如果剩余一个函数，则将函数的参数+1，并弹出函数，设置函数的参数个数
+                    arg_count = arg_count_stack.pop() + 1
+                    func = op_stack.pop() + str(arg_count) + ")"
+                    output.append(func)
+                    # print(f'there\'s function in op stack, poped function with argument count {arg_count}')
+            elif token in prio.keys():
                 # 4，扫描到运算符时
                 # print(f'got op type token')
                 if len(op_stack) > 0:
-                    if (op_stack[-1] in '+-*/&|^') and (prio[s] <= prio[op_stack[-1]]):
+                    if (op_stack[-1] in '+-*/&|^') and (prio[token] <= prio[op_stack[-1]]):
                         # print(f'op stack has op {op_stack[-1]}, which is higher than current token {s}, poped!\n'
                         #       f'current token {s} will be put back to exp for next try')
                         output.append(op_stack.pop())
-                        exp_list.append(s)
+                        exp_list.append(token)
                     else:
-                        op_stack.append(s)
+                        op_stack.append(token)
                 else:
                     # 如果op栈为空，直接将token压入op栈
-                    op_stack.append(s)
+                    op_stack.append(token)
+            elif token in functions:
+                # 5，扫描到函数时，将函数压入op栈，并将数字0压入arc_count栈
+                op_stack.append(token)
+                arg_count_stack.append(0)
+            elif token == ',':
+                # 6, 扫描到逗号时，说明函数有参数，该函数的参数数量+1，同时弹出op栈中所有非函数的op
+                try:
+                    arg_count_stack[-1] += 1
+                except:
+                    raise InputError(f'Invalid expression: miss-placed comma!')
+                while op_stack[-1][-1] != '(':  # 弹出所有的操作符，直到下一个函数或括号
+                    try:
+                        output.append(op_stack.pop())
+                    except:
+                        raise InputError(f'Invalid expression, missing opening parenthesis!')
 
-            else: # 扫描到不合法输入
-                raise ValueError(f'unidentified characters found in blender string: \'{s}\'')
+            else:  # 扫描到不合法输入
+                raise ValueError(f'unidentified characters found in blender string: \'{token}\'')
             # print(f'step ends: output list is {output}, op_stack is {op_stack}')
         while op_stack:
             output.append(op_stack.pop())

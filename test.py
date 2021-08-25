@@ -3311,24 +3311,54 @@ class TestOperator(unittest.TestCase):
         # self.op.set_blender('selecting', "-(0 + 1) * 2")
         # self.assertEqual(self.op._selecting_blend([1, 2, 3]), -9)
         self.op.set_blender('selecting', "(0-1)/2 + 3")
+        print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertAlmostEqual(self.op._selecting_blend([1, 2, 3, 0.0]), -0.33333333)
         self.op.set_blender('selecting', "0 + 1 / 2")
+        print(f'RPN of notation: "0 + 1 / 2" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertAlmostEqual(self.op._selecting_blend([1, math.pi, 4]), 1.78539816)
         self.op.set_blender('selecting', "(0 + 1) / 2")
+        print(f'RPN of notation: "(0 + 1) / 2" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertEqual(self.op._selecting_blend([1, 2, 3]), 1)
         self.op.set_blender('selecting', "(0 + 1 * 2) / 3")
+        print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertAlmostEqual(self.op._selecting_blend([3, math.e, 10, 10]), 3.0182818284590454)
         self.op.set_blender('selecting', "0 / 1 * 2")
+        print(f'RPN of notation: "0 / 1 * 2" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertEqual(self.op._selecting_blend([1, 3, 6]), 2)
         self.op.set_blender('selecting', "(0 - 1 + 2) * 4")
+        print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertAlmostEqual(self.op._selecting_blend([1, 1, -1, np.nan, math.pi]), -3.141592653589793)
         self.op.set_blender('selecting', "0 * 1")
+        print(f'RPN of notation: "0 * 1" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
         self.assertAlmostEqual(self.op._selecting_blend([math.pi, math.e]), 8.539734222673566)
 
         self.op.set_blender('selecting', 'abs(3-sqrt(2) /  cos(1))')
-        self.assertEqual(self.op.selecting_blender_expr, ['abs', '-', '/', 'cos', '1', 'sqrt', '2', '3'])
+        print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
+        self.assertEqual(self.op.selecting_blender_expr, ['abs(1)', '-', '/', 'cos(1)', '1', 'sqrt(1)', '2', '3'])
         self.op.set_blender('selecting', '0/max(2,1,3 + 5)+4')
-        self.assertEqual(self.op.selecting_blender_expr, ['+', '4', '/', 'max', '+', '5', '3', '1', '2', '0'])
+        print(f'RPN of notation: "0/max(2,1,3 + 5)+4" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
+        self.assertEqual(self.op.selecting_blender_expr, ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
+
+        self.op.set_blender('selecting', '1 + sum(1,2,3+3, sum(1, 2) + 3) *5')
+        print(f'RPN of notation: "1 + sum(1,2,3+3, sum(1, 2) + 3) *5" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
+        self.assertEqual(self.op.selecting_blender_expr, ['+', '*', '5', 'sum(4)', '+', '3', 'sum(2)', '2', '1',
+                                                          '+', '3', '3', '2', '1', '1'])
+        self.op.set_blender('selecting', '1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)')
+        print(f'RPN of notation: "1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)" is:\n'
+              f'{self.op.selecting_blender_expr[::-1]}')
+        self.assertEqual(self.op.selecting_blender_expr, ['+', '*', '+', '3', '2', 'sum(5)', '-', '8', '7',
+                                                          'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
+                                                          '+', '5', '3', '2', '1', '1'])
 
         # self.assertRaises(ValueError, self.op.set_blender, 'selecting', '0 and (1 or 2)')
 
@@ -3922,6 +3952,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, selmask, 0.001))
 
     def test_parser(self):
+
         """test blender parser"""
         self.assertEqual(blender_evaluate("1 + 2 * 3"), 7)
         self.assertEqual(blender_evaluate("(1 + 2) * 3"), 9)
