@@ -607,7 +607,7 @@ class Operator:
                     try:
                         output.append(op_stack.pop())
                     except:  # 如果右括号没有与之配对的左括号，则报错
-                        raise InputError(f'Invalid expression, missing opening parenthesis!')
+                        raise ValueError(f'Invalid expression, missing opening parenthesis!')
                 if op_stack[-1] == '(':  # 如果剩余右括号，则弹出右括号，并丢弃这对括号
                     op_stack.pop()
                 else:  # 如果剩余一个函数，则将函数的参数+1，并弹出函数，设置函数的参数个数
@@ -638,12 +638,12 @@ class Operator:
                 try:
                     arg_count_stack[-1] += 1
                 except:
-                    raise InputError(f'Invalid expression: miss-placed comma!')
+                    raise ValueError(f'Invalid expression: miss-placed comma!')
                 while op_stack[-1][-1] != '(':  # 弹出所有的操作符，直到下一个函数或括号
                     try:
                         output.append(op_stack.pop())
                     except:
-                        raise InputError(f'Invalid expression, missing opening parenthesis!')
+                        raise ValueError(f'Invalid expression, missing opening parenthesis!')
 
             else:  # 扫描到不合法输入
                 raise ValueError(f'unidentified characters found in blender string: \'{token}\'')
@@ -1308,16 +1308,32 @@ class Operator:
         :return:
             ndarray, 混合完成的选股蒙板
         """
+        functions = {'sum(': np.sum,
+                     'abs(': np.abs,
+                     'sqrt(': np.sqrt,
+                     'cos(': np.cos,
+                     'max(': max}
         exp = self._selecting_blender[:]
         s = []
         while exp:  # 等同于但是更好: while exp != []
             if exp[-1].isdigit():
+                # 如果是数字则直接入栈
                 s.append(sel_masks[int(exp.pop())])
-                # print(f'calculating: puting number {s[-1]} into s, gets {s}')
+            elif exp[-1][-1] == ')':
+                # 如果碰到函数，
+                token = exp.pop()
+                arg_count = int(token[-2])
+                func = functions.get(token[0:-2])
+                if func is None:
+                    raise ValueError(f'the function \'{token[0:-2]}\' -> {functions.get(token[0:-2])} is not a valid function!')
+                args = tuple([s.pop() for i in range(arg_count)])
+                try:
+                    s.append(func(*args))
+                except:
+                    print(f'wrong output func(*args) with args = {args} => ')
             else:
                 # print(f'calculating: taking {s[-1]} and {s[-2]} and eval {s[-2]} {exp[-1]} {s[-1]}')
                 s.append(self._blend(s.pop(), s.pop(), exp.pop()))
-                # print(f'gets result {s[-1]}')
         return unify(s[0])
 
     def _blend(self, n1, n2, op):

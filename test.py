@@ -62,7 +62,6 @@ from qteasy.database import DataSource
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
 from qteasy.parser import blender_evaluate
-from qteasy.parser2 import parse, compute
 
 
 class TestCost(unittest.TestCase):
@@ -3298,6 +3297,22 @@ class TestOperator(unittest.TestCase):
                                                           '+', '4', '3', '/', '2', '*', '1', '0'])
         self.assertEqual(self.op._selecting_blend([1, 1, 1, 1, 1, 1, 1, 1, 1]), 3)
         self.assertEqual(self.op._selecting_blend([2, 1, 4, 3, 5, 5, 2, 2, 10]), 14)
+        self.op.set_blender('selecting', '0/max(2,1,3 + 5)+4')
+        self.assertEqual(self.op.selecting_blender_expr, ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
+        self.assertEqual(self.op._selecting_blend([8.0, 4, 3, 5.0, 0.125, 5]), 0.925)
+        self.assertEqual(self.op._selecting_blend([2, 1, 4, 3, 5, 5, 2, 2, 10]), 5.25)
+        self.op.set_blender('selecting', '0/max(2,1,3 + 5)+4')
+        self.assertEqual(self.op._selecting_blend([8.0, 4, 3, 5.0, 0.125, 5]), 0.925)
+        self.assertEqual(self.op._selecting_blend([2, 1, 4, 3, 5, 5, 2, 2, 10]), 5.25)
+
+        print('speed test')
+        import time
+        st = time.time()
+        self.op.set_blender('selecting', '0+max(1,2,(3+4)*5, max(6, (7+8)*9), 10-11) * (12+13)')
+        for i in range(10000):
+            res = self.op._selecting_blend([1, 1, 2, 3, 4, 5, 3, 4, 5, 6, 7, 8, 2, 3])
+        et = time.time()
+        print(f'total time for RPN processing: {et - st}, got result: {res}')
 
         self.op.set_blender('selecting', "0 + 1 * 2")
         self.assertEqual(self.op._selecting_blend([1, 2, 3]), 7)
@@ -3312,50 +3327,50 @@ class TestOperator(unittest.TestCase):
         # self.assertEqual(self.op._selecting_blend([1, 2, 3]), -9)
         self.op.set_blender('selecting', "(0-1)/2 + 3")
         print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertAlmostEqual(self.op._selecting_blend([1, 2, 3, 0.0]), -0.33333333)
         self.op.set_blender('selecting', "0 + 1 / 2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertAlmostEqual(self.op._selecting_blend([1, math.pi, 4]), 1.78539816)
         self.op.set_blender('selecting', "(0 + 1) / 2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertEqual(self.op._selecting_blend([1, 2, 3]), 1)
         self.op.set_blender('selecting', "(0 + 1 * 2) / 3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertAlmostEqual(self.op._selecting_blend([3, math.e, 10, 10]), 3.0182818284590454)
         self.op.set_blender('selecting', "0 / 1 * 2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertEqual(self.op._selecting_blend([1, 3, 6]), 2)
         self.op.set_blender('selecting', "(0 - 1 + 2) * 4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertAlmostEqual(self.op._selecting_blend([1, 1, -1, np.nan, math.pi]), -3.141592653589793)
         self.op.set_blender('selecting', "0 * 1")
         print(f'RPN of notation: "0 * 1" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertAlmostEqual(self.op._selecting_blend([math.pi, math.e]), 8.539734222673566)
 
         self.op.set_blender('selecting', 'abs(3-sqrt(2) /  cos(1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertEqual(self.op.selecting_blender_expr, ['abs(1)', '-', '/', 'cos(1)', '1', 'sqrt(1)', '2', '3'])
         self.op.set_blender('selecting', '0/max(2,1,3 + 5)+4')
         print(f'RPN of notation: "0/max(2,1,3 + 5)+4" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertEqual(self.op.selecting_blender_expr, ['+', '4', '/', 'max(3)', '+', '5', '3', '1', '2', '0'])
 
         self.op.set_blender('selecting', '1 + sum(1,2,3+3, sum(1, 2) + 3) *5')
         print(f'RPN of notation: "1 + sum(1,2,3+3, sum(1, 2) + 3) *5" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertEqual(self.op.selecting_blender_expr, ['+', '*', '5', 'sum(4)', '+', '3', 'sum(2)', '2', '1',
                                                           '+', '3', '3', '2', '1', '1'])
         self.op.set_blender('selecting', '1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)')
         print(f'RPN of notation: "1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)" is:\n'
-              f'{self.op.selecting_blender_expr[::-1]}')
+              f'{" ".join(self.op.selecting_blender_expr[::-1])}')
         self.assertEqual(self.op.selecting_blender_expr, ['+', '*', '+', '3', '2', 'sum(5)', '-', '8', '7',
                                                           'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
                                                           '+', '5', '3', '2', '1', '1'])
@@ -3950,50 +3965,6 @@ class TestOperator(unittest.TestCase):
 
         self.assertEqual(output.shape, selmask.shape)
         self.assertTrue(np.allclose(output, selmask, 0.001))
-
-    def test_parser(self):
-
-        """test blender parser"""
-        self.assertEqual(blender_evaluate("1 + 2 * 3"), 7)
-        self.assertEqual(blender_evaluate("(1 + 2) * 3"), 9)
-        self.assertEqual(blender_evaluate("(1+2) * 3"), 9)
-        self.assertEqual(blender_evaluate("(1 + 2)   * 3"), 9)
-        self.assertEqual(blender_evaluate("-(1 + 2) * 3"), -9)
-        self.assertAlmostEqual(blender_evaluate("(1-2)/3.0 + 0.0000"), -0.33333333)
-        self.assertAlmostEqual(blender_evaluate("1 + pi / 4"), 1.78539816)
-        self.assertEqual(blender_evaluate("(a + b) / c", {'a': 1, 'b': 2, 'c': 3}), 1)
-        self.assertEqual(blender_evaluate("(x + e * 10) / 10", {'x': 3}), 3.0182818284590454)
-        self.assertEqual(blender_evaluate("1.0 / 3 * 6"), 2)
-        self.assertEqual(blender_evaluate("(1 - 1 + -1) * pi"), -3.141592653589793)
-        self.assertEqual(blender_evaluate("pi * e"), 8.539734222673566)
-        self.assertEqual(blender_evaluate("sin(pi) + 2.14"), 2.14)
-        self.assertEqual(blender_evaluate("sqrt(2)"), 1.4142135623730951)
-        self.assertEqual(blender_evaluate("abs(5-sqrt(2) /  cos(pi))"), 6.414213562373095)
-        self.assertEqual(blender_evaluate('8.0/max(3,4,5. + 5)+0.125'), 0.925)
-        var1 = np.array([[1, 2], [3, 4]])
-        var2 = np.array([[3, 4], [4, 5]])
-        res1 = np.array([[4, 6], [7, 9]])
-        res2 = np.array([[3, 8], [12, 20]])
-        self.assertTrue(np.allclose(blender_evaluate("a+b", {'a': var1, 'b': var2}), res1))
-        self.assertTrue(np.allclose(blender_evaluate("a*b", {'a': var1, 'b': var2}), res2))
-
-    def test_parser2(self):
-        """test blender parser 2"""
-        self.assertEqual(compute(parse('1+1')), 2)
-        self.assertEqual(compute(parse('1-1')), 0)
-        self.assertEqual(compute(parse('3-2+1')), 2)
-        self.assertEqual(compute(parse('8/4/2')), 1)
-        self.assertEqual(compute(parse('1*2')), 2)
-        self.assertEqual(compute(parse('(1+7)*(9+2)')), 88)
-        self.assertEqual(compute(parse('(2+7)/4')), 2.25)
-        self.assertEqual(compute(parse('7/4')), 1.75)
-        self.assertEqual(compute(parse('2*3+4')), 10)
-        self.assertEqual(compute(parse('2*(3+4)')), 14)
-        self.assertEqual(compute(parse('2+3*4')), 14)
-        self.assertEqual(compute(parse('2+(3*4)')), 14)
-        self.assertEqual(compute(parse('2-(3*4+1)')), -11)
-        self.assertEqual(compute(parse('2*(3*4+1)')), 26)
-        self.assertEqual(compute(parse('8/((1+3)*2)')), 1)
 
     def test_tokenizer(self):
         self.assertListEqual(self.op._exp_to_token('(1 - 1 + -1) * pi'),
