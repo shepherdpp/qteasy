@@ -61,8 +61,6 @@ from qteasy.database import DataSource
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
-from qteasy.parser import blender_evaluate
-
 
 class TestCost(unittest.TestCase):
     def setUp(self):
