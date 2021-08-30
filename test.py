@@ -2954,7 +2954,7 @@ class TestOperator(unittest.TestCase):
                                    rows=self.date_indices)
         print(f'in test_Operator, history panel is created for selection finance test:')
         self.hp2.info()
-        self.op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
+        self.op = qt.Operator(pt=['all'], ps='dma', vs='urgent')
 
     def test_info(self):
         """Test information output of Operator"""
@@ -3043,9 +3043,9 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(timing_types=[test_ls],
-                              selecting_types=[test_sel],
-                              ricon_types=[test_sig])
+        self.op = qt.Operator(ps=[test_ls],
+                              pt=[test_sel],
+                              vs=[test_sig])
         too_early_cash = qt.CashPlan(dates='2016-01-01', amounts=10000)
         early_cash = qt.CashPlan(dates='2016-07-01', amounts=10000)
         on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
@@ -3064,13 +3064,13 @@ class TestOperator(unittest.TestCase):
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
         self.assertIsInstance(self.op._selecting_history_data, list)
-        self.assertIsInstance(self.op._timing_history_data, list)
+        self.assertIsInstance(self.op._stg_history_data, list)
         self.assertIsInstance(self.op._ricon_history_data, list)
         self.assertEqual(len(self.op._selecting_history_data), 1)
-        self.assertEqual(len(self.op._timing_history_data), 1)
+        self.assertEqual(len(self.op._stg_history_data), 1)
         self.assertEqual(len(self.op._ricon_history_data), 1)
         sel_hist_data = self.op._selecting_history_data[0]
-        tim_hist_data = self.op._timing_history_data[0]
+        tim_hist_data = self.op._stg_history_data[0]
         ric_hist_data = self.op._ricon_history_data[0]
         print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)
@@ -3134,9 +3134,9 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(timing_types=[test_ls],
-                              selecting_types=[test_sel],
-                              ricon_types=[test_sig])
+        self.op = qt.Operator(ps=[test_ls],
+                              pt=[test_sel],
+                              vs=[test_sig])
         self.assertIsInstance(self.op, qt.Operator, 'Operator Creation Error')
         self.op.set_parameter(stg_id='t-0',
                               pars={'000300': (5, 10.),
@@ -3219,7 +3219,7 @@ class TestOperator(unittest.TestCase):
 
         :return:
         """
-        new_op = qt.Operator(selecting_types=['all'], timing_types='dma', ricon_types='urgent')
+        new_op = qt.Operator(pt=['all'], ps='dma', vs='urgent')
         print(new_op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
         print(f'info of Timing strategy in new op: \n{new_op.strategies[0].info()}')
         self.op.set_parameter('t-0',
@@ -6834,9 +6834,9 @@ class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
     def setUp(self):
-        self.op = qt.Operator(timing_types=['dma', 'macd'],
-                              selecting_types=['all'],
-                              ricon_types=['urgent'])
+        self.op = qt.Operator(ps=['dma', 'macd'],
+                              pt=['all'],
+                              vs=['urgent'])
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
         self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
@@ -6901,7 +6901,7 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
-        op = qt.Operator(timing_types=['stema'])
+        op = qt.Operator(ps=['stema'])
         op.set_parameter('t-0', pars=(6,))
         op.set_parameter('s-0', (0.5,))
         op.set_parameter('r-0', ())
@@ -7326,7 +7326,7 @@ class TestQT(unittest.TestCase):
         """
         # TODO: Investigate, error when invest_end being set to "20181231", problem probably
         # TODO: related to trade day calendar.
-        op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
+        op = qt.Operator(ps='long', pt='finance', vs='ricon_none')
         all_shares = stock_basic()
         shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
         print('extracted banking share pool:')
@@ -7365,7 +7365,7 @@ class TestQT(unittest.TestCase):
         """test built-in strategy selecting finance
         """
         print(f'test portfolio selection from large quantities of shares')
-        op = qt.Operator(timing_types='long', selecting_types='finance', ricon_types='ricon_none')
+        op = qt.Operator(ps='long', pt='finance', vs='ricon_none')
         qt.configure(asset_pool=qt.get_stock_pool(date='20070101',
                                                   industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                             '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
@@ -7475,7 +7475,7 @@ class TestBuiltIns(unittest.TestCase):
                      opti_sample_count=100)
 
     def test_crossline(self):
-        op = qt.Operator(timing_types=['crossline'])
+        op = qt.Operator(ps=['crossline'])
         op.set_parameter('t-0', pars=(35, 120, 10, 'buy'))
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
@@ -7485,7 +7485,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_macd(self):
-        op = qt.Operator(timing_types=['macd'])
+        op = qt.Operator(ps=['macd'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7493,7 +7493,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dma(self):
-        op = qt.Operator(timing_types=['dma'])
+        op = qt.Operator(ps=['dma'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7501,7 +7501,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_trix(self):
-        op = qt.Operator(timing_types=['trix'])
+        op = qt.Operator(ps=['trix'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7509,13 +7509,13 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_cdl(self):
-        op = qt.Operator(timing_types=['cdl'])
+        op = qt.Operator(ps=['cdl'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         # built-in cdl is not optimizable
 
     def test_ssma(self):
-        op = qt.Operator(timing_types=['ssma'])
+        op = qt.Operator(ps=['ssma'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7523,7 +7523,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sdema(self):
-        op = qt.Operator(timing_types=['sdema'])
+        op = qt.Operator(ps=['sdema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7531,7 +7531,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sema(self):
-        op = qt.Operator(timing_types=['sema'])
+        op = qt.Operator(ps=['sema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7539,13 +7539,13 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sht(self):
-        op = qt.Operator(timing_types=['sht'])
+        op = qt.Operator(ps=['sht'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         # built-in strategy sht is not optimizable
 
     def test_skama(self):
-        op = qt.Operator(timing_types=['skama'])
+        op = qt.Operator(ps=['skama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7553,7 +7553,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_smama(self):
-        op = qt.Operator(timing_types=['smama'])
+        op = qt.Operator(ps=['smama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7561,7 +7561,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sfama(self):
-        op = qt.Operator(timing_types=['sfama'])
+        op = qt.Operator(ps=['sfama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7569,7 +7569,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_st3(self):
-        op = qt.Operator(timing_types=['st3'])
+        op = qt.Operator(ps=['st3'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7577,7 +7577,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_stema(self):
-        op = qt.Operator(timing_types=['stema'])
+        op = qt.Operator(ps=['stema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7585,7 +7585,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_strima(self):
-        op = qt.Operator(timing_types=['strima'])
+        op = qt.Operator(ps=['strima'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7593,7 +7593,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_swma(self):
-        op = qt.Operator(timing_types=['swma'])
+        op = qt.Operator(ps=['swma'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7601,7 +7601,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dsma(self):
-        op = qt.Operator(timing_types=['dsma'])
+        op = qt.Operator(ps=['dsma'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7609,7 +7609,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_ddema(self):
-        op = qt.Operator(timing_types=['ddema'])
+        op = qt.Operator(ps=['ddema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7617,7 +7617,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dema(self):
-        op = qt.Operator(timing_types=['dema'])
+        op = qt.Operator(ps=['dema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7625,7 +7625,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dkama(self):
-        op = qt.Operator(timing_types=['dkama'])
+        op = qt.Operator(ps=['dkama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7633,7 +7633,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dmama(self):
-        op = qt.Operator(timing_types=['dmama'])
+        op = qt.Operator(ps=['dmama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7641,7 +7641,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dfama(self):
-        op = qt.Operator(timing_types=['dfama'])
+        op = qt.Operator(ps=['dfama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7649,7 +7649,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dt3(self):
-        op = qt.Operator(timing_types=['dt3'])
+        op = qt.Operator(ps=['dt3'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7657,7 +7657,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dtema(self):
-        op = qt.Operator(timing_types=['dtema'])
+        op = qt.Operator(ps=['dtema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7665,7 +7665,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dtrima(self):
-        op = qt.Operator(timing_types=['dtrima'])
+        op = qt.Operator(ps=['dtrima'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7673,7 +7673,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_dwma(self):
-        op = qt.Operator(timing_types=['dwma'])
+        op = qt.Operator(ps=['dwma'])
         op.set_parameter('t-0', pars=(200, 22))
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
@@ -7682,7 +7682,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slsma(self):
-        op = qt.Operator(timing_types=['slsma'])
+        op = qt.Operator(ps=['slsma'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7690,7 +7690,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sldema(self):
-        op = qt.Operator(timing_types=['sldema'])
+        op = qt.Operator(ps=['sldema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7698,7 +7698,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slema(self):
-        op = qt.Operator(timing_types=['slema'])
+        op = qt.Operator(ps=['slema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7706,13 +7706,13 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slht(self):
-        op = qt.Operator(timing_types=['slht'])
+        op = qt.Operator(ps=['slht'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         # built-in strategy slht is not optimizable
 
     def test_slkama(self):
-        op = qt.Operator(timing_types=['slkama'])
+        op = qt.Operator(ps=['slkama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7720,7 +7720,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slmama(self):
-        op = qt.Operator(timing_types=['slmama'])
+        op = qt.Operator(ps=['slmama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7728,7 +7728,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slfama(self):
-        op = qt.Operator(timing_types=['slfama'])
+        op = qt.Operator(ps=['slfama'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7736,7 +7736,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slt3(self):
-        op = qt.Operator(timing_types=['slt3'])
+        op = qt.Operator(ps=['slt3'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7744,7 +7744,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sltema(self):
-        op = qt.Operator(timing_types=['sltema'])
+        op = qt.Operator(ps=['sltema'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7752,7 +7752,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_sltrima(self):
-        op = qt.Operator(timing_types=['sltrima'])
+        op = qt.Operator(ps=['sltrima'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -7760,7 +7760,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
     def test_slwma(self):
-        op = qt.Operator(timing_types=['slwma'])
+        op = qt.Operator(ps=['slwma'])
         op.set_parameter('t-0', opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')

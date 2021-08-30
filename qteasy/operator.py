@@ -13,9 +13,7 @@ import numpy as np
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
-from .strategy import RollingTiming
-from .strategy import SimpleSelecting
-from .strategy import SimpleTiming
+from .strategy import Strategy
 from .built_in import AVAILABLE_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
 from .utilfuncs import unify, mask_to_signal
@@ -160,9 +158,11 @@ class Operator:
     根据输入的参数生成Operator对象，在对象中创建相应的策略类型:
 
     input:
-            :param selecting_types: 一个包含多个字符串的列表，表示不同选股策略，后续可以考虑把字符串列表改为逗号分隔的纯字符串输入
-            :param timing_types: 字符串列表，表示不同择时策略，后续可以考虑把字符串列表改为逗号分隔的纯字符串输入
-            :param ricon_types: 字符串列表，表示不同风控策略，后续可以考虑把字符串列表改为逗号分隔的纯字符串输入
+            :param strategies: 一个包含多个字符串的列表，表示不同策略
+            :param signal_type: 信号生成器的类型，可以使用三种不同的信号生成器，分别生成不同类型的信号：
+                                pt：positional target，生成的信号代表某种股票的目标仓位
+                                ps：proportion signal，比例买卖信号，代表每种股票的买卖百分比
+                                VS：volume signal，数量买卖信号，代表每种股票的计划买卖数量
 
         Operator对象其实就是若干个不同类型的操作策略的容器对象，
         在一个Operator对象中，可以包含任意多个"策略对象"，而运行Operator生成交易信号的过程，就是调用这些不同的交易策略，并通过
@@ -175,9 +175,7 @@ class Operator:
          Gen  \  strategy  | RollingTiming | SimpleSelecting | Simple_Timing | FactoralSelecting |
          ==================|===============|=================|===============|===================|
          Positional target |       Yes     |        Yes      |       Yes     |        Yes        |
-         ------------------|---------------|-----------------|---------------|-------------------|
          proportion signal |       Yes     |        Yes      |       Yes     |        Yes        |
-         ------------------|---------------|-----------------|---------------|-------------------|
          volume signal     |       Yes     |        Yes      |       Yes     |        Yes        |
 
         ==五种策略类型==
@@ -247,7 +245,7 @@ class Operator:
         在Operator对象中，包含的策略可以有无限多个，但是Operator会将策略用于生成三种不同类型的信号，不同种类的信号可以同时输出，但是
         不建议这么做，建议一个Operator对象只生成一种类型的信号。
 
-        Operator对象可以同时将多个策略用于生成同一种信号，不过，为了确保输出唯一，多个策略的输出将被以某种方式混合，混合的方式是Operator
+        Operator对象可以同时将多个策略用于生成同一种信号，为了确保输出唯一，多个策略的输出将被以某种方式混合，混合的方式是Operator
         对象的属性，定义了同样用途的不同策略输出结果的混合方式，以下是三种用途及其混合方式的介绍：
 
             信号类型1,  仓位目标信号（Positional Target，PT信号：
@@ -256,71 +254,49 @@ class Operator:
                 应该注意的是，PT信号并不给出明确的操作或者交易信号，仅仅是给出一个目标仓位，是否产生交易信号需要检查当前实际持仓与
                 目标持仓之间的差异来确定，当这个差值大于某一个阈值的时候，产生交易信号。这个阈值由QT级别的参数确定。
 
-                所有类型的交易信号都一样，只要交易价格是同一类型的时候，都应该混合为一组信号进入回测程序进行回测，混合的方式由混合
-                字符串确定，字符串的格式为"[chg|pos]-0/9|cumulative"(此处应该使用正则表达式)
+            信号类型2,  比例买卖信号（Proportional Signal，PS信号）：
+                比例买卖信号代表每一个时间周期上计划买入或卖出的各个股票的数量，当信号代表买入时，该信号的数值代表计划买入价值占当时
+                总资产的百分比；当信号代表卖出时，该信号的数值代表计划卖出的数量占当时该股票的持有数量的百分比，亦即：
+                    - 当信号代表买入时，0.3代表使用占总资产30%的现金买入某支股票
+                    - 当信号代表卖出时，-0.5代表卖出所持有的某种股票的50%的份额
 
-                'str-T': T为浮点数，当多个策略多空蒙板的总体信号强度达到阈值T时，总体输出为1(或者-1)，否则为0
-                'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-                    这种类型有一个变体：
-                    'pos-N-T': T为信号强度阈值，忽略信号强度达不到该阈值的多空蒙板信号，将剩余的多空蒙板进行计数，信号数量达到或
-                    超过N时，输出为1（或者-1），否则为0
-                'avg': 平均信号强度，所有多空蒙板的信号强度的平均值
-                'comboo': 在每个策略发生反转时都会产生交易信号，信号的强度不经过衰减，但是通常第一个信号产生后，后续信号就再无意义
+            信号类型3:  数量买卖信号（Volume Signal，VS信号）：
+                数量买卖信号代表每一个时间周期上计划买入或卖出的各个股票的数量，这个数量代表计划买卖数量，实际买卖数量受买卖规则影响，
+                因此可能与计划买卖信号不同。例如： 500代表买入相应股票500股
 
-            信号类型2,  生成选股蒙板：
-                选股蒙板定义了每一个时刻整个投资组合中每一个投资产品被分配到的权重。同样，如果定义了多个策略，也必须将它们的输出结果混
-                合成一个
 
-                选股蒙板的混合方式由一个逻辑表达式来确定，例如'0 and (1 or 2 and (3 or 4))'
-                上面的表达式表示了如何根据五个选股蒙板来确定一个个股是否被选中而且权重多大。在目前的系统中，qteasy只是简单地将and运算
-                处理为乘法，or运算处理为加法。在只有0和1的情况下这样做是没有问题的，但是在普遍蒙板中存在大量介于0和1之间的浮点数的
-                时候，就需要注意了，如果蒙板0中某个股票的权重为0.5,在蒙板1中的权重为0.5，那么0 and 1 与0 or 1的结果分别应该是什么？
+        ==交易信号的混合==
 
-                目前这个问题的解决方式是：
-                    0.5 and 0.5 = 0.5 * 0.5 = 0.25,
-                    0.5 or 0.5 = 0.5 + 0.5 = 1
-                完成上述计算后重新unify整个蒙板
+            选股蒙板的混合方式由一个逻辑表达式来确定，例如'0 and (1 or 2 and (3 or 4))'
+            上面的表达式表示了如何根据五个选股蒙板来确定一个个股是否被选中而且权重多大。在目前的系统中，qteasy只是简单地将and运算
+            处理为乘法，or运算处理为加法。在只有0和1的情况下这样做是没有问题的，但是在普遍蒙板中存在大量介于0和1之间的浮点数的
+            时候，就需要注意了，如果蒙板0中某个股票的权重为0.5,在蒙板1中的权重为0.5，那么0 and 1 与0 or 1的结果分别应该是什么？
 
-                想到还有另一种解决方式：
-                    0.5 and 0.5 = 0.5 * 0.5 = 0.25,
-                    0.5 or 0.5 = 1 - (1 - 0.5) * (1 - 0.5) = 0.75
-                同样在完成上述计算后unify整个蒙板
+            交易信号矩阵的混合方式跟多空蒙板的混合方式相似，以混合字符串赖定义。混合字符串的格式为"[chg|pos]-0/9|cumulative"
 
-                孰优孰劣，还需要观察和试验，但是现在先把后一种方式写入代码中，后续再进行验证
+            'chg-N': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
+            'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
+            'cumulative': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
+            所有类型的交易信号都一样，只要交易价格是同一类型的时候，都应该混合为一组信号进入回测程序进行回测，混合的方式由混合
+            字符串确定，字符串的格式为"[chg|pos]-0/9|cumulative"(此处应该使用正则表达式)
 
-            用途3:  生成交易信号矩阵：
-                交易信号矩阵是由策略直接生成的交易信号组成的，如前所述，1代表开多仓或平空仓，-1代表平多仓或开空仓。与其他用途一样，如果
-                多个策略被用于同样的用途，应该把多个策略的输出混合成一个最终输出。
+            'str-T': T为浮点数，当多个策略多空蒙板的总体信号强度达到阈值T时，总体输出为1(或者-1)，否则为0
+            'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
+                这种类型有一个变体：
+                'pos-N-T': T为信号强度阈值，忽略信号强度达不到该阈值的多空蒙板信号，将剩余的多空蒙板进行计数，信号数量达到或
+                超过N时，输出为1（或者-1），否则为0
+            'avg': 平均信号强度，所有多空蒙板的信号强度的平均值
+            'comboo': 在每个策略发生反转时都会产生交易信号，信号的强度不经过衰减，但是通常第一个信号产生后，后续信号就再无意义
 
-                交易信号矩阵的混合方式跟多空蒙板的混合方式相似，以混合字符串赖定义。混合字符串的格式为"[chg|pos]-0/9|cumulative"
+            目前这个问题的解决方式是：
+                0.5 and 0.5 = 0.5 * 0.5 = 0.25,
+                0.5 or 0.5 = 0.5 + 0.5 = 1
+            完成上述计算后重新unify整个蒙板
 
-                'chg-N': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
-                'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-                'cumulative': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
-
-        ==策略的组合==
-
-        以上三类策略通过不同的方式混合后，可以任意组合一种复杂的策略，因此，在qteasy系统中，复杂的策略是可以由很多个简单的策略组合而来
-        的。
-        在一个Operator对象中，作为容器可以容纳任意多个任意类型的策略，所有的策略以用途分成三组，所有的策略可以引用不同的历史数据，生成
-        同样大小尺度的结果（也就是说，生成的结果有相同的历史区间，相同的时间粒度），最后这些结果被通过某种方法"混合"起来，形成每个用途
-        的最终的结果，即多空模版、选股蒙板以及交易信号矩阵。
-        三种用途的结果又再次被组合起来，变成整个Operator对象的输出。
-
-        目前采用的组合方式是：
-
-        mask_to_signal(多空模版 * 选股蒙板) + 交易信号
-        其中mask_to_signal()函数的作用是将蒙板转化为交易信号，这样输出的就是交易信号
-
-        未来将第三类策略升级为单品种信号生成策略后，信号的组合方式就可以变为：
-
-        mask_to_signal(多空蒙板 * 选股蒙板）+ (交易信号 * 选股蒙板)
-        这样同样可以输出一组交易信号
-
-        但这样做还会有问题，预先生成交易信号在交易过程中存在MOQ时可能会发生这样的情况，在试图分多次建仓买入股票时，由于股票价值较高，导致
-        分批建仓的信号每次都无法买入，解决的思路有两个，第一是在回测时不仅接受交易信号，还接受目标仓位，那么如果第一次建仓不够买入一手
-        股票，到后续的目标仓位时总能有足够资金建仓。第二种是修改回测程序，在每次操作后记录理论操作数量和实际操作数量的差值，等下次有同方向
-        操作的时候补齐差额。孰优孰劣？目前还没有想清楚。
+            想到还有另一种解决方式：
+                0.5 and 0.5 = 0.5 * 0.5 = 0.25,
+                0.5 or 0.5 = 1 - (1 - 0.5) * (1 - 0.5) = 0.75
+            同样在完成上述计算后unify整个蒙板
 
     """
 
@@ -328,165 +304,68 @@ class Operator:
 
     AVAILABLE_LS_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
 
-    def __init__(self, selecting_types=None,
-                 timing_types=None,
-                 ricon_types=None):
+    def __init__(self, strategies=None, signal_type=None):
         """根据生成具体的对象
 
         input:
-            :param selecting_types: 一个包含多个字符串的列表，表示不同选股策略，后续可以考虑把字符串列表改为逗号分隔的纯字符串输入
-            :param timing_types: 字符串列表，表示不同择时策略，后续可以考虑把字符串列表改为逗号分隔的纯字符串输入
-            :param ricon_types: 字符串列表，表示不同风控策略，后续可以考虑把字符串列表改为逗号分隔的纯字符串输入
+            :param strategies: str, 用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
+            :param signal_type: str, 需要生成的交易信号的类型，包含一下三种类型
         """
         # 对象属性：
         # 交易信号通用属性：
 
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
-        if selecting_types is None:
-            selecting_types = ['all']
-        if isinstance(selecting_types, str):
-            selecting_types = str_to_list(selecting_types)
-        if timing_types is None:
-            timing_types = ['long']
-        if isinstance(timing_types, str):
-            timing_types = str_to_list(timing_types)
-        if ricon_types is None:
-            ricon_types = ['ricon_none']
-        if isinstance(ricon_types, str):
-            ricon_types = str_to_list(ricon_types)
-        # 在Operator对象中，对每一种类型的策略，需要三个列表对象加上一个字符串作为基本数据结构，存储相关信息：
+        if strategies is None:
+            stg = []
+        elif isinstance(strategies, str):
+            stg = str_to_list(strategies)
+        else:
+            stg = []
+
+        if signal_type is None:
+            self._signal_type = 'pt'
+        # 在Operator对象中，包含三个列表对象加上一个字符串作为基本数据结构，存储相关信息：
         # 对于每一类型的策略，第一个列表是_stg_types， 按照顺序保存所有相关策略对象的种类字符串，如['MACD', 'DMA', 'MACD']
         # 第二个列表是_stg，按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
         # 第三个列表是_stg_history_data, 列表中按照顺序保存用于不同策略的历史数据切片，格式均为np.ndarray，维度为三维
         # 字符串则是"混合"字符串，代表最终将所有的同类策略混合到一起的方式，对于不同类型的策略，混合方式定义不同
         # 以上的数据结构对于所有类型的策略都基本相同
-        self._timing_types = []
-        self._timing = []
-        self._timing_history_data = []
-        self._ls_blender = 'pos-1'  # 默认的择时策略混合方式
-        for timing_type in timing_types:
+        self._stg_types = []
+        self._strategies = []
+        self._stg_history_data = []
+        self._stg_blender = 'avg()'  # 默认的择时策略混合方式
+        for s in stg:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
-            if isinstance(timing_type, str):
-                if timing_type.lower() not in AVAILABLE_STRATEGIES:
-                    raise KeyError(f'built-in timing strategy \'{timing_type}\' not found!')
-                self._timing_types.append(timing_type)
-                self._timing.append(BUILT_IN_STRATEGY_DICT[timing_type]())
+            if isinstance(s, str):
+                if s.lower() not in AVAILABLE_STRATEGIES:
+                    raise KeyError(f'built-in timing strategy \'{s}\' not found!')
+                self._stg_types.append(s)
+                self._strategies.append(BUILT_IN_STRATEGY_DICT[s]())
             # 当传入的对象是一个strategy时，直接
-            elif isinstance(timing_type, (RollingTiming, SimpleTiming)):
-                self._timing_types.append(timing_type.stg_type)
-                self._timing.append(timing_type)
+            elif isinstance(s, Strategy):
+                self._stg_types.append(s.stg_type)
+                self._strategies.append(s)
             else:
-                raise TypeError(f'The timing strategy type \'{type(timing_type)}\' is not supported!')
-        # 根据输入参数创建不同的具体选股策略对象。selecting_types及selectings属性与择时策略对象属性相似
-        # 都是列表，包含若干相互独立的选股策略（至少一个）
-        self._selecting_type = []
-        self._selecting = []
-        self._selecting_history_data = []
-        # 生成选股蒙板生成策略清单
-        cur_type = 0
-        str_list = []
-
-        for selecting_type in selecting_types:
-            if cur_type == 0:
-                str_list.append(str(cur_type))
-            else:
-                str_list.append(f' or {str(cur_type)}')
-            cur_type += 1
-            if isinstance(selecting_type, str):
-                if selecting_type.lower() not in AVAILABLE_STRATEGIES:
-                    raise KeyError(f'KeyError: built-in selecting type \'{selecting_type}\' not found!')
-                self._selecting_type.append(selecting_type)
-                self._selecting.append(BUILT_IN_STRATEGY_DICT[selecting_type]())
-            elif isinstance(selecting_type, (SimpleSelecting, SimpleTiming)):
-                self._selecting_type.append(selecting_type.stg_type)
-                self._selecting.append(selecting_type)
-            else:
-                raise TypeError(f'Type Error, the type of object {type(selecting_type)} is not supported!')
-        self._selecting_blender_string = ''.join(str_list)
-        # create selecting blender by selecting blender string
-        self._selecting_blender = self._exp_to_blender
-
-        # 根据输入参数生成不同的风险控制策略对象
-        self._ricon_type = []
-        self._ricon = []
-        self._ricon_history_data = []
-        self._ricon_blender = 'add'
-        for ricon_type in ricon_types:
-            if isinstance(ricon_type, str):
-                if ricon_type.lower() not in AVAILABLE_STRATEGIES:
-                    raise KeyError(f'ricon type {ricon_type} not available!')
-                self._ricon_type.append(ricon_type)
-                self._ricon.append(BUILT_IN_STRATEGY_DICT[ricon_type]())
-            elif isinstance(ricon_type, (RollingTiming, SimpleTiming)):
-                self._ricon_type.append(ricon_type.stg_type)
-                self._ricon.append(ricon_type)
-            else:
-                raise TypeError(f'Type Error, the type of passed object {type(ricon_type)} is not supported!')
-
-    @property
-    def timing(self):
-        """返回operator对象的所有timing对象"""
-        return self._timing
-
-    @property
-    def timing_count(self):
-        """返回operator对象中的所有timing对象的数量"""
-        return len(self.timing)
-
-    @property
-    def ls_blender(self):
-        """返回operator对象中的多空蒙板混合器"""
-        return self._ls_blender
-
-    @property
-    def selecting(self):
-        """返回operator对象的所有selecting对象"""
-        return self._selecting
-
-    @property
-    def selecting_count(self):
-        """返回operator对象的所有selecting对象的数量"""
-        return len(self.selecting)
-
-    @property
-    def selecting_blender(self):
-        """返回operator对象的所有选股策略的选股结果混合器"""
-        return self._selecting_blender_string
-
-    @property
-    def selecting_blender_expr(self):
-        """返回operator对象的所有选股策略的选股结果的混合器表达式"""
-        return self._selecting_blender
-
-    @property
-    def ricon(self):
-        """返回operator对象的所有ricon对象"""
-        return self._ricon
-
-    @property
-    def ricon_count(self):
-        """返回operator对象的所有ricon对象的数量"""
-        return len(self.ricon)
-
-    @property
-    def ricon_blender(self):
-        """返回operator对象的所有ricon对象的混合器"""
-        return self._ricon_blender
+                raise TypeError(f'The strategy type \'{type(s)}\' is not supported!')
 
     @property
     def strategies(self):
-        """返回operator对象的所有策略子对象"""
-        stg = [item for item in self.timing + self.selecting + self.ricon]
-        return stg
+        """返回operator对象的所有timing对象"""
+        return self._strategies
 
     @property
     def strategy_count(self):
-        """返回operator对象的所有策略的数量"""
+        """返回operator对象中的所有timing对象的数量"""
         return len(self.strategies)
 
     @property
+    def stg_blender(self):
+        """返回operator对象中的多空蒙板混合器"""
+        return self._stg_blender
+
+    @property
     def strategy_blenders(self):
-        return [self.ls_blender, self.selecting_blender, self.ricon_blender]
+        return [self._stg_blender]
 
     @property
     def op_data_types(self):
@@ -968,8 +847,8 @@ class Operator:
         print('=' * 25)
 
         # 接着打印 timing模块的信息
-        print('Total count of timing strategies:', len(self._timing))
-        print('The blend type of timing strategies is', self._ls_blender)
+        print('Total count of timing strategies:', len(self._strategies))
+        print('The blend type of timing strategies is', self._stg_blender)
         print('Parameters of timing Strategies:')
         for tmg in self.timing:
             tmg.info()
@@ -1064,8 +943,8 @@ class Operator:
         self._selecting_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                         for stg in self.selecting]
         # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
-        self._timing_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                     for stg in self.timing]
+        self._stg_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                  for stg in self.timing]
         self._ricon_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                     for stg in self.ricon]
 
@@ -1091,7 +970,7 @@ class Operator:
             存储在operator对象的下面三个属性中，在生成交易信号时直接调用，避免了每次生成交易信号
             时再动态分配历史数据。
                 self._selecting_history_data
-                self._timing_history_data
+                self._stg_history_data
                 self._ricon_history_data
 
         :return=====
@@ -1106,7 +985,7 @@ class Operator:
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert len(self._timing_history_data) > 0, \
+        assert len(self._stg_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
@@ -1129,7 +1008,7 @@ class Operator:
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
         # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
         # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
-        ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._timing, self._timing_history_data)])
+        ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._strategies, self._stg_history_data)])
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
@@ -1138,7 +1017,7 @@ class Operator:
 
         # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并移除所有大于1或小于-1的信号
         # 生成交易信号矩阵
-        if self._ls_blender != 'none':
+        if self._stg_blender != 'none':
             # 常规情况下，所有的ls_mask会先被混合起来，然后再与sel_mask相乘后生成交易信号，与ricon_mat相加
             op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
         else:
@@ -1177,7 +1056,7 @@ class Operator:
         """
         # TODO: 使用regex判断输入的ls_blender各式是否正确
         assert isinstance(ls_blender, str), f'TypeError, expecting string but got {type(ls_blender)}'
-        self._ls_blender = ls_blender
+        self._stg_blender = ls_blender
 
     def _set_selecting_blender(self, selecting_blender_expression):
         """ 设置选股策略的混合方式，混合方式通过选股策略混合表达式来表示
@@ -1263,7 +1142,7 @@ class Operator:
             :rtype: object: 一个混合后的多空蒙板
         """
         try:
-            blndr = str_to_list(self._ls_blender, '-')  # 从对象的属性中读取择时混合参数
+            blndr = str_to_list(self._stg_blender, '-')  # 从对象的属性中读取择时混合参数
         except:
             raise TypeError(f'the timing blender converted successfully!')
         assert isinstance(blndr[0], str) and blndr[0] in self.AVAILABLE_LS_BLENDER_TYPES, \
