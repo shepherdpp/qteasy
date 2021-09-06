@@ -575,3 +575,29 @@ def function_debugger(func):
             raise
 
     return func_debugger
+
+
+def is_number_like(key: [str, int, float])-> bool:
+    """ 判断一个字符串是否是一个合法的数字
+
+    :param key:
+    :return:
+    """
+    if isinstance(key, (float, int)):
+        return True
+    if not isinstance(key, str):
+        return False
+    if len(key) == 0:
+        return False
+    if all(ch in '-0123456789.' for ch in key):
+        if key.count('.') + key.count('-') == len(key):
+            return False
+        if key.count('.') > 1 or key.count('-') > 1:
+            return False
+        if key.count('-') == 1 and key[0] != '-':
+            return False
+        if len(key) >= 2:
+            if key[0] == '0' and key[1] != '.':
+                return False
+        return True
+    return False

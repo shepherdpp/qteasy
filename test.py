@@ -8,7 +8,7 @@ from numpy import int64
 import itertools
 import datetime
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list, is_number_like
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_or_slice, labels_to_dict
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
@@ -5275,6 +5275,21 @@ class TestUtilityFuncs(unittest.TestCase):
                          pd.to_datetime(date_christmas))
         self.assertEqual(pd.to_datetime(next_market_trade_day(date_christmas, 'XHKG')),
                          pd.to_datetime(next_christmas_xhkg))
+
+    def test_is_number_like(self):
+        """test the function: is_number_like()"""
+        self.assertTrue(is_number_like(123))
+        self.assertTrue(is_number_like(23.7))
+        self.assertTrue(is_number_like('2.3'))
+        self.assertTrue(is_number_like('-0.2'))
+        self.assertTrue(is_number_like('0.03'))
+        self.assertTrue(is_number_like('345'))
+        self.assertTrue(is_number_like('-45.321'))
+
+        self.assertFalse(is_number_like('-..023'))
+        self.assertFalse(is_number_like('abc'))
+        self.assertFalse(is_number_like('0.32a'))
+        self.assertFalse(is_number_like('0-2'))
 
 
 class TestTushare(unittest.TestCase):
