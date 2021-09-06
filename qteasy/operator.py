@@ -127,31 +127,6 @@ class Signal:
 
     # def
 
-
-def is_number(s):
-    """ 判断一个字符串是否是一个合法的数字
-
-    :param s:
-    :return:
-    """
-    if not isinstance(s, str):
-        return False
-    if len(s) == 0:
-        return False
-    if all(ch in '-0123456789.' for ch in s):
-        if s.count('.') + s.count('-') == len(s):
-            return False
-        if s.count('.') > 1 or s.count('-') > 1:
-            return False
-        if s.count('-') == 1 and s[0] != '-':
-            return False
-        if len(s) >= 2:
-            if s[0] == '0' and s[1] != '.':
-                return False
-        return True
-    return False
-
-
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
 
