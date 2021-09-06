@@ -236,25 +236,31 @@ class Strategy:
     def data_types(self, data_types):
         self.set_hist_pars(data_types=data_types)
 
+    @property
+    def price_type(self):
+        """策略回测时所使用的价格类型"""
+        return self._bt_price_types
+
     def __str__(self):
         """打印所有相关信息和主要属性"""
         str1 = f'{type(self)}'
-        str2 = f'\nStrategy type: {self.stg_type}'
+        str2 = f'\nStrategy type: {self.stg_type} at {hex(id(self))}\n'
         str3 = f'\nInformation of the strategy: {self.stg_name}, {self.stg_text}'
         str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_boes}'
         if self._pars is not None:
-            str5 = f'\nParameter Loaded; {type(self._pars)}, {self._pars}\n'
+            str5 = f'\nParameter: {self._pars}\n'
         else:
-            str5 = f'\nParameter NOT loaded!\n'
+            str5 = f'\nNo Parameter!\n'
         return ''.join([str1, str2, str3, str4, str5])
 
     def __repr__(self):
-        """ 打印对象的相关信息
+        """ 打印对象的代表信息，strategy对象的代表信息即它的名字，其他的属性都是可变的，唯独name是唯一不变的strategy的id
+        因此打印的格式为"Timing(macd)"或类似式样
 
         :return:
         """
-        str1 = f'{type(self)} at {hex(id(self))}\n'
-        str2 = f'{self.stg_name} of type: \'{self.stg_type}\''  # f'\nStrategy {self.stg_type}'
+        str1 = f'{type(self)}('
+        str2 = f'{self.stg_name})'
         return ''.join([str1, str2])
 
     def info(self, verbose: bool = False):
@@ -264,7 +270,7 @@ class Strategy:
         if self._pars is not None:
             print('Parameter Loaded:', type(self._pars), self._pars)
         else:
-            print('Parameter NOT loaded!')
+            print('No Parameter!')
         # 在verbose == True时打印更多的额外信息
         if verbose:
             print('Information of the strategy:\n', self.stg_name, self.stg_text)

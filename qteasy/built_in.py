@@ -2431,7 +2431,6 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
 
         """
         n, = self.pars
-        # TODO: not Implemented!
         factors = atr(hist_data, n)
 
         return factors
@@ -2495,4 +2494,4 @@ BUILT_IN_STRATEGY_DICT = {'crossline':  TimingCrossline,
                           'sltrima':    SLPTRIMA,
                           'slwma':      SLPWMA}
 
-AVAILABLE_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()
+AVAILABLE_BUILT_IN_STRATEGIES = BUILT_IN_STRATEGY_DICT.keys()

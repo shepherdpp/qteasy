@@ -14,7 +14,7 @@ from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
 from .strategy import Strategy
-from .built_in import AVAILABLE_STRATEGIES, BUILT_IN_STRATEGY_DICT
+from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
 from .utilfuncs import unify, mask_to_signal
 
@@ -126,6 +126,7 @@ class Signal:
         return self.__or__(other)
 
     # def
+
 
 class Operator:
     """交易操作生成类，通过简单工厂模式创建择时属性类和选股属性类，并根据这两个属性类的结果生成交易清单
@@ -261,29 +262,36 @@ class Operator:
 
             上面的表达式表示了如何将五组交易信号变换为一组信号。表达式可以是任意合法的通用四则运算表达式，表达式中可以包含任意内建
             的信号算子或函数，用户可以相当自由地组合自己的混合表达式。表达式中的数字0～4代表Operator所生成的交易信号，这些数字也
-            不必唯一，可以重复，也可以遗漏，如写成"1+1+1*2+max(1, 4)"是完全合法的，只是第二组信号会被重复使用四次，而第一组和第
-            三组数据不会被用到而已。如果数字超过了信号的个数，则会使用最后一组信号，如"999+999"表达式被用于只有两组信号的Operator
+            不必唯一，可以重复，也可以遗漏，如写成"1+1+1*2+max(1, 4)"是完全合法的，只是第二组信号会被重复使用四次，而第一组(0)和第
+            四组(3)数据不会被用到而已。如果数字超过了信号的个数，则会使用最后一组信号，如"999+999"表达式被用于只有两组信号的Operator
             对象时，系统会把第二组信号相加返回。
 
             交易信号的算子包括以下这些：
 
             and: 0.5 and 0.5 = 0.5 * 0.5 = 0.25,
-            or:
-            orr: 0.5 or 0.5 = 1 - (1 - 0.5) * (1 - 0.5) = 0.75
+            or:  0.5 or 0.5 = 0.5 + 0.5 = 1
+            orr: 0.5 orr 0.5 = 1 - (1 - 0.5) * (1 - 0.5) = 0.75
+            not: not(1) = 1 - 1 = 0; not(0.3) = 1 - 0.3 = 0.7
+            + :  0.5 + 0.5 = 1
+            - :  1.0 - 0.5 = 0.5
+            * :  0.5 * 0.5 = 0.25
+            / :  0.25 / 0.5 = 0.5
 
-            'chg-N': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
-            'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
-            'cumulative': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
+            算子还包括以下函数：
+
+            'chg-N()': N为正整数，取值区间为1到len(timing)的值，表示多空状态在第N次信号反转时反转
+            'pos-N()': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
+            'cumulative()': 在每个策略发生反转时都会产生交易信号，但是信号强度为1/len(timing)
             所有类型的交易信号都一样，只要交易价格是同一类型的时候，都应该混合为一组信号进入回测程序进行回测，混合的方式由混合
             字符串确定，字符串的格式为"[chg|pos]-0/9|cumulative"(此处应该使用正则表达式)
 
-            'str-T': T为浮点数，当多个策略多空蒙板的总体信号强度达到阈值T时，总体输出为1(或者-1)，否则为0
-            'pos-N': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
+            'str-T()': T为浮点数，当多个策略多空蒙板的总体信号强度达到阈值T时，总体输出为1(或者-1)，否则为0
+            'pos-N()': N为正整数，取值区间为1到len(timing)的值，表示在N个策略为多时状态为多，否则为空
                 这种类型有一个变体：
                 'pos-N-T': T为信号强度阈值，忽略信号强度达不到该阈值的多空蒙板信号，将剩余的多空蒙板进行计数，信号数量达到或
                 超过N时，输出为1（或者-1），否则为0
-            'avg': 平均信号强度，所有多空蒙板的信号强度的平均值
-            'comboo': 在每个策略发生反转时都会产生交易信号，信号的强度不经过衰减，但是通常第一个信号产生后，后续信号就再无意义
+            'avg()': 平均信号强度，所有多空蒙板的信号强度的平均值
+            'combo()': 在每个策略发生反转时都会产生交易信号，信号的强度不经过衰减，但是通常第一个信号产生后，后续信号就再无意义
 
     """
 
@@ -314,7 +322,7 @@ class Operator:
             self._signal_type = 'pt'
         elif not isinstance(signal_type, str):
             raise TypeError(f'signal type {type(signal_type)} is not a string')
-        elif signal_type.lower() not in AVAILABLE_SIGNAL_TYPES:
+        elif signal_type.lower() not in self.AVAILABLE_SIGNAL_TYPES:
             raise ValueError(f'the signal type {signal_type} is not valid!')
         else:
             self._signal_type = signal_type
@@ -330,17 +338,7 @@ class Operator:
         self._stg_blender = 'avg()'  # 默认的择时策略混合方式
         for s in stg:
             # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
-            if isinstance(s, str):
-                if s.lower() not in AVAILABLE_STRATEGIES:
-                    raise KeyError(f'built-in timing strategy \'{s}\' not found!')
-                self._stg_types.append(s)
-                self._strategies.append(BUILT_IN_STRATEGY_DICT[s]())
-            # 当传入的对象是一个strategy时，直接
-            elif isinstance(s, Strategy):
-                self._stg_types.append(s.stg_type)
-                self._strategies.append(s)
-            else:
-                raise TypeError(f'The strategy type \'{type(s)}\' is not supported!')
+            self.add_strategy(s)
 
     @property
     def strategies(self):
@@ -351,6 +349,11 @@ class Operator:
     def strategy_count(self):
         """返回operator对象中的所有timing对象的数量"""
         return len(self.strategies)
+
+    @property
+    def strategy_names(self):
+        """返回operator对象中所有交易策略对象的名称"""
+        return [stg.name for stg in self.strategies]
 
     @property
     def stg_blender(self):
@@ -364,7 +367,6 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
-
         d_types = [typ for item in self.strategies for typ in item.data_types]
         d_types = list(set(d_types))
         d_types.sort()
@@ -377,6 +379,13 @@ class Operator:
         d_freq = list(set(d_freq))
         assert len(d_freq) == 1, f'ValueError, there are multiple history data frequency required by strategies'
         return d_freq[0]
+
+    @property
+    def op_price_types(self):
+        """返回operator对象所有策略子对象的回测价格类型"""
+        p_types = [typ for item in self.strategies for typ in item.price_type]
+        p_types = list(set(p_types))
+        return p_types
 
     @property
     def opt_space_par(self):
@@ -425,6 +434,13 @@ class Operator:
         return max(stg.window_length for stg in self.strategies)
 
     @property
+    def price_type_count(self):
+        """ 计算operator对象中所有子策略的不同回测价格类型的数量
+        :return: int
+        """
+        return len(self.op_price_types)
+
+    @property
     def ready(self):
         """ assess if the operator is ready to generate
 
@@ -432,13 +448,41 @@ class Operator:
         """
         raise NotImplementedError
 
-    def add_strategy(self, stg, usage):
-        """add strategy"""
-        raise NotImplementedError
+    def add_strategy(self, stg):
+        """ 添加一个strategy交易策略到operator对象中
 
-    def remove_strategy(self, stg):
+        :param: stg, 需要添加的交易策略，可以为交易策略对象，也可以时内置交易策略的策略id或策略名称
+        """
+        # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
+        if isinstance(stg, str):
+            if stg.lower() not in AVAILABLE_BUILT_IN_STRATEGIES:
+                raise KeyError(f'built-in timing strategy \'{stg}\' not found!')
+            self._stg_types.append(stg)
+            self._strategies.append(BUILT_IN_STRATEGY_DICT[stg]())
+        # 当传入的对象是一个strategy对象时，直接添加该策略对象
+        elif isinstance(stg, Strategy):
+            self._stg_types.append(stg.stg_type)
+            self._strategies.append(stg)
+        else:
+            raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
+
+    def remove_strategy(self, id_or_name=None):
         """remove strategy"""
-        raise NotImplementedError
+        if id_or_name is None:
+            pos = -1
+        if isinstance(id_or_name, int):
+            if id_or_name < self.strategy_count:
+                pos = id_or_name
+            else:
+                pos = -1
+        if isinstance(id_or_name, str):
+            if id_or_name not in self.strategy_names:
+                raise ValueError(f'the strategy {id_or_name} is not in operator')
+            else:
+                pos = self.strategy_names.index(id_or_name)
+        self._stg_types.pop(pos)
+        self._strategies.pop(pos)
+        return
 
     def clear(self):
         """clear all strategies
@@ -833,7 +877,6 @@ class Operator:
         lst_out = lst.loc[lst.any(axis=1)]
         return lst_out
 
-
     def _set_strategy_blender(self, selecting_blender_expression):
         """ 设置选股策略的混合方式，混合方式通过选股策略混合表达式来表示
 
@@ -852,4 +895,3 @@ class Operator:
                         f', the expression might contain unidentified operator, a valid expression contains only \n'
                         f'numbers, function or variable names and operations such as "+-*/^&|", for example: '
                         f'\' 0 & ( 1 | 2 )\'')
-
