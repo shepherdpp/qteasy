@@ -3322,7 +3322,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op._selecting_blend([1, 2, 3]), 9)
         # TODO: 目前对于-(1+2)这样的表达式还无法处理
         # self.op.set_blender('selecting', "-(0 + 1) * 2")
-        # self.assertEqual(self.op._selecting_blend([1, 2, 3]), -9)
+        # self.assertEqual(self.op.signal_blend([1, 2, 3]), -9)
         self.op.set_blender('selecting', "(0-1)/2 + 3")
         print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
               f'{" ".join(self.op.selecting_blender_expr[::-1])}')

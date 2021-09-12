@@ -17,6 +17,7 @@ from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
 from .utilfuncs import mask_to_signal
+from .blender import blender_parser
 
 
 class Signal:
@@ -355,6 +356,10 @@ class Operator:
         return [stg.name for stg in self.strategies]
 
     @property
+    def strategy_blenders(self):
+        return self._stg_blender
+
+    @property
     def signal_type(self):
         """ 返回operator对象的信号类型"""
         return self._signal_type
@@ -597,29 +602,22 @@ class Operator:
                 s = k
 
     # TODO: 完善本函数的Docstring，添加详细的使用介绍和示例
-    def set_blender(self, blender_type, *args, **kwargs):
+    def set_blender(self, price_type, blender):
         """ 统一的blender混合器属性设置入口
 
-        :param blender_type:
-            :type blender_type: str, 一个字符串，用于指定被设置属性的混合器的类型，接收到可识别
-            的输入后，调用不同的混合器设置函数，设置混合器
+        :param price_type:
+            :type price_type: str, 一个字符串，用于指定需要混合的交易信号的价格类型
+        :param blender:
+            :type blender: str, 一个合法的交易信号混合表达式
 
         :return
             None
 
         """
-        if isinstance(blender_type, str):
-            if blender_type.lower() in ['selecting', 'sel', 'select']:
-                self._set_selecting_blender(*args, **kwargs)
-            elif blender_type.lower() in ['ls', 'longshort', 'long_short']:
-                self._set_ls_blender(*args, **kwargs)
-            elif blender_type.lower() in ['ricon']:
-                self._set_ricon_blender(*args, **kwargs)
-            else:
-                raise ValueError(f'wrong input! \'{blender_type}\' is not a valid input, '
-                                 f'choose from [\'selecting\', \'sel\', \'ls\', \'ricon\']')
+        if isinstance(price_type, str):
+            self._stg_blender[price_type] = blender_parser(blender)
         else:
-            raise TypeError(f'blender_type should be a string, got {type(blender_type)} instead')
+            raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
         pass
 
     def get_blender(self, price_type=None):

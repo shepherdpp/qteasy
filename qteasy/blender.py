@@ -16,45 +16,90 @@ import math
 from .utilfuncs import unify, is_number_like, str_to_list
 
 
+# 这里定义可用的交易信号混合函数
 def argsum(*args):
     """sum of all arguments"""
     return sum(args)
 
 
-_FUNCTIONS = {
-    'abs':     abs,
-    'acos':    math.acos,
-    'asin':    math.asin,
-    'atan':    math.atan,
-    'atan2':   math.atan2,
-    'ceil':    math.ceil,
-    'cos':     math.cos,
-    'cosh':    math.cosh,
-    'degrees': math.degrees,
-    'exp':     math.exp,
-    'fabs':    math.fabs,
-    'floor':   math.floor,
-    'fmod':    math.fmod,
-    'frexp':   math.frexp,
-    'hypot':   math.hypot,
-    'ldexp':   math.ldexp,
-    'log':     math.log,
-    'log10':   math.log10,
-    'max':     max,
-    'modf':    math.modf,
-    'pow':     math.pow,
-    'radians': math.radians,
-    'sin':     math.sin,
-    'sinh':    math.sinh,
-    'sqrt':    math.sqrt,
-    'tan':     math.tan,
-    'tanh':    math.tanh,
-    'sum':     argsum
-}
+def op_avg(*args):
+    """
+
+    :param args:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def op_pos(*args):
+    """
+
+    :param args:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def op_avg_pos(*args):
+    """
+
+    :param args:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def op_str(*args):
+    """
+
+    :param args:
+    :return:
+    """
+    raise NotImplementedError
+
+
+def op_combo(*args):
+    """
+
+    :param args:
+    :return:
+    """
+    raise NotImplementedError
+
+
+_AVAILABLE_FUNCTIONS = {'abs(':     abs,
+                        'acos(':    math.acos,
+                        'asin(':    math.asin,
+                        'atan(':    math.atan,
+                        'atan2(':   math.atan2,
+                        'ceil(':    math.ceil,
+                        'cos(':     math.cos,
+                        'cosh(':    math.cosh,
+                        'degrees(': math.degrees,
+                        'exp(':     math.exp,
+                        'fabs(':    math.fabs,
+                        'floor(':   math.floor,
+                        'fmod(':    math.fmod,
+                        'frexp(':   math.frexp,
+                        'hypot(':   math.hypot,
+                        'ldexp(':   math.ldexp,
+                        'log(':     math.log,
+                        'log10(':   math.log10,
+                        'max(':     max,
+                        'modf(':    math.modf,
+                        'pow(':     math.pow,
+                        'radians(': math.radians,
+                        'sin(':     math.sin,
+                        'sinh(':    math.sinh,
+                        'sqrt(':    math.sqrt,
+                        'tan(':     math.tan,
+                        'tanh(':    math.tanh,
+                        'sum(':     argsum
+                        }
 
 
 @property
-def _blender_parser(blender_string):
+def blender_parser(blender_string):
     """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
 
     系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
@@ -156,6 +201,39 @@ def _blender_parser(blender_string):
     return output
 
 
+def signal_blend(op_signals, blender):
+    """ 选股策略混合器，将各个选股策略生成的选股蒙板按规则混合成一个蒙板
+
+    input:
+        :param op_signals:
+        :param blender:
+    :return:
+        ndarray, 混合完成的选股蒙板
+    """
+    exp = blender[:]
+    s = []
+    while exp:
+        if exp[-1].isdigit():
+            # 如果是数字则直接入栈
+            s.append(op_signals[int(exp.pop())])
+        elif exp[-1][-1] == ')':
+            # 如果碰到函数，
+            token = exp.pop()
+            arg_count = int(token[-2])
+            func = _AVAILABLE_FUNCTIONS.get(token[0:-2])
+            if func is None:
+                raise ValueError(
+                        f'the function \'{token[0:-2]}\' -> {functions.get(token[0:-2])} is not a valid function!')
+            args = tuple([s.pop() for i in range(arg_count)])
+            try:
+                s.append(func(*args))
+            except:
+                print(f'wrong output func(*args) with args = {args} => ')
+        else:
+            s.append(_operate(s.pop(), s.pop(), exp.pop()))
+    return unify(s[0])
+
+
 def _exp_to_token(string):
     """ 将输入的blender-exp裁切成不同的元素(token)，包括数字、符号、函数等
 
@@ -247,45 +325,7 @@ def _exp_to_token(string):
     return tokens
 
 
-def _selecting_blend(self, sel_masks):
-    """ 选股策略混合器，将各个选股策略生成的选股蒙板按规则混合成一个蒙板
-
-    input:
-        :param sel_masks:
-    :return:
-        ndarray, 混合完成的选股蒙板
-    """
-    functions = {'sum(':  np.sum,
-                 'abs(':  np.abs,
-                 'sqrt(': np.sqrt,
-                 'cos(':  np.cos,
-                 'max(':  max}
-    exp = self._selecting_blender[:]
-    s = []
-    while exp:  # 等同于但是更好: while exp != []
-        if exp[-1].isdigit():
-            # 如果是数字则直接入栈
-            s.append(sel_masks[int(exp.pop())])
-        elif exp[-1][-1] == ')':
-            # 如果碰到函数，
-            token = exp.pop()
-            arg_count = int(token[-2])
-            func = functions.get(token[0:-2])
-            if func is None:
-                raise ValueError(
-                        f'the function \'{token[0:-2]}\' -> {functions.get(token[0:-2])} is not a valid function!')
-            args = tuple([s.pop() for i in range(arg_count)])
-            try:
-                s.append(func(*args))
-            except:
-                print(f'wrong output func(*args) with args = {args} => ')
-        else:
-            # print(f'calculating: taking {s[-1]} and {s[-2]} and eval {s[-2]} {exp[-1]} {s[-1]}')
-            s.append(self._blend(s.pop(), s.pop(), exp.pop()))
-    return unify(s[0])
-
-
-def _blend(n1, n2, op):
+def _operate(n1, n2, op):
     """混合操作符函数，将两个选股、多空蒙板混合为一个
 
     input:
@@ -310,6 +350,7 @@ def _blend(n1, n2, op):
         raise ValueError(f'ValueError, unknown operand, {op} is not an operand that can be recognized')
 
 
+# TODO: 将ls_blend中的函数写入blender.py的第一部分函数定义中
 def _ls_blend(ls_masks):
     """ 择时策略混合器，将各个择时策略生成的多空蒙板按规则混合成一个蒙板
         这些多空模板的混合方式由混合字符串来定义。
