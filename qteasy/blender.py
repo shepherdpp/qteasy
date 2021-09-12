@@ -13,6 +13,7 @@
 
 import numpy as np
 import math
+from .utilfuncs import unify, is_number_like, str_to_list
 
 
 def argsum(*args):
@@ -53,7 +54,7 @@ _FUNCTIONS = {
 
 
 @property
-def _exp_to_blender():
+def _blender_parser(blender_string):
     """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
 
     系统接受的合法表达式为包含 '*' 与 '+' 的中缀表达式，符合人类的思维习惯，使用括号来实现强制
@@ -87,14 +88,14 @@ def _exp_to_blender():
     op_stack = []  # 运算符栈
     arg_count_stack = []  # 函数的参数个数栈
     output = []  # 结果队列
-    exp_list = self._exp_to_token(self._selecting_blender_string)[::-1]
+    exp_list = _exp_to_token(blender_string)[::-1]
     while exp_list:
         # print(f'step starts: output list is {output}, op_stack is {op_stack}\n'
         #       f'will pop token: {exp_list[-1]} from exp_list: {exp_list}')
         token = exp_list.pop()
         # 从右至左逐个读取表达式中的元素（数字或操作符）
         # 并按照以下算法处理
-        if is_number(token):
+        if is_number_like(token):
             # 1，如果元素是数字则进入结果队列
             output.append(token)
             # print(f'got number token, put to output list')
@@ -153,6 +154,7 @@ def _exp_to_blender():
         output.append(op_stack.pop())
     output.reverse()  # 表达式解析完成，生成前缀表达式
     return output
+
 
 def _exp_to_token(string):
     """ 将输入的blender-exp裁切成不同的元素(token)，包括数字、符号、函数等
@@ -283,7 +285,7 @@ def _selecting_blend(self, sel_masks):
     return unify(s[0])
 
 
-def _blend(self, n1, n2, op):
+def _blend(n1, n2, op):
     """混合操作符函数，将两个选股、多空蒙板混合为一个
 
     input:
@@ -294,7 +296,6 @@ def _blend(self, n1, n2, op):
         :return: np.ndarray
 
     """
-    # import pdb; pdb.set_trace()
     if op == '+':
         return n2 + n1
     elif op == 'and' or op == '&' or op == '*':

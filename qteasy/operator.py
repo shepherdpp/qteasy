@@ -16,7 +16,7 @@ from .utilfuncs import str_to_list
 from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGY_DICT
 
-from .utilfuncs import unify, mask_to_signal
+from .utilfuncs import mask_to_signal
 
 
 class Signal:
@@ -224,19 +224,19 @@ class Operator:
         Operator对象可以同时将多个策略用于生成同一种信号，为了确保输出唯一，多个策略的输出将被以某种方式混合，混合的方式是Operator
         对象的属性，定义了同样用途的不同策略输出结果的混合方式，以下是三种用途及其混合方式的介绍：
 
-            信号类型1,  仓位目标信号（Positional Target，PT信号：
+            信号类型1,  仓位目标信号(Positional Target，PT信号)：
                 仓位目标信号代表在某个时间点上应该持有的各种投资产品的仓位百分比。信号取值从-100% ～ 100%，或者-1～1之间，代表在
                 这个时间点上，应该将该百分比的全部资产投资到这个产品中。如果百分比为负数，代表应该持有空头仓位。
                 应该注意的是，PT信号并不给出明确的操作或者交易信号，仅仅是给出一个目标仓位，是否产生交易信号需要检查当前实际持仓与
                 目标持仓之间的差异来确定，当这个差值大于某一个阈值的时候，产生交易信号。这个阈值由QT级别的参数确定。
 
-            信号类型2,  比例买卖信号（Proportional Signal，PS信号）：
+            信号类型2,  比例买卖信号(Proportional Signal，PS信号)：
                 比例买卖信号代表每一个时间周期上计划买入或卖出的各个股票的数量，当信号代表买入时，该信号的数值代表计划买入价值占当时
                 总资产的百分比；当信号代表卖出时，该信号的数值代表计划卖出的数量占当时该股票的持有数量的百分比，亦即：
                     - 当信号代表买入时，0.3代表使用占总资产30%的现金买入某支股票
                     - 当信号代表卖出时，-0.5代表卖出所持有的某种股票的50%的份额
 
-            信号类型3:  数量买卖信号（Volume Signal，VS信号）：
+            信号类型3:  数量买卖信号(Volume Signal，VS信号)：
                 数量买卖信号代表每一个时间周期上计划买入或卖出的各个股票的数量，这个数量代表计划买卖数量，实际买卖数量受买卖规则影响，
                 因此可能与计划买卖信号不同。例如： 500代表买入相应股票500股
 
@@ -298,46 +298,45 @@ class Operator:
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
 
     AVAILABLE_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
-    AVAILABLE_SIGNAL_TYPES = ['pt', 'ps', 'vs']
+    AVAILABLE_SIGNAL_TYPES = {'pt': 'Position Target',
+                              'ps': 'Proportion Signal',
+                              'vs': 'Volume Signal'}
 
     def __init__(self, strategies=None, signal_type=None):
-        """根据生成具体的对象
+        """生成具体的Operator对象
+
+        Operator对象的基本数据结构：包含四个列表加一个字典Dict，存储相关信息：
+            _stg_id:            str, 交易策略列表，按照顺序保存所有相关策略对象的id（名称），如['MACD', 'DMA', 'MACD']
+            _stg:               Strategy, 按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
+            _stg_history_data:  ndarray, 列表中按照顺序保存用于不同策略的三维历史数据切片
+            _op_blenders:       dict,  "信号混合"字典，包含不同价格类型交易信号的混合表达式，dict的键对应不同的
+                                交易价格类型，每个值包含交易信号混合表达式，表达式存储为一个列表，表达式以逆波兰式
+                                存储(RPN, Reversed Polish Notation)
 
         input:
             :param strategies: str, 用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
             :param signal_type: str, 需要生成的交易信号的类型，包含一下三种类型
         """
-        # 对象属性：
-        # 交易信号通用属性：
-
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
-        if strategies is None:
-            stg = []
-        elif isinstance(strategies, str):
+        if isinstance(strategies, str):
             stg = str_to_list(strategies)
+        elif isinstance(strategies, list):
+            stg = strategies
         else:
             stg = []
+        if signal_type not in self.AVAILABLE_SIGNAL_TYPES:
+            signal_type = 'pt'
 
-        if signal_type is None:
-            self._signal_type = 'pt'
-        elif not isinstance(signal_type, str):
-            raise TypeError(f'signal type {type(signal_type)} is not a string')
-        elif signal_type.lower() not in self.AVAILABLE_SIGNAL_TYPES:
-            raise ValueError(f'the signal type {signal_type} is not valid!')
-        else:
-            self._signal_type = signal_type
-        # 在Operator对象中，包含三个列表对象加上一个字符串作为基本数据结构，存储相关信息：
-        # 对于每一类型的策略，第一个列表是_stg_types， 按照顺序保存所有相关策略对象的种类字符串，如['MACD', 'DMA', 'MACD']
-        # 第二个列表是_stg，按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
-        # 第三个列表是_stg_history_data, 列表中按照顺序保存用于不同策略的历史数据切片，格式均为np.ndarray，维度为三维
-        # 字符串则是"混合"字符串，代表最终将所有的同类策略混合到一起的方式，对于不同类型的策略，混合方式定义不同
-        # 以上的数据结构对于所有类型的策略都基本相同
-        self._stg_types = []
-        self._strategies = []
-        self._stg_history_data = []
-        self._stg_blender = 'avg()'  # 默认的择时策略混合方式
+        # 初始化基本数据结构
+        self._signal_type = None        # 保存operator对象输出的信号类型
+        self._stg_types = []            # 保存所有交易策略的id，便于识别每个交易策略
+        self._strategies = []           # 保存实际的交易策略对象
+        self._stg_history_data = []     # 保存供各个策略生成交易信号的历史数据（ndarray）
+        self._stg_blender = {}          # 交易信号混合表达式字典
+
+        # 添加strategy对象
         for s in stg:
-            # 通过字符串比较确认timing_type的输入参数来生成不同的具体择时策略对象，使用.lower()转化为全小写字母
+            # 逐一添加所有的策略
             self.add_strategy(s)
 
     @property
@@ -356,13 +355,14 @@ class Operator:
         return [stg.name for stg in self.strategies]
 
     @property
-    def stg_blender(self):
-        """返回operator对象中的多空蒙板混合器"""
-        return self._stg_blender
+    def signal_type(self):
+        """ 返回operator对象的信号类型"""
+        return self._signal_type
 
-    @property
-    def strategy_blenders(self):
-        return [self._stg_blender]
+    @signal_type.setter
+    def signal_type(self, st):
+        """ 设置signal_type的值"""
+        self._signal_type = self.set_signal_type(st)
 
     @property
     def op_data_types(self):
@@ -442,7 +442,11 @@ class Operator:
 
     @property
     def ready(self):
-        """ assess if the operator is ready to generate
+        """ 检查Operator对象是否已经准备好，可以开始生成交易信号，如果可以，返回True，否则返回False
+
+        返回True，表明Operator的各项属性已经具备以下条件：
+            1，
+            2，
 
         :return:
         """
@@ -451,7 +455,7 @@ class Operator:
     def add_strategy(self, stg):
         """ 添加一个strategy交易策略到operator对象中
 
-        :param: stg, 需要添加的交易策略，可以为交易策略对象，也可以时内置交易策略的策略id或策略名称
+        :param: stg, 需要添加的交易策略，可以为交易策略对象，也可以是内置交易策略的策略id或策略名称
         """
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
@@ -467,7 +471,8 @@ class Operator:
             raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
 
     def remove_strategy(self, id_or_name=None):
-        """remove strategy"""
+        """从Operator对象中移除一个交易策略"""
+        pos = -1
         if id_or_name is None:
             pos = -1
         if isinstance(id_or_name, int):
@@ -484,12 +489,43 @@ class Operator:
         self._strategies.pop(pos)
         return
 
-    def clear(self):
+    def clear_strategies(self):
         """clear all strategies
 
         :return:
         """
         raise NotImplementedError
+
+    def get_strategies(self, price_type=None):
+        """返回operator对象中的strategy对象, price_type为一个可选参数，
+        如果给出price_type时，返回使用该price_type的交易策略
+
+        :param price_type: str 一个可用的price_type
+
+        """
+        if price_type is None:
+            return self._strategies
+        else:
+            return [stg for stg in self._strategies if stg.price_type == price_type]
+
+    def get_strategy_count(self, price_type=None):
+        """返回operator中的交易策略的数量, price_type为一个可选参数，
+        如果给出price_type时，返回使用该price_type的交易策略数量"""
+        return len(self.get_strategies(price_type))
+
+    def get_strategy_names(self, price_type=None):
+        """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
+        如果给出price_type时，返回使用该price_type的交易策略名称"""
+        return [stg.name for stg in self.get_strategies(price_type)]
+
+    def set_signal_type(self, st):
+        """ 给signal_type属性赋值"""
+        if not isinstance(st, str):
+            raise TypeError(f'signal type {type(st)} is not a string')
+        elif st.lower() not in self.AVAILABLE_SIGNAL_TYPES:
+            raise ValueError(f'the signal type {st} is not valid!')
+        else:
+            self._signal_type = st
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -586,6 +622,17 @@ class Operator:
             raise TypeError(f'blender_type should be a string, got {type(blender_type)} instead')
         pass
 
+    def get_blender(self, price_type=None):
+        """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
+
+        :param price_type: str 一个可用的price_type
+
+        """
+        if price_type is None:
+            return self._stg_blender
+        else:
+            return self._stg_blender[price_type]
+
     def set_parameter(self,
                       stg_id: str,
                       pars: [tuple, dict] = None,
@@ -679,33 +726,20 @@ class Operator:
             :type verbose: bool
 
         """
-        print('OPERATION MODULE INFO:')
+        print('OPERATOR INFO:')
         print('=' * 25)
         print('Information of the Module')
         print('=' * 25)
         # 打印各个子模块的信息：
-        # 首先打印Selecting模块的信息
-        print('Total count of SimpleSelecting strategies:', len(self._selecting))
-        print('the blend type of selecting strategies is', self._selecting_blender_string)
-        print('Parameters of SimpleSelecting Strategies:')
-        for sel in self.selecting:
-            sel.info()
-        print('=' * 25)
-
-        # 接着打印 timing模块的信息
-        print('Total count of timing strategies:', len(self._strategies))
-        print('The blend type of timing strategies is', self._stg_blender)
-        print('Parameters of timing Strategies:')
-        for tmg in self.timing:
-            tmg.info()
-        print('=' * 25)
-
-        # 最后打印Ricon模块的信息
-        print('Total count of Risk Control strategies:', len(self._ricon))
-        print('The blend type of Risk Control strategies is', self._ricon_blender)
-        for ric in self.ricon:
-            ric.info()
-        print('=' * 25)
+        print(f'Total {self.strategy_count} operation strategies, working on {self.price_type_count} prices:\n')
+        for price_type in self.op_price_types:
+            print(f'- {price_type}: {self.get_strategies(price_type)}: {self.get_blender(price_type)}')
+        # 打印每个strategy的详细信息
+        if verbose:
+            print('Parameters of SimpleSelecting Strategies:')
+            for stg in self.strategies:
+                stg.info()
+            print('=' * 25)
 
     # TODO 临时性使用cashplan作为参数之一，理想中应该只用一个"start_date"即可，这个Start_date可以在core.run()中具体指定，因为
     # TODO 在不同的运行模式下，start_date可能来源是不同的：
