@@ -31,6 +31,12 @@ class Strategy:
     """
     __mataclass__ = ABCMeta
 
+    AVAILABLE_BT_PRICE_TYPES = ['open', 'high', 'low', 'close',
+                                'buy1', 'buy2', 'buy3', 'buy4', 'buy5',
+                                'sell1', 'sell2', 'sell3', 'sell4', 'sell5']
+
+    AVAILABLE_DATA_FREQS = []
+
     def __init__(self,
                  pars: tuple = (),
                  opt_tag: int = 0,
@@ -44,7 +50,7 @@ class Strategy:
                  sample_freq: str = 'd',
                  window_length: int = 270,
                  data_types: [str, list] = '',
-                 bt_price_types: [str, list] = '',
+                 bt_price_type: str = '',
                  reference_data: str = 'none',
                  reference_data_types: [str, list] = ''):
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
@@ -104,9 +110,8 @@ class Strategy:
             data_types = str_to_list(data_types, ',')
         assert isinstance(data_types, list), f'TypeError, data type should be a list, got {type(data_types)} instead'
         self._data_types = data_types
-        if isinstance(bt_price_types, str):
-            bt_price_types = str_to_list(bt_price_types, ',')
-        self._bt_price_types = bt_price_types
+        self._bt_price_type = None
+        self.set_hist_pars(price_type=bt_price_type)
         self._reference_data = reference_data
         if isinstance(reference_data_types, str):
             reference_data_types = str_to_list(reference_data_types, ',')
@@ -239,7 +244,12 @@ class Strategy:
     @property
     def price_type(self):
         """策略回测时所使用的价格类型"""
-        return self._bt_price_types
+        return self._bt_price_type
+
+    @price_type.setter
+    def price_type(self, price_type):
+        """ 设置策略回测室所使用的价格类型"""
+        self.set_hist_pars(price_type=price_type)
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -319,13 +329,14 @@ class Strategy:
             self._par_bounds_or_enums = par_boes
         return par_boes
 
-    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None):
+    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None, price_type=None):
         """ 设置策略的历史数据回测相关属性
 
         :param data_freq: str,
         :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
         :param window_length: int，表示回测时需要用到的历史数据深度
         :param data_types: str，表示需要用到的历史数据类型
+        :param price_type: str, 需要用到的历史数据回测价格类型
         :return: None
         """
         if data_freq is not None:
@@ -351,6 +362,10 @@ class Strategy:
             assert isinstance(data_types, list), \
                 f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
+        if price_type is not None:
+            assert isinstance(price_type, str), f'Wrong input type, price_type should be a string, got {type(price_type)}'
+            assert price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {price_type} is not a valid price type'
+            self._bt_price_type = price_type
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""

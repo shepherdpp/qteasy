@@ -3064,13 +3064,13 @@ class TestOperator(unittest.TestCase):
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
         self.assertIsInstance(self.op._selecting_history_data, list)
-        self.assertIsInstance(self.op._stg_history_data, list)
+        self.assertIsInstance(self.op._signal_history_data, list)
         self.assertIsInstance(self.op._ricon_history_data, list)
         self.assertEqual(len(self.op._selecting_history_data), 1)
-        self.assertEqual(len(self.op._stg_history_data), 1)
+        self.assertEqual(len(self.op._signal_history_data), 1)
         self.assertEqual(len(self.op._ricon_history_data), 1)
         sel_hist_data = self.op._selecting_history_data[0]
-        tim_hist_data = self.op._stg_history_data[0]
+        tim_hist_data = self.op._signal_history_data[0]
         ric_hist_data = self.op._ricon_history_data[0]
         print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)

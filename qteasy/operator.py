@@ -309,7 +309,7 @@ class Operator:
         Operator对象的基本数据结构：包含四个列表加一个字典Dict，存储相关信息：
             _stg_id:            str, 交易策略列表，按照顺序保存所有相关策略对象的id（名称），如['MACD', 'DMA', 'MACD']
             _stg:               Strategy, 按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
-            _stg_history_data:  ndarray, 列表中按照顺序保存用于不同策略的三维历史数据切片
+            _signal_history_data:  ndarray, 列表中按照顺序保存用于不同策略的三维历史数据切片
             _op_blenders:       dict,  "信号混合"字典，包含不同价格类型交易信号的混合表达式，dict的键对应不同的
                                 交易价格类型，每个值包含交易信号混合表达式，表达式存储为一个列表，表达式以逆波兰式
                                 存储(RPN, Reversed Polish Notation)
@@ -329,11 +329,12 @@ class Operator:
             signal_type = 'pt'
 
         # 初始化基本数据结构
-        self._signal_type = None        # 保存operator对象输出的信号类型
-        self._stg_types = []            # 保存所有交易策略的id，便于识别每个交易策略
-        self._strategies = []           # 保存实际的交易策略对象
-        self._stg_history_data = []     # 保存供各个策略生成交易信号的历史数据（ndarray）
-        self._stg_blender = {}          # 交易信号混合表达式字典
+        self._signal_type = None  # 保存operator对象输出的信号类型
+        self._stg_types = []  # 保存所有交易策略的id，便于识别每个交易策略
+        self._strategies = []  # 保存实际的交易策略对象
+        self._signal_history_data = []  # 保存供各个策略生成交易信号的历史数据（ndarray）
+        self._bt_history_data = []  # 保存供各个策略进行历史交易回测的历史价格数据（ndarray）
+        self._stg_blender = {}  # 交易信号混合表达式字典
 
         # 添加strategy对象
         for s in stg:
@@ -523,6 +524,14 @@ class Operator:
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         return [stg.name for stg in self.get_strategies(price_type)]
 
+    def get_strategy_by_name(self, stg_name):
+        """ 根据输入的策略名称返回strategy对象"""
+        assert stg_name in self.strategy_names, f'stg_name can not be found in operator'
+        stg_names = self.strategy_names
+        strategies = self.strategies
+        stg_idx = stg_names.index(stg_name)
+        return strategies[stg_idx]
+
     def set_signal_type(self, st):
         """ 给signal_type属性赋值"""
         if not isinstance(st, str):
@@ -640,6 +649,7 @@ class Operator:
                       sample_freq: str = None,
                       window_length: int = None,
                       data_types: [str, list] = None,
+                      price_type: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
             stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
@@ -647,7 +657,7 @@ class Operator:
             这里应该有本函数的详细介绍
 
             :param stg_id:
-                :type stg_id: str, 策略ID字符串，格式为x-N，表示第N个x类策略，x的取值范围为{'s', 't', 'r'},分别表示选股、择时和风控策略
+                :type stg_id: str, 策略的名称（ID），根据ID定位需要修改参数的策略
 
             :param pars:
                 :type pars: tuple or dict , 需要设置的策略参数，格式为tuple
@@ -671,47 +681,36 @@ class Operator:
             :param data_types:
                 :type data_types: str or list, 策略计算所需历史数据的数据类型
 
+            :param price_type:
+                :type price_type: str, 策略回测交易时使用的交易价格类型
+
             :return:
         """
         assert isinstance(stg_id, str), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
-        l = stg_id.split('-')
-        assert len(l) == 2 and l[1].isdigit(), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
-        if l[0].lower() == 's':
-            assert int(l[1]) < self.selecting_count, \
-                f'ValueError: trying to set parameter for the {int(l[1]) + 1}-th selecting strategy but there\'s only' \
-                f' {self.selecting_count} selecting strategy(s)'
-            strategy = self.selecting[int(l[1])]
-        elif l[0].lower() == 't':
-            assert int(l[1]) < self.timing_count, \
-                f'ValueError: trying to set parameter for the {int(l[1]) + 1}-th timing strategy but there\'s only' \
-                f' {self.timing_count} timing strategies'
-            strategy = self.timing[int(l[1])]
-        elif l[0].lower() == 'r':
-            assert int(l[1]) < self.ricon_count, \
-                f'ValueError: trying to set parameter for the {int(l[1]) + 1}-th ricon strategy but there\'s only ' \
-                f'{self.ricon_count} ricon strategies'
-            strategy = self.ricon[int(l[1])]
-        else:
-            raise ValueError(f'The identifier of strategy is not recognized, should be like \'t-0\', got {stg_id}')
-        if pars is not None:
+        # 根据策略的名称或ID获取策略对象
+        strategy = self.get_strategy_by_name(stg_id)
+        # 逐一修改该策略对象的各个参数
+        if pars is not None:  # 设置策略参数
             if strategy.set_pars(pars):
                 pass
             else:
                 raise ValueError(f'parameter setting error')
-        if opt_tag is not None:
+        if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
-        if par_boes is not None:
+        if par_boes is not None:  # 设置策略的参数优化边界
             strategy.set_par_boes(par_boes)
-        if par_types is not None:
+        if par_types is not None:  # 设置策略的参数类型
             strategy.par_types = par_types
         has_sf = sample_freq is not None
         has_wl = window_length is not None
         has_dt = data_types is not None
-        if has_sf or has_wl or has_dt:
+        has_pt = price_type is not None
+        if has_sf or has_wl or has_dt or has_pt:
             strategy.set_hist_pars(sample_freq=sample_freq,
                                    window_length=window_length,
-                                   data_types=data_types)
-        # set up additional properties of the class if they do exist:
+                                   data_types=data_types,
+                                   price_type=price_type)
+        # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 
     # =================================================
@@ -814,17 +813,10 @@ class Operator:
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式
-        assert self.selecting_blender != ''
-        assert self.ls_blender != ''
-        assert self.ricon_blender != ''
+        # assert self._stg_blender != ''
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
-        self._selecting_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                        for stg in self.selecting]
-        # 用于择时仓位策略的数据需要包含足够的数据窗口用于滚动计算
-        self._stg_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                  for stg in self.timing]
-        self._ricon_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                    for stg in self.ricon]
+        self._signal_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                     for stg in self.strategies]
 
     # TODO: 需要改进：
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
@@ -848,7 +840,7 @@ class Operator:
             存储在operator对象的下面三个属性中，在生成交易信号时直接调用，避免了每次生成交易信号
             时再动态分配历史数据。
                 self._selecting_history_data
-                self._stg_history_data
+                self._signal_history_data
                 self._ricon_history_data
 
         :return=====
@@ -863,7 +855,7 @@ class Operator:
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert len(self._stg_history_data) > 0, \
+        assert len(self._signal_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
@@ -886,7 +878,7 @@ class Operator:
         # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
         # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
         # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
-        ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._strategies, self._stg_history_data)])
+        ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._strategies, self._signal_history_data)])
         ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
         # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
         # 依次使用风控策略队列中的所有策略生成风险控制矩阵
