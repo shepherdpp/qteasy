@@ -26,9 +26,6 @@ from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
 from ._arg_validators import INDICATOR_TYPE_DATA
 from ._arg_validators import COMPOSIT_TYPE_DATA
 
-TUSHARE_TOKEN = '14f96621db7a937c954b1943a579f52c09bbd5022ed3f03510b77369'
-ts.set_token(TUSHARE_TOKEN)
-
 
 class HistoryPanel():
     """qteasy 量化投资系统使用的主要历史数据的数据类型.
