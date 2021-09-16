@@ -394,6 +394,11 @@ class Operator:
         return p_types
 
     @property
+    def signal_history_data(self):
+        """ 返回生成交易信号所需的历史数据列表"""
+        return self._signal_history_data
+
+    @property
     def opt_space_par(self):
         """一次性返回operator对象中所有参加优化（opt_tag != 0）的子策略的参数空间Space信息
             改属性的返回值是一个元组，包含ranges, types两个列表，这两个列表正好可以直接用作Space对象的创建参数，用于创建一个合适的
@@ -686,7 +691,7 @@ class Operator:
 
             :return:
         """
-        assert isinstance(stg_id, str), f'stg_id should be a string like \'t-0\', got {stg_id} instead'
+        assert isinstance(stg_id, str), f'stg_id should be a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
         strategy = self.get_strategy_by_name(stg_id)
         # 逐一修改该策略对象的各个参数
@@ -853,6 +858,7 @@ class Operator:
         # 生成空的选股蒙板
 
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
+        # TODO: 这里的格式检查是否可以移到prepar_data()中去？这样效率更高
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
         assert len(self._signal_history_data) > 0, \
@@ -862,7 +868,8 @@ class Operator:
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
-        for sel, dt in zip(self._selecting, self._selecting_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        # TODO， 使用map代替for loop可能能够再次提升运行速度
+        for sel, dt in zip(self.strategies, self.signal_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]
@@ -871,28 +878,7 @@ class Operator:
             # 生成的选股蒙板添加到选股蒙板队列中，
 
         sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
-        # sel_mask.any(0) 生成一个行向量，每个元素对应sel_mask中的一列，如果某列全部为零，该元素为0，
-        # 乘以hist_extract后，会把它对应列清零，因此不参与后续计算，降低了择时和风控计算的开销
-        # TODO: 这里本意是筛选掉未中选的股票，降低择时计算的开销，使用新的数据结构后不再适用，需改进以使其适用
-        # hist_selected = hist_data * selected_shares
-        # 第二步，使用择时策略在历史数据上独立产生若干多空蒙板(ls_mask)
-        # 生成多空蒙板时忽略在整个历史考察期内从未被选中过的股票：
-        # 依次使用择时策略队列中的所有策略逐个生成多空蒙板
-        ls_masks = np.array([tmg.generate(dt) for tmg, dt in zip(self._strategies, self._signal_history_data)])
-        ls_mask = self._ls_blend(ls_masks)  # 混合所有多空蒙板生成最终的多空蒙板
-        # 第三步，风险控制交易信号矩阵生成（简称风控矩阵）
-        # 依次使用风控策略队列中的所有策略生成风险控制矩阵
-        ricon_mats = np.array([ricon.generate(dt) for ricon, dt in zip(self._ricon, self._ricon_history_data)])
-        ricon_mat = self._ricon_blend(ricon_mats)  # 混合所有风控矩阵后得到最终的风控策略
 
-        # 使用mask_to_signal方法将多空蒙板及选股蒙板的乘积（持仓蒙板）转化为交易信号，再加上风控交易信号矩阵，并移除所有大于1或小于-1的信号
-        # 生成交易信号矩阵
-        if self._stg_blender != 'none':
-            # 常规情况下，所有的ls_mask会先被混合起来，然后再与sel_mask相乘后生成交易信号，与ricon_mat相加
-            op_mat = (mask_to_signal(ls_mask * sel_mask) + ricon_mat).clip(-1, 1)
-        else:
-            # 在ls_blender为"none"的时候，代表择时多空蒙板不会进行混合，分别与sel_mask相乘后单独生成交易信号，再与ricon_mat相加
-            op_mat = (mask_to_signal(ls_mask * sel_mask).sum(axis=0) + ricon_mat).clip(-1, 1)
         # 生成DataFrame，并且填充日期数据
         date_list = hist_data.hdates[-op_mat.shape[0]:]
         # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
