@@ -6849,9 +6849,7 @@ class TestQT(unittest.TestCase):
     """对qteasy系统进行总体测试"""
 
     def setUp(self):
-        self.op = qt.Operator(ps=['dma', 'macd'],
-                              pt=['all'],
-                              vs=['urgent'])
+        self.op = qt.Operator(strategies=['dma', 'macd'])
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
         self.op.set_parameter('s-0', pars=(2,), sample_freq='y')

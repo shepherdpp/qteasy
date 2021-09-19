@@ -7,6 +7,7 @@
 # to generate operation signals with
 # given history data.
 # ======================================
+import warnings
 
 import pandas as pd
 import numpy as np
@@ -308,11 +309,19 @@ class Operator:
 
         Operator对象的基本数据结构：包含四个列表加一个字典Dict，存储相关信息：
             _stg_id:            str, 交易策略列表，按照顺序保存所有相关策略对象的id（名称），如['MACD', 'DMA', 'MACD']
-            _stg:               Strategy, 按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
-            _signal_history_data:  ndarray, 列表中按照顺序保存用于不同策略的三维历史数据切片
-            _op_blenders:       dict,  "信号混合"字典，包含不同价格类型交易信号的混合表达式，dict的键对应不同的
+            _strategies:        :type: [Strategy, ...],
+                                按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
+            _signal_history_data:
+                                :type [ndarray, ...], 列表中按照顺序保存用于不同策略的三维历史数据切片
+            _backtest_history_data:
+                                :type [ndarray, ...], 列表中按照顺序保存用于不同策略回测的交易价格数据
+            _op_blenders:       :type dict,
+                                "信号混合"字典，包含不同价格类型交易信号的混合表达式，dict的键对应不同的
                                 交易价格类型，每个值包含交易信号混合表达式，表达式存储为一个列表，表达式以逆波兰式
                                 存储(RPN, Reversed Polish Notation)
+        Operator对象的基本属性包括：
+            signal_type:
+
 
         input:
             :param strategies: str, 用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
@@ -463,6 +472,23 @@ class Operator:
         """
         raise NotImplementedError
 
+    def __getitem__(self, item):
+        """ 根据策略的名称或序号返回子策略"""
+        item_is_int = isinstance(item, int)
+        item_is_str = isinstance(item, str)
+        if not (item_is_int or item_is_str):
+            warnings.warn('the item is in a wrong format and can not be parsed!')
+            return
+        if item_is_str:
+            if item not in self.strategy_names:
+                warnings.warn('the strategy name can not be recognized!')
+                return
+            return self.get_strategy_by_name(item)
+        strategy_count = self.strategy_count
+        if item >= strategy_count - 1:
+            item = strategy_count - 1
+        return self.strategies[item]
+
     def add_strategy(self, stg):
         """ 添加一个strategy交易策略到operator对象中
 
@@ -507,7 +533,7 @@ class Operator:
         """
         raise NotImplementedError
 
-    def get_strategies(self, price_type=None):
+    def get_strategies_by_price_type(self, price_type=None):
         """返回operator对象中的strategy对象, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略
 
@@ -522,12 +548,12 @@ class Operator:
     def get_strategy_count(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
-        return len(self.get_strategies(price_type))
+        return len(self.get_strategies_by_price_type(price_type))
 
     def get_strategy_names(self, price_type=None):
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
-        return [stg.name for stg in self.get_strategies(price_type)]
+        return [stg.name for stg in self.get_strategies_by_price_type(price_type)]
 
     def get_strategy_by_name(self, stg_name):
         """ 根据输入的策略名称返回strategy对象"""
@@ -735,7 +761,7 @@ class Operator:
         # 打印各个子模块的信息：
         print(f'Total {self.strategy_count} operation strategies, working on {self.price_type_count} prices:\n')
         for price_type in self.op_price_types:
-            print(f'- {price_type}: {self.get_strategies(price_type)}: {self.get_blender(price_type)}')
+            print(f'- {price_type}: {self.get_strategies_by_price_type(price_type)}: {self.get_blender(price_type)}')
         # 打印每个strategy的详细信息
         if verbose:
             print('Parameters of SimpleSelecting Strategies:')
@@ -869,20 +895,20 @@ class Operator:
         shares = hist_data.shares
         date_list = hist_data.hdates
         # TODO， 使用map代替for loop可能能够再次提升运行速度
-        for sel, dt in zip(self.strategies, self.signal_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        for stg, dt in zip(self.strategies, self.signal_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]
             sel_masks.append(
-                    sel.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
+                    stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
             # 生成的选股蒙板添加到选股蒙板队列中，
 
-        sel_mask = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
+        op_signals = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
 
         # 生成DataFrame，并且填充日期数据
-        date_list = hist_data.hdates[-op_mat.shape[0]:]
+        date_list = hist_data.hdates[-op_signals.shape[0]:]
         # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
-        lst = pd.DataFrame(op_mat, index=date_list, columns=shares)
+        lst = pd.DataFrame(op_signals, index=date_list, columns=shares)
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
         return lst_out
