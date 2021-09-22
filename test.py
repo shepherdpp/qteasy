@@ -902,29 +902,6 @@ class TestCoreSubFuncs(unittest.TestCase):
                                     (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(sp.boes)
 
-    def test_time_string_format(self):
-        print('Testing qt.time_string_format() function:')
-        t = 3.14
-        self.assertEqual(time_str_format(t), '3s 140.0ms')
-        self.assertEqual(time_str_format(t, estimation=True), '3s ')
-        self.assertEqual(time_str_format(t, short_form=True), '3"140')
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), '3"')
-        t = 300.14
-        self.assertEqual(time_str_format(t), '5min 140.0ms')
-        self.assertEqual(time_str_format(t, estimation=True), '5min ')
-        self.assertEqual(time_str_format(t, short_form=True), "5'140")
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "5'")
-        t = 7435.0014
-        self.assertEqual(time_str_format(t), '2hrs 3min 55s 1.4ms')
-        self.assertEqual(time_str_format(t, estimation=True), '2hrs ')
-        self.assertEqual(time_str_format(t, short_form=True), "2H3'55\"001")
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "2H")
-        t = 88425.0509
-        self.assertEqual(time_str_format(t), '1days 33min 45s 50.9ms')
-        self.assertEqual(time_str_format(t, estimation=True), '1days ')
-        self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
-        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
-
     def test_get_stock_pool(self):
         print(f'start test building stock pool function\n')
         share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
@@ -2389,260 +2366,6 @@ class TestLoop(unittest.TestCase):
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
 
-class TestOperatorSubFuncs(unittest.TestCase):
-    def setUp(self):
-        mask_list = [[0.0, 0.0, 0.0, 0.0],
-                     [0.5, 0.0, 0.0, 1.0],
-                     [0.5, 0.0, 0.3, 1.0],
-                     [0.5, 0.0, 0.3, 0.5],
-                     [0.5, 0.5, 0.3, 0.5],
-                     [0.5, 0.5, 0.3, 1.0],
-                     [0.3, 0.5, 0.0, 1.0],
-                     [0.3, 1.0, 0.0, 1.0]]
-        signal_list = [[0.0, 0.0, 0.0, 0.0],
-                       [0.5, 0.0, 0.0, 1.0],
-                       [0.0, 0.0, 0.3, 0.0],
-                       [0.0, 0.0, 0.0, -0.5],
-                       [0.0, 0.5, 0.0, 0.0],
-                       [0.0, 0.0, 0.0, 0.5],
-                       [-0.4, 0.0, -1.0, 0.0],
-                       [0.0, 0.5, 0.0, 0.0]]
-        mask_multi = [[[0, 0, 1, 1, 0],
-                       [0, 1, 1, 1, 0],
-                       [1, 1, 1, 1, 0],
-                       [1, 1, 1, 1, 1],
-                       [1, 1, 1, 1, 1],
-                       [1, 1, 0, 1, 1],
-                       [0, 1, 0, 0, 1],
-                       [1, 1, 0, 0, 1],
-                       [1, 1, 0, 0, 1],
-                       [1, 0, 0, 0, 1]],
-
-                      [[0, 0, 1, 0, 1],
-                       [0, 1, 1, 1, 1],
-                       [1, 1, 0, 1, 1],
-                       [1, 1, 1, 0, 0],
-                       [1, 1, 0, 0, 0],
-                       [1, 0, 0, 0, 0],
-                       [1, 0, 0, 0, 0],
-                       [1, 1, 0, 0, 0],
-                       [1, 1, 0, 1, 0],
-                       [0, 1, 0, 1, 0]],
-
-                      [[0, 0, 0., 0, 1],
-                       [0, 0, 1., 0, 1],
-                       [0, 0, 1., 0, 1],
-                       [1, 0, 1., 0, 1],
-                       [1, 1, .5, 1, 1],
-                       [1, 0, .5, 1, 0],
-                       [1, 1, .5, 1, 0],
-                       [0, 1, 0., 0, 0],
-                       [1, 0, 0., 0, 0],
-                       [0, 1, 0., 0, 0]]]
-        signal_multi = [[[0., 0., 1., 1., 0.],
-                         [0., 1., 0., 0., 0.],
-                         [1., 0., 0., 0., 0.],
-                         [0., 0., 0., 0., 1.],
-                         [0., 0., 0., 0., 0.],
-                         [0., 0., -1., 0., 0.],
-                         [-1., 0., 0., -1., 0.],
-                         [1., 0., 0., 0., 0.],
-                         [0., 0., 0., 0., 0.],
-                         [0., -1., 0., 0., 0.]],
-
-                        [[0., 0., 1., 0., 1.],
-                         [0., 1., 0., 1., 0.],
-                         [1., 0., -1., 0., 0.],
-                         [0., 0., 1., -1., -1.],
-                         [0., 0., -1., 0., 0.],
-                         [0., -1., 0., 0., 0.],
-                         [0., 0., 0., 0., 0.],
-                         [0., 1., 0., 0., 0.],
-                         [0., 0., 0., 1., 0.],
-                         [-1., 0., 0., 0., 0.]],
-
-                        [[0., 0., 0., 0., 1.],
-                         [0., 0., 1., 0., 0.],
-                         [0., 0., 0., 0., 0.],
-                         [1., 0., 0., 0., 0.],
-                         [0., 1., -0.5, 1., 0.],
-                         [0., -1., 0., 0., -1.],
-                         [0., 1., 0., 0., 0.],
-                         [-1., 0., -1., -1., 0.],
-                         [1., -1., 0., 0., 0.],
-                         [-1., 1., 0., 0., 0.]]]
-        self.mask = np.array(mask_list)
-        self.multi_mask = np.array(mask_multi)
-        self.correct_signal = np.array(signal_list)
-        self.correct_multi_signal = np.array(signal_multi)
-        self.op = qt.Operator()
-
-    def test_ls_blend(self):
-        """测试多空蒙板的混合器，三种混合方式均需要测试"""
-        ls_mask1 = [[0.0, 0.0, 0.0, -0.0],
-                    [1.0, 0.0, 0.0, -1.0],
-                    [1.0, 0.0, 1.0, -1.0],
-                    [1.0, 0.0, 1.0, -1.0],
-                    [1.0, 1.0, 1.0, -1.0],
-                    [1.0, 1.0, 1.0, -1.0],
-                    [0.0, 1.0, 0.0, -1.0],
-                    [0.0, 1.0, 0.0, -1.0]]
-        ls_mask2 = [[0.0, 0.0, 0.5, -0.5],
-                    [0.0, 0.0, 0.5, -0.3],
-                    [0.0, 0.5, 0.5, -0.0],
-                    [0.5, 0.5, 0.3, -0.0],
-                    [0.5, 0.5, 0.3, -0.3],
-                    [0.5, 0.5, 0.0, -0.5],
-                    [0.3, 0.5, 0.0, -1.0],
-                    [0.3, 1.0, 0.0, -1.0]]
-        ls_mask3 = [[0.5, 0.0, 1.0, -0.4],
-                    [0.4, 0.0, 1.0, -0.3],
-                    [0.3, 0.0, 0.8, -0.2],
-                    [0.2, 0.0, 0.6, -0.1],
-                    [0.1, 0.2, 0.4, -0.2],
-                    [0.1, 0.3, 0.2, -0.5],
-                    [0.1, 0.4, 0.0, -0.5],
-                    [0.1, 0.5, 0.0, -1.0]]
-
-        # result with blender 'avg'
-        ls_blnd_avg = [[0.16666667, 0.00000000, 0.50000000, -0.3],
-                       [0.46666667, 0.00000000, 0.50000000, -0.53333333],
-                       [0.43333333, 0.16666667, 0.76666667, -0.4],
-                       [0.56666667, 0.16666667, 0.63333333, -0.36666667],
-                       [0.53333333, 0.56666667, 0.56666667, -0.5],
-                       [0.53333333, 0.60000000, 0.40000000, -0.66666667],
-                       [0.13333333, 0.63333333, 0.00000000, -0.83333333],
-                       [0.13333333, 0.83333333, 0.00000000, -1.]]
-        # result with blender 'str-1.5'
-        ls_blnd_str_15 = [[0, 0, 1, 0],
-                          [0, 0, 1, -1],
-                          [0, 0, 1, 0],
-                          [1, 0, 1, 0],
-                          [1, 1, 1, -1],
-                          [1, 1, 0, -1],
-                          [0, 1, 0, -1],
-                          [0, 1, 0, -1]]
-        # result with blender 'pos-2' == 'pos-2-0'
-        ls_blnd_pos_2 = [[0, 0, 1, -1],
-                         [1, 0, 1, -1],
-                         [1, 0, 1, -1],
-                         [1, 0, 1, -1],
-                         [1, 1, 1, -1],
-                         [1, 1, 1, -1],
-                         [1, 1, 0, -1],
-                         [1, 1, 0, -1]]
-        # result with blender 'pos-2-0.25'
-        ls_blnd_pos_2_25 = [[0, 0, 1, -1],
-                            [1, 0, 1, -1],
-                            [1, 0, 1, 0],
-                            [1, 0, 1, 0],
-                            [1, 1, 1, -1],
-                            [1, 1, 0, -1],
-                            [0, 1, 0, -1],
-                            [0, 1, 0, -1]]
-        # result with blender 'avg_pos-2' == 'pos-2-0'
-        ls_blnd_avg_pos_2 = [[0.00000000, 0.00000000, 0.50000000, -0.3],
-                             [0.46666667, 0.00000000, 0.50000000, -0.53333333],
-                             [0.43333333, 0.00000000, 0.76666667, -0.4],
-                             [0.56666667, 0.00000000, 0.63333333, -0.36666667],
-                             [0.53333333, 0.56666667, 0.56666667, -0.5],
-                             [0.53333333, 0.60000000, 0.40000000, -0.66666667],
-                             [0.13333333, 0.63333333, 0.00000000, -0.83333333],
-                             [0.13333333, 0.83333333, 0.00000000, -1.]]
-        # result with blender 'avg_pos-2-0.25'
-        ls_blnd_avg_pos_2_25 = [[0.00000000, 0.00000000, 0.50000000, -0.3],
-                                [0.46666667, 0.00000000, 0.50000000, -0.53333333],
-                                [0.43333333, 0.00000000, 0.76666667, 0.00000000],
-                                [0.56666667, 0.00000000, 0.63333333, 0.00000000],
-                                [0.53333333, 0.56666667, 0.56666667, -0.5],
-                                [0.53333333, 0.60000000, 0.00000000, -0.66666667],
-                                [0.00000000, 0.63333333, 0.00000000, -0.83333333],
-                                [0.00000000, 0.83333333, 0.00000000, -1.]]
-        # result with blender 'combo'
-        ls_blnd_combo = [[0.5, 0., 1.5, -0.9],
-                         [1.4, 0., 1.5, -1.6],
-                         [1.3, 0.5, 2.3, -1.2],
-                         [1.7, 0.5, 1.9, -1.1],
-                         [1.6, 1.7, 1.7, -1.5],
-                         [1.6, 1.8, 1.2, -2.],
-                         [0.4, 1.9, 0., -2.5],
-                         [0.4, 2.5, 0., -3.]]
-
-        ls_masks = np.array([np.array(ls_mask1), np.array(ls_mask2), np.array(ls_mask3)])
-
-        # test A: the ls_blender 'str-T'
-        self.op.set_blender('ls', 'str-1.5')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'test A: result of ls_blender: str-1.5: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_str_15))
-
-        # test B: the ls_blender 'pos-N-T'
-        self.op.set_blender('ls', 'pos-2')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'Test B-1: result of ls_blender: pos-2: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_pos_2))
-
-        self.op.set_blender('ls', 'pos-2-0.25')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'Test B-2: result of ls_blender: pos-2-0.25: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_pos_2_25))
-
-        # test C: the ls_blender 'avg_pos-N-T'
-        self.op.set_blender('ls', 'avg_pos-2')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'Test C-1: result of ls_blender: avg_pos-2: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_pos_2, 5))
-
-        self.op.set_blender('ls', 'avg_pos-2-0.25')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'Test C-2: result of ls_blender: avg_pos-2-0.25: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_pos_2_25, 5))
-
-        # test D: the ls_blender 'avg'
-        self.op.set_blender('ls', 'avg')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'Test D: result of ls_blender: avg: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_avg))
-
-        # test E: the ls_blender 'combo'
-        self.op.set_blender('ls', 'combo')
-        res = qt.Operator._ls_blend(self.op, ls_masks)
-        print(f'Test E: result of ls_blender: combo: \n{res}')
-        self.assertTrue(np.allclose(res, ls_blnd_combo))
-
-    def test_sel_blend(self):
-        """测试选股蒙板的混合器，包括所有的混合模式"""
-        # step2, test blending of sel masks
-        pass
-
-    def test_bs_blend(self):
-        """测试买卖信号混合模式"""
-        # step3, test blending of op signals
-        pass
-
-    def test_unify(self):
-        print('Testing Unify functions\n')
-        l1 = np.array([[3, 2, 5], [5, 3, 2]])
-        res = unify(l1)
-        target = np.array([[0.3, 0.2, 0.5], [0.5, 0.3, 0.2]])
-
-        self.assertIs(np.allclose(res, target), True, 'sum of all elements is 1')
-        l1 = np.array([[1, 1, 1, 1, 1], [2, 2, 2, 2, 2]])
-        res = unify(l1)
-        target = np.array([[0.2, 0.2, 0.2, 0.2, 0.2], [0.2, 0.2, 0.2, 0.2, 0.2]])
-
-        self.assertIs(np.allclose(res, target), True, 'sum of all elements is 1')
-
-    def test_mask_to_signal(self):
-        signal = mask_to_signal(self.mask)
-        print(f'Test A: single mask to signal, result: \n{signal}')
-        self.assertTrue(np.allclose(signal, self.correct_signal))
-
-        signal = mask_to_signal(self.multi_mask)
-        print(f'Test A: single mask to signal, result: \n{signal}')
-        self.assertTrue(np.allclose(signal, self.correct_multi_signal))
-
-
 class TestLSStrategy(qt.RollingTiming):
     """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成
 
@@ -3015,6 +2738,7 @@ class TestOperator(unittest.TestCase):
         # self.op.remove_strategy(stg='macd')
 
     def test_property_get(self):
+        """ test all property getters"""
         self.assertIsInstance(self.op, qt.Operator)
         self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
         self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
@@ -3038,6 +2762,22 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.selecting_blender, '0')
         self.assertEqual(self.op.ricon_blender, 'add')
         self.assertEqual(self.op.opt_types, [0, 0, 0])
+
+    def test_property_strategies(self):
+        """ test property strategies"""
+        raise NotImplementedError
+
+    def test_property_strategy_count(self):
+        """ test Property strategy_count"""
+        raise NotImplementedError
+
+    def test_property_strategy_names(self):
+        """ test property strategy_names"""
+        raise NotImplementedError
+
+    def test_property_set(self):
+        """ test all property setters"""
+        raise NotImplementedError
 
     def test_prepare_data(self):
         test_ls = TestLSStrategy()
@@ -5075,6 +4815,29 @@ class TestUtilityFuncs(unittest.TestCase):
     def setUp(self):
         pass
 
+    def test_time_string_format(self):
+        print('Testing qt.time_string_format() function:')
+        t = 3.14
+        self.assertEqual(time_str_format(t), '3s 140.0ms')
+        self.assertEqual(time_str_format(t, estimation=True), '3s ')
+        self.assertEqual(time_str_format(t, short_form=True), '3"140')
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), '3"')
+        t = 300.14
+        self.assertEqual(time_str_format(t), '5min 140.0ms')
+        self.assertEqual(time_str_format(t, estimation=True), '5min ')
+        self.assertEqual(time_str_format(t, short_form=True), "5'140")
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "5'")
+        t = 7435.0014
+        self.assertEqual(time_str_format(t), '2hrs 3min 55s 1.4ms')
+        self.assertEqual(time_str_format(t, estimation=True), '2hrs ')
+        self.assertEqual(time_str_format(t, short_form=True), "2H3'55\"001")
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "2H")
+        t = 88425.0509
+        self.assertEqual(time_str_format(t), '1days 33min 45s 50.9ms')
+        self.assertEqual(time_str_format(t, estimation=True), '1days ')
+        self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
+
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
         self.assertEqual(str_to_list('a, b, c '), ['a', 'b', 'c'])
@@ -5092,7 +4855,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(list(list_or_slice([0, 2], str_dict)), [0, 2])
         self.assertEqual(list(list_or_slice([True, False, True, False], str_dict)), [0, 2])
 
-    def test_label_to_dict(self):
+    def test_labels_to_dict(self):
         target_list = [0, 1, 10, 100]
         target_dict = {'close': 0, 'open': 1, 'high': 2, 'low': 3}
         target_dict2 = {'close': 0, 'open': 2, 'high': 1, 'low': 3}
@@ -5100,6 +4863,10 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(labels_to_dict(['close', 'open', 'high', 'low'], target_list), target_dict)
         self.assertEqual(labels_to_dict('close, high, open, low', target_list), target_dict2)
         self.assertEqual(labels_to_dict(['close', 'high', 'open', 'low'], target_list), target_dict2)
+
+    def test_input_to_list(self):
+        """ test util function input_to_list()"""
+        raise NotImplementedError
 
     def test_regulate_date_format(self):
         self.assertEqual(regulate_date_format('2019/11/06'), '20191106')
@@ -5157,6 +4924,18 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertTrue(maybe_trade_day(date_trade))
         self.assertFalse(maybe_trade_day(date_holiday))
         self.assertFalse(maybe_trade_day(date_weekend))
+
+    def test_is_market_trade_day(self):
+        """ test util func is_market_trade_day()"""
+        raise NotImplementedError
+
+    def test_weekday_name(self):
+        """ test util func weekday_name()"""
+        raise NotImplementedError
+
+    def test_list_truncate(self):
+        """ test util func list_truncate()"""
+        raise NotImplementedError
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""

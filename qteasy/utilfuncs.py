@@ -547,38 +547,6 @@ def list_truncate(lst, trunc_size):
         return sub_lists
 
 
-def function_debugger(func):
-    """ a decorator that can be used to debug func during run time,
-    print out extra information:
-
-    name of function
-    arguments of the function
-    type of arguments of the function
-    run-time of the function
-    :param func:
-    :return:
-    """
-
-    def func_debugger(*args, **kwargs):
-        import time
-        try:
-            st = time.time()
-            res = func(*args, **kwargs)
-            run_time = time.time() - st
-            print(f'Run time: {run_time * 1000:.5f} ms\nresult of {func.__name__}({args, kwargs}) is\n{res}')
-            return res
-        except Exception as ex:
-            print(f'Error encountered during run time of function {func.__name__}({args, kwargs})\n'
-                  f'types of arguments:')
-            for arg in args:
-                print(f'{arg}:    \n{type(arg)}')
-            for arg in kwargs:
-                print(f'{arg}:    \n{type(arg)}')
-            raise
-
-    return func_debugger
-
-
 def is_number_like(key: [str, int, float])-> bool:
     """ 判断一个字符串是否是一个合法的数字
 
