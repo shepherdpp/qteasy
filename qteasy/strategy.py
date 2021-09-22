@@ -50,7 +50,7 @@ class Strategy:
                  sample_freq: str = 'd',
                  window_length: int = 270,
                  data_types: [str, list] = '',
-                 bt_price_type: str = '',
+                 bt_price_type: str = 'close',
                  reference_data: str = 'none',
                  reference_data_types: [str, list] = ''):
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
@@ -87,7 +87,9 @@ class Strategy:
                                             4, 'close'
                                             5, 'volume'
                                             6, 'eps'
-                                            7,
+                                            7, ...
+            :param bt_price_type:           静态属性，策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价，也可以设置
+                                            为五档交易价格中的某一个价格，根据交易当时的时间戳动态确定具体的交易价格
         """
         self._pars = pars  # 策略的参数，动态属性，可以直接赋值（通过set_pars函数赋值）
         self._opt_tag = opt_tag  # 策略的优化标记，

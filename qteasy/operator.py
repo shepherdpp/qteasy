@@ -15,7 +15,7 @@ from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
 from .strategy import Strategy
-from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGY_DICT
+from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 
 from .utilfuncs import mask_to_signal
 from .blender import blender_parser
@@ -338,7 +338,7 @@ class Operator:
             signal_type = 'pt'
 
         # 初始化基本数据结构
-        self._signal_type = None  # 保存operator对象输出的信号类型
+        self._signal_type = signal_type  # 保存operator对象输出的信号类型
         self._stg_types = []  # 保存所有交易策略的id，便于识别每个交易策略
         self._strategies = []  # 保存实际的交易策略对象
         self._signal_history_data = []  # 保存供各个策略生成交易信号的历史数据（ndarray）
@@ -363,7 +363,7 @@ class Operator:
     @property
     def strategy_names(self):
         """返回operator对象中所有交易策略对象的名称"""
-        return [stg.name for stg in self.strategies]
+        return [stg.stg_name for stg in self.strategies]
 
     @property
     def strategy_blenders(self):
@@ -382,10 +382,17 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
+        import pdb; pdb.set_trace()
         d_types = [typ for item in self.strategies for typ in item.data_types]
         d_types = list(set(d_types))
         d_types.sort()
         return d_types
+
+    @property
+    def op_data_type_count(self):
+        """ 返回operator对象生成交易清单所需的历史数据类型数量
+        """
+        return len(self.op_data_types)
 
     @property
     def op_data_freq(self):
@@ -396,14 +403,14 @@ class Operator:
         return d_freq[0]
 
     @property
-    def op_price_types(self):
+    def bt_price_types(self):
         """返回operator对象所有策略子对象的回测价格类型"""
-        p_types = [typ for item in self.strategies for typ in item.price_type]
+        p_types = [item.price_type for item in self.strategies]
         p_types = list(set(p_types))
         return p_types
 
     @property
-    def signal_history_data(self):
+    def op_history_data(self):
         """ 返回生成交易信号所需的历史数据列表"""
         return self._signal_history_data
 
@@ -454,11 +461,11 @@ class Operator:
         return max(stg.window_length for stg in self.strategies)
 
     @property
-    def price_type_count(self):
+    def bt_price_type_count(self):
         """ 计算operator对象中所有子策略的不同回测价格类型的数量
         :return: int
         """
-        return len(self.op_price_types)
+        return len(self.bt_price_types)
 
     @property
     def ready(self):
@@ -489,23 +496,30 @@ class Operator:
             item = strategy_count - 1
         return self.strategies[item]
 
-    def add_strategy(self, stg):
+    def add_strategy(self, stg, **kwargs):
         """ 添加一个strategy交易策略到operator对象中
 
         :param: stg, 需要添加的交易策略，可以为交易策略对象，也可以是内置交易策略的策略id或策略名称
+        :param: kwargs, 任意合法的策略属性，可以在添加策略时直接给该策略属性赋值
         """
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
             if stg.lower() not in AVAILABLE_BUILT_IN_STRATEGIES:
                 raise KeyError(f'built-in timing strategy \'{stg}\' not found!')
-            self._stg_types.append(stg)
-            self._strategies.append(BUILT_IN_STRATEGY_DICT[stg]())
+            strategy_type = stg
+            strategy = BUILT_IN_STRATEGIES[stg]
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, Strategy):
-            self._stg_types.append(stg.stg_type)
-            self._strategies.append(stg)
+            strategy_type = stg.stg_type
+            strategy = stg
         else:
             raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
+
+        self._stg_types.append(strategy_type)
+        self._strategies.append(strategy)
+        # 逐一修改该策略对象的各个参数
+        self.set_parameter(stg_id=len(self.strategies), **kwargs)
+
 
     def remove_strategy(self, id_or_name=None):
         """从Operator对象中移除一个交易策略"""
@@ -553,7 +567,7 @@ class Operator:
     def get_strategy_names(self, price_type=None):
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
-        return [stg.name for stg in self.get_strategies_by_price_type(price_type)]
+        return [stg.stg_name for stg in self.get_strategies_by_price_type(price_type)]
 
     def get_strategy_by_name(self, stg_name):
         """ 根据输入的策略名称返回strategy对象"""
@@ -683,7 +697,7 @@ class Operator:
                       price_type: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
-            stg_id的格式为'x-n'，其中x为's/t/r'中的一个字母，n为一个整数
+            将函数参数中给定的策略参数赋值给相应的策略
 
             这里应该有本函数的详细介绍
 
@@ -717,9 +731,12 @@ class Operator:
 
             :return:
         """
-        assert isinstance(stg_id, str), f'stg_id should be a string, got {type(stg_id)} instead'
+        assert isinstance(stg_id, (int, str)), f'stg_id should be a int, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
-        strategy = self.get_strategy_by_name(stg_id)
+        if isinstance(stg_id, str):
+            strategy = self.get_strategy_by_name(stg_id)
+        else:
+            strategy = self[stg_id]
         # 逐一修改该策略对象的各个参数
         if pars is not None:  # 设置策略参数
             if strategy.set_pars(pars):
@@ -742,7 +759,7 @@ class Operator:
                                    data_types=data_types,
                                    price_type=price_type)
         # 设置可能存在的其他参数
-        strategy.set_custom_pars(**kwargs)
+        strategy.set_custom_pars(self, **kwargs)
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -759,9 +776,17 @@ class Operator:
         print('Information of the Module')
         print('=' * 25)
         # 打印各个子模块的信息：
-        print(f'Total {self.strategy_count} operation strategies, working on {self.price_type_count} prices:\n')
-        for price_type in self.op_price_types:
-            print(f'- {price_type}: {self.get_strategies_by_price_type(price_type)}: {self.get_blender(price_type)}')
+        print(f'Total {self.strategy_count} operation strategies, requiring {self.op_data_type_count} '
+              f'types of historical data:')
+        for data_type in self.op_data_types:
+            print(f'{data_type}')
+        for price_type in self.bt_price_types:
+            print(f'for backtest histoty price type: {price_type}: \n'
+                  f'{self.get_strategies_by_price_type(price_type)}:')
+            if self.strategy_blenders != {}:
+                print(f'{self.get_blender(price_type)}')
+            else:
+                print(f'no blender')
         # 打印每个strategy的详细信息
         if verbose:
             print('Parameters of SimpleSelecting Strategies:')
@@ -895,7 +920,7 @@ class Operator:
         shares = hist_data.shares
         date_list = hist_data.hdates
         # TODO， 使用map代替for loop可能能够再次提升运行速度
-        for stg, dt in zip(self.strategies, self.signal_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]

@@ -259,6 +259,8 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
 def str_to_list(input_string, sep_char: str = ','):
     """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义"""
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
+    if input_string == "":
+        return list()
     res = input_string.replace(' ', '').split(sep_char)
     return res
 
