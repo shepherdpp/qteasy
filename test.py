@@ -2684,6 +2684,88 @@ class TestOperator(unittest.TestCase):
         print(f'test printing information of operator object')
         # self.op.info()
 
+    def test_property_get(self):
+        """ test all property getters"""
+        self.assertIsInstance(self.op, qt.Operator)
+        self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
+        self.assertIsInstance(self.op.ricon[0], qt.RiconUrgent)
+        self.assertEqual(self.op.selecting_count, 1)
+        self.assertEqual(self.op.strategy_count, 3)
+        self.assertEqual(self.op.ricon_count, 1)
+        self.assertEqual(self.op.timing_count, 1)
+        print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
+        print(f'info of Timing strategy: \n{self.op.strategies[0].info()}')
+        self.assertEqual(len(self.op.strategies), 3)
+        self.assertIsInstance(self.op.strategies[0], qt.TimingDMA)
+        self.assertIsInstance(self.op.strategies[1], qt.SelectingAll)
+        self.assertIsInstance(self.op.strategies[2], qt.RiconUrgent)
+        self.assertEqual(self.op.strategy_count, 3)
+        self.assertEqual(self.op.op_data_freq, 'd')
+        self.assertEqual(self.op.op_data_types, ['close'])
+        self.assertEqual(self.op.opt_space_par, ([], []))
+        self.assertEqual(self.op.max_window_length, 270)
+        self.assertEqual(self.op.ls_blender, 'pos-1')
+        self.assertEqual(self.op.selecting_blender, '0')
+        self.assertEqual(self.op.ricon_blender, 'add')
+        self.assertEqual(self.op.opt_types, [0, 0, 0])
+
+    def test_property_strategies(self):
+        """ test property strategies"""
+        raise NotImplementedError
+
+    def test_property_strategy_count(self):
+        """ test Property strategy_count"""
+        raise NotImplementedError
+
+    def test_property_strategy_names(self):
+        """ test property strategy_names"""
+        raise NotImplementedError
+
+    def test_property_singal_type(self):
+        """ test property signal_type"""
+        raise NotImplementedError
+
+    def test_property_op_data_types(self):
+        """ test property op_data_types"""
+        raise NotImplementedError
+
+    def test_property_op_data_type_count(self):
+        """ test property op_data_type_count"""
+        raise NotImplementedError
+
+    def test_property_op_data_freq(self):
+        """ test property op_data_freq"""
+        raise NotImplementedError
+
+    def test_property_bt_price_types(self):
+        """ test property bt_price_types"""
+        raise NotImplementedError
+
+    def test_property_op_history_data(self):
+        """ test property op_history_data"""
+        raise NotImplementedError
+
+    def test_property_opt_space_par(self):
+        """ test property opt_space_par"""
+        raise NotImplementedError
+
+    def test_property_opt_types(self):
+        """ test property opt_types"""
+        raise NotImplementedError
+
+    def test_property_max_window_length(self):
+        """ test property max_window_length"""
+        raise NotImplementedError
+
+    def test_property_bt_price_type_count(self):
+        """ test property bt_price_type_count"""
+        raise NotImplementedError
+
+    def test_property_set(self):
+        """ test all property setters"""
+        raise NotImplementedError
+
     def test_operator_ready(self):
         """test the method ready of Operator"""
         pass
@@ -2735,51 +2817,7 @@ class TestOperator(unittest.TestCase):
     def test_operator_remove_strategy(self):
         """test removing strategies from Operator"""
         pass
-        # self.op.remove_strategy(stg='macd')
-
-    def test_property_get(self):
-        """ test all property getters"""
-        self.assertIsInstance(self.op, qt.Operator)
-        self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
-        self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
-        self.assertIsInstance(self.op.ricon[0], qt.RiconUrgent)
-        self.assertEqual(self.op.selecting_count, 1)
-        self.assertEqual(self.op.strategy_count, 3)
-        self.assertEqual(self.op.ricon_count, 1)
-        self.assertEqual(self.op.timing_count, 1)
-        print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
-        print(f'info of Timing strategy: \n{self.op.strategies[0].info()}')
-        self.assertEqual(len(self.op.strategies), 3)
-        self.assertIsInstance(self.op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(self.op.strategies[1], qt.SelectingAll)
-        self.assertIsInstance(self.op.strategies[2], qt.RiconUrgent)
-        self.assertEqual(self.op.strategy_count, 3)
-        self.assertEqual(self.op.op_data_freq, 'd')
-        self.assertEqual(self.op.op_data_types, ['close'])
-        self.assertEqual(self.op.opt_space_par, ([], []))
-        self.assertEqual(self.op.max_window_length, 270)
-        self.assertEqual(self.op.ls_blender, 'pos-1')
-        self.assertEqual(self.op.selecting_blender, '0')
-        self.assertEqual(self.op.ricon_blender, 'add')
-        self.assertEqual(self.op.opt_types, [0, 0, 0])
-
-    def test_property_strategies(self):
-        """ test property strategies"""
-        raise NotImplementedError
-
-    def test_property_strategy_count(self):
-        """ test Property strategy_count"""
-        raise NotImplementedError
-
-    def test_property_strategy_names(self):
-        """ test property strategy_names"""
-        raise NotImplementedError
-
-    def test_property_set(self):
-        """ test all property setters"""
-        raise NotImplementedError
-
-    def test_prepare_data(self):
+        # self.op.remove_strategy(stg='macd')    def test_prepare_data(self):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
@@ -7685,7 +7723,6 @@ def test_suite(*args):
                                   TestCashPlan()])
         elif arg_item == 'core':
             suite.addTests(tests=[TestOperator(),
-                                  TestOperatorSubFuncs(),
                                   TestLoop(),
                                   TestEvaluations(),
                                   TestBuiltIns()])
