@@ -13,7 +13,7 @@ from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_da
 from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_or_slice, labels_to_dict
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
-from qteasy.built_in import SelectingFinanceIndicator
+from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
 from qteasy.history import stack_dataframes
 from qteasy.tsfuncs import income, indicators, name_change, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
@@ -58,6 +58,8 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 
 from qteasy.database import DataSource
+
+from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
@@ -2366,6 +2368,12 @@ class TestLoop(unittest.TestCase):
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
 
+class TestStrategy(unittest.TestCase):
+    """ test all properties and methods of strategy base class"""
+    def setUp(self) -> None:
+        pass
+
+
 class TestLSStrategy(qt.RollingTiming):
     """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成
 
@@ -2677,12 +2685,29 @@ class TestOperator(unittest.TestCase):
                                    rows=self.date_indices)
         print(f'in test_Operator, history panel is created for selection finance test:')
         self.hp2.info()
-        self.op = qt.Operator(pt=['all'], strategies='dma', vs='urgent')
+        self.op = qt.Operator(strategies='dma', signal_type='PS')
+        self.op2 = qt.Operator(strategies='dma, macd, trix')
+
+    def test_init(self):
+        """ test initialization of Operator class"""
+        op = qt.Operator()
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.signal_type, 'pt')
+        self.assertIsInstance(op.strategies, list)
+        self.assertEqual(len(op.strategies), 0)
+        op = qt.Operator('dma')
+        self.assertIsInstance(op, qt.Operator)
+        self.assertIsInstance(op.strategies, list)
+        self.assertIsInstance(op.strategies[0], TimingDMA)
+        op = qt.Operator('dma, macd')
+        self.assertIsInstance(op, qt.Operator)
+        op = qt.Operator(['dma', 'macd'])
+        self.assertIsInstance(op, qt.Operator)
 
     def test_info(self):
         """Test information output of Operator"""
         print(f'test printing information of operator object')
-        # self.op.info()
+        self.op.info()
 
     def test_property_get(self):
         """ test all property getters"""
@@ -2712,11 +2737,32 @@ class TestOperator(unittest.TestCase):
 
     def test_property_strategies(self):
         """ test property strategies"""
-        raise NotImplementedError
+        print(f'created a new simple Operator with only one strategy: DMA')
+        op = qt.Operator('dma')
+        strategies = op.strategies
+        self.assertIsInstance(strategies, list)
+        op.info()
+
+        print(f'created the second simple Operator with three strategies')
+        self.assertIsInstance(strategies[0], TimingDMA)
+        op = qt.Operator('dma, macd, cdl')
+        strategies = op.strategies
+        op.info()
+        self.assertIsInstance(strategies, list)
+        self.assertIsInstance(strategies[0], TimingDMA)
+        self.assertIsInstance(strategies[1], TimingMACD)
+        self.assertIsInstance(strategies[2], TimingCDL)
 
     def test_property_strategy_count(self):
-        """ test Property strategy_count"""
-        raise NotImplementedError
+        """ test Property strategy_count, and the method get_strategy_count_by_price_type()"""
+        self.assertEqual(self.op.strategy_count, 1)
+        self.assertEqual(self.op2.strategy_count, 3)
+        self.assertEqual(self.op.get_strategy_count_by_price_type(), 1)
+        self.assertEqual(self.op2.get_strategy_count_by_price_type(), 3)
+        self.assertEqual(self.op.get_strategy_count_by_price_type('close'), 1)
+        self.assertEqual(self.op.get_strategy_count_by_price_type('high'), 0)
+        self.assertEqual(self.op2.get_strategy_count_by_price_type('close'), 3)
+        self.assertEqual(self.op2.get_strategy_count_by_price_type('open'), 0)
 
     def test_property_strategy_names(self):
         """ test property strategy_names"""

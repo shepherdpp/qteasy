@@ -382,7 +382,6 @@ class Operator:
     @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
-        import pdb; pdb.set_trace()
         d_types = [typ for item in self.strategies for typ in item.data_types]
         d_types = list(set(d_types))
         d_types.sort()
@@ -518,8 +517,7 @@ class Operator:
         self._stg_types.append(strategy_type)
         self._strategies.append(strategy)
         # 逐一修改该策略对象的各个参数
-        self.set_parameter(stg_id=len(self.strategies), **kwargs)
-
+        self.set_parameter(stg_id=len(self._strategies), **kwargs)
 
     def remove_strategy(self, id_or_name=None):
         """从Operator对象中移除一个交易策略"""
@@ -559,12 +557,12 @@ class Operator:
         else:
             return [stg for stg in self._strategies if stg.price_type == price_type]
 
-    def get_strategy_count(self, price_type=None):
+    def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
         return len(self.get_strategies_by_price_type(price_type))
 
-    def get_strategy_names(self, price_type=None):
+    def get_strategy_names_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         return [stg.stg_name for stg in self.get_strategies_by_price_type(price_type)]
@@ -759,7 +757,7 @@ class Operator:
                                    data_types=data_types,
                                    price_type=price_type)
         # 设置可能存在的其他参数
-        strategy.set_custom_pars(self, **kwargs)
+        strategy.set_custom_pars(**kwargs)
 
     # =================================================
     # 下面是Operation模块的公有方法：
@@ -778,8 +776,10 @@ class Operator:
         # 打印各个子模块的信息：
         print(f'Total {self.strategy_count} operation strategies, requiring {self.op_data_type_count} '
               f'types of historical data:')
+        all_op_data_types = []
         for data_type in self.op_data_types:
-            print(f'{data_type}')
+            all_op_data_types.append(data_type)
+        print(", ".join(all_op_data_types))
         for price_type in self.bt_price_types:
             print(f'for backtest histoty price type: {price_type}: \n'
                   f'{self.get_strategies_by_price_type(price_type)}:')
