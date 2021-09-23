@@ -2709,32 +2709,6 @@ class TestOperator(unittest.TestCase):
         print(f'test printing information of operator object')
         self.op.info()
 
-    def test_property_get(self):
-        """ test all property getters"""
-        self.assertIsInstance(self.op, qt.Operator)
-        self.assertIsInstance(self.op.timing[0], qt.TimingDMA)
-        self.assertIsInstance(self.op.selecting[0], qt.SelectingAll)
-        self.assertIsInstance(self.op.ricon[0], qt.RiconUrgent)
-        self.assertEqual(self.op.selecting_count, 1)
-        self.assertEqual(self.op.strategy_count, 3)
-        self.assertEqual(self.op.ricon_count, 1)
-        self.assertEqual(self.op.timing_count, 1)
-        print(self.op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
-        print(f'info of Timing strategy: \n{self.op.strategies[0].info()}')
-        self.assertEqual(len(self.op.strategies), 3)
-        self.assertIsInstance(self.op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(self.op.strategies[1], qt.SelectingAll)
-        self.assertIsInstance(self.op.strategies[2], qt.RiconUrgent)
-        self.assertEqual(self.op.strategy_count, 3)
-        self.assertEqual(self.op.op_data_freq, 'd')
-        self.assertEqual(self.op.op_data_types, ['close'])
-        self.assertEqual(self.op.opt_space_par, ([], []))
-        self.assertEqual(self.op.max_window_length, 270)
-        self.assertEqual(self.op.ls_blender, 'pos-1')
-        self.assertEqual(self.op.selecting_blender, '0')
-        self.assertEqual(self.op.ricon_blender, 'add')
-        self.assertEqual(self.op.opt_types, [0, 0, 0])
-
     def test_property_strategies(self):
         """ test property strategies"""
         print(f'created a new simple Operator with only one strategy: DMA')
@@ -2766,7 +2740,18 @@ class TestOperator(unittest.TestCase):
 
     def test_property_strategy_names(self):
         """ test property strategy_names"""
-        raise NotImplementedError
+        op = qt.Operator('dma')
+        self.assertIsInstance(op.strategy_names, list)
+        names = op.strategy_names[0]
+        print(f'names are {names}')
+        self.assertEqual(names, 'QUICK DMA STRATEGY')
+
+        op = qt.Operator('dma, macd, trix, cdl')
+        self.assertIsInstance(op.strategy_names, list)
+        self.assertEqual(op.strategy_names[0], 'QUICK DMA STRATEGY')
+        self.assertEqual(op.strategy_names[1], 'MACD STRATEGY')
+        self.assertEqual(op.strategy_names[2], 'TRIX STRATEGY')
+        self.assertEqual(op.strategy_names[3], 'CDL INDICATOR STRATEGY')
 
     def test_property_singal_type(self):
         """ test property signal_type"""
