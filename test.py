@@ -2776,10 +2776,23 @@ class TestOperator(unittest.TestCase):
         self.assertRaises(TypeError, setattr, op, 'signal_type', 123)
         self.assertRaises(ValueError, setattr, op, 'signal_type', 'wrong value')
 
-
     def test_property_op_data_types(self):
         """ test property op_data_types"""
-        raise NotImplementedError
+        op = qt.Operator()
+        self.assertIsInstance(op.op_data_types, list)
+        self.assertEqual(op.op_data_types, [])
+
+        op = qt.Operator('macd, dma, trix')
+        dt = op.op_data_types
+        self.assertEqual(dt[0], 'close')
+
+        op = qt.Operator('macd, cdl')
+        dt = op.op_data_types
+        self.assertEqual(dt[0], 'close')
+        self.assertEqual(dt[1], 'high')
+        self.assertEqual(dt[2], 'low')
+        self.assertEqual(dt[3], 'open')
+        self.assertEqual(dt, ['close', 'high', 'low', 'open'])
 
     def test_property_op_data_type_count(self):
         """ test property op_data_type_count"""
