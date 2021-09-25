@@ -2793,10 +2793,29 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(dt[2], 'low')
         self.assertEqual(dt[3], 'open')
         self.assertEqual(dt, ['close', 'high', 'low', 'open'])
+        op.add_strategy('dma')
+        dt = op.op_data_types
+        self.assertEqual(dt[0], 'close')
+        self.assertEqual(dt[1], 'high')
+        self.assertEqual(dt[2], 'low')
+        self.assertEqual(dt[3], 'open')
+        self.assertEqual(dt, ['close', 'high', 'low', 'open'])
 
     def test_property_op_data_type_count(self):
         """ test property op_data_type_count"""
-        raise NotImplementedError
+        op = qt.Operator()
+        self.assertIsInstance(op.op_data_type_count, int)
+        self.assertEqual(op.op_data_type_count, 0)
+
+        op = qt.Operator('macd, dma, trix')
+        dtn = op.op_data_type_count
+        self.assertEqual(dtn, 1)
+        op = qt.Operator('macd, cdl')
+        dtn = op.op_data_type_count
+        self.assertEqual(dtn, 4)
+        op.add_strategy('dma')
+        dtn = op.op_data_type_count
+        self.assertEqual(dtn, 4)
 
     def test_property_op_data_freq(self):
         """ test property op_data_freq"""
