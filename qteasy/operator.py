@@ -300,9 +300,9 @@ class Operator:
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
 
     AVAILABLE_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
-    AVAILABLE_SIGNAL_TYPES = {'pt': 'Position Target',
-                              'ps': 'Proportion Signal',
-                              'vs': 'Volume Signal'}
+    AVAILABLE_SIGNAL_TYPES = {'position target': 'pt',
+                              'proportion signal': 'ps',
+                              'volume signal': 'vs'}
 
     def __init__(self, strategies=None, signal_type=None):
         """生成具体的Operator对象
@@ -334,11 +334,14 @@ class Operator:
             stg = strategies
         else:
             stg = []
-        if signal_type not in self.AVAILABLE_SIGNAL_TYPES:
+        if signal_type is None:
+            signal_type = 'pt'
+        if (signal_type.lower() not in self.AVAILABLE_SIGNAL_TYPES) and \
+                (signal_type.lower() not in self.AVAILABLE_SIGNAL_TYPES.values()):
             signal_type = 'pt'
 
         # 初始化基本数据结构
-        self._signal_type = signal_type  # 保存operator对象输出的信号类型
+        self._signal_type = ''  # 保存operator对象输出的信号类型
         self._stg_types = []  # 保存所有交易策略的id，便于识别每个交易策略
         self._strategies = []  # 保存实际的交易策略对象
         self._signal_history_data = []  # 保存供各个策略生成交易信号的历史数据（ndarray）
@@ -349,6 +352,8 @@ class Operator:
         for s in stg:
             # 逐一添加所有的策略
             self.add_strategy(s)
+        # 添加signal_type属性
+        self.signal_type = signal_type
 
     @property
     def strategies(self):
@@ -377,7 +382,14 @@ class Operator:
     @signal_type.setter
     def signal_type(self, st):
         """ 设置signal_type的值"""
-        self._signal_type = self.set_signal_type(st)
+        if not isinstance(st, str):
+            raise TypeError(f'signal type should be a string, got {type(st)} instead!')
+        elif st.lower() in self.AVAILABLE_SIGNAL_TYPES:
+            self._signal_type = self.AVAILABLE_SIGNAL_TYPES[st.lower()]
+        elif st.lower() in self.AVAILABLE_SIGNAL_TYPES.values():
+            self._signal_type = st.lower()
+        else:
+            raise ValueError(f'the signal type {st} is not valid!')
 
     @property
     def op_data_types(self):
@@ -574,15 +586,6 @@ class Operator:
         strategies = self.strategies
         stg_idx = stg_names.index(stg_name)
         return strategies[stg_idx]
-
-    def set_signal_type(self, st):
-        """ 给signal_type属性赋值"""
-        if not isinstance(st, str):
-            raise TypeError(f'signal type {type(st)} is not a string')
-        elif st.lower() not in self.AVAILABLE_SIGNAL_TYPES:
-            raise ValueError(f'the signal type {st} is not valid!')
-        else:
-            self._signal_type = st
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中

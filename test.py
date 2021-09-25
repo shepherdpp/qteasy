@@ -2755,7 +2755,27 @@ class TestOperator(unittest.TestCase):
 
     def test_property_singal_type(self):
         """ test property signal_type"""
-        raise NotImplementedError
+        op = qt.Operator()
+        self.assertIsInstance(op.signal_type, str)
+        self.assertEqual(op.signal_type, 'pt')
+        op = qt.Operator(signal_type='ps')
+        self.assertIsInstance(op.signal_type, str)
+        self.assertEqual(op.signal_type, 'ps')
+        op = qt.Operator(signal_type='PS')
+        self.assertEqual(op.signal_type, 'ps')
+        op = qt.Operator(signal_type='proportion signal')
+        self.assertEqual(op.signal_type, 'ps')
+        print(f'"pt" will be the default type if wrong value is given')
+        op = qt.Operator(signal_type='wrong value')
+        self.assertEqual(op.signal_type, 'pt')
+
+        print(f'test signal_type.setter')
+        op.signal_type = 'ps'
+        self.assertEqual(op.signal_type, 'ps')
+        print(f'test error raising')
+        self.assertRaises(TypeError, setattr, op, 'signal_type', 123)
+        self.assertRaises(ValueError, setattr, op, 'signal_type', 'wrong value')
+
 
     def test_property_op_data_types(self):
         """ test property op_data_types"""
