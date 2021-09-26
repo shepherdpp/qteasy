@@ -2709,6 +2709,22 @@ class TestOperator(unittest.TestCase):
         print(f'test printing information of operator object')
         self.op.info()
 
+    def test_get_strategy_by_name(self):
+        """ test get_strategy_by_name()"""
+        pass
+
+    def test_get_strategies_by_price_type(self):
+        """ test get_strategies_by_price_type"""
+        pass
+
+    def test_get_strategy_count_by_price_type(self):
+        """ test get_strategy_count_by_price_type"""
+        pass
+
+    def test_get_strategy_names_by_price_type(self):
+        """ test get_strategy_names_by_price_type"""
+        pass
+
     def test_property_strategies(self):
         """ test property strategies"""
         print(f'created a new simple Operator with only one strategy: DMA')
@@ -2819,7 +2835,21 @@ class TestOperator(unittest.TestCase):
 
     def test_property_op_data_freq(self):
         """ test property op_data_freq"""
-        raise NotImplementedError
+        op = qt.Operator()
+        self.assertIsInstance(op.op_data_freq, str)
+        self.assertEqual(len(op.op_data_freq), 0)
+        self.assertEqual(op.op_data_freq, '')
+
+        op = qt.Operator('macd, dma, trix')
+        dtf = op.op_data_freq
+        self.assertIsInstance(dtf, str)
+        self.assertEqual(dtf[0], 'd')
+        op.set_parameter('macd strategy', data_freq='m')
+        dtf = op.op_data_freq
+        self.assertIsInstance(dtf, list)
+        self.assertEqual(len(dtf), 2)
+        self.assertEqual(dtf[0], 'm')
+        self.assertEqual(dtf[1], 'd')
 
     def test_property_bt_price_types(self):
         """ test property bt_price_types"""

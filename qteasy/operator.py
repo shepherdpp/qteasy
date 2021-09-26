@@ -300,9 +300,9 @@ class Operator:
     # 对象初始化时需要给定对象中包含的选股、择时、风控组件的类型列表
 
     AVAILABLE_BLENDER_TYPES = ['avg', 'avg_pos', 'pos', 'str', 'combo', 'none']
-    AVAILABLE_SIGNAL_TYPES = {'position target': 'pt',
+    AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                               'proportion signal': 'ps',
-                              'volume signal': 'vs'}
+                              'volume signal':     'vs'}
 
     def __init__(self, strategies=None, signal_type=None):
         """生成具体的Operator对象
@@ -410,8 +410,12 @@ class Operator:
         """返回operator对象所有策略子对象所需数据的采样频率"""
         d_freq = [stg.data_freq for stg in self.strategies]
         d_freq = list(set(d_freq))
-        assert len(d_freq) == 1, f'ValueError, there are multiple history data frequency required by strategies'
-        return d_freq[0]
+        if len(d_freq) == 0:
+            return ''
+        if len(d_freq) == 1:
+            return d_freq[0]
+        warnings.warn(f'there are multiple history data frequency required by strategies', RuntimeWarning)
+        return d_freq
 
     @property
     def bt_price_types(self):
@@ -581,10 +585,12 @@ class Operator:
 
     def get_strategy_by_name(self, stg_name):
         """ 根据输入的策略名称返回strategy对象"""
-        assert stg_name in self.strategy_names, f'stg_name can not be found in operator'
+        assert stg_name.upper() in self.strategy_names, f'stg_name {stg_name} can not be found in operator. \n' \
+                                                        f'{self.strategy_names}'
         stg_names = self.strategy_names
         strategies = self.strategies
-        stg_idx = stg_names.index(stg_name)
+        stg_idx = stg_names.index(stg_name.upper())
+        print(f'getting strategy: \n{strategies[stg_idx]}')
         return strategies[stg_idx]
 
     def set_opt_par(self, opt_par):
@@ -692,6 +698,7 @@ class Operator:
                       opt_tag: int = None,
                       par_boes: [tuple, list] = None,
                       par_types: [list, str] = None,
+                      data_freq: str = None,
                       sample_freq: str = None,
                       window_length: int = None,
                       data_types: [str, list] = None,
@@ -718,8 +725,11 @@ class Operator:
             :param par_types:
                 :type par_types: str or list, 策略参数类型列表，与par_boes配合确定策略参数取值范围类型，详情参见Space类的介绍
 
+            :param data_freq:
+                :type data_freq: str, 数据频率，策略本身所使用的数据的采样频率
+
             :param sample_freq:
-                :type sample_freq: str, 采样频率，策略运行时的采样频率
+                :type sample_freq: str, 采样频率，策略运行时进行信号生成的采样频率，该采样频率决定了信号的频率
 
             :param window_length:
                 :type window_length: int, 窗口长度：策略计算的前视窗口长度
@@ -750,12 +760,14 @@ class Operator:
             strategy.set_par_boes(par_boes)
         if par_types is not None:  # 设置策略的参数类型
             strategy.par_types = par_types
+        has_df = data_freq is not None
         has_sf = sample_freq is not None
         has_wl = window_length is not None
         has_dt = data_types is not None
         has_pt = price_type is not None
-        if has_sf or has_wl or has_dt or has_pt:
-            strategy.set_hist_pars(sample_freq=sample_freq,
+        if has_df or has_sf or has_wl or has_dt or has_pt:
+            strategy.set_hist_pars(data_freq=data_freq,
+                                   sample_freq=sample_freq,
                                    window_length=window_length,
                                    data_types=data_types,
                                    price_type=price_type)
