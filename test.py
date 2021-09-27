@@ -2711,7 +2711,16 @@ class TestOperator(unittest.TestCase):
 
     def test_get_strategy_by_name(self):
         """ test get_strategy_by_name()"""
-        pass
+        op = qt.Operator()
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_names, [])
+
+        op = qt.Operator('macd, dma, trix')
+        self.assertEqual(op.strategy_names, ['MACD STRATEGY', 'QUICK DMA STRATEGY', 'TRIX STRATEGY'])
+        self.assertIs(op.get_strategy_by_name('macd strategy'), op.strategies[0])
+        self.assertIs(op.get_strategy_by_name(1), op.strategies[1])
+        self.assertIs(op.get_strategy_by_name('trix strategy'), op.strategies[2])
 
     def test_get_strategies_by_price_type(self):
         """ test get_strategies_by_price_type"""

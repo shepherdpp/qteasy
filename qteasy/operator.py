@@ -585,11 +585,16 @@ class Operator:
 
     def get_strategy_by_name(self, stg_name):
         """ 根据输入的策略名称返回strategy对象"""
-        assert stg_name.upper() in self.strategy_names, f'stg_name {stg_name} can not be found in operator. \n' \
-                                                        f'{self.strategy_names}'
-        stg_names = self.strategy_names
+        if isinstance(stg_name, str):
+            assert stg_name.upper() in self.strategy_names, f'stg_name {stg_name} can not be found in operator. \n' \
+                                                            f'{self.strategy_names}'
+            stg_names = self.strategy_names
+            stg_idx = stg_names.index(stg_name.upper())
+        elif isinstance(stg_name, int):
+            stg_idx = stg_name
+        else:
+            raise TypeError(f'stg_name should be a string or an integer, got {type(stg_name)} instead!')
         strategies = self.strategies
-        stg_idx = stg_names.index(stg_name.upper())
         print(f'getting strategy: \n{strategies[stg_idx]}')
         return strategies[stg_idx]
 
