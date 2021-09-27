@@ -2853,7 +2853,21 @@ class TestOperator(unittest.TestCase):
 
     def test_property_bt_price_types(self):
         """ test property bt_price_types"""
-        raise NotImplementedError
+        op = qt.Operator()
+        self.assertIsInstance(op.bt_price_types, list)
+        self.assertEqual(len(op.bt_price_types), 0)
+        self.assertEqual(op.bt_price_types, [])
+
+        op = qt.Operator('macd, dma, trix')
+        dtp = op.bt_price_types
+        self.assertIsInstance(dtp, list)
+        self.assertEqual(dtp[0], 'close')
+        op.set_parameter('macd strategy', price_type='open')
+        dtp = op.bt_price_types
+        self.assertIsInstance(dtp, list)
+        self.assertEqual(len(dtp), 2)
+        self.assertEqual(dtp[0], 'open')
+        self.assertEqual(dtp[1], 'close')
 
     def test_property_op_history_data(self):
         """ test property op_history_data"""
