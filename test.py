@@ -2724,7 +2724,30 @@ class TestOperator(unittest.TestCase):
 
     def test_get_strategies_by_price_type(self):
         """ test get_strategies_by_price_type"""
-        pass
+        op = qt.Operator()
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_names, [])
+
+        op = qt.Operator('macd, dma, trix')
+        op.set_parameter('macd strategy', price_type='open')
+        op.set_parameter('quick dma strategy', price_type='close')
+        op.set_parameter('trix strategy', price_type='open')
+        stg_close = op.get_strategies_by_price_type('close')
+        stg_open = op.get_strategies_by_price_type('open')
+        stg_high = op.get_strategies_by_price_type('high')
+
+        self.assertIsInstance(stg_close, list)
+        self.assertIsInstance(stg_open, list)
+        self.assertIsInstance(stg_high, list)
+
+        self.assertEqual(stg_close, [op.strategies[1]])
+        self.assertEqual(stg_open, [op.strategies[0], op.strategies[2]])
+        self.assertEqual(stg_high, [])
+
+        stg_wrong = op.get_strategies_by_price_type(123)
+        self.assertIsInstance(stg_wrong, list)
+        self.assertEqual(stg_wrong, [])
 
     def test_get_strategy_count_by_price_type(self):
         """ test get_strategy_count_by_price_type"""
