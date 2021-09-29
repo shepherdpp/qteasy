@@ -2949,7 +2949,25 @@ class TestOperator(unittest.TestCase):
 
     def test_property_op_history_data(self):
         """ test property op_history_data"""
-        raise NotImplementedError
+        op = qt.Operator()
+        self.assertIsInstance(op.op_history_data, list)
+        self.assertEqual(len(op.op_history_data), 0)
+        self.assertEqual(op.op_history_data, [])
+
+        op = qt.Operator('macd, dma, trix, cdl')
+        ohd = op.op_history_data
+        print(f'ohd is {ohd}')
+        self.assertIsInstance(ohd, list)
+        self.assertEqual(ohd[0], ['close'])
+        op.set_parameter('macd strategy', data_types='open, close')
+        ohd = op.op_history_data
+        print(f'ohd is {ohd}')
+        self.assertIsInstance(ohd, list)
+        self.assertEqual(len(ohd), 4)
+        self.assertEqual(ohd[0], ['open', 'close'])
+        self.assertEqual(ohd[1], ['close'])
+        self.assertEqual(ohd[2], ['close'])
+        self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
 
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
@@ -3026,9 +3044,7 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(strategies=[test_ls],
-                              pt=[test_sel],
-                              vs=[test_sig])
+        self.op = qt.Operator(strategies=[test_ls])
         too_early_cash = qt.CashPlan(dates='2016-01-01', amounts=10000)
         early_cash = qt.CashPlan(dates='2016-07-01', amounts=10000)
         on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
@@ -3046,15 +3062,10 @@ class TestOperator(unittest.TestCase):
                               pars=(0.2, 0.02, -0.02))
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
-        self.assertIsInstance(self.op._selecting_history_data, list)
-        self.assertIsInstance(self.op._signal_history_data, list)
-        self.assertIsInstance(self.op._ricon_history_data, list)
-        self.assertEqual(len(self.op._selecting_history_data), 1)
-        self.assertEqual(len(self.op._signal_history_data), 1)
-        self.assertEqual(len(self.op._ricon_history_data), 1)
-        sel_hist_data = self.op._selecting_history_data[0]
-        tim_hist_data = self.op._signal_history_data[0]
-        ric_hist_data = self.op._ricon_history_data[0]
+        self.assertIsInstance(self.op._op_history_data, list)
+        self.assertEqual(len(self.op._op_history_data), 1)
+        tim_hist_data = self.op._op_history_data[0]
+
         print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)
         print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])

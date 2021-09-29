@@ -311,7 +311,7 @@ class Operator:
             _stg_id:            str, 交易策略列表，按照顺序保存所有相关策略对象的id（名称），如['MACD', 'DMA', 'MACD']
             _strategies:        :type: [Strategy, ...],
                                 按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
-            _signal_history_data:
+            _op_history_data:
                                 :type [ndarray, ...], 列表中按照顺序保存用于不同策略的三维历史数据切片
             _backtest_history_data:
                                 :type [ndarray, ...], 列表中按照顺序保存用于不同策略回测的交易价格数据
@@ -344,7 +344,6 @@ class Operator:
         self._signal_type = ''  # 保存operator对象输出的信号类型
         self._stg_types = []  # 保存所有交易策略的id，便于识别每个交易策略
         self._strategies = []  # 保存实际的交易策略对象
-        self._signal_history_data = []  # 保存供各个策略生成交易信号的历史数据（ndarray）
         self._bt_history_data = []  # 保存供各个策略进行历史交易回测的历史价格数据（ndarray）
         self._stg_blender = {}  # 交易信号混合表达式字典
 
@@ -427,7 +426,7 @@ class Operator:
     @property
     def op_history_data(self):
         """ 返回生成交易信号所需的历史数据列表"""
-        return self._signal_history_data
+        return [stg.data_types for stg in self.strategies]
 
     @property
     def opt_space_par(self):
@@ -891,8 +890,8 @@ class Operator:
         # 确保op的策略都设置了混合方式
         # assert self._stg_blender != ''
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
-        self._signal_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                     for stg in self.strategies]
+        self._op_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                 for stg in self.strategies]
 
     # TODO: 需要改进：
     # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
@@ -916,7 +915,7 @@ class Operator:
             存储在operator对象的下面三个属性中，在生成交易信号时直接调用，避免了每次生成交易信号
             时再动态分配历史数据。
                 self._selecting_history_data
-                self._signal_history_data
+                self._op_history_data
                 self._ricon_history_data
 
         :return=====
@@ -932,7 +931,7 @@ class Operator:
         # TODO: 这里的格式检查是否可以移到prepar_data()中去？这样效率更高
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert len(self._signal_history_data) > 0, \
+        assert len(self._op_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
         assert len(self._ricon_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
