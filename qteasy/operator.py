@@ -510,15 +510,40 @@ class Operator:
             item = strategy_count - 1
         return self.strategies[item]
 
+    def add_strategies(self, strategies):
+        """ 添加多个Strategy交易策略到Operator对象中
+        使用这个方法，不能在添加交易策策略的同时修改交易策略的基本属性
+        输入参数strategies可以为一个列表或者一个逗号分隔字符串
+        列表中的元素可以为代表内置策略类型的字符串，或者为一个具体的策略对象
+        字符串和策略对象可以混合给出
+
+        :param strategies:
+        :return:
+        """
+        if isinstance(strategies, str):
+            strategies = str_to_list(strategies)
+        assert isinstance(strategies, list), f'TypeError, the strategies ' \
+                                             f'should be a list of string, got {type(strategies)} instead'
+        # import pdb; pdb.set_trace()
+        for stg in strategies:
+            if not isinstance(stg, (str, Strategy)):
+                warnings.warn(f'WrongType! some of the items in strategies '
+                              f'can not be added - got {stg}',RuntimeWarning)
+            self.add_strategy(stg)
+
     def add_strategy(self, stg, **kwargs):
         """ 添加一个strategy交易策略到operator对象中
+        如果调用本方法添加一个交易策略到Operator中，可以在添加的时候同时修改或指定交易策略的基本属性
 
         :param: stg, 需要添加的交易策略，可以为交易策略对象，也可以是内置交易策略的策略id或策略名称
-        :param: kwargs, 任意合法的策略属性，可以在添加策略时直接给该策略属性赋值
+        :param: **kwargs, 任意合法的策略属性，可以在添加策略时直接给该策略属性赋值，
+                必须明确指定需要修改的属性名称，
+                例如: opt_tag = 1
         """
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
-            if stg.lower() not in AVAILABLE_BUILT_IN_STRATEGIES:
+            stg = stg.lower()
+            if stg not in AVAILABLE_BUILT_IN_STRATEGIES:
                 raise KeyError(f'built-in timing strategy \'{stg}\' not found!')
             strategy_type = stg
             strategy = BUILT_IN_STRATEGIES[stg]
@@ -532,7 +557,7 @@ class Operator:
         self._stg_types.append(strategy_type)
         self._strategies.append(strategy)
         # 逐一修改该策略对象的各个参数
-        self.set_parameter(stg_id=len(self._strategies), **kwargs)
+        self.set_parameter(stg_id=self.strategy_count, **kwargs)
 
     def remove_strategy(self, id_or_name=None):
         """从Operator对象中移除一个交易策略"""
