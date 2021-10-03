@@ -342,15 +342,13 @@ class Operator:
 
         # 初始化基本数据结构
         self._signal_type = ''  # 保存operator对象输出的信号类型
-        self._stg_types = []  # 保存所有交易策略的id，便于识别每个交易策略
+        self._strategy_id = []  # 保存所有交易策略的id，便于识别每个交易策略
         self._strategies = []  # 保存实际的交易策略对象
         self._bt_history_data = []  # 保存供各个策略进行历史交易回测的历史价格数据（ndarray）
         self._stg_blender = {}  # 交易信号混合表达式字典
 
         # 添加strategy对象
-        for s in stg:
-            # 逐一添加所有的策略
-            self.add_strategy(s)
+        self.add_strategies(stg)
         # 添加signal_type属性
         self.signal_type = signal_type
 
@@ -365,9 +363,9 @@ class Operator:
         return len(self.strategies)
 
     @property
-    def strategy_names(self):
-        """返回operator对象中所有交易策略对象的名称"""
-        return [stg.stg_name for stg in self.strategies]
+    def strategy_id(self):
+        """返回operator对象中所有交易策略对象的ID"""
+        return self._strategy_id
 
     @property
     def strategy_blenders(self):
@@ -501,10 +499,10 @@ class Operator:
             warnings.warn('the item is in a wrong format and can not be parsed!')
             return
         if item_is_str:
-            if item not in self.strategy_names:
+            if item not in self.strategy_id:
                 warnings.warn('the strategy name can not be recognized!')
                 return
-            return self.get_strategy_by_name(item)
+            return self.get_strategy_by_id(item)
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             item = strategy_count - 1
@@ -524,7 +522,6 @@ class Operator:
             strategies = str_to_list(strategies)
         assert isinstance(strategies, list), f'TypeError, the strategies ' \
                                              f'should be a list of string, got {type(strategies)} instead'
-        # import pdb; pdb.set_trace()
         for stg in strategies:
             if not isinstance(stg, (str, Strategy)):
                 warnings.warn(f'WrongType! some of the items in strategies '
@@ -543,21 +540,35 @@ class Operator:
         # 如果输入为一个字符串时，检查该字符串是否代表一个内置策略的id或名称，使用.lower()转化为全小写字母
         if isinstance(stg, str):
             stg = stg.lower()
-            if stg not in AVAILABLE_BUILT_IN_STRATEGIES:
+            if stg not in BUILT_IN_STRATEGIES:
                 raise KeyError(f'built-in timing strategy \'{stg}\' not found!')
-            strategy_type = stg
+            stg_id = stg
             strategy = BUILT_IN_STRATEGIES[stg]
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, Strategy):
-            strategy_type = stg.stg_type
+            if stg in AVAILABLE_BUILT_IN_STRATEGIES:
+                stg_id_index = list(AVAILABLE_BUILT_IN_STRATEGIES).index(stg)
+                stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
+            else:
+                stg_id = 'custom'
             strategy = stg
         else:
             raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
 
-        self._stg_types.append(strategy_type)
+        self._strategy_id.append(self._next_stg_id(stg_id))
         self._strategies.append(strategy)
         # 逐一修改该策略对象的各个参数
-        self.set_parameter(stg_id=self.strategy_count, **kwargs)
+        self.set_parameter(stg_id=stg_id, **kwargs)
+
+    def _next_stg_id(self, stg_id):
+        """ find out next available strategy id"""
+        assert isinstance(stg_id, str)
+        if stg_id in self.strategy_id:
+            stg_id_stripped = [ID.partition("_")[0] for ID in self.strategy_id if ID.partition("_")[0] == stg_id]
+            next_id = stg_id + "_" + str(len(stg_id_stripped))
+            return next_id
+        else:
+            return stg_id
 
     def remove_strategy(self, id_or_name=None):
         """从Operator对象中移除一个交易策略"""
@@ -570,11 +581,11 @@ class Operator:
             else:
                 pos = -1
         if isinstance(id_or_name, str):
-            if id_or_name not in self.strategy_names:
+            if id_or_name not in self.strategy_id:
                 raise ValueError(f'the strategy {id_or_name} is not in operator')
             else:
-                pos = self.strategy_names.index(id_or_name)
-        self._stg_types.pop(pos)
+                pos = self.strategy_id.index(id_or_name)
+        self._strategy_id.pop(pos)
         self._strategies.pop(pos)
         return
 
@@ -607,17 +618,17 @@ class Operator:
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         return [stg.stg_name for stg in self.get_strategies_by_price_type(price_type)]
 
-    def get_strategy_by_name(self, stg_name):
+    def get_strategy_by_id(self, stg_id):
         """ 根据输入的策略名称返回strategy对象"""
-        if isinstance(stg_name, str):
-            assert stg_name.upper() in self.strategy_names, f'stg_name {stg_name} can not be found in operator. \n' \
-                                                            f'{self.strategy_names}'
-            stg_names = self.strategy_names
-            stg_idx = stg_names.index(stg_name.upper())
-        elif isinstance(stg_name, int):
-            stg_idx = stg_name
+        if isinstance(stg_id, str):
+            assert stg_id in self.strategy_id, f'stg_id {stg_id} can not be found in operator. \n' \
+                                                            f'{self.strategy_id}'
+            stg_id_list = self.strategy_id
+            stg_idx = stg_id_list.index(stg_id)
+        elif isinstance(stg_id, int):
+            stg_idx = stg_id
         else:
-            raise TypeError(f'stg_name should be a string or an integer, got {type(stg_name)} instead!')
+            raise TypeError(f'stg_id should be a string or an integer, got {type(stg_id)} instead!')
         strategies = self.strategies
         print(f'getting strategy: \n{strategies[stg_idx]}')
         return strategies[stg_idx]
@@ -774,7 +785,7 @@ class Operator:
         assert isinstance(stg_id, (int, str)), f'stg_id should be a int, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
         if isinstance(stg_id, str):
-            strategy = self.get_strategy_by_name(stg_id)
+            strategy = self.get_strategy_by_id(stg_id)
         else:
             strategy = self[stg_id]
         # 逐一修改该策略对象的各个参数

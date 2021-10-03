@@ -490,7 +490,7 @@ class RollingTiming(Strategy):
 
         __init__()方法定义了该策略的最基本参数，这些参数与策略的使用息息相关，而且推荐使用"super().__init__()"的形式设置这些参数，这些参数
         包括：
-            stg_name:
+            stg_id:
             stg_text:
             par_count:
             par_types:
@@ -812,7 +812,7 @@ class SimpleTiming(Strategy):
 
         __init__()方法定义了该策略的最基本参数，这些参数与策略的使用息息相关，而且推荐使用"super().__init__()"的形式设置这些参数，这些参数
         包括：
-            stg_name:
+            stg_id:
             stg_text:
             par_count:
             par_types:

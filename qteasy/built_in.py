@@ -103,7 +103,7 @@ class TimingMACD(stg.RollingTiming):
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
                          stg_name='MACD STRATEGY',
-                         stg_text='MACD strategy, determin long/short position according to differences of '
+                         stg_text='MACD strategy, determine long/short position according to differences of '
                                   'exponential weighted moving average prices',
                          data_types='close')
 
@@ -2494,4 +2494,4 @@ BUILT_IN_STRATEGIES = {'crossline':  TimingCrossline(),
                        'sltrima':    SLPTRIMA(),
                        'slwma':      SLPWMA()}
 
-AVAILABLE_BUILT_IN_STRATEGIES = BUILT_IN_STRATEGIES.keys()
+AVAILABLE_BUILT_IN_STRATEGIES = BUILT_IN_STRATEGIES.values()

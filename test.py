@@ -2370,6 +2370,7 @@ class TestLoop(unittest.TestCase):
 
 class TestStrategy(unittest.TestCase):
     """ test all properties and methods of strategy base class"""
+
     def setUp(self) -> None:
         pass
 
@@ -2710,29 +2711,29 @@ class TestOperator(unittest.TestCase):
         self.op.info()
 
     def test_get_strategy_by_name(self):
-        """ test get_strategy_by_name()"""
+        """ test get_strategy_by_id()"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_names, [])
+        self.assertEqual(op.strategy_id, [])
 
         op = qt.Operator('macd, dma, trix')
-        self.assertEqual(op.strategy_names, ['MACD STRATEGY', 'QUICK DMA STRATEGY', 'TRIX STRATEGY'])
-        self.assertIs(op.get_strategy_by_name('macd strategy'), op.strategies[0])
-        self.assertIs(op.get_strategy_by_name(1), op.strategies[1])
-        self.assertIs(op.get_strategy_by_name('trix strategy'), op.strategies[2])
+        self.assertEqual(op.strategy_id, ['macd', 'dma', 'trix'])
+        self.assertIs(op.get_strategy_by_id('macd'), op.strategies[0])
+        self.assertIs(op.get_strategy_by_id(1), op.strategies[1])
+        self.assertIs(op.get_strategy_by_id('trix'), op.strategies[2])
 
     def test_get_strategies_by_price_type(self):
         """ test get_strategies_by_price_type"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_names, [])
+        self.assertEqual(op.strategy_id, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd strategy', price_type='open')
-        op.set_parameter('quick dma strategy', price_type='close')
-        op.set_parameter('trix strategy', price_type='open')
+        op.set_parameter('macd', price_type='open')
+        op.set_parameter('dma', price_type='close')
+        op.set_parameter('trix', price_type='open')
         stg_close = op.get_strategies_by_price_type('close')
         stg_open = op.get_strategies_by_price_type('open')
         stg_high = op.get_strategies_by_price_type('high')
@@ -2754,12 +2755,12 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_names, [])
+        self.assertEqual(op.strategy_id, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd strategy', price_type='open')
-        op.set_parameter('quick dma strategy', price_type='close')
-        op.set_parameter('trix strategy', price_type='open')
+        op.set_parameter('macd', price_type='open')
+        op.set_parameter('dma', price_type='close')
+        op.set_parameter('trix', price_type='open')
         stg_close = op.get_strategy_count_by_price_type('close')
         stg_open = op.get_strategy_count_by_price_type('open')
         stg_high = op.get_strategy_count_by_price_type('high')
@@ -2781,12 +2782,12 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_names, [])
+        self.assertEqual(op.strategy_id, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd strategy', price_type='open')
-        op.set_parameter('quick dma strategy', price_type='close')
-        op.set_parameter('trix strategy', price_type='open')
+        op.set_parameter('macd', price_type='open')
+        op.set_parameter('dma', price_type='close')
+        op.set_parameter('trix', price_type='open')
         stg_close = op.get_strategy_names_by_price_type('close')
         stg_open = op.get_strategy_names_by_price_type('open')
         stg_high = op.get_strategy_names_by_price_type('high')
@@ -2795,8 +2796,8 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(stg_open, list)
         self.assertIsInstance(stg_high, list)
 
-        self.assertEqual(stg_close, ['QUICK DMA STRATEGY'])
-        self.assertEqual(stg_open, ['MACD STRATEGY', 'TRIX STRATEGY'])
+        self.assertEqual(stg_close, ['dma'])
+        self.assertEqual(stg_open, ['macd', 'trix'])
         self.assertEqual(stg_high, [])
 
         stg_wrong = op.get_strategy_names_by_price_type(123)
@@ -2833,19 +2834,27 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op2.get_strategy_count_by_price_type('open'), 0)
 
     def test_property_strategy_names(self):
-        """ test property strategy_names"""
+        """ test property strategy_id"""
         op = qt.Operator('dma')
-        self.assertIsInstance(op.strategy_names, list)
-        names = op.strategy_names[0]
+        self.assertIsInstance(op.strategy_id, list)
+        names = op.strategy_id[0]
         print(f'names are {names}')
-        self.assertEqual(names, 'QUICK DMA STRATEGY')
+        self.assertEqual(names, 'dma')
 
         op = qt.Operator('dma, macd, trix, cdl')
-        self.assertIsInstance(op.strategy_names, list)
-        self.assertEqual(op.strategy_names[0], 'QUICK DMA STRATEGY')
-        self.assertEqual(op.strategy_names[1], 'MACD STRATEGY')
-        self.assertEqual(op.strategy_names[2], 'TRIX STRATEGY')
-        self.assertEqual(op.strategy_names[3], 'CDL INDICATOR STRATEGY')
+        self.assertIsInstance(op.strategy_id, list)
+        self.assertEqual(op.strategy_id[0], 'dma')
+        self.assertEqual(op.strategy_id[1], 'macd')
+        self.assertEqual(op.strategy_id[2], 'trix')
+        self.assertEqual(op.strategy_id[3], 'cdl')
+
+        op = qt.Operator('dma, macd, trix, dma, dma')
+        self.assertIsInstance(op.strategy_id, list)
+        self.assertEqual(op.strategy_id[0], 'dma')
+        self.assertEqual(op.strategy_id[1], 'macd')
+        self.assertEqual(op.strategy_id[2], 'trix')
+        self.assertEqual(op.strategy_id[3], 'dma_1')
+        self.assertEqual(op.strategy_id[4], 'dma_2')
 
     def test_property_singal_type(self):
         """ test property signal_type"""
@@ -2922,7 +2931,7 @@ class TestOperator(unittest.TestCase):
         dtf = op.op_data_freq
         self.assertIsInstance(dtf, str)
         self.assertEqual(dtf[0], 'd')
-        op.set_parameter('macd strategy', data_freq='m')
+        op.set_parameter('macd', data_freq='m')
         dtf = op.op_data_freq
         self.assertIsInstance(dtf, list)
         self.assertEqual(len(dtf), 2)
@@ -2940,7 +2949,7 @@ class TestOperator(unittest.TestCase):
         dtp = op.bt_price_types
         self.assertIsInstance(dtp, list)
         self.assertEqual(dtp[0], 'close')
-        op.set_parameter('macd strategy', price_type='open')
+        op.set_parameter('macd', price_type='open')
         dtp = op.bt_price_types
         self.assertIsInstance(dtp, list)
         self.assertEqual(len(dtp), 2)
@@ -2959,7 +2968,7 @@ class TestOperator(unittest.TestCase):
         print(f'ohd is {ohd}')
         self.assertIsInstance(ohd, list)
         self.assertEqual(ohd[0], ['close'])
-        op.set_parameter('macd strategy', data_types='open, close')
+        op.set_parameter('macd', data_types='open, close')
         ohd = op.op_history_data
         print(f'ohd is {ohd}')
         self.assertIsInstance(ohd, list)
@@ -3051,10 +3060,22 @@ class TestOperator(unittest.TestCase):
         self.assertRaises(AssertionError, op.add_strategies, 123)
         self.assertRaises(AssertionError, op.add_strategies, None)
 
-    def test_operator_remove_strategy(self):
-        """test removing strategies from Operator"""
-        pass
-        # self.op.remove_strategy(stg='macd')    def test_prepare_data(self):
+    def test_opeartor_remove_strategy(self):
+        """ test method remove strategy"""
+        op = qt.Operator('dma, all, urgent')
+        op.add_strategies(['dma', 'macd'])
+        op.add_strategies(['DMA', TestLSStrategy()])
+        self.assertEqual(op.strategy_count, 7)
+        print('test removing strategies from Operator')
+        op.remove_strategy('dma')
+        self.assertEqual(op.strategy_count, 6)
+        self.assertEqual(op.strategy_id, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
+        op.remove_strategy('dma_1')
+        self.assertEqual(op.strategy_count, 5)
+        self.assertEqual(op.strategy_id, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+
+    def test_operator_prepare_data(self):
+        """test processes that related to prepare data"""
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
@@ -3066,13 +3087,13 @@ class TestOperator(unittest.TestCase):
                                     amounts=[10000, 10000, 10000, 10000])
         late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
         multi_cash = qt.CashPlan(dates='2016-07-08, 2016-08-08', amounts=[10000, 10000])
-        self.op.set_parameter(stg_id='t-0',
+        self.op.set_parameter(stg_id='custom',
                               pars={'000300': (5, 10.),
                                     '000400': (5, 10.),
                                     '000500': (5, 6.)})
-        self.op.set_parameter(stg_id='s-0',
+        self.op.set_parameter(stg_id='custom_1',
                               pars=())
-        self.op.set_parameter(stg_id='r-0',
+        self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
@@ -3081,12 +3102,12 @@ class TestOperator(unittest.TestCase):
         tim_hist_data = self.op._op_history_data[0]
 
         print(f'in test_prepare_data in TestOperator:')
-        print('selecting history data:\n', sel_hist_data)
+        print('selecting history data:\n', self.sel_hist_data)
         print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
-        print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
-        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
-        self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
-        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
+        print('difference is \n', self.sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
+        self.assertTrue(np.allclose(self.sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
+        self.assertTrue(np.allclose(self.tim_hist_data, self.test_data_3D, equal_nan=True))
+        self.assertTrue(np.allclose(self.ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
 
         # raises Value Error if empty history panel is given
         empty_hp = qt.HistoryPanel()
@@ -3142,9 +3163,7 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(strategies=[test_ls],
-                              pt=[test_sel],
-                              vs=[test_sig])
+        self.op = qt.Operator(strategies=[test_ls])
         self.assertIsInstance(self.op, qt.Operator, 'Operator Creation Error')
         self.op.set_parameter(stg_id='t-0',
                               pars={'000300': (5, 10.),
@@ -3227,27 +3246,15 @@ class TestOperator(unittest.TestCase):
 
         :return:
         """
-        new_op = qt.Operator(pt=['all'], strategies='dma', vs='urgent')
+        new_op = qt.Operator(strategies='dma')
         print(new_op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
         print(f'info of Timing strategy in new op: \n{new_op.strategies[0].info()}')
-        self.op.set_parameter('t-0',
+        self.op.set_parameter('dma',
                               pars=(5, 10, 5),
                               opt_tag=1,
                               par_boes=((5, 10), (5, 15), (10, 15)),
                               window_length=10,
                               data_types=['close', 'open', 'high'])
-        self.op.set_parameter(stg_id='s-0',
-                              pars=None,
-                              opt_tag=1,
-                              sample_freq='10d',
-                              window_length=10,
-                              data_types='close, open')
-        self.op.set_parameter(stg_id='r-0',
-                              pars=None,
-                              opt_tag=0,
-                              sample_freq='d',
-                              window_length=20,
-                              data_types='close, open')
         self.assertEqual(self.op.timing[0].pars, (5, 10, 5))
         self.assertEqual(self.op.timing[0].par_boes, ((5, 10), (5, 15), (10, 15)))
 
@@ -3384,24 +3391,12 @@ class TestOperator(unittest.TestCase):
         # self.assertRaises(ValueError, self.op.set_blender, 'selecting', '0 and (1 or 2)')
 
     def test_set_opt_par(self):
-        self.op.set_parameter('t-0',
+        self.op.set_parameter('dma',
                               pars=(5, 10, 5),
                               opt_tag=1,
                               par_boes=((5, 10), (5, 15), (10, 15)),
                               window_length=10,
                               data_types=['close', 'open', 'high'])
-        self.op.set_parameter(stg_id='s-0',
-                              pars=(0.5,),
-                              opt_tag=0,
-                              sample_freq='10d',
-                              window_length=10,
-                              data_types='close, open')
-        self.op.set_parameter(stg_id='r-0',
-                              pars=(9, -0.23),
-                              opt_tag=1,
-                              sample_freq='d',
-                              window_length=20,
-                              data_types='close, open')
         self.assertEqual(self.op.timing[0].pars, (5, 10, 5))
         self.assertEqual(self.op.selecting[0].pars, (0.5,))
         self.assertEqual(self.op.ricon[0].pars, (9, -0.23))
@@ -3992,7 +3987,8 @@ class TestOperator(unittest.TestCase):
                              ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
         print(self.op._exp_to_token('(x + e * 10) / 10'))
         self.assertListEqual(self.op._exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
-                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12', ')'])
+                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12',
+                              ')'])
         print(self.op._exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
         self.assertListEqual(self.op._exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
                              ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
