@@ -2796,11 +2796,59 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(stg_open, list)
         self.assertIsInstance(stg_high, list)
 
+        self.assertEqual(stg_close, ['QUICK DMA STRATEGY'])
+        self.assertEqual(stg_open, ['MACD STRATEGY', 'TRIX STRATEGY'])
+        self.assertEqual(stg_high, [])
+
+        stg_wrong = op.get_strategy_names_by_price_type(123)
+        self.assertIsInstance(stg_wrong, list)
+        self.assertEqual(stg_wrong, [])
+
+    def test_get_strategy_id_by_price_type(self):
+        """ test get_strategy_IDs_by_price_type"""
+        print('-----Test get strategy IDs by price type------\n')
+        op = qt.Operator()
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_id, [])
+
+        op = qt.Operator('macd, dma, trix')
+        op.set_parameter('macd', price_type='open')
+        op.set_parameter('dma', price_type='close')
+        op.set_parameter('trix', price_type='open')
+        stg_close = op.get_strategy_id_by_price_type('close')
+        stg_open = op.get_strategy_id_by_price_type('open')
+        stg_high = op.get_strategy_id_by_price_type('high')
+
+        self.assertIsInstance(stg_close, list)
+        self.assertIsInstance(stg_open, list)
+        self.assertIsInstance(stg_high, list)
+
         self.assertEqual(stg_close, ['dma'])
         self.assertEqual(stg_open, ['macd', 'trix'])
         self.assertEqual(stg_high, [])
 
-        stg_wrong = op.get_strategy_names_by_price_type(123)
+        op.add_strategies('dma, macd')
+        op.set_parameter('dma_1', price_type='open')
+        op.set_parameter('macd', price_type='open')
+        op.set_parameter('macd_1', price_type='high')
+        op.set_parameter('trix', price_type='close')
+        print(f'Operator strategy id:\n'
+              f'{op.strategies} on memory pos:\n'
+              f'{[id(stg) for stg in op.strategies]}')
+        stg_close = op.get_strategy_id_by_price_type('close')
+        stg_open = op.get_strategy_id_by_price_type('open')
+        stg_high = op.get_strategy_id_by_price_type('high')
+        stg_all = op.get_strategy_id_by_price_type()
+        print(f'All IDs of strategies:\n'
+              f'{stg_all}\n'
+              f'All price types of strategies:\n'
+              f'{[stg.price_type for stg in op.strategies]}')
+        self.assertEqual(stg_close, ['dma', 'trix'])
+        self.assertEqual(stg_open, ['macd', 'dma_1'])
+        self.assertEqual(stg_high, ['macd_1'])
+
+        stg_wrong = op.get_strategy_id_by_price_type(123)
         self.assertIsInstance(stg_wrong, list)
         self.assertEqual(stg_wrong, [])
 
@@ -2980,7 +3028,34 @@ class TestOperator(unittest.TestCase):
 
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
-        raise NotImplementedError
+        print(f'-----test property opt_space_par--------:\n')
+        op = qt.Operator()
+        self.assertIsInstance(op.opt_space_par, tuple)
+        self.assertIsInstance(op.opt_space_par[0], list)
+        self.assertIsInstance(op.opt_space_par[1], list)
+        self.assertEqual(len(op.opt_space_par), 2)
+        self.assertEqual(op.opt_space_par, ([], []))
+
+        op = qt.Operator('macd, dma, trix, cdl')
+        osp = op.opt_space_par
+        print(f'before setting opt_tags opt_space_par is empty:\n'
+              f'osp is {osp}\n')
+        self.assertIsInstance(osp, tuple)
+        self.assertEqual(osp[0], [])
+        self.assertEqual(osp[1], [])
+        op.set_parameter('macd', opt_tag=1)
+        op.set_parameter('dma', opt_tag=1)
+        osp = op.opt_space_par
+        print(f'after setting opt_tags opt_space_par is not empty:\n'
+              f'osp is {osp}\n')
+        self.assertIsInstance(osp, tuple)
+        self.assertEqual(len(osp), 2)
+        self.assertIsInstance(osp[0], list)
+        self.assertIsInstance(osp[1], list)
+        self.assertEqual(len(osp[0]), 6)
+        self.assertEqual(len(osp[1]), 6)
+        self.assertEqual(osp[0], [(10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250)])
+        self.assertEqual(osp[1], ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
 
     def test_property_opt_types(self):
         """ test property opt_types"""

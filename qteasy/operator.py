@@ -543,7 +543,7 @@ class Operator:
             if stg not in BUILT_IN_STRATEGIES:
                 raise KeyError(f'built-in timing strategy \'{stg}\' not found!')
             stg_id = stg
-            strategy = BUILT_IN_STRATEGIES[stg]
+            strategy = BUILT_IN_STRATEGIES[stg]()
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, Strategy):
             if stg in AVAILABLE_BUILT_IN_STRATEGIES:
@@ -615,8 +615,22 @@ class Operator:
 
     def get_strategy_names_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的名称, price_type为一个可选参数，
+        注意，strategy name并没有实际的作用，未来将被去掉
+        在操作operator对象时，引用某个策略实际使用的是策略的id，而不是name
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         return [stg.stg_name for stg in self.get_strategies_by_price_type(price_type)]
+
+    def get_strategy_id_by_price_type(self, price_type=None):
+        """返回operator对象中所有交易策略对象的ID, price_type为一个可选参数，
+        如果给出price_type时，返回使用该price_type的交易策略名称"""
+        res = []
+        if price_type is None:
+            res = self.strategy_id
+        else:
+            for stg, stg_id in zip(self.strategies, self.strategy_id):
+                if stg.price_type == price_type:
+                    res.append(stg_id)
+        return res
 
     def get_strategy_by_id(self, stg_id):
         """ 根据输入的策略名称返回strategy对象"""
@@ -630,7 +644,6 @@ class Operator:
         else:
             raise TypeError(f'stg_id should be a string or an integer, got {type(stg_id)} instead!')
         strategies = self.strategies
-        print(f'getting strategy: \n{strategies[stg_idx]}')
         return strategies[stg_idx]
 
     def set_opt_par(self, opt_par):
@@ -782,8 +795,9 @@ class Operator:
 
             :return:
         """
-        assert isinstance(stg_id, (int, str)), f'stg_id should be a int, got {type(stg_id)} instead'
+        assert isinstance(stg_id, (int, str)), f'stg_id should be a int or a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
+        # TODO; 应该允许同时设置多个策略的参数（对于opt_tag这一类参数非常有用）
         if isinstance(stg_id, str):
             strategy = self.get_strategy_by_id(stg_id)
         else:
