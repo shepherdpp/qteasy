@@ -2988,21 +2988,23 @@ class TestOperator(unittest.TestCase):
 
     def test_property_bt_price_types(self):
         """ test property bt_price_types"""
+        print('------test property bt_price_tyeps-------')
         op = qt.Operator()
         self.assertIsInstance(op.bt_price_types, list)
         self.assertEqual(len(op.bt_price_types), 0)
         self.assertEqual(op.bt_price_types, [])
 
         op = qt.Operator('macd, dma, trix')
-        dtp = op.bt_price_types
-        self.assertIsInstance(dtp, list)
-        self.assertEqual(dtp[0], 'close')
+        btp = op.bt_price_types
+        self.assertIsInstance(btp, list)
+        self.assertEqual(btp[0], 'close')
         op.set_parameter('macd', price_type='open')
-        dtp = op.bt_price_types
-        self.assertIsInstance(dtp, list)
-        self.assertEqual(len(dtp), 2)
-        self.assertEqual(dtp[0], 'open')
-        self.assertEqual(dtp[1], 'close')
+        btp = op.bt_price_types
+        print(f'price_types are \n{btp}')
+        self.assertIsInstance(btp, list)
+        self.assertEqual(len(btp), 2)
+        self.assertEqual(btp[0], 'close')
+        self.assertEqual(btp[1], 'open')
 
     def test_property_op_history_data(self):
         """ test property op_history_data"""
@@ -3059,15 +3061,68 @@ class TestOperator(unittest.TestCase):
 
     def test_property_opt_types(self):
         """ test property opt_types"""
-        raise NotImplementedError
+        print(f'-----test property opt_types--------:\n')
+        op = qt.Operator()
+        self.assertIsInstance(op.opt_types, list)
+        self.assertEqual(len(op.opt_types), 0)
+        self.assertEqual(op.opt_types, [])
+
+        op = qt.Operator('macd, dma, trix, cdl')
+        otp = op.opt_types
+        print(f'before setting opt_tags opt_space_par is empty:\n'
+              f'otp is {otp}\n')
+        self.assertIsInstance(otp, list)
+        self.assertEqual(otp, [0, 0, 0, 0])
+        op.set_parameter('macd', opt_tag=1)
+        op.set_parameter('dma', opt_tag=1)
+        otp = op.opt_types
+        print(f'after setting opt_tags opt_space_par is not empty:\n'
+              f'otp is {otp}\n')
+        self.assertIsInstance(otp, list)
+        self.assertEqual(len(otp), 4)
+        self.assertEqual(otp, [1, 1, 0, 0])
 
     def test_property_max_window_length(self):
         """ test property max_window_length"""
-        raise NotImplementedError
+        print(f'-----test property max window length--------:\n')
+        op = qt.Operator()
+        self.assertIsInstance(op.max_window_length, int)
+        self.assertEqual(op.max_window_length, 0)
+
+        op = qt.Operator('macd, dma, trix, cdl')
+        mwl = op.max_window_length
+        print(f'before setting window_length the value is 270:\n'
+              f'mwl is {mwl}\n')
+        self.assertIsInstance(mwl, int)
+        self.assertEqual(mwl, 270)
+        op.set_parameter('macd', window_length=300)
+        op.set_parameter('dma', window_length=350)
+        mwl = op.max_window_length
+        print(f'after setting window_length the value is new set value:\n'
+              f'mwl is {mwl}\n')
+        self.assertIsInstance(mwl, int)
+        self.assertEqual(mwl, 350)
 
     def test_property_bt_price_type_count(self):
         """ test property bt_price_type_count"""
-        raise NotImplementedError
+        print(f'-----test property bt_price_type_count--------:\n')
+        op = qt.Operator()
+        self.assertIsInstance(op.bt_price_type_count, int)
+        self.assertEqual(op.bt_price_type_count, 0)
+
+        op = qt.Operator('macd, dma, trix, cdl')
+        otp = op.bt_price_type_count
+        print(f'before setting price_type the price count is 1:\n'
+              f'otp is {otp}\n')
+        self.assertIsInstance(otp, int)
+        self.assertEqual(otp, 1)
+        op.set_parameter('macd', price_type='open')
+        op.set_parameter('dma', price_type='open')
+        otp = op.bt_price_type_count
+        print(f'after setting price_type the price type count is 2:\n'
+              f'otp is {otp}\n')
+        self.assertIsInstance(otp, int)
+        self.assertEqual(otp, 2)
 
     def test_property_set(self):
         """ test all property setters"""
@@ -3102,6 +3157,11 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(op.strategies[0], qt.TimingDMA)
         self.assertIsInstance(op.strategies[5], TestLSStrategy)
         self.assertEqual(op.strategy_count, 6)
+        print(f'Test different instance of objects are added to operator')
+        op.add_strategy('dma')
+        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.TimingDMA)
+        self.assertIsNot(op.strategies[0], op.strategies[6])
 
     def test_operator_add_strategies(self):
         """ etst adding multiple strategies to Operator"""
@@ -3131,6 +3191,8 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(op.strategies[0], qt.TimingDMA)
         self.assertIsInstance(op.strategies[9], qt.TimingDMA)
         self.assertIsInstance(op.strategies[10], qt.TimingMACD)
+        self.assertIsNot(op.strategies[0], op.strategies[9])
+        self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
         print('test adding fault data')
         self.assertRaises(AssertionError, op.add_strategies, 123)
         self.assertRaises(AssertionError, op.add_strategies, None)

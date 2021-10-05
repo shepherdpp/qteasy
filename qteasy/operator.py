@@ -419,6 +419,7 @@ class Operator:
         """返回operator对象所有策略子对象的回测价格类型"""
         p_types = [item.price_type for item in self.strategies]
         p_types = list(set(p_types))
+        p_types.sort()
         return p_types
 
     @property
@@ -461,7 +462,9 @@ class Operator:
 
     @property
     def opt_types(self):
-        """返回所有策略的优化类型标签"""
+        """ 返回所有策略的优化类型标签
+            该属性返回值是一个列表，按顺序列出所有交易策略的优化类型标签
+        """
         return [stg.opt_tag for stg in self.strategies]
 
     @property
@@ -470,7 +473,10 @@ class Operator:
 
         :return: int
         """
-        return max(stg.window_length for stg in self.strategies)
+        if self.strategy_count == 0:
+            return 0
+        else:
+            return max(stg.window_length for stg in self.strategies)
 
     @property
     def bt_price_type_count(self):
