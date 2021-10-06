@@ -2983,8 +2983,8 @@ class TestOperator(unittest.TestCase):
         dtf = op.op_data_freq
         self.assertIsInstance(dtf, list)
         self.assertEqual(len(dtf), 2)
-        self.assertEqual(dtf[0], 'm')
-        self.assertEqual(dtf[1], 'd')
+        self.assertEqual(dtf[0], 'd')
+        self.assertEqual(dtf[1], 'm')
 
     def test_property_bt_price_types(self):
         """ test property bt_price_types"""
@@ -3216,7 +3216,7 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(strategies=[test_ls])
+        self.op = qt.Operator(strategies=[test_ls, test_sel, test_sig])
         too_early_cash = qt.CashPlan(dates='2016-01-01', amounts=10000)
         early_cash = qt.CashPlan(dates='2016-07-01', amounts=10000)
         on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
@@ -3228,23 +3228,30 @@ class TestOperator(unittest.TestCase):
                               pars={'000300': (5, 10.),
                                     '000400': (5, 10.),
                                     '000500': (5, 6.)})
+        self.assertEqual(self.op.strategies[0].pars, {'000300': (5, 10.),
+                                                      '000400': (5, 10.),
+                                                      '000500': (5, 6.)})
         self.op.set_parameter(stg_id='custom_1',
                               pars=())
+        self.assertEqual(self.op.strategies[1].pars, ()),
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
+        self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
         self.assertIsInstance(self.op._op_history_data, list)
-        self.assertEqual(len(self.op._op_history_data), 1)
+        self.assertEqual(len(self.op._op_history_data), 3)
         tim_hist_data = self.op._op_history_data[0]
+        sel_hist_data = self.op._op_history_data[1]
+        ric_hist_data = self.op._op_history_data[2]
 
         print(f'in test_prepare_data in TestOperator:')
-        print('selecting history data:\n', self.sel_hist_data)
+        print('selecting history data:\n', sel_hist_data)
         print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
-        print('difference is \n', self.sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
-        self.assertTrue(np.allclose(self.sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
-        self.assertTrue(np.allclose(self.tim_hist_data, self.test_data_3D, equal_nan=True))
-        self.assertTrue(np.allclose(self.ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
+        print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
+        self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
+        self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
+        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
 
         # raises Value Error if empty history panel is given
         empty_hp = qt.HistoryPanel()

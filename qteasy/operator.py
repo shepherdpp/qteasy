@@ -344,7 +344,7 @@ class Operator:
         self._signal_type = ''  # 保存operator对象输出的信号类型
         self._strategy_id = []  # 保存所有交易策略的id，便于识别每个交易策略
         self._strategies = []  # 保存实际的交易策略对象
-        self._bt_history_data = []  # 保存供各个策略进行历史交易回测的历史价格数据（ndarray）
+        self._op_history_data = []  # 保存供各个策略进行交易信号生成的历史数据（ndarray）
         self._stg_blender = {}  # 交易信号混合表达式字典
 
         # 添加strategy对象
@@ -404,9 +404,12 @@ class Operator:
 
     @property
     def op_data_freq(self):
-        """返回operator对象所有策略子对象所需数据的采样频率"""
+        """返回operator对象所有策略子对象所需数据的采样频率
+            如果所有strategy的data_freq相同时，给出这个值，否则给出一个排序的列表
+        """
         d_freq = [stg.data_freq for stg in self.strategies]
         d_freq = list(set(d_freq))
+        d_freq.sort()
         if len(d_freq) == 0:
             return ''
         if len(d_freq) == 1:
@@ -576,21 +579,21 @@ class Operator:
         else:
             return stg_id
 
-    def remove_strategy(self, id_or_name=None):
+    def remove_strategy(self, id_or_pos=None):
         """从Operator对象中移除一个交易策略"""
         pos = -1
-        if id_or_name is None:
+        if id_or_pos is None:
             pos = -1
-        if isinstance(id_or_name, int):
-            if id_or_name < self.strategy_count:
-                pos = id_or_name
+        if isinstance(id_or_pos, int):
+            if id_or_pos < self.strategy_count:
+                pos = id_or_pos
             else:
                 pos = -1
-        if isinstance(id_or_name, str):
-            if id_or_name not in self.strategy_id:
-                raise ValueError(f'the strategy {id_or_name} is not in operator')
+        if isinstance(id_or_pos, str):
+            if id_or_pos not in self.strategy_id:
+                raise ValueError(f'the strategy {id_or_pos} is not in operator')
             else:
-                pos = self.strategy_id.index(id_or_name)
+                pos = self.strategy_id.index(id_or_pos)
         self._strategy_id.pop(pos)
         self._strategies.pop(pos)
         return
