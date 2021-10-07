@@ -3387,45 +3387,59 @@ class TestOperator(unittest.TestCase):
                              for date1, date2
                              in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]))
 
-    def test_operator_parameter_setting(self):
-        """
+    def test_stg_parameter_setting(self):
+        """ test setting parameters of strategies
+        test the method set_parameters
 
         :return:
         """
-        new_op = qt.Operator(strategies='dma')
-        print(new_op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
-        print(f'info of Timing strategy in new op: \n{new_op.strategies[0].info()}')
-        self.op.set_parameter('dma',
-                              pars=(5, 10, 5),
-                              opt_tag=1,
-                              par_boes=((5, 10), (5, 15), (10, 15)),
-                              window_length=10,
-                              data_types=['close', 'open', 'high'])
-        self.assertEqual(self.op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(self.op.strategies[0].par_boes, ((5, 10), (5, 15), (10, 15)))
+        op = qt.Operator(strategies='dma, all, urgent')
+        print(op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
+        print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
+        op.set_parameter('dma',
+                         pars=(5, 10, 5),
+                         opt_tag=1,
+                         par_boes=((5, 10), (5, 15), (10, 15)),
+                         window_length=10,
+                         data_types=['close', 'open', 'high'])
+        op.set_parameter('all',
+                         window_length=20)
+        op.set_parameter(2,
+                         opt_tag=1,
+                         pars=(9, -0.09),
+                         window_length=10)
+        self.assertEqual(op.strategies[0].pars, (5, 10, 5))
+        self.assertEqual(op.strategies[0].par_boes, ((5, 10), (5, 15), (10, 15)))
+        self.assertEqual(op.strategies[2].pars, (9, -0.09))
+        self.assertEqual(op.op_data_freq, 'd')
+        self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
+        self.assertEqual(op.opt_space_par,
+                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
+                          ['discr', 'discr', 'discr', 'discr', 'conti']))
+        self.assertEqual(op.max_window_length, 20)
+        self.assertRaises(AssertionError, op.set_parameter, stg_id='t-1', pars=(1, 2))
+        self.assertRaises(AssertionError, op.set_parameter, stg_id='t1', pars=(1, 2))
+        # test blenders of different price types
+        # test setting blenders to different price types
+        # TODO: to allow operands like "and", "or", "not", "xor"
+        # op.set_blender('close', '0 and 1 or 2')
+        # self.assertEqual(op.get_blender('close'), 'str-1.2')
+        op.set_blender('open', '0 & 1 | 2')
+        self.assertEqual(op.get_blender('open'), ['|', '2', '&', '1', '0'])
+        op.set_blender('high', '(0|1) & 2')
+        self.assertEqual(op.get_blender('high'), ['&', '2', '|', '1', '0'])
+        op.set_blender('close', '0 & 1 | 2')
+        self.assertEqual(op.get_blender(), {'close': ['|', '2', '&', '1', '0'],
+                                            'high': ['&', '2', '|', '1', '0'],
+                                            'open': ['|', '2', '&', '1', '0']})
 
-        self.assertEqual(self.op.op_data_freq, 'd')
-        self.assertEqual(self.op.op_data_types, ['close', 'high', 'open'])
-        self.assertEqual(self.op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (0, 1)], ['discr', 'discr', 'discr', 'conti']))
-        self.assertEqual(self.op.max_window_length, 20)
-        self.assertRaises(AssertionError, self.op.set_parameter, stg_id='t-1', pars=(1, 2))
-        self.assertRaises(AssertionError, self.op.set_parameter, stg_id='t1', pars=(1, 2))
-        self.assertRaises(AssertionError, self.op.set_parameter, stg_id=32, pars=(1, 2))
+        self.assertRaises(ValueError, op.set_blender, 'close', '0and1')
+        self.assertRaises(ValueError, op.set_blender, 'close', '0 and 1')
 
-        self.op.set_blender('selecting', '0 and 1 or 2')
-        self.op.set_blender('ls', 'str-1.2')
-        self.assertEqual(self.op.ls_blender, 'str-1.2')
-        self.assertEqual(self.op.selecting_blender, '0 & 1 | 2')
-        self.assertEqual(self.op.selecting_blender_expr, ['|', '&', '0', '1', '2'])
-        self.assertEqual(self.op.ricon_blender, 'add')
-
-        self.assertRaises(ValueError, self.op.set_blender, 'select', '0and1')
-        self.assertRaises(TypeError, self.op.set_blender, 35, '0 and 1')
-
-        self.assertEqual(self.op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (0, 1)], ['discr', 'discr', 'discr', 'conti']))
-        self.assertEqual(self.op.opt_tags, [1, 1, 0])
+        self.assertEqual(op.opt_space_par,
+                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
+                          ['discr', 'discr', 'discr', 'discr', 'conti']))
+        self.assertEqual(op.opt_tags, [1, 0, 1])
 
     def test_signal_blend(self):
         self.assertEqual(blender_parser('0 & 1 | 2'), ['|', '2', '&', '1', '0'])
@@ -3536,7 +3550,6 @@ class TestOperator(unittest.TestCase):
                                                           '+', '5', '3', '2', '1', '1'])
 
         # TODO: ndarray type of signals to be tested:
-
 
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
