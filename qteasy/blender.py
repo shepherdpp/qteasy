@@ -98,7 +98,6 @@ _AVAILABLE_FUNCTIONS = {'abs(':     abs,
                         }
 
 
-@property
 def blender_parser(blender_string):
     """选股策略混合表达式解析程序，将通常的中缀表达式解析为前缀运算队列，从而便于混合程序直接调用
 
@@ -223,7 +222,7 @@ def signal_blend(op_signals, blender):
             func = _AVAILABLE_FUNCTIONS.get(token[0:-2])
             if func is None:
                 raise ValueError(
-                        f'the function \'{token[0:-2]}\' -> {functions.get(token[0:-2])} is not a valid function!')
+                        f'the function \'{token[0:-2]}\' -> {func.get(token[0:-2])} is not a valid function!')
             args = tuple([s.pop() for i in range(arg_count)])
             try:
                 s.append(func(*args))

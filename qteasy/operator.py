@@ -741,7 +741,7 @@ class Operator:
             self._stg_blender[price_type] = blender_parser(blender)
         else:
             raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
-        pass
+        return None
 
     def get_blender(self, price_type=None):
         """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
