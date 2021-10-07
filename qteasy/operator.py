@@ -464,7 +464,7 @@ class Operator:
         return ranges, types
 
     @property
-    def opt_types(self):
+    def opt_tags(self):
         """ 返回所有策略的优化类型标签
             该属性返回值是一个列表，按顺序列出所有交易策略的优化类型标签
         """
@@ -990,10 +990,11 @@ class Operator:
         # TODO: 这里的格式检查是否可以移到prepar_data()中去？这样效率更高
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert len(self._op_history_data) > 0, \
+        assert len(self.op_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
-        assert len(self._ricon_history_data) > 0, \
-            f'ObjectSetupError: history data should be set before signal creation!'
+        for history_data in self.op_history_data:
+            assert len(history_data) > 0, \
+                f'ObjectSetupError: history data should be set before signal creation!'
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates

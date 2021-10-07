@@ -3060,22 +3060,22 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(osp[1], ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
 
     def test_property_opt_types(self):
-        """ test property opt_types"""
-        print(f'-----test property opt_types--------:\n')
+        """ test property opt_tags"""
+        print(f'-----test property opt_tags--------:\n')
         op = qt.Operator()
-        self.assertIsInstance(op.opt_types, list)
-        self.assertEqual(len(op.opt_types), 0)
-        self.assertEqual(op.opt_types, [])
+        self.assertIsInstance(op.opt_tags, list)
+        self.assertEqual(len(op.opt_tags), 0)
+        self.assertEqual(op.opt_tags, [])
 
         op = qt.Operator('macd, dma, trix, cdl')
-        otp = op.opt_types
+        otp = op.opt_tags
         print(f'before setting opt_tags opt_space_par is empty:\n'
               f'otp is {otp}\n')
         self.assertIsInstance(otp, list)
         self.assertEqual(otp, [0, 0, 0, 0])
         op.set_parameter('macd', opt_tag=1)
         op.set_parameter('dma', opt_tag=1)
-        otp = op.opt_types
+        otp = op.opt_tags
         print(f'after setting opt_tags opt_space_par is not empty:\n'
               f'otp is {otp}\n')
         self.assertIsInstance(otp, list)
@@ -3307,20 +3307,20 @@ class TestOperator(unittest.TestCase):
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(strategies=[test_ls])
+        self.op = qt.Operator(strategies=[test_ls, test_sel, test_sig])
         self.assertIsInstance(self.op, qt.Operator, 'Operator Creation Error')
-        self.op.set_parameter(stg_id='t-0',
+        self.op.set_parameter(stg_id='custom',
                               pars={'000300': (5, 10.),
                                     '000400': (5, 10.),
                                     '000500': (5, 6.)})
-        self.op.set_parameter(stg_id='s-0',
+        self.op.set_parameter(stg_id='custom_1',
                               pars=())
         # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
                           hist_data=self.hp1,
                           cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
-        self.op.set_parameter(stg_id='r-0',
+        self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
@@ -3423,7 +3423,7 @@ class TestOperator(unittest.TestCase):
 
         self.assertEqual(self.op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (0, 1)], ['discr', 'discr', 'discr', 'conti']))
-        self.assertEqual(self.op.opt_types, [1, 1, 0])
+        self.assertEqual(self.op.opt_tags, [1, 1, 0])
 
     def test_selecting_blend(self):
         self.op.set_blender('selecting', '0 & 1 | 2')
@@ -3535,24 +3535,63 @@ class TestOperator(unittest.TestCase):
         # self.assertRaises(ValueError, self.op.set_blender, 'selecting', '0 and (1 or 2)')
 
     def test_set_opt_par(self):
-        self.op.set_parameter('dma',
-                              pars=(5, 10, 5),
-                              opt_tag=1,
-                              par_boes=((5, 10), (5, 15), (10, 15)),
-                              window_length=10,
-                              data_types=['close', 'open', 'high'])
-        self.assertEqual(self.op.timing[0].pars, (5, 10, 5))
-        self.assertEqual(self.op.selecting[0].pars, (0.5,))
-        self.assertEqual(self.op.ricon[0].pars, (9, -0.23))
-        self.assertEqual(self.op.opt_types, [1, 0, 1])
-        self.op.set_opt_par((5, 12, 9, 8, -0.1))
-        self.assertEqual(self.op.timing[0].pars, (5, 12, 9))
-        self.assertEqual(self.op.selecting[0].pars, (0.5,))
-        self.assertEqual(self.op.ricon[0].pars, (8, -0.1))
+        """ test setting opt pars in batch"""
+        print(f'--------- Testing setting Opt Pars: set_opt_par -------')
+        op = qt.Operator('dma, random, crossline')
+        op.set_parameter('dma',
+                         pars=(5, 10, 5),
+                         opt_tag=1,
+                         par_boes=((5, 10), (5, 15), (10, 15)),
+                         window_length=10,
+                         data_types=['close', 'open', 'high'])
+        self.assertEqual(op.strategies[0].pars, (5, 10, 5))
+        self.assertEqual(op.strategies[1].pars, (0.5,))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.opt_tags, [1, 0, 0])
+        op.set_opt_par((5, 12, 9))
+        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
+        self.assertEqual(op.strategies[1].pars, (0.5,))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+
+        op.set_parameter('crossline',
+                         pars=(5, 10, 5, 'sell'),
+                         opt_tag=1,
+                         par_boes=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         window_length=10,
+                         data_types=['close', 'open', 'high'])
+        self.assertEqual(op.opt_tags, [1, 0, 1])
+        op.set_opt_par((5, 12, 9, 8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
+        self.assertEqual(op.strategies[1].pars, (0.5,))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+
+        op.set_opt_par((9, 200, 155, 8, 26, 9, 'buy', 5, 12, 9))
+        self.assertEqual(op.strategies[0].pars, (9, 200, 155))
+        self.assertEqual(op.strategies[1].pars, (0.5,))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
+        op.set_parameter('crossline',
+                         pars=(5, 10, 5, 'sell'),
+                         opt_tag=2,
+                         par_boes=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         window_length=10,
+                         data_types=['close', 'open', 'high'])
+        self.assertEqual(op.opt_tags, [1, 0, 2])
+        self.assertEqual(op.strategies[0].pars, (9, 200, 155))
+        self.assertEqual(op.strategies[1].pars, (0.5,))
+        self.assertEqual(op.strategies[2].pars, (5, 10, 5, 'sell'))
+        op.set_opt_par((5, 12, 9, (8, 26, 9, 'buy')))
+        self.assertEqual(op.strategies[0].pars, (5, 12, 9))
+        self.assertEqual(op.strategies[1].pars, (0.5,))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
 
-        self.assertRaises(ValueError, self.op.set_opt_par, (5, 12, 9, 8))
+        # Test Errors
+        # Not enough values for parameter
+        op.set_parameter('crossline', opt_tag=1)
+        self.assertRaises(ValueError, op.set_opt_par, (5, 12, 9, 8))
+        # wrong type of input
+        self.assertRaises(AssertionError, op.set_opt_par, [5, 12, 9, 7, 15, 12, 'sell'])
 
     def test_stg_attribute_get_and_set(self):
         self.stg = qt.TimingCrossline()
