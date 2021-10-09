@@ -371,6 +371,11 @@ class Operator:
     def strategy_blenders(self):
         return self._stg_blender
 
+    @strategy_blenders.setter
+    def strategy_blenders(self, blenders):
+        """ setting blenders of strategy"""
+        self.set_blender(price_type=None, blender=blenders)
+
     @property
     def signal_type(self):
         """ 返回operator对象的信号类型"""
@@ -386,7 +391,8 @@ class Operator:
         elif st.lower() in self.AVAILABLE_SIGNAL_TYPES.values():
             self._signal_type = st.lower()
         else:
-            raise ValueError(f'the signal type {st} is not valid!')
+            raise ValueError(f'the signal type {st} is not valid!\n'
+                             f'{self.AVAILABLE_SIGNAL_TYPES}')
 
     @property
     def op_data_types(self):
@@ -737,11 +743,22 @@ class Operator:
             None
 
         """
+        if self.strategy_count == 0:
+            return
+        if price_type is None:
+            price_type = self.bt_price_types[0]
         if isinstance(price_type, str):
-            self._stg_blender[price_type] = blender_parser(blender)
+            if isinstance(blender, str):
+                self._stg_blender[price_type] = blender_parser(blender)
+            elif isinstance(blender, list):
+                len_diff = self.bt_price_type_count - len(blender)
+                if len_diff > 0:
+                    blender.extend(blender[-1] * len_diff)
+                for bldr, pt in zip(blender, self.bt_price_types):
+                    self._stg_blender[pt] = blender_parser(bldr)
         else:
             raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
-        return None
+        return
 
     def get_blender(self, price_type=None):
         """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
@@ -1016,22 +1033,3 @@ class Operator:
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
         return lst_out
-
-    def _set_strategy_blender(self, selecting_blender_expression):
-        """ 设置选股策略的混合方式，混合方式通过选股策略混合表达式来表示
-
-            给选股策略混合表达式赋值后，直接解析表达式，将选股策略混合表达式的前缀表达式存入选股策略混合器
-        """
-        if not isinstance(selecting_blender_expression, str):  # 如果输入不是str类型
-            self._selecting_blender_string = '0'
-            self._selecting_blender = ['0']
-        else:
-            self._selecting_blender_string = selecting_blender_expression
-            try:
-                self._selecting_blender = self._exp_to_blender
-            except:
-                raise ValueError(
-                        f'SimpleSelecting blender expression is not Valid: (\'{selecting_blender_expression}\')'
-                        f', the expression might contain unidentified operator, a valid expression contains only \n'
-                        f'numbers, function or variable names and operations such as "+-*/^&|", for example: '
-                        f'\' 0 & ( 1 | 2 )\'')

@@ -2906,6 +2906,10 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_id[3], 'dma_1')
         self.assertEqual(op.strategy_id[4], 'dma_2')
 
+    def test_property_strategy_blenders(self):
+        """ test property strategy blenders"""
+        raise NotImplementedError
+
     def test_property_singal_type(self):
         """ test property signal_type"""
         op = qt.Operator()
@@ -3127,12 +3131,45 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(otp, 2)
 
     def test_property_set(self):
-        """ test all property setters"""
-        raise NotImplementedError
+        """ test all property setters:
+            setting following properties:
+            - strategy_blenders
+            - signal_type
+            other properties can not be set"""
+        print(f'------- Test setting properties ---------')
+        op = qt.Operator()
+        self.assertIsInstance(op.strategy_blenders, dict)
+        self.assertIsInstance(op.signal_type, str)
+        self.assertEqual(op.strategy_blenders, {})
+        self.assertEqual(op.signal_type, 'pt')
+        op.strategy_blenders = '1 + 2'
+        op.signal_type = 'proportion signal'
+        self.assertEqual(op.strategy_blenders, {})
+        self.assertEqual(op.signal_type, 'ps')
+
+        op = qt.Operator('macd, dma, trix, cdl')
+        # TODO: 修改set_parameter()，使下面的用法成立
+        # op.set_parameter('dma, cdl', price_type='open')
+        op.set_parameter('dma', price_type='open')
+        op.set_parameter('cdl', price_type='open')
+        sb = op.strategy_blenders
+        st = op.signal_type
+        self.assertIsInstance(sb, dict)
+        print(f'before setting: strategy_blenders={sb}')
+        self.assertEqual(sb, {})
+        op.strategy_blenders = '1+2 * 3'
+        sb = op.strategy_blenders
+        print(f'after setting strategy_blender={sb}')
+        self.assertEqual(sb, {'close': ['+', '*', '3', '2', '1']})
+        op.strategy_blenders = ['1+2', '3-4']
+        sb = op.strategy_blenders
+        print(f'after setting strategy_blender={sb}')
+        self.assertEqual(sb, {'close': ['+', '2', '1'],
+                              'open':  ['-', '4', '3']})
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
-        pass
+        raise NotImplementedError
         # print(f'operator is ready? "{self.op.ready}"')
 
     def test_operator_add_strategy(self):
@@ -3212,6 +3249,10 @@ class TestOperator(unittest.TestCase):
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
         self.assertEqual(op.strategy_id, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+
+    def test_opeartor_clear_strategies(self):
+        """ test opeartor clear strategy"""
+        raise NotImplementedError
 
     def test_operator_prepare_data(self):
         """test processes that related to prepare data"""
