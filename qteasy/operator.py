@@ -609,7 +609,10 @@ class Operator:
 
         :return:
         """
-        raise NotImplementedError
+        if self.strategy_count > 0:
+            self._strategy_id = []
+            self._strategies = []
+        return
 
     def get_strategies_by_price_type(self, price_type=None):
         """返回operator对象中的strategy对象, price_type为一个可选参数，

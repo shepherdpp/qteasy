@@ -287,7 +287,7 @@ class Strategy:
         if verbose:
             print('Information of the strategy:\n', self.stg_name, self.stg_text)
 
-    def set_pars(self, pars: tuple) -> int:
+    def set_pars(self, pars: (tuple, dict)) -> int:
         """设置策略参数，在设置之前对参数的个数进行检查
 
         input:

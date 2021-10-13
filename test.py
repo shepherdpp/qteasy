@@ -2712,7 +2712,7 @@ class TestOperator(unittest.TestCase):
         print(f'test printing information of operator object')
         self.op.info()
 
-    def test_get_strategy_by_name(self):
+    def test_get_strategy_by_id(self):
         """ test get_strategy_by_id()"""
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
@@ -2724,6 +2724,21 @@ class TestOperator(unittest.TestCase):
         self.assertIs(op.get_strategy_by_id('macd'), op.strategies[0])
         self.assertIs(op.get_strategy_by_id(1), op.strategies[1])
         self.assertIs(op.get_strategy_by_id('trix'), op.strategies[2])
+
+    def test_get_items(self):
+        """ test method __getitem__(), it should be the same as geting strategies by id"""
+        op = qt.Operator()
+        self.assertIsInstance(op, qt.Operator)
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_id, [])
+
+        op = qt.Operator('macd, dma, trix')
+        self.assertEqual(op.strategy_id, ['macd', 'dma', 'trix'])
+        self.assertIs(op['macd'], op.strategies[0])
+        self.assertIs(op['trix'], op.strategies[2])
+        self.assertIs(op[1], op.strategies[1])
+        self.assertIs(op[3], op.strategies[2])
+
 
     def test_get_strategies_by_price_type(self):
         """ test get_strategies_by_price_type"""
@@ -3251,8 +3266,23 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_id, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
 
     def test_opeartor_clear_strategies(self):
-        """ test opeartor clear strategy"""
-        raise NotImplementedError
+        """ test operator clear strategies"""
+        op = qt.Operator('dma, all, urgent')
+        op.add_strategies(['dma', 'macd'])
+        op.add_strategies(['DMA', TestLSStrategy()])
+        self.assertEqual(op.strategy_count, 7)
+        print('test removing strategies from Operator')
+        op.clear_strategies()
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_id, [])
+        op.add_strategy('dma', pars=(12, 123, 25))
+        self.assertEqual(op.strategy_count, 1)
+        self.assertEqual(op.strategy_id, ['dma'])
+        self.assertEqual(type(op.strategies[0]), TimingDMA)
+        self.assertEqual(op.strategies[0].pars, (12, 123, 25))
+        op.clear_strategies()
+        self.assertEqual(op.strategy_count, 0)
+        self.assertEqual(op.strategy_id, [])
 
     def test_operator_prepare_data(self):
         """test processes that related to prepare data"""
@@ -3524,6 +3554,7 @@ class TestOperator(unittest.TestCase):
         import time
         st = time.time()
         blender = blender_parser('0+max(1,2,(3+4)*5, max(6, (7+8)*9), 10-11) * (12+13)')
+        res = []
         for i in range(10000):
             res = signal_blend([1, 1, 2, 3, 4, 5, 3, 4, 5, 6, 7, 8, 2, 3], blender)
         et = time.time()
