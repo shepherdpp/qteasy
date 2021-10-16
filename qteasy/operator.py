@@ -612,6 +612,8 @@ class Operator:
         if self.strategy_count > 0:
             self._strategy_id = []
             self._strategies = []
+            self._stg_blender = {}
+            self._op_history_data = []
         return
 
     def get_strategies_by_price_type(self, price_type=None):
@@ -749,16 +751,23 @@ class Operator:
         if self.strategy_count == 0:
             return
         if price_type is None:
-            price_type = self.bt_price_types[0]
-        if isinstance(price_type, str):
             if isinstance(blender, str):
-                self._stg_blender[price_type] = blender_parser(blender)
-            elif isinstance(blender, list):
+                blender = [blender]
+            if isinstance(blender, list):
                 len_diff = self.bt_price_type_count - len(blender)
                 if len_diff > 0:
                     blender.extend(blender[-1] * len_diff)
                 for bldr, pt in zip(blender, self.bt_price_types):
-                    self._stg_blender[pt] = blender_parser(bldr)
+                    self.set_blender(price_type=pt, blender=bldr)
+            else:
+                raise TypeError(f'Wrong type of blender, a string or a list of strings should be given,'
+                                f' got {type(blender)} instead')
+            return
+        if isinstance(price_type, str):
+            if isinstance(blender, str):
+                self._stg_blender[price_type] = blender_parser(blender)
+            else:
+                self._stg_blender[price_type] = []
         else:
             raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
         return
@@ -771,8 +780,11 @@ class Operator:
         """
         if price_type is None:
             return self._stg_blender
-        else:
-            return self._stg_blender[price_type]
+        if price_type not in self.bt_price_types:
+            return None
+        if price_type not in self.strategy_blenders:
+            return None
+        return self._stg_blender[price_type]
 
     def set_parameter(self,
                       stg_id: str,

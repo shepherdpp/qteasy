@@ -2922,8 +2922,69 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_id[4], 'dma_2')
 
     def test_property_strategy_blenders(self):
-        """ test property strategy blenders"""
-        raise NotImplementedError
+        """ test property strategy blenders including property setter,
+            and test the method get_blender()"""
+        print(f'------- Test property strategy blenders ---------')
+        op = qt.Operator()
+        self.assertIsInstance(op.strategy_blenders, dict)
+        self.assertIsInstance(op.signal_type, str)
+        self.assertEqual(op.strategy_blenders, {})
+        self.assertEqual(op.signal_type, 'pt')
+        # test adding blender to empty operator
+        op.strategy_blenders = '1 + 2'
+        op.signal_type = 'proportion signal'
+        self.assertEqual(op.strategy_blenders, {})
+        self.assertEqual(op.signal_type, 'ps')
+
+        op.add_strategy('dma')
+        op.strategy_blenders = '1+2'
+        self.assertEqual(op.strategy_blenders, {'close': ['+', '2', '1']})
+
+        op.clear_strategies()
+        self.assertEqual(op.strategy_blenders, {})
+        op.add_strategies('dma, trix, macd')
+        op.set_parameter('dma', price_type='open')
+
+        op.set_blender('open', '1+2')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '2', '1'])
+        self.assertEqual(blender_close, None)
+        self.assertEqual(blender_high, None)
+
+        op.set_blender('open', '1+2+3')
+        op.set_blender('abc', '1+2+3')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        blender_abc = op.get_blender('abc')
+        self.assertEqual(blender_open, ['+', '3', '+', '2', '1'])
+        self.assertEqual(blender_close, None)
+        self.assertEqual(blender_high, None)
+        self.assertEqual(blender_abc, None)
+
+        op.set_blender('open', 123)
+        blender_open = op.get_blender('open')
+        self.assertEqual(blender_open, [])
+
+        op.set_blender(None, '1+1')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '1', '1'])
+        self.assertEqual(blender_close, None)
+        self.assertEqual(blender_high, None)
+
+        op.set_blender(None, '1+1')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '1', '1'])
+        self.assertEqual(blender_close, ['+', '1', '1'])
+        self.assertEqual(blender_high, ['+', '1', '1'])
+
+        self.assertRaises(TypeError, op.set_blender, 1, '1+3')
 
     def test_property_singal_type(self):
         """ test property signal_type"""
