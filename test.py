@@ -2707,6 +2707,19 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator(['dma', 'macd'])
         self.assertIsInstance(op, qt.Operator)
 
+    def test_repr(self):
+        """ test basic representation of Opeartor class"""
+        op = qt.Operator()
+        self.assertEqual(op.__repr__(), 'Operator()')
+
+        op = qt.Operator('macd, dma, trix, random, avg_low')
+        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, avg_low)')
+        self.assertEqual(op['dma'].__repr__(), 'Q-TIMING(DMA)')
+        self.assertEqual(op['macd'].__repr__(), 'R-TIMING(MACD)')
+        self.assertEqual(op['trix'].__repr__(), 'R-TIMING(TRIX)')
+        self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
+        self.assertEqual(op['avg_low'].__repr__(), 'FACTOR(AVG LOW)')
+
     def test_info(self):
         """Test information output of Operator"""
         print(f'test printing information of operator object')
@@ -2813,8 +2826,8 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(stg_open, list)
         self.assertIsInstance(stg_high, list)
 
-        self.assertEqual(stg_close, ['QUICK DMA STRATEGY'])
-        self.assertEqual(stg_open, ['MACD STRATEGY', 'TRIX STRATEGY'])
+        self.assertEqual(stg_close, ['DMA'])
+        self.assertEqual(stg_open, ['MACD', 'TRIX'])
         self.assertEqual(stg_high, [])
 
         stg_wrong = op.get_strategy_names_by_price_type(123)
@@ -3250,7 +3263,8 @@ class TestOperator(unittest.TestCase):
         op.strategy_blenders = '1+2 * 3'
         sb = op.strategy_blenders
         print(f'after setting strategy_blender={sb}')
-        self.assertEqual(sb, {'close': ['+', '*', '3', '2', '1']})
+        self.assertEqual(sb, {'close': ['+', '*', '3', '2', '1'],
+                              'open':  ['+', '*', '3', '2', '1']})
         op.strategy_blenders = ['1+2', '3-4']
         sb = op.strategy_blenders
         print(f'after setting strategy_blender={sb}')
@@ -3542,6 +3556,8 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator(strategies='dma, all, urgent')
         print(op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
+        # TODO: allow set_parameters to a list of strategies or str-listed strategies
+        # TODO: allow set_parameters to all strategies of specific bt price type
         op.set_parameter('dma',
                          pars=(5, 10, 5),
                          opt_tag=1,
@@ -3554,6 +3570,8 @@ class TestOperator(unittest.TestCase):
                          opt_tag=1,
                          pars=(9, -0.09),
                          window_length=10)
+        op.set_parameter('all', price_type='high')
+        op.set_parameter('urgent', price_type='open')
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
         self.assertEqual(op.strategies[0].par_boes, ((5, 10), (5, 15), (10, 15)))
         self.assertEqual(op.strategies[2].pars, (9, -0.09))
@@ -3570,6 +3588,7 @@ class TestOperator(unittest.TestCase):
         # TODO: to allow operands like "and", "or", "not", "xor"
         # op.set_blender('close', '0 and 1 or 2')
         # self.assertEqual(op.get_blender('close'), 'str-1.2')
+        self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
         op.set_blender('open', '0 & 1 | 2')
         self.assertEqual(op.get_blender('open'), ['|', '2', '&', '1', '0'])
         op.set_blender('high', '(0|1) & 2')
@@ -3759,8 +3778,8 @@ class TestOperator(unittest.TestCase):
 
     def test_stg_attribute_get_and_set(self):
         self.stg = qt.TimingCrossline()
-        self.stg_type = 'TIMING'
-        self.stg_name = "CROSSLINE STRATEGY"
+        self.stg_type = 'R-TIMING'
+        self.stg_name = "CROSSLINE"
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '

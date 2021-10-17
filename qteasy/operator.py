@@ -352,6 +352,14 @@ class Operator:
         # 添加signal_type属性
         self.signal_type = signal_type
 
+    def __repr__(self):
+        res = list()
+        res.append('Operator(')
+        if self.strategy_count > 0:
+            res.append(', '.join(self.strategy_id))
+        res.append(')')
+        return ''.join(res)
+
     @property
     def strategies(self):
         """返回operator对象的所有timing对象"""

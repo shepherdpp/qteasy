@@ -271,7 +271,7 @@ class Strategy:
 
         :return:
         """
-        str1 = f'{type(self)}('
+        str1 = f'{self._stg_type}('
         str2 = f'{self.stg_name})'
         return ''.join([str1, str2])
 
@@ -525,7 +525,7 @@ class RollingTiming(Strategy):
                  window_length: int = 270,
                  data_types: [list, str] = 'close'):
         super().__init__(pars=pars,
-                         stg_type='TIMING',
+                         stg_type='R-TIMING',
                          stg_name=stg_name,
                          stg_text=stg_text,
                          par_count=par_count,
@@ -709,7 +709,7 @@ class SimpleSelecting(Strategy):
             par_bounds_or_enums = [(0, 1)]
         super().__init__(pars=pars,
                          opt_tag=opt_tag,
-                         stg_type='SELECTING',
+                         stg_type='SELECT',
                          stg_name=stg_name,
                          stg_text=stg_text,
                          par_count=par_count,
@@ -854,7 +854,7 @@ class SimpleTiming(Strategy):
                  data_types: [list, str] = 'close'):
         super().__init__(pars=pars,
                          opt_tag=opt_tag,
-                         stg_type='RICON',
+                         stg_type='Q-TIMING',
                          stg_name=stg_name,
                          stg_text=stg_text,
                          par_count=par_count,
@@ -1001,7 +1001,7 @@ class FactoralSelecting(Strategy):
             par_bounds_or_enums = [(0, 1)]
         super().__init__(pars=pars,
                          opt_tag=opt_tag,
-                         stg_type='SELECTING',
+                         stg_type='FACTOR',
                          stg_name=stg_name,
                          stg_text=stg_text,
                          par_count=par_count,

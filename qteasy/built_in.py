@@ -58,7 +58,7 @@ class TimingCrossline(stg.RollingTiming):
                          par_count=4,
                          par_types=['discr', 'discr', 'conti', 'enum'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
-                         stg_name='CROSSLINE STRATEGY',
+                         stg_name='CROSSLINE',
                          stg_text='Moving average crossline strategy, determine long/short position according to the ' \
                                   'cross point of long and short term moving average prices ',
                          data_types='close')
@@ -102,7 +102,7 @@ class TimingMACD(stg.RollingTiming):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
-                         stg_name='MACD STRATEGY',
+                         stg_name='MACD',
                          stg_text='MACD strategy, determine long/short position according to differences of '
                                   'exponential weighted moving average prices',
                          data_types='close')
@@ -154,7 +154,7 @@ class TimingTRIX(stg.RollingTiming):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(2, 50), (3, 150)],
-                         stg_name='TRIX STRATEGY',
+                         stg_name='TRIX',
                          stg_text='TRIX strategy, determine long/short position according to triple exponential '
                                   'weighted moving average prices',
                          data_freq='d',
@@ -200,7 +200,7 @@ class TimingCDL(stg.RollingTiming):
                          par_count=0,
                          par_types=None,
                          par_bounds_or_enums=None,
-                         stg_name='CDL INDICATOR STRATEGY',
+                         stg_name='CDL INDICATOR',
                          stg_text='CDL Indicators, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='open,high,low,close')
@@ -226,7 +226,7 @@ class SoftBBand(stg.RollingTiming):
                          par_count=4,
                          par_types=['discr', 'conti', 'conti', 'discr'],
                          par_bounds_or_enums=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
-                         stg_name='Boolinger Band STRATEGY',
+                         stg_name='Boolinger Band',
                          stg_text='BBand strategy, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='close')
@@ -272,7 +272,7 @@ class TimingBBand(stg.RollingTiming):
                          par_count=3,
                          par_types=['discr', 'conti', 'conti'],
                          par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
-                         stg_name='BBand STRATEGY',
+                         stg_name='BBand',
                          stg_text='BBand strategy, determine long/short position according to Bollinger bands',
                          data_freq='d',
                          sample_freq='d',
@@ -308,8 +308,8 @@ class TimingSAREXT(stg.RollingTiming):
                          par_count=2,
                          par_types=['discr', 'conti'],
                          par_bounds_or_enums=[(-100, 100), (0, 5)],
-                         stg_name='Parabolic SAREXT STRATEGY',
-                         stg_text='Parabolic SAR Extended STRATEGY, determine buy/sell signals according to CDL Indicators',
+                         stg_name='Parabolic SAREXT',
+                         stg_text='Parabolic SAR Extended Strategy, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='high, low')
 
@@ -1252,7 +1252,7 @@ class ADX(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 35)],
-                         stg_name='ADX STRATEGY',
+                         stg_name='ADX',
                          stg_text='Average Directional Movement Index, determine buy/sell signals according to ADX Indicators',
                          window_length=200,
                          data_types='high, low, close')
@@ -1289,7 +1289,7 @@ class APO(stg.RollingTiming):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 100), (10, 100), (0, 8)],
-                         stg_name='APO STRATEGY',
+                         stg_name='APO',
                          stg_text='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
                          window_length=200,
                          data_types='close')
@@ -1326,7 +1326,7 @@ class AROON(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='AROON STRATEGY',
+                         stg_name='AROON',
                          stg_text='Aroon, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
@@ -1369,7 +1369,7 @@ class AROONOSC(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='AROON Oscilator STRATEGY',
+                         stg_name='AROON Oscilator',
                          stg_text='Aroon Oscilator, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
@@ -1409,7 +1409,7 @@ class CCI(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='CCI STRATEGY',
+                         stg_name='CCI',
                          stg_text='CCI, determine long/short positions according to CC Indicators',
                          window_length=200,
                          data_types='high, low, close')
@@ -1447,7 +1447,7 @@ class CMO(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='CMO STRATEGY',
+                         stg_name='CMO',
                          stg_text='CMO, determine long/short positions according to CMO Indicators',
                          window_length=200,
                          data_types='close')
@@ -1487,7 +1487,7 @@ class MACDEXT(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr', 'discr', 'discr', 'discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
-                         stg_name='MACD Extention STRATEGY',
+                         stg_name='MACD Extention',
                          stg_text='MACD Extention, determine long/short position according to extended MACD Indicators',
                          window_length=200,
                          data_types='close')
@@ -1524,7 +1524,7 @@ class MFI(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='MFI STRATEGY',
+                         stg_name='MFI',
                          stg_text='MFI, determine buy/sell signals according to MFI Indicators',
                          window_length=200,
                          data_types='high, low, close, volume')
@@ -1558,7 +1558,7 @@ class DI(stg.RollingTiming):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(1, 100), (1, 100)],
-                         stg_name='DI STRATEGY',
+                         stg_name='DI',
                          stg_text='DI, determine long/short positions according to +/- DI Indicators',
                          window_length=200,
                          data_types='high, low, close')
@@ -1594,7 +1594,7 @@ class DM(stg.RollingTiming):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(1, 100), (1, 100)],
-                         stg_name='DM STRATEGY',
+                         stg_name='DM',
                          stg_text='DM, determine long/short positions according to +/- DM Indicators',
                          window_length=200,
                          data_types='high, low')
@@ -1630,7 +1630,7 @@ class MOM(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(1, 100)],
-                         stg_name='MOM STRATEGY',
+                         stg_name='MOM',
                          stg_text='MOM, determine long/short positions according to MOM Indicators',
                          window_length=100,
                          data_types='close')
@@ -1664,7 +1664,7 @@ class PPO(stg.RollingTiming):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (0, 8)],
-                         stg_name='PPO STRATEGY',
+                         stg_name='PPO',
                          stg_text='PPO, determine long/short positions according to PPO Indicators',
                          window_length=100,
                          data_types='close')
@@ -1700,7 +1700,7 @@ class RSI(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='RSI STRATEGY',
+                         stg_name='RSI',
                          stg_text='RSI, determine long/short positions according to RSI Indicators',
                          window_length=100,
                          data_types='close')
@@ -1734,7 +1734,7 @@ class STOCH(stg.RollingTiming):
                          par_count=5,
                          par_types=['discr', 'discr', 'discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)],
-                         stg_name='Stochastic STRATEGY',
+                         stg_name='Stochastic',
                          stg_text='Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
@@ -1773,7 +1773,7 @@ class STOCHF(stg.RollingTiming):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (0, 8)],
-                         stg_name='Fast Stochastic STRATEGY',
+                         stg_name='Fast Stochastic',
                          stg_text='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
@@ -1802,7 +1802,7 @@ class STOCHF(stg.RollingTiming):
 
 
 class STOCHRSI(stg.RollingTiming):
-    """ Stochastic Fast 策略
+    """ Stochastic RSI 策略
     """
 
     def __init__(self, pars=(14, 5, 3, 0)):
@@ -1810,8 +1810,8 @@ class STOCHRSI(stg.RollingTiming):
                          par_count=4,
                          par_types=['discr', 'discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (2, 100), (0, 8)],
-                         stg_name='Fast Stochastic STRATEGY',
-                         stg_text='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         stg_name='Stochastic RSI',
+                         stg_text='Stochaxtic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
                          window_length=100,
                          data_types='close')
 
@@ -1850,7 +1850,7 @@ class ULTOSC(stg.RollingTiming):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(1, 100), (1, 100), (1, 100)],
-                         stg_name='Ultimate Oscillator STRATEGY',
+                         stg_name='Ultimate Oscillator',
                          stg_text='Ultimate Oscillator, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
@@ -1886,7 +1886,7 @@ class WILLR(stg.RollingTiming):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='Williams\' R STRATEGY',
+                         stg_name='Williams\' R',
                          stg_text='Williams R, determine buy/sell signals according to Williams R',
                          window_length=100,
                          data_types='high, low, close')
@@ -2010,7 +2010,7 @@ class TimingDMA(stg.SimpleTiming):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
-                         stg_name='QUICK DMA STRATEGY',
+                         stg_name='DMA',
                          stg_text='Quick DMA strategy, determine long/short position according to differences of '
                                   'moving average prices with simple timing strategy',
                          data_types='close')
@@ -2081,7 +2081,7 @@ class SelectingAll(stg.SimpleSelecting):
 
     def __init__(self, pars=(0.5,)):
         super().__init__(pars=pars,
-                         stg_name='SIMPLE SELECTING',
+                         stg_name='SIMPLE ',
                          stg_text='SimpleSelecting all share and distribute weights evenly')
 
     def _realize(self, hist_data, params):
@@ -2095,8 +2095,8 @@ class SelectingNone(stg.SimpleSelecting):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='SIMPLE SELECTING',
-                         stg_text='SimpleSelecting all share and distribute weights evenly')
+                         stg_name='NONE ',
+                         stg_text='None of the shares will be selected')
 
     def _realize(self, hist_data, params):
         # 所有股票全部被选中，投资比例平均分配
@@ -2109,7 +2109,7 @@ class SelectingRandom(stg.SimpleSelecting):
 
     def __init__(self, pars=(0.5,)):
         super().__init__(pars=pars,
-                         stg_name='RANDOM SELECTING',
+                         stg_name='RANDOM',
                          stg_text='SimpleSelecting share Randomly and distribute weights evenly')
 
     def _realize(self, hist_data, params):
@@ -2142,7 +2142,7 @@ class SelectingFinanceIndicator(stg.FactoralSelecting):
                                               (-np.inf, np.inf),
                                               (-np.inf, np.inf),
                                               (0, 1.)],
-                         stg_name='FINANCE SELECTING',
+                         stg_name='FINANCE',
                          stg_text='SimpleSelecting share_pool according to financial report EPS indicator',
                          data_freq='d',
                          sample_freq='y',
@@ -2168,7 +2168,7 @@ class SelectingLastOpen(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST OPEN',
+                         stg_name=' LAST OPEN',
                          stg_text='Select stocks according their last open price',
                          data_freq='d',
                          sample_freq='y',
@@ -2194,7 +2194,7 @@ class SelectingLastClose(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST CLOSE',
+                         stg_name='LAST CLOSE',
                          stg_text='Select stocks according their last close price',
                          data_freq='d',
                          sample_freq='y',
@@ -2220,7 +2220,7 @@ class SelectingLastHigh(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST HIGH',
+                         stg_name='LAST HIGH',
                          stg_text='Select stocks according their last high price',
                          data_freq='d',
                          sample_freq='y',
@@ -2246,7 +2246,7 @@ class SelectingLastLow(stg.FactoralSelecting):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SELECTING LAST LOW',
+                         stg_name='LAST LOW',
                          stg_text='Select stocks according their last low price',
                          data_freq='d',
                          sample_freq='y',
@@ -2274,7 +2274,7 @@ class SelectingAvgOpen(stg.FactoralSelecting):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='SELECTING AVG OPEN',
+                         stg_name='AVG OPEN',
                          stg_text='Select stocks by its N day average open price',
                          data_freq='d',
                          sample_freq='M',
@@ -2303,7 +2303,7 @@ class SelectingAvgClose(stg.FactoralSelecting):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='SELECTING AVG CLOSE',
+                         stg_name='AVG CLOSE',
                          stg_text='Select stocks by its N day average close price',
                          data_freq='d',
                          sample_freq='M',
@@ -2332,7 +2332,7 @@ class SelectingAvgLow(stg.FactoralSelecting):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='SELECTING AVG LOW',
+                         stg_name='AVG LOW',
                          stg_text='Select stocks by its N day average low price',
                          data_freq='d',
                          sample_freq='M',
@@ -2361,7 +2361,7 @@ class SelectingAvghigh(stg.FactoralSelecting):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='SELECTING AVG HIGH',
+                         stg_name='AVG HIGH',
                          stg_text='Select stocks by its N day average high price',
                          data_freq='d',
                          sample_freq='M',
@@ -2390,7 +2390,7 @@ class SelectingNDayChange(stg.FactoralSelecting):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='SELECTING N-DAY CHANGE',
+                         stg_name='N-DAY CHANGE',
                          stg_text='Select stocks by its N day price change',
                          data_freq='d',
                          sample_freq='M',
@@ -2419,7 +2419,7 @@ class SelectingNDayVolatility(stg.FactoralSelecting):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='SELECTING N-DAY CHANGE',
+                         stg_name='N-DAY VOL',
                          stg_text='Select stocks by its N day price change',
                          data_freq='d',
                          sample_freq='M',
