@@ -735,14 +735,41 @@ class Operator:
                 stg.set_pars(opt_par[s])
                 s = k
 
-    # TODO: 完善本函数的Docstring，添加详细的使用介绍和示例
-    def set_blender(self, price_type, blender):
+    def set_blender(self, price_type=None, blender=None):
         """ 统一的blender混合器属性设置入口
 
         :param price_type:
-            :type price_type: str, 一个字符串，用于指定需要混合的交易信号的价格类型
+            :type price_type: str, 一个字符串，用于指定需要混合的交易信号的价格类型，
+                                如果给出price_type且price_type存在，则设置该price_type的策略的混合表达式
+                                如果给出price_type而price_type不存在，则给出warning并返回
+                                如果给出的price_type不是正确的类型，则报错
+                                如果price_type为None，则设置所有price_type的策略的混合表达式，此时：
+                                    如果给出的blender为一个字符串，则设置所有的price_type为相同的表达式
+                                    如果给出的blender为一个列表，则按照列表中各个元素的顺序分别设置每一个price_type的混合表达式，
+                                    如果blender中的元素不足，则重复最后一个混合表达式
         :param blender:
             :type blender: str, 一个合法的交易信号混合表达式
+                                当price_type为None时，可以接受list为参数，同时为所有的price_type设置混合表达式
+
+        :example:
+            >>> op = Operator('dma, macd')
+            >>> op.set_parameter('dma', price_type='close')
+            >>> op.set_parameter('macd', price_type='open')
+
+            >>> # 设置open的策略混合模式
+            >>> op.set_blender('open', '1+2')
+            >>> op.get_blender()
+            >>> {'open': ['+', '2', '1']}
+
+            >>> # 给所有的交易价格策略设置同样的混合表达式
+            >>> op.set_blender(None, '1 + 2')
+            >>> op.get_blender()
+            >>> {'close': ['+', '2', '1'], 'open':  ['+', '2', '1']}
+
+            >>> # 通过一个列表给不同的交易价格策略设置不同的混合表达式（交易价格按照字母顺序从小到大排列）
+            >>> op.set_blender(None, ['1 + 2', '3*4'])
+            >>> op.get_blender()
+            >>> {'close': ['+', '2', '1'], 'open':  ['*', '4', '3']}
 
         :return
             None
@@ -751,12 +778,14 @@ class Operator:
         if self.strategy_count == 0:
             return
         if price_type is None:
+            if blender is None:
+                return
             if isinstance(blender, str):
                 blender = [blender]
             if isinstance(blender, list):
                 len_diff = self.bt_price_type_count - len(blender)
                 if len_diff > 0:
-                    blender.extend(blender[-1] * len_diff)
+                    blender.extend([blender[-1]] * len_diff)
                 for bldr, pt in zip(blender, self.bt_price_types):
                     self.set_blender(price_type=pt, blender=bldr)
             else:
@@ -764,6 +793,9 @@ class Operator:
                                 f' got {type(blender)} instead')
             return
         if isinstance(price_type, str):
+            if price_type not in self.bt_price_types:
+                warnings.warn('price type is not valid, no blender will be created!')
+                return
             if isinstance(blender, str):
                 self._stg_blender[price_type] = blender_parser(blender)
             else:

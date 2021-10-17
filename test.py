@@ -2942,8 +2942,9 @@ class TestOperator(unittest.TestCase):
 
         op.clear_strategies()
         self.assertEqual(op.strategy_blenders, {})
-        op.add_strategies('dma, trix, macd')
+        op.add_strategies('dma, trix, macd, dma')
         op.set_parameter('dma', price_type='open')
+        op.set_parameter('trix', price_type='high')
 
         op.set_blender('open', '1+2')
         blender_open = op.get_blender('open')
@@ -2959,6 +2960,7 @@ class TestOperator(unittest.TestCase):
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
         blender_abc = op.get_blender('abc')
+        self.assertEqual(op.strategy_blenders, {'open':  ['+', '3', '+', '2', '1']})
         self.assertEqual(blender_open, ['+', '3', '+', '2', '1'])
         self.assertEqual(blender_close, None)
         self.assertEqual(blender_high, None)
@@ -2972,17 +2974,29 @@ class TestOperator(unittest.TestCase):
         blender_open = op.get_blender('open')
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
-        self.assertEqual(blender_open, ['+', '1', '1'])
-        self.assertEqual(blender_close, None)
-        self.assertEqual(blender_high, None)
-
-        op.set_blender(None, '1+1')
-        blender_open = op.get_blender('open')
-        blender_close = op.get_blender('close')
-        blender_high = op.get_blender('high')
+        self.assertEqual(op.bt_price_types, ['close', 'high', 'open'])
+        self.assertEqual(op.get_blender(), {'close': ['+', '1', '1'],
+                                            'open':  ['+', '1', '1'],
+                                            'high':  ['+', '1', '1']})
         self.assertEqual(blender_open, ['+', '1', '1'])
         self.assertEqual(blender_close, ['+', '1', '1'])
         self.assertEqual(blender_high, ['+', '1', '1'])
+
+        op.set_blender(None, ['1+1', '3+4'])
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '4', '3'])
+        self.assertEqual(blender_close, ['+', '1', '1'])
+        self.assertEqual(blender_high, ['+', '4', '3'])
+
+        op.strategy_blenders = (['1+2', '2*3', '1+4'])
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '4', '1'])
+        self.assertEqual(blender_close, ['+', '2', '1'])
+        self.assertEqual(blender_high, ['*', '3', '2'])
 
         self.assertRaises(TypeError, op.set_blender, 1, '1+3')
 
