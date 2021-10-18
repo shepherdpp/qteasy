@@ -507,12 +507,31 @@ class Operator:
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号，如果可以，返回True，否则返回False
 
         返回True，表明Operator的各项属性已经具备以下条件：
-            1，
-            2，
+            1，Operator 已经有strategy
+            2，所有类型的strategy都有blender
 
         :return:
         """
-        raise NotImplementedError
+        message = [f'Operator readiness:\n']
+        is_ready = True
+        if self.strategy_count == 0:
+            message.append(f'No strategy -- add strategies to Operator!')
+            is_ready = False
+        if len(self.strategy_blenders) < self.bt_price_type_count:
+            message.append(f'No blender -- some of the strategies will not be used for signal, add blender')
+            is_ready = False
+        else:
+            pass
+
+        if len(self.op_history_data) < self.strategy_count:
+            message.append(f'No history data -- ')
+            is_ready = False
+
+        if not is_ready:
+            print(''.join(message))
+
+        return is_ready
+
 
     def __getitem__(self, item):
         """ 根据策略的名称或序号返回子策略"""

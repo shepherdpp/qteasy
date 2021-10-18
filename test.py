@@ -2752,7 +2752,6 @@ class TestOperator(unittest.TestCase):
         self.assertIs(op[1], op.strategies[1])
         self.assertIs(op[3], op.strategies[2])
 
-
     def test_get_strategies_by_price_type(self):
         """ test get_strategies_by_price_type"""
         op = qt.Operator()
@@ -3273,8 +3272,8 @@ class TestOperator(unittest.TestCase):
 
     def test_operator_ready(self):
         """test the method ready of Operator"""
-        raise NotImplementedError
-        # print(f'operator is ready? "{self.op.ready}"')
+        op = qt.Operator()
+        print(f'operator is ready? "{op.ready}"')
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
