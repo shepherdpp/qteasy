@@ -1069,7 +1069,7 @@ class Operator:
                 self._ricon_history_data
 
         :return=====
-            list
+            Pandas.DataFrame
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """
@@ -1077,8 +1077,8 @@ class Operator:
         # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
         # 生成空的选股蒙板
 
-        # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联号相应的历史数据
-        # TODO: 这里的格式检查是否可以移到prepar_data()中去？这样效率更高
+        # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联相应的历史数据
+        # TODO: 这里的格式检查是否可以移到prepare_data()中去？这样效率更高
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
         assert len(self.op_history_data) > 0, \
