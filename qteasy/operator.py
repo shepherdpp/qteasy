@@ -440,9 +440,16 @@ class Operator:
         return p_types
 
     @property
-    def op_history_data(self):
-        """ 返回生成交易信号所需的历史数据列表"""
+    def op_data_type_list(self):
+        """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
         return [stg.data_types for stg in self.strategies]
+
+    @property
+    def op_history_data(self):
+        """ 返回一个列表，这个列表中的每个元素都是ndarray，每个ndarray中包含了
+        可以用于signal generation 的历史数据，且这些历史数据的类型与op_data_type_list
+        中规定的数据类型相同，历史数据跨度满足信号生成的需求"""
+        return self._op_history_data
 
     @property
     def opt_space_par(self):
@@ -523,7 +530,7 @@ class Operator:
         else:
             pass
 
-        if len(self.op_history_data) < self.strategy_count:
+        if len(self.op_data_type_list) < self.strategy_count:
             message.append(f'No history data -- ')
             is_ready = False
 
@@ -531,7 +538,6 @@ class Operator:
             print(''.join(message))
 
         return is_ready
-
 
     def __getitem__(self, item):
         """ 根据策略的名称或序号返回子策略"""
@@ -1073,24 +1079,21 @@ class Operator:
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """
-        # 第一步，在历史数据上分别使用选股策略独立产生若干选股蒙板（sel_mask）
-        # 选股策略的所有参数都通过对象属性设置，因此在这里不需要传递任何参数
-        # 生成空的选股蒙板
 
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联相应的历史数据
         # TODO: 这里的格式检查是否可以移到prepare_data()中去？这样效率更高
         assert isinstance(hist_data, HistoryPanel), \
             f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert len(self.op_history_data) > 0, \
+        assert len(self._op_history_data) > 0, \
             f'ObjectSetupError: history data should be set before signal creation!'
-        for history_data in self.op_history_data:
+        for history_data in self._op_history_data:
             assert len(history_data) > 0, \
                 f'ObjectSetupError: history data should be set before signal creation!'
         sel_masks = []
         shares = hist_data.shares
         date_list = hist_data.hdates
         # TODO， 使用map代替for loop可能能够再次提升运行速度
-        for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        for stg, dt in zip(self.strategies, self._op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]

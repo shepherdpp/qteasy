@@ -3114,20 +3114,20 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
 
-    def test_property_op_history_data(self):
-        """ test property op_history_data"""
+    def test_property_op_data_type_list(self):
+        """ test property op_data_type_list"""
         op = qt.Operator()
-        self.assertIsInstance(op.op_history_data, list)
-        self.assertEqual(len(op.op_history_data), 0)
-        self.assertEqual(op.op_history_data, [])
+        self.assertIsInstance(op.op_data_type_list, list)
+        self.assertEqual(len(op.op_data_type_list), 0)
+        self.assertEqual(op.op_data_type_list, [])
 
         op = qt.Operator('macd, dma, trix, cdl')
-        ohd = op.op_history_data
+        ohd = op.op_data_type_list
         print(f'ohd is {ohd}')
         self.assertIsInstance(ohd, list)
         self.assertEqual(ohd[0], ['close'])
         op.set_parameter('macd', data_types='open, close')
-        ohd = op.op_history_data
+        ohd = op.op_data_type_list
         print(f'ohd is {ohd}')
         self.assertIsInstance(ohd, list)
         self.assertEqual(len(ohd), 4)
@@ -3135,6 +3135,14 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(ohd[1], ['close'])
         self.assertEqual(ohd[2], ['close'])
         self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
+
+    def test_property_op_history_data(self):
+        """ Test this important function to get operation history data that shall be used in
+            signal generation
+            these data are stored in list of nd-arrays, each ndarray represents the data
+            that is needed for each and every strategy
+        """
+        raise NotImplementedError
 
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
