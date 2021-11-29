@@ -3491,6 +3491,7 @@ class TestOperator(unittest.TestCase):
                           cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
+        # self.op.set_blender(blender='0+1+2')
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         self.op.info()
@@ -7912,8 +7913,8 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
-        op.set_parameter('t-0', pars=(35, 120, 10, 'buy'))
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, pars=(35, 120, 10, 'buy'))
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)

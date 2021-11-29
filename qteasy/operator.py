@@ -959,7 +959,7 @@ class Operator:
             print(f'for backtest histoty price type: {price_type}: \n'
                   f'{self.get_strategies_by_price_type(price_type)}:')
             if self.strategy_blenders != {}:
-                print(f'{self.get_blender(price_type)}')
+                print(f'signal blenders: {self.get_blender(price_type)}')
             else:
                 print(f'no blender')
         # 打印每个strategy的详细信息
@@ -981,7 +981,9 @@ class Operator:
             检查cash_plan投资计划中的每个投资时间点均有价格数据，也就是说，投资时间点都在交易日内
             检查cash_plan投资计划中第一次投资时间点前有足够的数据量，用于滚动回测
             检查cash_plan投资计划中最后一次投资时间点在历史数据的范围内
-            从hist_data中根据各个量化策略的参数选取正确的切片放入各个策略数据仓库中
+            从hist_data中根据各个量化策略的参数选取正确的历史数据切片放入各个策略数据仓库中
+            检查op_signal混合器的设置，根据op的属性设置正确的混合器，如果没有设置混合器，则生成一个
+                基础混合器（blender）
 
             然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
             切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。
@@ -1043,8 +1045,15 @@ class Operator:
         # 确保op的策略都设置了参数
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
-        # 确保op的策略都设置了混合方式
-        # assert self._stg_blender != ''
+        # 确保op的策略都设置了混合方式，在未设置混合器时，混合器是一个空dict
+        if self.strategy_blenders == {}:
+            warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+            # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
+            # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
+            for price_type in self.bt_price_types:
+                stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
+                self.set_blender(price_type=price_type,
+                                 blender='+'.join(map(str, range(stg_count_for_price_type))))
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
         self._op_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                  for stg in self.strategies]
@@ -1089,24 +1098,28 @@ class Operator:
         for history_data in self._op_history_data:
             assert len(history_data) > 0, \
                 f'ObjectSetupError: history data should be set before signal creation!'
-        sel_masks = []
+        from .blender import signal_blend
+        op_signals = []
         shares = hist_data.shares
         date_list = hist_data.hdates
         # TODO， 使用map代替for loop可能能够再次提升运行速度
-        for stg, dt in zip(self.strategies, self._op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]
-            sel_masks.append(
+            op_signals.append(
                     stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
             # 生成的选股蒙板添加到选股蒙板队列中，
 
-        op_signals = self._selecting_blend(sel_masks)  # 根据蒙板混合前缀表达式混合所有蒙板
+        # blended_signal = self._selecting_blend(op_signals)  # 根据蒙板混合前缀表达式混合所有蒙板
+        signal_blender = self.get_blender(self.bt_price_types[0])
+        import pdb; pdb.set_trace()
+        blended_signal = signal_blend(op_signals, blender=signal_blender)
 
         # 生成DataFrame，并且填充日期数据
-        date_list = hist_data.hdates[-op_signals.shape[0]:]
+        date_list = hist_data.hdates[-blended_signal.shape[0]:]
         # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
-        lst = pd.DataFrame(op_signals, index=date_list, columns=shares)
+        lst = pd.DataFrame(blended_signal, index=date_list, columns=shares)
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
         return lst_out
