@@ -3001,6 +3001,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(blender_open, ['+', '4', '3'])
         self.assertEqual(blender_close, ['+', '1', '1'])
         self.assertEqual(blender_high, ['+', '4', '3'])
+        self.assertEqual(op.view_blender('open'), '3+4')
+        self.assertEqual(op.view_blender('close'), '1+1')
+        self.assertEqual(op.view_blender('high'), '3+4')
 
         op.strategy_blenders = (['1+2', '2*3', '1+4'])
         blender_open = op.get_blender('open')
@@ -3009,8 +3012,53 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(blender_open, ['+', '4', '1'])
         self.assertEqual(blender_close, ['+', '2', '1'])
         self.assertEqual(blender_high, ['*', '3', '2'])
+        self.assertEqual(op.view_blender('open'), '1+4')
+        self.assertEqual(op.view_blender('close'), '1+2')
+        self.assertEqual(op.view_blender('high'), '2*3')
 
+        # test error inputs:
+        # wrong type of price_type
         self.assertRaises(TypeError, op.set_blender, 1, '1+3')
+        # price_type not found, no change is made
+        op.set_blender('volume', '1+3')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '4', '1'])
+        self.assertEqual(blender_close, ['+', '2', '1'])
+        self.assertEqual(blender_high, ['*', '3', '2'])
+        # price_type not valid, no change is made
+        op.set_blender('closee', '1+2')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, ['+', '4', '1'])
+        self.assertEqual(blender_close, ['+', '2', '1'])
+        self.assertEqual(blender_high, ['*', '3', '2'])
+        # wrong type of blender, set to empty list
+        op.set_blender('open', 55)
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, [])
+        self.assertEqual(blender_close, ['+', '2', '1'])
+        self.assertEqual(blender_high, ['*', '3', '2'])
+        # wrong type of blender, set to empty list
+        op.set_blender('close', ['1+2'])
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, [])
+        self.assertEqual(blender_close, [])
+        self.assertEqual(blender_high, ['*', '3', '2'])
+        # can't parse blender, set to empty list
+        op.set_blender('high', 'a+bc')
+        blender_open = op.get_blender('open')
+        blender_close = op.get_blender('close')
+        blender_high = op.get_blender('high')
+        self.assertEqual(blender_open, [])
+        self.assertEqual(blender_close, [])
+        self.assertEqual(blender_high, [])
 
     def test_property_singal_type(self):
         """ test property signal_type"""
@@ -3491,17 +3539,18 @@ class TestOperator(unittest.TestCase):
                           cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
+        self.op.signal_type = 'pt'
         # self.op.set_blender(blender='0+1+2')
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         self.op.info()
-
+        self.op.info(verbose=True)
+        self.assertEqual(self.op.strategy_blenders,
+                         {'close': ['+', '2', '+', '1', '0']})
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
         self.assertTrue(isinstance(op_list, pd.DataFrame))
         self.assertEqual(op_list.shape, (26, 3))
-        # 删除去掉重复信号的code后，信号从原来的23条变为26条，包含三条重复信号，但是删除重复信号可能导致将不应该删除的信号删除，详见
-        # operator.py的create_signal()函数注释836行
         target_op_dates = ['2016/07/08', '2016/07/12', '2016/07/13', '2016/07/14',
                            '2016/07/18', '2016/07/20', '2016/07/22', '2016/07/26',
                            '2016/07/27', '2016/07/28', '2016/08/02', '2016/08/03',
@@ -3605,9 +3654,6 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.get_blender(), {'close': ['|', '2', '&', '1', '0'],
                                             'high': ['&', '2', '|', '1', '0'],
                                             'open': ['|', '2', '&', '1', '0']})
-
-        self.assertRaises(ValueError, op.set_blender, 'close', '0and1')
-        self.assertRaises(ValueError, op.set_blender, 'close', '0 and 1')
 
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],

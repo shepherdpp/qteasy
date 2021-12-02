@@ -193,7 +193,6 @@ def blender_parser(blender_string):
 
         else:  # 扫描到不合法输入
             raise ValueError(f'unidentified characters found in blender string: \'{token}\'')
-        # print(f'step ends: output list is {output}, op_stack is {op_stack}')
     while op_stack:
         output.append(op_stack.pop())
     output.reverse()  # 表达式解析完成，生成前缀表达式

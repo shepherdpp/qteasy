@@ -345,7 +345,8 @@ class Operator:
         self._strategy_id = []  # 保存所有交易策略的id，便于识别每个交易策略
         self._strategies = []  # 保存实际的交易策略对象
         self._op_history_data = []  # 保存供各个策略进行交易信号生成的历史数据（ndarray）
-        self._stg_blender = {}  # 交易信号混合表达式字典
+        self._stg_blender = {}  # 字典——交易信号混合表达式的解析式
+        self._stg_blender_strings = {}  # 交易信号混和表达式的原始字符串形式
 
         # 添加strategy对象
         self.add_strategies(stg)
@@ -646,6 +647,7 @@ class Operator:
             self._strategy_id = []
             self._strategies = []
             self._stg_blender = {}
+            self._stg_blender_strings = {}
             self._op_history_data = []
         return
 
@@ -811,11 +813,15 @@ class Operator:
         if self.strategy_count == 0:
             return
         if price_type is None:
+            # 当price_type没有显式给出时，同时为所有的price_type设置blender，此时区分多种情况：
             if blender is None:
+                # price_type和blender都为空，退出
                 return
             if isinstance(blender, str):
+                # blender为一个普通的字符串，此时将这个blender转化为一个包含该blender的列表，并交由下一步操作
                 blender = [blender]
             if isinstance(blender, list):
+                # 将列表中的blender补齐数量后，递归调用本函数，分别赋予所有的price_type
                 len_diff = self.bt_price_type_count - len(blender)
                 if len_diff > 0:
                     blender.extend([blender[-1]] * len_diff)
@@ -826,12 +832,22 @@ class Operator:
                                 f' got {type(blender)} instead')
             return
         if isinstance(price_type, str):
+            # 当直接给出price_type时，仅为这个price_type赋予blender
             if price_type not in self.bt_price_types:
                 warnings.warn('price type is not valid, no blender will be created!')
                 return
             if isinstance(blender, str):
-                self._stg_blender[price_type] = blender_parser(blender)
+                # TODO: 此处似乎应该增加blender字符串的合法性检查？？
+                try:
+                    parsed_blender = blender_parser(blender)
+                    self._stg_blender[price_type] = parsed_blender
+                    self._stg_blender_strings[price_type] = blender
+                except:
+                    self._stg_blender_strings[price_type] = None
+                    self._stg_blender[price_type] = []
             else:
+                # 忽略类型不正确的blender输入
+                self._stg_blender_strings[price_type] = None
                 self._stg_blender[price_type] = []
         else:
             raise TypeError(f'price_type should be a string, got {type(price_type)} instead')
@@ -847,9 +863,23 @@ class Operator:
             return self._stg_blender
         if price_type not in self.bt_price_types:
             return None
-        if price_type not in self.strategy_blenders:
+        if price_type not in self._stg_blender:
             return None
         return self._stg_blender[price_type]
+
+    def view_blender(self, price_type=None):
+        """返回operator对象中的多空蒙板混合器的可读版本, 即返回blender的原始字符串
+
+        :param price_type: str 一个可用的price_type
+
+        """
+        if price_type is None:
+            return self._stg_blender_strings
+        if price_type not in self.bt_price_types:
+            return None
+        if price_type not in self._stg_blender:
+            return None
+        return self._stg_blender_strings[price_type]
 
     def set_parameter(self,
                       stg_id: str,
@@ -959,7 +989,7 @@ class Operator:
             print(f'for backtest histoty price type: {price_type}: \n'
                   f'{self.get_strategies_by_price_type(price_type)}:')
             if self.strategy_blenders != {}:
-                print(f'signal blenders: {self.get_blender(price_type)}')
+                print(f'signal blenders: {self.view_blender(price_type)}')
             else:
                 print(f'no blender')
         # 打印每个strategy的详细信息
@@ -1111,9 +1141,11 @@ class Operator:
                     stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
             # 生成的选股蒙板添加到选股蒙板队列中，
 
-        # blended_signal = self._selecting_blend(op_signals)  # 根据蒙板混合前缀表达式混合所有蒙板
+        # 根据蒙板混合前缀表达式混合所有蒙板
+        # 针对不同的looping-price-type，应该生成不同的signal，因此不同looping-price-type的signal需要分别混合
+        # 最终输出的signal可能是一个HistoryPanel对象
         signal_blender = self.get_blender(self.bt_price_types[0])
-        import pdb; pdb.set_trace()
+
         blended_signal = signal_blend(op_signals, blender=signal_blender)
 
         # 生成DataFrame，并且填充日期数据
@@ -1122,4 +1154,5 @@ class Operator:
         lst = pd.DataFrame(blended_signal, index=date_list, columns=shares)
         # 定位lst中所有不全为0的行
         lst_out = lst.loc[lst.any(axis=1)]
+        # import pdb; pdb.set_trace()
         return lst_out
