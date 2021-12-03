@@ -1098,9 +1098,10 @@ class Operator:
     # TODO: hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
     # TODO: 需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
     def create_signal(self, hist_data: HistoryPanel):
-        """ 操作信号生成方法，在输入的历史数据上分别应用选股策略、择时策略和风险控制策略，生成初步交易信号后，
+        """生成交易信号
 
-        对信号进行合法性处理，最终生成合法交易信号
+        在生成交易信号之前需要调用prepare_data准备好相应的
+
         input:
         :param hist_data:
             :type hist_data: HistoryPanel
@@ -1132,14 +1133,13 @@ class Operator:
         op_signals = []
         shares = hist_data.shares
         date_list = hist_data.hdates
-        # TODO， 使用map代替for loop可能能够再次提升运行速度
-        for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成选股蒙板
+        for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
             # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
             # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
             history_length = dt.shape[1]
             op_signals.append(
                     stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
-            # 生成的选股蒙板添加到选股蒙板队列中，
+            # 生成的交易信号添加到交易信号队列中，
 
         # 根据蒙板混合前缀表达式混合所有蒙板
         # 针对不同的looping-price-type，应该生成不同的signal，因此不同looping-price-type的signal需要分别混合
@@ -1153,6 +1153,7 @@ class Operator:
         # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
         lst = pd.DataFrame(blended_signal, index=date_list, columns=shares)
         # 定位lst中所有不全为0的行
-        lst_out = lst.loc[lst.any(axis=1)]
+        # lst_out = lst.loc[lst.any(axis=1)]
+        lst_out = lst
         # import pdb; pdb.set_trace()
         return lst_out

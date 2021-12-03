@@ -37,3 +37,4 @@ configurations.txt
 qteasy/data/close.dat
 qteasy/.DS_Store
 .DS_Store
+ani_plot.py

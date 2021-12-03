@@ -2446,6 +2446,7 @@ class TestSelStrategyDiffTime(qt.SimpleSelecting):
     选股比例为平均分配
     """
 
+    # TODO: This strategy is not working, find out why and improve
     def __init__(self):
         super().__init__(stg_name='test_SEL',
                          stg_text='test portfolio selection strategy',
@@ -2972,7 +2973,7 @@ class TestOperator(unittest.TestCase):
         blender_close = op.get_blender('close')
         blender_high = op.get_blender('high')
         blender_abc = op.get_blender('abc')
-        self.assertEqual(op.strategy_blenders, {'open':  ['+', '3', '+', '2', '1']})
+        self.assertEqual(op.strategy_blenders, {'open': ['+', '3', '+', '2', '1']})
         self.assertEqual(blender_open, ['+', '3', '+', '2', '1'])
         self.assertEqual(blender_close, None)
         self.assertEqual(blender_high, None)
@@ -3190,7 +3191,13 @@ class TestOperator(unittest.TestCase):
             these data are stored in list of nd-arrays, each ndarray represents the data
             that is needed for each and every strategy
         """
-        raise NotImplementedError
+        print(f'------- Test getting operation history data ---------')
+        op = qt.Operator()
+        self.assertIsInstance(op.strategy_blenders, dict)
+        self.assertIsInstance(op.signal_type, str)
+        self.assertEqual(op.strategy_blenders, {})
+        self.assertEqual(op.op_history_data, [])
+        self.assertEqual(op.signal_type, 'pt')
 
     def test_property_opt_space_par(self):
         """ test property opt_space_par"""
@@ -3439,6 +3446,11 @@ class TestOperator(unittest.TestCase):
         on_spot_cash = qt.CashPlan(dates='2016-07-08', amounts=10000)
         no_trade_cash = qt.CashPlan(dates='2016-07-08, 2016-07-30, 2016-08-11, 2016-09-03',
                                     amounts=[10000, 10000, 10000, 10000])
+        # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
+        self.assertRaises(AssertionError,
+                          self.op.prepare_data,
+                          hist_data=self.hp1,
+                          cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
         multi_cash = qt.CashPlan(dates='2016-07-08, 2016-08-08', amounts=[10000, 10000])
         self.op.set_parameter(stg_id='custom',
@@ -3458,6 +3470,9 @@ class TestOperator(unittest.TestCase):
                              cash_plan=on_spot_cash)
         self.assertIsInstance(self.op._op_history_data, list)
         self.assertEqual(len(self.op._op_history_data), 3)
+        # test if automatic strategy blenders are set
+        self.assertEqual(self.op.strategy_blenders,
+                         {'close': ['+', '2', '+', '1', '0']})
         tim_hist_data = self.op._op_history_data[0]
         sel_hist_data = self.op._op_history_data[1]
         ric_hist_data = self.op._op_history_data[2]
@@ -3517,14 +3532,134 @@ class TestOperator(unittest.TestCase):
         # test the effect of data type sequence in strategy definition
 
     def test_operator_generate(self):
-        """
+        """ Test signal generation process of operator objects
 
         :return:
         """
+        # 使用test模块的自定义策略生成三种交易策略
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
+        test_sel2 = TestSelStrategyDiffTime()
         test_sig = TestSigStrategy()
-        self.op = qt.Operator(strategies=[test_ls, test_sel, test_sig])
+        print('--Test PT type signal generation--')
+        # 测试PT类型的信号生成：
+        # 创建一个Operator对象，信号类型为PT（比例目标信号）
+        # 这个Operator对象包含两个策略，分别为LS-Strategy以及Sel-Strategy，代表择时和选股策略
+        # 两个策略分别生成PT信号后混合成一个信号输出
+        self.op = qt.Operator(strategies=[test_ls, test_sel])
+        self.op.set_parameter(stg_id='custom',
+                              pars={'000010': (5, 10.),
+                                    '000030': (5, 10.),
+                                    '000039': (5, 6.)})
+        self.op.set_parameter(stg_id=1,
+                              pars=())
+        # self.op.set_blender(blender='0+1+2')
+        self.op.prepare_data(hist_data=self.hp1,
+                             cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        print('--test operator information in normal mode--')
+        self.op.info()
+        print('--test operator information in verbose mode--')
+        self.op.info(verbose=True)
+        self.assertEqual(self.op.strategy_blenders,
+                         {'close': ['+', '1', '0']})
+        self.op.set_blender(None, '0*1')
+        self.assertEqual(self.op.strategy_blenders,
+                         {'close': ['*', '1', '0']})
+        print('--test operation signal created in Proportional Target (PT) Mode--')
+        op_list = self.op.create_signal(hist_data=self.hp1)
+        print(f'operation list is created: as following:\n {op_list}')
+        self.assertTrue(isinstance(op_list, pd.DataFrame))
+        self.assertEqual(op_list.shape, (45, 3))
+        target_op_dates = ['2016/07/08', '2016/07/11', '2016/07/12', '2016/07/13', '2016/07/14',
+                           '2016/07/15', '2016/07/18', '2016/07/19', '2016/07/20', '2016/07/21',
+                           '2016/07/22', '2016/07/25', '2016/07/26', '2016/07/27', '2016/07/28',
+                           '2016/07/29', '2016/08/01', '2016/08/02', '2016/08/03', '2016/08/04',
+                           '2016/08/05', '2016/08/08', '2016/08/09', '2016/08/10', '2016/08/11',
+                           '2016/08/12', '2016/08/15', '2016/08/16', '2016/08/17', '2016/08/18',
+                           '2016/08/19', '2016/08/22', '2016/08/23', '2016/08/24', '2016/08/25',
+                           '2016/08/26', '2016/08/29', '2016/08/30', '2016/08/31', '2016/09/01',
+                           '2016/09/02', '2016/09/05', '2016/09/06', '2016/09/07', '2016/09/08']
+        target_op_values = np.array([[0, 0, 0],
+                                     [0, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0.5, 0],
+                                     [0.5, 0.5, 0],
+                                     [0.5, 0.5, 0],
+                                     [0.5, 0.5, 0],
+                                     [0.5, 0.5, 0],
+                                     [0.5, 0.5, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0, 0],
+                                     [0.5, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0.5],
+                                     [0, 0.5, 0.5],
+                                     [0, 0.5, 0.5],
+                                     [0, 0.5, 0.5],
+                                     [0, 0.5, 0.5],
+                                     [0, 0.5, 0.5],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0],
+                                     [0, 0.5, 0]])
+        target_op = pd.DataFrame(data=target_op_values, index=target_op_dates, columns=['000010', '000030', '000039'])
+        target_op = target_op.rename(index=pd.Timestamp)
+        print(f'target operation list is as following:\n {target_op}')
+        dates_pairs = [[date1, date2, date1 == date2]
+                       for date1, date2
+                       in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]
+        all_dates_equal = all(date1 == date2
+                              for date1, date2
+                              in zip(target_op.index.strftime("%m-%d"), op_list.index.strftime("%m-%d")))
+        print(f'All dates are equal?\n'
+              f'{all_dates_equal}')
+        signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
+                        for sig1, sig2
+                        in zip(list(target_op.values), list(op_list.values))]
+        all_signal_equal = all(all(sig1 == sig2)
+                               for sig1, sig2
+                               in zip(list(target_op.values), list(op_list.values)))
+        print(f'all signals are equal?\n'
+              f'{all_signal_equal}')
+        print(f'dates side by side:\n '
+              f'{dates_pairs}')
+        print(f'signals side by side:\n'
+              f'{signal_pairs}')
+        print([item[2] for item in dates_pairs])
+        print([item[2] for item in signal_pairs])
+        self.assertTrue(np.allclose(target_op.values, op_list.values, equal_nan=True))
+        self.assertTrue(all([date1 == date2
+                             for date1, date2
+                             in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]))
+
+        print('--Test PS Type signal generation--')
+        # 测试PS类型的信号生成：
+        # 创建一个Operator对象，信号类型为PS（比例交易信号）
+        # 这个Operator对象包含两个SigStrategy策略，策略类型相同但是策略的参数不同
+        # 两个策略分别生成PS信号后混合成一个信号输出
+        self.op = qt.Operator(strategies=[test_ls, test_sel])
         self.assertIsInstance(self.op, qt.Operator, 'Operator Creation Error')
         self.op.set_parameter(stg_id='custom',
                               pars={'000300': (5, 10.),
@@ -3539,18 +3674,20 @@ class TestOperator(unittest.TestCase):
                           cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
-        self.op.signal_type = 'pt'
         # self.op.set_blender(blender='0+1+2')
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        print('--test how operator information is printed out--')
         self.op.info()
+        print('--test how operator information is printed out in verbose mode--')
         self.op.info(verbose=True)
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['+', '2', '+', '1', '0']})
+        print('--test opeartion signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
         self.assertTrue(isinstance(op_list, pd.DataFrame))
-        self.assertEqual(op_list.shape, (26, 3))
+        self.assertEqual(op_list.shape, (45, 3))
         target_op_dates = ['2016/07/08', '2016/07/12', '2016/07/13', '2016/07/14',
                            '2016/07/18', '2016/07/20', '2016/07/22', '2016/07/26',
                            '2016/07/27', '2016/07/28', '2016/08/02', '2016/08/03',
@@ -3590,9 +3727,19 @@ class TestOperator(unittest.TestCase):
         dates_pairs = [[date1, date2, date1 == date2]
                        for date1, date2
                        in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]
+        all_dates_equal = all(date1 == date2
+                              for date1, date2
+                              in zip(target_op.index.strftime("%m-%d"), op_list.index.strftime("%m-%d")))
+        print(f'All dates are equal?\n'
+              f'{all_dates_equal}')
         signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
                         for sig1, sig2
                         in zip(list(target_op.values), list(op_list.values))]
+        all_signal_equal = all(all(sig1 == sig2)
+                               for sig1, sig2
+                               in zip(list(target_op.values), list(op_list.values)))
+        print(f'all signals are equal?\n'
+              f'{all_signal_equal}')
         print(f'dates side by side:\n '
               f'{dates_pairs}')
         print(f'signals side by side:\n'
@@ -3652,8 +3799,8 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.get_blender('high'), ['&', '2', '|', '1', '0'])
         op.set_blender('close', '0 & 1 | 2')
         self.assertEqual(op.get_blender(), {'close': ['|', '2', '&', '1', '0'],
-                                            'high': ['&', '2', '|', '1', '0'],
-                                            'open': ['|', '2', '&', '1', '0']})
+                                            'high':  ['&', '2', '|', '1', '0'],
+                                            'open':  ['|', '2', '&', '1', '0']})
 
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
@@ -3688,7 +3835,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(signal_blend([5, 9, 1, 4], blender), 7)
         # pars: '(0*1/2*(3+4))+5*(6+7)-8'
         self.assertEqual(blender_parser('(0*1/2*(3+4))+5*(6+7)-8'), ['-', '8', '+', '*', '+', '7', '6', '5', '*',
-                                                          '+', '4', '3', '/', '2', '*', '1', '0'])
+                                                                     '+', '4', '3', '/', '2', '*', '1', '0'])
         blender = blender_parser('(0*1/2*(3+4))+5*(6+7)-8')
         self.assertEqual(signal_blend([1, 1, 1, 1, 1, 1, 1, 1, 1], blender), 3)
         self.assertEqual(signal_blend([2, 1, 4, 3, 5, 5, 2, 2, 10], blender), 14)
@@ -3761,13 +3908,13 @@ class TestOperator(unittest.TestCase):
         print(f'RPN of notation: "1 + sum(1,2,3+3, sum(1, 2) + 3) *5" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertEqual(blender, ['+', '*', '5', 'sum(4)', '+', '3', 'sum(2)', '2', '1',
-                                                          '+', '3', '3', '2', '1', '1'])
+                                   '+', '3', '3', '2', '1', '1'])
         blender = blender_parser('1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)')
         print(f'RPN of notation: "1+sum(1,2,(3+5)*4, sum(3, (4+5)*6), 7-8) * (2+3)" is:\n'
               f'{" ".join(blender[::-1])}')
         self.assertEqual(blender, ['+', '*', '+', '3', '2', 'sum(5)', '-', '8', '7',
-                                                          'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
-                                                          '+', '5', '3', '2', '1', '1'])
+                                   'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
+                                   '+', '5', '3', '2', '1', '1'])
 
         # TODO: ndarray type of signals to be tested:
 
