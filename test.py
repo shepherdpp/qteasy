@@ -2731,10 +2731,10 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        self.assertEqual(op.strategy_id, ['macd', 'dma', 'trix'])
+        self.assertEqual(op.strategy_ids, ['macd', 'dma', 'trix'])
         self.assertIs(op.get_strategy_by_id('macd'), op.strategies[0])
         self.assertIs(op.get_strategy_by_id(1), op.strategies[1])
         self.assertIs(op.get_strategy_by_id('trix'), op.strategies[2])
@@ -2744,10 +2744,10 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        self.assertEqual(op.strategy_id, ['macd', 'dma', 'trix'])
+        self.assertEqual(op.strategy_ids, ['macd', 'dma', 'trix'])
         self.assertIs(op['macd'], op.strategies[0])
         self.assertIs(op['trix'], op.strategies[2])
         self.assertIs(op[1], op.strategies[1])
@@ -2758,7 +2758,7 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
         op.set_parameter('macd', price_type='open')
@@ -2785,7 +2785,7 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
         op.set_parameter('macd', price_type='open')
@@ -2812,7 +2812,7 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
         op.set_parameter('macd', price_type='open')
@@ -2840,7 +2840,7 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertIsInstance(op, qt.Operator)
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
         op.set_parameter('macd', price_type='open')
@@ -2912,27 +2912,27 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op2.get_strategy_count_by_price_type('open'), 0)
 
     def test_property_strategy_names(self):
-        """ test property strategy_id"""
+        """ test property strategy_ids"""
         op = qt.Operator('dma')
-        self.assertIsInstance(op.strategy_id, list)
-        names = op.strategy_id[0]
+        self.assertIsInstance(op.strategy_ids, list)
+        names = op.strategy_ids[0]
         print(f'names are {names}')
         self.assertEqual(names, 'dma')
 
         op = qt.Operator('dma, macd, trix, cdl')
-        self.assertIsInstance(op.strategy_id, list)
-        self.assertEqual(op.strategy_id[0], 'dma')
-        self.assertEqual(op.strategy_id[1], 'macd')
-        self.assertEqual(op.strategy_id[2], 'trix')
-        self.assertEqual(op.strategy_id[3], 'cdl')
+        self.assertIsInstance(op.strategy_ids, list)
+        self.assertEqual(op.strategy_ids[0], 'dma')
+        self.assertEqual(op.strategy_ids[1], 'macd')
+        self.assertEqual(op.strategy_ids[2], 'trix')
+        self.assertEqual(op.strategy_ids[3], 'cdl')
 
         op = qt.Operator('dma, macd, trix, dma, dma')
-        self.assertIsInstance(op.strategy_id, list)
-        self.assertEqual(op.strategy_id[0], 'dma')
-        self.assertEqual(op.strategy_id[1], 'macd')
-        self.assertEqual(op.strategy_id[2], 'trix')
-        self.assertEqual(op.strategy_id[3], 'dma_1')
-        self.assertEqual(op.strategy_id[4], 'dma_2')
+        self.assertIsInstance(op.strategy_ids, list)
+        self.assertEqual(op.strategy_ids[0], 'dma')
+        self.assertEqual(op.strategy_ids[1], 'macd')
+        self.assertEqual(op.strategy_ids[2], 'trix')
+        self.assertEqual(op.strategy_ids[3], 'dma_1')
+        self.assertEqual(op.strategy_ids[4], 'dma_2')
 
     def test_property_strategy_blenders(self):
         """ test property strategy blenders including property setter,
@@ -3411,10 +3411,10 @@ class TestOperator(unittest.TestCase):
         print('test removing strategies from Operator')
         op.remove_strategy('dma')
         self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_id, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_id, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
 
     def test_opeartor_clear_strategies(self):
         """ test operator clear strategies"""
@@ -3425,15 +3425,15 @@ class TestOperator(unittest.TestCase):
         print('test removing strategies from Operator')
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
         op.add_strategy('dma', pars=(12, 123, 25))
         self.assertEqual(op.strategy_count, 1)
-        self.assertEqual(op.strategy_id, ['dma'])
+        self.assertEqual(op.strategy_ids, ['dma'])
         self.assertEqual(type(op.strategies[0]), TimingDMA)
         self.assertEqual(op.strategies[0].pars, (12, 123, 25))
         op.clear_strategies()
         self.assertEqual(op.strategy_count, 0)
-        self.assertEqual(op.strategy_id, [])
+        self.assertEqual(op.strategy_ids, [])
 
     def test_operator_prepare_data(self):
         """test processes that related to prepare data"""

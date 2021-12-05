@@ -305,27 +305,23 @@ class Operator:
                               'volume signal':     'vs'}
 
     def __init__(self, strategies=None, signal_type=None):
-        """生成具体的Operator对象
+        """ 生成具体的Operator对象
+            每个Operator对象主要包含多个strategy对象，每一个strategy对象都会被赋予一个唯一的ID，通过
+            这个ID可以访问所有的Strategy对象，除ID以外，每个strategy也会有一个唯一的序号，通过该序号也可以
+            访问所有的额strategy对象。或者给相应的strategy对象设置、调整参数。
 
-        Operator对象的基本数据结构：包含四个列表加一个字典Dict，存储相关信息：
-            _stg_id:            str, 交易策略列表，按照顺序保存所有相关策略对象的id（名称），如['MACD', 'DMA', 'MACD']
-            _strategies:        :type: [Strategy, ...],
-                                按照顺序存储所有的策略对象，如[Timing(MACD), Timing(timing_DMA), Timing(MACD)]
-            _op_history_data:
-                                :type [ndarray, ...], 列表中按照顺序保存用于不同策略的三维历史数据切片
-            _backtest_history_data:
-                                :type [ndarray, ...], 列表中按照顺序保存用于不同策略回测的交易价格数据
-            _op_blenders:       :type dict,
-                                "信号混合"字典，包含不同价格类型交易信号的混合表达式，dict的键对应不同的
-                                交易价格类型，每个值包含交易信号混合表达式，表达式存储为一个列表，表达式以逆波兰式
-                                存储(RPN, Reversed Polish Notation)
+        input:
+            :param strategies:  str, 用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
+                                如果不给出strategies，则会生成一个空的Operator对象
+
+            :param signal_type: str, 需要生成的交易信号的类型，包含以下三种类型:
+                                        'pt', 'ps', 'vs'
+                                默认交易信号类型为'ps'
+
         Operator对象的基本属性包括：
             signal_type:
 
 
-        input:
-            :param strategies: str, 用于生成交易信号的交易策略清单（以交易信号的id或交易信号对象本身表示）
-            :param signal_type: str, 需要生成的交易信号的类型，包含一下三种类型
         """
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
@@ -341,12 +337,61 @@ class Operator:
             signal_type = 'pt'
 
         # 初始化基本数据结构
+        '''
+        Operator对象的基本数据结构包含一个列表和多个字典Dict，分别存储对象中Strategy对象的信息：
+        一个列表是Strategy ID list即策略ID列表：
+            _stg_id:            交易策略ID列表，保存所有相关策略对象的唯一标识id（名称），如:
+                                    ['MACD', 
+                                     'DMA', 
+                                     'MACD-1']
+        
+        这些Dict分为两类：
+        第一类保存所有Strategy交易策略的信息：这一类字典的键都是该Strategy的ID：
+                                     
+            _strategies:        以字典形式存储所有交易策略对象本身
+                                存储所有的策略对象，如:
+                                    {'MACD':    Timing(MACD), 
+                                     'DMA':     Timing(timing_DMA), 
+                                     'MACD-1':  Timing(MACD)}
+                                     
+            _op_history_data:   以字典形式保存用于所有策略交易信号生成的历史数据切片（HistoryPanel对象切片）
+                                例如：
+                                    {'MACD':    ndarray-MACD, 
+                                     'DMA':     ndarray-DMA, 
+                                     'MACD-1':  ndarray-MACD-1}
+                                     
+        第二类Dict保存不同回测价格类型的交易策略的混合表达式和混合操作队列
+                                
+            _stg_blender_strings:
+                                交易信号混合表达式，该表达式决定了一组多个交易信号应该如何共同影响
+                                最终的交易决策，通过该表达式用户可以灵活地控制不同交易信号对最终交易
+                                信号的影响，例如只有当多个交易信号同时存在买入时才买入，等等。
+                                交易信号表达式以类似于四则运算表达式以及函数式的方式表达，解析后应用
+                                到所有交易信号中
+                                例如：
+                                    {'close':    '0 + 1', 
+                                     'open':     '2*(0+1)'}
+                                
+            _stg_blenders:      "信号混合"字典，包含不同价格类型交易信号的混合操作队列，dict的键对应不同的
+                                交易价格类型，Value为交易信号混合操作队列，操作队列以逆波兰式
+                                存储(RPN, Reversed Polish Notation)
+                                例如：
+                                    {'close':    ['*', '1', '0'], 
+                                     'open':     ['*', '2', '+', '1', '0']}
+                                
+        '''
+        # TODO: 将strategies以及op_history_data两个数据结构改为dict，便于随机抓取
+        # TODO: 每一个strategy在Operator对象中都会被赋予一个唯一的index, 根据这个index
+        # TODO: 可以找到这个strategy的id、strategy对象以及op_history_data
+
         self._signal_type = ''  # 保存operator对象输出的信号类型
-        self._strategy_id = []  # 保存所有交易策略的id，便于识别每个交易策略
-        self._strategies = []  # 保存实际的交易策略对象
-        self._op_history_data = []  # 保存供各个策略进行交易信号生成的历史数据（ndarray）
-        self._stg_blender = {}  # 字典——交易信号混合表达式的解析式
-        self._stg_blender_strings = {}  # 交易信号混和表达式的原始字符串形式
+
+        self._next_stg_index = 0    # int——递增的策略index，确保不会出现重复的index
+        self._strategy_id = []      # List——保存所有交易策略的id，便于识别每个交易策略
+        self._strategies = {}       # Dict——保存实际的交易策略对象
+        self._op_history_data = {}  # Dict——保存供各个策略进行交易信号生成的历史数据（ndarray）
+        self._stg_blender = {}      # Dict——交易信号混合表达式的解析式
+        self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
         # 添加strategy对象
         self.add_strategies(stg)
@@ -357,22 +402,22 @@ class Operator:
         res = list()
         res.append('Operator(')
         if self.strategy_count > 0:
-            res.append(', '.join(self.strategy_id))
+            res.append(', '.join(self.strategy_ids))
         res.append(')')
         return ''.join(res)
 
     @property
     def strategies(self):
-        """返回operator对象的所有timing对象"""
+        """返回operator对象的所有Strategy对象"""
         return self._strategies
 
     @property
     def strategy_count(self):
-        """返回operator对象中的所有timing对象的数量"""
+        """返回operator对象中的所有Strategy对象的数量"""
         return len(self.strategies)
 
     @property
-    def strategy_id(self):
+    def strategy_ids(self):
         """返回operator对象中所有交易策略对象的ID"""
         return self._strategy_id
 
@@ -548,14 +593,14 @@ class Operator:
             warnings.warn('the item is in a wrong format and can not be parsed!')
             return
         if item_is_str:
-            if item not in self.strategy_id:
+            if item not in self.strategy_ids:
                 warnings.warn('the strategy name can not be recognized!')
                 return
             return self.get_strategy_by_id(item)
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             item = strategy_count - 1
-        return self.strategies[item]
+        return self.strategies[self.strategy_ids[item]]
 
     def add_strategies(self, strategies):
         """ 添加多个Strategy交易策略到Operator对象中
@@ -605,15 +650,15 @@ class Operator:
             raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
 
         self._strategy_id.append(self._next_stg_id(stg_id))
-        self._strategies.append(strategy)
+        self._strategies[stg_id] = strategy
         # 逐一修改该策略对象的各个参数
         self.set_parameter(stg_id=stg_id, **kwargs)
 
     def _next_stg_id(self, stg_id):
         """ find out next available strategy id"""
         assert isinstance(stg_id, str)
-        if stg_id in self.strategy_id:
-            stg_id_stripped = [ID.partition("_")[0] for ID in self.strategy_id if ID.partition("_")[0] == stg_id]
+        if stg_id in self.strategy_ids:
+            stg_id_stripped = [ID.partition("_")[0] for ID in self.strategy_ids if ID.partition("_")[0] == stg_id]
             next_id = stg_id + "_" + str(len(stg_id_stripped))
             return next_id
         else:
@@ -630,10 +675,10 @@ class Operator:
             else:
                 pos = -1
         if isinstance(id_or_pos, str):
-            if id_or_pos not in self.strategy_id:
+            if id_or_pos not in self.strategy_ids:
                 raise ValueError(f'the strategy {id_or_pos} is not in operator')
             else:
-                pos = self.strategy_id.index(id_or_pos)
+                pos = self.strategy_ids.index(id_or_pos)
         self._strategy_id.pop(pos)
         self._strategies.pop(pos)
         return
@@ -644,11 +689,11 @@ class Operator:
         :return:
         """
         if self.strategy_count > 0:
-            self._strategy_id = []
-            self._strategies = []
+            self._strategy_id = {}
+            self._strategies = {}
             self._stg_blender = {}
             self._stg_blender_strings = {}
-            self._op_history_data = []
+            self._op_history_data = {}
         return
 
     def get_strategies_by_price_type(self, price_type=None):
@@ -680,26 +725,29 @@ class Operator:
         如果给出price_type时，返回使用该price_type的交易策略名称"""
         res = []
         if price_type is None:
-            res = self.strategy_id
+            res = self.strategy_ids
         else:
-            for stg, stg_id in zip(self.strategies, self.strategy_id):
+            for stg, stg_id in zip(self.strategies, self.strategy_ids):
                 if stg.price_type == price_type:
                     res.append(stg_id)
         return res
 
     def get_strategy_by_id(self, stg_id):
         """ 根据输入的策略名称返回strategy对象"""
+        all_ids = self.strategy_ids
+        stg_count = self.strategy_count
         if isinstance(stg_id, str):
-            assert stg_id in self.strategy_id, f'stg_id {stg_id} can not be found in operator. \n' \
-                                                            f'{self.strategy_id}'
-            stg_id_list = self.strategy_id
-            stg_idx = stg_id_list.index(stg_id)
+            assert stg_id in all_ids, f'stg_id {stg_id} can not be found in operator. \n' \
+                                                            f'{all_ids}'
         elif isinstance(stg_id, int):
-            stg_idx = stg_id
+            if stg_id < 0:
+                stg_id = 0
+            elif stg_id > stg_count:
+                stg_id = stg_count
+            stg_id = all_ids[stg_id]
         else:
             raise TypeError(f'stg_id should be a string or an integer, got {type(stg_id)} instead!')
-        strategies = self.strategies
-        return strategies[stg_idx]
+        return self.strategies[stg_id]
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -1088,19 +1136,22 @@ class Operator:
         self._op_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
                                  for stg in self.strategies]
 
-    # TODO: 需要改进：
-    # TODO: 供回测或实盘交易的交易信号应该转化为交易订单，并支持期货交易，因此生成的交易订单应该包含四类：
-    # TODO: 1，Buy-开多仓，2，sell-平多仓，3，sel_short-开空仓，4，buy_to_cover-平空仓
-    # TODO: 应该创建标准的交易订单模式，并且通过一个函数把交易信号转化为交易订单，以供回测或实盘交易使用
-
     # TODO: 需要调查：
     # TODO: 为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
     # TODO: hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
     # TODO: 需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
+    # TODO: ————上述问题的原因是生成的交易信号仍然被转化为DataFrame，shares和dates被作为列标签和行标签传入DataFrame，进而
+    # TODO: 被用于消除不需要的行，同时还保证原始行号信息不丢失。在新的架构下，似乎可以不用创建一个DataFrame对象，直接返回ndarray
+    # TODO: 这样不仅可以消除参数hist_data的使用，还能进一步提升速度
     def create_signal(self, hist_data: HistoryPanel):
-        """生成交易信号
+        """生成交易信号：
+            遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
+            如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
+            如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
 
-        在生成交易信号之前需要调用prepare_data准备好相应的
+
+
+            在生成交易信号之前需要调用prepare_data准备好相应的
 
         input:
         :param hist_data:
@@ -1121,39 +1172,34 @@ class Operator:
         """
 
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联相应的历史数据
-        # TODO: 这里的格式检查是否可以移到prepare_data()中去？这样效率更高
-        assert isinstance(hist_data, HistoryPanel), \
-            f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}'
-        assert len(self._op_history_data) > 0, \
-            f'ObjectSetupError: history data should be set before signal creation!'
-        for history_data in self._op_history_data:
-            assert len(history_data) > 0, \
-                f'ObjectSetupError: history data should be set before signal creation!'
+        if not isinstance(hist_data, HistoryPanel):
+            raise TypeError(f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}')
         from .blender import signal_blend
         op_signals = []
         shares = hist_data.shares
         date_list = hist_data.hdates
-        for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
-            # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
-            history_length = dt.shape[1]
-            op_signals.append(
-                    stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
-            # 生成的交易信号添加到交易信号队列中，
+        # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
+        # 一个字典保存所有交易价格类型各自的交易信号ndarray
+        signal_out = {}
+        for bt_price_type in self.bt_price_types:
+            # 针对每种交易价格类型分别遍历所有的策略
+            relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
+            for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
+                # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
+                # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
+                history_length = dt.shape[1]
+                op_signals.append(
+                        stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
+                # 生成的交易信号添加到交易信号队列中，
 
-        # 根据蒙板混合前缀表达式混合所有蒙板
-        # 针对不同的looping-price-type，应该生成不同的signal，因此不同looping-price-type的signal需要分别混合
-        # 最终输出的signal可能是一个HistoryPanel对象
-        signal_blender = self.get_blender(self.bt_price_types[0])
-
-        blended_signal = signal_blend(op_signals, blender=signal_blender)
+            # 根据蒙板混合前缀表达式混合所有蒙板
+            # 针对不同的looping-price-type，应该生成不同的signal，因此不同looping-price-type的signal需要分别混合
+            # 最终输出的signal可能是一个HistoryPanel对象
+            signal_blender = self.get_blender(bt_price_type)
+            blended_signal = signal_blend(op_signals, blender=signal_blender)
+            signal_out[bt_price_type] = blended_signal
 
         # 生成DataFrame，并且填充日期数据
-        date_list = hist_data.hdates[-blended_signal.shape[0]:]
-        # TODO: 在这里似乎可以不用DataFrame，直接生成一个np.ndarray速度更快
-        lst = pd.DataFrame(blended_signal, index=date_list, columns=shares)
-        # 定位lst中所有不全为0的行
-        # lst_out = lst.loc[lst.any(axis=1)]
-        lst_out = lst
+
         # import pdb; pdb.set_trace()
         return lst_out
