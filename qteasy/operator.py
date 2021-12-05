@@ -408,8 +408,8 @@ class Operator:
 
     @property
     def strategies(self):
-        """返回operator对象的所有Strategy对象"""
-        return self._strategies
+        """以列表的形式返回operator对象的所有Strategy对象"""
+        return list(self._strategies.values())
 
     @property
     def strategy_count(self):
@@ -596,11 +596,23 @@ class Operator:
             if item not in self.strategy_ids:
                 warnings.warn('the strategy name can not be recognized!')
                 return
-            return self.get_strategy_by_id(item)
+            return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             item = strategy_count - 1
-        return self.strategies[self.strategy_ids[item]]
+        return self._strategies[self.strategy_ids[item]]
+
+    def get_stg(self, stg_id):
+        """ 获取一个strategy对象, Operator[item]的另一种用法
+
+        """
+        return self[stg_id]
+
+    def get_strategy_by_id(self, stg_id):
+        """ 获取一个strategy对象, Operator[item]的另一种用法
+
+        """
+        return self[stg_id]
 
     def add_strategies(self, strategies):
         """ 添加多个Strategy交易策略到Operator对象中
@@ -731,23 +743,6 @@ class Operator:
                 if stg.price_type == price_type:
                     res.append(stg_id)
         return res
-
-    def get_strategy_by_id(self, stg_id):
-        """ 根据输入的策略名称返回strategy对象"""
-        all_ids = self.strategy_ids
-        stg_count = self.strategy_count
-        if isinstance(stg_id, str):
-            assert stg_id in all_ids, f'stg_id {stg_id} can not be found in operator. \n' \
-                                                            f'{all_ids}'
-        elif isinstance(stg_id, int):
-            if stg_id < 0:
-                stg_id = 0
-            elif stg_id > stg_count:
-                stg_id = stg_count
-            stg_id = all_ids[stg_id]
-        else:
-            raise TypeError(f'stg_id should be a string or an integer, got {type(stg_id)} instead!')
-        return self.strategies[stg_id]
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
