@@ -380,9 +380,6 @@ class Operator:
                                      'open':     ['*', '2', '+', '1', '0']}
                                 
         '''
-        # TODO: 将strategies以及op_history_data两个数据结构改为dict，便于随机抓取
-        # TODO: 每一个strategy在Operator对象中都会被赋予一个唯一的index, 根据这个index
-        # TODO: 可以找到这个strategy的id、strategy对象以及op_history_data
 
         self._signal_type = ''  # 保存operator对象输出的信号类型
 
@@ -402,19 +399,19 @@ class Operator:
         res = list()
         res.append('Operator(')
         if self.strategy_count > 0:
-            res.append(', '.join(self.strategy_ids))
+            res.append(', '.join(self._strategy_id))
         res.append(')')
         return ''.join(res)
 
     @property
     def strategies(self):
         """以列表的形式返回operator对象的所有Strategy对象"""
-        return list(self._strategies.values())
+        return [self._strategies[stg_id] for stg_id in self._strategy_id]
 
     @property
     def strategy_count(self):
         """返回operator对象中的所有Strategy对象的数量"""
-        return len(self.strategies)
+        return len(self._strategy_id)
 
     @property
     def strategy_ids(self):
@@ -592,15 +589,16 @@ class Operator:
         if not (item_is_int or item_is_str):
             warnings.warn('the item is in a wrong format and can not be parsed!')
             return
+        all_ids = self._strategy_id
         if item_is_str:
-            if item not in self.strategy_ids:
+            if item not in all_ids:
                 warnings.warn('the strategy name can not be recognized!')
                 return
             return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
             item = strategy_count - 1
-        return self._strategies[self.strategy_ids[item]]
+        return self._strategies[all_ids[item]]
 
     def get_stg(self, stg_id):
         """ 获取一个strategy对象, Operator[item]的另一种用法
@@ -660,17 +658,17 @@ class Operator:
             strategy = stg
         else:
             raise TypeError(f'The strategy type \'{type(stg)}\' is not supported!')
-
-        self._strategy_id.append(self._next_stg_id(stg_id))
+        stg_id = self._next_stg_id(stg_id)
+        self._strategy_id.append(stg_id)
         self._strategies[stg_id] = strategy
         # 逐一修改该策略对象的各个参数
         self.set_parameter(stg_id=stg_id, **kwargs)
 
-    def _next_stg_id(self, stg_id):
+    def _next_stg_id(self, stg_id: str):
         """ find out next available strategy id"""
-        assert isinstance(stg_id, str)
-        if stg_id in self.strategy_ids:
-            stg_id_stripped = [ID.partition("_")[0] for ID in self.strategy_ids if ID.partition("_")[0] == stg_id]
+        all_ids = self._strategy_id
+        if stg_id in all_ids:
+            stg_id_stripped = [ID.partition("_")[0] for ID in all_ids if ID.partition("_")[0] == stg_id]
             next_id = stg_id + "_" + str(len(stg_id_stripped))
             return next_id
         else:
@@ -687,12 +685,14 @@ class Operator:
             else:
                 pos = -1
         if isinstance(id_or_pos, str):
-            if id_or_pos not in self.strategy_ids:
+            all_ids = self._strategy_id
+            if id_or_pos not in all_ids:
                 raise ValueError(f'the strategy {id_or_pos} is not in operator')
             else:
-                pos = self.strategy_ids.index(id_or_pos)
+                pos = all_ids.index(id_or_pos)
+        # 删除strategy的时候，不需要实际删除某个strategy，只需要删除其id即可
         self._strategy_id.pop(pos)
-        self._strategies.pop(pos)
+        # self._strategies.pop(pos)
         return
 
     def clear_strategies(self):
@@ -701,11 +701,12 @@ class Operator:
         :return:
         """
         if self.strategy_count > 0:
-            self._strategy_id = {}
+            self._strategy_id = []
             self._strategies = {}
+            self._op_history_data = {}
+
             self._stg_blender = {}
             self._stg_blender_strings = {}
-            self._op_history_data = {}
         return
 
     def get_strategies_by_price_type(self, price_type=None):
@@ -716,9 +717,23 @@ class Operator:
 
         """
         if price_type is None:
-            return self._strategies
+            return self.strategies
         else:
-            return [stg for stg in self._strategies if stg.price_type == price_type]
+            return [stg for stg in self.strategies if stg.price_type == price_type]
+
+    def get_op_history_data_by_price_type(self, price_type=None):
+        """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
+        如果给出price_type时，返回使用该price_type的所有策略的历史数据
+
+        :param price_type: str 一个可用的price_type
+
+        """
+        all_hist_data = self._op_history_data
+        if price_type is None:
+            return list(all_hist_data.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
@@ -735,14 +750,15 @@ class Operator:
     def get_strategy_id_by_price_type(self, price_type=None):
         """返回operator对象中所有交易策略对象的ID, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略名称"""
-        res = []
+        all_ids = self._strategy_id
         if price_type is None:
-            res = self.strategy_ids
+            return all_ids
         else:
-            for stg, stg_id in zip(self.strategies, self.strategy_ids):
+            res = []
+            for stg, stg_id in zip(self.strategies, all_ids):
                 if stg.price_type == price_type:
                     res.append(stg_id)
-        return res
+            return res
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -925,7 +941,7 @@ class Operator:
         return self._stg_blender_strings[price_type]
 
     def set_parameter(self,
-                      stg_id: str,
+                      stg_id: [str, int],
                       pars: [tuple, dict] = None,
                       opt_tag: int = None,
                       par_boes: [tuple, list] = None,
@@ -977,10 +993,9 @@ class Operator:
         assert isinstance(stg_id, (int, str)), f'stg_id should be a int or a string, got {type(stg_id)} instead'
         # 根据策略的名称或ID获取策略对象
         # TODO; 应该允许同时设置多个策略的参数（对于opt_tag这一类参数非常有用）
-        if isinstance(stg_id, str):
-            strategy = self.get_strategy_by_id(stg_id)
-        else:
-            strategy = self[stg_id]
+        strategy = self.get_strategy_by_id(stg_id)
+        if strategy is None:
+            raise KeyError(f'Specified strategie does not exist or can not be found!')
         # 逐一修改该策略对象的各个参数
         if pars is not None:  # 设置策略参数
             if strategy.set_pars(pars):
@@ -1128,8 +1143,8 @@ class Operator:
                 self.set_blender(price_type=price_type,
                                  blender='+'.join(map(str, range(stg_count_for_price_type))))
         # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
-        self._op_history_data = [hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                 for stg in self.strategies]
+        self._op_history_data = {stg_id: hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+                                 for stg_id, stg in zip(self._strategy_id, self.strategies)}
 
     # TODO: 需要调查：
     # TODO: 为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
@@ -1179,7 +1194,8 @@ class Operator:
         for bt_price_type in self.bt_price_types:
             # 针对每种交易价格类型分别遍历所有的策略
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
-            for stg, dt in zip(self.strategies, self.op_history_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
+            relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
+            for stg, dt in zip(relevant_strategies, relevant_hist_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
                 # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
                 # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
                 history_length = dt.shape[1]
@@ -1196,5 +1212,5 @@ class Operator:
 
         # 生成DataFrame，并且填充日期数据
 
-        # import pdb; pdb.set_trace()
-        return lst_out
+        import pdb; pdb.set_trace()
+        return signal_out

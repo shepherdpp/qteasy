@@ -3196,7 +3196,7 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(op.strategy_blenders, dict)
         self.assertIsInstance(op.signal_type, str)
         self.assertEqual(op.strategy_blenders, {})
-        self.assertEqual(op.op_history_data, [])
+        self.assertEqual(op.op_history_data, {})
         self.assertEqual(op.signal_type, 'pt')
 
     def test_property_opt_space_par(self):
@@ -3346,6 +3346,12 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(op.strategies[0], qt.TimingDMA)
         self.assertIsInstance(op.strategies[1], qt.SelectingAll)
         self.assertIsInstance(op.strategies[2], qt.RiconUrgent)
+        self.assertIsInstance(op[0], qt.TimingDMA)
+        self.assertIsInstance(op[1], qt.SelectingAll)
+        self.assertIsInstance(op[2], qt.RiconUrgent)
+        self.assertIsInstance(op['dma'], qt.TimingDMA)
+        self.assertIsInstance(op['all'], qt.SelectingAll)
+        self.assertIsInstance(op['urgent'], qt.RiconUrgent)
         self.assertEqual(op.strategy_count, 3)
         print(f'test adding strategies into existing op')
         print('test adding strategy by string')
@@ -3412,9 +3418,20 @@ class TestOperator(unittest.TestCase):
         op.remove_strategy('dma')
         self.assertEqual(op.strategy_count, 6)
         self.assertEqual(op.strategy_ids, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[2], op['dma_1'])
+        self.assertEqual(op.strategies[3], op['macd'])
+        self.assertEqual(op.strategies[4], op['dma_2'])
+        self.assertEqual(op.strategies[5], op['custom'])
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
         self.assertEqual(op.strategy_ids, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategies[0], op['all'])
+        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[2], op['macd'])
+        self.assertEqual(op.strategies[3], op['dma_2'])
+        self.assertEqual(op.strategies[4], op['custom'])
 
     def test_opeartor_clear_strategies(self):
         """ test operator clear strategies"""
@@ -3468,14 +3485,14 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=on_spot_cash)
-        self.assertIsInstance(self.op._op_history_data, list)
+        self.assertIsInstance(self.op._op_history_data, dict)
         self.assertEqual(len(self.op._op_history_data), 3)
         # test if automatic strategy blenders are set
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['+', '2', '+', '1', '0']})
-        tim_hist_data = self.op._op_history_data[0]
-        sel_hist_data = self.op._op_history_data[1]
-        ric_hist_data = self.op._op_history_data[2]
+        tim_hist_data = self.op._op_history_data['custom']
+        sel_hist_data = self.op._op_history_data['custom_1']
+        ric_hist_data = self.op._op_history_data['custom_2']
 
         print(f'in test_prepare_data in TestOperator:')
         print('selecting history data:\n', sel_hist_data)
@@ -3568,8 +3585,15 @@ class TestOperator(unittest.TestCase):
         print('--test operation signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal(hist_data=self.hp1)
         print(f'operation list is created: as following:\n {op_list}')
-        self.assertTrue(isinstance(op_list, pd.DataFrame))
-        self.assertEqual(op_list.shape, (45, 3))
+        self.assertTrue(isinstance(op_list, dict))
+        backtest_price_types = list(op_list.keys())
+        op_signals = list(op_list.values())
+        self.assertEqual(backtest_price_types[0], 'close')
+        self.assertEqual(op_signals[0].shape, (45, 3))
+        # self.assertEqual(backtest_price_types[1], 'close')
+        # self.assertEqual(op_signals[1].shape, (45, 3))
+
+        # TODO: 因为现在op.generate的输出是一个ndarray dict，因此不再需要对比日期，只需要直接比较输出结果即可
         target_op_dates = ['2016/07/08', '2016/07/11', '2016/07/12', '2016/07/13', '2016/07/14',
                            '2016/07/15', '2016/07/18', '2016/07/19', '2016/07/20', '2016/07/21',
                            '2016/07/22', '2016/07/25', '2016/07/26', '2016/07/27', '2016/07/28',
@@ -3762,6 +3786,7 @@ class TestOperator(unittest.TestCase):
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
         # TODO: allow set_parameters to a list of strategies or str-listed strategies
         # TODO: allow set_parameters to all strategies of specific bt price type
+        print(f'Set up strategy parameters by strategy id')
         op.set_parameter('dma',
                          pars=(5, 10, 5),
                          opt_tag=1,
@@ -3770,12 +3795,13 @@ class TestOperator(unittest.TestCase):
                          data_types=['close', 'open', 'high'])
         op.set_parameter('all',
                          window_length=20)
+        op.set_parameter('all', price_type='high')
+        print(f'Can also set up strategy parameters by strategy index')
+        op.set_parameter(2, price_type='open')
         op.set_parameter(2,
                          opt_tag=1,
                          pars=(9, -0.09),
                          window_length=10)
-        op.set_parameter('all', price_type='high')
-        op.set_parameter('urgent', price_type='open')
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
         self.assertEqual(op.strategies[0].par_boes, ((5, 10), (5, 15), (10, 15)))
         self.assertEqual(op.strategies[2].pars, (9, -0.09))
@@ -3785,8 +3811,11 @@ class TestOperator(unittest.TestCase):
                          ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
                           ['discr', 'discr', 'discr', 'discr', 'conti']))
         self.assertEqual(op.max_window_length, 20)
-        self.assertRaises(AssertionError, op.set_parameter, stg_id='t-1', pars=(1, 2))
-        self.assertRaises(AssertionError, op.set_parameter, stg_id='t1', pars=(1, 2))
+        print(f'KeyError will be raised if wrong strategy id is given')
+        self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
+        self.assertRaises(KeyError, op.set_parameter, stg_id='wrong_input', pars=(1, 2))
+        print(f'ValueError will be raised if parameter can be set')
+        self.assertRaises(ValueError, op.set_parameter, stg_id=0, pars=('wrong input', 'wrong input'))
         # test blenders of different price types
         # test setting blenders to different price types
         # TODO: to allow operands like "and", "or", "not", "xor"
