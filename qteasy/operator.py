@@ -1043,8 +1043,10 @@ class Operator:
         for data_type in self.op_data_types:
             all_op_data_types.append(data_type)
         print(", ".join(all_op_data_types))
+        print(f'{self.bt_price_type_count} types of back test price types:\n'
+              f'{self.bt_price_types}')
         for price_type in self.bt_price_types:
-            print(f'for backtest histoty price type: {price_type}: \n'
+            print(f'for backtest histoty price type - {price_type}: \n'
                   f'{self.get_strategies_by_price_type(price_type)}:')
             if self.strategy_blenders != {}:
                 print(f'signal blenders: {self.view_blender(price_type)}')
@@ -1205,12 +1207,9 @@ class Operator:
 
             # 根据蒙板混合前缀表达式混合所有蒙板
             # 针对不同的looping-price-type，应该生成不同的signal，因此不同looping-price-type的signal需要分别混合
-            # 最终输出的signal可能是一个HistoryPanel对象
+            # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             signal_out[bt_price_type] = blended_signal
 
-        # 生成DataFrame，并且填充日期数据
-
-        import pdb; pdb.set_trace()
         return signal_out

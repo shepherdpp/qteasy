@@ -3157,11 +3157,36 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(btp[0], 'close')
         op.set_parameter('macd', price_type='open')
         btp = op.bt_price_types
+        btpc = op.bt_price_type_count
         print(f'price_types are \n{btp}')
         self.assertIsInstance(btp, list)
         self.assertEqual(len(btp), 2)
         self.assertEqual(btp[0], 'close')
         self.assertEqual(btp[1], 'open')
+        self.assertEqual(btpc, 2)
+
+        op.add_strategies(['dma', 'macd'])
+        op.set_parameter('dma_1', price_type='high')
+        btp = op.bt_price_types
+        btpc = op.bt_price_type_count
+        self.assertEqual(btp[0], 'close')
+        self.assertEqual(btp[1], 'high')
+        self.assertEqual(btp[2], 'open')
+        self.assertEqual(btpc, 3)
+
+        op.remove_strategy('dma_1')
+        btp = op.bt_price_types
+        btpc = op.bt_price_type_count
+        self.assertEqual(btp[0], 'close')
+        self.assertEqual(btp[1], 'open')
+        self.assertEqual(btpc, 2)
+
+        op.remove_strategy('macd_1')
+        btp = op.bt_price_types
+        btpc = op.bt_price_type_count
+        self.assertEqual(btp[0], 'close')
+        self.assertEqual(btp[1], 'open')
+        self.assertEqual(btpc, 2)
 
     def test_property_op_data_type_list(self):
         """ test property op_data_type_list"""
@@ -3575,8 +3600,6 @@ class TestOperator(unittest.TestCase):
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test operator information in normal mode--')
         self.op.info()
-        print('--test operator information in verbose mode--')
-        self.op.info(verbose=True)
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['+', '1', '0']})
         self.op.set_blender(None, '0*1')
@@ -3584,7 +3607,7 @@ class TestOperator(unittest.TestCase):
                          {'close': ['*', '1', '0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal(hist_data=self.hp1)
-        print(f'operation list is created: as following:\n {op_list}')
+
         self.assertTrue(isinstance(op_list, dict))
         backtest_price_types = list(op_list.keys())
         op_signals = list(op_list.values())
@@ -3592,188 +3615,220 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op_signals[0].shape, (45, 3))
         # self.assertEqual(backtest_price_types[1], 'close')
         # self.assertEqual(op_signals[1].shape, (45, 3))
+        target_op_values = np.array([[0.0, 0.0, 0.0],
+                                     [0.0, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.0, 0.0],
+                                     [0.5, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.5],
+                                     [0.0, 0.5, 0.5],
+                                     [0.0, 0.5, 0.5],
+                                     [0.0, 0.5, 0.5],
+                                     [0.0, 0.5, 0.5],
+                                     [0.0, 0.5, 0.5],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0],
+                                     [0.0, 0.5, 0.0]])
 
-        # TODO: 因为现在op.generate的输出是一个ndarray dict，因此不再需要对比日期，只需要直接比较输出结果即可
-        target_op_dates = ['2016/07/08', '2016/07/11', '2016/07/12', '2016/07/13', '2016/07/14',
-                           '2016/07/15', '2016/07/18', '2016/07/19', '2016/07/20', '2016/07/21',
-                           '2016/07/22', '2016/07/25', '2016/07/26', '2016/07/27', '2016/07/28',
-                           '2016/07/29', '2016/08/01', '2016/08/02', '2016/08/03', '2016/08/04',
-                           '2016/08/05', '2016/08/08', '2016/08/09', '2016/08/10', '2016/08/11',
-                           '2016/08/12', '2016/08/15', '2016/08/16', '2016/08/17', '2016/08/18',
-                           '2016/08/19', '2016/08/22', '2016/08/23', '2016/08/24', '2016/08/25',
-                           '2016/08/26', '2016/08/29', '2016/08/30', '2016/08/31', '2016/09/01',
-                           '2016/09/02', '2016/09/05', '2016/09/06', '2016/09/07', '2016/09/08']
-        target_op_values = np.array([[0, 0, 0],
-                                     [0, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0.5, 0],
-                                     [0.5, 0.5, 0],
-                                     [0.5, 0.5, 0],
-                                     [0.5, 0.5, 0],
-                                     [0.5, 0.5, 0],
-                                     [0.5, 0.5, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0, 0],
-                                     [0.5, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0.5],
-                                     [0, 0.5, 0.5],
-                                     [0, 0.5, 0.5],
-                                     [0, 0.5, 0.5],
-                                     [0, 0.5, 0.5],
-                                     [0, 0.5, 0.5],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0],
-                                     [0, 0.5, 0]])
-        target_op = pd.DataFrame(data=target_op_values, index=target_op_dates, columns=['000010', '000030', '000039'])
-        target_op = target_op.rename(index=pd.Timestamp)
-        print(f'target operation list is as following:\n {target_op}')
-        dates_pairs = [[date1, date2, date1 == date2]
-                       for date1, date2
-                       in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]
-        all_dates_equal = all(date1 == date2
-                              for date1, date2
-                              in zip(target_op.index.strftime("%m-%d"), op_list.index.strftime("%m-%d")))
-        print(f'All dates are equal?\n'
-              f'{all_dates_equal}')
         signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
                         for sig1, sig2
-                        in zip(list(target_op.values), list(op_list.values))]
+                        in zip(list(target_op_values), list(op_signals[0]))]
         all_signal_equal = all(all(sig1 == sig2)
                                for sig1, sig2
-                               in zip(list(target_op.values), list(op_list.values)))
+                               in zip(list(target_op_values), list(op_signals[0])))
         print(f'all signals are equal?\n'
               f'{all_signal_equal}')
-        print(f'dates side by side:\n '
-              f'{dates_pairs}')
         print(f'signals side by side:\n'
               f'{signal_pairs}')
-        print([item[2] for item in dates_pairs])
         print([item[2] for item in signal_pairs])
-        self.assertTrue(np.allclose(target_op.values, op_list.values, equal_nan=True))
-        self.assertTrue(all([date1 == date2
-                             for date1, date2
-                             in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]))
+        self.assertTrue(np.allclose(target_op_values, op_signals[0], equal_nan=True))
 
-        print('--Test PS Type signal generation--')
-        # 测试PS类型的信号生成：
-        # 创建一个Operator对象，信号类型为PS（比例交易信号）
-        # 这个Operator对象包含两个SigStrategy策略，策略类型相同但是策略的参数不同
-        # 两个策略分别生成PS信号后混合成一个信号输出
-        self.op = qt.Operator(strategies=[test_ls, test_sel])
-        self.assertIsInstance(self.op, qt.Operator, 'Operator Creation Error')
-        self.op.set_parameter(stg_id='custom',
-                              pars={'000300': (5, 10.),
-                                    '000400': (5, 10.),
-                                    '000500': (5, 6.)})
-        self.op.set_parameter(stg_id='custom_1',
-                              pars=())
-        # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
-        self.assertRaises(AssertionError,
-                          self.op.prepare_data,
-                          hist_data=self.hp1,
-                          cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        print('--Test two separate signal generation for different price types--')
+        # 测试两组PT类型的信号生成：
+        # 在Operator对象中增加两个SigStrategy策略，策略类型相同但是策略的参数不同，回测价格类型为"OPEN"
+        # Opeartor应该生成两组交易信号，分别用于"close"和"open"两中不同的价格类型
+        # 这里需要重新生成两个新的交易策略对象，否则在op的strategies列表中产生重复的对象引用，从而引起错误
+        test_ls = TestLSStrategy()
+        test_sel = TestSelStrategy()
+        self.op.add_strategies([test_ls, test_sel])
         self.op.set_parameter(stg_id='custom_2',
-                              pars=(0.2, 0.02, -0.02))
-        # self.op.set_blender(blender='0+1+2')
+                              price_type='open')
+        self.op.set_parameter(stg_id='custom_3',
+                              price_type='open')
+        self.assertEqual(self.op['custom'].price_type, 'close')
+        self.assertEqual(self.op['custom_2'].price_type, 'open')
+        self.op.set_parameter(stg_id='custom_2',
+                              pars={'000010': (5, 10.),
+                                    '000030': (5, 10.),
+                                    '000039': (5, 6.)})
+        self.op.set_parameter(stg_id='custom_3',
+                              pars=())
+        self.op.set_blender(blender='0 or 1', price_type='open')
         self.op.prepare_data(hist_data=self.hp1,
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
-        print('--test how operator information is printed out in verbose mode--')
-        self.op.info(verbose=True)
+        # import pdb; pdb.set_trace()
         self.assertEqual(self.op.strategy_blenders,
-                         {'close': ['+', '2', '+', '1', '0']})
+                         {'close':  ['*', '1', '0'],
+                          'open':   ['or', '1', '0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal(hist_data=self.hp1)
-        print(f'operation list is created: as following:\n {op_list}')
-        self.assertTrue(isinstance(op_list, pd.DataFrame))
-        self.assertEqual(op_list.shape, (45, 3))
-        target_op_dates = ['2016/07/08', '2016/07/12', '2016/07/13', '2016/07/14',
-                           '2016/07/18', '2016/07/20', '2016/07/22', '2016/07/26',
-                           '2016/07/27', '2016/07/28', '2016/08/02', '2016/08/03',
-                           '2016/08/04', '2016/08/05', '2016/08/08', '2016/08/10',
-                           '2016/08/16', '2016/08/18', '2016/08/24', '2016/08/26',
-                           '2016/08/29', '2016/08/30', '2016/08/31', '2016/09/05',
-                           '2016/09/06', '2016/09/08']
-        target_op_values = np.array([[0.0, 1.0, 0.0],
-                                     [0.5, -1.0, 0.0],
-                                     [1.0, 0.0, 0.0],
-                                     [0.0, 0.0, -1.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 0.5, 0.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 0.0, -1.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, -1.0, 0.0],
-                                     [0.0, 0.0, -1.0],
-                                     [0.0, 1.0, 0.0],
-                                     [-1.0, 0.0, 0.0],
-                                     [0.0, 0.0, -1.0],
-                                     [0.0, 0.0, -1.0],
-                                     [0.0, 0.0, 1.0],
-                                     [-1.0, 0.0, 0.0],
-                                     [0.0, 1.0, 1.0],
-                                     [0.0, 1.0, 0.5],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 1.0, 0.0],
-                                     [0.0, 0.0, -1.0],
-                                     [0.0, 1.0, 0.0]])
-        target_op = pd.DataFrame(data=target_op_values, index=target_op_dates, columns=['000010', '000030', '000039'])
-        target_op = target_op.rename(index=pd.Timestamp)
-        print(f'target operation list is as following:\n {target_op}')
-        dates_pairs = [[date1, date2, date1 == date2]
-                       for date1, date2
-                       in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]
-        all_dates_equal = all(date1 == date2
-                              for date1, date2
-                              in zip(target_op.index.strftime("%m-%d"), op_list.index.strftime("%m-%d")))
-        print(f'All dates are equal?\n'
-              f'{all_dates_equal}')
+
+        self.assertTrue(isinstance(op_list, dict))
+        signal_close = op_list['close']
+        signal_open = op_list['open']
+        self.assertEqual(signal_close.shape, (45, 3))
+        self.assertEqual(signal_open.shape, (45, 3))
+
+        target_op_close = np.array([[0.0, 0.0, 0.0],
+                                    [0.0, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.0, 0.0],
+                                    [0.5, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.5],
+                                    [0.0, 0.5, 0.5],
+                                    [0.0, 0.5, 0.5],
+                                    [0.0, 0.5, 0.5],
+                                    [0.0, 0.5, 0.5],
+                                    [0.0, 0.5, 0.5],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0],
+                                    [0.0, 0.5, 0.0]])
+        target_op_open = np.array([[0.5, 0.5, 1.0],
+                                   [0.5, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 0.5, 1.0],
+                                   [1.0, 1.0, 1.0],
+                                   [1.0, 1.0, 1.0],
+                                   [1.0, 1.0, 1.0],
+                                   [1.0, 1.0, 0.0],
+                                   [1.0, 1.0, 0.0],
+                                   [1.0, 1.0, 0.0],
+                                   [1.0, 0.5, 0.0],
+                                   [1.0, 0.5, 0.0],
+                                   [1.0, 1.0, 0.0],
+                                   [0.0, 1.0, 0.5],
+                                   [0.0, 1.0, 0.5],
+                                   [0.0, 1.0, 0.5],
+                                   [0.0, 1.0, 0.5],
+                                   [0.0, 1.0, 0.5],
+                                   [0.0, 1.0, 0.5],
+                                   [0.0, 1.0, 0.5],
+                                   [0.5, 1.0, 0.0],
+                                   [0.5, 1.0, 0.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.0, 1.0, 1.0],
+                                   [0.0, 1.0, 1.0],
+                                   [0.0, 1.0, 1.0],
+                                   [0.0, 1.0, 1.0],
+                                   [0.0, 1.0, 1.0],
+                                   [0.0, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0],
+                                   [0.5, 1.0, 1.0]])
+
         signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
                         for sig1, sig2
-                        in zip(list(target_op.values), list(op_list.values))]
+                        in zip(list(target_op_close), list(signal_close))]
         all_signal_equal = all(all(sig1 == sig2)
                                for sig1, sig2
-                               in zip(list(target_op.values), list(op_list.values)))
+                               in zip(list(target_op_close), list(signal_close)))
         print(f'all signals are equal?\n'
               f'{all_signal_equal}')
-        print(f'dates side by side:\n '
-              f'{dates_pairs}')
         print(f'signals side by side:\n'
               f'{signal_pairs}')
-        print([item[2] for item in dates_pairs])
-        print([item[2] for item in signal_pairs])
-        self.assertTrue(np.allclose(target_op.values, op_list.values, equal_nan=True))
-        self.assertTrue(all([date1 == date2
-                             for date1, date2
-                             in zip(target_op.index.strftime('%m-%d'), op_list.index.strftime('%m-%d'))]))
+        self.assertTrue(np.allclose(target_op_close, signal_close, equal_nan=True))
+        signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
+                        for sig1, sig2
+                        in zip(list(target_op_open), list(signal_open))]
+        all_signal_equal = all(all(sig1 == sig2)
+                               for sig1, sig2
+                               in zip(list(target_op_open), list(signal_open)))
+        print(f'all signals are equal?\n'
+              f'{all_signal_equal}')
+        print(f'signals side by side:\n'
+              f'{signal_pairs}')
+        self.assertTrue(np.allclose(target_op_open, signal_open, equal_nan=True))
+
+        print('--Test two separate signal generation for different price types--')
+        # 更多测试集合
+
 
     def test_stg_parameter_setting(self):
         """ test setting parameters of strategies
@@ -3837,6 +3892,8 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
     def test_signal_blend(self):
+        self.assertEqual(blender_parser('0 & 1'), ['&', '1', '0'])
+        self.assertEqual(blender_parser('0 or 1'), ['or', '1', '0'])
         self.assertEqual(blender_parser('0 & 1 | 2'), ['|', '2', '&', '1', '0'])
         blender = blender_parser('0 & 1 | 2')
         self.assertEqual(signal_blend([1, 1, 1], blender), 1)
@@ -4564,6 +4621,18 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, selmask, 0.001))
 
     def test_tokenizer(self):
+        self.assertListEqual(_exp_to_token('1+1'),
+                             ['1', '+', '1'])
+        print(_exp_to_token('1+1'))
+        self.assertListEqual(_exp_to_token('1 & 1'),
+                             ['1', '&', '1'])
+        print(_exp_to_token('1&1'))
+        self.assertListEqual(_exp_to_token('1 and 1'),
+                             ['1', 'and', '1'])
+        print(_exp_to_token('1 and 1'))
+        self.assertListEqual(_exp_to_token('1 or 1'),
+                             ['1', 'or', '1'])
+        print(_exp_to_token('1 or 1'))
         self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
                              ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
         print(_exp_to_token('(1 - 1 + -1) * pi'))

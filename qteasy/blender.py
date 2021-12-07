@@ -222,14 +222,16 @@ def signal_blend(op_signals, blender):
             if func is None:
                 raise ValueError(
                         f'the function \'{token[0:-2]}\' -> {func.get(token[0:-2])} is not a valid function!')
-            args = tuple([s.pop() for i in range(arg_count)])
+            args = tuple(s.pop() for i in range(arg_count))
             try:
                 s.append(func(*args))
             except:
                 print(f'wrong output func(*args) with args = {args} => ')
         else:
+            # 如果碰到运算符
             s.append(_operate(s.pop(), s.pop(), exp.pop()))
-    return unify(s[0])
+    # TODO: 是否真的需要把unify作为一个通用指标应用到所有信号上？我看没有这个必要
+    return s[0]
 
 
 def _exp_to_token(string):
@@ -239,7 +241,10 @@ def _exp_to_token(string):
     """
     if not isinstance(string, str):
         raise TypeError()
-    token_types = {'operation':         0,
+    function_like_operators = ['or',
+                               'and',
+                               'not']
+    token_types = {'operator':          0,
                    'number':            1,
                    'function':          2,
                    'open_parenthesis':  3,
@@ -257,22 +262,25 @@ def _exp_to_token(string):
     # 逐个扫描字符，判断每个字符代表的token类型，当token类型发生变化时，将当前token压入tokens栈
     for ch in string:
         if ch in '+*/^&|':
-            cur_token_type = token_types['operation']
+            cur_token_type = token_types['operator']
         elif ch in '-':
             # '-'号出现在左括号或另一个符号以后，应被识别为负号，成为数字的一部分
-            if prev_token_type == token_types['operation'] or \
+            if prev_token_type == token_types['operator'] or \
                     prev_token_type == token_types['open_parenthesis']:
                 cur_token_type = token_types['number']
             else:
                 # 否则被识别为一个操作符
-                cur_token_type = token_types['operation']
+                cur_token_type = token_types['operator']
         elif ch in '0123456789':
             if cur_token == '':
                 cur_token_type = token_types['number']
             else:
                 # 如果数字跟在function的后面，则被识别为字母（function）的一部分，否则被识别为数字
                 # 但数字被识别为function一部分的前提是function还没有以左括号结尾
-                if prev_token_type == token_types['function'] and cur_token[-1] != '(':
+                # 以及前一个function不在"function_like_operator"中
+                if prev_token_type == token_types['function'] and \
+                        cur_token[-1] != '(' and \
+                        cur_token not in function_like_operators:
                     cur_token_type = token_types['function']
                 else:
                     cur_token_type = token_types['number']
@@ -283,7 +291,8 @@ def _exp_to_token(string):
             # 字母和下划线应被识别为变量或函数名,
             if cur_token == '':
                 cur_token_type = token_types['function']
-            else:  # 如果前一个token已经为function且已经完整，则强行分割token
+            else:
+                # 如果前一个token已经为function且已经完整，则强行分割token
                 if cur_token_type == token_types['function'] and cur_token[-1] == '(':
                     next_token = True
                 cur_token_type = token_types['function']
