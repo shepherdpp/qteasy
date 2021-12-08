@@ -2205,7 +2205,8 @@ class TestLoop(unittest.TestCase):
                              [0.000, 0.000, 2027.188, 719.924, 0.000, 2701.488, 4379.099, 0.000, 0.000, 44603.718],
                              [0.000, 0.000, 2027.188, 719.924, 0.000, 2701.488, 4379.099, 0.000, 0.000, 44381.544]])
 
-    def test_loop_step(self):
+    def test_loop_step_pt(self):
+        """ test loop step of Proportion Target signals"""
         cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
                                                        pre_amounts=np.zeros(7, dtype='float'),
                                                        op=self.op_signals[0],
@@ -2326,7 +2327,346 @@ class TestLoop(unittest.TestCase):
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 2027.18825, 719.9239224, 0, 2701.487958, 4379.098907])))
         self.assertAlmostEqual(value, 47413.40131, 4)
 
-    def test_loop(self):
+    def test_loop_step_ps(self):
+        """ test loop step of Proportion Signal type of singals"""
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
+                                                       pre_amounts=np.zeros(7, dtype='float'),
+                                                       op=self.op_signals[0],
+                                                       prices=self.prices[0],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 1 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 7500)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
+        self.assertAlmostEqual(value, 10000.00)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=5059.722222,
+                                                       pre_amounts=np.array([0, 0, 0, 0, 555.5555556,
+                                                                             205.0653595, 321.0891813]),
+                                                       op=self.op_signals[3],
+                                                       prices=self.prices[3],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 4 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 1201.2775195, 5)
+        self.assertTrue(np.allclose(amounts, np.array([346.9824373, 416.6786936, 0, 0,
+                                                       555.5555556, 205.0653595, 321.0891813])))
+        self.assertAlmostEqual(value, 9646.111756, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=6179.77423,
+                                                       pre_amounts=np.array([115.7186428, 416.6786936, 735.6441811,
+                                                                             269.8495646, 0, 1877.393446, 0]),
+                                                       op=self.op_signals[31],
+                                                       prices=self.prices[31],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 32 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 0, 5)
+        self.assertTrue(np.allclose(amounts, np.array([1073.823175, 416.6786936, 735.6441811,
+                                                       269.8495646, 0, 1877.393446, 0])))
+        self.assertAlmostEqual(value, 21133.50798, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
+                                                       pre_amounts=np.array([1073.823175, 416.6786936, 735.6441811,
+                                                                             269.8495646, 0, 938.6967231, 1339.207325]),
+                                                       op=self.op_signals[60],
+                                                       prices=self.prices[60],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 61 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 5001.424618, 5)
+        self.assertTrue(np.allclose(amounts, np.array([1073.823175, 416.6786936, 735.6441811, 269.8495646,
+                                                       1785.205494, 938.6967231, 1339.207325])))
+        self.assertAlmostEqual(value, 33323.83588, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=cash,
+                                                       pre_amounts=amounts,
+                                                       op=self.op_signals[61],
+                                                       prices=self.prices[61],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 62 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 0, 5)
+        self.assertTrue(np.allclose(amounts, np.array([0, 416.6786936, 1290.69215, 719.9239224,
+                                                       1785.205494, 2701.487958, 1339.207325])))
+        self.assertAlmostEqual(value, 32820.29007, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=915.6208259,
+                                                       pre_amounts=np.array([0, 416.6786936, 1290.69215, 719.9239224,
+                                                                             0, 2701.487958, 4379.098907]),
+                                                       op=self.op_signals[96],
+                                                       prices=self.prices[96],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 97 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 5140.742779, 5)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 1290.69215, 719.9239224, 0, 2701.487958, 4379.098907])))
+        self.assertAlmostEqual(value, 45408.73655, 4)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=cash,
+                                                       pre_amounts=amounts,
+                                                       op=self.op_signals[97],
+                                                       prices=self.prices[97],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 98 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 0, 5)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 2027.18825, 719.9239224, 0, 2701.487958, 4379.098907])))
+        self.assertAlmostEqual(value, 47413.40131, 4)
+
+    def test_loop_step_vs(self):
+        """test loop step of Volume Signal type of signals"""
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
+                                                       pre_amounts=np.zeros(7, dtype='float'),
+                                                       op=self.op_signals[0],
+                                                       prices=self.prices[0],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 1 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 7500)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
+        self.assertAlmostEqual(value, 10000.00)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=5059.722222,
+                                                       pre_amounts=np.array([0, 0, 0, 0, 555.5555556,
+                                                                             205.0653595, 321.0891813]),
+                                                       op=self.op_signals[3],
+                                                       prices=self.prices[3],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 4 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 1201.2775195, 5)
+        self.assertTrue(np.allclose(amounts, np.array([346.9824373, 416.6786936, 0, 0,
+                                                       555.5555556, 205.0653595, 321.0891813])))
+        self.assertAlmostEqual(value, 9646.111756, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=6179.77423,
+                                                       pre_amounts=np.array([115.7186428, 416.6786936, 735.6441811,
+                                                                             269.8495646, 0, 1877.393446, 0]),
+                                                       op=self.op_signals[31],
+                                                       prices=self.prices[31],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 32 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 0, 5)
+        self.assertTrue(np.allclose(amounts, np.array([1073.823175, 416.6786936, 735.6441811,
+                                                       269.8495646, 0, 1877.393446, 0])))
+        self.assertAlmostEqual(value, 21133.50798, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
+                                                       pre_amounts=np.array([1073.823175, 416.6786936, 735.6441811,
+                                                                             269.8495646, 0, 938.6967231, 1339.207325]),
+                                                       op=self.op_signals[60],
+                                                       prices=self.prices[60],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 61 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 5001.424618, 5)
+        self.assertTrue(np.allclose(amounts, np.array([1073.823175, 416.6786936, 735.6441811, 269.8495646,
+                                                       1785.205494, 938.6967231, 1339.207325])))
+        self.assertAlmostEqual(value, 33323.83588, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=cash,
+                                                       pre_amounts=amounts,
+                                                       op=self.op_signals[61],
+                                                       prices=self.prices[61],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 62 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 0, 5)
+        self.assertTrue(np.allclose(amounts, np.array([0, 416.6786936, 1290.69215, 719.9239224,
+                                                       1785.205494, 2701.487958, 1339.207325])))
+        self.assertAlmostEqual(value, 32820.29007, 5)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=915.6208259,
+                                                       pre_amounts=np.array([0, 416.6786936, 1290.69215, 719.9239224,
+                                                                             0, 2701.487958, 4379.098907]),
+                                                       op=self.op_signals[96],
+                                                       prices=self.prices[96],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 97 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 5140.742779, 5)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 1290.69215, 719.9239224, 0, 2701.487958, 4379.098907])))
+        self.assertAlmostEqual(value, 45408.73655, 4)
+
+        cash, amounts, fee, value = qt.core._loop_step(pre_cash=cash,
+                                                       pre_amounts=amounts,
+                                                       op=self.op_signals[97],
+                                                       prices=self.prices[97],
+                                                       rate=self.rate,
+                                                       moq_buy=0,
+                                                       moq_sell=0,
+                                                       print_log=True)
+        print(f'day 98 result in complete looping: \n'
+              f'cash:     {cash}\n'
+              f'amounts:  {np.round(amounts, 2)}\n'
+              f'value:    {value}')
+        self.assertAlmostEqual(cash, 0, 5)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 2027.18825, 719.9239224, 0, 2701.487958, 4379.098907])))
+        self.assertAlmostEqual(value, 47413.40131, 4)
+
+    def test_loop_pt(self):
+        """ Test looping of PT proportion target signals
+
+        """
+        res = apply_loop(op_list=self.op_signal_df,
+                         history_list=self.history_list,
+                         cash_plan=self.cash,
+                         cost_rate=self.rate,
+                         moq_buy=0,
+                         moq_sell=0,
+                         inflation_rate=0,
+                         print_log=True)
+        self.assertIsInstance(res, pd.DataFrame)
+        print(f'in test_loop:\nresult of loop test is \n{res}')
+        self.assertTrue(np.allclose(res.values, self.res, 5))
+        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
+        self.assertRaises(AssertionError,
+                          apply_loop,
+                          self.op_signal_df,
+                          self.history_list,
+                          self.cash,
+                          self.rate,
+                          0, 1,
+                          0,
+                          False)
+        self.assertRaises(AssertionError,
+                          apply_loop,
+                          self.op_signal_df,
+                          self.history_list,
+                          self.cash,
+                          self.rate,
+                          1, 5,
+                          0,
+                          False)
+        print(f'test loop results with moq equal to 100')
+        res = apply_loop(op_list=self.op_signal_df,
+                         history_list=self.history_list,
+                         cash_plan=self.cash,
+                         cost_rate=self.rate2,
+                         moq_buy=100,
+                         moq_sell=1,
+                         inflation_rate=0,
+                         print_log=True)
+        self.assertIsInstance(res, pd.DataFrame)
+        print(f'in test_loop:\nresult of loop test is \n{res}')
+
+    def test_loop_ps(self):
+        """ Test looping of PS Proportion Signal type of signals
+
+        """
+        res = apply_loop(op_list=self.op_signal_df,
+                         history_list=self.history_list,
+                         cash_plan=self.cash,
+                         cost_rate=self.rate,
+                         moq_buy=0,
+                         moq_sell=0,
+                         inflation_rate=0,
+                         print_log=True)
+        self.assertIsInstance(res, pd.DataFrame)
+        print(f'in test_loop:\nresult of loop test is \n{res}')
+        self.assertTrue(np.allclose(res.values, self.res, 5))
+        print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
+        self.assertRaises(AssertionError,
+                          apply_loop,
+                          self.op_signal_df,
+                          self.history_list,
+                          self.cash,
+                          self.rate,
+                          0, 1,
+                          0,
+                          False)
+        self.assertRaises(AssertionError,
+                          apply_loop,
+                          self.op_signal_df,
+                          self.history_list,
+                          self.cash,
+                          self.rate,
+                          1, 5,
+                          0,
+                          False)
+        print(f'test loop results with moq equal to 100')
+        res = apply_loop(op_list=self.op_signal_df,
+                         history_list=self.history_list,
+                         cash_plan=self.cash,
+                         cost_rate=self.rate2,
+                         moq_buy=100,
+                         moq_sell=1,
+                         inflation_rate=0,
+                         print_log=True)
+        self.assertIsInstance(res, pd.DataFrame)
+        print(f'in test_loop:\nresult of loop test is \n{res}')
+
+    def test_loop_vs(self):
+        """ Test looping of VS Volume Signal type of signals
+
+        """
         res = apply_loop(op_list=self.op_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,

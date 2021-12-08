@@ -67,9 +67,6 @@ AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 # TODO: 使用一个大的DataFrame存储整个回测过程的所有参数，作为回测记录
 # TODO: Usability improvements:
-# TODO: 1: 增加PREDICT模式，完善predict模式所需的参数，完善其他优化算法的参数
-# TODO: 完善config字典的信息属性，使得用户可以快速了解当前配置
-# TODO: Config应该有一个保存功能，或至少有一个"read_last"功能，以便用户长期保存常用的上下文参数变量
 # TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
 def _loop_step(pre_cash: float,
                pre_amounts: np.ndarray,
@@ -297,9 +294,10 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
-# TODO: 增加功能：上一次信号执行结果确认：
-# TODO:         1, 如果上一次信号执行后有余量未完成，需要叠加到本次完成
-# TODO:         2, 如果上次信号执行后本次无需执行（如完全相同的卖出信号，无需重复执行）则跳过本次执行
+# TODO: 区别对待不同的交易信号：
+# TODO: PT信号，比较实际持仓和目标持仓的差额，当差额大于某个阈值时产生操作信号
+# TODO: PS信号，直接按比例执行操作信号
+# TODO: VS信号，直接执行交易量操作信号
 
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
