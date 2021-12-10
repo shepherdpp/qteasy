@@ -19,7 +19,7 @@ from qteasy.tsfuncs import income, indicators, name_change, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
-from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic
+from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic, stock_company
 
 from qteasy.evaluate import eval_alpha, eval_benchmark, eval_beta, eval_fv
 from qteasy.evaluate import eval_info_ratio, eval_max_drawdown, eval_sharp
@@ -6406,12 +6406,12 @@ class TestTushare(unittest.TestCase):
     # TODO: called "stock_company"
     def test_stock_company(self):
         print(f'test tushare function: stock_company')
-        # shares = '600748.SH'
-        # df = stock_company(shares=shares)
-        # self.assertIsInstance(df, pd.DataFrame)
-        # self.assertFalse(df.empty)
-        # df.info()
-        # print(df.head(10))
+        shares = '600748.SH'
+        df = stock_company(shares=shares)
+        self.assertIsInstance(df, pd.DataFrame)
+        self.assertFalse(df.empty)
+        df.info()
+        print(df.head(10))
 
     def test_get_bar(self):
         print(f'test tushare function: get_bar')
@@ -8011,8 +8011,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_montecarlo(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         qt.run(self.op,
                mode=2,
                opti_method=1,
@@ -8067,8 +8065,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_montecarlo_visual(self):
         """测试策略的优化模式，使用蒙特卡洛寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in Montecarlo algorithm with parallel ON')
         qt.configuration(up_to=1, default=True)
         qt.run(self.op,
@@ -8092,8 +8088,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_grid(self):
         """测试策略的优化模式，使用网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -8149,8 +8143,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_grid_visual(self):
         """测试策略的优化模式，使用网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in grid search algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -8210,8 +8202,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_incremental(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -8279,8 +8269,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_incremental_visual(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -8316,8 +8304,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_predict(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
@@ -8352,8 +8338,6 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_2_predict_visual(self):
         """测试策略的优化模式，使用递进步长网格寻优"""
-        # TODO: investigate, function does not work while
-        # TODO: setting parallel = True
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
