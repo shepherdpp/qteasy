@@ -9,6 +9,8 @@
 # Happy New Year and prosperous in 2021!!
 # ======================================
 
+# here's some test codes
+
 import pandas as pd
 import numpy as np
 import time
@@ -86,15 +88,15 @@ def _loop_step(pre_cash: float,
 
         :param pre_amounts,
             :type pre_amounts: np.ndarray:
-            交易开始前各个股票账户中的股份余额
+            交易开始前各个股票的持有数量余额
 
         :param op,
             :type op: np.ndarray
-            本次交易的个股交易清单
+            本次交易的个股交易信号清单
 
         :param prices：
             :type prices: np.ndarray，
-            本次交易发生时各个股票的价格
+            本次交易发生时各个股票的交易价格
 
         :param rate：
             :type rate: object Cost
@@ -127,10 +129,10 @@ def _loop_step(pre_cash: float,
     if print_log:
         # asset_array = np.array([pre_amounts, prices])
         logging.info(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
-              f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
-              f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
-              f'本期资产价格:  {np.around(prices, 2)}\n'
-              f'本期交易信号:  {op}')
+                     f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
+                     f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
+                     f'本期资产价格:  {np.around(prices, 2)}\n'
+                     f'本期交易信号:  {op}')
         print(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
               f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
               f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
@@ -482,7 +484,6 @@ def is_ready(**kwargs):
     # 检查invest(loop)、opti、test等几个start与end日期是否冲突
 
     # 检查invest(loop)、opti、test等几个cash_dates是否冲突
-
 
     return True
 

@@ -110,7 +110,7 @@ class Cost:
         else:
             raise TypeError
 
-    #@njit
+    # @njit
     def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray, moq: float = 0):
         """计算出售投资产品的要素
 
