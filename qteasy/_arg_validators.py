@@ -721,7 +721,15 @@ def _valid_qt_kwargs():
                                              '"20100104,20100202,20100304"'
                                              '["20100104", "20100202", "20100304"]'},
 
-        'PT_buy_threashold':   {'Default':   0.03,
+        'buy_sell_priority':   {'Default':   'sell',
+                                'Validator': lambda value: isinstance(value, str) and
+                                                           value.lower() in ['sell', 'buy'],
+                                'level':     4,
+                                'text':      '回测交易信号时处理卖出和买入信号的优先顺序，可取的值有两种：\n'
+                                             '-\'sell\'- 首先处理卖出信号，再处理买入信号\n'
+                                             '-\'buy\'- 首先处理买入信号，再处理卖出信号'},
+
+        'PT_buy_threshold':    {'Default':   0.03,
                                 'Validator': lambda value: isinstance(value, float)
                                                            and 0 <= value < 1,
                                 'level':     3,
@@ -730,7 +738,7 @@ def _valid_qt_kwargs():
                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
                                              '该百分比必须为正'},
 
-        'PT_sell_threashold':  {'Default':   -0.03,
+        'PT_sell_threshold':   {'Default':   -0.03,
                                 'Validator': lambda value: isinstance(value, float)
                                                             and -1 < value <= 0,
                                 'level':     3,

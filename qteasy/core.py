@@ -300,7 +300,6 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 # TODO: PT信号，比较实际持仓和目标持仓的差额，当差额大于某个阈值时产生操作信号
 # TODO: PS信号，直接按比例执行操作信号
 # TODO: VS信号，直接执行交易量操作信号
-
 def apply_loop(op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                cash_plan: CashPlan = None,
@@ -308,18 +307,26 @@ def apply_loop(op_list: pd.DataFrame,
                moq_buy: float = 100.,
                moq_sell: float = 1,
                inflation_rate: float = 0.03,
+               price_priority_OHLC = 'OHLC',
+               price_priority_quote = 'normal',
+               pt_buy_threshold: float = 0.1,
+               pt_sell_threshold: float = -0.1,
+               buy_sell_priority: str = 'sell',
                print_log: bool = False) -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
     input：=====
-        :param cash_plan: float: 初始资金额，未来将被替换为CashPlan对象
+        :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
         :param history_list: object pd.DataFrame: 完整历史价格清单，数据的频率由freq参数决定
         :param op_list: object pd.DataFrame: 标准格式交易清单，描述一段时间内的交易详情，每次交易一行数据
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
         :param moq_buy: float：每次交易买进的最小份额单位
         :param moq_sell: float: 每次交易卖出的最小份额单位
         :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
+        :param pt_buy_threshold: float, PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
+        :param pt_sell_threshold: flaot, PT卖出信号阈值，只有当实际持仓与目标持仓的差值小于该阈值时，才会产生卖出信号
+        :param buy_sell_priority: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
         :param print_log: bool: 设置为True将打印回测详细日志
 
     output：=====
@@ -344,7 +351,8 @@ def apply_loop(op_list: pd.DataFrame,
     op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
     shares = op_list.columns
-    share_dict = {k: v for k, v in zip(range(len(shares)), shares)}
+    share_count = len(shares)
+    share_dict = {k: v for k, v in zip(range(share_count), shares)}
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
     # TODO: FutureWarning:
     # TODO: Passing list-likes to .loc or [] with any missing label will raise
@@ -356,6 +364,8 @@ def apply_loop(op_list: pd.DataFrame,
     # price = history_list.fillna(method='ffill').fillna(0).loc[op_list.index].values
     looped_dates = list(op_list.index)
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
+    inflation_factors = []
+    days_difference = []
     if inflation_rate > 0:
         # print(f'looped dates are like: {looped_dates}')
         days_timedelta = looped_dates - np.roll(looped_dates, 1)
@@ -370,7 +380,7 @@ def apply_loop(op_list: pd.DataFrame,
     invest_dict = cash_plan.to_dict(investment_date_pos)
     # 初始化计算结果列表
     cash = 0  # 持有现金总额，期初现金总额总是0，在回测过程中到现金投入日时再加入现金
-    amounts = [0] * len(history_list.columns)  # 投资组合中各个资产的持有数量，初始值为全0向量
+    amounts = [0] * share_count  # 投资组合中各个资产的持有数量，初始值为全0向量
     cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
