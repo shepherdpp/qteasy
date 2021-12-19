@@ -734,18 +734,18 @@ def _valid_qt_kwargs():
                                                            and 0 <= value < 1,
                                 'level':     3,
                                 'text':      '回测信号模式为PT（position target）时，触发买入信号的仓位差异阈值\n'
-                                             '在这种模式下，当持有的投资产品的仓位与目标仓位高，且差额超过阈值时，触发买入信号\n'
+                                             '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发买入信号\n'
                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
-                                             '该百分比必须为正'},
+                                             '该百分比在0～100%之间，50%表示用一半的总资产价值买入该股票'},
 
-        'PT_sell_threshold':   {'Default':   -0.03,
+        'PT_sell_threshold':   {'Default':   0.03,
                                 'Validator': lambda value: isinstance(value, float)
                                                             and -1 < value <= 0,
                                 'level':     3,
                                 'text':      '回测信号模式为PT（position target）时，触发卖出信号的仓位差异阈值\n'
-                                             '在这种模式下，当持有的投资产品的仓位比目标仓位低，且差额超过阈值时，触发卖出信号\n'
+                                             '在这种模式下，当持有的投资产品的仓位比目标仓位高，且差额超过阈值时，触发卖出信号\n'
                                              '这个阈值以实际仓位与目标仓位之差与目标仓位的百分比计算\n'
-                                             '该百分比必须为负'},
+                                             '该百分比在0～100%之间，50%表示卖出一半持仓'},
 
         'price_priority_OHLC': {'Default':   'OHLC',
                                 'Validator': lambda value: isinstance(value, str)

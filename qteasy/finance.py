@@ -163,7 +163,6 @@ class Cost:
         cash_spent = None
         fee = None
         if self.buy_fix == 0.:
-            print(f'cash_to_spend: {cash_to_spend}')
             # 固定费用为0，估算购买一定金额股票的交易费率
             rates = self.__call__(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
             # 根据moq计算实际购买份额，当价格为0的时候买入份额为0

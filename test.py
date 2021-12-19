@@ -3552,11 +3552,15 @@ class TestLoop(unittest.TestCase):
 
     def test_loop_step_pt(self):
         """ test loop step of Proportion Target signals"""
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=10000,
                                                        pre_amounts=np.zeros(7, dtype='float'),
                                                        op=self.ps_signals[0],
                                                        prices=self.prices[0],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)
@@ -3568,12 +3572,16 @@ class TestLoop(unittest.TestCase):
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
         self.assertAlmostEqual(value, 10000.00)
 
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=5059.722222,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=5059.722222,
                                                        pre_amounts=np.array([0, 0, 0, 0, 555.5555556,
                                                                              205.0653595, 321.0891813]),
                                                        op=self.ps_signals[3],
                                                        prices=self.prices[3],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)
@@ -3586,12 +3594,16 @@ class TestLoop(unittest.TestCase):
                                                        555.5555556, 205.0653595, 321.0891813])))
         self.assertAlmostEqual(value, 9646.111756, 5)
 
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=6179.77423,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=6179.77423,
                                                        pre_amounts=np.array([115.7186428, 416.6786936, 735.6441811,
                                                                              269.8495646, 0, 1877.393446, 0]),
                                                        op=self.ps_signals[31],
                                                        prices=self.prices[31],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)
@@ -3604,12 +3616,16 @@ class TestLoop(unittest.TestCase):
                                                        269.8495646, 0, 1877.393446, 0])))
         self.assertAlmostEqual(value, 21133.50798, 5)
 
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=10000,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=10000,
                                                        pre_amounts=np.array([1073.823175, 416.6786936, 735.6441811,
                                                                              269.8495646, 0, 938.6967231, 1339.207325]),
                                                        op=self.ps_signals[60],
                                                        prices=self.prices[60],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)
@@ -3622,11 +3638,15 @@ class TestLoop(unittest.TestCase):
                                                        1785.205494, 938.6967231, 1339.207325])))
         self.assertAlmostEqual(value, 33323.83588, 5)
 
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=cash,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=cash,
                                                        pre_amounts=amounts,
                                                        op=self.ps_signals[61],
                                                        prices=self.prices[61],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)
@@ -3639,12 +3659,16 @@ class TestLoop(unittest.TestCase):
                                                        1785.205494, 2701.487958, 1339.207325])))
         self.assertAlmostEqual(value, 32820.29007, 5)
 
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=915.6208259,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=915.6208259,
                                                        pre_amounts=np.array([0, 416.6786936, 1290.69215, 719.9239224,
                                                                              0, 2701.487958, 4379.098907]),
                                                        op=self.ps_signals[96],
                                                        prices=self.prices[96],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)
@@ -3656,11 +3680,15 @@ class TestLoop(unittest.TestCase):
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 1290.69215, 719.9239224, 0, 2701.487958, 4379.098907])))
         self.assertAlmostEqual(value, 45408.73655, 4)
 
-        cash, amounts, fee, value = qt.core._loop_step(pre_cash=cash,
+        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
+                                                       pre_cash=cash,
                                                        pre_amounts=amounts,
                                                        op=self.ps_signals[97],
                                                        prices=self.prices[97],
                                                        rate=self.rate,
+                                                       pt_buy_threshold=0.1,
+                                                       pt_sell_threshold=0.1,
+                                                       sell_first=True,
                                                        moq_buy=0,
                                                        moq_sell=0,
                                                        print_log=True)

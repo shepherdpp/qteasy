@@ -148,7 +148,7 @@ def _loop_step(signal_type: int,
         fee：        本次交易总费用
         value：      本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
     """
-    # 1，计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
+    # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
     if print_log:
         # asset_array = np.array([pre_amounts, prices])
@@ -163,81 +163,143 @@ def _loop_step(signal_type: int,
               f'本期资产价格:  {np.around(prices, 2)}\n'
               f'本期交易信号:  {op}')
 
-    # 2，生成计划买卖数量
+    # 2,计算计划买入金额和计划卖出数量
     if signal_type == 0:
         # signal_type 为PT，比较当前持仓与计划持仓的差额，再生成买卖数量
         ptbt = pt_buy_threshold
-        ptst = pt_sell_threshold
-        amounts_to_buy = ptbt
-        cash_to_spend = ptst
+        ptst = -pt_sell_threshold
+        # 计算当前持仓与目标持仓之间的差额
+        position_diff = op - (pre_amounts / pre_value)
+        # 实际仓位太过高于目标仓位时，卖出，卖出数量 = 仓位差 * 持仓份额
+        amounts_to_sell = np.where(position_diff < ptst, position_diff * pre_amounts, 0)
+        # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
+        cash_to_spend = np.where(position_diff > ptbt, position_diff * pre_value, 0)
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
-        op = op
-        amounts_to_buy = op
-        cash_to_spend = op
+        # 卖出数量为交易信号 * 当前持仓份额
+        amounts_to_sell = np.where(op < 0, op * pre_amounts, 0)
+        # 买入金额为交易信号 * 当前总资产
+        cash_to_spend = np.where(op > 0, op * pre_value, 0)
     elif signal_type == 2:
-        amounts_to_buy = op
-        cash_to_spend = op
+        # 卖出数量即为交易信号中小于零者
+        amounts_to_sell = np.where(op < 0, op, 0)
+        # 买入金额即为交易信号中大于零者
+        cash_to_spend = np.where(op > 0, op, 0)
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
 
+    # 3,考虑MOQ，计算第一轮实际交易结果和交易费用
     if sell_first:
-        pass
+        # 先卖后买的情形，先处理卖单，获得现金后用于买单
+        amounts_to_sell = np.fmax(amounts_to_sell, -pre_amounts)  # 卖出数量不允许超出持仓数量（期货情形应除外）
+        # 计算交易后的资产余额以及获得的现金
+        amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
+                                                                        a_to_sell=amounts_to_sell,
+                                                                        moq=moq_sell)
+        # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
+        cash = pre_cash + cash_gained
 
-    # 计算按照交易清单出售资产后的资产余额以及获得的现金
-    # 根据出售持有资产的份额数量计算获取的现金
-    # 这里直接将OP_amount传入getresult函数中计算交易结果
-    amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
-                                                                    a_to_sell=op,
-                                                                    amounts=pre_amounts,
-                                                                    moq=moq_sell)
-    if print_log:
-        # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
-        if share_names is None:
-            share_names = np.arange(len(op))
-        item_sold = np.where(op < 0)[0]
-        if len(item_sold) > 0:
-            for i in item_sold:
-                if prices[i] != 0:
-                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
-                          f'出售 {np.round(-amount_sold[i], 2)} 份')
-                else:
-                    print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
-                          f'暂停交易，出售 {0.0} 份')
-            print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-                  f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
-        else:
-            print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
-    # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
-    cash = pre_cash + cash_gained
-    # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
-    pur_values = pre_value * np.where(op > 0, op, 0)
-    # if print_log and pur_values.sum() > 0:
-    if print_log and pur_values.sum() > 0:
-        print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
-    if pur_values.sum() > cash:
-        # 估算买入资产所需现金超过持有现金
-        pur_values = pur_values / pur_values.sum() * cash
         if print_log:
-            print(f'由于持有现金不足，调整动用资金数量为: {pur_values.sum():.2f}')
+            # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
+            if share_names is None:
+                share_names = np.arange(len(op))
+            item_sold = np.where(op < 0)[0]
+            if len(item_sold) > 0:
+                for i in item_sold:
+                    if prices[i] != 0:
+                        print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+                              f'出售 {np.round(-amount_sold[i], 2)} 份')
+                    else:
+                        print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+                              f'暂停交易，出售 {0.0} 份')
+                print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
+                      f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
+            else:
+                print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
+
+        # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
+        total_cash_to_spend = cash_to_spend.sum()
+        if print_log and total_cash_to_spend > 0:
+            print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
+        if total_cash_to_spend > cash:
             # 按比例降低分配给每个拟买入资产的现金额度
-    # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
-    amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
-                                                                        op=op,
-                                                                        cash_to_spend=pur_values,
-                                                                        moq=moq_buy)
-    if print_log:
-        # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
-        if share_names is None:
-            share_names = np.arange(len(op))
-        item_purchased = np.where(op > 0)[0]
-        if len(item_purchased) > 0:
-            for i in item_purchased:
-                print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
-                      f' 买入 {np.round(amount_purchased[i], 2)} 份')
-            print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
-        else:
-            print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
+            cash_to_spend = cash_to_spend / total_cash_to_spend * cash
+            if print_log:
+                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f}')
+
+        # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
+        amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
+                                                                            cash_to_spend=cash_to_spend,
+                                                                            moq=moq_buy)
+        if print_log:
+            # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
+            if share_names is None:
+                share_names = np.arange(len(op))
+            item_purchased = np.where(op > 0)[0]
+            if len(item_purchased) > 0:
+                for i in item_purchased:
+                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+                          f' 买入 {np.round(amount_purchased[i], 2)} 份')
+                print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+            else:
+                print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
+    else:
+        # 先买后卖的情形，先处理买单，获得股票后用于卖单
+
+        # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
+        total_cash_to_spend = cash_to_spend.sum()
+        if print_log and total_cash_to_spend > 0:
+            print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
+        if total_cash_to_spend > pre_cash:
+            # 估算买入资产所需现金超过持有现金
+            cash_to_spend = cash_to_spend / total_cash_to_spend * pre_cash
+            if print_log:
+                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f}')
+                # 按比例降低分配给每个拟买入资产的现金额度
+
+        # 计算购入每项资产实际花费的现金以及实际买入资产数量
+        amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
+                                                                            cash_to_spend=cash_to_spend,
+                                                                            moq=moq_buy)
+        if print_log:
+            # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
+            if share_names is None:
+                share_names = np.arange(len(op))
+            item_purchased = np.where(op > 0)[0]
+            if len(item_purchased) > 0:
+                for i in item_purchased:
+                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+                          f' 买入 {np.round(amount_purchased[i], 2)} 份')
+                print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+            else:
+                print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
+
+        # 本期买入资产后资产余额 = 期初资产余额 + 买入资产总额
+        amounts = pre_amounts + amount_purchased
+        amounts_to_sell = np.fmax(amounts_to_sell, -amounts)  # 卖出数量不允许超出持仓数量（期货情形应除外）
+
+        # 计算交易后的资产余额以及获得的现金
+        amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
+                                                                        a_to_sell=amounts_to_sell,
+                                                                        moq=moq_sell)
+        if print_log:
+            # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
+            if share_names is None:
+                share_names = np.arange(len(op))
+            item_sold = np.where(op < 0)[0]
+            if len(item_sold) > 0:
+                for i in item_sold:
+                    if prices[i] != 0:
+                        print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+                              f'出售 {np.round(-amount_sold[i], 2)} 份')
+                    else:
+                        print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+                              f'暂停交易，出售 {0.0} 份')
+                print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
+                      f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
+            else:
+                print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
+
     # 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
