@@ -70,11 +70,15 @@ AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 # TODO: 使用一个大的DataFrame存储整个回测过程的所有参数，作为回测记录
 # TODO: Usability improvements:
 # TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
-def _loop_step(pre_cash: float,
+def _loop_step(signal_type: int,
+               pre_cash: float,
                pre_amounts: np.ndarray,
                op: np.ndarray,
                prices: np.ndarray,
                rate: Cost,
+               pt_buy_threshold: float,
+               pt_sell_threshold: float,
+               sell_first: bool,
                moq_buy: float = 100,
                moq_sell: float = 1,
                print_log: bool = False,
@@ -82,6 +86,13 @@ def _loop_step(pre_cash: float,
     """ 对单次交易进行处理，采用向量化计算以提升效率
 
     input：=====
+        :param signal_type:
+            :type signal_type: int
+            信号类型:
+                0 - PT signal
+                1 - PS signal
+                2 - VS signal
+
         :param pre_cash,
             :type pre_cash: np.ndarray
             本次交易开始前账户现金余额
@@ -101,6 +112,19 @@ def _loop_step(pre_cash: float,
         :param rate：
             :type rate: object Cost
             交易成本率对象
+
+        :param pt_buy_threshold：
+            :type pt_buy_threshold: object Cost
+            当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
+
+        :param pt_sell_threshold：
+            :type pt_sell_threshold: object Cost
+            当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
+
+        :param sell_first：
+            :type sell_first: object Cost
+            True:   先卖后买模式
+            False:  先买后卖模式
 
         :param moq_buy：
             :type moq_buy: float:
@@ -124,7 +148,7 @@ def _loop_step(pre_cash: float,
         fee：        本次交易总费用
         value：      本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
     """
-    # 计算交易前现金及股票余额在当前价格下的资产总额
+    # 1，计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_value = pre_cash + (pre_amounts * prices).sum()
     if print_log:
         # asset_array = np.array([pre_amounts, prices])
@@ -138,10 +162,33 @@ def _loop_step(pre_cash: float,
               f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
               f'本期资产价格:  {np.around(prices, 2)}\n'
               f'本期交易信号:  {op}')
+
+    # 2，生成计划买卖数量
+    if signal_type == 0:
+        # signal_type 为PT，比较当前持仓与计划持仓的差额，再生成买卖数量
+        ptbt = pt_buy_threshold
+        ptst = pt_sell_threshold
+        amounts_to_buy = ptbt
+        cash_to_spend = ptst
+    elif signal_type == 1:
+        # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
+        op = op
+        amounts_to_buy = op
+        cash_to_spend = op
+    elif signal_type == 2:
+        amounts_to_buy = op
+        cash_to_spend = op
+    else:
+        raise ValueError(f'signal_type value {signal_type} not supported!')
+
+    if sell_first:
+        pass
+
     # 计算按照交易清单出售资产后的资产余额以及获得的现金
     # 根据出售持有资产的份额数量计算获取的现金
+    # 这里直接将OP_amount传入getresult函数中计算交易结果
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
-                                                                    op=op,
+                                                                    a_to_sell=op,
                                                                     amounts=pre_amounts,
                                                                     moq=moq_sell)
     if print_log:
@@ -164,10 +211,9 @@ def _loop_step(pre_cash: float,
     # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
     cash = pre_cash + cash_gained
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
-    # pur_values = pre_value * op.clip(0)  # 使用clip比np.where速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多，但无法处理nan值
-    pur_values = pre_value * np.where(op > 0, op, 0)  # 使用clip比np.where速度更快,且op.clip(1)比np.clip(op, 0, 1)快很多，但无法处理nan值
+    pur_values = pre_value * np.where(op > 0, op, 0)
     # if print_log and pur_values.sum() > 0:
-    if print_log:
+    if print_log and pur_values.sum() > 0:
         print(f'本期计划买入资产动用资金: {pur_values.sum():.2f}')
     if pur_values.sum() > cash:
         # 估算买入资产所需现金超过持有现金
@@ -178,7 +224,7 @@ def _loop_step(pre_cash: float,
     # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         op=op,
-                                                                        cash_to_be_spent=pur_values,
+                                                                        cash_to_spend=pur_values,
                                                                         moq=moq_buy)
     if print_log:
         # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
@@ -1508,7 +1554,7 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
         pool.items 作为结果输出的参数组
         pool.perfs 输出的参数组的评价分数
 """
-    # s_range, s_type = op.opt_space_par
+    # s_range, s_type = a_to_sell.opt_space_par
     space = Space(*op.opt_space_par)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
     par_generator, total = space.extract(config.opti_sample_count, how='rand')

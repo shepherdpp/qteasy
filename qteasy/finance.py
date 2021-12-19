@@ -111,13 +111,15 @@ class Cost:
             raise TypeError
 
     # @njit
-    def get_selling_result(self, prices: np.ndarray, op: np.ndarray, amounts: np.ndarray, moq: float = 0):
+    def get_selling_result(self,
+                           prices: np.ndarray,
+                           a_to_sell: np.ndarray,
+                           moq: float = 0):
         """计算出售投资产品的要素
 
 
         :param prices: 投资产品的价格
-        :param op: 交易信号
-        :param amounts: 持有投资产品的份额
+        :param a_to_sell: 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
         :param moq: 卖出股票的最小交易单位
 
         :return:
@@ -127,9 +129,9 @@ class Cost:
         fee: float
         """
         if moq == 0:
-            a_sold = np.sign(prices) * np.where(op < 0, amounts * op, 0)
+            a_sold = a_to_sell
         else:
-            a_sold = np.sign(prices) * np.where(op < 0, np.trunc(amounts * op / moq) * moq, 0)
+            a_sold = np.trunc(a_to_sell / moq) * moq
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.__call__(trade_values=sold_values, is_buying=False, fixed_fees=False)
@@ -142,12 +144,14 @@ class Cost:
         return a_sold, cash_gained, fee
 
     # @njit
-    def get_purchase_result(self, prices: np.ndarray, op: np.ndarray, cash_to_be_spent: [np.ndarray, float], moq: float):
+    def get_purchase_result(self,
+                            prices: np.ndarray,
+                            cash_to_spend: [np.ndarray, float],
+                            moq: float):
         """获得购买资产时的要素
 
         :param prices: ndarray, 投资组合中每只股票的当前单价
-        :param op: ndarray, 操作矩阵，针对投资组合中的每只股票的买卖操作，>0代表买入或平空仓,<0代表卖出或平多仓，绝对值表示买卖比例
-        :param cash_to_be_spent: ndarray, 买入金额，可用于买入股票或资产的计划金额
+        :param cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
         :param moq: float, 最小交易单位
         :return:
         a_to_purchase: 一个ndarray, 代表所有股票分别买入的份额或数量
@@ -159,22 +163,17 @@ class Cost:
         cash_spent = None
         fee = None
         if self.buy_fix == 0.:
+            print(f'cash_to_spend: {cash_to_spend}')
             # 固定费用为0，估算购买一定金额股票的交易费率
-            rates = self.__call__(trade_values=cash_to_be_spent, is_buying=True, fixed_fees=False)
-            # 计算期望购买份额，这是在不考虑moq的情况下，最多能买到的份额（通常不是整数）
-            a_to_purchase = np.where(prices,
-                                     np.where(op > 0,
-                                              cash_to_be_spent / (prices * (1 + rates)),
-                                              0),
-                                     0)
-            # 根据moq计算实际购买份额
+            rates = self.__call__(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
+            # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
             if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
-                a_purchased = a_to_purchase
+                a_purchased = np.where(prices,
+                                       cash_to_spend / (prices * (1 + rates)),
+                                       0)
             else:  # moq不为零，实际买入份额必须是moq的倍数，因此实际买入份额通常小于期望买入份额
                 a_purchased = np.where(prices,
-                                       np.where(op > 0,
-                                                np.trunc(cash_to_be_spent / (prices * moq * (1 + rates))) * moq,
-                                                0),
+                                       np.trunc(cash_to_spend / (prices * moq * (1 + rates))) * moq,
                                        0)
             # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
             fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0)
@@ -183,19 +182,15 @@ class Cost:
             fee = fees.sum()
         elif self.buy_fix:
             # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，只计算买入金额大于固定费用的份额
-            fixed_fees = self.__call__(trade_values=cash_to_be_spent, is_buying=True, fixed_fees=True)
+            fixed_fees = self.__call__(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
             if moq == 0:
                 a_purchased = np.fmax(np.where(prices,
-                                               np.where(op > 0,
-                                                        (cash_to_be_spent - fixed_fees) / prices,
-                                                        0),
+                                               (cash_to_spend - fixed_fees) / prices,
                                                0),
                                       0)
             else:
                 a_purchased = np.fmax(np.where(prices,
-                                               np.where(op > 0,
-                                                        np.trunc((cash_to_be_spent - fixed_fees) / (prices * moq)) * moq,
-                                                        0),
+                                               np.trunc((cash_to_spend - fixed_fees) / (prices * moq)) * moq,
                                                0),
                                       0)
             cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0)
