@@ -149,19 +149,8 @@ def _loop_step(signal_type: int,
         value：      本次交易后资产总额（按照交易后现金及股份余额以及交易时的价格计算）
     """
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
-    pre_value = pre_cash + (pre_amounts * prices).sum()
-    if print_log:
-        # asset_array = np.array([pre_amounts, prices])
-        logging.info(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
-                     f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
-                     f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
-                     f'本期资产价格:  {np.around(prices, 2)}\n'
-                     f'本期交易信号:  {op}')
-        print(f'本期期初总资产:{pre_value:.2f}，其中包括: \n'
-              f'期初现金:      {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
-              f'期初持有资产:  {np.around(pre_amounts, 2)}\n'
-              f'本期资产价格:  {np.around(prices, 2)}\n'
-              f'本期交易信号:  {op}')
+    pre_values = pre_amounts * prices
+    pre_value = pre_cash + pre_values.sum()
 
     # 2,计算计划买入金额和计划卖出数量
     if signal_type == 0:
@@ -169,22 +158,51 @@ def _loop_step(signal_type: int,
         ptbt = pt_buy_threshold
         ptst = -pt_sell_threshold
         # 计算当前持仓与目标持仓之间的差额
-        position_diff = op - (pre_amounts / pre_value)
+        pre_position = pre_values / pre_value
+        position_diff = op - pre_position
         # 实际仓位太过高于目标仓位时，卖出，卖出数量 = 仓位差 * 持仓份额
-        amounts_to_sell = np.where(position_diff < ptst, position_diff * pre_amounts, 0)
+        amounts_to_sell = np.where(position_diff < ptst, position_diff / pre_position * pre_amounts, 0)
         # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
         cash_to_spend = np.where(position_diff > ptbt, position_diff * pre_value, 0)
+        # 打印log：
+        if print_log:
+            print(f'本期期初总资产: {pre_value:.5f}，其中包括: \n'
+                  f'期初持有现金:   {pre_cash:.5f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
+                  f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期持仓目标:   {op}\n'
+                  f'本期实际持仓:   {np.around(pre_values / pre_value, 3)}\n'
+                  f'本期持仓差异:   {np.around(position_diff, 3)}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
         # 卖出数量为交易信号 * 当前持仓份额
         amounts_to_sell = np.where(op < 0, op * pre_amounts, 0)
         # 买入金额为交易信号 * 当前总资产
         cash_to_spend = np.where(op > 0, op * pre_value, 0)
+        # 打印log：
+        if print_log:
+            print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n'
+                  f'期初持有现金:   {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
+                  f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期交易信号:   {op}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
     elif signal_type == 2:
         # 卖出数量即为交易信号中小于零者
         amounts_to_sell = np.where(op < 0, op, 0)
         # 买入金额即为交易信号中大于零者
         cash_to_spend = np.where(op > 0, op, 0)
+        # 打印log：
+        if print_log:
+            print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n'
+                  f'期初持有现金:   {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
+                  f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期交易信号:   {op}')
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
 
@@ -197,13 +215,14 @@ def _loop_step(signal_type: int,
                                                                         a_to_sell=amounts_to_sell,
                                                                         moq=moq_sell)
         # 本期出售资产后现金余额 = 期初现金余额 + 出售资产获得现金总额
-        cash = pre_cash + cash_gained
+        available_cash = pre_cash + cash_gained
+        print(f'available_cash({available_cash}) = pre_cash({pre_cash}) + cash_gained({cash_gained})')
 
         if print_log:
             # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
             if share_names is None:
                 share_names = np.arange(len(op))
-            item_sold = np.where(op < 0)[0]
+            item_sold = np.where(amount_sold < 0)[0]
             if len(item_sold) > 0:
                 for i in item_sold:
                     if prices[i] != 0:
@@ -221,11 +240,11 @@ def _loop_step(signal_type: int,
         total_cash_to_spend = cash_to_spend.sum()
         if print_log and total_cash_to_spend > 0:
             print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-        if total_cash_to_spend > cash:
+        if total_cash_to_spend > available_cash:
             # 按比例降低分配给每个拟买入资产的现金额度
-            cash_to_spend = cash_to_spend / total_cash_to_spend * cash
+            cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
             if print_log:
-                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f}')
+                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash}')
 
         # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
         amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
@@ -235,7 +254,7 @@ def _loop_step(signal_type: int,
             # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
             if share_names is None:
                 share_names = np.arange(len(op))
-            item_purchased = np.where(op > 0)[0]
+            item_purchased = np.where(amount_purchased > 0)[0]
             if len(item_purchased) > 0:
                 for i in item_purchased:
                     print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
@@ -261,6 +280,7 @@ def _loop_step(signal_type: int,
         amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                             cash_to_spend=cash_to_spend,
                                                                             moq=moq_buy)
+        available_cash = pre_cash - cash_spent
         if print_log:
             # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
             if share_names is None:
@@ -305,12 +325,12 @@ def _loop_step(signal_type: int,
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
     amounts = pre_amounts + amount_purchased + amount_sold
     # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
-    cash += cash_spent.sum()
+    available_cash += cash_spent.sum()
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
-    value = (amounts * prices).sum() + cash
+    value = (amounts * prices).sum() + available_cash
     if print_log:
-        print(f'期末现金: {cash:.2f}, 期末总资产: {value:.2f}\n')
-    return cash, amounts, fee, value
+        print(f'期末现金: {available_cash:.2f}, 期末总资产: {value:.2f}\n')
+    return available_cash, amounts, fee, value
 
 
 def _get_complete_hist(looped_value: pd.DataFrame,
