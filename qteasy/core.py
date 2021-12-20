@@ -244,12 +244,14 @@ def _loop_step(signal_type: int,
             # 按比例降低分配给每个拟买入资产的现金额度
             cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
             if print_log:
-                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash}')
+                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
 
         # 计算购入每项资产实际花费的现金以及实际买入资产数量，如果MOQ不为0，则需要取整并修改实际花费现金额
         amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                             cash_to_spend=cash_to_spend,
                                                                             moq=moq_buy)
+        # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
+        available_cash += cash_spent
         if print_log:
             # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
             if share_names is None:
@@ -264,28 +266,29 @@ def _loop_step(signal_type: int,
                 print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
     else:
         # 先买后卖的情形，先处理买单，获得股票后用于卖单
-
+        available_cash = pre_cash
         # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
         total_cash_to_spend = cash_to_spend.sum()
         if print_log and total_cash_to_spend > 0:
             print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-        if total_cash_to_spend > pre_cash:
+        if total_cash_to_spend > available_cash:
             # 估算买入资产所需现金超过持有现金
-            cash_to_spend = cash_to_spend / total_cash_to_spend * pre_cash
+            cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
             if print_log:
-                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f}')
+                print(f'由于持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
                 # 按比例降低分配给每个拟买入资产的现金额度
 
         # 计算购入每项资产实际花费的现金以及实际买入资产数量
         amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                             cash_to_spend=cash_to_spend,
                                                                             moq=moq_buy)
-        available_cash = pre_cash - cash_spent
+        # 现金余额 = 当前现金余额 + 本期购入资产花费现金总额（负值）
+        available_cash += cash_spent
         if print_log:
             # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
             if share_names is None:
                 share_names = np.arange(len(op))
-            item_purchased = np.where(op > 0)[0]
+            item_purchased = np.where(amount_purchased > 0)[0]
             if len(item_purchased) > 0:
                 for i in item_purchased:
                     print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
@@ -302,11 +305,14 @@ def _loop_step(signal_type: int,
         amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                         a_to_sell=amounts_to_sell,
                                                                         moq=moq_sell)
+        # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
+        available_cash += cash_gained
+
         if print_log:
             # 当没有给出share_dict，同时需要输出print_log的时候，生成一个临时share_dict
             if share_names is None:
                 share_names = np.arange(len(op))
-            item_sold = np.where(op < 0)[0]
+            item_sold = np.where(amount_sold < 0)[0]
             if len(item_sold) > 0:
                 for i in item_sold:
                     if prices[i] != 0:
@@ -316,7 +322,7 @@ def _loop_step(signal_type: int,
                         print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
                               f'暂停交易，出售 {0.0} 份')
                 print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-                      f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
+                      f'交易后现金余额: {(available_cash + cash_gained):.3f}')
             else:
                 print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
@@ -324,8 +330,6 @@ def _loop_step(signal_type: int,
     fee = fee_buying + fee_selling
     # 持有资产总额 = 期初资产余额 + 本期买入资产总额 + 本期卖出资产总额（负值）
     amounts = pre_amounts + amount_purchased + amount_sold
-    # 期末现金余额 = 本期出售资产后余额 + 本期购入资产花费现金总额（负值）
-    available_cash += cash_spent.sum()
     # 期末资产总价值 = 期末资产总额 * 本期资产单价 + 期末现金余额
     value = (amounts * prices).sum() + available_cash
     if print_log:
