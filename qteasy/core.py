@@ -191,6 +191,7 @@ def _loop_step(signal_type: int,
                   f'本期交易信号:   {op}\n'
                   f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
                   f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+
     elif signal_type == 2:
         # 卖出数量即为交易信号中小于零者
         amounts_to_sell = np.where(op < 0, op, 0)
@@ -203,6 +204,7 @@ def _loop_step(signal_type: int,
                   f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
                   f'本期资产价格:   {np.around(prices, 2)}\n'
                   f'本期交易信号:   {op}')
+
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
 
