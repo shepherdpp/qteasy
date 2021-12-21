@@ -195,7 +195,7 @@ def _loop_step(signal_type: int,
         # 卖出数量即为交易信号中小于零者
         amounts_to_sell = np.where(op < 0, op, 0)
         # 买入金额即为交易信号中大于零者
-        cash_to_spend = np.where(op > 0, op, 0)
+        cash_to_spend = np.where(op > 0, op * prices, 0)
         # 打印log：
         if print_log:
             print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n'

@@ -4166,14 +4166,13 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
+        self.assertAlmostEqual(cash, 7750)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500.0, 0, 0])))
         self.assertAlmostEqual(value, 10000.00)
 
         cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=5059.722222,
-                                                       pre_amounts=np.array([0, 0, 0, 0, 555.5555556,
-                                                                             205.0653595, 321.0891813]),
+                                                       pre_cash=self.vs_res_sb00[2][7],
+                                                       pre_amounts=self.vs_res_sb00[2][0:7],
                                                        op=self.vs_signals[3],
                                                        prices=self.prices[3],
                                                        rate=self.rate,
@@ -4188,15 +4187,13 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 1201.2775195, 5)
-        self.assertTrue(np.allclose(amounts, np.array([346.9824373, 416.6786936, 0, 0,
-                                                       555.5555556, 205.0653595, 321.0891813])))
-        self.assertAlmostEqual(value, 9646.111756, 5)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
+        self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
+        self.assertAlmostEqual(value, self.vs_res_sb00[3][9], 2)
 
         cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=6179.77423,
-                                                       pre_amounts=np.array([115.7186428, 416.6786936, 735.6441811,
-                                                                             269.8495646, 0, 1877.393446, 0]),
+                                                       pre_cash=self.vs_res_sb00[30][7],
+                                                       pre_amounts=self.vs_res_sb00[30][0:7],
                                                        op=self.vs_signals[31],
                                                        prices=self.prices[31],
                                                        rate=self.rate,
@@ -4211,15 +4208,13 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 0, 5)
-        self.assertTrue(np.allclose(amounts, np.array([1073.823175, 416.6786936, 735.6441811,
-                                                       269.8495646, 0, 1877.393446, 0])))
-        self.assertAlmostEqual(value, 21133.50798, 5)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
+        self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
+        self.assertAlmostEqual(value, self.vs_res_sb00[31][9], 2)
 
         cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.array([1073.823175, 416.6786936, 735.6441811,
-                                                                             269.8495646, 0, 938.6967231, 1339.207325]),
+                                                       pre_cash=self.vs_res_sb00[59][7] + 10000,
+                                                       pre_amounts=self.vs_res_sb00[59][0:7],
                                                        op=self.vs_signals[60],
                                                        prices=self.prices[60],
                                                        rate=self.rate,
@@ -4234,10 +4229,9 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 5001.424618, 5)
-        self.assertTrue(np.allclose(amounts, np.array([1073.823175, 416.6786936, 735.6441811, 269.8495646,
-                                                       1785.205494, 938.6967231, 1339.207325])))
-        self.assertAlmostEqual(value, 33323.83588, 5)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
+        self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
+        self.assertAlmostEqual(value, self.vs_res_sb00[60][9], 2)
 
         cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
                                                        pre_cash=cash,
@@ -4256,15 +4250,13 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 0, 5)
-        self.assertTrue(np.allclose(amounts, np.array([0, 416.6786936, 1290.69215, 719.9239224,
-                                                       1785.205494, 2701.487958, 1339.207325])))
-        self.assertAlmostEqual(value, 32820.29007, 5)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
+        self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
+        self.assertAlmostEqual(value, self.vs_res_sb00[61][9], 2)
 
         cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=915.6208259,
-                                                       pre_amounts=np.array([0, 416.6786936, 1290.69215, 719.9239224,
-                                                                             0, 2701.487958, 4379.098907]),
+                                                       pre_cash=self.vs_res_sb00[95][7],
+                                                       pre_amounts=self.vs_res_sb00[95][0:7],
                                                        op=self.vs_signals[96],
                                                        prices=self.prices[96],
                                                        rate=self.rate,
@@ -4279,9 +4271,9 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 5140.742779, 5)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 1290.69215, 719.9239224, 0, 2701.487958, 4379.098907])))
-        self.assertAlmostEqual(value, 45408.73655, 4)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
+        self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
+        self.assertAlmostEqual(value, self.vs_res_sb00[96][9], 2)
 
         cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
                                                        pre_cash=cash,
@@ -4300,9 +4292,9 @@ class TestLoop(unittest.TestCase):
               f'amounts:  {np.round(amounts, 2)}\n'
               f'value:    {value}\n'
               f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 0, 5)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 2027.18825, 719.9239224, 0, 2701.487958, 4379.098907])))
-        self.assertAlmostEqual(value, 47413.40131, 4)
+        self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
+        self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
+        self.assertAlmostEqual(value, self.vs_res_sb00[97][9], 2)
 
     def test_loop_pt(self):
         """ Test looping of PT proportion target signals, with
