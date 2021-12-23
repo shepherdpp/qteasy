@@ -721,13 +721,15 @@ def _valid_qt_kwargs():
                                              '"20100104,20100202,20100304"'
                                              '["20100104", "20100202", "20100304"]'},
 
-        'buy_sell_priority':   {'Default':   'sell',
-                                'Validator': lambda value: isinstance(value, str) and
-                                                           value.lower() in ['sell', 'buy'],
+        'maximize_cash_usage': {'Default':   False,
+                                'Validator': lambda value: isinstance(value, bool),
                                 'level':     4,
-                                'text':      '回测交易信号时处理卖出和买入信号的优先顺序，可取的值有两种：\n'
-                                             '-\'sell\'- 首先处理卖出信号，再处理买入信号\n'
-                                             '-\'buy\'- 首先处理买入信号，再处理卖出信号'},
+                                'text':      '是否最大化利用同一批次交易获得的现金。即优先卖出股票并将获得的现金立即用于：\n'
+                                             '同一批次的买入交易，以便最大限度利用可用现金。当现金的交割期大于0时无效。'
+                                             '- False - 默认值，同批次买入和卖出信号同时处理，不立即使用卖出资产的现金\n'
+                                             '          将同一批次交易委托同时提交时，这是正常情况'
+                                             '- True -  首先处理同一批次交易中的卖出信号，并在可能时将获得的现金立即用于\n'
+                                             '          本次买入'},
 
         'PT_buy_threshold':    {'Default':   0.03,
                                 'Validator': lambda value: isinstance(value, float)

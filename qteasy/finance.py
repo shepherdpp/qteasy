@@ -159,9 +159,9 @@ class Cost:
         fee: 花费的费用，购买成本，包括佣金和滑点等投资成本
         """
         # 给三个函数返回值预先赋值
-        a_purchased = None
-        cash_spent = None
-        fee = None
+        a_purchased = np.zeros_like(prices)
+        cash_spent = 0
+        fee = 0
         if self.buy_fix == 0.:
             # 固定费用为0，估算购买一定金额股票的交易费率
             rates = self.__call__(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
