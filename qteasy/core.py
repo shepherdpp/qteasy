@@ -78,9 +78,10 @@ def _loop_step(signal_type: int,
                rate: Cost,
                pt_buy_threshold: float,
                pt_sell_threshold: float,
-               max_cash_usage: bool,
-               moq_buy: float = 100,
-               moq_sell: float = 1,
+               maximize_cash_usage: bool,
+               allow_sell_short: bool,
+               moq_buy: float,
+               moq_sell: float,
                print_log: bool = False,
                share_names: list = None) -> tuple:
     """ 对同一批交易进行处理，采用向量化计算以提升效率
@@ -123,8 +124,8 @@ def _loop_step(signal_type: int,
             :type pt_sell_threshold: object Cost
             当交易信号类型为PT时，用于计算买入/卖出信号的强度阈值
 
-        :param max_cash_usage：
-            :type max_cash_usage: object Cost
+        :param maximize_cash_usage：
+            :type maximize_cash_usage: object Cost
             True:   先卖后买模式
             False:  先买后卖模式
 
@@ -212,10 +213,12 @@ def _loop_step(signal_type: int,
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
 
-    # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。此时不需要考虑可用账户内可用股票数量，原因有二：
-    #   a，正常的股票交易信号生成时不会产生超过可用数量的卖出信号
-    #   b，即使策略中的逻辑错误导致计划卖出数量超过可用数量，也应该当成期货卖空处理，在账户中计入
-    #   负数持仓，代表持有空头仓位
+    # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
+
+    # 如果不允许卖空交易，则需要更新股票卖出计划数量
+    if not allow_sell_short:
+        amounts_to_sell = - np.fmin(-amounts_to_sell, pre_amounts)
+
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
                                                                     moq=moq_sell)
@@ -237,7 +240,7 @@ def _loop_step(signal_type: int,
         else:
             print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
-    if max_cash_usage:
+    if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
         # 现金余额 = 期初现金余额 + 本次出售资产获得现金总额
         pre_cash += cash_gained
@@ -371,7 +374,8 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 # TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
-def apply_loop(op_list: pd.DataFrame,
+def apply_loop(op_type: int,
+               op_list: pd.DataFrame,
                history_list: pd.DataFrame,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
@@ -381,7 +385,8 @@ def apply_loop(op_list: pd.DataFrame,
                price_priority_OHLC='OHLC',
                price_priority_quote='normal',
                pt_buy_threshold: float = 0.1,
-               pt_sell_threshold: float = -0.1,
+               pt_sell_threshold: float = 0.1,
+               allow_sell_short: bool = False,
                max_cash_usage: bool = False,
                print_log: bool = False) -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
@@ -479,7 +484,7 @@ def apply_loop(op_list: pd.DataFrame,
         cash_spent, \
         amount_purchased, \
         amount_sold, \
-        fee = _loop_step(signal_type=0,
+        fee = _loop_step(signal_type=op_type,
                          pre_cash=available_cash,
                          pre_amounts=available_amounts,
                          op=op[i],
@@ -487,7 +492,8 @@ def apply_loop(op_list: pd.DataFrame,
                          rate=cost_rate,
                          pt_buy_threshold=pt_buy_threshold,
                          pt_sell_threshold=pt_sell_threshold,
-                         max_cash_usage=max_cash_usage,
+                         maximize_cash_usage=max_cash_usage,
+                         allow_sell_short=allow_sell_short,
                          moq_buy=moq_buy,
                          moq_sell=moq_sell,
                          print_log=print_log,
@@ -500,9 +506,9 @@ def apply_loop(op_list: pd.DataFrame,
         stock_delivery_queue.append(amount_purchased)
         available_amounts = available_amounts + amount_sold + stock_delivery_queue.pop()
         # 持有现金、持有股票用于计算本期的总价值
-        own_cash = available_cash + cash_gained + cash_spent
-        own_amounts = available_amounts + amount_sold + amount_purchased
-        value = own_amounts * price[i] + own_cash
+        own_cash = own_cash + cash_gained + cash_spent
+        own_amounts = own_amounts + amount_sold + amount_purchased
+        value = (own_amounts * price[i]).sum() + own_cash
         # 保存计算结果
         cashes.append(own_cash)
         fees.append(fee)
@@ -627,7 +633,7 @@ def configuration(level=0, up_to=0, default=False, verbose=False):
     :return:
     """
     assert isinstance(level, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
-    assert isinstance(up_to, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
+    assert isinstance(up_to, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(up_to)}'
     if up_to <= level:
         up_to = level
     if up_to == level:

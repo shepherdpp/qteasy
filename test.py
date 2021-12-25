@@ -2319,7 +2319,9 @@ class TestLoop(unittest.TestCase):
                              buy_min=10,
                              sell_min=5,
                              slipage=0)
+        self.pt_signal_df = pd.DataFrame(self.pt_signals, index=self.dates, columns=self.shares)
         self.ps_signal_df = pd.DataFrame(self.ps_signals, index=self.dates, columns=self.shares)
+        self.vs_signal_df = pd.DataFrame(self.vs_signals, index=self.dates, columns=self.shares)
         self.history_list = pd.DataFrame(self.prices, index=self.dates, columns=self.shares)
 
         # 模拟PT信号回测结果
@@ -3595,7 +3597,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3616,7 +3619,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3637,7 +3641,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3658,7 +3663,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3679,7 +3685,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3700,7 +3707,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3721,7 +3729,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3744,7 +3753,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3765,7 +3775,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3786,7 +3797,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3807,7 +3819,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3828,7 +3841,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3849,7 +3863,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3870,7 +3885,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3893,7 +3909,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3914,7 +3931,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3935,7 +3953,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3956,7 +3975,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3977,7 +3997,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -3998,7 +4019,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4019,7 +4041,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4042,7 +4065,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4063,7 +4087,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4084,7 +4109,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4105,7 +4131,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4126,7 +4153,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4147,7 +4175,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4168,7 +4197,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4191,7 +4221,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4212,7 +4243,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4233,7 +4265,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4254,7 +4287,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4275,7 +4309,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4296,7 +4331,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4317,7 +4353,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=True,
+                                                     maximize_cash_usage=True,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4340,7 +4377,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4361,7 +4399,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4382,7 +4421,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4403,7 +4443,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4424,7 +4465,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4445,7 +4487,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4466,7 +4509,8 @@ class TestLoop(unittest.TestCase):
                                                      rate=self.rate,
                                                      pt_buy_threshold=0.1,
                                                      pt_sell_threshold=0.1,
-                                                     max_cash_usage=False,
+                                                     maximize_cash_usage=False,
+                                                     allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
                                                      print_log=True)
@@ -4489,7 +4533,8 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 0 days \n'
               'cash delivery delay = 0 day \n'
               'buy-sell sequence = sell first')
-        res = apply_loop(op_list=self.ps_signal_df,
+        res = apply_loop(op_type=0,
+                         op_list=self.pt_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
@@ -4499,10 +4544,11 @@ class TestLoop(unittest.TestCase):
                          print_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res.values, self.pt_res, 5))
+        self.assertTrue(np.allclose(res, self.pt_res_bs00, 2))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
                           apply_loop,
+                          0,
                           self.ps_signal_df,
                           self.history_list,
                           self.cash,
@@ -4512,6 +4558,7 @@ class TestLoop(unittest.TestCase):
                           False)
         self.assertRaises(AssertionError,
                           apply_loop,
+                          0,
                           self.ps_signal_df,
                           self.history_list,
                           self.cash,
@@ -4520,7 +4567,8 @@ class TestLoop(unittest.TestCase):
                           0,
                           False)
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_list=self.ps_signal_df,
+        res = apply_loop(op_type=0,
+                         op_list=self.ps_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
@@ -4641,7 +4689,8 @@ class TestLoop(unittest.TestCase):
         """ Test looping of PS Proportion Signal type of signals
 
         """
-        res = apply_loop(op_list=self.ps_signal_df,
+        res = apply_loop(op_type=1,
+                         op_list=self.ps_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
@@ -4651,10 +4700,11 @@ class TestLoop(unittest.TestCase):
                          print_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res.values, self.pt_res, 5))
+        self.assertTrue(np.allclose(res, self.ps_res_bs00, 5))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
                           apply_loop,
+                          0,
                           self.ps_signal_df,
                           self.history_list,
                           self.cash,
@@ -4664,6 +4714,7 @@ class TestLoop(unittest.TestCase):
                           False)
         self.assertRaises(AssertionError,
                           apply_loop,
+                          0,
                           self.ps_signal_df,
                           self.history_list,
                           self.cash,
@@ -4672,7 +4723,8 @@ class TestLoop(unittest.TestCase):
                           0,
                           False)
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_list=self.ps_signal_df,
+        res = apply_loop(op_type=1,
+                         op_list=self.ps_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
@@ -4687,7 +4739,8 @@ class TestLoop(unittest.TestCase):
         """ Test looping of VS Volume Signal type of signals
 
         """
-        res = apply_loop(op_list=self.ps_signal_df,
+        res = apply_loop(op_type=2,
+                         op_list=self.vs_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
@@ -4697,10 +4750,11 @@ class TestLoop(unittest.TestCase):
                          print_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res.values, self.pt_res, 5))
+        self.assertTrue(np.allclose(res, self.vs_res_bs00, 5))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
                           apply_loop,
+                          0,
                           self.ps_signal_df,
                           self.history_list,
                           self.cash,
@@ -4710,6 +4764,7 @@ class TestLoop(unittest.TestCase):
                           False)
         self.assertRaises(AssertionError,
                           apply_loop,
+                          0,
                           self.ps_signal_df,
                           self.history_list,
                           self.cash,
@@ -4718,7 +4773,8 @@ class TestLoop(unittest.TestCase):
                           0,
                           False)
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_list=self.ps_signal_df,
+        res = apply_loop(op_type=2,
+                         op_list=self.vs_signal_df,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
