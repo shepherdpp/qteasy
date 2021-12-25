@@ -3587,1195 +3587,897 @@ class TestLoop(unittest.TestCase):
 
     def test_loop_step_pt_sb00(self):
         """ test loop step PT-signal, sell first"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.pt_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=10000,
+                                                     pre_amounts=np.zeros(7, dtype='float'),
+                                                     op=self.pt_signals[0],
+                                                     prices=self.prices[0],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = 10000 + c_g + c_s
+        amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb00[2][7],
-                                                       pre_amounts=self.pt_res_sb00[2][0:7],
-                                                       op=self.pt_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_sb00[2][7],
+                                                     pre_amounts=self.pt_res_sb00[2][0:7],
+                                                     op=self.pt_signals[3],
+                                                     prices=self.prices[3],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_sb00[2][7] + c_g + c_s
+        amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb00[3][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb00[30][7],
-                                                       pre_amounts=self.pt_res_sb00[30][0:7],
-                                                       op=self.pt_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_sb00[30][7],
+                                                     pre_amounts=self.pt_res_sb00[30][0:7],
+                                                     op=self.pt_signals[31],
+                                                     prices=self.prices[31],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_sb00[30][7] + c_g + c_s
+        amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb00[31][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb00[59][7] + 10000,
-                                                       pre_amounts=self.pt_res_sb00[59][0:7],
-                                                       op=self.pt_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_sb00[59][7] + 10000,
+                                                     pre_amounts=self.pt_res_sb00[59][0:7],
+                                                     op=self.pt_signals[60],
+                                                     prices=self.prices[60],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_sb00[59][7] + c_g + c_s + 10000
+        amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb00[60][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.pt_signals[61],
+                                                     prices=self.prices[61],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb00[61][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb00[95][7],
-                                                       pre_amounts=self.pt_res_sb00[95][0:7],
-                                                       op=self.pt_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_sb00[95][7],
+                                                     pre_amounts=self.pt_res_sb00[95][0:7],
+                                                     op=self.pt_signals[96],
+                                                     prices=self.prices[96],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_sb00[96][7] + c_g + c_s
+        amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb00[96][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.pt_signals[97],
+                                                     prices=self.prices[97],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb00[97][9], 2)
 
     def test_loop_step_pt_bs00(self):
         """ test loop step PT-signal, buy first"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.pt_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=10000,
+                                                     pre_amounts=np.zeros(7, dtype='float'),
+                                                     op=self.pt_signals[0],
+                                                     prices=self.prices[0],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = 10000 + c_g + c_s
+        amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs00[2][7],
-                                                       pre_amounts=self.pt_res_bs00[2][0:7],
-                                                       op=self.pt_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_bs00[2][7],
+                                                     pre_amounts=self.pt_res_bs00[2][0:7],
+                                                     op=self.pt_signals[3],
+                                                     prices=self.prices[3],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_bs00[2][7] + c_g + c_s
+        amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs00[3][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs00[30][7],
-                                                       pre_amounts=self.pt_res_bs00[30][0:7],
-                                                       op=self.pt_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_bs00[30][7],
+                                                     pre_amounts=self.pt_res_bs00[30][0:7],
+                                                     op=self.pt_signals[31],
+                                                     prices=self.prices[31],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_bs00[30][7] + c_g + c_s
+        amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs00[31][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs00[59][7] + 10000,
-                                                       pre_amounts=self.pt_res_bs00[59][0:7],
-                                                       op=self.pt_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_bs00[59][7] + 10000,
+                                                     pre_amounts=self.pt_res_bs00[59][0:7],
+                                                     op=self.pt_signals[60],
+                                                     prices=self.prices[60],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_bs00[59][7] + c_g + c_s + 10000
+        amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs00[60][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.pt_signals[61],
+                                                     prices=self.prices[61],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs00[61][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs00[95][7],
-                                                       pre_amounts=self.pt_res_bs00[95][0:7],
-                                                       op=self.pt_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=self.pt_res_bs00[95][7],
+                                                     pre_amounts=self.pt_res_bs00[95][0:7],
+                                                     op=self.pt_signals[96],
+                                                     prices=self.prices[96],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.pt_res_bs00[96][7] + c_g + c_s
+        amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs00[96][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.pt_signals[97],
+                                                     prices=self.prices[97],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs00[97][9], 2)
-
-    def test_loop_step_pt_sb21(self):
-        """ test loop step PT-signal, sell first"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.pt_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb21[2][7],
-                                                       pre_amounts=self.pt_res_sb21[2][0:7],
-                                                       op=self.pt_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_sb21[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_sb21[3][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb21[3][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb21[30][7],
-                                                       pre_amounts=self.pt_res_sb21[30][0:7],
-                                                       op=self.pt_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_sb21[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_sb21[31][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb21[31][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb21[59][7] + 10000,
-                                                       pre_amounts=self.pt_res_sb21[59][0:7],
-                                                       op=self.pt_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_sb21[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_sb21[60][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb21[60][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_sb21[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_sb21[61][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb21[61][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_sb21[95][7],
-                                                       pre_amounts=self.pt_res_sb21[95][0:7],
-                                                       op=self.pt_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_sb21[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_sb21[96][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb21[96][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_sb21[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_sb21[97][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_sb21[97][9], 2)
-
-    def test_loop_step_pt_bs21(self):
-        """ test loop step PT-signal, buy first"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.pt_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, 7500)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs21[2][7],
-                                                       pre_amounts=self.pt_res_bs21[2][0:7],
-                                                       op=self.pt_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_bs21[3][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs21[3][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs21[3][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs21[30][7],
-                                                       pre_amounts=self.pt_res_bs21[30][0:7],
-                                                       op=self.pt_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_bs21[31][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs21[31][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs21[31][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs21[59][7] + 10000,
-                                                       pre_amounts=self.pt_res_bs21[59][0:7],
-                                                       op=self.pt_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_bs21[60][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs21[60][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs21[60][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_bs21[61][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs21[61][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs21[61][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=self.pt_res_bs21[95][7],
-                                                       pre_amounts=self.pt_res_bs21[95][0:7],
-                                                       op=self.pt_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_bs21[96][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs21[96][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs21[96][9], 2)
-
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=0,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.pt_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
-        print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
-              f'----------------------------------\n')
-        self.assertAlmostEqual(cash, self.pt_res_bs21[97][7], 2)
-        self.assertTrue(np.allclose(amounts, self.pt_res_bs21[97][0:7]))
-        self.assertAlmostEqual(value, self.pt_res_bs21[97][9], 2)
 
     def test_loop_step_ps_sb00(self):
         """ test loop step PS-signal, sell first"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.ps_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=10000,
+                                                     pre_amounts=np.zeros(7, dtype='float'),
+                                                     op=self.ps_signals[0],
+                                                     prices=self.prices[0],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = 10000 + c_g + c_s
+        amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_sb00[2][7],
-                                                       pre_amounts=self.ps_res_sb00[2][0:7],
-                                                       op=self.ps_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_sb00[2][7],
+                                                     pre_amounts=self.ps_res_sb00[2][0:7],
+                                                     op=self.ps_signals[3],
+                                                     prices=self.prices[3],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_sb00[2][7] + c_g + c_s
+        amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_sb00[3][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_sb00[30][7],
-                                                       pre_amounts=self.ps_res_sb00[30][0:7],
-                                                       op=self.ps_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_sb00[30][7],
+                                                     pre_amounts=self.ps_res_sb00[30][0:7],
+                                                     op=self.ps_signals[31],
+                                                     prices=self.prices[31],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_sb00[30][7] + c_g + c_s
+        amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_sb00[31][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_sb00[59][7] + 10000,
-                                                       pre_amounts=self.ps_res_sb00[59][0:7],
-                                                       op=self.ps_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_sb00[59][7] + 10000,
+                                                     pre_amounts=self.ps_res_sb00[59][0:7],
+                                                     op=self.ps_signals[60],
+                                                     prices=self.prices[60],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_sb00[59][7] + c_g + c_s + 10000
+        amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_sb00[60][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.ps_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.ps_signals[61],
+                                                     prices=self.prices[61],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_sb00[61][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_sb00[95][7],
-                                                       pre_amounts=self.ps_res_sb00[95][0:7],
-                                                       op=self.ps_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_sb00[95][7],
+                                                     pre_amounts=self.ps_res_sb00[95][0:7],
+                                                     op=self.ps_signals[96],
+                                                     prices=self.prices[96],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_sb00[96][7] + c_g + c_s
+        amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_sb00[96][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.ps_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.ps_signals[97],
+                                                     prices=self.prices[97],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_sb00[97][9], 2)
 
     def test_loop_step_ps_bs00(self):
         """ test loop step PS-signal, buy first"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.ps_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=10000,
+                                                     pre_amounts=np.zeros(7, dtype='float'),
+                                                     op=self.ps_signals[0],
+                                                     prices=self.prices[0],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = 10000 + c_g + c_s
+        amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_bs00[2][7],
-                                                       pre_amounts=self.ps_res_bs00[2][0:7],
-                                                       op=self.ps_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_bs00[2][7],
+                                                     pre_amounts=self.ps_res_bs00[2][0:7],
+                                                     op=self.ps_signals[3],
+                                                     prices=self.prices[3],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_bs00[2][7] + c_g + c_s
+        amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_bs00[3][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_bs00[30][7],
-                                                       pre_amounts=self.ps_res_bs00[30][0:7],
-                                                       op=self.ps_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_bs00[30][7],
+                                                     pre_amounts=self.ps_res_bs00[30][0:7],
+                                                     op=self.ps_signals[31],
+                                                     prices=self.prices[31],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_bs00[30][7] + c_g + c_s
+        amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_bs00[31][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_bs00[59][7] + 10000,
-                                                       pre_amounts=self.ps_res_bs00[59][0:7],
-                                                       op=self.ps_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_bs00[59][7] + 10000,
+                                                     pre_amounts=self.ps_res_bs00[59][0:7],
+                                                     op=self.ps_signals[60],
+                                                     prices=self.prices[60],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_bs00[59][7] + c_g + c_s + 10000
+        amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_bs00[60][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.ps_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.ps_signals[61],
+                                                     prices=self.prices[61],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_bs00[61][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=self.ps_res_bs00[95][7],
-                                                       pre_amounts=self.ps_res_bs00[95][0:7],
-                                                       op=self.ps_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=self.ps_res_bs00[95][7],
+                                                     pre_amounts=self.ps_res_bs00[95][0:7],
+                                                     op=self.ps_signals[96],
+                                                     prices=self.prices[96],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.ps_res_bs00[96][7] + c_g + c_s
+        amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_bs00[96][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=1,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.ps_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.ps_signals[97],
+                                                     prices=self.prices[97],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
-        self.assertAlmostEqual(value, self.ps_res_bs00[97][9], 2)
 
     def test_loop_step_vs_sb00(self):
         """test loop step of Volume Signal type of signals"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.vs_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=10000,
+                                                     pre_amounts=np.zeros(7, dtype='float'),
+                                                     op=self.vs_signals[0],
+                                                     prices=self.prices[0],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = 10000 + c_g + c_s
+        amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7750)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500.0, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_sb00[2][7],
-                                                       pre_amounts=self.vs_res_sb00[2][0:7],
-                                                       op=self.vs_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_sb00[2][7],
+                                                     pre_amounts=self.vs_res_sb00[2][0:7],
+                                                     op=self.vs_signals[3],
+                                                     prices=self.prices[3],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_sb00[2][7] + c_g + c_s
+        amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_sb00[3][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_sb00[30][7],
-                                                       pre_amounts=self.vs_res_sb00[30][0:7],
-                                                       op=self.vs_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_sb00[30][7],
+                                                     pre_amounts=self.vs_res_sb00[30][0:7],
+                                                     op=self.vs_signals[31],
+                                                     prices=self.prices[31],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_sb00[30][7] + c_g + c_s
+        amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_sb00[31][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_sb00[59][7] + 10000,
-                                                       pre_amounts=self.vs_res_sb00[59][0:7],
-                                                       op=self.vs_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_sb00[59][7] + 10000,
+                                                     pre_amounts=self.vs_res_sb00[59][0:7],
+                                                     op=self.vs_signals[60],
+                                                     prices=self.prices[60],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_sb00[59][7] + c_g + c_s + 10000
+        amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_sb00[60][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.vs_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.vs_signals[61],
+                                                     prices=self.prices[61],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_sb00[61][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_sb00[95][7],
-                                                       pre_amounts=self.vs_res_sb00[95][0:7],
-                                                       op=self.vs_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_sb00[95][7],
+                                                     pre_amounts=self.vs_res_sb00[95][0:7],
+                                                     op=self.vs_signals[96],
+                                                     prices=self.prices[96],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_sb00[96][7] + c_g + c_s
+        amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_sb00[96][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.vs_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=True,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.vs_signals[97],
+                                                     prices=self.prices[97],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=True,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_sb00[97][9], 2)
 
     def test_loop_step_vs_bs00(self):
         """test loop step of Volume Signal type of signals"""
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=10000,
-                                                       pre_amounts=np.zeros(7, dtype='float'),
-                                                       op=self.vs_signals[0],
-                                                       prices=self.prices[0],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=10000,
+                                                     pre_amounts=np.zeros(7, dtype='float'),
+                                                     op=self.vs_signals[0],
+                                                     prices=self.prices[0],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = 10000 + c_g + c_s
+        amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7750)
-        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500.0, 0, 0])))
-        self.assertAlmostEqual(value, 10000.00)
+        self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_bs00[2][7],
-                                                       pre_amounts=self.vs_res_bs00[2][0:7],
-                                                       op=self.vs_signals[3],
-                                                       prices=self.prices[3],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_bs00[2][7],
+                                                     pre_amounts=self.vs_res_bs00[2][0:7],
+                                                     op=self.vs_signals[3],
+                                                     prices=self.prices[3],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_bs00[2][7] + c_g + c_s
+        amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_bs00[3][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_bs00[30][7],
-                                                       pre_amounts=self.vs_res_bs00[30][0:7],
-                                                       op=self.vs_signals[31],
-                                                       prices=self.prices[31],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_bs00[30][7],
+                                                     pre_amounts=self.vs_res_bs00[30][0:7],
+                                                     op=self.vs_signals[31],
+                                                     prices=self.prices[31],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_bs00[30][7] + c_g + c_s
+        amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_bs00[31][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_bs00[59][7] + 10000,
-                                                       pre_amounts=self.vs_res_bs00[59][0:7],
-                                                       op=self.vs_signals[60],
-                                                       prices=self.prices[60],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_bs00[59][7] + 10000,
+                                                     pre_amounts=self.vs_res_bs00[59][0:7],
+                                                     op=self.vs_signals[60],
+                                                     prices=self.prices[60],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_bs00[59][7] + c_g + c_s + 10000
+        amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_bs00[60][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.vs_signals[61],
-                                                       prices=self.prices[61],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.vs_signals[61],
+                                                     prices=self.prices[61],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_bs00[61][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=self.vs_res_bs00[95][7],
-                                                       pre_amounts=self.vs_res_bs00[95][0:7],
-                                                       op=self.vs_signals[96],
-                                                       prices=self.prices[96],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=self.vs_res_bs00[95][7],
+                                                     pre_amounts=self.vs_res_bs00[95][0:7],
+                                                     op=self.vs_signals[96],
+                                                     prices=self.prices[96],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = self.vs_res_bs00[96][7] + c_g + c_s
+        amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_bs00[96][9], 2)
 
-        cash, amounts, fee, value = qt.core._loop_step(signal_type=2,
-                                                       pre_cash=cash,
-                                                       pre_amounts=amounts,
-                                                       op=self.vs_signals[97],
-                                                       prices=self.prices[97],
-                                                       rate=self.rate,
-                                                       pt_buy_threshold=0.1,
-                                                       pt_sell_threshold=0.1,
-                                                       max_cash_usage=False,
-                                                       moq_buy=0,
-                                                       moq_sell=0,
-                                                       print_log=True)
+        c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
+                                                     pre_cash=cash,
+                                                     pre_amounts=amounts,
+                                                     op=self.vs_signals[97],
+                                                     prices=self.prices[97],
+                                                     rate=self.rate,
+                                                     pt_buy_threshold=0.1,
+                                                     pt_sell_threshold=0.1,
+                                                     max_cash_usage=False,
+                                                     moq_buy=0,
+                                                     moq_sell=0,
+                                                     print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash:     {cash:.3f}\n'
-              f'amounts:  {np.round(amounts, 2)}\n'
-              f'value:    {value:.3f}\n'
+              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
+        cash = cash + c_g + c_s
+        amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
-        self.assertAlmostEqual(value, self.vs_res_bs00[97][9], 2)
 
     def test_loop_pt(self):
         """ Test looping of PT proportion target signals, with

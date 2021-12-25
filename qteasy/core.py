@@ -145,11 +145,11 @@ def _loop_step(signal_type: int,
             以list的形式存储的股票名称，share_names列表的元素数量与股票的数量相同
 
     return：===== tuple，包含五个元素
-        cash_gained:    float, 本批次交易中获得的现金增加额
-        cash_spent:     float, 本批次交易中共花费的现金总额
-        amounts_sold:   ndarray, 交易后每个个股账户中的股份减少数量
-        amounts_gained: ndarray, 交易后每个个股账户中的股份增加数量
-        fee:            float, 本次交易总费用，包括卖出的费用和买入的费用
+        cash_gained:        float, 本批次交易中获得的现金增加额
+        cash_spent:         float, 本批次交易中共花费的现金总额
+        amounts_purchased:  ndarray, 交易后每个个股账户中的股份增加数量
+        amounts_sold:       ndarray, 交易后每个个股账户中的股份减少数量
+        fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = pre_amounts * prices
@@ -206,7 +206,8 @@ def _loop_step(signal_type: int,
                   f'期初持有现金:   {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
                   f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
                   f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期交易信号:   {op}')
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
