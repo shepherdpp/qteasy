@@ -71,8 +71,10 @@ AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 # TODO: Usability improvements:
 # TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
 def _loop_step(signal_type: int,
-               pre_cash: float,
-               pre_amounts: np.ndarray,
+               own_cash: float,
+               own_amounts: np.ndarray,
+               available_cash: float,
+               available_amounts: np.ndarray,
                op: np.ndarray,
                prices: np.ndarray,
                rate: Cost,
@@ -96,13 +98,21 @@ def _loop_step(signal_type: int,
                 1 - PS signal
                 2 - VS signal
 
-        :param pre_cash,
-            :type pre_cash: np.ndarray
-            本次交易开始前账户现金余额
+        :param own_cash:
+            :type own_cash: float
+            本次交易开始前持有的现金余额（包括交割中的现金）
 
-        :param pre_amounts,
-            :type pre_amounts: np.ndarray:
-            交易开始前各个股票的持有数量余额
+        :param own_amounts:
+            :type own_amounts: np.ndarray
+            本次交易开始前持有的资产份额（包括交割中的资产份额）
+
+        :param available_cash,
+            :type available_cash: np.ndarray
+            本次交易开始前账户可用现金余额（交割中的现金不计入余额）
+
+        :param available_amounts,
+            :type available_amounts: np.ndarray:
+            交易开始前各个股票的可用数量余额（交割中的股票不计入余额）
 
         :param op,
             :type op: np.ndarray
@@ -153,8 +163,8 @@ def _loop_step(signal_type: int,
         fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
-    pre_values = pre_amounts * prices
-    pre_value = pre_cash + pre_values.sum()
+    pre_values = own_amounts * prices
+    total_value = own_cash + pre_values.sum()
 
     # 2,制定交易计划，生成计划买入金额和计划卖出数量
     if signal_type == 0:
@@ -162,20 +172,20 @@ def _loop_step(signal_type: int,
         ptbt = pt_buy_threshold
         ptst = -pt_sell_threshold
         # 计算当前持仓与目标持仓之间的差额
-        pre_position = pre_values / pre_value
+        pre_position = pre_values / total_value
         position_diff = op - pre_position
         # 实际仓位太过高于目标仓位时，卖出，卖出数量 = 仓位差 * 持仓份额
-        amounts_to_sell = np.where(position_diff < ptst, position_diff / pre_position * pre_amounts, 0)
+        amounts_to_sell = np.where(position_diff < ptst, position_diff / pre_position * own_amounts, 0)
         # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
-        cash_to_spend = np.where(position_diff > ptbt, position_diff * pre_value, 0)
+        cash_to_spend = np.where(position_diff > ptbt, position_diff * total_value, 0)
         # 打印log：
         if print_log:
-            print(f'本期期初总资产: {pre_value:.5f}，其中包括: \n'
-                  f'期初持有现金:   {pre_cash:.5f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
-                  f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
                   f'本期资产价格:   {np.around(prices, 2)}\n'
                   f'本期持仓目标:   {op}\n'
-                  f'本期实际持仓:   {np.around(pre_values / pre_value, 3)}\n'
+                  f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
                   f'本期持仓差异:   {np.around(position_diff, 3)}\n'
                   f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
                   f'计划买入金额:   {np.around(cash_to_spend, 3)}')
@@ -183,18 +193,18 @@ def _loop_step(signal_type: int,
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
         # 卖出数量为交易信号 * 当前持仓份额
-        amounts_to_sell = np.where(op < 0, op * pre_amounts, 0)
+        amounts_to_sell = np.where(op < 0, op * own_amounts, 0)
         # 买入金额为交易信号 * 当前总资产
-        cash_to_spend = np.where(op > 0, op * pre_value, 0)
+        cash_to_spend = np.where(op > 0, op * total_value, 0)
         # 打印log：
         if print_log:
-            print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n'
-                  f'期初持有现金:   {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
-                  f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期交易信号:   {op}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+            #       f'本期资产价格:   {np.around(prices, 2)}\n'
+            #       f'本期交易信号:   {op}\n'
+            #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+            #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 2:
         # 卖出数量即为交易信号中小于零者
@@ -203,12 +213,12 @@ def _loop_step(signal_type: int,
         cash_to_spend = np.where(op > 0, op * prices, 0)
         # 打印log：
         if print_log:
-            print(f'本期期初总资产: {pre_value:.2f}，其中包括: \n'
-                  f'期初持有现金:   {pre_cash:.2f}, 资产总价值: {pre_value - pre_cash:.2f}\n'
-                  f'期初持有资产:   {np.around(pre_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+            #       f'本期资产价格:   {np.around(prices, 2)}\n'
+            #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+            #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
@@ -217,7 +227,7 @@ def _loop_step(signal_type: int,
 
     # 如果不允许卖空交易，则需要更新股票卖出计划数量
     if not allow_sell_short:
-        amounts_to_sell = - np.fmin(-amounts_to_sell, pre_amounts)
+        amounts_to_sell = - np.fmin(-amounts_to_sell, available_amounts)
 
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
@@ -236,14 +246,14 @@ def _loop_step(signal_type: int,
                     print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
                           f'暂停交易，出售 {0.0} 份')
             print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-                  f'交易后现金余额: {(pre_cash + cash_gained):.3f}')
+                  f'交易后现金余额: {(available_cash + cash_gained):.3f}')
         else:
             print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
         # 现金余额 = 期初现金余额 + 本次出售资产获得现金总额
-        pre_cash += cash_gained
+        available_cash += cash_gained
 
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     total_cash_to_spend = cash_to_spend.sum()
@@ -254,12 +264,12 @@ def _loop_step(signal_type: int,
             print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
         return cash_gained, 0, np.zeros_like(op), amount_sold, fee_selling
 
-    if total_cash_to_spend > pre_cash:
+    if total_cash_to_spend > available_cash:
         # 按比例降低分配给每个拟买入资产的现金额度
-        cash_to_spend = cash_to_spend / total_cash_to_spend * pre_cash
+        cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
         if print_log:
             print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-            print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {pre_cash:.2f}')
+            print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
@@ -386,6 +396,8 @@ def apply_loop(op_type: int,
                price_priority_quote='normal',
                pt_buy_threshold: float = 0.1,
                pt_sell_threshold: float = 0.1,
+               cash_delivery_period: int = 0,
+               stock_delivery_period: int = 0,
                allow_sell_short: bool = False,
                max_cash_usage: bool = False,
                print_log: bool = False) -> pd.DataFrame:
@@ -400,8 +412,13 @@ def apply_loop(op_type: int,
         :param moq_buy: float：每次交易买进的最小份额单位
         :param moq_sell: float: 每次交易卖出的最小份额单位
         :param inflation_rate: float, 现金的时间价值率，如果>0，则现金的价值随时间增长，增长率为inflation_rate
+        :param price_priority_OHLC: str, 同一周期内多批次交易信号的执行顺序，应用于开高收低价的情形
+        :param price_priority_quote: str, 同一周期内多批次交易信号的执行顺序，应用于五档报价的情形
         :param pt_buy_threshold: float, PT买入信号阈值，只有当实际持仓与目标持仓的差值大于该阈值时，才会产生买入信号
         :param pt_sell_threshold: flaot, PT卖出信号阈值，只有当实际持仓与目标持仓的差值小于该阈值时，才会产生卖出信号
+        :param cash_delivery_period: int, 现金交割周期，默认值为0，单位为天。
+        :param stock_delivery_period: int, 股票交割周期，默认值为0，单位为天。
+        :param allow_sell_short: bool, 是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
         :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
         :param print_log: bool: 设置为True将打印回测详细日志
 
@@ -456,7 +473,7 @@ def apply_loop(op_type: int,
     own_amounts = [0] * share_count  # 投资组合中各个资产的持有数量，初始值为全0向量
     available_amounts = own_amounts  # 每期可用的资产数量
     cash_delivery_queue = []  # 用于模拟现金交割延迟期的定长队列
-    stock_delivery_queue = []   # 用于模拟股票交割延迟期的定长队列
+    stock_delivery_queue = []  # 用于模拟股票交割延迟期的定长队列
     cashes = []  # 中间变量用于记录各个资产买入卖出时消耗或获得的现金
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
@@ -484,31 +501,55 @@ def apply_loop(op_type: int,
         cash_spent, \
         amount_purchased, \
         amount_sold, \
-        fee = _loop_step(signal_type=op_type,
-                         pre_cash=available_cash,
-                         pre_amounts=available_amounts,
-                         op=op[i],
-                         prices=price[i],
-                         rate=cost_rate,
-                         pt_buy_threshold=pt_buy_threshold,
-                         pt_sell_threshold=pt_sell_threshold,
-                         maximize_cash_usage=max_cash_usage,
-                         allow_sell_short=allow_sell_short,
-                         moq_buy=moq_buy,
-                         moq_sell=moq_sell,
-                         print_log=print_log,
-                         share_names=shares)
+        fee = _loop_step(
+                signal_type=op_type,
+                own_cash=own_cash,
+                own_amounts=own_amounts,
+                available_cash=available_cash,
+                available_amounts=available_amounts,
+                op=op[i],
+                prices=price[i],
+                rate=cost_rate,
+                pt_buy_threshold=pt_buy_threshold,
+                pt_sell_threshold=pt_sell_threshold,
+                maximize_cash_usage=max_cash_usage,
+                allow_sell_short=allow_sell_short and cash_delivery_period == 0,
+                moq_buy=moq_buy,
+                moq_sell=moq_sell,
+                print_log=print_log,
+                share_names=shares)
         # 计算本批次交易后的可用现金、可用股票以及持有现金、持有股票
         # 可用现金、可用股票数量首交割延迟期影响，从定长队列中取增加值
-        # TODO: 此处暂时使用列表代替定长队列，其实应该使用专门的定长队列类来实现交割效果
+        # TODO: 此处暂时使用列表和列表长度判断代替定长队列，无法实现隔天判断的效果。
+        # TODO: 其实应该使用专门的定长队列类来实现交割隔天判断的效果
+        # 获得的现金进入交割队列
         cash_delivery_queue.append(cash_gained)
-        available_cash = available_cash + cash_spent + cash_delivery_queue.pop()
+        cash_delivered = 0
+        # 达到交割周期后，完成交割
+        if print_log: print(f'开始交割本次交易获得的现金：{cash_gained:.2f}')
+        if len(cash_delivery_queue) > cash_delivery_period:
+            cash_delivered = cash_delivery_queue.pop(0)
+            if print_log: print(f'交割完成的现金：{cash_delivered:.2f} / 交割队列: {cash_delivery_queue}')
+        available_cash = available_cash + cash_spent + cash_delivered
+
         stock_delivery_queue.append(amount_purchased)
-        available_amounts = available_amounts + amount_sold + stock_delivery_queue.pop()
+        stock_delivered = np.zeros_like(amount_purchased)
+        if print_log: print(f'开始交割本次买入的资产：{np.around(amount_purchased, 2)}')
+        if len(stock_delivery_queue) >= stock_delivery_period:
+            stock_delivered = stock_delivery_queue.pop(0)
+            if print_log: print(f'以下资产交割完成：{np.around(stock_delivered, 2)}\n'
+                                f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
+        available_amounts = available_amounts + amount_sold + stock_delivered
         # 持有现金、持有股票用于计算本期的总价值
         own_cash = own_cash + cash_gained + cash_spent
         own_amounts = own_amounts + amount_sold + amount_purchased
         value = (own_amounts * price[i]).sum() + own_cash
+        # 打印结果
+        if print_log:
+            print(f'本期交易完成, 交易后持有现金/可用现金: {own_cash:.2f} / {available_cash:.2f}, \n'
+                  f'资产总额：{value:.2f}其中\n'
+                  f'持有资产：{np.around(own_amounts, 2)}\n'
+                  f'可用资产：{np.around(available_amounts, 2)}\n')
         # 保存计算结果
         cashes.append(own_cash)
         fees.append(fee)
@@ -708,15 +749,17 @@ def check_and_prepare_hist_data(operator, config):
     # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.test_cash_dates is None:
         test_start = next_market_trade_day(config.test_start).strftime('%Y%m%d')
-        test_cash_plan = CashPlan(test_start,
-                                  config.test_cash_amounts[0],
-                                  config.riskfree_ir)
+        test_cash_plan = CashPlan(
+                test_start,
+                config.test_cash_amounts[0],
+                config.riskfree_ir)
     else:
         cash_dates = str_to_list(config.test_cash_dates)
         adjusted_cash_dates = [next_market_trade_day(date) for date in cash_dates]
-        test_cash_plan = CashPlan(dates=adjusted_cash_dates,
-                                  amounts=config.test_cash_amounts,
-                                  interest_rate=config.riskfree_ir)
+        test_cash_plan = CashPlan(
+                dates=adjusted_cash_dates,
+                amounts=config.test_cash_amounts,
+                interest_rate=config.riskfree_ir)
         test_start = regulate_date_format(test_cash_plan.first_day)
         if pd.to_datetime(test_start) != pd.to_datetime(config.test_start):
             warn(f'first cash investment on {test_start} differ from invest_start {config.test_start}, first cash'
@@ -735,19 +778,21 @@ def check_and_prepare_hist_data(operator, config):
     opti_end = config.opti_end
     test_end = config.test_end
     window_length = operator.max_window_length
-    hist_op = get_history_panel(start=regulate_date_format(pd.to_datetime(invest_start) -
-                                                           pd.Timedelta(int(window_length * 1.6), 'd')),
-                                end=invest_end,
-                                shares=config.asset_pool,
-                                htypes=operator.op_data_types,
-                                freq=operator.op_data_freq,
-                                asset_type=config.asset_type,
-                                adj='hfq',
-                                chanel=config.hist_data_channel,
-                                parallel=config.hist_dnld_parallel,
-                                delay=config.hist_dnld_delay,
-                                delay_every=config.hist_dnld_delay_evy,
-                                progress=config.hist_dnld_prog_bar) if run_mode <= 1 else HistoryPanel()
+    hist_op = get_history_panel(
+            start=regulate_date_format(
+                    pd.to_datetime(invest_start) -
+                    pd.Timedelta(int(window_length * 1.6), 'd')),
+            end=invest_end,
+            shares=config.asset_pool,
+            htypes=operator.op_data_types,
+            freq=operator.op_data_freq,
+            asset_type=config.asset_type,
+            adj='hfq',
+            chanel=config.hist_data_channel,
+            parallel=config.hist_dnld_parallel,
+            delay=config.hist_dnld_delay,
+            delay_every=config.hist_dnld_delay_evy,
+            progress=config.hist_dnld_prog_bar) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
     hist_loop = hist_op.to_dataframe(htype='close')
     # fill np.inf in hist_loop to prevent from result in nan in value
@@ -830,7 +875,7 @@ def run(operator, **kwargs):
             交易信号为一个tuple，包含以下组分信息：
              1，交易品种：str，需要交易的目标投资产品，可能为股票、基金、期货或其他，根据建立或设置的投资组合产品池确定
              2，交易位置：int，分别为多头头寸：1，或空头仓位： -1 （空头头寸只有在期货或期权交易时才会涉及到）
-             3，交易方向：int，分别为开仓：1， 平仓：0 （股票和基金的交易只能开多头（买入）和平多头（卖出），基金可以开、平空头）
+             3，交易方向：int，分别为开仓：1， 平仓：0 （股票和基金的交易只能开多仓（买入）和平多仓（卖出），基金可以开、平空头）
              4，交易类型：int，分为市价单：1，限价单：0
              5，交易价格：float，仅当交易类型为限价单时有效，市价单
              6，交易量：float，当交易方向为开仓（买入）时，交易量代表计划现金投入量，当交易方向为平仓（卖出）时，交易量代表卖出的产品份额
@@ -869,7 +914,7 @@ def run(operator, **kwargs):
             因为交易结果清单是根据有交易信号的历史交易日上计算的，因此并不完整。根据完整的历史数据，系统可以将数据补充完整并得到整个历史区间的
             每日甚至更高频率的投资持仓及总资产变化表。完成这张表后，系统将在这张总资产变化表上执行完整的回测结果分析，分析的内容包括：
                 1，total_investment                      总投资
-                2，total_final_value                     投资期末总资产
+                2，total_final_value                      投资期末总资产
                 3，loop_length                           投资模拟区间长度
                 4，total_earning                         总盈亏
                 5，total_transaction_cost                总交易成本
@@ -883,7 +928,7 @@ def run(operator, **kwargs):
                 13，max_retreat                          投资期最大回测率
                 14，Karma_rate                           卡玛比率
                 15，Sharp_rate                           夏普率
-                16，win_rage                             胜率
+                16，win_rate                             胜率
 
             上述所有评价结果和历史区间数据能够以可视化的方式输出到图表中。同时回测的结果数据和回测区间的每一次模拟交易记录也可以被记录到log对象中
             保存在磁盘上供未来调用
