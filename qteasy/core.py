@@ -512,8 +512,8 @@ def apply_loop(op_type: int,
                 rate=cost_rate,
                 pt_buy_threshold=pt_buy_threshold,
                 pt_sell_threshold=pt_sell_threshold,
-                maximize_cash_usage=max_cash_usage,
-                allow_sell_short=allow_sell_short and cash_delivery_period == 0,
+                maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
+                allow_sell_short=allow_sell_short,
                 moq_buy=moq_buy,
                 moq_sell=moq_sell,
                 print_log=print_log,
@@ -527,7 +527,7 @@ def apply_loop(op_type: int,
         cash_delivered = 0
         # 达到交割周期后，完成交割
         if print_log: print(f'开始交割本次交易获得的现金：{cash_gained:.2f}')
-        if len(cash_delivery_queue) > cash_delivery_period:
+        if len(cash_delivery_queue) >= cash_delivery_period:
             cash_delivered = cash_delivery_queue.pop(0)
             if print_log: print(f'交割完成的现金：{cash_delivered:.2f} / 交割队列: {cash_delivery_queue}')
         available_cash = available_cash + cash_spent + cash_delivered
