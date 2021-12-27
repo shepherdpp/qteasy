@@ -274,11 +274,11 @@ class Operator:
 
         self._signal_type = ''  # 保存operator对象输出的信号类型
 
-        self._next_stg_index = 0    # int——递增的策略index，确保不会出现重复的index
-        self._strategy_id = []      # List——保存所有交易策略的id，便于识别每个交易策略
-        self._strategies = {}       # Dict——保存实际的交易策略对象
+        self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
+        self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
+        self._strategies = {}  # Dict——保存实际的交易策略对象
         self._op_history_data = {}  # Dict——保存供各个策略进行交易信号生成的历史数据（ndarray）
-        self._stg_blender = {}      # Dict——交易信号混合表达式的解析式
+        self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
         # 添加strategy对象
@@ -520,7 +520,7 @@ class Operator:
         for stg in strategies:
             if not isinstance(stg, (str, Strategy)):
                 warnings.warn(f'WrongType! some of the items in strategies '
-                              f'can not be added - got {stg}',RuntimeWarning)
+                              f'can not be added - got {stg}', RuntimeWarning)
             self.add_strategy(stg)
 
     def add_strategy(self, stg, **kwargs):
@@ -1102,5 +1102,4 @@ class Operator:
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             signal_out[bt_price_type] = blended_signal
-
         return signal_out
