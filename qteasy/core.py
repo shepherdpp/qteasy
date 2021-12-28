@@ -162,6 +162,15 @@ def _loop_step(signal_type: int,
         amounts_sold:       ndarray, 交易后每个个股账户中的股份减少数量
         fee:                float, 本次交易总费用，包括卖出的费用和买入的费用
     """
+    # 0, 当本期交易信号全为0，且信号类型为1或2时，退出计算，因为此时
+    # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
+    # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
+    # 出计算
+    if np.all(op == 0) and signal_type > 0:
+        # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
+        # 因为正好op全为0，因此返回op即可
+        return 0, 0, op, op, 0
+
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
     total_value = own_cash + pre_values.sum()
@@ -182,13 +191,13 @@ def _loop_step(signal_type: int,
         if print_log:
             print(f'本期期初资产总价: {total_value:.2f}: \n'
                   f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期持仓目标:   {op}\n'
-                  f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
-                  f'本期持仓差异:   {np.around(position_diff, 3)}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+            # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+            #       f'本期资产价格:   {np.around(prices, 2)}\n'
+            #       f'本期持仓目标:   {op}\n'
+            #       f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
+            #       f'本期持仓差异:   {np.around(position_diff, 3)}\n'
+            #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+            #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
