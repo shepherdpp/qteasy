@@ -14,7 +14,7 @@ from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
-from qteasy.history import stack_dataframes
+
 from qteasy.tsfuncs import income, indicators, name_change, get_bar
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
@@ -56,6 +56,7 @@ from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minind
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
+from qteasy.history import stack_dataframes, dataframe_to_hp
 
 from qteasy.database import DataSource
 
@@ -2472,162 +2473,195 @@ class TestLoop(unittest.TestCase):
         self.multi_signals = []
         # multisignal的第一组信号为开盘价信号
         self.multi_signals.append(
-                np.array([[0.0, 0.0, 0.0],
-                          [0.0, -0.5, 0.0],
-                          [0.0, -0.5, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.2, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.3, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.3],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.4, 0.3],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.1, 0.0, 0.4],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.2, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.1, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0]])
+                pd.DataFrame(np.array([[0.000, 0.000, 0.000],
+                                       [0.000, -0.500, 0.000],
+                                       [0.000, -0.500, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.150, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.300, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.300],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.350, 0.250],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.100, 0.000, 0.350],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.200, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.050, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000]]),
+                             columns=self.multi_shares,
+                             index=self.multi_dates
+                             )
         )
         # 第二组信号为最高价信号
         self.multi_signals.append(
-                np.array([[0.0, 0.2, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, -0.2, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.2],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0]])
+                pd.DataFrame(np.array([[0.000, 0.150, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, -0.200, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.200],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000]]),
+                             columns=self.multi_shares,
+                             index=self.multi_dates
+                             )
         )
         # 第三组信号为收盘价信号
         self.multi_signals.append(
-                np.array([[0.0, 0.2, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [-0.5, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, -0.8],
-                          [0.0, 0.0, 0.0],
-                          [0.0, -1.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [-0.8, 0.0, 0.0],
-                          [0.0, 0.0, -0.9],
-                          [0.0, 0.0, 0.0],
-                          [0.0, -0.7, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, -1.0],
-                          [0.0, 0.0, 0.0],
-                          [0.0, 0.0, 0.0],
-                          [-1.0, 0.0, 0.0],
-                          [0.0, -1.0, 0.0],
-                          [0.0, 0.0, 0.0]])
+                pd.DataFrame(np.array([[0.000, 0.200, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [-0.500, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, -0.800],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, -1.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [-0.750, 0.000, 0.000],
+                                       [0.000, 0.000, -0.850],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, -0.700, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, -1.000],
+                                       [0.000, 0.000, 0.000],
+                                       [0.000, 0.000, 0.000],
+                                       [-1.000, 0.000, 0.000],
+                                       [0.000, -1.000, 0.000],
+                                       [0.000, 0.000, 0.000]]),
+                             columns=self.multi_shares,
+                             index=self.multi_dates
+                             )
+        )
+
+        # 交易回测所需的价格也有三组，分别是开盘价、最高价和收盘价
+        self.multi_histories = []
+        # multisignal的第一组信号为开盘价信号
+        self.multi_histories.append(
+                pd.DataFrame(self.multi_prices_open,
+                             columns=self.multi_shares,
+                             index=self.multi_dates
+                             )
+        )
+        # 第二组信号为最高价信号
+        self.multi_histories.append(
+                pd.DataFrame(self.multi_prices_high,
+                             columns=self.multi_shares,
+                             index=self.multi_dates
+                             )
+        )
+        # 第三组信号为收盘价信号
+        self.multi_histories.append(
+                pd.DataFrame(self.multi_prices_close,
+                             columns=self.multi_shares,
+                             index=self.multi_dates
+                             )
         )
 
         # 设置回测参数
@@ -2646,10 +2680,32 @@ class TestLoop(unittest.TestCase):
                              buy_min=10,
                              sell_min=5,
                              slipage=0)
-        self.pt_signal_df = pd.DataFrame(self.pt_signals, index=self.dates, columns=self.shares)
-        self.ps_signal_df = pd.DataFrame(self.ps_signals, index=self.dates, columns=self.shares)
-        self.vs_signal_df = pd.DataFrame(self.vs_signals, index=self.dates, columns=self.shares)
-        self.history_list = pd.DataFrame(self.prices, index=self.dates, columns=self.shares)
+        self.pt_signal_hp = dataframe_to_hp(
+                pd.DataFrame(self.pt_signals, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.ps_signal_hp = dataframe_to_hp(
+                pd.DataFrame(self.ps_signals, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.vs_signal_hp = dataframe_to_hp(
+                pd.DataFrame(self.vs_signals, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.multi_signal_hp = stack_dataframes(
+                self.multi_signals,
+                stack_along='htypes',
+                htypes='open, high, close'
+        )
+        self.history_list = dataframe_to_hp(
+                pd.DataFrame(self.prices, index=self.dates, columns=self.shares),
+                htypes='close'
+        )
+        self.multi_history_list = stack_dataframes(
+                self.multi_histories,
+                stack_along='htypes',
+                htypes='open, high, close'
+        )
 
         # 模拟PT信号回测结果
         # PT信号，先卖后买，交割期为0
@@ -4925,7 +4981,7 @@ class TestLoop(unittest.TestCase):
               'cash delivery delay = 0 day \n'
               'buy-sell sequence = sell first')
         res = apply_loop(op_type=0,
-                         op_list=self.pt_signal_df,
+                         op_list=self.pt_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
@@ -4940,7 +4996,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -4950,7 +5006,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -4959,7 +5015,7 @@ class TestLoop(unittest.TestCase):
                           False)
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=0,
-                         op_list=self.ps_signal_df,
+                         op_list=self.ps_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
@@ -4983,7 +5039,7 @@ class TestLoop(unittest.TestCase):
               'maximize_cash = False (buy and sell at the same time)')
         res = apply_loop(
                 op_type=0,
-                op_list=self.pt_signal_df,
+                op_list=self.pt_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
@@ -5005,7 +5061,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5015,7 +5071,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5025,7 +5081,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(
                 op_type=1,
-                op_list=self.ps_signal_df,
+                op_list=self.ps_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
@@ -5051,7 +5107,7 @@ class TestLoop(unittest.TestCase):
               'but not applicable because cash delivery period == 1')
         res = apply_loop(
                 op_type=0,
-                op_list=self.pt_signal_df,
+                op_list=self.pt_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
@@ -5074,7 +5130,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5084,7 +5140,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5094,7 +5150,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(
                 op_type=1,
-                op_list=self.ps_signal_df,
+                op_list=self.ps_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
@@ -5112,7 +5168,7 @@ class TestLoop(unittest.TestCase):
 
         """
         res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_df,
+                         op_list=self.ps_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
@@ -5127,7 +5183,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5137,7 +5193,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5146,7 +5202,7 @@ class TestLoop(unittest.TestCase):
                           False)
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_df,
+                         op_list=self.ps_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
@@ -5170,7 +5226,7 @@ class TestLoop(unittest.TestCase):
               'maximize_cash = False (buy and sell at the same time)')
         res = apply_loop(
                 op_type=1,
-                op_list=self.ps_signal_df,
+                op_list=self.ps_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
@@ -5192,7 +5248,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5202,7 +5258,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5212,7 +5268,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(
                 op_type=1,
-                op_list=self.ps_signal_df,
+                op_list=self.ps_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
@@ -5238,7 +5294,7 @@ class TestLoop(unittest.TestCase):
               'but not applicable because cash delivery period == 1')
         res = apply_loop(
                 op_type=1,
-                op_list=self.ps_signal_df,
+                op_list=self.ps_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
@@ -5261,7 +5317,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5271,7 +5327,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5281,7 +5337,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(
                 op_type=1,
-                op_list=self.ps_signal_df,
+                op_list=self.ps_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
@@ -5299,7 +5355,7 @@ class TestLoop(unittest.TestCase):
 
         """
         res = apply_loop(op_type=2,
-                         op_list=self.vs_signal_df,
+                         op_list=self.vs_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
@@ -5314,7 +5370,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5324,7 +5380,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5333,7 +5389,7 @@ class TestLoop(unittest.TestCase):
                           False)
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=2,
-                         op_list=self.vs_signal_df,
+                         op_list=self.vs_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
@@ -5357,7 +5413,7 @@ class TestLoop(unittest.TestCase):
               'maximize_cash = False (buy and sell at the same time)')
         res = apply_loop(
                 op_type=2,
-                op_list=self.vs_signal_df,
+                op_list=self.vs_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
@@ -5379,7 +5435,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.vs_signal_df,
+                          self.vs_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5389,7 +5445,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.vs_signal_df,
+                          self.vs_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5399,7 +5455,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(
                 op_type=1,
-                op_list=self.vs_signal_df,
+                op_list=self.vs_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
@@ -5425,7 +5481,7 @@ class TestLoop(unittest.TestCase):
               'but not applicable because cash delivery period == 1')
         res = apply_loop(
                 op_type=2,
-                op_list=self.vs_signal_df,
+                op_list=self.vs_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
@@ -5448,7 +5504,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.vs_signal_df,
+                          self.vs_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5458,7 +5514,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.vs_signal_df,
+                          self.vs_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5468,7 +5524,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(
                 op_type=1,
-                op_list=self.vs_signal_df,
+                op_list=self.vs_signal_hp,
                 history_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
@@ -5486,8 +5542,8 @@ class TestLoop(unittest.TestCase):
 
         """
         res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_df,
-                         history_list=self.history_list,
+                         op_list=self.multi_signal_hp,
+                         history_list=self.multi_history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq_buy=0,
@@ -5501,7 +5557,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5511,7 +5567,7 @@ class TestLoop(unittest.TestCase):
         self.assertRaises(AssertionError,
                           apply_loop,
                           0,
-                          self.ps_signal_df,
+                          self.ps_signal_hp,
                           self.history_list,
                           self.cash,
                           self.rate,
@@ -5520,7 +5576,7 @@ class TestLoop(unittest.TestCase):
                           False)
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_df,
+                         op_list=self.ps_signal_hp,
                          history_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
@@ -5539,7 +5595,7 @@ class TestStrategy(unittest.TestCase):
         pass
 
 
-class TestLSStrategy(qt.RollingTiming):
+class TestLSStrategy(RollingTiming):
     """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成
 
     该策略有两个参数，N与Price
@@ -5569,7 +5625,7 @@ class TestLSStrategy(qt.RollingTiming):
             return 1
 
 
-class TestSelStrategy(qt.SimpleSelecting):
+class TestSelStrategy(SimpleSelecting):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -5600,7 +5656,7 @@ class TestSelStrategy(qt.SimpleSelecting):
         return chosen
 
 
-class TestSelStrategyDiffTime(qt.SimpleSelecting):
+class TestSelStrategyDiffTime(SimpleSelecting):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -5630,7 +5686,7 @@ class TestSelStrategyDiffTime(qt.SimpleSelecting):
         return chosen
 
 
-class TestSigStrategy(qt.SimpleTiming):
+class TestSigStrategy(SimpleTiming):
     """用于Test测试的简单信号生成策略，基于SimpleTiming策略生成
 
     策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2

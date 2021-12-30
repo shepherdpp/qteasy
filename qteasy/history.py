@@ -788,8 +788,8 @@ def dataframe_to_hp(df: pd.DataFrame,
                     shares=None,
                     column_type: str = None) -> HistoryPanel:
     """ 根据DataFrame中的数据创建HistoryPanel对象。由于DataFrame只有一个二维数组，因此一个DataFrame只能转化为以下两种HistoryPanel之一：
-        1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的share为(1, dates, htypes)
-            在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而htypes则必须给出
+        1，只有一个share，包含一个或多个htype的HistoryPanel，这时HistoryPanel的shape为(1, dates, htypes)
+            在这种情况下，htypes可以由一个列表，或逗号分隔字符串给出，也可以由DataFrame对象的column Name来生成，而share则必须给出
         2，只有一个dtype，包含一个或多个shares的HistoryPanel，这时HistoryPanel的shape为(shares, dates, 1)
         具体转化为何种类型的HistoryPanel可以由column_type参数来指定，也可以通过给出hdates、htypes以及shares参数来由程序判断
 
@@ -841,7 +841,7 @@ def dataframe_to_hp(df: pd.DataFrame,
                     column_type = 'shares'
             except:
                 raise ValueError(f'shares should be a list or a string, got {type(shares)} instead')
-        print(f'got None in function for column_type, column type is set to {column_type}')
+        # print(f'got None in function for column_type, column type is set to {column_type}')
     if column_type == 'shares':
         if shares is None:
             shares = df.columns
