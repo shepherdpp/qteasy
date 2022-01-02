@@ -69,17 +69,19 @@ from qteasy.blender import _exp_to_token, blender_parser, signal_blend
 
 class TestCost(unittest.TestCase):
     def setUp(self):
-        self.amounts = np.array([10000, 20000, 10000])
-        self.op = np.array([0, 1, -0.33333333])
+        self.amounts = np.array([10000., 20000., 10000.])
+        self.op = np.array([0., 1., -0.33333333])
         self.amounts_to_sell = np.array([0., 0., -3333.3333])
-        self.cash_to_spend = np.array([0., 20000, 0.])
-        self.prices = np.array([10, 20, 10])
-        self.r = qt.Cost()
+        self.cash_to_spend = np.array([0., 20000., 0.])
+        self.prices = np.array([10., 20., 10.])
+        self.r = qt.Cost(0.0)
 
     def test_rate_creation(self):
         """测试对象生成"""
         print('testing rates objects\n')
         self.assertIsInstance(self.r, qt.Cost, 'Type should be Rate')
+        self.assertEqual(self.r.buy_fix, 0)
+        self.assertEqual(self.r.sell_fix, 0)
 
     def test_rate_operations(self):
         """测试交易费率对象"""
@@ -90,17 +92,20 @@ class TestCost(unittest.TestCase):
         self.assertEqual(self.r['buy_min'], 5., 'Item got is incorrect')
         self.assertEqual(self.r['sell_min'], 0.0, 'Item got is incorrect')
         self.assertEqual(self.r['slipage'], 0.0, 'Item got is incorrect')
-        self.assertEqual(np.allclose(self.r(self.amounts), [0.003, 0.003, 0.003]), True, 'fee calculation wrong')
+        self.assertEqual(np.allclose(self.r.calculate(self.amounts),
+                                     [0.003, 0.003, 0.003]),
+                         True,
+                         'fee calculation wrong')
 
     def test_rate_fee(self):
         """测试买卖交易费率"""
         self.r.buy_rate = 0.003
         self.r.sell_rate = 0.001
-        self.r.buy_fix = 0
-        self.r.sell_fix = 0
-        self.r.buy_min = 0
-        self.r.sell_min = 0
-        self.r.slipage = 0
+        self.r.buy_fix = 0.
+        self.r.sell_fix = 0.
+        self.r.buy_min = 0.
+        self.r.sell_min = 0.
+        self.r.slipage = 0.
 
         print('\nSell result with fixed rate = 0.001 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
@@ -110,7 +115,7 @@ class TestCost(unittest.TestCase):
         self.assertAlmostEqual(test_rate_fee_result[2], 33.333332999999996, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 1:')
-        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
+        print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1.))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333]), True, 'result incorrect')
         self.assertAlmostEqual(test_rate_fee_result[1], 33296.67, msg='result incorrect')

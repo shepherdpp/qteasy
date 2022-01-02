@@ -16,6 +16,7 @@ import numpy as np
 import time
 import math
 import logging
+from numba import njit
 from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -70,6 +71,7 @@ AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 # TODO: 使用一个大的DataFrame存储整个回测过程的所有参数，作为回测记录
 # TODO: Usability improvements:
 # TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
+# @njit
 def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
@@ -188,9 +190,9 @@ def _loop_step(signal_type: int,
         # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
         cash_to_spend = np.where(position_diff > ptbt, position_diff * total_value, 0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+        # if print_log:
+        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
+        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
             # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
             #       f'本期资产价格:   {np.around(prices, 2)}\n'
             #       f'本期持仓目标:   {op}\n'
@@ -206,9 +208,9 @@ def _loop_step(signal_type: int,
         # 买入金额为交易信号 * 当前总资产
         cash_to_spend = np.where(op > 0, op * total_value, 0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+        # if print_log:
+        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
+        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
             # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
             #       f'本期资产价格:   {np.around(prices, 2)}\n'
             #       f'本期交易信号:   {op}\n'
@@ -221,16 +223,17 @@ def _loop_step(signal_type: int,
         # 买入金额即为交易信号中大于零者
         cash_to_spend = np.where(op > 0, op * prices, 0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+        # if print_log:
+        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
+        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
             # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
             #       f'本期资产价格:   {np.around(prices, 2)}\n'
             #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
             #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
-        raise ValueError(f'signal_type value {signal_type} not supported!')
+        # raise ValueError(f'signal_type value {signal_type} not supported!')
+        pass
 
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
@@ -241,23 +244,23 @@ def _loop_step(signal_type: int,
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
                                                                     moq=moq_sell)
-    if print_log:
-        # 输出本批次卖出交易的详细信息
-        if share_names is None:
-            share_names = np.arange(len(op))
-        item_sold = np.where(amount_sold < 0)[0]
-        if len(item_sold) > 0:
-            for i in item_sold:
-                if prices[i] != 0:
-                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
-                          f'出售 {np.round(-amount_sold[i], 2)} 份')
-                else:
-                    print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
-                          f'暂停交易，出售 {0.0} 份')
-            print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-                  f'交易后现金余额: {(available_cash + cash_gained):.3f}')
-        else:
-            print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
+    # if print_log:
+    #     # 输出本批次卖出交易的详细信息
+    #     if share_names is None:
+    #         share_names = np.arange(len(op))
+    #     item_sold = np.where(amount_sold < 0)[0]
+    #     if len(item_sold) > 0:
+    #         for i in item_sold:
+    #             if prices[i] != 0:
+    #                 print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+    #                       f'出售 {np.round(-amount_sold[i], 2)} 份')
+    #             else:
+    #                 print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+    #                       f'暂停交易，出售 {0.0} 份')
+    #         print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
+    #               f'交易后现金余额: {(available_cash + cash_gained):.3f}')
+    #     else:
+    #         print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
@@ -269,32 +272,32 @@ def _loop_step(signal_type: int,
 
     if total_cash_to_spend == 0:
         # 如果买入计划为0，则直接跳过后续的计算
-        if print_log:
-            print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
+        # if print_log:
+        #     print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
         return cash_gained, 0, np.zeros_like(op), amount_sold, fee_selling
 
     if total_cash_to_spend > available_cash:
         # 按比例降低分配给每个拟买入资产的现金额度
         cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
-        if print_log:
-            print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-            print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
+        # if print_log:
+        #     print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
+        #     print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         cash_to_spend=cash_to_spend,
                                                                         moq=moq_buy)
-    if print_log:
-        # 输出本批次买入交易的详细信息
-        if share_names is None:
-            share_names = np.arange(len(op))
-        item_purchased = np.where(amount_purchased > 0)[0]
-        if len(item_purchased) > 0:
-            for i in item_purchased:
-                print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
-                      f' 买入 {np.round(amount_purchased[i], 2)} 份')
-            print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+    # if print_log:
+    #     # 输出本批次买入交易的详细信息
+    #     if share_names is None:
+    #         share_names = np.arange(len(op))
+    #     item_purchased = np.where(amount_purchased > 0)[0]
+    #     if len(item_purchased) > 0:
+    #         for i in item_purchased:
+    #             print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+    #                   f' 买入 {np.round(amount_purchased[i], 2)} 份')
+    #         print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling

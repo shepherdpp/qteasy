@@ -12,9 +12,21 @@
 import numpy as np
 import pandas as pd
 from numba import jit, njit, int64, float64
+from numba import jitclass, types, typed
 from collections import Iterable
 
+cost_numba_spec = [
+    ('buy_fix', float64),
+    ('sell_fix', float64),
+    ('buy_rate', float64),
+    ('sell_rate', float64),
+    ('buy_min', float64),
+    ('sell_min', float64),
+    ('slipage', float64)
+]
 
+
+# @jitclass(cost_numba_spec)
 class Cost:
     """ 交易成本类，用于在回测过程中对交易成本进行估算
 
@@ -34,20 +46,20 @@ class Cost:
     """
 
     def __init__(self,
-                 buy_fix: float = 0.0,
-                 sell_fix: float = 0.0,
-                 buy_rate: float = 0.003,
-                 sell_rate: float = 0.001,
-                 buy_min: float = 5.0,
-                 sell_min: float = 0.0,
-                 slipage: float = 0.0):
-        self.buy_fix = float(buy_fix)
-        self.sell_fix = float(sell_fix)
-        self.buy_rate = float(buy_rate)
-        self.sell_rate = float(sell_rate)
-        self.buy_min = float(buy_min)
-        self.sell_min = float(sell_min)
-        self.slipage = float(slipage)
+                 buy_fix=0.0,
+                 sell_fix=0.0,
+                 buy_rate=0.003,
+                 sell_rate=0.001,
+                 buy_min=5.0,
+                 sell_min=0.0,
+                 slipage=0.0):
+        self.buy_fix = buy_fix
+        self.sell_fix = sell_fix
+        self.buy_rate = buy_rate
+        self.sell_rate = sell_rate
+        self.buy_min = buy_min
+        self.sell_min = sell_min
+        self.slipage = slipage
 
     def __str__(self):
         """设置Rate对象的打印形式"""
@@ -59,11 +71,10 @@ class Cost:
         return f'Rate({self.buy_fix}/{self.sell_fix}, {self.buy_rate}/{self.sell_rate}, ' \
                f'{self.buy_min}/{self.sell_min}, {self.slipage})'
 
-    # TODO: Rate对象的调用结果应该返回交易费用而不是交易费率，否则固定费率就没有意义了(交易固定费用在回测中计算较为复杂)
-    def __call__(self,
-                 trade_values: np.ndarray,
-                 is_buying: bool = True,
-                 fixed_fees: bool = False) -> float:
+    def calculate(self,
+                  trade_values: np.ndarray,
+                  is_buying: bool = True,
+                  fixed_fees: bool = False) -> float:
         """直接调用对象，计算交易费率或交易费用
 
         采用两种模式计算：
@@ -83,16 +94,32 @@ class Cost:
         bm = self.buy_min
         sm = self.sell_min
         slp = self.slipage
-        return _calculate_fee(trade_values.astype('float'),
-                              fixed_fees,
-                              is_buying,
-                              bf, sf, br, sr, bm, sm, slp)
+
+        if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
+            if is_buying:
+                return bf + slp * trade_values ** 2
+            else:
+                return sf + slp * trade_values ** 2
+        else:  # 采用固定费率模式计算
+            if is_buying:
+                if bm == 0.:
+                    return br + slp * trade_values
+                else:
+                    min_rate = bm / (trade_values - bm)
+                    return np.fmax(br, min_rate) + slp * trade_values
+            else:
+                if sm == 0.:
+                    return sr - slp * trade_values
+                else:
+                    min_rate = -sm / trade_values
+                    min_rate[np.isinf(min_rate)] = 0  # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
+                    return np.fmax(sr, min_rate) + slp * trade_values
 
     def __getitem__(self, item: str) -> float:
         """通过字符串获取Rate对象的某个组份（费率、滑点或冲击率）"""
-        assert isinstance(item, str), 'TypeError, item should be a string in ' \
-                                      '[\'buy_fix\', \'sell_fix\', \'buy_rate\', \'sell_rate\',' \
-                                      ' \'buy_min\', \'sell_min\',\'slipage\']'
+        # assert isinstance(item, str), 'TypeError, item should be a string in ' \
+        #                               '[\'buy_fix\', \'sell_fix\', \'buy_rate\', \'sell_rate\',' \
+        #                               ' \'buy_min\', \'sell_min\',\'slipage\']'
         if item == 'buy_fix':
             return self.buy_fix
         elif item == 'sell_fix':
@@ -114,7 +141,7 @@ class Cost:
     def get_selling_result(self,
                            prices: np.ndarray,
                            a_to_sell: np.ndarray,
-                           moq: float = 0):
+                           moq=0.):
         """计算出售投资产品的要素
 
 
@@ -134,11 +161,11 @@ class Cost:
             a_sold = np.trunc(a_to_sell / moq) * moq
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
-            rates = self.__call__(trade_values=sold_values, is_buying=False, fixed_fees=False)
+            rates = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=False)
             cash_gained = (-1 * sold_values * (1 - rates)).sum()
             fee = -(sold_values * rates).sum()
         else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
-            fixed_fees = self.__call__(trade_values=sold_values, is_buying=False, fixed_fees=True)
+            fixed_fees = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=True)
             fee = np.where(a_sold, fixed_fees, 0).sum()
             cash_gained = - sold_values.sum() - fee
         return a_sold, cash_gained, fee
@@ -160,67 +187,41 @@ class Cost:
         """
         # 给三个函数返回值预先赋值
         a_purchased = np.zeros_like(prices)
-        cash_spent = 0
-        fee = 0
+        cash_spent = np.zeros_like(prices)
+        fee = 0.
         if self.buy_fix == 0.:
             # 固定费用为0，估算购买一定金额股票的交易费率
-            rates = self.__call__(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
+            rates = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
             # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
             if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
                 a_purchased = np.where(prices,
                                        cash_to_spend / (prices * (1 + rates)),
-                                       0)
+                                       0.)
             else:  # moq不为零，实际买入份额必须是moq的倍数，因此实际买入份额通常小于期望买入份额
                 a_purchased = np.where(prices,
                                        np.trunc(cash_to_spend / (prices * moq * (1 + rates))) * moq,
-                                       0)
+                                       0.)
             # 根据交易量计算交易费用，考虑最低费用的因素，当费用低于最低费用时，使用最低费用
-            fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0)
+            fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0.)
             purchased_values = a_purchased * prices + fees
-            cash_spent = np.where(a_purchased, -1 * purchased_values, 0)
+            cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
             fee = fees.sum()
         elif self.buy_fix:
             # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，只计算买入金额大于固定费用的份额
-            fixed_fees = self.__call__(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
-            if moq == 0:
+            fixed_fees = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
+            if moq == 0.:
                 a_purchased = np.fmax(np.where(prices,
                                                (cash_to_spend - fixed_fees) / prices,
-                                               0),
-                                      0)
+                                               0.),
+                                      0.)
             else:
                 a_purchased = np.fmax(np.where(prices,
                                                np.trunc((cash_to_spend - fixed_fees) / (prices * moq)) * moq,
-                                               0),
-                                      0)
-            cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0)
-            fee = np.where(a_purchased, fixed_fees, 0).sum()
+                                               0.),
+                                      0.)
+            cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0.)
+            fee = np.where(a_purchased, fixed_fees, 0.).sum()
         return a_purchased, cash_spent.sum(), fee
-
-
-@jit(float64[:](float64[:], int64, int64, float64, float64, float64, float64, float64, float64, float64), nopython=True)
-def _calculate_fee(trade_values, fixed_fees, is_buying, bf, sf, br, sr, bm, sm, slp):
-    """calculate the transaction fee given all parameters
-
-    """
-    if fixed_fees:  # 采用固定费用模式计算, 返回固定费用及滑点成本，返回的是费用而不是费率
-        if is_buying:
-            return bf + slp * trade_values ** 2
-        else:
-            return sf + slp * trade_values ** 2
-    else:  # 采用固定费率模式计算
-        if is_buying:
-            if bm == 0.:
-                return br + slp * trade_values
-            else:
-                min_rate = bm / (trade_values - bm)
-                return np.fmax(br, min_rate) + slp * trade_values
-        else:
-            if sm == 0.:
-                return sr - slp * trade_values
-            else:
-                min_rate = -sm / trade_values
-                min_rate[np.isinf(min_rate)] = 0  # 当trade_values中有0值时，将产生inf，且传递到caller后会导致问题，因此需要清零
-                return np.fmax(sr, min_rate) + slp * trade_values
 
 
 # TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
@@ -239,7 +240,7 @@ class CashPlan:
         """
         if isinstance(amounts, (int, float)):
             amounts = [amounts]
-        assert isinstance(amounts,(list, np.ndarray)), \
+        assert isinstance(amounts, (list, np.ndarray)), \
             f'TypeError: amounts should be a list of numbers, got {type(amounts)} instead'
         if isinstance(amounts, list):
             assert all([isinstance(amount, (int, float, np.int64, np.float64)) for amount in amounts]), \
@@ -544,4 +545,3 @@ def distribute_investment(amount: float,
     :param freq:
     :return:
     """
-
