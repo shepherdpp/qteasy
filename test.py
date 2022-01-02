@@ -3950,6 +3950,59 @@ class TestLoop(unittest.TestCase):
                  [500.000, 710.484, 1100.000, 100.000, 0.000, 100.000, 900.000, 13167.000, 0.000, 35286.584],
                  [500.000, 710.484, 1100.000, 100.000, 0.000, 100.000, 900.000, 13167.000, 0.000, 35081.366]])
 
+        # Multi信号处理结果，先卖后买，使用卖出的现金买进，交割期为2天（股票）0天（现金）
+        self.multi_res = np.array(
+                [[0.0000, 357.2545, 0.0000, 6506.9627, 0.0000, 9965.1867],
+                 [0.0000, 357.2545, 0.0000, 6506.9627, 0.0000, 10033.0650],
+                 [0.0000, 178.6273, 0.0000, 8273.5864, 0.0000, 10034.8513],
+                 [0.0000, 178.6273, 0.0000, 8273.5864, 0.0000, 10036.6376],
+                 [150.3516, 178.6273, 0.0000, 6771.5740, 0.0000, 10019.3404],
+                 [150.3516, 178.6273, 0.0000, 6771.5740, 0.0000, 10027.7062],
+                 [150.3516, 178.6273, 0.0000, 6771.5740, 0.0000, 10030.1477],
+                 [150.3516, 178.6273, 0.0000, 6771.5740, 0.0000, 10005.1399],
+                 [150.3516, 178.6273, 0.0000, 6771.5740, 0.0000, 10002.5054],
+                 [150.3516, 489.4532, 0.0000, 3765.8877, 0.0000, 9967.3860],
+                 [75.1758, 391.5625, 0.0000, 5490.1377, 0.0000, 10044.4059],
+                 [75.1758, 391.5625, 0.0000, 5490.1377, 0.0000, 10078.1430],
+                 [75.1758, 391.5625, 846.3525, 392.3025, 0.0000, 10138.2709],
+                 [75.1758, 391.5625, 846.3525, 392.3025, 0.0000, 10050.4768],
+                 [75.1758, 391.5625, 846.3525, 392.3025, 0.0000, 10300.0711],
+                 [75.1758, 391.5625, 846.3525, 392.3025, 0.0000, 10392.6970],
+                 [75.1758, 391.5625, 169.2705, 4644.3773, 0.0000, 10400.5282],
+                 [75.1758, 391.5625, 169.2705, 4644.3773, 0.0000, 10408.9220],
+                 [75.1758, 0.0000, 169.2705, 8653.9776, 0.0000, 10376.5914],
+                 [75.1758, 0.0000, 169.2705, 8653.9776, 0.0000, 10346.8794],
+                 [75.1758, 0.0000, 169.2705, 8653.9776, 0.0000, 10364.7474],
+                 [75.1758, 381.1856, 645.5014, 2459.1665, 0.0000, 10302.4570],
+                 [18.7939, 381.1856, 645.5014, 3024.6764, 0.0000, 10747.4929],
+                 [18.7939, 381.1856, 96.8252, 6492.3097, 0.0000, 11150.9107],
+                 [18.7939, 381.1856, 96.8252, 6492.3097, 0.0000, 11125.2946],
+                 [18.7939, 114.3557, 96.8252, 9227.3166, 0.0000, 11191.9956],
+                 [18.7939, 114.3557, 96.8252, 9227.3166, 0.0000, 11145.7486],
+                 [18.7939, 114.3557, 96.8252, 9227.3166, 0.0000, 11090.0768],
+                 [132.5972, 114.3557, 864.3802, 4223.9548, 0.0000, 11113.8733],
+                 [132.5972, 114.3557, 864.3802, 4223.9548, 0.0000, 11456.3281],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 21983.7333],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 22120.6165],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 21654.5327],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 21429.6550],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 21912.5643],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 22516.3100],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 23169.0777],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 23390.8080],
+                 [132.5972, 114.3557, 864.3802, 14223.9548, 0.0000, 23743.3742],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 23210.7311],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 24290.4375],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 24335.3279],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 18317.3553],
+                 [132.5972, 559.9112, 864.3802, 9367.3999, 0.0000, 18023.4660],
+                 [259.4270, 559.9112, 0.0000, 15820.6915, 0.0000, 24390.0527],
+                 [259.4270, 559.9112, 0.0000, 15820.6915, 0.0000, 24389.6421],
+                 [259.4270, 559.9112, 0.0000, 15820.6915, 0.0000, 24483.5953],
+                 [0.0000, 559.9112, 0.0000, 18321.5674, 0.0000, 24486.1895],
+                 [0.0000, 0.0000, 0.0000, 24805.3389, 0.0000, 24805.3389],
+                 [0.0000, 0.0000, 0.0000, 24805.3389, 0.0000, 24805.3389]])
+
     def test_loop_step_pt_sb00(self):
         """ test loop step PT-signal, sell first"""
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4988,9 +5041,9 @@ class TestLoop(unittest.TestCase):
                          moq_buy=0,
                          moq_sell=0,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
+        # print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.pt_res_bs00, 2))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
@@ -5022,9 +5075,9 @@ class TestLoop(unittest.TestCase):
                          moq_buy=100,
                          moq_sell=1,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
+        # print(f'in test_loop:\nresult of loop test is \n{res}')
 
     def test_loop_pt_with_delay(self):
         """ Test looping of PT proportion target signals, with:
@@ -5048,7 +5101,7 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                print_log=True)
+                print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5175,7 +5228,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=0,
                          moq_sell=0,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.ps_res_bs00, 5))
@@ -5209,7 +5262,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=100,
                          moq_sell=1,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5235,7 +5288,7 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                print_log=True)
+                print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5362,7 +5415,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=0,
                          moq_sell=0,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.vs_res_bs00, 5))
@@ -5396,7 +5449,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=100,
                          moq_sell=1,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5491,7 +5544,7 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                print_log=True)
+                print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5533,7 +5586,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                print_log=True)
+                print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5548,11 +5601,20 @@ class TestLoop(unittest.TestCase):
                          cost_rate=self.rate,
                          moq_buy=0,
                          moq_sell=0,
+                         cash_delivery_period=0,
+                         stock_delivery_period=2,
+                         max_cash_usage=True,
                          inflation_rate=0,
-                         print_log=True)
+                         print_log=False)
         self.assertIsInstance(res, pd.DataFrame)
-        print(f'in test_loop:\nresult of loop test is \n{res}')
-        self.assertTrue(np.allclose(res, self.ps_res_bs00, 5))
+        print(f'in test_loop:\nresult of loop test is \n{res}\n'
+              f'result comparison line by line:')
+        for i in range(len(res)):
+            print(np.around(res.values[i]))
+            print(np.around(self.multi_res[i]))
+            print()
+
+        self.assertTrue(np.allclose(res, self.multi_res, 5))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
                           apply_loop,
@@ -5576,12 +5638,15 @@ class TestLoop(unittest.TestCase):
                           False)
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=1,
-                         op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
+                         op_list=self.multi_signal_hp,
+                         history_list=self.multi_history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
                          moq_buy=100,
                          moq_sell=1,
+                         cash_delivery_period=0,
+                         stock_delivery_period=2,
+                         max_cash_usage=False,
                          inflation_rate=0,
                          print_log=True)
         self.assertIsInstance(res, pd.DataFrame)
@@ -8019,6 +8084,11 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp6.columns.keys()), [0, 1, 2, 3])
         self.assertEqual(list(self.hp6.rows.keys())[0], pd.Timestamp('2016-07-01'))
 
+        print('test creating HistoryPanel with very limited data')
+        print('test creating HistoryPanel with 2D data')
+        temp_data = np.random.randint(10, size=(7, 3)).astype('float')
+        temp_hp = qt.HistoryPanel(temp_data)
+
         # Error testing during HistoryPanel creating
         # shape does not match
         self.assertRaises(AssertionError,
@@ -8484,9 +8554,10 @@ class TestHistoryPanel(unittest.TestCase):
         temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
         self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
         temp_hp.fillna(2.3)
-        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
+        filled_values = new_values.copy()
+        filled_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
         self.assertTrue(np.allclose(temp_hp.values,
-                                    new_values, equal_nan=True))
+                                    filled_values, equal_nan=True))
 
     def test_get_history_panel(self):
         # TODO: implement this test case

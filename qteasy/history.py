@@ -90,6 +90,8 @@ class HistoryPanel():
         """
 
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
+        # TODO: 在生成HistoryPanel时传入的ndarray会被直接用于HistoryPanel，如果事后修改这个ndarray，HistoryPanel也会改变
+        # TODO: 应该考虑是否在创建HistoryPanel时生成ndarray的一个copy而不是使用其自身 。
         self._levels = None
         self._columns = None
         self._rows = None
@@ -112,7 +114,7 @@ class HistoryPanel():
             if values.ndim == 1:
                 values = values.reshape(1, values.shape[0], 1)
             elif values.ndim == 2:
-                if len(levels) == 1:
+                if (levels is None) or (len(levels) == 1):
                     values = values.reshape(1, *values.shape)
                 else:
                     values = values.reshape(*values.T.shape, 1)
@@ -445,7 +447,7 @@ class HistoryPanel():
         """
         assert isinstance(with_val, (int, float, np.int, np.float))
         if not self.is_empty:
-            np._values = np.where(np.isnan(self._values), with_val, self._values)
+            self._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
 
     def join(self,
