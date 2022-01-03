@@ -56,7 +56,7 @@ from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minind
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
-from qteasy.history import stack_dataframes, dataframe_to_hp
+from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
 
 from qteasy.database import DataSource
 
@@ -6896,13 +6896,14 @@ class TestOperator(unittest.TestCase):
         print('--test operation signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal(hist_data=self.hp1)
 
-        self.assertTrue(isinstance(op_list, dict))
-        backtest_price_types = list(op_list.keys())
-        op_signals = list(op_list.values())
+        self.assertTrue(isinstance(op_list, HistoryPanel))
+        backtest_price_types = op_list.htypes
         self.assertEqual(backtest_price_types[0], 'close')
-        self.assertEqual(op_signals[0].shape, (45, 3))
-        # self.assertEqual(backtest_price_types[1], 'close')
-        # self.assertEqual(ps_signals[1].shape, (45, 3))
+        self.assertEqual(op_list.shape, (3, 45, 1))
+        reduced_op_list = op_list.values.squeeze().T
+        print(f'op_list created, it is a 3 share/45 days/1 htype array, to make comparison happen, \n'
+              f'it will be squeezed to a 2-d array to compare on share-wise:\n'
+              f'{reduced_op_list}')
         target_op_values = np.array([[0.0, 0.0, 0.0],
                                      [0.0, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
@@ -6951,16 +6952,16 @@ class TestOperator(unittest.TestCase):
 
         signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
                         for sig1, sig2
-                        in zip(list(target_op_values), list(op_signals[0]))]
+                        in zip(list(target_op_values), list(reduced_op_list))]
         all_signal_equal = all(all(sig1 == sig2)
                                for sig1, sig2
-                               in zip(list(target_op_values), list(op_signals[0])))
+                               in zip(list(target_op_values), list(reduced_op_list)))
         print(f'all signals are equal?\n'
               f'{all_signal_equal}')
         print(f'signals side by side:\n'
               f'{signal_pairs}')
         print([item[2] for item in signal_pairs])
-        self.assertTrue(np.allclose(target_op_values, op_signals[0], equal_nan=True))
+        self.assertTrue(np.allclose(target_op_values, reduced_op_list, equal_nan=True))
 
         print('--Test two separate signal generation for different price types--')
         # 测试两组PT类型的信号生成：
@@ -6994,9 +6995,9 @@ class TestOperator(unittest.TestCase):
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal(hist_data=self.hp1)
 
-        self.assertTrue(isinstance(op_list, dict))
-        signal_close = op_list['close']
-        signal_open = op_list['open']
+        self.assertTrue(isinstance(op_list, HistoryPanel))
+        signal_close = op_list['close'].squeeze().T
+        signal_open = op_list['open'].squeeze().T
         self.assertEqual(signal_close.shape, (45, 3))
         self.assertEqual(signal_open.shape, (45, 3))
 

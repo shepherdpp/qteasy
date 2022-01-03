@@ -31,9 +31,9 @@ class HistoryPanel():
     """qteasy 量化投资系统使用的主要历史数据的数据类型.
 
     HistoryPanel数据结构的核心部分是一个基于numpy的三维ndarray矩阵，这个矩阵由M层N行L列，三个维度的轴标签分别为：
-        axis 0: 层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
-        axis 1: 行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
-        axis 2: 列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
+        axis 0: levels/层，每层的标签为一个个股，每一层在HistoryPanel中被称为一个level，所有level的标签被称为shares
+        axis 1: rows/行，每行的标签为一个时间点，每一行在HistoryPanel中被称为一个row，所有row的标签被称为hdates
+        axis 2: columns/列，每列的标签为一种历史数据，每一列在HistoryPanel中被称为一个column，所有column的标签被称为htypes
 
     使用HistoryPanel类，用户可以：
         1, 方便地对数据进行切片，切片的基本方法是使用__getitem__()方法，也就是使用方括号[]传入切片器或列表对象，切片的输出是一个
@@ -77,16 +77,26 @@ class HistoryPanel():
             一个HistoryPanel对象是qteasy中用于历史数据操作的主要数据结构，其本质是一个numpy.ndarray，这个ndarray是一个
             三维数组，这个三维数组有L层，R行、C列，分别代表L种历史数据、R条数据记录、C种股票的历史数据。
 
-            在生成一个HistoryPanel的时候，应该同时输入层标签、行标签和列标签分别代表所输入数据的数据类型、日期时间戳以及股票代码，如果
-            不输入这些数据，从数据结构的层面上来说不会有问题，但是在qteasy应用中可能会报错。
+            在生成一个HistoryPanel的时候，可以同时输入层标签（股票代码）、行标签（日期时间）和列标签（历史数据类型）
+            如果不输入这些数据，HistoryPanel会自动生成标签。在某些qteasy应用中，要求输入正确的标签，如果标签不正确
+            可能导致报错。
 
             历史数据类型可以包括类似开盘价、收盘价这样的量价数据，同样也可以包括诸如pe、ebitda等等财务数据
 
-        :param values: 一个ndarray，必须是一个三维数组，如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
-        :param levels: HistoryPanel的层标签，层的数量为values第一个维度的数据量，每一层代表一个数据类型
-        :param rows: datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，行标签代表每一条数据对应的
-                        历史时间戳
-        :param columns:str，通常为股票代码或证券代码，
+        :param values:
+            一个ndarray，该数组的维度不能超过三维，如果给出的数组维度不够三维，将根据给出的标签推断并补齐维度
+            如果不给出values，则会返回一个空HistoryPanel，其empty属性为True
+
+        :param levels:
+            HistoryPanel的股票标签，层的数量为values第一个维度的数据量，每一层代表一种股票或资产
+
+        :param rows:
+            HistoryPanel的时间日期标签。
+            datetime range或者timestamp index或者str类型，通常是时间类型或可以转化为时间类型，
+            行标签代表每一条数据对应的历史时间戳
+
+        :param columns:str，
+            HistoryPanel的列标签，代表历史数据的类型，既可以是历史数据的
         """
 
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
@@ -162,14 +172,14 @@ class HistoryPanel():
 
     @property
     def levels(self):
-        """返回HistoryPanel的层标签字典
+        """返回HistoryPanel的层标签字典，也是HistoryPanel的股票代码字典
 
         HistoryPanel的层标签是保存成一个字典形式的：
-        levels =    {level_name[0]: 0,
-                     level_name[1]: 1,
-                     level_name[2]: 2,
+        levels =    {share_name[0]: 0,
+                     share_name[1]: 1,
+                     share_name[2]: 2,
                      ...
-                     level_name[l]: l}
+                     share_name[l]: l}
         这个字典在level的标签与level的id之间建立了一个联系，因此，如果需要通过层标签来快速地访问某一层的数据，可以非常容易地通过：
             data = HP.values[levels[level_name[a], :, :]
         来访问
@@ -180,7 +190,7 @@ class HistoryPanel():
 
     @property
     def shares(self):
-        """返回HistoryPanel的列标签——股票列表"""
+        """返回HistoryPanel的层标签——股票列表"""
         if self.is_empty:
             return 0
         else:
@@ -198,20 +208,20 @@ class HistoryPanel():
 
     @property
     def level_count(self):
-        """返回HistoryPanel中数据类型的数量"""
+        """返回HistoryPanel中股票或资产品种的数量"""
         return self._l_count
 
     @property
     def share_count(self):
-        """获取HistoryPanel中股票的数量"""
+        """获取HistoryPanel中股票或资产品种的数量"""
         return self._l_count
 
     @property
     def rows(self):
-        """ 与levels类似，rows也是返回一个字典，通过这个字典建立日期与行号的联系：
+        """ 返回Hi storyPanel的日期字典，通过这个字典建立日期与行号的联系：
 
         rows =  {row_date[0]: 0,
-                 row_daet[1]: 1,
+                 row_date[1]: 1,
                  row_date[2]: 2,
                  ...
                  row_date[r]: r
@@ -262,6 +272,7 @@ class HistoryPanel():
 
     @htypes.setter
     def htypes(self, input_htypes: [str, list]):
+        """修改HistoryPanel的历史数据类型"""
         if not self.is_empty:
             if isinstance(input_htypes, str):
                 input_htypes = str_to_list(input_string=input_htypes)
@@ -275,12 +286,12 @@ class HistoryPanel():
 
     @property
     def columns(self):
-        """与levels及rows类似，获取一个字典，将股票代码与列号进行对应
-        columns = {share_name[0]: 0,
-                   share_naem[1]: 1,
-                   share_name[2]: 2,
+        """返回一个字典，代表HistoryPanel的历史数据，将历史数据与列号进行对应
+        columns = {htype_name[0]: 0,
+                   htype_naem[1]: 1,
+                   htype_name[2]: 2,
                    ...
-                   share_name[c]: c}
+                   htype_name[c]: c}
 
         这样便于内部根据股票代码对数据进行切片
         """
@@ -288,7 +299,7 @@ class HistoryPanel():
 
     @property
     def column_count(self):
-        """获取HistoryPanel的列数量或股票数量"""
+        """获取HistoryPanel的列数量或历史数据数量"""
         return self._c_count
 
     @property
@@ -362,8 +373,6 @@ class HistoryPanel():
             share_slice = list_or_slice(share_slice, self.levels)
             hdate_slice = list_or_slice(hdate_slice, self.rows)
 
-            # print('share_pool is ', share_slice, '\nhtypes is ', htype_slice,
-            #      '\nhdates is ', hdate_slice)
             return self.values[share_slice][:, hdate_slice][:, :, htype_slice]
 
     def __str__(self):

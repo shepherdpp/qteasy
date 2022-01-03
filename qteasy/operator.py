@@ -1102,4 +1102,9 @@ class Operator:
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             signal_out[bt_price_type] = blended_signal
-        return signal_out
+        # 将字典中的ndarray对象组装成HistoryPanel对象
+        signal_hp_value = np.zeros((*blended_signal.T.shape, self.bt_price_type_count))
+        for i, bt_price_type in zip(range(self.bt_price_type_count), self.bt_price_types):
+            signal_hp_value[:,:,i] = signal_out[bt_price_type].T
+        signal_hp = HistoryPanel(signal_hp_value, columns=self.bt_price_types)
+        return signal_hp
