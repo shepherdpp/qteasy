@@ -403,6 +403,53 @@ class HistoryPanel():
     def __repr__(self):
         return self.__str__()
 
+    def segment(self, start_date, end_date):
+        """ 获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回
+            这两个日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
+            htypes的数据
+
+        :input
+            :param start_date: 开始日期
+            :param end_date: 结束日期
+
+        :return
+            HistoryPanel
+        """
+        sd = pd.to_datetime(start_date)
+        ed = pd.to_datetime(end_date)
+        hdates = np.array(self.hdates)
+        sd_index = hdates.searchsorted(sd)
+        ed_index = hdates.searchsorted(ed)
+        new_dates = list(hdates[sd_index:ed_index])
+        new_values = self[:, :, sd_index:ed_index]
+        return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
+
+    def slice(self, shares=None, htypes=None):
+        """ 获取HistoryPanel的一个股票或数据种类片段，shares和htypes可以为列表或逗号分隔字符
+            串，表示需要获取的股票或数据的种类。
+
+        :input
+            :param shares: 需要的股票列表
+            :param htypes: 需要的数据类型列表
+
+        :return
+            HistoryPanel
+        """
+        if shares is None:
+            shares = self.shares
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
+        if not isinstance(shares, list): raise KeyError(f'wrong shares are given!')
+
+        if htypes is None:
+            htypes = self.htypes
+        if isinstance(htypes, str):
+            htypes = str_to_list(htypes)
+        if not isinstance(htypes, list): raise KeyError(f'wrong htypes are given!')
+
+        new_values = self[htypes, shares]
+        return HistoryPanel(new_values, levels=shares, columns=htypes, rows=self.hdates)
+
     def info(self):
         """ 打印本HistoryPanel对象的信息
 
@@ -457,6 +504,17 @@ class HistoryPanel():
         assert isinstance(with_val, (int, float, np.int, np.float))
         if not self.is_empty:
             self._values = np.where(np.isnan(self._values), with_val, self._values)
+        return self
+
+    def fillinf(self, with_val: [int, float, np.int, np.float]):
+        """ 使用with_value来填充HistoryPanel中的所有inf值
+
+        :param with_val: flaot
+        :return:
+        """
+        assert isinstance(with_val, (int, float, np.int, np.float))
+        if not self.is_empty:
+            self._values = np.where(np.isinf(self._values), with_val, self._values)
         return self
 
     def join(self,
@@ -598,7 +656,8 @@ class HistoryPanel():
                                 columns=combined_htypes)
 
     def as_type(self, dtype):
-        """ Convert the data type of current HistoryPanel to another
+        """ 将HistoryPanel的数据类型转换为dtype类型
+        dtype只能为'float'或'int'
 
         :param dtype:
         :return:
@@ -701,6 +760,18 @@ class HistoryPanel():
             for htype in self.htypes:
                 df_dict[htype] = self.to_dataframe(htype=htype)
             return df_dict
+
+    # TODO: implement this method
+    def head(self, row_count=5):
+        """打印HistoryPanel的最初几行，默认打印五行"""
+
+        raise NotImplementedError
+
+    # TODO: implement this method
+    def tail(self, row_count=5):
+        """打印HistoryPanel的最末几行，默认打印五行"""
+
+        raise NotImplementedError
 
     # TODO: implement this method
     def plot(self, *args, **kwargs):

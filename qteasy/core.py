@@ -190,16 +190,16 @@ def _loop_step(signal_type: int,
         # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
         cash_to_spend = np.where(position_diff > ptbt, position_diff * total_value, 0)
         # 打印log：
-        # if print_log:
-        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
-        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-            #       f'本期资产价格:   {np.around(prices, 2)}\n'
-            #       f'本期持仓目标:   {op}\n'
-            #       f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
-            #       f'本期持仓差异:   {np.around(position_diff, 3)}\n'
-            #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-            #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if print_log:
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期持仓目标:   {op}\n'
+                  f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
+                  f'本期持仓差异:   {np.around(position_diff, 3)}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
@@ -208,14 +208,14 @@ def _loop_step(signal_type: int,
         # 买入金额为交易信号 * 当前总资产
         cash_to_spend = np.where(op > 0, op * total_value, 0)
         # 打印log：
-        # if print_log:
-        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
-        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-            #       f'本期资产价格:   {np.around(prices, 2)}\n'
-            #       f'本期交易信号:   {op}\n'
-            #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-            #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if print_log:
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期交易信号:   {op}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 2:
         # 卖出数量即为交易信号中小于零者
@@ -223,17 +223,17 @@ def _loop_step(signal_type: int,
         # 买入金额即为交易信号中大于零者
         cash_to_spend = np.where(op > 0, op * prices, 0)
         # 打印log：
-        # if print_log:
-        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
-        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            # print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-            #       f'本期资产价格:   {np.around(prices, 2)}\n'
-            #       f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-            #       f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if print_log:
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
-        # raise ValueError(f'signal_type value {signal_type} not supported!')
-        pass
+        raise ValueError(f'signal_type value {signal_type} not supported!')
+        # pass
 
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
@@ -244,23 +244,23 @@ def _loop_step(signal_type: int,
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
                                                                     moq=moq_sell)
-    # if print_log:
-    #     # 输出本批次卖出交易的详细信息
-    #     if share_names is None:
-    #         share_names = np.arange(len(op))
-    #     item_sold = np.where(amount_sold < 0)[0]
-    #     if len(item_sold) > 0:
-    #         for i in item_sold:
-    #             if prices[i] != 0:
-    #                 print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
-    #                       f'出售 {np.round(-amount_sold[i], 2)} 份')
-    #             else:
-    #                 print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
-    #                       f'暂停交易，出售 {0.0} 份')
-    #         print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-    #               f'交易后现金余额: {(available_cash + cash_gained):.3f}')
-    #     else:
-    #         print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
+    if print_log:
+        # 输出本批次卖出交易的详细信息
+        if share_names is None:
+            share_names = np.arange(len(op))
+        item_sold = np.where(amount_sold < 0)[0]
+        if len(item_sold) > 0:
+            for i in item_sold:
+                if prices[i] != 0:
+                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+                          f'出售 {np.round(-amount_sold[i], 2)} 份')
+                else:
+                    print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+                          f'暂停交易，出售 {0.0} 份')
+            print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
+                  f'交易后现金余额: {(available_cash + cash_gained):.3f}')
+        else:
+            print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
@@ -272,32 +272,32 @@ def _loop_step(signal_type: int,
 
     if total_cash_to_spend == 0:
         # 如果买入计划为0，则直接跳过后续的计算
-        # if print_log:
-        #     print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
+        if print_log:
+            print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
         return cash_gained, 0, np.zeros_like(op), amount_sold, fee_selling
 
     if total_cash_to_spend > available_cash:
         # 按比例降低分配给每个拟买入资产的现金额度
         cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
-        # if print_log:
-        #     print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-        #     print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
+        if print_log:
+            print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
+            print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         cash_to_spend=cash_to_spend,
                                                                         moq=moq_buy)
-    # if print_log:
-    #     # 输出本批次买入交易的详细信息
-    #     if share_names is None:
-    #         share_names = np.arange(len(op))
-    #     item_purchased = np.where(amount_purchased > 0)[0]
-    #     if len(item_purchased) > 0:
-    #         for i in item_purchased:
-    #             print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
-    #                   f' 买入 {np.round(amount_purchased[i], 2)} 份')
-    #         print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+    if print_log:
+        # 输出本批次买入交易的详细信息
+        if share_names is None:
+            share_names = np.arange(len(op))
+        item_purchased = np.where(amount_purchased > 0)[0]
+        if len(item_purchased) > 0:
+            for i in item_purchased:
+                print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+                      f' 买入 {np.round(amount_purchased[i], 2)} 份')
+            print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
@@ -501,7 +501,7 @@ def apply_loop(op_type: int,
         sub_total_fee = 0
         if print_log:
             print(f'交易日期:{current_date.strftime(date_print_format)}, '
-                  f'{weekday_name(current_date.weekday())}')
+                  f'{weekday_name(current_date.weekday())}, op_type: {op_type}')
         if inflation_rate > 0:  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             own_cash *= inflation_factors[i]
             available_cash *= inflation_factors[i]
@@ -759,13 +759,16 @@ def check_and_prepare_hist_data(operator, config):
     :param: operator: Operator对象，
     :param: config, dict 参数字典
     :return:
-        hist_op:
-        hist_loop:
-        hist_opti:
-        hist_test:
-        hist_opti_loop:
-        hist_test_loop:
-
+        hist_op:            type: HistoryPanel, 用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
+        hist_loop:          type: pd.DataFrame, 用于回测模式投资策略回测的历史价格数据，包含所有回测股票的所有交易价格数据
+        hist_opti:          type: HistoryPanel, 用于优化模式下生成投资策略的历史数据，包含多只股票的多种历史数据
+        hist_test:          type: HistoryPanel, 用于优化模式下用于独立测试投资策略的历史数据，这部分数据可以与hist_opti
+                                不同，用于对策略优化后的结果进行独立检验
+        hist_test_loop:     type: pd.DataFrame, 用于策略优化模式下投资策略优化结果的回测，作为独立检验数据
+        hist_reference:     type: pd.DataFrame, 用于评价回测结果的同期参照数据，一般为股票指数如HS300指数
+        invest_cash_plan:   type: CashPlan,     用于回测模式的资金投入计划
+        opti_cash_plan:     type: CashPlan,     用于优化模式下，策略优化区间的资金投入计划
+        test_cash_plan:     type: CashPlan,     用于优化模式下，策略测试区间的资金投入计划
     """
     run_mode = config.mode
     # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
@@ -833,9 +836,9 @@ def check_and_prepare_hist_data(operator, config):
         # TODO: 此处应该检查test_start是否在config.test_start与config.test_end之间，否则raise
     # 设定投资结束日期
     if run_mode == 0:
-        if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日22:00以后
+        if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日且22:00以后
             invest_end = regulate_date_format(current_date)
-        else:  # 交易日17:00以前，查询到前一个交易日
+        else:  # 非交易日，或交易日21:00以前，查询到前一个交易日
             invest_end = regulate_date_format(prev_market_trade_day(current_date))
     else:
         invest_end = config.invest_end
@@ -858,12 +861,12 @@ def check_and_prepare_hist_data(operator, config):
             delay=config.hist_dnld_delay,
             delay_every=config.hist_dnld_delay_evy,
             progress=config.hist_dnld_prog_bar) if run_mode <= 1 else HistoryPanel()
-    # 生成用于数据回测的历史数据，格式为pd.DataFrame，仅有一个价格数据用于计算交易价格
-    hist_loop = hist_op.to_dataframe(htype='close')
+    # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
+    # TODO: 此处应该根据回测价格顺序模式调整bt_price_types的价格
+    bt_price_types = operator.bt_price_types
+    hist_loop = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in hist_loop to prevent from result in nan in value
-    inf_locs = np.where(np.isinf(hist_loop))
-    for row, col in zip(inf_locs[0], inf_locs[1]):
-        hist_loop.iloc[row, col] = 0
+    hist_loop.fillinf(0)
 
     # 生成用于策略优化训练的训练历史数据集合
     hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(opti_start) -
@@ -920,7 +923,7 @@ def check_and_prepare_hist_data(operator, config):
                       ).to_dataframe(htype='close')
 
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \
-           invest_cash_plan, opti_cash_plan, test_cash_plan
+               invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
 # TODO: 根据最新的qteasy基础模块设计更新docstring并更新函数
@@ -1379,7 +1382,7 @@ def _evaluate_all_parameters(par_generator,
 def _evaluate_one_parameter(par,
                             op: Operator,
                             op_history_data: HistoryPanel,
-                            loop_history_data: [pd.DataFrame, pd.Series],
+                            loop_history_data: HistoryPanel,
                             reference_history_data,
                             reference_history_data_type,
                             config,
@@ -1404,9 +1407,9 @@ def _evaluate_one_parameter(par,
             历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
             价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
-        :param loop_history_data: pd.DataFrame
-            用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
-            （假设交易价格为收盘价）
+        :param loop_history_data: HistoryPanel
+            用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，可以为收盘价
+            和/或其他回测所需要的历史价格
 
         :param reference_history_data: pd.DataFrame
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
@@ -1491,7 +1494,7 @@ def _evaluate_one_parameter(par,
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time
     riskfree_ir = config.riskfree_ir
-    if op_list.empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
+    if op_list.is_empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         res_dict['complete_values'] = pd.DataFrame()
         return res_dict
@@ -1546,11 +1549,11 @@ def _evaluate_one_parameter(par,
     if period_util_type == 'single' or period_util_type == 'montecarlo':
         start_dates.append(invest_cash_dates)
         # start_dates.append(loop_history_data.index[0])
-        end_dates.append(loop_history_data.index[-1])
+        end_dates.append(loop_history_data.hdates[-1])
     elif period_util_type == 'multiple':
         first_history_date = invest_cash_dates
         # first_history_date = loop_history_data.index[0]
-        last_history_date = loop_history_data.index[-1]
+        last_history_date = loop_history_data.hdates[-1]
         history_range = last_history_date - first_history_date
         sub_hist_range = history_range * period_length
         sub_hist_interval = (1 - period_length) * history_range / period_count
@@ -1563,9 +1566,10 @@ def _evaluate_one_parameter(par,
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
     st = time.time()
+    op_type_id = op.signal_type_id
     for start, end in zip(start_dates, end_dates):
-        op_list_seg = op_list[start:end].copy()
-        history_list_seg = loop_history_data[start:end].copy()
+        op_list_seg = op_list.segment(start, end)
+        history_list_seg = loop_history_data.segment(start, end)
         if stage != 'loop':
             invest_cash_dates = history_list_seg.index[0]
         cash_plan = CashPlan(invest_cash_dates.strftime('%Y%m%d'),
@@ -1578,17 +1582,27 @@ def _evaluate_one_parameter(par,
                           config.cost_min_buy,
                           config.cost_min_sell,
                           config.cost_slippage)
-        looped_val = apply_loop(op_list=op_list_seg,
-                                history_list=history_list_seg,
-                                cash_plan=cash_plan,
-                                cost_rate=trade_cost,
-                                moq_buy=config.trade_batch_size,
-                                moq_sell=config.sell_batch_size,
-                                print_log=print_backtest_log)
-        complete_values = _get_complete_hist(looped_value=looped_val,
-                                             h_list=history_list_seg,
-                                             ref_list=reference_history_data,
-                                             with_price=False)
+        looped_val = apply_loop(
+                op_type=op_type_id,
+                op_list=op_list_seg,
+                history_list=history_list_seg,
+                cash_plan=cash_plan,
+                cost_rate=trade_cost,
+                moq_buy=config.trade_batch_size,
+                moq_sell=config.sell_batch_size,
+                inflation_rate=config.riskfree_ir,
+                pt_buy_threshold=config.PT_buy_threshold,
+                pt_sell_threshold=config.PT_sell_threshold,
+                cash_delivery_period=config.cash_deliver_period,
+                stock_delivery_period=config.stock_deliver_period,
+                allow_sell_short=config.allow_sell_short,
+                max_cash_usage=config.maximize_cash_usage,
+                print_log=print_backtest_log)
+        complete_values = _get_complete_hist(
+                looped_value=looped_val,
+                h_list=history_list_seg,
+                ref_list=reference_history_data,
+                with_price=False)
         perf = evaluate(op_list=op_list_seg,
                         looped_values=complete_values,
                         hist_benchmark=reference_history_data,

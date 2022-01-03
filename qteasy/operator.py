@@ -337,6 +337,16 @@ class Operator:
                              f'{self.AVAILABLE_SIGNAL_TYPES}')
 
     @property
+    def signal_type_id(self):
+        """ 以数字的形式返回operator对象的信号类型，便于loop中识别使用"""
+        if self._signal_type == 'pt':
+            return 0
+        elif self._signal_type == 'ps':
+            return 1
+        else:
+            return 2
+
+    @property
     def op_data_types(self):
         """返回operator对象所有策略子对象所需数据类型的集合"""
         d_types = [typ for item in self.strategies for typ in item.data_types]
@@ -1069,7 +1079,7 @@ class Operator:
                 self._ricon_history_data
 
         :return=====
-            Pandas.DataFrame
+            HistoryPanel
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """
@@ -1106,5 +1116,7 @@ class Operator:
         signal_hp_value = np.zeros((*blended_signal.T.shape, self.bt_price_type_count))
         for i, bt_price_type in zip(range(self.bt_price_type_count), self.bt_price_types):
             signal_hp_value[:,:,i] = signal_out[bt_price_type].T
-        signal_hp = HistoryPanel(signal_hp_value, columns=self.bt_price_types)
+        signal_hp = HistoryPanel(signal_hp_value,
+                                 levels=shares,
+                                 columns=self.bt_price_types)
         return signal_hp

@@ -6950,17 +6950,6 @@ class TestOperator(unittest.TestCase):
                                      [0.0, 0.5, 0.0],
                                      [0.0, 0.5, 0.0]])
 
-        signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
-                        for sig1, sig2
-                        in zip(list(target_op_values), list(reduced_op_list))]
-        all_signal_equal = all(all(sig1 == sig2)
-                               for sig1, sig2
-                               in zip(list(target_op_values), list(reduced_op_list)))
-        print(f'all signals are equal?\n'
-              f'{all_signal_equal}')
-        print(f'signals side by side:\n'
-              f'{signal_pairs}')
-        print([item[2] for item in signal_pairs])
         self.assertTrue(np.allclose(target_op_values, reduced_op_list, equal_nan=True))
 
         print('--Test two separate signal generation for different price types--')
@@ -7092,25 +7081,15 @@ class TestOperator(unittest.TestCase):
                                    [0.5, 1.0, 1.0],
                                    [0.5, 1.0, 1.0]])
 
-        signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
+        signal_pairs = [[list(sig1), list(sig2), sig1 == sig2]
                         for sig1, sig2
                         in zip(list(target_op_close), list(signal_close))]
-        all_signal_equal = all(all(sig1 == sig2)
-                               for sig1, sig2
-                               in zip(list(target_op_close), list(signal_close)))
-        print(f'all signals are equal?\n'
-              f'{all_signal_equal}')
         print(f'signals side by side:\n'
               f'{signal_pairs}')
         self.assertTrue(np.allclose(target_op_close, signal_close, equal_nan=True))
-        signal_pairs = [[list(sig1), list(sig2), all(sig1 == sig2)]
+        signal_pairs = [[list(sig1), list(sig2), sig1 == sig2]
                         for sig1, sig2
                         in zip(list(target_op_open), list(signal_open))]
-        all_signal_equal = all(all(sig1 == sig2)
-                               for sig1, sig2
-                               in zip(list(target_op_open), list(signal_open)))
-        print(f'all signals are equal?\n'
-              f'{all_signal_equal}')
         print(f'signals side by side:\n'
               f'{signal_pairs}')
         self.assertTrue(np.allclose(target_op_open, signal_open, equal_nan=True))
@@ -8196,6 +8175,14 @@ class TestHistoryPanel(unittest.TestCase):
         hp.shares = ['000300', '600227', '600222', '000123', '000129']
         hp.info()
 
+    def test_segment(self):
+        """测试历史数据片段的获取"""
+        raise NotImplementedError
+
+    def test_slice(self):
+        """测试历史数据切片的获取"""
+        raise NotImplementedError
+
     def test_relabel(self):
         new_shares_list = ['000001', '000002', '000003', '000004', '000005']
         new_shares_str = '000001, 000002, 000003, 000004, 000005'
@@ -8553,6 +8540,7 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
     def test_fill_na(self):
+        """测试填充无效值"""
         print(self.hp)
         new_values = self.hp.values.astype(float)
         new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
@@ -8564,6 +8552,9 @@ class TestHistoryPanel(unittest.TestCase):
         filled_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = 2.3
         self.assertTrue(np.allclose(temp_hp.values,
                                     filled_values, equal_nan=True))
+
+    def test_fill_inf(self):
+        """测试填充无限值"""
 
     def test_get_history_panel(self):
         # TODO: implement this test case
@@ -10861,11 +10852,8 @@ class TestQT(unittest.TestCase):
         self.op = qt.Operator(strategies=['dma', 'macd'])
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
-        self.op.set_parameter('s-0', pars=(2,), sample_freq='y')
-        self.op.set_parameter('t-0', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-        self.op.set_parameter('t-1', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-        # self.a_to_sell.set_parameter('t-2', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-        self.op.set_parameter('r-0', opt_tag=0, par_boes=[(5, 14), (-0.2, 0)])
+        self.op.set_parameter('dma', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('macd', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
 
         qt.configure(reference_asset='000300.SH',
                      mode=1,
@@ -10883,9 +10871,8 @@ class TestQT(unittest.TestCase):
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
         self.op.set_blender('ls', 'pos-2')
-        self.op.set_parameter(stg_id='t-0', pars=timing_pars1)
-        self.op.set_parameter(stg_id='t-1', pars=timing_pars3)
-        self.op.set_parameter('r-0', pars=(9, -0.1595))
+        self.op.set_parameter(stg_id='dma', pars=timing_pars1)
+        self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
     def test_configure(self):
         """测试参数设置
@@ -10924,9 +10911,7 @@ class TestQT(unittest.TestCase):
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
         op = qt.Operator(strategies=['stema'])
-        op.set_parameter('t-0', pars=(6,))
-        op.set_parameter('s-0', (0.5,))
-        op.set_parameter('r-0', ())
+        op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
         qt.run(op)
 
@@ -11325,7 +11310,7 @@ class TestQT(unittest.TestCase):
                visual=True)
 
     def test_built_in_timing(self):
-        pass
+        """测试内置的择时策略"""
 
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance

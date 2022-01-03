@@ -458,7 +458,7 @@ def prev_market_trade_day(date, exchange='SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20221231'):
         return None
     if is_market_trade_day(_date, exchange):
         return _date

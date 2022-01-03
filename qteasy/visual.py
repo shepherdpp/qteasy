@@ -1109,6 +1109,9 @@ def _plot_test_result(opti_eval_res: list,
 def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, history_data=None):
     """打印实时信号生成模式的运行结果
     """
+    op_dates = op_list.hdates
+    h_dates = history_data.hdates
+    signal_type = operator.signal_type
     print(f'\n'
           f'      ====================================\n'
           f'      |                                  |\n'
@@ -1118,21 +1121,35 @@ def _print_operation_signal(op_list, run_time_prepare_data=0, operator=None, his
     print(f'Operation list is created based on following strategy:\n{operator.strategies}\n'
           f'{operator.info()}')
     print(f'Operation list is created on history data: \n'
-          f'starts:     {history_data.hdates[0]}\n'
-          f'end:        {history_data.hdates[-1]}')
+          f'starts:     {h_dates[0]}\n'
+          f'end:        {h_dates[-1]}')
     print(f'time consumption for operate signal creation: {time_str_format(run_time_prepare_data)}\n')
-    print(f'Operation signals are generated on {op_list.index[0]}\nends on {op_list.index[-1]}\n'
-          f'Total signals generated: {len(op_list.index)}.')
-    print(f'Operation signal for shares on {op_list.index[-1].date()}\n'
-          f'Last three operation signals:\n'
-          f'{op_list.tail(3)}\n')
-    print(f'---------Current Operation Instructions------------\n')
-    for share, signal in op_list.iloc[-1].iteritems():
+    print(f'Operation signals are generated on {op_dates[0]}\nends on {op_dates[-1]}\n'
+          f'Total signals generated: {len(op_dates)}.')
+    print(f'Operation signal for shares on {op_dates[-1].date()}\n')
+    print(f'---------Current Operation Instructions------------\n'
+          f'         signal type: {operator.signal_type}\n'
+          f'signals: \n{op_list}\n'
+          f'Today\'s operation signal as following:\n')
+
+    for share in op_list.shares:
         print(f'------share {share}-----------:')
-        if signal > 0:
-            print(f'Buy in with {signal * 100}% of total investment value!')
-        elif signal < 0:
-            print(f'Sell out {-signal * 100}% of current on holding stock!')
+        signal = op_list[:, share, op_list.hdates[-1]]
+        for price_type in range(op_list.htype_count):
+            # 根据信号类型解析信号含义
+            current_signal = signal[price_type].squeeze()[-1]
+            if signal_type == 'pt':  # 当信号类型为"PT"时，信号代表目标持仓仓位
+                print(f'Hold {current_signal * 100}% of total investment value!')
+            if signal_type == 'ps':  # 当信号类型为"PS"时，信号代表资产买入卖出比例
+                if signal[price_type] > 0:
+                    print(f'Buy in with {current_signal * 100}% of total investment value!')
+                elif signal[price_type] < 0:
+                    print(f'Sell out {-signal * 100}% of current on holding stock!')
+            if signal_type == 'vs':  # 当信号类型为"PT"时，信号代表资产买入卖出数量
+                if signal[price_type] > 0:
+                    print(f'Buy in with {current_signal} shares of total investment value!')
+                elif signal[price_type] < 0:
+                    print(f'Sell out {-signal} shares of current on holding stock!')
     print(f'\n      ===========END OF REPORT=============\n')
 
 

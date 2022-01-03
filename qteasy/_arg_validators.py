@@ -779,20 +779,20 @@ def _valid_qt_kwargs():
                                               '- "normal"：  优先处理更接近成交价的报价，如卖1/买1等\n'
                                               '- "reverse"： 优先处理更远离成交价的报价，如卖5/买5等'},
 
-        'cash_deliver_period':  {'Default':   'T+0',
-                                 'Validator': lambda value: isinstance(value, str)
-                                                            and value in ['T+0', 'T+1', 'T+2', 'T+3', 'T+4'],
+        'cash_deliver_period':  {'Default':   0,
+                                 'Validator': lambda value: isinstance(value, int)
+                                                            and value in range(5),
                                  'level':     3,
-                                 'text':      '回测时卖出股票获得现金的交割周期，T代表交易日，T+N中的数字N代表交易日后第N天\n'
-                                              '可以获得现金交割。\n'
-                                              '获得现金后立即计入总资产计算，但在途资金（尚未交割的资金）不能用于下一笔交易'},
+                                 'text':      '回测时卖出股票获得现金的交割周期，用一个数字N代表交易日后第N天可以完成现金交割。\n'
+                                              '获得现金后立即计入总资产计算，但在途资金（尚未交割的资金）不能用于下一笔交易\n'
+                                              '当现金交割期为零时，可以选择在同一轮交易中先卖出资产获得尽可能多的现金用于本轮\n'
+                                              '买入'},
 
-        'stock_deliver_period': {'Default':   'T+1',
-                                 'Validator': lambda value: isinstance(value, str)
-                                                            and value in ['T+0', 'T+1', 'T+2', 'T+3', 'T+4'],
+        'stock_deliver_period': {'Default':   1,
+                                 'Validator': lambda value: isinstance(value, int)
+                                                            and value in range(5),
                                  'level':     3,
-                                 'text':      '回测时买入股票后的股票交割周期，T代表交易日，T+N中的数字N代表交易日后第N天\n'
-                                              '可以获得股票交割。\n'
+                                 'text':      '回测时买入股票后的股票交割周期，用一个数字N代表交易日后第N天可以完成资产交割。\n'
                                               '获得股票后立即计入总资产计算，但尚未交割的股票不能用于下一笔交易'},
 
         'opti_start':           {'Default':   '20160405',
