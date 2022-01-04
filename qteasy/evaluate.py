@@ -139,7 +139,7 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
         - worst_drawdowns    一个DataFrame，五次最大的回撤记录
         TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
 
-    :param op_list: operator对象生成的交易清单
+    :param op_list: HistoryPanel: operator对象生成的交易清单
     :param hist_benchmark: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
     :param benchmark_data: 参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
     :param cash_plan: 投资计划
@@ -151,7 +151,7 @@ def evaluate(op_list, looped_values, hist_benchmark, benchmark_data, cash_plan, 
     performance_dict = dict()
     # 评价回测结果——计算回测终值，这是默认输出结果
     performance_dict['final_value'] = eval_fv(looped_val=looped_values)
-    performance_dict['loop_start'] = op_list.index[0]
+    performance_dict['loop_start'] = op_list.hdates[0]
     performance_dict['loop_end'] = looped_values.index[-1]
     performance_dict['complete_values'] = looped_values
     days, months, years, oper_count, total_invest, total_fee = eval_operation(op_list=op_list,

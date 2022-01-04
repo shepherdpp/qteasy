@@ -403,7 +403,7 @@ class HistoryPanel():
     def __repr__(self):
         return self.__str__()
 
-    def segment(self, start_date, end_date):
+    def segment(self, start_date=None, end_date=None):
         """ 获取HistoryPanel的一个日期片段，start_date和end_date都是日期型数据，返回
             这两个日期之间的所有数据，返回的类型为一个HistoryPanel，包含所有share和
             htypes的数据
@@ -415,11 +415,13 @@ class HistoryPanel():
         :return
             HistoryPanel
         """
+        hdates = np.array(self.hdates)
+        if start_date is None: start_date = hdates[0]
+        if end_date is None: end_date = hdates[-1]
         sd = pd.to_datetime(start_date)
         ed = pd.to_datetime(end_date)
-        hdates = np.array(self.hdates)
         sd_index = hdates.searchsorted(sd)
-        ed_index = hdates.searchsorted(ed)
+        ed_index = hdates.searchsorted(ed, side='right')
         new_dates = list(hdates[sd_index:ed_index])
         new_values = self[:, :, sd_index:ed_index]
         return HistoryPanel(new_values, levels=self.shares, rows=new_dates, columns=self.htypes)
