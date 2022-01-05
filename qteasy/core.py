@@ -190,16 +190,16 @@ def _loop_step(signal_type: int,
         # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
         cash_to_spend = np.where(position_diff > ptbt, position_diff * total_value, 0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期持仓目标:   {op}\n'
-                  f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
-                  f'本期持仓差异:   {np.around(position_diff, 3)}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        # if print_log:
+        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
+        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+        #     print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+        #           f'本期资产价格:   {np.around(prices, 2)}\n'
+        #           f'本期持仓目标:   {op}\n'
+        #           f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
+        #           f'本期持仓差异:   {np.around(position_diff, 3)}\n'
+        #           f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+        #           f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
@@ -208,14 +208,14 @@ def _loop_step(signal_type: int,
         # 买入金额为交易信号 * 当前总资产
         cash_to_spend = np.where(op > 0, op * total_value, 0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期交易信号:   {op}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        # if print_log:
+        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
+        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+        #     print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+        #           f'本期资产价格:   {np.around(prices, 2)}\n'
+        #           f'本期交易信号:   {op}\n'
+        #           f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+        #           f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 2:
         # 卖出数量即为交易信号中小于零者
@@ -223,13 +223,13 @@ def _loop_step(signal_type: int,
         # 买入金额即为交易信号中大于零者
         cash_to_spend = np.where(op > 0, op * prices, 0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        # if print_log:
+        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
+        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+        #     print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+        #           f'本期资产价格:   {np.around(prices, 2)}\n'
+        #           f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+        #           f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
@@ -362,7 +362,6 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     # print(f'extended looped value according to looped history: \n{looped_value.info()}')
     # 重新计算整个清单中的资产总价值，生成pandas.Series对象，如果looped_history历史价格中包含多种价格，使用最后一种
     decisive_prices = looped_history[-1].squeeze(axis=2).T
-    print(decisive_prices.shape, decisive_prices)
     looped_value['value'] = (decisive_prices * looped_value[shares]).sum(axis=1) + looped_value['cash']
     if with_price:  # 如果需要同时返回价格，则生成pandas.DataFrame对象，包含所有历史价格
         share_price_column_names = [name + '_p' for name in shares]
@@ -550,44 +549,44 @@ def apply_loop(op_type: int,
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
             if prev_date != current_date or cash_delivery_period == 0:
                 cash_delivery_queue.append(cash_gained)
-                if print_log:
-                    print(f'新增交割现金 - 本轮交易获得的现金: '
-                          f'{cash_gained:.2f}')
+                # if print_log:
+                #     print(f'新增交割现金 - 本轮交易获得的现金: '
+                #           f'{cash_gained:.2f}')
             else:
                 cash_delivery_queue[-1] += cash_gained
-                if print_log:
-                    print(f'同批累计交割 - 本轮交易累计获得的现金: '
-                          f'{cash_delivery_queue[-1]:.2f}')
+                # if print_log:
+                #     print(f'同批累计交割 - 本轮交易累计获得的现金: '
+                #           f'{cash_delivery_queue[-1]:.2f}')
 
             # 获得的资产进入交割队列，根据日期的变化确定是新增资产交割还是累加资产交割
             if prev_date != current_date or stock_delivery_period == 0:
                 stock_delivery_queue.append(amount_purchased)
-                if print_log:
-                    print(f'新增交割资产 - 本轮交易买入的资产: '
-                          f'{np.around(amount_purchased, 2)}')
+                # if print_log:
+                #     print(f'新增交割资产 - 本轮交易买入的资产: '
+                #           f'{np.around(amount_purchased, 2)}')
             else:  # if prev_date == current_date
                 stock_delivery_queue[-1] += amount_purchased
-                if print_log:
-                    print(f'同批累计交割 - 本轮累计买入的资产: '
-                          f'{np.around(stock_delivery_queue[-1], 2)}')
+                # if print_log:
+                #     print(f'同批累计交割 - 本轮累计买入的资产: '
+                #           f'{np.around(stock_delivery_queue[-1], 2)}')
 
             prev_date = current_date
 
             # 周期内不交割股票或现金，除非交割期限为0
             if cash_delivery_period == 0:
                 cash_delivered = cash_delivery_queue.pop(0)
-                if print_log:
-                    print(f'现金交割期为0，本期内直接交割现金：'
-                          f'{cash_delivered:.2f}')
+                # if print_log:
+                #     print(f'现金交割期为0，本期内直接交割现金：'
+                #           f'{cash_delivered:.2f}')
                 available_cash = available_cash + cash_spent + cash_delivered
             else:
                 available_cash = available_cash + cash_spent
 
             if stock_delivery_period == 0:
                 stock_delivered = stock_delivery_queue.pop(0)
-                if print_log:
-                    print(f'股票交割期为0，本期内直接交割资产：'
-                          f'{np.around(stock_delivered, 2)}')
+                # if print_log:
+                #     print(f'股票交割期为0，本期内直接交割资产：'
+                #           f'{np.around(stock_delivered, 2)}')
                 available_amounts = available_amounts + amount_sold + stock_delivered
             else:
                 available_amounts = available_amounts + amount_sold
@@ -595,33 +594,33 @@ def apply_loop(op_type: int,
             # 持有现金、持有股票用于计算本期的总价值
             own_cash = own_cash + cash_gained + cash_spent
             own_amounts = own_amounts + amount_sold + amount_purchased
-            value = (own_amounts * price[:, i, j]).sum() + own_cash
+            total_stock_value = (own_amounts * price[:, i, j]).sum()
+            total_value = total_stock_value + own_cash
             sub_total_fee += fee
         # 本期交易全部结束后，开始现金和资产的交割：
         if (len(cash_delivery_queue) >= cash_delivery_period) and (cash_delivery_period != 0):
             cash_delivered = cash_delivery_queue.pop(0)
-            if print_log:
-                print(f'现金交割期满，交割以下现金：{cash_delivered:.2f}'
-                      f' / 交割队列: {cash_delivery_queue}')
+            # if print_log:
+            #     print(f'现金交割期满，交割以下现金：{cash_delivered:.2f}'
+            #           f' / 交割队列: {cash_delivery_queue}')
             available_cash = available_cash + cash_delivered
 
         if (len(stock_delivery_queue) >= stock_delivery_period) and (stock_delivery_period != 0):
             stock_delivered = stock_delivery_queue.pop(0)
-            if print_log:
-                print(f'股票交割期满，以下资产交割完成：{np.around(stock_delivered, 2)}\n'
-                      f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
+            # if print_log:
+            #     print(f'股票交割期满，以下资产交割完成：{np.around(stock_delivered, 2)}\n'
+            #           f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             available_amounts = available_amounts + stock_delivered
 
         # 打印本日结果
         if print_log:
-            print(f'本期交易完成, 交易后持有现金/可用现金: {own_cash:.2f} / {available_cash:.2f}, \n'
-                  f'资产总额：{value:.2f}其中\n'
-                  f'持有资产：{np.around(own_amounts, 2)}\n'
-                  f'可用资产：{np.around(available_amounts, 2)}\n')
+            print(f'本期交易完成, 交易后资产总额: {total_value:.2f}, 其中\n'
+                  f'持有现金: {own_cash:.2f} \n'
+                  f'资产价值: {total_stock_value:.2f}\n')
         # 保存计算结果
         cashes.append(own_cash)
         fees.append(sub_total_fee)
-        values.append(value)
+        values.append(total_value)
         amounts_matrix.append(own_amounts)
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=op_list.hdates,
@@ -1606,8 +1605,7 @@ def _evaluate_one_parameter(par,
                 h_list=history_list_seg,
                 ref_list=reference_history_data,
                 with_price=False)
-        perf = evaluate(op_list=op_list_seg,
-                        looped_values=complete_values,
+        perf = evaluate(looped_values=complete_values,
                         hist_benchmark=reference_history_data,
                         benchmark_data=reference_history_data_type,
                         cash_plan=cash_plan,

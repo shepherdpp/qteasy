@@ -10854,6 +10854,7 @@ class TestQT(unittest.TestCase):
               '=======================================')
         self.op.set_parameter('dma', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
         self.op.set_parameter('macd', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.signal_type = 'pt'
 
         qt.configure(reference_asset='000300.SH',
                      mode=1,

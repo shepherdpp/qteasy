@@ -273,7 +273,6 @@ class Operator:
         '''
 
         self._signal_type = ''  # 保存operator对象输出的信号类型
-
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
         self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
         self._strategies = {}  # Dict——保存实际的交易策略对象

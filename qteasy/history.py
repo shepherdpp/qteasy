@@ -416,8 +416,10 @@ class HistoryPanel():
             HistoryPanel
         """
         hdates = np.array(self.hdates)
-        if start_date is None: start_date = hdates[0]
-        if end_date is None: end_date = hdates[-1]
+        if start_date is None:
+            start_date = hdates[0]
+        if end_date is None:
+            end_date = hdates[-1]
         sd = pd.to_datetime(start_date)
         ed = pd.to_datetime(end_date)
         sd_index = hdates.searchsorted(sd)
@@ -437,17 +439,21 @@ class HistoryPanel():
         :return
             HistoryPanel
         """
+        if self.is_empty:
+            return self
         if shares is None:
             shares = self.shares
         if isinstance(shares, str):
             shares = str_to_list(shares)
-        if not isinstance(shares, list): raise KeyError(f'wrong shares are given!')
+        if not isinstance(shares, list):
+            raise KeyError(f'wrong shares are given!')
 
         if htypes is None:
             htypes = self.htypes
         if isinstance(htypes, str):
             htypes = str_to_list(htypes)
-        if not isinstance(htypes, list): raise KeyError(f'wrong htypes are given!')
+        if not isinstance(htypes, list):
+            raise KeyError(f'wrong htypes are given!')
 
         new_values = self[htypes, shares]
         return HistoryPanel(new_values, levels=shares, columns=htypes, rows=self.hdates)

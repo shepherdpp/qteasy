@@ -25,6 +25,7 @@ from .utilfuncs import time_str_format, list_to_str_format
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
+
 register_matplotlib_converters()
 
 ValidAddPlots = ['macd',
@@ -622,9 +623,9 @@ def _plot_loop_result(loop_results: dict, config):
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
-                         f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
-                         f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
-                         f'  back test:{time_str_format(loop_results["loop_run_time"])}')
+                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
+                          f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
+                          f'  back test:{time_str_format(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.90, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
@@ -770,8 +771,8 @@ def _plot_loop_result(loop_results: dict, config):
     ax6.set_xlabel('date')
     ax6.set_ylim(-1, 0)
     ax6.fill_between(looped_values.index, 0, underwater,
-                    where=underwater < 0,
-                    facecolor=(0.8, 0.2, 0.0), alpha=0.35)
+                     where=underwater < 0,
+                     facecolor=(0.8, 0.2, 0.0), alpha=0.35)
     dd_starts = drawdowns['peak_date'].values
     dd_ends = drawdowns['recover_date'].values
     dd_valley = drawdowns['valley_date'].values
@@ -794,7 +795,6 @@ def _plot_loop_result(loop_results: dict, config):
                      s=f"-{dd:.1%}\n",
                      ha='center',
                      va='bottom')
-
 
     # 绘制收益率热力图
     monthly_return_df = loop_results['return_df'][['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -834,7 +834,7 @@ def _plot_loop_result(loop_results: dict, config):
     # 绘制月度收益率Histo直方图
     ax9.set_title('monthly returns histo')
     ax9.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
-                            label='monthly returns')
+             label='monthly returns')
     ax9.grid(False)
 
     # 设置所有图表的基本格式:
@@ -1178,9 +1178,29 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
     print(f'investment starts on      {looped_values.index[0]}\n'
           f'ends on                   {looped_values.index[-1]}\n'
           f'Total looped periods:     {loop_results["years"]:.1f} years.')
-    print(f'\n-------------operation summary:------------ \n '
-          f'{loop_results["oper_count"]}\n'
-          f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
+    print(f'\n-------------operation summary:------------'
+          f'\n')
+    op_summary = loop_results['oper_count']
+    print(op_summary.to_string(columns=["sell",
+                                        "buy",
+                                        "total",
+                                        "long",
+                                        "short",
+                                        "empty"],
+                               header=["Sell Cnt",
+                                       "Buy Cnt",
+                                       "Total",
+                                       "Long pct",
+                                       "Short pct",
+                                       "Empty pct"],
+                               formatters={'sell':   '{:.0f}'.format,
+                                           'buy':    '{:.0f}'.format,
+                                           'total':         '{:.0f}'.format,
+                                           'long':         '{:.1%}'.format,
+                                           'short':     '{:.1%}'.format,
+                                           'empty':     '{:.1%}'.format},
+                               justify='center'), '\n')
+    print(f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
     print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
           f'final value:              ¥{loop_results["final_value"]:12,.2f}')
     print(f'Total return:             {loop_results["rtn"]:13.2%} \n'
