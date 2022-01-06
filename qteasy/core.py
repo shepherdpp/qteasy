@@ -899,10 +899,8 @@ def check_and_prepare_hist_data(operator, config):
                                   delay_every=config.hist_dnld_delay_evy,
                                   progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
 
-    hist_test_loop = hist_test.to_dataframe(htype='close')
-    inf_locs = np.where(np.isinf(hist_test_loop))
-    for row, col in zip(inf_locs[0], inf_locs[1]):
-        hist_test_loop.iloc[row, col] = 0
+    hist_test_loop = hist_test.slice(htypes=bt_price_types)
+    hist_test_loop.fillinf(0)
 
     # 生成参考历史数据，作为参考用于回测结果的评价
     # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
@@ -1215,7 +1213,7 @@ def run(operator, **kwargs):
                                                 op=operator,
                                                 config=config)
         # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
-        hist_opti_loop = hist_opti.to_dataframe(htype='close').fillna(0)
+        hist_opti_loop = hist_opti.fillna(0)
         result_pool = _evaluate_all_parameters(par_generator=pars,
                                                total=config.opti_output_count,
                                                op=operator,
@@ -1282,7 +1280,7 @@ def _evaluate_all_parameters(par_generator,
                              total,
                              op: Operator,
                              op_history_data: HistoryPanel,
-                             loop_history_data: pd.DataFrame,
+                             loop_history_data: HistoryPanel,
                              reference_history_data,
                              reference_history_data_type,
                              config,
@@ -1573,7 +1571,7 @@ def _evaluate_one_parameter(par,
         op_list_seg = op_list.segment(start, end)
         history_list_seg = loop_history_data.segment(start, end)
         if stage != 'loop':
-            invest_cash_dates = history_list_seg.index[0]
+            invest_cash_dates = history_list_seg.hdates[0]
         cash_plan = CashPlan(invest_cash_dates.strftime('%Y%m%d'),
                              invest_cash_amounts,
                              riskfree_ir)
@@ -1696,7 +1694,7 @@ def _search_grid(hist, ref_hist, ref_type, op, config):
 
     # 使用extract从参数空间中提取所有的点，并打包为iterator对象进行循环
     par_generator, total = space.extract(config.opti_grid_size)
-    history_list = hist.to_dataframe(htype='close').fillna(0)
+    history_list = hist.fillna(0)
     st = time.time()
     pool = _evaluate_all_parameters(par_generator=par_generator,
                                     total=total,
@@ -1735,7 +1733,7 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
     space = Space(*op.opt_space_par)  # 生成参数空间
     # 使用随机方法从参数空间中取出point_count个点，并打包为iterator对象，后面的操作与网格法一致
     par_generator, total = space.extract(config.opti_sample_count, how='rand')
-    history_list = hist.to_dataframe(htype='close').fillna(0)
+    history_list = hist.fillna(0)
     st = time.time()
     pool = _evaluate_all_parameters(par_generator=par_generator,
                                     total=total,
@@ -1802,7 +1800,7 @@ def _search_incremental(hist, ref_hist, ref_type, op, config):
     space_count_in_round = 1  # 本轮运行子空间的数量
     current_round = 1  # 当前运行轮次
     current_volume = base_space.volume  # 当前运行轮次子空间的总体积
-    history_list = hist.to_dataframe(htype='close').fillna(0)  # 准备历史数据
+    history_list = hist.fillna(0)  # 准备历史数据
     """
     估算运行的总回合数量，由于每一轮运行的回合数都是大致固定的（随着空间大小取整会有波动）
     因此总的运行回合数就等于轮数乘以每一轮的回合数。关键是计算轮数

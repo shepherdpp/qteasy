@@ -599,9 +599,7 @@ def eval_operation(looped_value, cash_plan):
     buy_counts = holding_inc.sum(axis=0)
     long_percent = holding_long.sum(axis=0) / total_rounds
     short_percent = -holding_short.sum(axis=0) / total_rounds
-
-    print(sell_counts, buy_counts, long_percent, short_percent)
-
+    # 生成交易总结DataFrame
     op_counts = pd.DataFrame(sell_counts, index=holding_stocks.columns, columns=['sell'])
     op_counts['buy'] = buy_counts
     op_counts['total'] = op_counts.buy + op_counts.sell
