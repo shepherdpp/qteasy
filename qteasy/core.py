@@ -339,7 +339,10 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     """
     # 获取价格清单中的投资产品列表
     shares = h_list.shares  # 获取资产清单
-    start_date = looped_value.index[0]  # 开始日期
+    try:
+        start_date = looped_value.index[0]  # 开始日期
+    except:
+        raise IndexError('index 0 is out of bounds for axis 0 with size 0')
     looped_history = h_list.segment(start_date)  # 回测历史数据区间 = [开始日期:]
     # 使用价格清单的索引值对资产总价值清单进行重新索引，重新索引时向前填充每日持仓额、现金额，使得新的
     # 价值清单中新增的记录中的持仓额和现金额与最近的一个操作日保持一致，并消除nan值

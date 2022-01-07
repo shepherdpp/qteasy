@@ -1114,8 +1114,10 @@ class Operator:
         # 将字典中的ndarray对象组装成HistoryPanel对象
         signal_hp_value = np.zeros((*blended_signal.T.shape, self.bt_price_type_count))
         for i, bt_price_type in zip(range(self.bt_price_type_count), self.bt_price_types):
-            signal_hp_value[:,:,i] = signal_out[bt_price_type].T
+            signal_hp_value[:, :, i] = signal_out[bt_price_type].T
+        history_length = signal_hp_value.shape[1]  # find hdate series
         signal_hp = HistoryPanel(signal_hp_value,
                                  levels=shares,
-                                 columns=self.bt_price_types)
+                                 columns=self.bt_price_types,
+                                 rows=date_list[-history_length:])
         return signal_hp

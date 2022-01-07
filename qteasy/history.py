@@ -102,15 +102,17 @@ class HistoryPanel():
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
         # TODO: 在生成HistoryPanel时传入的ndarray会被直接用于HistoryPanel，如果事后修改这个ndarray，HistoryPanel也会改变
         # TODO: 应该考虑是否在创建HistoryPanel时生成ndarray的一个copy而不是使用其自身 。
+        if (not isinstance(values, np.ndarray)) and (values is not None):
+            raise TypeError(f'input value type should be numpy ndarray, got {type(values)}')
+
         self._levels = None
         self._columns = None
         self._rows = None
-        if values is None:
+        if values is None or values.size == 0:
             self._l_count, self._r_count, self._c_count = (0, 0, 0)
             self._values = None
             self._is_empty = True
         else:
-            assert isinstance(values, np.ndarray), f'input value type should be numpy ndarray, got {type(values)}'
             assert values.ndim <= 3, \
                 f'input array should be equal to or less than 3 dimensions, got {len(values.shape)}'
 

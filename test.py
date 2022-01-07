@@ -7985,7 +7985,19 @@ class TestHistoryPanel(unittest.TestCase):
         print(f'shares: {test_hp.shares}\nhtypes: {test_hp.htypes}')
         print(test_hp)
 
+        # HistoryPanel should be empty if no value is given
         empty_hp = qt.HistoryPanel()
+        self.assertTrue(empty_hp.is_empty)
+        self.assertIsInstance(empty_hp, qt.HistoryPanel)
+        self.assertEqual(empty_hp.shape[0], 0)
+        self.assertEqual(empty_hp.shape[1], 0)
+        self.assertEqual(empty_hp.shape[2], 0)
+        self.assertEqual(empty_hp.level_count, 0)
+        self.assertEqual(empty_hp.row_count, 0)
+        self.assertEqual(empty_hp.column_count, 0)
+
+        # HistoryPanel should also be empty if empty value (np.array([])) is given
+        empty_hp = qt.HistoryPanel(np.empty((5, 0, 4)), levels=self.shares, columns=self.htypes)
         self.assertTrue(empty_hp.is_empty)
         self.assertIsInstance(empty_hp, qt.HistoryPanel)
         self.assertEqual(empty_hp.shape[0], 0)
