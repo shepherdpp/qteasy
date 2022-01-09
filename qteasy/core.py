@@ -1257,14 +1257,16 @@ def run(operator, **kwargs):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_test)
+                print(f'config.test_cash_dates is {config.test_cash_dates}')
                 operator.prepare_data(hist_data=mock_hist,
-                                      cash_plan=CashPlan(config.test_cash_dates, config.test_cash_amounts))
-                mock_hist_loop = mock_hist
+                                      cash_plan=test_cash_plan
+                                      )
+                mock_hist_loop = mock_hist.to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(par_generator=pars,
                                                        total=config.opti_output_count,
                                                        op=operator,
                                                        op_history_data=mock_hist,
-                                                       loop_history_data=mock_hist_loop,
+                                                       loop_history_data=mock_hist,
                                                        reference_history_data=mock_hist_loop,
                                                        reference_history_data_type=reference_data_type,
                                                        config=config,
