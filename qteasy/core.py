@@ -1195,7 +1195,6 @@ def run(operator, **kwargs):
                                               stage='loop')
         # 格式化输出回测结果
         _print_loop_result(loop_result, config)
-        print(loop_result['complete_values'])
         if config.visual:
             # 如果config.visual == True，则：
             # 图表输出投资回报历史曲线

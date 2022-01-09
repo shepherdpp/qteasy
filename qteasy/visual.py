@@ -685,16 +685,18 @@ def _plot_loop_result(loop_results: dict, config):
                                              position.loc[position_bounds[:-2]]):
             # 分别使用绿色、红色填充交易回测历史中的多头和空头区间
             if long_short > 0:
-                # 用不同深浅的绿色填充多头区间
+                # 用不同深浅的绿色填充多头区间, 0 < long_short < 1
                 if long_short > 1:
                     long_short = 1
                 ax1.axvspan(first, second,
                             facecolor=((1 - 0.6 * long_short), (1 - 0.4 * long_short), (1 - 0.8 * long_short)),
                             alpha=0.2)
             else:
-                # 用不同深浅的红色填充空头区间
+                # 用不同深浅的红色填充空头区间, -1 < long_short < 0
+                if long_short < -1:
+                    long_short = -1
                 ax1.axvspan(first, second,
-                            facecolor=((1 - 0.2 * long_short), (1 - 0.8 * long_short), (1 - long_short)),
+                            facecolor=((1 + 0.2 * long_short), (1 + 0.8 * long_short), (1 + long_short)),
                             alpha=0.2)
 
     # 显示买卖时机的另一种方法，使用buy / sell 来存储买卖点

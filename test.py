@@ -11786,26 +11786,7 @@ class FastExperiments(unittest.TestCase):
 
         qt.run(op, visual=True)
 
-        qt.configure(asset_pool='000300.SH',
-                     asset_type='I',
-                     invest_start='20080101',
-                     invest_cash_dates=None)
-        qt.run(op)
-
-        qt.configure(asset_pool='000300.SH',
-                     asset_type='I',
-                     invest_start='20190312',
-                     invest_cash_dates=None)
-        qt.run(op)
-
-        qt.run(op,
-                     mode=1,
-                     asset_pool='000004.SH',
-                     invest_start='20190505',
-                     invest_end='20191231',
-                     invest_cash_dates=None)
-
-
+        qt.get_stock_pool(industry='银行,全国地产')
 
 
 class TestDataBase(unittest.TestCase):
