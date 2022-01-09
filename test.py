@@ -11153,7 +11153,7 @@ class TestQT(unittest.TestCase):
                indicator_plot_type=3)
 
     def test_run_mode_2_incremental(self):
-        """测试策略的优化模式，使用递进步长网格寻优"""
+        """测试策略的优化模式，使用递进步长蒙特卡洛寻优"""
         print(f'strategy optimization in incremental algorithm with parallel OFF')
         qt.run(self.op,
                mode=2,
@@ -11220,7 +11220,7 @@ class TestQT(unittest.TestCase):
                visual=False)
 
     def test_run_mode_2_incremental_visual(self):
-        """测试策略的优化模式，使用递进步长网格寻优"""
+        """测试策略的优化模式，使用递进步长蒙特卡洛寻优，结果以图表输出"""
         print(f'strategy optimization in incremental algorithm with parallel ON')
         qt.run(self.op,
                mode=2,
@@ -11255,7 +11255,7 @@ class TestQT(unittest.TestCase):
                visual=True)
 
     def test_run_mode_2_predict(self):
-        """测试策略的优化模式，使用递进步长网格寻优"""
+        """测试策略的优化模式，使用蒙特卡洛预测方法评价优化结果"""
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
@@ -11289,7 +11289,7 @@ class TestQT(unittest.TestCase):
                visual=False)
 
     def test_run_mode_2_predict_visual(self):
-        """测试策略的优化模式，使用递进步长网格寻优"""
+        """测试策略的优化模式，使用蒙特卡洛预测方法评价优化结果，结果以图表方式输出"""
         print(f'strategy optimization in montecarlo algorithm with predictive montecarlo test')
         qt.run(self.op,
                mode=2,
@@ -11779,17 +11779,33 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        op = qt.Operator('macd, dma', 'close')
-        print(op)
-        print(f'operator object created, properties are:\n'
-              f'info: \n'
-              f'{op.info()}\n'
-              f'strategies: {op.strategies}')
-        op.add_strategy('trix')
-        print(f'after adding strategy, {op.strategies}')
-        op.add_strategy('trix', price_type='open')
-        print(f'after adding strategy: {op.strategies}\n'
-              f'price types of strategies: {op.bt_price_types}')
+        op = qt.Operator(strategies=['dma'], signal_type='pt')
+        op.set_parameter(0, pars=(23, 166, 196))
+        op.info()
+        qt.configure(mode=1)
+
+        qt.run(op, visual=True)
+
+        qt.configure(asset_pool='000300.SH',
+                     asset_type='I',
+                     invest_start='20080101',
+                     invest_cash_dates=None)
+        qt.run(op)
+
+        qt.configure(asset_pool='000300.SH',
+                     asset_type='I',
+                     invest_start='20190312',
+                     invest_cash_dates=None)
+        qt.run(op)
+
+        qt.run(op,
+                     mode=1,
+                     asset_pool='000004.SH',
+                     invest_start='20190505',
+                     invest_end='20191231',
+                     invest_cash_dates=None)
+
+
 
 
 class TestDataBase(unittest.TestCase):

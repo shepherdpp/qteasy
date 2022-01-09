@@ -92,7 +92,7 @@ def unify(arr):
     :param arr: type: np.ndarray
     :return: ndarray
     """
-    if isinstance(arr, np.ndarray): #Input should be ndarray! got {type(arr)}'
+    if isinstance(arr, np.ndarray):  # Input should be ndarray! got {type(arr)}'
         s = arr.sum(1)
         shape = (s.shape[0], 1)
         return arr / s.reshape(shape)
@@ -345,7 +345,7 @@ def maybe_trade_day(date):
     """
     # public_holidays 是一个含两个list的tuple，存储了闭市的公共假期，第一个list是代表月份的数字，第二个list是代表日期的数字
     public_holidays = ([1, 1, 1, 4, 4, 4, 5, 5, 5, 10, 10, 10, 10, 10, 10, 10],
-                       [1, 2, 3, 3, 4, 5, 1, 2, 3, 1,  2,  3,  4,  5,  6,  7])
+                       [1, 2, 3, 3, 4, 5, 1, 2, 3, 1, 2, 3, 4, 5, 6, 7])
     try:
         date = pd.to_datetime(date)
     except:
@@ -547,7 +547,7 @@ def list_truncate(lst, trunc_size):
         return sub_lists
 
 
-def is_number_like(key: [str, int, float])-> bool:
+def is_number_like(key: [str, int, float]) -> bool:
     """ 判断一个字符串是否是一个合法的数字
 
     :param key:

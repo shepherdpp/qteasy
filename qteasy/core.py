@@ -1195,6 +1195,7 @@ def run(operator, **kwargs):
                                               stage='loop')
         # 格式化输出回测结果
         _print_loop_result(loop_result, config)
+        print(loop_result['complete_values'])
         if config.visual:
             # 如果config.visual == True，则：
             # 图表输出投资回报历史曲线
@@ -1259,7 +1260,7 @@ def run(operator, **kwargs):
                 mock_hist = _create_mock_data(hist_test)
                 operator.prepare_data(hist_data=mock_hist,
                                       cash_plan=CashPlan(config.test_cash_dates, config.test_cash_amounts))
-                mock_hist_loop = mock_hist.to_dataframe(htype='close')
+                mock_hist_loop = mock_hist
                 result_pool = _evaluate_all_parameters(par_generator=pars,
                                                        total=config.opti_output_count,
                                                        op=operator,

@@ -304,7 +304,7 @@ class Strategy:
             self._pars = pars
             return 1
         raise ValueError(f'parameter setting error in set_pars() method of \n{self}\nexpected par count: '
-                         f'{self.par_count}, got {len(pars)}')
+                         f'{self.par_count}, got {pars}')
 
     def set_opt_tag(self, opt_tag: int) -> int:
         """ 设置策略的优化类型

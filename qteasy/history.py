@@ -1132,17 +1132,21 @@ def get_history_panel(start,
     if chanel == 'online':
         result_hp = HistoryPanel()
         if len(price_type_data) > 0:
-            dataframes_to_stack.update(get_price_type_raw_data(start=start,
-                                                               end=end,
-                                                               freq=freq,
-                                                               shares=shares,
-                                                               htypes=price_type_data,
-                                                               asset_type=asset_type,
-                                                               parallel=parallel,
-                                                               delay=delay,
-                                                               adj=adj,
-                                                               delay_every=delay_every,
-                                                               progress=progress))
+            dataframes_to_stack.update(
+                    get_price_type_raw_data(
+                            start=start,
+                            end=end,
+                            freq=freq,
+                            shares=shares,
+                            htypes=price_type_data,
+                            asset_type=asset_type,
+                            parallel=parallel,
+                            delay=delay,
+                            adj=adj,
+                            delay_every=delay_every,
+                            progress=progress
+                    )
+            )
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             result_hp = result_hp.join(other=stack_dataframes(dfs=dataframes_to_stack,
@@ -1155,15 +1159,16 @@ def get_history_panel(start,
              indicator_dfs,
              balance_dfs,
              cashflow_dfs
-             ) = get_financial_report_type_raw_data(start=start,
-                                                    end=end,
-                                                    shares=shares,
-                                                    htypes=report_type,
-                                                    parallel=parallel,
-                                                    delay=delay,
-                                                    delay_every=delay_every,
-                                                    progress=progress
-                                                    )
+             ) = get_financial_report_type_raw_data(
+                    start=start,
+                    end=end,
+                    shares=shares,
+                    htypes=report_type,
+                    parallel=parallel,
+                    delay=delay,
+                    delay_every=delay_every,
+                    progress=progress
+            )
             if isinstance(shares, str):
                 shares = str_to_list(shares)
             for dfs in (income_dfs, indicator_dfs, balance_dfs, cashflow_dfs):

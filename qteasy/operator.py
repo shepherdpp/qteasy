@@ -793,7 +793,11 @@ class Operator:
         if isinstance(price_type, str):
             # 当直接给出price_type时，仅为这个price_type赋予blender
             if price_type not in self.bt_price_types:
-                warnings.warn('price type is not valid, no blender will be created!')
+                warnings.warn(
+                        f'\n'
+                        f'Given price type \'{price_type}\' is not in valid price type list of \n'
+                        f'current Operator, no blender will be created!\n'
+                        f'current valid price type list as following:\n{self.bt_price_types}')
                 return
             if isinstance(blender, str):
                 # TODO: 此处似乎应该增加blender字符串的合法性检查？？

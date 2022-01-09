@@ -275,6 +275,8 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
         reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
         b = eval_beta(looped_value, reference_value, reference_data)
         alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
+        looped_value['alpha'] = np.nan
+        looped_value['alpha'].iloc[-1] = alpha
     else:  # loop_len > 250
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
         bench = reference_value[reference_data]
