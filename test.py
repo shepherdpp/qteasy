@@ -11490,7 +11490,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_macd(self):
         op = qt.Operator(strategies=['macd'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11498,7 +11498,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dma(self):
         op = qt.Operator(strategies=['dma'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11506,7 +11506,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_trix(self):
         op = qt.Operator(strategies=['trix'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11514,13 +11514,13 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_cdl(self):
         op = qt.Operator(strategies=['cdl'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         # built-in cdl is not optimizable
 
     def test_ssma(self):
         op = qt.Operator(strategies=['ssma'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11528,7 +11528,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sdema(self):
         op = qt.Operator(strategies=['sdema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11536,7 +11536,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sema(self):
         op = qt.Operator(strategies=['sema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11544,13 +11544,13 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sht(self):
         op = qt.Operator(strategies=['sht'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         # built-in strategy sht is not optimizable
 
     def test_skama(self):
         op = qt.Operator(strategies=['skama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11558,7 +11558,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_smama(self):
         op = qt.Operator(strategies=['smama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11566,7 +11566,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sfama(self):
         op = qt.Operator(strategies=['sfama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11574,7 +11574,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_st3(self):
         op = qt.Operator(strategies=['st3'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11582,7 +11582,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_stema(self):
         op = qt.Operator(strategies=['stema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11590,7 +11590,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_strima(self):
         op = qt.Operator(strategies=['strima'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11598,7 +11598,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_swma(self):
         op = qt.Operator(strategies=['swma'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11606,7 +11606,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dsma(self):
         op = qt.Operator(strategies=['dsma'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11614,7 +11614,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_ddema(self):
         op = qt.Operator(strategies=['ddema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11622,7 +11622,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dema(self):
         op = qt.Operator(strategies=['dema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11630,7 +11630,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dkama(self):
         op = qt.Operator(strategies=['dkama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11638,7 +11638,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dmama(self):
         op = qt.Operator(strategies=['dmama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11646,7 +11646,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dfama(self):
         op = qt.Operator(strategies=['dfama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11654,7 +11654,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dt3(self):
         op = qt.Operator(strategies=['dt3'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11662,7 +11662,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dtema(self):
         op = qt.Operator(strategies=['dtema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11670,7 +11670,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dtrima(self):
         op = qt.Operator(strategies=['dtrima'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11678,8 +11678,8 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_dwma(self):
         op = qt.Operator(strategies=['dwma'])
-        op.set_parameter('t-0', pars=(200, 22))
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, pars=(200, 22))
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11687,7 +11687,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slsma(self):
         op = qt.Operator(strategies=['slsma'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11695,7 +11695,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sldema(self):
         op = qt.Operator(strategies=['sldema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11703,7 +11703,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slema(self):
         op = qt.Operator(strategies=['slema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11711,13 +11711,13 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slht(self):
         op = qt.Operator(strategies=['slht'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         # built-in strategy slht is not optimizable
 
     def test_slkama(self):
         op = qt.Operator(strategies=['slkama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11725,7 +11725,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slmama(self):
         op = qt.Operator(strategies=['slmama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11733,7 +11733,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slfama(self):
         op = qt.Operator(strategies=['slfama'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11741,7 +11741,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slt3(self):
         op = qt.Operator(strategies=['slt3'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11749,7 +11749,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sltema(self):
         op = qt.Operator(strategies=['sltema'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11757,7 +11757,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_sltrima(self):
         op = qt.Operator(strategies=['sltrima'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11765,7 +11765,7 @@ class TestBuiltIns(unittest.TestCase):
 
     def test_slwma(self):
         op = qt.Operator(strategies=['slwma'])
-        op.set_parameter('t-0', opt_tag=1)
+        op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
