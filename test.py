@@ -8189,11 +8189,179 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_segment(self):
         """测试历史数据片段的获取"""
-        raise NotImplementedError
+        test_hp = qt.HistoryPanel(self.data,
+                                  levels=self.shares,
+                                  columns=self.htypes,
+                                  rows=self.index2)
+        self.assertFalse(test_hp.is_empty)
+        self.assertIsInstance(test_hp, qt.HistoryPanel)
+        self.assertEqual(test_hp.shape[0], 5)
+        self.assertEqual(test_hp.shape[1], 10)
+        self.assertEqual(test_hp.shape[2], 4)
+        print(f'Test segment with None parameters')
+        seg1 = test_hp.segment()
+        seg2 = test_hp.segment('20150202')
+        seg3 = test_hp.segment(end_date='20201010')
+        self.assertIsInstance(seg1, qt.HistoryPanel)
+        self.assertIsInstance(seg2, qt.HistoryPanel)
+        self.assertIsInstance(seg3, qt.HistoryPanel)
+        # check values
+        self.assertTrue(np.allclose(
+                seg1.values, test_hp.values
+        ))
+        self.assertTrue(np.allclose(
+                seg2.values, test_hp.values
+        ))
+        self.assertTrue(np.allclose(
+                seg3.values, test_hp.values
+        ))
+        # check that htypes and shares should be same
+        self.assertEqual(seg1.htypes, test_hp.htypes)
+        self.assertEqual(seg1.shares, test_hp.shares)
+        self.assertEqual(seg2.htypes, test_hp.htypes)
+        self.assertEqual(seg2.shares, test_hp.shares)
+        self.assertEqual(seg3.htypes, test_hp.htypes)
+        self.assertEqual(seg3.shares, test_hp.shares)
+        # check that hdates are the same
+        self.assertEqual(seg1.hdates, test_hp.hdates)
+        self.assertEqual(seg2.hdates, test_hp.hdates)
+        self.assertEqual(seg3.hdates, test_hp.hdates)
+
+        print(f'Test segment with proper dates')
+        seg1 = test_hp.segment()
+        seg2 = test_hp.segment('20160704')
+        seg3 = test_hp.segment(start_date='2016-07-05',
+                               end_date='20160708')
+        self.assertIsInstance(seg1, qt.HistoryPanel)
+        self.assertIsInstance(seg2, qt.HistoryPanel)
+        self.assertIsInstance(seg3, qt.HistoryPanel)
+        # check values
+        self.assertTrue(np.allclose(
+                seg1.values, test_hp[:, :, :]
+        ))
+        self.assertTrue(np.allclose(
+                seg2.values, test_hp[:, :, 1:10]
+        ))
+        self.assertTrue(np.allclose(
+                seg3.values, test_hp[:, :, 2:6]
+        ))
+        # check that htypes and shares should be same
+        self.assertEqual(seg1.htypes, test_hp.htypes)
+        self.assertEqual(seg1.shares, test_hp.shares)
+        self.assertEqual(seg2.htypes, test_hp.htypes)
+        self.assertEqual(seg2.shares, test_hp.shares)
+        self.assertEqual(seg3.htypes, test_hp.htypes)
+        self.assertEqual(seg3.shares, test_hp.shares)
+        # check that hdates are the same
+        self.assertEqual(seg1.hdates, test_hp.hdates)
+        self.assertEqual(seg2.hdates, test_hp.hdates[1:10])
+        self.assertEqual(seg3.hdates, test_hp.hdates[2:6])
+
+        print(f'Test segment with non-existing but in range dates')
+        seg1 = test_hp.segment()
+        seg2 = test_hp.segment('20160703')
+        seg3 = test_hp.segment(start_date='2016-07-03',
+                               end_date='20160710')
+        self.assertIsInstance(seg1, qt.HistoryPanel)
+        self.assertIsInstance(seg2, qt.HistoryPanel)
+        self.assertIsInstance(seg3, qt.HistoryPanel)
+        # check values
+        self.assertTrue(np.allclose(
+                seg1.values, test_hp[:, :, :]
+        ))
+        self.assertTrue(np.allclose(
+                seg2.values, test_hp[:, :, 1:10]
+        ))
+        self.assertTrue(np.allclose(
+                seg3.values, test_hp[:, :, 1:6]
+        ))
+        # check that htypes and shares should be same
+        self.assertEqual(seg1.htypes, test_hp.htypes)
+        self.assertEqual(seg1.shares, test_hp.shares)
+        self.assertEqual(seg2.htypes, test_hp.htypes)
+        self.assertEqual(seg2.shares, test_hp.shares)
+        self.assertEqual(seg3.htypes, test_hp.htypes)
+        self.assertEqual(seg3.shares, test_hp.shares)
+        # check that hdates are the same
+        self.assertEqual(seg1.hdates, test_hp.hdates)
+        self.assertEqual(seg2.hdates, test_hp.hdates[1:10])
+        self.assertEqual(seg3.hdates, test_hp.hdates[1:6])
+
+        print(f'Test segment with out-of-range dates')
+        seg1 = test_hp.segment(start_date='2016-05-03',
+                               end_date='20160910')
+        self.assertIsInstance(seg1, qt.HistoryPanel)
+        # check values
+        self.assertTrue(np.allclose(
+                seg1.values, test_hp[:, :, :]
+        ))
+        # check that htypes and shares should be same
+        self.assertEqual(seg1.htypes, test_hp.htypes)
+        self.assertEqual(seg1.shares, test_hp.shares)
+        # check that hdates are the same
+        self.assertEqual(seg1.hdates, test_hp.hdates)
 
     def test_slice(self):
         """测试历史数据切片的获取"""
-        raise NotImplementedError
+        test_hp = qt.HistoryPanel(self.data,
+                                  levels=self.shares,
+                                  columns=self.htypes,
+                                  rows=self.index2)
+        self.assertFalse(test_hp.is_empty)
+        self.assertIsInstance(test_hp, qt.HistoryPanel)
+        self.assertEqual(test_hp.shape[0], 5)
+        self.assertEqual(test_hp.shape[1], 10)
+        self.assertEqual(test_hp.shape[2], 4)
+        print(f'Test slice with shares')
+        share = '000101'
+        slc = test_hp.slice(shares=share)
+        self.assertIsInstance(slc, qt.HistoryPanel)
+        self.assertEqual(slc.shares, ['000101'])
+        self.assertEqual(slc.htypes, test_hp.htypes)
+        self.assertEqual(slc.hdates, test_hp.hdates)
+        self.assertTrue(np.allclose(slc.values, test_hp[:, '000101']))
+
+        share = '000101, 000103'
+        slc = test_hp.slice(shares=share)
+        self.assertIsInstance(slc, qt.HistoryPanel)
+        self.assertEqual(slc.shares, ['000101', '000103'])
+        self.assertEqual(slc.htypes, test_hp.htypes)
+        self.assertEqual(slc.hdates, test_hp.hdates)
+        self.assertTrue(np.allclose(slc.values, test_hp[:, '000101, 000103']))
+
+        print(f'Test slice with htypes')
+        htype = 'open'
+        slc = test_hp.slice(htypes=htype)
+        self.assertIsInstance(slc, qt.HistoryPanel)
+        self.assertEqual(slc.shares, test_hp.shares)
+        self.assertEqual(slc.htypes, ['open'])
+        self.assertEqual(slc.hdates, test_hp.hdates)
+        self.assertTrue(np.allclose(slc.values, test_hp['open']))
+
+        htype = 'open, close'
+        slc = test_hp.slice(htypes=htype)
+        self.assertIsInstance(slc, qt.HistoryPanel)
+        self.assertEqual(slc.shares, test_hp.shares)
+        self.assertEqual(slc.htypes, ['open', 'close'])
+        self.assertEqual(slc.hdates, test_hp.hdates)
+        self.assertTrue(np.allclose(slc.values, test_hp['open, close']))
+        # test that slicing of "open, close" does NOT equal to "close, open"
+        self.assertFalse(np.allclose(slc.values, test_hp['close, open']))
+
+        print(f'Test slicing with both htypes and shares')
+        share = '000103, 000101'
+        htype = 'high, low, close'
+        slc = test_hp.slice(shares=share, htypes=htype)
+        self.assertIsInstance(slc, qt.HistoryPanel)
+        self.assertEqual(slc.shares, ['000103', '000101'])
+        self.assertEqual(slc.htypes, ['high', 'low', 'close'])
+        self.assertEqual(slc.hdates, test_hp.hdates)
+        self.assertTrue(np.allclose(slc.values, test_hp['high, low, close', '000103, 000101']))
+
+        print(f'Test Error cases')
+        # duplicated input
+        htype = 'open, close, open'
+        self.assertRaises(AssertionError, test_hp.slice, htypes=htype)
 
     def test_relabel(self):
         new_shares_list = ['000001', '000002', '000003', '000004', '000005']
