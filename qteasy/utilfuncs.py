@@ -416,7 +416,8 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20211231'):
+    # TODO: 有必要将"market_trade_day_range"设定为系统参数
+    if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20221231'):
         return False
     if not isinstance(exchange, str) and exchange in ['SSE',
                                                       'SZSE',

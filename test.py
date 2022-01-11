@@ -8093,7 +8093,7 @@ class TestHistoryPanel(unittest.TestCase):
                           self.data,
                           levels=self.shares, columns='close', rows=self.index)
         # valus is not np.ndarray
-        self.assertRaises(AssertionError,
+        self.assertRaises(TypeError,
                           qt.HistoryPanel,
                           list(self.data))
         # dimension/shape does not match
@@ -11955,6 +11955,12 @@ class FastExperiments(unittest.TestCase):
         qt.run(op, visual=True)
 
         qt.get_stock_pool(industry='银行,全国地产')
+
+        op = qt.Operator(strategies='dma, macd, trix', signal_type='pt')
+        op.set_parameter(0, pars=(78,114,140))
+        op.set_parameter(1, pars=(72,130,133))
+        op.set_parameter(2, pars=(131,27), window_length=500)
+        qt.run(op, mode=0, invest_start='20200101', invest_end='today')
 
 
 class TestDataBase(unittest.TestCase):
