@@ -26,20 +26,18 @@ from pathlib import Path
 # TODO: *       实现基本的帮助功能，实现大部分基本功能的功能介绍和查询
 # TODO: *       在运行策略之前显示关键参数，并检查参数是否存在逻辑问题
 # TODO: *
-# TODO: * (2): Built-in strategy base
-# TODO: *      更完善的内置策略：
-# TODO: *       内置策略包含果仁网等常规量化投资网站上包含的基本投资策略
-# TODO: *       增加利用指数择时的指数择时策略
+# TODO: * (2): Complete Examples 
+# TODO: *      完整的示例文件：
+# TODO: *       全面介绍QTEASY的使用方法以及所有的内置策略的回测结果
 # TODO: *
-# TODO: * (3): Advanced strategy evaluation - COMPLETED!
-# TODO: *      增强的策略优化结果评价：
+# TODO: * (3): Upgrated operation and strategy structure
+# TODO: *      升级的运行和策略结构：
 # TODO: *       多重历史数据区间的复合回测性能评价
 # TODO: *       通过生成伪历史数据进行蒙特卡洛模拟评价
 # TODO: *
-# TODO: * (4): Run parameter management and loggings
-# TODO: *      优化运行参数管理及运行日志记录：
-# TODO: *       使用参数表和参数字典的形式管理运行参数，并统一参数验证
-# TODO: *       使用loggings模块生成策略运行日志
+# TODO: * (4): Create and Save Run Logs:
+# TODO: *      生成并保存运行日志,
+# TODO: *       使用DataFrame表格形式保存运行日志并开通保存日志功能
 # TODO: *
 # TODO: * (5): Advanced History data interface and Database
 # TODO: *      统一化历史数据读取接口，本地数据通过数据库管理：

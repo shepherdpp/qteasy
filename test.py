@@ -6977,7 +6977,6 @@ class TestOperator(unittest.TestCase):
                              cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
-        # import pdb; pdb.set_trace()
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0'],
                           'open':  ['or', '1', '0']})
@@ -7966,6 +7965,38 @@ class TestHistoryPanel(unittest.TestCase):
         self.hp4 = qt.HistoryPanel(values=self.data4, levels='000100', columns='close', rows=self.index3)
         self.hp5 = qt.HistoryPanel(values=self.data)
         self.hp6 = qt.HistoryPanel(values=self.data, levels=self.shares, rows=self.index3)
+
+    def test_properties(self):
+        """ test all properties of HistoryPanel
+        """
+        self.assertFalse(self.hp.is_empty)
+        self.assertEqual(self.hp.row_count, 10)
+        self.assertEqual(self.hp.column_count, 4)
+        self.assertEqual(self.hp.level_count, 5)
+        self.assertEqual(self.hp.shape, (5, 10, 4))
+        self.assertSequenceEqual(self.hp.htypes, ['close', 'open', 'high', 'low'])
+        self.assertSequenceEqual(self.hp.shares, ['000100', '000101', '000102', '000103', '000104'])
+        self.assertSequenceEqual(list(self.hp.hdates), list(self.index))
+        self.assertDictEqual(self.hp.columns, {'close': 0, 'open': 1, 'high': 2, 'low': 3})
+        self.assertDictEqual(self.hp.levels, {'000100': 0, '000101': 1, '000102': 2, '000103': 3, '000104': 4})
+        row_dict = {Timestamp('2020-01-01 00:00:00', freq='D'): 0,
+                    Timestamp('2020-01-02 00:00:00', freq='D'): 1,
+                    Timestamp('2020-01-03 00:00:00', freq='D'): 2,
+                    Timestamp('2020-01-04 00:00:00', freq='D'): 3,
+                    Timestamp('2020-01-05 00:00:00', freq='D'): 4,
+                    Timestamp('2020-01-06 00:00:00', freq='D'): 5,
+                    Timestamp('2020-01-07 00:00:00', freq='D'): 6,
+                    Timestamp('2020-01-08 00:00:00', freq='D'): 7,
+                    Timestamp('2020-01-09 00:00:00', freq='D'): 8,
+                    Timestamp('2020-01-10 00:00:00', freq='D'): 9}
+        self.assertDictEqual(self.hp.rows, row_dict)
+
+    def test_len(self):
+        """ test the function len(HistoryPanel)
+
+        :return:
+        """
+        self.assertEqual(len(self.hp), 10)
 
     def test_empty_history_panel(self):
         """测试空HP或者特殊HP如维度标签为纯数字的HP"""
@@ -11496,8 +11527,6 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
-        # TODO: Investigate, error when invest_end being set to "20181231", problem probably
-        # TODO: related to trade day calendar.
         op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
         all_shares = stock_basic()
         shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
@@ -11510,7 +11539,7 @@ class TestQT(unittest.TestCase):
                      ref_asset_type='I',
                      opti_output_count=50,
                      invest_start='20070101',
-                     invest_end='20181229',
+                     invest_end='20181231',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,

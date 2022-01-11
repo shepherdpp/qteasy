@@ -1218,24 +1218,11 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
           f'Info ratio:               {loop_results["info"]:13.3f}\n'
           f'250 day volatility:       {loop_results["volatility"]:13.3f}\n'
           f'Max drawdown:             {loop_results["mdd"]:13.2%} \n'
-          f'    peak / valley:        {loop_results["peak_date"].date()} / {loop_results["valley_date"].date()}\n'
-          f'    recovered on:         {loop_results["recover_date"].date()}\n')
-    # print(f'\n--------------Worst 5 drawdonws:-------------\n')
-    # print(worst_drawdowns.to_string(formatters={'drawdown': '{:.2%}'.format}))
-    # print(f'\n---------monthly returns in history:---------\n')
-    # print(return_df.to_string(formatters={'Jan': '{:.1%}'.format,
-    #                                       'Feb': '{:.1%}'.format,
-    #                                       'Mar': '{:.1%}'.format,
-    #                                       'Apr': '{:.1%}'.format,
-    #                                       'May': '{:.1%}'.format,
-    #                                       'Jun': '{:.1%}'.format,
-    #                                       'Jul': '{:.1%}'.format,
-    #                                       'Aug': '{:.1%}'.format,
-    #                                       'Sep': '{:.1%}'.format,
-    #                                       'Oct': '{:.1%}'.format,
-    #                                       'Nov': '{:.1%}'.format,
-    #                                       'Dec': '{:.1%}'.format,
-    #                                       'y-cum': '{:.1%}'.format}))
+          f'    peak / valley:        {loop_results["peak_date"].date()} / {loop_results["valley_date"].date()}')
+    if not pd.isna(loop_results['recover_date']):
+        print(f'    recovered on:         {loop_results["recover_date"].date()}\n')
+    else:
+        print(f'    recovered on:         Not recovered!\n')
     print(f'\n===========END OF REPORT=============\n')
 
 

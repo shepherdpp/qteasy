@@ -145,7 +145,6 @@ def evaluate(looped_values: pd.DataFrame,
         - worst_drawdowns    一个DataFrame，五次最大的回撤记录
         TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
     input:
-        :param op_list: HistoryPanel: operator对象生成的交易清单
         :param looped_values:
         :param hist_benchmark: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
         :param benchmark_data: 参考数据类型，当hist_reference中包含多重数据时，指定某一个数据类型（如close）为参考数据
@@ -267,22 +266,25 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
     :return:
     """
     loop_len = len(looped_value)
-    # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
+    # 计算alpha的过程需要用到beta，如果beta不存在则需要先计算beta
+    if 'beta' not in looped_value.columns:
+        b = eval_beta(looped_value, reference_value, reference_data)
     if loop_len <= 250:
+        # 计算年化收益，如果回测期间小于一年，直接计算平均年收益率
         total_year = _get_yearly_span(looped_value)
         final_value = eval_fv(looped_value)
         strategy_return = (final_value / total_invest) ** (1 / total_year) - 1
         reference_return, reference_yearly_return = eval_benchmark(looped_value, reference_value, reference_data)
         b = eval_beta(looped_value, reference_value, reference_data)
         alpha = (strategy_return - risk_free_ror) - b * (reference_yearly_return - risk_free_ror)
+        # 当回测期间小于1年时，填充空白alpha值
         looped_value['alpha'] = np.nan
         looped_value['alpha'].iloc[-1] = alpha
     else:  # loop_len > 250
+        # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
         year_ret = looped_value.value / looped_value['value'].shift(250) - 1
         bench = reference_value[reference_data]
         bench_ret = (bench / bench.shift(250)) - 1
-        if 'beta' not in looped_value.columns:
-            b = eval_beta(looped_value, reference_value, reference_data)
         looped_value['alpha'] = (year_ret - risk_free_ror) - looped_value['beta'] * (bench_ret - risk_free_ror)
         alpha = looped_value['alpha'].mean()
     return alpha
@@ -556,58 +558,44 @@ def eval_return(looped_val, cash_plan):
     return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], skewness, kurtosis, monthly_return_df
 
 
-def eval_operation(looped_value, cash_plan):
+def eval_operation(op_list, looped_value, cash_plan):
     """ 评价函数，统计操作过程中的基本信息:
 
     对回测过程进行统计，输出以下内容：
-    1， 总交易次数：买入操作次数、卖出操作次数，总操作次数。由于针对不同的股票分别统计，因此操作次数并不是一个数字，而是
-        一个DataFrame。这个DF的结构分别如下:
+    1，总交易次数：买入操作次数、卖出操作次数，总操作次数。由于针对不同的股票分别统计，因此操作次数并不是一个数字，而是一个DataFrame
+    2，总投资额
+    3，总交易费用
+    4，回测时间长度, 分别用年、月、日数表示，年的类型为float，月和日的类型都是int
 
-                buy/sell/total为买卖次数，long/short/empty为多、空持仓时间占整体的比例：
-                                share   sell   buy   total  long   empty  short
-                                000001  12     13    25     35%    20%    45%
-                                000002  5      9     14     55%    9%     46%
-    2,  总投资额
-    3,  总交易费用
-    4,  回测时间长度, 分别用年、月、日数表示，年的类型为float，月和日的类型都是int
-
-    input:
-        :param looped_value: pd.DataFrame, 回测结果，包括每一轮交易后的拥有股票数量，持有现金数量和交易费用
-        :param cash_plan: CashPlan, 回测中使用的资金投入计划
+    :param looped_value:
+    :param cash_plan:
     :return:
-        total_days: int, 回测周期的总天数，数字为整数
-        total_months: int, 回测周期的总月份数，不满一月的按一月计算
-        total_years: float, 回测周期的总年数，数字为浮点数
-        op_counts: pd.DataFrame, 一个汇总了不同股票的交易次数的DataFrame
-        total_investment: float
-        total_op_fee: float,
     """
-    total_rounds = len(looped_value.index)
     total_days = (looped_value.index[-1] - looped_value.index[0]).days
     total_years = total_days / 365.
     total_months = int(np.round(total_days / 30))
-    # 使用looped_values统计交易过程中的多空持仓时间比例
-    holding_stocks = looped_value.copy()
-    holding_stocks.drop(columns=['cash', 'fee', 'value', 'reference'], inplace=True)
-    # 计算股票每一轮交易后的变化，增加者为买入，减少者为卖出
-    holding_movements = holding_stocks - holding_stocks.shift(1)
-    # 分别标记多仓/空仓，买入/卖出的位置，全部取sign（）以便后续方便加总统计数量
-    holding_long = np.where(holding_stocks>0, np.sign(holding_stocks), 0)
-    holding_short = np.where(holding_stocks<0, np.sign(holding_stocks), 0)
-    holding_inc = np.where(holding_movements>0, np.sign(holding_movements), 0)
-    holding_dec = np.where(holding_movements<0, np.sign(holding_movements), 0)
-    # 统计数量
-    sell_counts = -holding_dec.sum(axis=0)
-    buy_counts = holding_inc.sum(axis=0)
-    long_percent = holding_long.sum(axis=0) / total_rounds
-    short_percent = -holding_short.sum(axis=0) / total_rounds
-    # 生成交易总结DataFrame
-    op_counts = pd.DataFrame(sell_counts, index=holding_stocks.columns, columns=['sell'])
+    sell_counts = []
+    buy_counts = []
+    # 循环统计op_list交易清单中每个个股
+    for share, ser in op_list.iteritems():
+        # 初始化计数变量
+        sell_count = 0
+        buy_count = 0
+        current_pos = -1
+        # 循环统计个股交易清单中的每条交易信号
+        for i, value in ser.iteritems():
+            if np.sign(value) != current_pos:
+                current_pos = np.sign(value)
+                if current_pos == 1:
+                    buy_count += 1
+                else:
+                    sell_count += 1
+        sell_counts.append(sell_count)
+        buy_counts.append(buy_count)
+    # 所有统计数字组装成一个DataFrame对象
+    op_counts = pd.DataFrame(sell_counts, index=op_list.columns, columns=['sell'])
     op_counts['buy'] = buy_counts
     op_counts['total'] = op_counts.buy + op_counts.sell
-    op_counts['long'] = long_percent
-    op_counts['short'] = short_percent
-    op_counts['empty'] = 1 - op_counts.long - op_counts.short
     total_op_fee = looped_value.fee.sum()
     total_investment = cash_plan.total
     # 返回所有输出变量
