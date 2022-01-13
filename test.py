@@ -8,9 +8,10 @@ from numpy import int64
 import itertools
 import datetime
 
-from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list, is_number_like
-from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day, prev_market_trade_day
+from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
+from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_or_slice, labels_to_dict
+from qteasy.utilfuncs import weekday_name, prev_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
@@ -9294,7 +9295,10 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_input_to_list(self):
         """ test util function input_to_list()"""
-        raise NotImplementedError
+        self.assertEqual(input_to_list(5, 3), [5, 5, 5])
+        self.assertEqual(input_to_list(5, 3, 0), [5, 5, 5])
+        self.assertEqual(input_to_list([5], 3, 0), [5, 0, 0])
+        self.assertEqual(input_to_list([5, 4], 3, 0), [5, 4, 0])
 
     def test_regulate_date_format(self):
         self.assertEqual(regulate_date_format('2019/11/06'), '20191106')
@@ -9353,21 +9357,38 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(maybe_trade_day(date_holiday))
         self.assertFalse(maybe_trade_day(date_weekend))
 
-    def test_is_market_trade_day(self):
-        """ test util func is_market_trade_day()"""
-        raise NotImplementedError
-
     def test_weekday_name(self):
         """ test util func weekday_name()"""
-        raise NotImplementedError
+        self.assertEqual(weekday_name(0), 'Monday')
+        self.assertEqual(weekday_name(1), 'Tuesday')
+        self.assertEqual(weekday_name(2), 'Wednesday')
+        self.assertEqual(weekday_name(3), 'Thursday')
+        self.assertEqual(weekday_name(4), 'Friday')
+        self.assertEqual(weekday_name(5), 'Saturday')
+        self.assertEqual(weekday_name(6), 'Sunday')
 
     def test_list_truncate(self):
         """ test util func list_truncate()"""
-        raise NotImplementedError
+        l = [1,2,3,4,5]
+        ls = list_truncate(l, 2)
+        self.assertEqual(ls[0], [1, 2])
+        self.assertEqual(ls[1], [3, 4])
+        self.assertEqual(ls[2], [5])
+
+        self.assertRaises(AssertionError, list_truncate, l, 0)
+        self.assertRaises(AssertionError, list_truncate, 12, 0)
+        self.assertRaises(AssertionError, list_truncate, 0, l)
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
-        raise NotImplementedError
+        self.assertTrue(maybe_trade_day('20220104'))
+        self.assertTrue(maybe_trade_day('2021-12-31'))
+        self.assertTrue(maybe_trade_day(pd.to_datetime('2020/03/06')))
+
+        self.assertFalse(maybe_trade_day('2020-01-01'))
+        self.assertFalse(maybe_trade_day('2020/10/06'))
+
+        self.assertRaises(TypeError, maybe_trade_day, 'aaa')
 
     def test_prev_trade_day(self):
         """test the function prev_trade_day()
@@ -11985,10 +12006,11 @@ class FastExperiments(unittest.TestCase):
 
         qt.get_stock_pool(industry='银行,全国地产')
 
-        op = qt.Operator(strategies='dma, macd, trix', signal_type='pt')
+        op = qt.Operator(strategies='dma, macd', signal_type='pt')
         op.set_parameter(0, pars=(78,114,140))
         op.set_parameter(1, pars=(72,130,133))
-        op.set_parameter(2, pars=(131,27), window_length=500)
+        # op.set_parameter(2, pars=(131,27), window_length=500)
+        qt.configure(asset_pool='003624', asset_type='FD')
         qt.run(op, mode=0, invest_start='20200101', invest_end='today')
 
 
