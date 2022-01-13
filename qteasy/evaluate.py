@@ -558,7 +558,7 @@ def eval_return(looped_val, cash_plan):
     return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], skewness, kurtosis, monthly_return_df
 
 
-def eval_operation(op_list, looped_value, cash_plan):
+def eval_operation(looped_value, cash_plan):
     """ 评价函数，统计操作过程中的基本信息:
 
     对回测过程进行统计，输出以下内容：
@@ -571,31 +571,32 @@ def eval_operation(op_list, looped_value, cash_plan):
     :param cash_plan:
     :return:
     """
+    total_rounds = len(looped_value.index)
     total_days = (looped_value.index[-1] - looped_value.index[0]).days
     total_years = total_days / 365.
     total_months = int(np.round(total_days / 30))
-    sell_counts = []
-    buy_counts = []
-    # 循环统计op_list交易清单中每个个股
-    for share, ser in op_list.iteritems():
-        # 初始化计数变量
-        sell_count = 0
-        buy_count = 0
-        current_pos = -1
-        # 循环统计个股交易清单中的每条交易信号
-        for i, value in ser.iteritems():
-            if np.sign(value) != current_pos:
-                current_pos = np.sign(value)
-                if current_pos == 1:
-                    buy_count += 1
-                else:
-                    sell_count += 1
-        sell_counts.append(sell_count)
-        buy_counts.append(buy_count)
-    # 所有统计数字组装成一个DataFrame对象
-    op_counts = pd.DataFrame(sell_counts, index=op_list.columns, columns=['sell'])
+    # 使用looped_values统计交易过程中的多空持仓时间比例
+    holding_stocks = looped_value.copy()
+    holding_stocks.drop(columns=['cash', 'fee', 'value', 'reference'], inplace=True)
+    # 计算股票每一轮交易后的变化，增加者为买入，减少者为卖出
+    holding_movements = holding_stocks - holding_stocks.shift(1)
+    # 分别标记多仓/空仓，买入/卖出的位置，全部取sign（）以便后续方便加总统计数量
+    holding_long = np.where(holding_stocks>0, np.sign(holding_stocks), 0)
+    holding_short = np.where(holding_stocks<0, np.sign(holding_stocks), 0)
+    holding_inc = np.where(holding_movements>0, np.sign(holding_movements), 0)
+    holding_dec = np.where(holding_movements<0, np.sign(holding_movements), 0)
+    # 统计数量
+    sell_counts = -holding_dec.sum(axis=0)
+    buy_counts = holding_inc.sum(axis=0)
+    long_percent = holding_long.sum(axis=0) / total_rounds
+    short_percent = -holding_short.sum(axis=0) / total_rounds
+
+    op_counts = pd.DataFrame(sell_counts, index=holding_stocks.columns, columns=['sell'])
     op_counts['buy'] = buy_counts
     op_counts['total'] = op_counts.buy + op_counts.sell
+    op_counts['long'] = long_percent
+    op_counts['short'] = short_percent
+    op_counts['empty'] = 1 - op_counts.long - op_counts.short
     total_op_fee = looped_value.fee.sum()
     total_investment = cash_plan.total
     # 返回所有输出变量
