@@ -9,23 +9,111 @@
 
 
 ```python
-import sys
-sys.path.append('../')
 import qteasy as qt
 %matplotlib inline
 ```
 
 
 ```python
-op = qt.Operator(timing_types=['crossline'])
-op.set_parameter('t-0', pars=(35, 120, 10, 'buy'))
-res = qt.run(op, mode=1, 
+op = qt.Operator(strategies=['crossline'])
+op.set_parameter(0, pars=(35, 120, 10, 'buy'))
+qt.configure(mode=1,
+             print_backtest_log=False,
+             riskfree_ir=0.025,
              invest_start='19960413',
              invest_end='20210413',
-             asset_pool='000001.SH', asset_type='I', reference_asset='000001.SH')
+             asset_pool='000001.SH',
+             asset_type='I',
+             reference_asset='000001.SH')
+qt.configuration(up_to=5, default=True)
+```
+
+    Key                   Current        Default
+    ------------------------------------------------
+    mode:                 1              <1>
+    asset_pool:           000001.SH      <000300.SH>
+    asset_type:           I              <I>
+    trade_batch_size:     0.0            <0.0>
+    sell_batch_size:      0.0            <0.0>
+    riskfree_ir:          0.025          <0.0035>
+    parallel:             False          <False>
+    hist_dnld_parallel:   16             <16>
+    hist_dnld_delay:      None           <None>
+    hist_dnld_delay_evy:  None           <None>
+    hist_dnld_prog_bar:   None           <None>
+    gpu:                  False          <False>
+    hist_data_channel:    local          <local>
+    print_backtest_log:   False          <False>
+    reference_asset:      000001.SH      <000300.SH>
+    ref_asset_type:       I              <I>
+    ref_asset_dtype:      close          <close>
+    visual:               True           <True>
+    buy_sell_points:      True           <True>
+    show_positions:       True           <True>
+    cost_fixed_buy:       0              <0>
+    cost_fixed_sell:      0              <0>
+    cost_rate_buy:        0.0003         <0.0003>
+    cost_rate_sell:       0.0001         <0.0001>
+    cost_min_buy:         5.0            <5.0>
+    cost_min_sell:        0.0            <0.0>
+    cost_slippage:        0.0            <0.0>
+    log:                  True           <True>
+    trade_log:            True           <True>
+    invest_start:         19960413       <20160405>
+    invest_end:           20210413       <20210201>
+    invest_cash_amounts:  [100000.0]     <[100000.0]>
+    invest_cash_dates:    None           <None>
+    allow_sell_short:     False          <False>
+    maximize_cash_usage:  False          <False>
+    PT_buy_threshold:     0.03           <0.03>
+    PT_sell_threshold:    0.03           <0.03>
+    price_priority_OHLC:  OHLC           <OHLC>
+    price_priority_quote: normal         <normal>
+    cash_deliver_period:  0              <0>
+    stock_deliver_period: 1              <1>
+    opti_start:           20160405       <20160405>
+    opti_end:             20191231       <20191231>
+    opti_cash_amounts:    [100000.0]     <[100000.0]>
+    opti_cash_dates:      None           <None>
+    opti_type:            single         <single>
+    opti_sub_periods:     5              <5>
+    opti_sub_prd_length:  0.6            <0.6>
+    test_start:           20200106       <20200106>
+    test_end:             20210201       <20210201>
+    test_cash_amounts:    [100000.0]     <[100000.0]>
+    test_cash_dates:      None           <None>
+    test_type:            single         <single>
+    test_indicators:      years,fv,return,mdd,v,ref,alpha,beta,sharp,info<years,fv,return,mdd,v,ref,alpha,beta,sharp,info>
+    indicator_plot_type:  histo          <histo>
+    test_sub_periods:     3              <3>
+    test_sub_prd_length:  0.75           <0.75>
+    test_cycle_count:     100            <100>
+    optimize_target:      final_value    <final_value>
+    maximize_target:      True           <True>
+    opti_method:          1              <1>
+    opti_grid_size:       1              <1>
+    opti_sample_count:    256            <256>
+    opti_r_sample_count:  16             <16>
+    opti_reduce_ratio:    0.1            <0.1>
+    opti_max_rounds:      5              <5>
+    opti_min_volume:      1000           <1000>
+    opti_population:      1000.0         <1000.0>
+    opti_built-in_strategy_back_test/output_count:    30             <30>
+    
+
+
+
+```python
+res = qt.run(op)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -33,35 +121,37 @@ res = qt.run(op, mode=1,
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 65.8ms
-    time consumption for operation back looping:  233.1ms
+    time consumption for operate signal creation: 38.3ms
+    time consumption for operation back looping:  589.4ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  29.0  29.0   58.0
-    Total operation fee:     ¥    6,977.38
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    28       29     57   51.1%      0.0%     48.9%   
+    
+    Total operation fee:     ¥    6,589.95
     total investment amount: ¥  100,000.00
-    final value:              ¥1,101,743.42
-    Total return:                  1001.74% 
-    Avg Yearly return:               10.07%
-    Skewness:                         -0.72
-    Kurtosis:                         11.95
+    final value:              ¥1,015,064.41
+    Total return:                   915.06% 
+    Avg Yearly return:                9.71%
+    Skewness:                         -0.79
+    Kurtosis:                         12.30
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                              inf
-    Beta:                               inf
-    Sharp ratio:                       -inf
-    Info ratio:                       0.004
-    250 day volatility:               0.161
-    Max drawdown:                    45.38% 
+    alpha:                           -0.054
+    Beta:                             0.851
+    Sharp ratio:                      0.035
+    Info ratio:                       0.002
+    250 day volatility:               0.158
+    Max drawdown:                    46.31% 
         peak / valley:        2015-06-12 / 2020-02-03
-        recovered on:         NaT
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -70,17 +160,23 @@ res = qt.run(op, mode=1,
 
 
     
-![png](built-in_strategy_back_test/output_2_1.png)
+![png](built-in_strategy_back_test/output_3_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['macd'])
+op = qt.Operator(strategies=['macd'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -88,33 +184,35 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 100.3ms
-    time consumption for operation back looping:  217.7ms
+    time consumption for operate signal creation: 69.8ms
+    time consumption for operation back looping:  587.5ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  219.0  220.0  439.0
-    Total operation fee:     ¥   68,706.47
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   219      219    438   52.3%      0.0%     47.7%   
+    
+    Total operation fee:     ¥   64,593.15
     total investment amount: ¥  100,000.00
-    final value:              ¥2,052,326.42
-    Total return:                  1952.33% 
-    Avg Yearly return:               12.84%
+    final value:              ¥1,882,579.16
+    Total return:                  1782.58% 
+    Avg Yearly return:               12.45%
     Skewness:                         -0.09
-    Kurtosis:                         13.61
+    Kurtosis:                         13.67
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.033
-    Beta:                             1.008
-    Sharp ratio:                      0.046
-    Info ratio:                       0.012
-    250 day volatility:               0.162
-    Max drawdown:                    38.31% 
+    alpha:                            0.029
+    Beta:                             0.996
+    Sharp ratio:                      0.044
+    Info ratio:                       0.010
+    250 day volatility:               0.161
+    Max drawdown:                    38.50% 
         peak / valley:        2008-01-14 / 2008-10-15
         recovered on:         2009-07-20
     
@@ -125,17 +223,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_3_1.png)
+![png](built-in_strategy_back_test/output_4_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['dma'])
+op = qt.Operator(strategies=['dma'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -143,35 +247,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 21.2ms
-    time consumption for operation back looping:  201.4ms
+    time consumption for operate signal creation: 7.0ms
+    time consumption for operation back looping:  572.0ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  209.0  210.0  419.0
-    Total operation fee:     ¥   44,465.76
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   209      209    418   51.3%      0.0%     48.7%   
+    
+    Total operation fee:     ¥   41,939.60
     total investment amount: ¥  100,000.00
-    final value:              ¥1,228,955.07
-    Total return:                  1128.96% 
-    Avg Yearly return:               10.55%
+    final value:              ¥1,123,321.41
+    Total return:                  1023.32% 
+    Avg Yearly return:               10.15%
     Skewness:                         -0.34
-    Kurtosis:                         13.59
+    Kurtosis:                         13.64
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.003
-    Beta:                             1.000
-    Sharp ratio:                      0.037
-    Info ratio:                       0.005
+    alpha:                           -0.002
+    Beta:                             0.998
+    Sharp ratio:                      0.035
+    Info ratio:                       0.003
     250 day volatility:               0.162
-    Max drawdown:                    41.97% 
+    Max drawdown:                    42.24% 
         peak / valley:        2007-10-16 / 2009-01-15
-        recovered on:         2015-03-23
+        recovered on:         2015-03-30
     
     
     ===========END OF REPORT=============
@@ -180,17 +286,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_4_1.png)
+![png](built-in_strategy_back_test/output_5_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['trix'])
+op = qt.Operator(strategies=['trix'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -198,35 +310,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 81.4ms
-    time consumption for operation back looping:  195.1ms
+    time consumption for operate signal creation: 53.6ms
+    time consumption for operation back looping:  568.4ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  47.0  47.0   94.0
-    Total operation fee:     ¥    7,005.28
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    47       46     93   51.8%      0.0%     48.2%   
+    
+    Total operation fee:     ¥    6,628.99
     total investment amount: ¥  100,000.00
-    final value:              ¥  701,802.93
-    Total return:                   601.80% 
-    Avg Yearly return:                8.10%
-    Skewness:                         -0.85
-    Kurtosis:                         12.08
+    final value:              ¥  647,405.62
+    Total return:                   547.41% 
+    Avg Yearly return:                7.75%
+    Skewness:                         -0.87
+    Kurtosis:                         12.33
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                           -0.020
-    Beta:                             0.984
-    Sharp ratio:                      0.024
-    Info ratio:                      -0.003
-    250 day volatility:               0.167
-    Max drawdown:                    39.08% 
+    alpha:                           -0.022
+    Beta:                             0.998
+    Sharp ratio:                      0.023
+    Info ratio:                      -0.004
+    250 day volatility:               0.166
+    Max drawdown:                    39.82% 
         peak / valley:        2015-06-12 / 2019-01-03
-        recovered on:         NaT
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -235,17 +349,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_5_1.png)
+![png](built-in_strategy_back_test/output_6_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['cdl'])
+op = qt.Operator(strategies=['cdl'])
 res = qt.run(op, mode=1)
 ```
 
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+    Progress: [########################################] 1/1. 100.0%  Extracting data local filesHrom 19950531 to 20210413
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -253,16 +373,18 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 111.3ms
-    time consumption for operation back looping:  169.3ms
+    time consumption for operate signal creation: 63.2ms
+    time consumption for operation back looping:  705.2ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                sell  buy  total
-    000001.SH   0.0  1.0    1.0
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    1        0      1    100.0%     0.0%      0.0%   
+    
     Total operation fee:     ¥       29.99
     total investment amount: ¥  100,000.00
     final value:              ¥  580,746.64
@@ -274,14 +396,14 @@ res = qt.run(op, mode=1)
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.000
+    alpha:                           -0.000
     Beta:                             1.000
     Sharp ratio:                      0.021
-    Info ratio:                      -0.012
+    Info ratio:                      -0.003
     250 day volatility:               0.240
     Max drawdown:                    71.98% 
         peak / valley:        2007-10-16 / 2008-11-04
-        recovered on:         NaT
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -290,17 +412,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_6_1.png)
+![png](built-in_strategy_back_test/output_7_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['bband'])
+op = qt.Operator(strategies=['bband'], signal_type='ps')
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -308,35 +436,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 65.5ms
-    time consumption for operation back looping:  252.6ms
+    time consumption for operate signal creation: 31.9ms
+    time consumption for operation back looping:  369.0ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  271.0  269.0  540.0
-    Total operation fee:     ¥   52,073.15
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    91       62    153   49.4%      0.0%     50.6%   
+    
+    Total operation fee:     ¥   27,102.22
     total investment amount: ¥  100,000.00
-    final value:              ¥  966,210.00
-    Total return:                   866.21% 
-    Avg Yearly return:                9.49%
-    Skewness:                         -0.51
-    Kurtosis:                         13.60
+    final value:              ¥2,648,108.21
+    Total return:                  2548.11% 
+    Avg Yearly return:               14.00%
+    Skewness:                         -0.42
+    Kurtosis:                         14.09
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                           -0.013
-    Beta:                             0.998
-    Sharp ratio:                      0.023
-    Info ratio:                       0.002
-    250 day volatility:               0.163
-    Max drawdown:                    35.96% 
-        peak / valley:        2015-12-22 / 2020-02-03
-        recovered on:         NaT
+    alpha:                            0.036
+    Beta:                             1.000
+    Sharp ratio:                      0.039
+    Info ratio:                       0.015
+    250 day volatility:               0.156
+    Max drawdown:                    30.62% 
+        peak / valley:        1996-12-09 / 1996-12-24
+        recovered on:         1997-04-04
     
     
     ===========END OF REPORT=============
@@ -345,17 +475,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_7_1.png)
+![png](built-in_strategy_back_test/output_8_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['s-bband'])
-res = qt.run(op, mode=1)
+op = qt.Operator(strategies=['s-bband'], signal_type='ps')
+res = qt.run(op, mode=1, print_backtest_log=False)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -363,35 +499,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 159.6ms
-    time consumption for operation back looping:  681.4ms
+    time consumption for operate signal creation: 31.9ms
+    time consumption for operation back looping:  413.1ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  271.0  269.0  540.0
-    Total operation fee:     ¥   45,307.88
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   334      282    616   99.9%      0.0%      0.1%   
+    
+    Total operation fee:     ¥    6,741.51
     total investment amount: ¥  100,000.00
-    final value:              ¥  755,180.84
-    Total return:                   655.18% 
-    Avg Yearly return:                8.42%
-    Skewness:                         -0.52
-    Kurtosis:                         14.36
+    final value:              ¥1,265,109.72
+    Total return:                  1165.11% 
+    Avg Yearly return:               10.68%
+    Skewness:                         -0.97
+    Kurtosis:                         21.03
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                           -0.022
-    Beta:                             0.991
-    Sharp ratio:                      0.025
-    Info ratio:                      -0.002
-    250 day volatility:               0.166
-    Max drawdown:                    30.47% 
-        peak / valley:        1996-12-11 / 1996-12-24
-        recovered on:         1997-04-03
+    alpha:                            0.092
+    Beta:                             1.941
+    Sharp ratio:                      0.030
+    Info ratio:                       0.004
+    250 day volatility:               0.117
+    Max drawdown:                    30.62% 
+        peak / valley:        1996-12-09 / 1996-12-24
+        recovered on:         1997-04-04
     
     
     ===========END OF REPORT=============
@@ -400,17 +538,43 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_8_1.png)
+![png](built-in_strategy_back_test/output_9_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['sarext'])
-res = qt.run(op, mode=1)
+op = qt.Operator(strategies=['sarext'])
+qt.configuration()
+```
+
+    Key                   Current        
+    -------------------------------------
+    mode:                 1
+    asset_pool:           000001.SH
+    asset_type:           I
+    invest_start:         19960413
+    invest_end:           20210413
+    opti_start:           20160405
+    opti_end:             20191231
+    test_start:           20200106
+    test_end:             20210201
+    
+
+
+
+```python
+op = qt.Operator(strategies=['ssma'])
+res = qt.run(op, mode=1, printlog=True)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -418,198 +582,161 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 86.3ms
-    time consumption for operation back looping:  291.0ms
+    time consumption for operate signal creation: 26.7ms
+    time consumption for operation back looping:  568.0ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy   total
-    000001.SH  521.0  521.0  1042.0
-    Total operation fee:     ¥   37,362.71
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   354      353    707   53.6%      0.0%     46.4%   
+    
+    Total operation fee:     ¥  284,858.42
     total investment amount: ¥  100,000.00
-    final value:              ¥  158,779.67
-    Total return:                    58.78% 
-    Avg Yearly return:                1.87%
-    Skewness:                         -0.92
-    Kurtosis:                         24.71
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                           -0.096
-    Beta:                             0.984
-    Sharp ratio:                      0.017
-    Info ratio:                      -0.022
-    250 day volatility:               0.119
-    Max drawdown:                    50.55% 
-        peak / valley:        2015-08-17 / 2020-02-03
-        recovered on:         NaT
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_9_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['ssma'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 50.2ms
-    time consumption for operation back looping:  252.5ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  354.0  354.0  708.0
-    Total operation fee:     ¥  303,657.97
-    total investment amount: ¥  100,000.00
-    final value:              ¥5,440,610.18
-    Total return:                  5340.61% 
-    Avg Yearly return:               17.33%
+    final value:              ¥5,001,064.13
+    Total return:                  4901.06% 
+    Avg Yearly return:               16.93%
     Skewness:                         -0.22
-    Kurtosis:                         12.72
+    Kurtosis:                         12.77
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.083
-    Beta:                             1.016
-    Sharp ratio:                      0.056
+    alpha:                            0.077
+    Beta:                             0.993
+    Sharp ratio:                      0.055
+    Info ratio:                       0.023
+    250 day volatility:               0.157
+    Max drawdown:                    30.99% 
+        peak / valley:        2007-10-16 / 2009-01-15
+        recovered on:         2009-06-26
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_11_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['sdema'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 35.8ms
+    time consumption for operation back looping:  574.1ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   674      673    1347  52.4%      0.0%     47.6%   
+    
+    Total operation fee:     ¥  246,258.42
+    total investment amount: ¥  100,000.00
+    final value:              ¥1,842,314.74
+    Total return:                  1742.31% 
+    Avg Yearly return:               12.35%
+    Skewness:                          0.26
+    Kurtosis:                         14.54
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.013
+    Beta:                             0.990
+    Sharp ratio:                      0.042
+    Info ratio:                       0.010
+    250 day volatility:               0.158
+    Max drawdown:                    37.01% 
+        peak / valley:        2007-10-16 / 2008-11-04
+        recovered on:         2009-07-03
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_12_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['sema'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 28.2ms
+    time consumption for operation back looping:  578.1ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   377      376    753   53.6%      0.0%     46.4%   
+    
+    Total operation fee:     ¥  352,080.66
+    total investment amount: ¥  100,000.00
+    final value:              ¥5,568,823.83
+    Total return:                  5468.82% 
+    Avg Yearly return:               17.44%
+    Skewness:                         -0.28
+    Kurtosis:                         12.83
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.082
+    Beta:                             0.993
+    Sharp ratio:                      0.055
     Info ratio:                       0.025
     250 day volatility:               0.158
-    Max drawdown:                    30.57% 
-        peak / valley:        2007-10-16 / 2009-01-15
-        recovered on:         2009-06-24
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_10_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['sdema'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 68.7ms
-    time consumption for operation back looping:  309.0ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy   total
-    000001.SH  674.0  674.0  1348.0
-    Total operation fee:     ¥  260,519.47
-    total investment amount: ¥  100,000.00
-    final value:              ¥2,006,911.57
-    Total return:                  1906.91% 
-    Avg Yearly return:               12.74%
-    Skewness:                          0.25
-    Kurtosis:                         14.52
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.016
-    Beta:                             1.007
-    Sharp ratio:                      0.043
-    Info ratio:                       0.011
-    250 day volatility:               0.158
-    Max drawdown:                    36.76% 
-        peak / valley:        2007-10-16 / 2008-11-04
-        recovered on:         2009-07-02
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_11_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['sema'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 78.2ms
-    time consumption for operation back looping:  1s 36.4ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  377.0  377.0  754.0
-    Total operation fee:     ¥  375,361.50
-    total investment amount: ¥  100,000.00
-    final value:              ¥6,057,374.43
-    Total return:                  5957.37% 
-    Avg Yearly return:               17.83%
-    Skewness:                         -0.29
-    Kurtosis:                         12.79
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.088
-    Beta:                             1.018
-    Sharp ratio:                      0.057
-    Info ratio:                       0.026
-    250 day volatility:               0.158
-    Max drawdown:                    28.85% 
+    Max drawdown:                    29.29% 
         peak / valley:        2007-10-16 / 2009-01-15
         recovered on:         2009-06-29
     
@@ -620,17 +747,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_12_1.png)
+![png](built-in_strategy_back_test/output_13_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['sht'])
+op = qt.Operator(strategies=['sht'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -638,33 +771,35 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 173.9ms
-    time consumption for operation back looping:  264.1ms
+    time consumption for operate signal creation: 134.2ms
+    time consumption for operation back looping:  580.6ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  246.0  246.0  492.0
-    Total operation fee:     ¥  227,437.04
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   246      245    491   54.4%      0.0%     45.6%   
+    
+    Total operation fee:     ¥  213,484.06
     total investment amount: ¥  100,000.00
-    final value:              ¥5,709,997.92
-    Total return:                  5610.00% 
-    Avg Yearly return:               17.55%
+    final value:              ¥5,258,142.09
+    Total return:                  5158.14% 
+    Avg Yearly return:               17.17%
     Skewness:                         -0.39
-    Kurtosis:                         12.54
+    Kurtosis:                         12.61
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.082
-    Beta:                             1.014
-    Sharp ratio:                      0.054
-    Info ratio:                       0.026
-    250 day volatility:               0.161
-    Max drawdown:                    22.16% 
+    alpha:                            0.077
+    Beta:                             0.995
+    Sharp ratio:                      0.052
+    Info ratio:                       0.025
+    250 day volatility:               0.160
+    Max drawdown:                    22.35% 
         peak / valley:        1997-05-12 / 1997-12-18
         recovered on:         1999-05-27
     
@@ -675,17 +810,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_13_1.png)
+![png](built-in_strategy_back_test/output_14_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['skama'])
+op = qt.Operator(strategies=['skama'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -693,35 +834,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 52.3ms
-    time consumption for operation back looping:  239.7ms
+    time consumption for operate signal creation: 30.9ms
+    time consumption for operation back looping:  571.5ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  331.0  331.0  662.0
-    Total operation fee:     ¥  129,900.54
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   331      330    661   50.7%      0.0%     49.3%   
+    
+    Total operation fee:     ¥  122,059.97
     total investment amount: ¥  100,000.00
-    final value:              ¥1,676,767.63
-    Total return:                  1576.77% 
-    Avg Yearly return:               11.93%
+    final value:              ¥1,534,788.53
+    Total return:                  1434.79% 
+    Avg Yearly return:               11.54%
     Skewness:                         -0.32
-    Kurtosis:                         14.01
+    Kurtosis:                         14.09
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.018
-    Beta:                             1.018
-    Sharp ratio:                      0.039
-    Info ratio:                       0.008
+    alpha:                            0.012
+    Beta:                             0.992
+    Sharp ratio:                      0.037
+    Info ratio:                       0.007
     250 day volatility:               0.154
-    Max drawdown:                    34.35% 
+    Max drawdown:                    34.72% 
         peak / valley:        2007-10-16 / 2008-11-11
-        recovered on:         2009-07-15
+        recovered on:         2009-07-20
     
     
     ===========END OF REPORT=============
@@ -730,17 +873,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_14_1.png)
+![png](built-in_strategy_back_test/output_15_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['smama'])
+op = qt.Operator(strategies=['smama'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -748,33 +897,35 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 390.4ms
-    time consumption for operation back looping:  745.4ms
+    time consumption for operate signal creation: 144.5ms
+    time consumption for operation back looping:  615.7ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  494.0  494.0  988.0
-    Total operation fee:     ¥  352,285.02
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   494      493    987   53.2%      0.0%     46.8%   
+    
+    Total operation fee:     ¥  331,123.13
     total investment amount: ¥  100,000.00
-    final value:              ¥4,176,033.30
-    Total return:                  4076.03% 
-    Avg Yearly return:               16.09%
+    final value:              ¥3,839,038.80
+    Total return:                  3739.04% 
+    Avg Yearly return:               15.70%
     Skewness:                         -0.11
-    Kurtosis:                         13.84
+    Kurtosis:                         13.87
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.060
-    Beta:                             1.014
-    Sharp ratio:                      0.050
-    Info ratio:                       0.021
+    alpha:                            0.055
+    Beta:                             0.990
+    Sharp ratio:                      0.048
+    Info ratio:                       0.019
     250 day volatility:               0.157
-    Max drawdown:                    24.66% 
+    Max drawdown:                    25.57% 
         peak / valley:        2015-07-23 / 2018-12-14
         recovered on:         2020-07-06
     
@@ -785,17 +936,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_15_1.png)
+![png](built-in_strategy_back_test/output_16_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['sfama'])
+op = qt.Operator(strategies=['sfama'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -803,35 +960,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 266.8ms
-    time consumption for operation back looping:  393.2ms
+    time consumption for operate signal creation: 141.6ms
+    time consumption for operation back looping:  576.0ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  269.0  269.0  538.0
-    Total operation fee:     ¥  176,366.88
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   269      268    537   53.0%      0.0%     47.0%   
+    
+    Total operation fee:     ¥  165,473.25
     total investment amount: ¥  100,000.00
-    final value:              ¥3,578,401.38
-    Total return:                  3478.40% 
-    Avg Yearly return:               15.38%
+    final value:              ¥3,287,553.28
+    Total return:                  3187.55% 
+    Avg Yearly return:               14.99%
     Skewness:                         -0.57
-    Kurtosis:                         13.67
+    Kurtosis:                         13.75
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.057
-    Beta:                             1.016
-    Sharp ratio:                      0.047
-    Info ratio:                       0.020
+    alpha:                            0.051
+    Beta:                             0.994
+    Sharp ratio:                      0.045
+    Info ratio:                       0.018
     250 day volatility:               0.159
-    Max drawdown:                    34.38% 
+    Max drawdown:                    34.66% 
         peak / valley:        2015-06-12 / 2016-06-24
-        recovered on:         NaT
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -840,17 +999,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_16_1.png)
+![png](built-in_strategy_back_test/output_17_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['st3'])
+op = qt.Operator(strategies=['st3'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -858,33 +1023,35 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 61.2ms
-    time consumption for operation back looping:  289.2ms
+    time consumption for operate signal creation: 29.9ms
+    time consumption for operation back looping:  637.2ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  292.0  292.0  584.0
-    Total operation fee:     ¥  263,736.35
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   292      291    583   53.6%      0.0%     46.4%   
+    
+    Total operation fee:     ¥  247,511.22
     total investment amount: ¥  100,000.00
-    final value:              ¥4,940,400.57
-    Total return:                  4840.40% 
-    Avg Yearly return:               16.87%
+    final value:              ¥4,541,825.83
+    Total return:                  4441.83% 
+    Avg Yearly return:               16.48%
     Skewness:                         -0.36
-    Kurtosis:                         13.28
+    Kurtosis:                         13.34
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.080
-    Beta:                             1.016
-    Sharp ratio:                      0.055
-    Info ratio:                       0.024
+    alpha:                            0.075
+    Beta:                             0.994
+    Sharp ratio:                      0.054
+    Info ratio:                       0.022
     250 day volatility:               0.158
-    Max drawdown:                    28.01% 
+    Max drawdown:                    28.46% 
         peak / valley:        2007-10-16 / 2009-01-15
         recovered on:         2009-06-18
     
@@ -895,17 +1062,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_17_1.png)
+![png](built-in_strategy_back_test/output_18_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['stema'])
+op = qt.Operator(strategies=['stema'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -913,34 +1086,36 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 82.0ms
-    time consumption for operation back looping:  476.5ms
+    time consumption for operate signal creation: 40.6ms
+    time consumption for operation back looping:  594.2ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                  sell     buy   total
-    000001.SH  1110.0  1109.0  2219.0
-    Total operation fee:     ¥  489,967.91
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   1109     1109   2218  49.7%      0.0%     50.3%   
+    
+    Total operation fee:     ¥  459,406.79
     total investment amount: ¥  100,000.00
-    final value:              ¥3,888,141.56
-    Total return:                  3788.14% 
-    Avg Yearly return:               15.76%
+    final value:              ¥3,555,180.77
+    Total return:                  3455.18% 
+    Avg Yearly return:               15.35%
     Skewness:                          0.26
     Kurtosis:                         13.93
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.052
-    Beta:                             1.001
-    Sharp ratio:                      0.058
-    Info ratio:                       0.021
+    alpha:                            0.049
+    Beta:                             0.989
+    Sharp ratio:                      0.056
+    Info ratio:                       0.020
     250 day volatility:               0.167
-    Max drawdown:                    36.16% 
-        peak / valley:        2008-01-18 / 2008-09-18
+    Max drawdown:                    36.31% 
+        peak / valley:        2008-01-17 / 2008-09-18
         recovered on:         2009-05-04
     
     
@@ -950,17 +1125,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_18_1.png)
+![png](built-in_strategy_back_test/output_19_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['strima'])
+op = qt.Operator(strategies=['strima'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -968,200 +1149,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 68.8ms
-    time consumption for operation back looping:  324.6ms
+    time consumption for operate signal creation: 27.7ms
+    time consumption for operation back looping:  575.1ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  387.0  387.0  774.0
-    Total operation fee:     ¥  163,711.86
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   387      386    773   53.8%      0.0%     46.2%   
+    
+    Total operation fee:     ¥  154,195.86
     total investment amount: ¥  100,000.00
-    final value:              ¥2,088,052.84
-    Total return:                  1988.05% 
-    Avg Yearly return:               12.92%
-    Skewness:                         -0.26
-    Kurtosis:                         12.90
+    final value:              ¥1,919,160.49
+    Total return:                  1819.16% 
+    Avg Yearly return:               12.54%
+    Skewness:                         -0.25
+    Kurtosis:                         12.93
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.036
-    Beta:                             1.014
-    Sharp ratio:                      0.039
-    Info ratio:                       0.011
-    250 day volatility:               0.157
-    Max drawdown:                    41.13% 
-        peak / valley:        2007-10-16 / 2009-01-15
-        recovered on:         2014-11-10
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_19_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['swma'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 61.1ms
-    time consumption for operation back looping:  347.3ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  497.0  497.0  994.0
-    Total operation fee:     ¥  229,636.58
-    total investment amount: ¥  100,000.00
-    final value:              ¥2,516,272.31
-    Total return:                  2416.27% 
-    Avg Yearly return:               13.76%
-    Skewness:                         -0.13
-    Kurtosis:                         14.08
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.035
-    Beta:                             1.013
-    Sharp ratio:                      0.041
-    Info ratio:                       0.014
-    250 day volatility:               0.157
-    Max drawdown:                    30.72% 
-        peak / valley:        2015-06-12 / 2018-12-14
-        recovered on:         NaT
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_20_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['dsma'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 68.4ms
-    time consumption for operation back looping:  177.1ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  34.0  33.0   67.0
-    Total operation fee:     ¥    8,537.80
-    total investment amount: ¥  100,000.00
-    final value:              ¥1,384,010.68
-    Total return:                  1284.01% 
-    Avg Yearly return:               11.08%
-    Skewness:                         -0.73
-    Kurtosis:                         11.53
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                              inf
-    Beta:                               inf
-    Sharp ratio:                       -inf
-    Info ratio:                       0.008
-    250 day volatility:               0.166
-    Max drawdown:                    37.59% 
-        peak / valley:        2015-06-12 / 2016-01-07
-        recovered on:         NaT
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_21_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['ddema'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 169.5ms
-    time consumption for operation back looping:  496.8ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  62.0  62.0  124.0
-    Total operation fee:     ¥   14,478.85
-    total investment amount: ¥  100,000.00
-    final value:              ¥1,008,240.46
-    Total return:                   908.24% 
-    Avg Yearly return:                9.68%
-    Skewness:                         -0.61
-    Kurtosis:                         12.17
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.004
+    alpha:                            0.030
     Beta:                             0.991
-    Sharp ratio:                      0.024
-    Info ratio:                       0.002
-    250 day volatility:               0.168
-    Max drawdown:                    49.14% 
-        peak / valley:        2007-10-16 / 2008-11-04
-        recovered on:         2009-07-24
+    Sharp ratio:                      0.038
+    Info ratio:                       0.010
+    250 day volatility:               0.157
+    Max drawdown:                    41.48% 
+        peak / valley:        2007-10-16 / 2009-01-15
+        recovered on:         2014-11-25
     
     
     ===========END OF REPORT=============
@@ -1170,17 +1188,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_22_1.png)
+![png](built-in_strategy_back_test/output_20_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['dema'])
+op = qt.Operator(strategies=['swma'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1188,145 +1212,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 77.9ms
-    time consumption for operation back looping:  240.2ms
+    time consumption for operate signal creation: 26.5ms
+    time consumption for operation back looping:  592.4ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  152.0  152.0  304.0
-    Total operation fee:     ¥   85,049.86
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   497      496    993   53.1%      0.0%     46.9%   
+    
+    Total operation fee:     ¥  216,059.32
     total investment amount: ¥  100,000.00
-    final value:              ¥2,983,583.01
-    Total return:                  2883.58% 
-    Avg Yearly return:               14.54%
-    Skewness:                         -0.59
-    Kurtosis:                         13.08
+    final value:              ¥2,310,899.63
+    Total return:                  2210.90% 
+    Avg Yearly return:               13.38%
+    Skewness:                         -0.12
+    Kurtosis:                         14.11
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.052
-    Beta:                             1.004
-    Sharp ratio:                      0.044
-    Info ratio:                       0.017
-    250 day volatility:               0.162
-    Max drawdown:                    31.07% 
-        peak / valley:        1996-12-09 / 1997-02-19
-        recovered on:         1997-05-05
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_23_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['dkama'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 76.8ms
-    time consumption for operation back looping:  220.4ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  45.0  45.0   90.0
-    Total operation fee:     ¥    8,567.21
-    total investment amount: ¥  100,000.00
-    final value:              ¥1,158,158.00
-    Total return:                  1058.16% 
-    Avg Yearly return:               10.29%
-    Skewness:                         -0.63
-    Kurtosis:                         11.67
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                              inf
-    Beta:                               inf
-    Sharp ratio:                       -inf
-    Info ratio:                       0.004
-    250 day volatility:               0.161
-    Max drawdown:                    38.90% 
-        peak / valley:        2009-08-04 / 2013-12-26
-        recovered on:         2015-01-06
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_24_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['dmama'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 403.9ms
-    time consumption for operation back looping:  260.9ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  137.0  137.0  274.0
-    Total operation fee:     ¥   86,077.71
-    total investment amount: ¥  100,000.00
-    final value:              ¥2,798,861.21
-    Total return:                  2698.86% 
-    Avg Yearly return:               14.25%
-    Skewness:                         -0.69
-    Kurtosis:                         13.31
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.049
-    Beta:                             1.003
+    alpha:                            0.030
+    Beta:                             0.990
     Sharp ratio:                      0.039
-    Info ratio:                       0.017
-    250 day volatility:               0.162
-    Max drawdown:                    38.40% 
-        peak / valley:        2015-06-12 / 2020-06-15
-        recovered on:         NaT
+    Info ratio:                       0.013
+    250 day volatility:               0.157
+    Max drawdown:                    31.63% 
+        peak / valley:        2015-06-12 / 2018-12-14
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -1335,17 +1251,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_25_1.png)
+![png](built-in_strategy_back_test/output_21_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['dfama'])
+op = qt.Operator(strategies=['dsma'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1353,88 +1275,413 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 437.2ms
-    time consumption for operation back looping:  331.5ms
+    time consumption for operate signal creation: 38.5ms
+    time consumption for operation back looping:  593.5ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  58.0  58.0  116.0
-    Total operation fee:     ¥   24,642.21
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    33       33     66   54.1%      0.0%     45.9%   
+    
+    Total operation fee:     ¥    8,073.73
     total investment amount: ¥  100,000.00
-    final value:              ¥1,909,535.98
-    Total return:                  1809.54% 
-    Avg Yearly return:               12.52%
-    Skewness:                         -0.65
-    Kurtosis:                         12.59
+    final value:              ¥1,282,102.43
+    Total return:                  1182.10% 
+    Avg Yearly return:               10.74%
+    Skewness:                         -0.79
+    Kurtosis:                         11.82
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.034
-    Beta:                             0.974
-    Sharp ratio:                      0.028
-    Info ratio:                       0.012
-    250 day volatility:               0.162
-    Max drawdown:                    45.03% 
-        peak / valley:        2015-06-12 / 2020-06-15
-        recovered on:         NaT
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_26_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['dt3'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 85.9ms
-    time consumption for operation back looping:  236.9ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  118.0  119.0  237.0
-    Total operation fee:     ¥   34,469.84
-    total investment amount: ¥  100,000.00
-    final value:              ¥1,401,376.34
-    Total return:                  1301.38% 
-    Avg Yearly return:               11.13%
-    Skewness:                         -0.73
-    Kurtosis:                         13.07
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.012
-    Beta:                             0.993
-    Sharp ratio:                      0.032
-    Info ratio:                       0.007
+    alpha:                           -0.003
+    Beta:                             0.918
+    Sharp ratio:                      0.033
+    Info ratio:                       0.006
     250 day volatility:               0.164
-    Max drawdown:                    38.59% 
+    Max drawdown:                    37.77% 
+        peak / valley:        2015-06-12 / 2016-01-07
+        recovered on:         Not recovered!
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_22_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['ddema'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 50.2ms
+    time consumption for operation back looping:  576.0ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    62       61    123   53.9%      0.0%     46.1%   
+    
+    Total operation fee:     ¥   13,708.33
+    total investment amount: ¥  100,000.00
+    final value:              ¥  934,220.81
+    Total return:                   834.22% 
+    Avg Yearly return:                9.35%
+    Skewness:                         -0.63
+    Kurtosis:                         12.39
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.001
+    Beta:                             0.998
+    Sharp ratio:                      0.022
+    Info ratio:                       0.001
+    250 day volatility:               0.167
+    Max drawdown:                    49.41% 
+        peak / valley:        2007-10-16 / 2008-11-04
+        recovered on:         2009-07-27
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_23_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['dema'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 40.9ms
+    time consumption for operation back looping:  581.4ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   152      151    303   53.5%      0.0%     46.5%   
+    
+    Total operation fee:     ¥   79,796.95
+    total investment amount: ¥  100,000.00
+    final value:              ¥2,743,507.81
+    Total return:                  2643.51% 
+    Avg Yearly return:               14.16%
+    Skewness:                         -0.60
+    Kurtosis:                         13.19
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.047
+    Beta:                             0.996
+    Sharp ratio:                      0.043
+    Info ratio:                       0.016
+    250 day volatility:               0.161
+    Max drawdown:                    31.93% 
+        peak / valley:        2015-06-12 / 2019-01-17
+        recovered on:         Not recovered!
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_24_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['dkama'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 42.3ms
+    time consumption for operation back looping:  585.2ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    44       45     89   53.1%      0.0%     46.9%   
+    
+    Total operation fee:     ¥    8,105.82
+    total investment amount: ¥  100,000.00
+    final value:              ¥1,070,862.54
+    Total return:                   970.86% 
+    Avg Yearly return:                9.94%
+    Skewness:                         -0.71
+    Kurtosis:                         11.98
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                           -0.128
+    Beta:                             0.724
+    Sharp ratio:                      0.050
+    Info ratio:                       0.003
+    250 day volatility:               0.159
+    Max drawdown:                    39.87% 
+        peak / valley:        2009-08-04 / 2013-12-26
+        recovered on:         2015-03-23
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_25_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['dmama'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 270.6ms
+    time consumption for operation back looping:  580.8ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   137      136    273   53.3%      0.0%     46.7%   
+    
+    Total operation fee:     ¥   80,851.94
+    total investment amount: ¥  100,000.00
+    final value:              ¥2,574,675.59
+    Total return:                  2474.68% 
+    Avg Yearly return:               13.87%
+    Skewness:                         -0.70
+    Kurtosis:                         13.43
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.045
+    Beta:                             0.997
+    Sharp ratio:                      0.038
+    Info ratio:                       0.015
+    250 day volatility:               0.161
+    Max drawdown:                    39.49% 
+        peak / valley:        2015-06-12 / 2020-06-15
+        recovered on:         Not recovered!
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_26_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['dfama'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 258.3ms
+    time consumption for operation back looping:  547.5ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    58       57    115   52.3%      0.0%     47.7%   
+    
+    Total operation fee:     ¥   23,184.64
+    total investment amount: ¥  100,000.00
+    final value:              ¥1,764,779.73
+    Total return:                  1664.78% 
+    Avg Yearly return:               12.16%
+    Skewness:                         -0.69
+    Kurtosis:                         12.85
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.031
+    Beta:                             0.997
+    Sharp ratio:                      0.027
+    Info ratio:                       0.010
+    250 day volatility:               0.160
+    Max drawdown:                    46.06% 
+        peak / valley:        2015-06-12 / 2020-06-15
+        recovered on:         Not recovered!
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_27_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['dt3'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 42.1ms
+    time consumption for operation back looping:  572.4ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   118      118    236   52.8%      0.0%     47.2%   
+    
+    Total operation fee:     ¥   32,440.65
+    total investment amount: ¥  100,000.00
+    final value:              ¥1,286,985.75
+    Total return:                  1186.99% 
+    Avg Yearly return:               10.76%
+    Skewness:                         -0.73
+    Kurtosis:                         13.19
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.008
+    Beta:                             0.997
+    Sharp ratio:                      0.030
+    Info ratio:                       0.006
+    250 day volatility:               0.164
+    Max drawdown:                    38.98% 
         peak / valley:        2007-10-16 / 2009-01-21
         recovered on:         2009-07-24
     
@@ -1445,17 +1692,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_27_1.png)
+![png](built-in_strategy_back_test/output_28_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['dtema'])
+op = qt.Operator(strategies=['dtema'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1463,35 +1716,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 110.9ms
-    time consumption for operation back looping:  325.4ms
+    time consumption for operate signal creation: 64.3ms
+    time consumption for operation back looping:  585.0ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  497.0  497.0  994.0
-    Total operation fee:     ¥  154,485.52
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   497      496    993   49.8%      0.0%     50.2%   
+    
+    Total operation fee:     ¥  145,631.11
     total investment amount: ¥  100,000.00
-    final value:              ¥1,976,816.10
-    Total return:                  1876.82% 
-    Avg Yearly return:               12.67%
+    final value:              ¥1,805,256.44
+    Total return:                  1705.26% 
+    Avg Yearly return:               12.26%
     Skewness:                          0.29
-    Kurtosis:                         15.34
+    Kurtosis:                         15.36
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.006
-    Beta:                             1.006
-    Sharp ratio:                      0.046
-    Info ratio:                       0.011
+    alpha:                            0.003
+    Beta:                             0.993
+    Sharp ratio:                      0.044
+    Info ratio:                       0.009
     250 day volatility:               0.158
-    Max drawdown:                    43.82% 
+    Max drawdown:                    44.01% 
         peak / valley:        2007-10-31 / 2008-11-04
-        recovered on:         2011-02-11
+        recovered on:         2011-02-14
     
     
     ===========END OF REPORT=============
@@ -1500,17 +1755,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_28_1.png)
+![png](built-in_strategy_back_test/output_29_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['dtrima'])
+op = qt.Operator(strategies=['dtrima'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1518,35 +1779,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 74.8ms
-    time consumption for operation back looping:  209.2ms
+    time consumption for operate signal creation: 38.3ms
+    time consumption for operation back looping:  550.6ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  35.0  34.0   69.0
-    Total operation fee:     ¥    9,946.86
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    34       34     68   52.3%      0.0%     47.7%   
+    
+    Total operation fee:     ¥    9,376.42
     total investment amount: ¥  100,000.00
-    final value:              ¥1,567,240.12
-    Total return:                  1467.24% 
-    Avg Yearly return:               11.63%
-    Skewness:                         -0.62
-    Kurtosis:                         11.51
+    final value:              ¥1,448,674.20
+    Total return:                  1348.67% 
+    Avg Yearly return:               11.28%
+    Skewness:                         -0.68
+    Kurtosis:                         11.80
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.011
-    Beta:                             0.905
-    Sharp ratio:                   -346.535
-    Info ratio:                       0.009
-    250 day volatility:               0.163
-    Max drawdown:                    38.95% 
+    alpha:                           -0.069
+    Beta:                             0.805
+    Sharp ratio:                      0.043
+    Info ratio:                       0.008
+    250 day volatility:               0.161
+    Max drawdown:                    39.98% 
         peak / valley:        2015-06-12 / 2020-03-23
-        recovered on:         NaT
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -1555,18 +1818,24 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_29_1.png)
+![png](built-in_strategy_back_test/output_30_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['dwma'])
-op.set_parameter('t-0', pars=(200, 22))
+op = qt.Operator(strategies=['dwma'])
+op.set_parameter(0, pars=(200, 22))
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1574,35 +1843,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 152.7ms
-    time consumption for operation back looping:  383.9ms
+    time consumption for operate signal creation: 35.3ms
+    time consumption for operation back looping:  556.8ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  34.0  34.0   68.0
-    Total operation fee:     ¥    9,851.40
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    33       34     67   53.7%      0.0%     46.3%   
+    
+    Total operation fee:     ¥    9,293.27
     total investment amount: ¥  100,000.00
-    final value:              ¥1,555,773.05
-    Total return:                  1455.77% 
-    Avg Yearly return:               11.60%
-    Skewness:                         -0.72
-    Kurtosis:                         11.51
+    final value:              ¥1,439,770.26
+    Total return:                  1339.77% 
+    Avg Yearly return:               11.25%
+    Skewness:                         -0.79
+    Kurtosis:                         11.81
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                             -inf
-    Beta:                              -inf
-    Sharp ratio:                       -inf
-    Info ratio:                       0.009
-    250 day volatility:               0.164
-    Max drawdown:                    35.14% 
+    alpha:                            0.008
+    Beta:                             0.924
+    Sharp ratio:                      0.036
+    Info ratio:                       0.008
+    250 day volatility:               0.161
+    Max drawdown:                    36.23% 
         peak / valley:        2009-08-04 / 2013-12-26
-        recovered on:         2014-12-22
+        recovered on:         2014-12-31
     
     
     ===========END OF REPORT=============
@@ -1611,17 +1882,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_30_1.png)
+![png](built-in_strategy_back_test/output_31_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slsma'])
+op = qt.Operator(strategies=['slsma'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1629,88 +1906,98 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 77.6ms
-    time consumption for operation back looping:  311.6ms
+    time consumption for operate signal creation: 23.8ms
+    time consumption for operation back looping:  572.2ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  180.0  180.0  360.0
-    Total operation fee:     ¥   81,760.65
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   180      179    359   52.3%      0.0%     47.7%   
+    
+    Total operation fee:     ¥   76,876.35
     total investment amount: ¥  100,000.00
-    final value:              ¥2,398,528.37
-    Total return:                  2298.53% 
-    Avg Yearly return:               13.55%
-    Skewness:                         -0.64
-    Kurtosis:                         12.72
+    final value:              ¥2,212,725.86
+    Total return:                  2112.73% 
+    Avg Yearly return:               13.18%
+    Skewness:                         -0.65
+    Kurtosis:                         12.88
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.045
-    Beta:                             1.005
-    Sharp ratio:                      0.031
-    Info ratio:                       0.014
-    250 day volatility:               0.159
-    Max drawdown:                    43.29% 
-        peak / valley:        2010-11-08 / 2014-07-10
-        recovered on:         2015-03-23
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_31_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['sldema'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 55.7ms
-    time consumption for operation back looping:  249.0ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  292.0  292.0  584.0
-    Total operation fee:     ¥  344,268.15
-    total investment amount: ¥  100,000.00
-    final value:              ¥6,528,125.04
-    Total return:                  6428.13% 
-    Avg Yearly return:               18.18%
-    Skewness:                         -0.32
-    Kurtosis:                         12.98
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.095
-    Beta:                             1.018
-    Sharp ratio:                      0.059
-    Info ratio:                       0.028
+    alpha:                            0.040
+    Beta:                             0.996
+    Sharp ratio:                      0.029
+    Info ratio:                       0.013
     250 day volatility:               0.158
-    Max drawdown:                    25.13% 
+    Max drawdown:                    44.26% 
+        peak / valley:        2009-08-04 / 2014-07-10
+        recovered on:         2015-03-30
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_32_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['sldema'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 30.5ms
+    time consumption for operation back looping:  574.3ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   292      291    583   53.5%      0.0%     46.5%   
+    
+    Total operation fee:     ¥  322,499.81
+    total investment amount: ¥  100,000.00
+    final value:              ¥6,003,557.59
+    Total return:                  5903.56% 
+    Avg Yearly return:               17.79%
+    Skewness:                         -0.32
+    Kurtosis:                         13.04
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.089
+    Beta:                             0.994
+    Sharp ratio:                      0.057
+    Info ratio:                       0.026
+    250 day volatility:               0.158
+    Max drawdown:                    25.23% 
         peak / valley:        1997-05-12 / 1997-08-11
         recovered on:         1999-05-24
     
@@ -1721,17 +2008,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_32_1.png)
+![png](built-in_strategy_back_test/output_33_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slema'])
+op = qt.Operator(strategies=['slema'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1739,33 +2032,35 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 47.0ms
-    time consumption for operation back looping:  232.8ms
+    time consumption for operate signal creation: 25.4ms
+    time consumption for operation back looping:  599.7ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  232.0  232.0  464.0
-    Total operation fee:     ¥  183,330.35
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   232      231    463   53.3%      0.0%     46.7%   
+    
+    Total operation fee:     ¥  171,936.08
     total investment amount: ¥  100,000.00
-    final value:              ¥4,423,320.97
-    Total return:                  4323.32% 
-    Avg Yearly return:               16.36%
-    Skewness:                         -0.48
-    Kurtosis:                         13.40
+    final value:              ¥4,069,320.46
+    Total return:                  3969.32% 
+    Avg Yearly return:               15.97%
+    Skewness:                         -0.49
+    Kurtosis:                         13.53
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.073
-    Beta:                             1.017
-    Sharp ratio:                      0.047
-    Info ratio:                       0.023
-    250 day volatility:               0.157
-    Max drawdown:                    26.29% 
+    alpha:                            0.067
+    Beta:                             0.994
+    Sharp ratio:                      0.046
+    Info ratio:                       0.021
+    250 day volatility:               0.156
+    Max drawdown:                    26.81% 
         peak / valley:        2007-10-16 / 2009-01-16
         recovered on:         2009-06-18
     
@@ -1776,17 +2071,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_33_1.png)
+![png](built-in_strategy_back_test/output_34_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slht'])
+op = qt.Operator(strategies=['slht'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1794,35 +2095,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 176.7ms
-    time consumption for operation back looping:  243.3ms
+    time consumption for operate signal creation: 129.4ms
+    time consumption for operation back looping:  580.4ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  186.0  186.0  372.0
-    Total operation fee:     ¥   83,407.84
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   186      185    371   53.1%      0.0%     46.9%   
+    
+    Total operation fee:     ¥   78,314.29
     total investment amount: ¥  100,000.00
-    final value:              ¥2,518,882.13
-    Total return:                  2418.88% 
-    Avg Yearly return:               13.77%
-    Skewness:                         -0.66
-    Kurtosis:                         13.48
+    final value:              ¥2,313,301.46
+    Total return:                  2213.30% 
+    Avg Yearly return:               13.38%
+    Skewness:                         -0.67
+    Kurtosis:                         13.57
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.046
-    Beta:                             1.000
-    Sharp ratio:                      0.040
-    Info ratio:                       0.015
-    250 day volatility:               0.163
-    Max drawdown:                    31.31% 
+    alpha:                            0.042
+    Beta:                             0.997
+    Sharp ratio:                      0.038
+    Info ratio:                       0.014
+    250 day volatility:               0.162
+    Max drawdown:                    32.27% 
         peak / valley:        2009-08-04 / 2012-11-07
-        recovered on:         2014-11-28
+        recovered on:         2014-12-02
     
     
     ===========END OF REPORT=============
@@ -1831,17 +2134,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_34_1.png)
+![png](built-in_strategy_back_test/output_35_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slkama'])
+op = qt.Operator(strategies=['slkama'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1849,35 +2158,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 49.9ms
-    time consumption for operation back looping:  220.7ms
+    time consumption for operate signal creation: 24.5ms
+    time consumption for operation back looping:  566.7ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  221.0  221.0  442.0
-    Total operation fee:     ¥   98,125.72
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   221      220    441   49.3%      0.0%     50.7%   
+    
+    Total operation fee:     ¥   91,979.22
     total investment amount: ¥  100,000.00
-    final value:              ¥2,338,394.28
-    Total return:                  2238.39% 
-    Avg Yearly return:               13.43%
+    final value:              ¥2,145,109.68
+    Total return:                  2045.11% 
+    Avg Yearly return:               13.04%
     Skewness:                         -0.36
-    Kurtosis:                         14.02
+    Kurtosis:                         14.19
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.036
-    Beta:                             1.018
-    Sharp ratio:                      0.042
-    Info ratio:                       0.012
+    alpha:                            0.029
+    Beta:                             0.993
+    Sharp ratio:                      0.040
+    Info ratio:                       0.011
     250 day volatility:               0.150
-    Max drawdown:                    32.35% 
+    Max drawdown:                    32.78% 
         peak / valley:        2007-10-16 / 2008-12-23
-        recovered on:         2009-07-03
+        recovered on:         2009-07-06
     
     
     ===========END OF REPORT=============
@@ -1886,17 +2197,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_35_1.png)
+![png](built-in_strategy_back_test/output_36_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slmama'])
+op = qt.Operator(strategies=['slmama'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1904,33 +2221,35 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 164.8ms
-    time consumption for operation back looping:  280.3ms
+    time consumption for operate signal creation: 133.8ms
+    time consumption for operation back looping:  578.8ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  494.0  494.0  988.0
-    Total operation fee:     ¥  352,285.02
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   494      493    987   53.2%      0.0%     46.8%   
+    
+    Total operation fee:     ¥  331,123.13
     total investment amount: ¥  100,000.00
-    final value:              ¥4,176,033.30
-    Total return:                  4076.03% 
-    Avg Yearly return:               16.09%
+    final value:              ¥3,839,038.80
+    Total return:                  3739.04% 
+    Avg Yearly return:               15.70%
     Skewness:                         -0.11
-    Kurtosis:                         13.84
+    Kurtosis:                         13.87
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.060
-    Beta:                             1.014
-    Sharp ratio:                      0.050
-    Info ratio:                       0.021
+    alpha:                            0.055
+    Beta:                             0.990
+    Sharp ratio:                      0.048
+    Info ratio:                       0.019
     250 day volatility:               0.157
-    Max drawdown:                    24.66% 
+    Max drawdown:                    25.57% 
         peak / valley:        2015-07-23 / 2018-12-14
         recovered on:         2020-07-06
     
@@ -1941,17 +2260,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_36_1.png)
+![png](built-in_strategy_back_test/output_37_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slfama'])
+op = qt.Operator(strategies=['slfama'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -1959,35 +2284,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 185.3ms
-    time consumption for operation back looping:  228.3ms
+    time consumption for operate signal creation: 139.5ms
+    time consumption for operation back looping:  588.8ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  121.0  121.0  242.0
-    Total operation fee:     ¥   36,685.50
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   121      120    241   52.9%      0.0%     47.1%   
+    
+    Total operation fee:     ¥   34,547.45
     total investment amount: ¥  100,000.00
-    final value:              ¥1,286,231.58
-    Total return:                  1186.23% 
-    Avg Yearly return:               10.75%
-    Skewness:                         -0.74
-    Kurtosis:                         13.19
+    final value:              ¥1,187,917.00
+    Total return:                  1087.92% 
+    Avg Yearly return:               10.40%
+    Skewness:                         -0.75
+    Kurtosis:                         13.33
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.010
-    Beta:                             0.998
-    Sharp ratio:                      0.029
-    Info ratio:                       0.006
+    alpha:                            0.007
+    Beta:                             0.997
+    Sharp ratio:                      0.027
+    Info ratio:                       0.004
     250 day volatility:               0.163
-    Max drawdown:                    46.99% 
+    Max drawdown:                    47.92% 
         peak / valley:        2015-06-12 / 2020-06-15
-        recovered on:         NaT
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -1996,17 +2323,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_37_1.png)
+![png](built-in_strategy_back_test/output_38_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slt3'])
+op = qt.Operator(strategies=['slt3'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -2014,145 +2347,163 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 97.0ms
-    time consumption for operation back looping:  202.3ms
+    time consumption for operate signal creation: 24.6ms
+    time consumption for operation back looping:  554.0ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  106.0  107.0  213.0
-    Total operation fee:     ¥   24,825.15
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   106      106    212   53.1%      0.0%     46.9%   
+    
+    Total operation fee:     ¥   23,376.58
     total investment amount: ¥  100,000.00
-    final value:              ¥1,071,977.51
-    Total return:                   971.98% 
-    Avg Yearly return:                9.95%
+    final value:              ¥  984,738.14
+    Total return:                   884.74% 
+    Avg Yearly return:                9.58%
     Skewness:                         -0.73
-    Kurtosis:                         13.15
+    Kurtosis:                         13.29
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                           -0.002
+    Beta:                             0.997
+    Sharp ratio:                      0.027
+    Info ratio:                       0.002
+    250 day volatility:               0.163
+    Max drawdown:                    35.69% 
+        peak / valley:        2007-10-16 / 2009-01-21
+        recovered on:         2009-07-15
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_39_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['sltema'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 25.1ms
+    time consumption for operation back looping:  627.7ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   637      636    1273  53.4%      0.0%     46.6%   
+    
+    Total operation fee:     ¥  271,491.57
+    total investment amount: ¥  100,000.00
+    final value:              ¥2,071,418.67
+    Total return:                  1971.42% 
+    Avg Yearly return:               12.88%
+    Skewness:                         -0.07
+    Kurtosis:                         13.77
+    Benchmark return:               480.92% 
+    Benchmark Yearly return:          7.29%
+    
+    ------strategy loop_results indicators------ 
+    alpha:                            0.028
+    Beta:                             0.989
+    Sharp ratio:                      0.035
+    Info ratio:                       0.011
+    250 day volatility:               0.159
+    Max drawdown:                    40.19% 
+        peak / valley:        2015-07-13 / 2018-12-14
+        recovered on:         Not recovered!
+    
+    
+    ===========END OF REPORT=============
+    
+
+
+
+    
+![png](built-in_strategy_back_test/output_40_3.png)
+    
+
+
+
+```python
+op = qt.Operator(strategies=['sltrima'])
+res = qt.run(op, mode=1)
+```
+
+    Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
+         ====================================
+         |                                  |
+         |       BACK TESTING RESULT        |
+         |                                  |
+         ====================================
+    
+    qteasy running mode: 1 - History back testing
+    time consumption for operate signal creation: 23.8ms
+    time consumption for operation back looping:  554.7ms
+    
+    investment starts on      1996-04-15 00:00:00
+    ends on                   2021-04-13 00:00:00
+    Total looped periods:     25.0 years.
+    
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH    84       83    167   53.7%      0.0%     46.3%   
+    
+    Total operation fee:     ¥   18,479.00
+    total investment amount: ¥  100,000.00
+    final value:              ¥1,124,468.69
+    Total return:                  1024.47% 
+    Avg Yearly return:               10.16%
+    Skewness:                         -0.77
+    Kurtosis:                         12.34
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
     alpha:                            0.002
-    Beta:                             0.994
-    Sharp ratio:                      0.029
-    Info ratio:                       0.003
-    250 day volatility:               0.164
-    Max drawdown:                    35.26% 
-        peak / valley:        2007-10-16 / 2009-01-21
-        recovered on:         2009-07-14
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_38_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['sltema'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 52.9ms
-    time consumption for operation back looping:  489.7ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                 sell    buy   total
-    000001.SH  637.0  637.0  1274.0
-    Total operation fee:     ¥  287,584.99
-    total investment amount: ¥  100,000.00
-    final value:              ¥2,250,935.78
-    Total return:                  2150.94% 
-    Avg Yearly return:               13.26%
-    Skewness:                         -0.07
-    Kurtosis:                         13.76
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.033
-    Beta:                             1.010
-    Sharp ratio:                      0.037
-    Info ratio:                       0.013
-    250 day volatility:               0.159
-    Max drawdown:                    39.45% 
-        peak / valley:        2015-07-13 / 2018-12-14
-        recovered on:         NaT
-    
-    
-    ===========END OF REPORT=============
-    
-
-
-
-    
-![png](built-in_strategy_back_test/output_39_1.png)
-    
-
-
-
-```python
-op = qt.Operator(timing_types=['sltrima'])
-res = qt.run(op, mode=1)
-```
-
-    Progress: [########################################] 1/1. 100.0%  Extracting data local files
-         ====================================
-         |                                  |
-         |       BACK TESTING RESULT        |
-         |                                  |
-         ====================================
-    
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 66.1ms
-    time consumption for operation back looping:  1s 253.7ms
-    
-    investment starts on      1996-04-15 00:00:00
-    ends on                   2021-04-13 00:00:00
-    Total looped periods:     25.0 years.
-    
-    -------------operation summary:------------ 
-                sell   buy  total
-    000001.SH  84.0  84.0  168.0
-    Total operation fee:     ¥   19,545.87
-    total investment amount: ¥  100,000.00
-    final value:              ¥1,216,540.82
-    Total return:                  1116.54% 
-    Avg Yearly return:               10.51%
-    Skewness:                         -0.76
-    Kurtosis:                         12.20
-    Benchmark return:               480.92% 
-    Benchmark Yearly return:          7.29%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                            0.005
-    Beta:                             0.988
-    Sharp ratio:                      0.024
-    Info ratio:                       0.005
-    250 day volatility:               0.167
-    Max drawdown:                    39.56% 
+    Beta:                             0.997
+    Sharp ratio:                      0.023
+    Info ratio:                       0.004
+    250 day volatility:               0.166
+    Max drawdown:                    39.94% 
         peak / valley:        2007-10-16 / 2008-12-31
-        recovered on:         2010-10-19
+        recovered on:         2010-10-25
     
     
     ===========END OF REPORT=============
@@ -2161,17 +2512,23 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_40_1.png)
+![png](built-in_strategy_back_test/output_41_3.png)
     
 
 
 
 ```python
-op = qt.Operator(timing_types=['slwma'])
+op = qt.Operator(strategies=['slwma'])
 res = qt.run(op, mode=1)
 ```
 
     Progress: [########################################] 1/1. 100.0%  Extracting data local files
+
+    /Users/jackie/OneDrive/Projects/PycharmProjects/qteasy/qteasy/operator.py:1049: UserWarning: User-defined Signal blenders do not exist, default ones will be created!
+      warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+
+
+    
          ====================================
          |                                  |
          |       BACK TESTING RESULT        |
@@ -2179,35 +2536,37 @@ res = qt.run(op, mode=1)
          ====================================
     
     qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 58.9ms
-    time consumption for operation back looping:  243.0ms
+    time consumption for operate signal creation: 23.2ms
+    time consumption for operation back looping:  601.8ms
     
     investment starts on      1996-04-15 00:00:00
     ends on                   2021-04-13 00:00:00
     Total looped periods:     25.0 years.
     
-    -------------operation summary:------------ 
-                 sell    buy  total
-    000001.SH  112.0  111.0  223.0
-    Total operation fee:     ¥   35,426.95
+    -------------operation summary:------------
+    
+              Sell Cnt Buy Cnt Total Long pct Short pct Empty pct
+    000001.SH   111      111    222   54.0%      0.0%     46.0%   
+    
+    Total operation fee:     ¥   33,484.92
     total investment amount: ¥  100,000.00
-    final value:              ¥1,551,164.57
-    Total return:                  1451.16% 
-    Avg Yearly return:               11.58%
-    Skewness:                         -0.65
-    Kurtosis:                         12.42
+    final value:              ¥1,433,746.89
+    Total return:                  1333.75% 
+    Avg Yearly return:               11.23%
+    Skewness:                         -0.69
+    Kurtosis:                         12.70
     Benchmark return:               480.92% 
     Benchmark Yearly return:          7.29%
     
     ------strategy loop_results indicators------ 
-    alpha:                            0.026
-    Beta:                             0.986
-    Sharp ratio:                      0.026
-    Info ratio:                       0.009
-    250 day volatility:               0.162
-    Max drawdown:                    39.36% 
-        peak / valley:        2015-06-12 / 2016-01-04
-        recovered on:         NaT
+    alpha:                            0.022
+    Beta:                             0.991
+    Sharp ratio:                      0.025
+    Info ratio:                       0.008
+    250 day volatility:               0.160
+    Max drawdown:                    39.66% 
+        peak / valley:        2015-06-12 / 2020-06-16
+        recovered on:         Not recovered!
     
     
     ===========END OF REPORT=============
@@ -2216,5 +2575,11 @@ res = qt.run(op, mode=1)
 
 
     
-![png](built-in_strategy_back_test/output_41_1.png)
-   
+![png](built-in_strategy_back_test/output_42_3.png)
+    
+
+
+
+```python
+
+```

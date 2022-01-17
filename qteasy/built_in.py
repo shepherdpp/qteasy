@@ -226,8 +226,8 @@ class SoftBBand(stg.RollingTiming):
                          par_count=4,
                          par_types=['discr', 'conti', 'conti', 'discr'],
                          par_bounds_or_enums=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
-                         stg_name='Boolinger Band',
-                         stg_text='BBand strategy, determine buy/sell signals according to CDL Indicators',
+                         stg_name='Soft Bolinger Band',
+                         stg_text='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
                          window_length=200,
                          data_types='close')
 
@@ -246,9 +246,9 @@ class SoftBBand(stg.RollingTiming):
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
         # 如果价格高于上轨，则逐步卖出，每次卖出投资总额的33.3%
         if h[0][-1] < low[-1]:
-            sig = 0.1
-        elif h[0][-1] > hi[-1]:
             sig = -0.333
+        elif h[0][-1] > hi[-1]:
+            sig = 0.1
         else:
             sig = 0
         return sig
@@ -292,9 +292,9 @@ class TimingBBand(stg.RollingTiming):
         # 2, 当avg_price从下至上穿过布林带下缘时，产生多头建仓或平空仓信号 +1
         # 3, 其余时刻不产生任何信号
         if price[-2] >= upper[-2] and price[-1] < upper[-1]:
-            return -1.
-        elif price[-2] <= lower[-2] and price[-1] > lower[-1]:
             return +1.
+        elif price[-2] <= lower[-2] and price[-1] > lower[-1]:
+            return -1.
         else:
             return 0.
 
