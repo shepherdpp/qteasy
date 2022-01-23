@@ -1122,9 +1122,10 @@ def run(operator, **kwargs):
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
+    if operator.empty:
+        raise ValueError(f'operator object does not have any strategy, please add at least one strategy!')
+
     import time
-    # import pdb
-    # pdb.set_trace()
     optimization_methods = {0: _search_grid,
                             1: _search_montecarlo,
                             2: _search_incremental,

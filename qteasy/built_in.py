@@ -73,13 +73,17 @@ class TimingCrossline(stg.RollingTiming):
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         # 根据观望模式在不同的点位产生Long/short标记
         if hesitate == 'buy':
-            m = -m
+            pass
+            # m = -m
         elif hesitate == 'sell':
             pass
         else:  # hesitate == 'none'
-            m = 0
-        if diff < m:
+            pass
+            # m = 0
+        if diff < -m:
             return 1
+        elif diff > m:
+            return -1
         else:
             return 0
 
@@ -134,7 +138,7 @@ class TimingMACD(stg.RollingTiming):
         if _macd[-1] > 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class TimingTRIX(stg.RollingTiming):
@@ -183,7 +187,7 @@ class TimingTRIX(stg.RollingTiming):
         if trx[-1] > matrix[-1]:
             return 1
         else:
-            return 0
+            return -1
 
 
 class TimingCDL(stg.RollingTiming):
@@ -366,7 +370,7 @@ class SCRSSMA(stg.RollingTiming):
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class SCRSDEMA(stg.RollingTiming):

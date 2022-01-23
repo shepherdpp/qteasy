@@ -5792,6 +5792,63 @@ class TestSigStrategy(SimpleTiming):
         return sig
 
 
+class MyStg(qt.RollingTiming):
+    """自定义双均线择时策略策略"""
+
+    def __init__(self):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        """
+        必须初始化的关键策略参数清单：
+
+        """
+        super().__init__(
+                pars=(20, 100, 0.01),
+                par_count=3,
+                par_types=['discr', 'discr', 'conti'],
+                par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 0.5)],
+                stg_name='CUSTOM ROLLING TIMING STRATEGY',
+                stg_text='Customized Rolling Timing Strategy for Testing',
+                data_types='close',
+                window_length=100,
+        )
+
+        print(f'=====================\n====================\n'
+              f'custom strategy initialized, \npars: {self.pars}\npar_count:{self.par_count}\npar_types:'
+              f'{self.par_types}\n'
+              f'{self.info()}')
+
+    # 策略的具体实现代码写在策略的_realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def _realize(self, hist_price, params):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
+        f, s, m = params
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = hist_price.T
+        # 计算长短均线的当前值
+        s_ma = qt.sma(h[0], s)[-1]
+        f_ma = qt.sma(h[0], f)[-1]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_ma * (1 + m)
+        s_ma_l = s_ma * (1 - m)
+        # 根据观望模式在不同的点位产生Long/short/empty标记
+
+        if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
+            return 1
+        elif s_ma_l < f_ma < s_ma_u:  # 当均线在停止边界以内时，平仓
+            return 0
+        else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
+            return -1
+
+
 class TestOperator(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：
 
@@ -11700,11 +11757,11 @@ class TestBuiltIns(unittest.TestCase):
         op = qt.Operator(strategies=['crossline'])
         op.set_parameter(0, pars=(35, 120, 10, 'buy'))
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        qt.run(op, mode=1, invest_start='20080103')
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
+        # qt.run(op, mode=2, invest_start='20080103')
 
     def test_macd(self):
         op = qt.Operator(strategies=['macd'])
@@ -11997,21 +12054,8 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        op = qt.Operator(strategies=['dma'], signal_type='pt')
-        op.set_parameter(0, pars=(23, 166, 196))
-        op.info()
-        qt.configure(mode=1)
-
-        qt.run(op, visual=True)
-
-        qt.get_stock_pool(industry='银行,全国地产')
-
-        op = qt.Operator(strategies='dma, macd', signal_type='pt')
-        op.set_parameter(0, pars=(78,114,140))
-        op.set_parameter(1, pars=(72,130,133))
-        # op.set_parameter(2, pars=(131,27), window_length=500)
-        qt.configure(asset_pool='003624', asset_type='FD')
-        qt.run(op, mode=0, invest_start='20200101', invest_end='today')
+        op = qt.Operator(strategies=[MyStg()], signal_type='pt')
+        qt.run(op, mode=1)
 
 
 class TestDataBase(unittest.TestCase):

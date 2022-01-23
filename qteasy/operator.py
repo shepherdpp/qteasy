@@ -9,15 +9,12 @@
 # ======================================
 import warnings
 
-import pandas as pd
 import numpy as np
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
 from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
-
-from .utilfuncs import mask_to_signal
 from .blender import blender_parser
 
 
@@ -222,6 +219,8 @@ class Operator:
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
             stg = str_to_list(strategies)
+        elif isinstance(strategies, Strategy):
+            stg = [strategies]
         elif isinstance(strategies, list):
             stg = strategies
         else:
@@ -297,6 +296,12 @@ class Operator:
             res.append(', '.join(self._strategy_id))
         res.append(')')
         return ''.join(res)
+
+    @property
+    def empty(self):
+        """检查operator是否包含任何策略"""
+        res = (len(self.strategies) == 0)
+        return res
 
     @property
     def strategies(self):
@@ -467,6 +472,8 @@ class Operator:
 
         :return:
         """
+        if self.empty:
+            return False
         message = [f'Operator readiness:\n']
         is_ready = True
         if self.strategy_count == 0:

@@ -98,6 +98,13 @@ class Strategy:
         self._stg_text = stg_text  # 策略的描述文字
         self._par_count = par_count  # 策略参数的元素个数
         self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
+        # TODO: parameter validation should take place here
+        assert isinstance(par_count, int)
+        assert isinstance(pars, (tuple, list, dict))
+
+        assert par_count == len(par_types)
+        assert par_count == len(par_bounds_or_enums)
+
         if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
             self._par_bounds_or_enums = []
         else:
