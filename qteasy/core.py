@@ -185,51 +185,85 @@ def _loop_step(signal_type: int,
         # 计算当前持仓与目标持仓之间的差额
         pre_position = pre_values / total_value
         position_diff = op - pre_position
-        # 实际仓位太过高于目标仓位时，卖出，卖出数量 = 仓位差 * 持仓份额
-        amounts_to_sell = np.where(position_diff < ptst, position_diff / pre_position * own_amounts, 0)
-        # 实际仓位太过低于目标仓位时，买入，买入金额 = 仓位差 * 当前总资产
-        cash_to_spend = np.where(position_diff > ptbt, position_diff * total_value, 0)
+        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
+        # 当持有份额大于零时，平多仓：卖出数量 = 仓位差 * 持仓份额，此时持仓份额需大于零
+        amounts_to_sell = np.where((position_diff < ptst) & (own_amounts > 0),
+                                   position_diff / pre_position * own_amounts,
+                                   0)
+        # 当持有份额不小于0时，开多仓：买入金额 = 仓位差 * 当前总资产，此时不能持有空头头寸
+        cash_to_spend = np.where((position_diff > ptbt) & (own_amounts >= 0),
+                                 position_diff * total_value,
+                                 0)
+        # 当允许买空卖空时，允许开启空头头寸：
+        if allow_sell_short:
+            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
+            cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
+                                       position_diff * total_value,
+                                       0)
+            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 仓位差 * 当前持有空头份额
+            amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
+                                     position_diff / pre_position * own_amounts,
+                                     0)
         # 打印log：
-        # if print_log:
-        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
-        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-        #     print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-        #           f'本期资产价格:   {np.around(prices, 2)}\n'
-        #           f'本期持仓目标:   {op}\n'
-        #           f'本期实际持仓:   {np.around(pre_values / total_value, 3)}\n'
-        #           f'本期持仓差异:   {np.around(position_diff, 3)}\n'
-        #           f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-        #           f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if print_log:
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期持仓目标:   {op}\n'
+                  f'本期实际持仓:   {np.around(pre_position, 3)}\n'
+                  f'本期持仓差异:   {np.around(position_diff, 3)}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
-        # 卖出数量为交易信号 * 当前持仓份额
-        amounts_to_sell = np.where(op < 0, op * own_amounts, 0)
-        # 买入金额为交易信号 * 当前总资产
-        cash_to_spend = np.where(op > 0, op * total_value, 0)
+        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
+        # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
+        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0)
+        # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
+        cash_to_spend = np.where((op < 0) & (own_amounts >= 0), op * total_value, 0)
+
+        # 当允许买空卖空时，允许开启空头头寸：
+        if allow_sell_short:
+            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 =交易信号 * 当前总资产
+            cash_to_spend += np.where((op > 0) & (own_amounts == 0), op * total_value, 0)
+            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
+            amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op * own_amounts, 0)
+
         # 打印log：
-        # if print_log:
-        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
-        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-        #     print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-        #           f'本期资产价格:   {np.around(prices, 2)}\n'
-        #           f'本期交易信号:   {op}\n'
-        #           f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-        #           f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if print_log:
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'本期交易信号:   {op}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 2:
-        # 卖出数量即为交易信号中小于零者
-        amounts_to_sell = np.where(op < 0, op, 0)
-        # 买入金额即为交易信号中大于零者
-        cash_to_spend = np.where(op > 0, op * prices, 0)
+        # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
+        # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
+        # 当持有份额大于零时，平多仓：卖出数量 = 信号数量，此时持仓份额需大于零
+        amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op, 0)
+        # 当持有份额不小于0时，开多仓：买入金额 = 信号数量 * 资产价格，此时不能持有空头头寸，必须为空仓或多仓
+        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * prices, 0)
+
+        # 当允许买空卖空时，允许开启空头头寸：
+        if allow_sell_short:
+            # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 信号数量 * 资产价格
+            cash_to_spend += np.where((op > 0) & (own_amounts == 0), op * prices, 0)
+            # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
+            amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op, 0)
+
         # 打印log：
-        # if print_log:
-        #     print(f'本期期初资产总价: {total_value:.2f}: \n'
-        #           f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-        #     print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-        #           f'本期资产价格:   {np.around(prices, 2)}\n'
-        #           f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-        #           f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if print_log:
+            print(f'本期期初资产总价: {total_value:.2f}: \n'
+                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
+            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+                  f'本期资产价格:   {np.around(prices, 2)}\n'
+                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
