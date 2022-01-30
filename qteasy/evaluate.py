@@ -449,8 +449,9 @@ def eval_max_drawdown(looped_value):
     # 生成包含所有dd的DataFrame
     dd_df = pd.DataFrame(dd_pool.items, columns=['peak_date', 'valley_date', 'recover_date', 'drawdown'])
     dd_df.sort_values(by='drawdown', inplace=True)
-    if dd_df.empty:
-        return np.nan, np.nan, np.nan, np.nan, dd_df
+    if dd_df.empty:  # 出现这种情况的一种可能是没有drawdown，因此drawdown应该为0
+        output_date = looped_value.index[-1]
+        return 0, output_date, output_date, output_date, dd_df
     else:
         mdd = dd_df.loc[0]
         max_drawdown = -mdd.drawdown

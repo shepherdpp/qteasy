@@ -5816,13 +5816,8 @@ class MyStg(qt.RollingTiming):
                 stg_name='CUSTOM ROLLING TIMING STRATEGY',
                 stg_text='Customized Rolling Timing Strategy for Testing',
                 data_types='close',
-                window_length=100,
+                window_length=200,
         )
-
-        print(f'=====================\n====================\n'
-              f'custom strategy initialized, \npars: {self.pars}\npar_count:{self.par_count}\npar_types:'
-              f'{self.par_types}\n'
-              f'{self.info()}')
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
@@ -5843,7 +5838,7 @@ class MyStg(qt.RollingTiming):
 
         if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
             return 1
-        elif s_ma_l < f_ma < s_ma_u:  # 当均线在停止边界以内时，平仓
+        elif s_ma_l <= f_ma <= s_ma_u:  # 当均线在停止边界以内时，平仓
             return 0
         else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
             return -1
@@ -11757,7 +11752,7 @@ class TestBuiltIns(unittest.TestCase):
         op = qt.Operator(strategies=['crossline'])
         op.set_parameter(0, pars=(35, 120, 10, 'buy'))
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1, invest_start='20080103')
+        qt.run(op, mode=1, invest_start='20080103', allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11774,7 +11769,7 @@ class TestBuiltIns(unittest.TestCase):
     def test_dma(self):
         op = qt.Operator(strategies=['dma'])
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
+        qt.run(op, mode=1, allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
@@ -12055,7 +12050,8 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         op = qt.Operator(strategies=[MyStg()], signal_type='pt')
-        qt.run(op, mode=1)
+        op.set_parameter(0, (25, 123, 0.01))
+        qt.run(op, mode=1, invest_start='20080101', allow_sell_short=True, print_backtest_log=False)
 
 
 class TestDataBase(unittest.TestCase):
