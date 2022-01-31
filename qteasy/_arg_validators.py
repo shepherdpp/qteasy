@@ -469,7 +469,6 @@ class ConfigDict(dict):
 
         即：
         config.attr = config['attr']
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -580,12 +579,54 @@ def _valid_qt_kwargs():
                                  'text':      '如果True，策略参数寻优时使用GPU加速计算\n'
                                               '<本功能目前尚未实现! NotImplemented>'},
 
-        'hist_data_channel':    {'Default':   'local',
-                                 'Validator': lambda value: isinstance(value, str) and value in ['local', 'online'],
+        'local_data_source':    {'Default':   'file',
+                                 'Validator': lambda value: isinstance(value, str) and value in ['file',
+                                                                                                 'database',
+                                                                                                 'db'],
                                  'level':     4,
-                                 'text':      '确定如何获取历史数据：\n'
-                                              'local   - 优先从本地读取历史数据，未存储在本地的数据再从网上下载，并确保本地数据更新\n'
-                                              'online  - 从网上下载数据，不更新本地数据'},
+                                 'text':      '确定本地历史数据存储方式：\n'
+                                              'file      - 历史数据以本地文件的形式存储，\n'
+                                              '           文件格式在"local_data_file_type"属性中指定，包括csv/hdf等多种选项\n'
+                                              'database - 历史数据存储在一个mysql数据库中\n'
+                                              '           选择此选项时，需要在配置文件中配置数据库的连接信息\n'
+                                              'db       - 等同于"database"'},
+
+        'local_data_file_type':  {'Default':   'csv',
+                                 'Validator': lambda value: isinstance(value, str) and value in ['csv',
+                                                                                                 'hdf',
+                                                                                                 'feather'],
+                                 'level':     4,
+                                 'text':      '确定本地历史数据文件的存储格式：\n'
+                                              'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
+                                              'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
+                                              'ftr - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
+
+        'local_data_file_path':  {'Default':   'qteasy/data/',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '确定本地历史数据文件存储路径\n'},
+
+        'local_db_host':        {'Default':   'localhost',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '用于存储历史数据的数据库的主机名，该数据库应该为mysql数据库或MariaDB\n'},
+
+        'local_db_port':        {'Default':   3306,
+                                 'Validator': lambda value: isinstance(value, int) and 1024 < value < 49151,
+                                 'level':     4,
+                                 'text':      '用于存储历史数据的数据库的端口号，默认值为mysql数据库的端口号3306\n'},
+
+        'local_db_user':        {'Default':   '',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '访问数据库的用户名，该用户需具备足够的操作权限\n'
+                                              '建议通过配置文件配置数据库用户名和密码'},
+
+        'local_db_password':    {'Default':   '',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '数据库的访问密码\n\n'
+                                              '建议通过配置文件配置数据库用户名和密码'},
 
         'print_backtest_log':   {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
