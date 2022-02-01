@@ -30,7 +30,152 @@ LOCAL_DATA_FILE_EXT = '.dat'
 这里定义AVAILABLE_TABLES 以及 TABLE_STRUCTURES
 """
 DATA_MAPPING_TABLE = []
-AVAILABLE_TABLES = []
+
+# 定义Table structure，定义所有数据表的主键和内容
+AVAILABLE_TABLES = {
+
+    'trade_calendar':   {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_basic':      {'columns':     ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname',
+                                         'enname', 'cnspell', 'market', 'exchange', 'curr_type',
+                                         'list_status', 'list_date', 'delist_date', 'is_hs'],
+                         'dtypes':      ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str',
+                                         'str', 'str', 'str', 'str', 'str', 'str', 'str'],
+                         'remarks':     ['TS代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称',
+                                         '英文全称', '拼音缩写', '市场类型（主板/创业板/科创板/CDR）',
+                                         '交易所代码', '交易货币', '上市状态 L上市 D退市 P暂停上市',
+                                         '上市日期', '退市日期', '是否沪深港通标的，N否 H沪股通 S深股通'],
+                         'prime_keys':  [0]},
+
+    'index_basic':      {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'fund_basic':       {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'future_basic':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'opt_basic':        {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_5min':       {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_30min':      {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_hourly':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_daily':      {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_weekly':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_monthly':    {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'index_daily':      {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'index_weekly':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'index_monthly':    {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'fund_daily':       {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'future_daily':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_adj_factor': {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_daily_info': {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'index_daily_info': {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'index_weight':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_income':     {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_balance':    {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_cashflow':    {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_financial':   {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_forecast':   {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]},
+
+    'stock_express':    {'columns':     [],
+                         'dtypes':      [],
+                         'remarks':     [],
+                         'prime_keys':  [0]}
+
+}
 
 
 class DataSource():
@@ -129,55 +274,3 @@ class DataSource():
         pass
 
     # 以上函数是新架构需要的
-
-    def overwrite_file(self, file_name, df):
-        """ save df as file name or overwrite file name if file_name already exists
-
-        :param file_name:
-        :param df:
-        :return:
-        """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        df = self.validated_dataframe(df)
-        # df.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        df.reset_index().to_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        return file_name
-
-    def extract_data(self, file_name, shares, start, end, freq: str = 'd'):
-        """ 从文件中读取数据片段，指定股票代码、开始日期、结束日期和数据频率（数据频率必须低于文件所含数据的频率，否则会缺失数据
-
-            数据中若存在NaN值，会原样返回
-
-        :param file_name:   文件名
-        :param shares:     需要读取的数据片段包含的股票代码
-        :param start:      读取数据的开始日期时间
-        :param end:        读取数据的结束日期时间
-        :param freq:       读取数据的时间频率，该频率应该低于文件中所存储的数据的时间频率，例如
-                                可以从频率为'd'的文件中读取'w'或者'q'的数据，反之则会出现缺失数据
-        :return:
-            DataFrame:     包含所需数据片段的DataFrame，行标签为日期时间，列标签为股票代码
-        """
-        expected_index = pd.date_range(start=start, end=end, freq=freq)
-        expected_columns = shares
-
-        df = self.open_file(file_name)
-
-        index_missing = any(index not in df.index for index in expected_index)
-        column_missing = any(column not in df.columns for column in expected_columns)
-
-        if index_missing:
-            additional_index = [index for index in expected_index if index not in df.index]
-            df = df.reindex(expected_index)
-            df.loc[additional_index] = np.inf
-
-        if column_missing:
-            additional_column = [c for c in expected_columns if c not in df.columns]
-            # print(f'adding new columns {additional_column}')
-            for col in additional_column:
-                df[col] = np.inf
-
-        extracted = df[expected_columns].loc[expected_index]
-
-        return extracted
-
