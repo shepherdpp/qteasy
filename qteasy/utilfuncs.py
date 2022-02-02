@@ -11,12 +11,12 @@ import numpy as np
 import pandas as pd
 import sys
 import qteasy
-from pandas import Timestamp
-from datetime import datetime
+import time
+from functools import wraps
 
 TIME_FREQ_STRINGS = ['TICK',
                      'T',
-                     'MIN',
+                     'MIN', '1MIN', '5MIN', '15MIN', '30MIN',
                      'H',
                      'D', '5D', '10D', '20D',
                      'W',
@@ -45,6 +45,44 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 38: '######################################--', 39: '#######################################-',
                 40: '########################################'
                 }
+
+
+def retry(exception_to_check, tries=5, delay=3., backoff=2., logger=None):
+    """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
+
+    :param exception_to_check: 需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
+    :type exception_to_check: Exception 或 tuple
+    :param tries: 最终放弃前的尝试次数
+    :type tries: int
+    :param delay: 第一次重试前等待的延迟时间（秒）
+    :type delay: float
+    :param backoff: 延迟倍增乘数，每多一次重试延迟时间就延长该倍数
+    :type backoff: float
+    :param logger: 日志logger对象. 如果给出None, 则打印结果
+    :type logger: logging.Logger 对象
+    """
+    def deco_retry(f):
+
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except exception_to_check as e:
+                    msg = f'{str(e)}, Retrying in {mdelay} seconds...'
+                    if logger:
+                        logger.warning(msg)
+                    else:
+                        print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
 
 
 def mask_to_signal(lst):

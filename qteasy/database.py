@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 from os import path
 from qteasy import QT_ROOT_PATH
+from qteasy.utilfuncs import retry
 
 from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
 from .utilfuncs import str_to_list, progress_bar
@@ -595,9 +596,10 @@ class DataSource:
 
         :param kwargs: the args can be improved in the future
         """
-        assert source_type in ['file', 'database', 'db']
+        assert source_type in ['file', 'database', 'db'], ValueError()
+        self.source_type = source_type
 
-        if source_type == 'file':
+        if self.source_type == 'file':
             # set up file type and file location
             pass
         else: # source_type == 'database' or 'db'
@@ -609,17 +611,19 @@ class DataSource:
             # try to create pymysql connections
             try:
                 self.con = pymysql.connect(host=host,
-                                             port=port,
-                                             user=user,
-                                             password=password,
-                                             db='ts_db')
+                                           port=port,
+                                           user=user,
+                                           password=password,
+                                           db='ts_db')
                 self.cursor = self.con.cursor()
-                
+                self.con.commit()
             except Exception as e:
+                # maybe fallback to file savinng:
+                self.file_type = file_type
+                self.file_loc = file_loc
                 raise e
             # try to create sqlalchemy engine:
             self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/ts_db')
-
         pass
 
     def file_exists(self, file_name):

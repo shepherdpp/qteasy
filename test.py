@@ -7,11 +7,13 @@ import math
 from numpy import int64
 import itertools
 import datetime
+import logging
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
-from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_or_slice, labels_to_dict
+from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, prev_market_trade_day, is_number_like, list_truncate, input_to_list
+
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
@@ -9289,9 +9291,31 @@ class TestHistoryPanel(unittest.TestCase):
         pass
 
 
+class RetryableError(Exception):
+    """ 用于retry测试的自定义Error Type"""
+    pass
+
+
+class AnotherRetryableError(Exception):
+    """ 用于retry测试的自定义Error Type"""
+    pass
+
+
+class UnexpectedError(Exception):
+    """ 用于retry测试的自定义Error Type"""
+    pass
+
+
 class TestUtilityFuncs(unittest.TestCase):
     def setUp(self):
         pass
+
+    def test_unify(self):
+        n1 = 2
+        self.assertEqual(unify(n1), 2)
+        n2 = np.array([[1., 1., 1., 1.], [0., 1., 0., 1.]])
+        n3 = np.array([[.25, .25, .25, .25], [0., .5, 0., .5]])
+        self.assertTrue(np.allclose(unify(n2), n3))
 
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')
@@ -9421,7 +9445,7 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_list_truncate(self):
         """ test util func list_truncate()"""
-        l = [1,2,3,4,5]
+        l = [1, 2, 3, 4, 5]
         ls = list_truncate(l, 2)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
@@ -9574,6 +9598,86 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_number_like('abc'))
         self.assertFalse(is_number_like('0.32a'))
         self.assertFalse(is_number_like('0-2'))
+
+    def test_retry_decorator(self):
+        """ test the retry decorator"""
+        print(f'test no retry needed functions')
+        self.counter = 0
+        @retry(RetryableError, tries=4, delay=0.1)
+        def succeeds():
+            self.counter += 1
+            return 'success'
+        r = succeeds()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 1)
+
+        print(f'test retry only once')
+        self.counter = 0
+        @retry(RetryableError, tries=4, delay=0.1)
+        def fails_once():
+            self.counter += 1
+            if self.counter < 2:
+                raise RetryableError('failed')
+            else:
+                return 'success'
+
+        r = fails_once()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 2)
+
+        print(f'test retry limit is reached')
+        self.counter = 0
+
+        @retry(RetryableError, tries=4, delay=0.1)
+        def always_fails():
+            self.counter += 1
+            raise RetryableError('failed')
+
+        with self.assertRaises(RetryableError):
+            always_fails()
+        self.assertEqual(self.counter, 4)
+
+        print(f'test checking for multiple exceptions')
+        self.counter = 0
+
+        @retry((RetryableError, AnotherRetryableError), tries=4, delay=0.1)
+        def raise_multiple_exceptions():
+            self.counter += 1
+            if self.counter == 1:
+                raise RetryableError('a retryable error')
+            elif self.counter == 2:
+                raise AnotherRetryableError('another retryable error')
+            else:
+                return 'success'
+
+        r = raise_multiple_exceptions()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 3)
+
+        print(f'does not retry when unexpected error occurs')
+        @retry(RetryableError, tries=4, delay=0.1)
+        def raise_unexpected_error():
+            raise UnexpectedError('unexpected error')
+
+        with self.assertRaises(UnexpectedError):
+            raise_unexpected_error()
+
+        print(f'test recording info with a logger')
+        self.counter = 0
+        # set up the logger object
+        sh = logging.StreamHandler()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(sh)
+
+        @retry(RetryableError, tries=4, delay=0.1, logger=logger)
+        def fails_once():
+            self.counter += 1
+            if self.counter < 2:
+                raise RetryableError('failed')
+            else:
+                return 'success'
+
+        fails_once()
 
 
 class TestTushare(unittest.TestCase):
