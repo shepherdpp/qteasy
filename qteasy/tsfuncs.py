@@ -13,12 +13,31 @@ import time
 import tushare as ts
 from functools import lru_cache
 from .utilfuncs import regulate_date_format, list_to_str_format, str_to_list, next_market_trade_day
+from .utilfuncs import retry
 
 VALID_STOCK_CODE_SUFFIX = ['.SZ', '.SH', '.HK']
 
 
+# tsfuncs interface function
+# call this function to extract data for tables defined in DataSource module
+# interface function should be defined in all data provider modules
+def acquire_data(table, **kwargs):
+    """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
+    # function map 定义了table与tushare函数之间的对应关系，以便调用正确的函数下载数据
+    from .database import TABLE_SOURCE_MAPPING
+    assert isinstance(table, str), TypeError(f'A string should be given as table name, got {type(table)} instead')
+    assert table in TABLE_SOURCE_MAPPING.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
+
+    func_name = TABLE_SOURCE_MAPPING[table]['tushare']
+    func = globals()[func_name]
+
+    return func(**kwargs)
+
+
+# Tushare functions:
 # Basic Market Data
 # ==================
+
 
 @lru_cache(maxsize=16)
 def stock_basic(is_hs: str = None,
@@ -250,6 +269,158 @@ def stock_company(shares: str = None,
 
 # Bar price data
 # ==================
+@retry(Exception)
+def daily_basic(shares: object = None,
+                trade_date: object = None,
+                start: object = None,
+                end: object = None) -> pd.DataFrame:
+    """ tushare function wrapper: """
+    pro = ts.pro_api()
+    return pro.daily_basic(ts_code=shares,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+
+
+@retry(Exception)
+def daily_basic2(shares: object = None,
+                 trade_date: object = None,
+                 start: object = None,
+                 end: object = None) -> pd.DataFrame:
+    """ tushare function wrapper: """
+    pro = ts.pro_api()
+    return pro.bak_daily(ts_code=shares,
+                         trade_date=trade_date,
+                         start_date=start,
+                         end_date=end)
+
+
+@retry(Exception)
+def index_daily_basic(shares: object = None,
+                      trade_date: object = None,
+                      start: object = None,
+                      end: object = None) -> pd.DataFrame:
+    """ tushare function wrapper: """
+    pro = ts.pro_api()
+    return pro.index_dailybasic(ts_code=shares,
+                                trade_date=trade_date,
+                                start_date=start,
+                                end_date=end)
+
+
+@retry(Exception)
+def mins(share: object = None,
+         start=None,
+         end=None,
+         freq=None):
+    # TODO: 应该可以通过"trade_date"来读取一根K线, 需要测试api
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，所以必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.stk_mins(ts_code=share, start_date=start, end_date=end, freq=freq)
+
+
+@retry(Exception)
+def daily(share=None,
+          trade_date=None,
+          start=None,
+          end=None):
+    """
+
+    :param share:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.daily(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def weekly(share=None,
+           trade_date=None,
+           start=None,
+           end=None):
+    """
+
+    :param share:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.weekly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def monthly(share=None,
+            trade_date=None,
+            start=None,
+            end=None):
+    """
+
+    :param share:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.monthly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def index_daily(index=None,
+                trade_date=None,
+                start=None,
+                end=None):
+    """
+
+    :param index:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.index_daily(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def index_weekly(index=None,
+                 trade_date=None,
+                 start=None,
+                 end=None):
+    """
+
+    :param index:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.index_weekly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def index_monthly(index=None,
+                  trade_date=None,
+                  start=None,
+                  end=None):
+    """
+
+    :param index:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.index_monthly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+
+
 @lru_cache(maxsize=16)
 def get_bar(shares: object,
             start: object,

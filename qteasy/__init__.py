@@ -12,6 +12,7 @@ from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSele
 from .visual import candle, ohlc, renko
 from .built_in import *
 from .finance import CashPlan, Cost
+from .database import DataSource
 from ._arg_validators import QT_CONFIG
 from warnings import warn
 

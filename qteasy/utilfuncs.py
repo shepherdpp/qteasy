@@ -47,7 +47,7 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 }
 
 
-def retry(exception_to_check, tries=5, delay=3., backoff=2., logger=None):
+def retry(exception_to_check, tries=7, delay=1., backoff=2., logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
     :param exception_to_check: 需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
