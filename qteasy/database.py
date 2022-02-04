@@ -776,14 +776,6 @@ class DataSource:
             raise TypeError(f'Invalid file type: {self.file_type}')
         return file_path_name
 
-    def del_file(self, file_name):
-        """ delete file
-
-        :param file_name:
-        :return:
-        """
-        raise NotImplementedError
-
     def read_file(self, file_name):
         """ open the file with name file_name and return the df
 
@@ -862,7 +854,7 @@ class DataSource:
         """
         df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
 
-    # (逻辑)数据表操作层函数，只在表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
+    # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def read_table_data(self, table, shares=None, start=None, end=None):
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
@@ -985,6 +977,32 @@ class DataSource:
             # 如果source_type是db，不需要合并数据，但是需要去掉已经存在的数据
             local_data = self.read_table_data()
         return data
+
+    # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
+    def get_history_dataframes(self, shares, htypes, start, end, freq):
+        """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
+            HistoryPanel对象，用于策略的运行、回测或优化测试。
+
+        :param shares:
+
+        :param htypes:
+        :param start:
+        :param end:
+        :param freq:
+
+        :return:
+        Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
+            HistoryPanel对象
+        """
+        self.read_table_data()
+        raise NotImplementedError
+
+    def refill_local_source(self):
+        """ 补充本地数据，手动或自动运行补充本地数据库
+
+        :return:
+        """
+        raise NotImplementedError
 
 
     # 以上函数是新架构需要的

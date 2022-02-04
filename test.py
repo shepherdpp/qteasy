@@ -12162,91 +12162,44 @@ class TestDataBase(unittest.TestCase):
     """test local historical file database management methods"""
 
     def setUp(self):
-        self.data_source = DataSource()
+        pass
 
-    def test_get_and_update_data(self):
-        # import pdb;
-        # pdb.set_trace()
+    def test_datasource_creation(self):
+        """ test creation of all kinds of data sources"""
+        pass
 
-        # print(f'test expanded date time idx_range from 2020 07 01')
-        ds = self.data_source
-        # hp = ds.get_and_update_data(start='20200901',
-        #                             end='20201231',
-        #                             freq='d',
-        #                             shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
-        #                                     '000001.SZ', '000002.SZ'],
-        #                             htypes=['close'],
-        #                             adj='hfq',
-        #                             parallel=10)
-        # hp.info()
-        # hp = qt.HistoryPanel()
-        # print(hp)
-        #
-        # print(f'test different share scope, added 000005.SZ')
-        # hp = ds.get_and_update_data(start='20200101',
-        #                             end='20200901',
-        #                             freq='d',
-        #                             shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
-        #                             htypes=['close', 'open'],
-        #                             parallel=0)
-        # hp.info()
-        # hp = qt.HistoryPanel()
-        #
-        # print(f'test getting and updating adjusted price data')
-        # hp = ds.get_and_update_data(start='20180101',
-        #                             end='20211201',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['close', 'open', 'high', 'low'],
-        #                             adj='hfq',
-        #                             parallel=16,
-        #                             delay=180,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
+    def test_file_exists(self):
+        """ test DataSource method file_exists"""
+        pass
 
-        # print(f'test getting and updating refresh data')
-        # hp = ds.get_and_update_data(start='19950101',
-        #                             end='20211231',
-        #                             freq='d',
-        #                             shares=['000812.SZ', '600748.SH', '000616.SZ',
-        #                                     '000620.SZ', '000667.SZ', '000001.SZ'],
-        #                             htypes='open, high, low, close, vol',
-        #                             refresh=True,
-        #                             parallel=10,
-        #                             delay=125,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
+    def test_write_file(self):
+        """ test DataSource method write_file"""
+        pass
 
-        # print(f'test getting and updating refresh data')
-        # hp = ds.get_and_update_data(start='20060101',
-        #                             end='20201231',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['vol'],
-        #                             parallel=10,
-        #                             delay=125,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
-        #
-        # print(f'test getting and updating lots of mixed data')
-        # hp = ds.get_and_update_data(start='19950101',
-        #                             end='20200901',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['close', 'open', 'high', 'low', 'net_profit',
-        #                                     'finan_exp', 'total_share', 'eps',
-        #                                     'dt_eps', 'total_revenue_ps', 'cap_rese'],
-        #                             parallel=10,
-        #                             delay=125,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
+    def test_read_file(self):
+        """ test DataSource method read_file"""
+        pass
+
+    def test_read_database(self):
+        """ test DataSource method read_database"""
+        pass
+
+    def test_write_database(self):
+        """ test DataSource method write_database"""
+        pass
+
+    def test_read_table_data(self):
+        """ test DataSource method read_table_data"""
+        pass
+
+    def test_write_table_data(self):
+        """ test DataSource method write_table_data"""
+        pass
+
+    def test_download_and_check_table_data(self):
+        """ test DataSouce method download_and_check_table_data"""
+        pass
+
 
 
 def test_suite(*args):
