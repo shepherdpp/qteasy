@@ -1090,7 +1090,7 @@ def get_history_panel(start,
         需要的HistoryPanel数据对象
 
         首先利用不同的get_X_type_raw_data()函数获取不同类型的原始数据，再把原始数据整理成为date_by_row及htype_by_column的不同的
-        dataframe，再使用stack_dataframe()函数把所有的dataframe组合成HistoryPanel格式
+        df，再使用stack_dataframe()函数把所有的dataframe组合成HistoryPanel格式
 
     :param start:
     :param end:

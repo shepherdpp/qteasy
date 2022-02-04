@@ -12,18 +12,12 @@
 import pymysql
 from sqlalchemy import create_engine
 import pandas as pd
-import numpy as np
 from os import path
 
-from .history import stack_dataframes, get_price_type_raw_data, get_financial_report_type_raw_data
-from .utilfuncs import str_to_list, progress_bar
+from .utilfuncs import str_to_list, regulate_date_format
 
-from ._arg_validators import PRICE_TYPE_DATA
-from ._arg_validators import BALANCE_TYPE_DATA, CASHFLOW_TYPE_DATA
-from ._arg_validators import INDICATOR_TYPE_DATA
-
-LOCAL_DATA_FOLDER = 'qteasy/data/'
-LOCAL_DATA_FILE_EXT = '.dat'
+AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
+AVAILABLE_CHANNELS = ['tushare']
 
 """ 
 这里定义AVAILABLE_TABLES 以及 TABLE_STRUCTURES
@@ -694,11 +688,30 @@ class DataSource:
         """
 
         assert source_type in ['file', 'database', 'db'], ValueError()
+        if source_type == 'database':
+            source_type = 'db'
         self.source_type = source_type
 
         if self.source_type == 'file':
             # set up file type and file location
-            pass
+            if file_type is None:
+                file_type = 'fth'
+            if not isinstance(file_type, str):
+                raise TypeError(f'file type should be a string, got {type(file_type)} instead!')
+            file_type = file_type.lower()
+            if file_type not in AVAILABLE_DATA_FILE_TYPES:
+                raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
+            if file_type == 'feather':
+                file_type = 'fth'
+            self.file_type = file_type
+
+            if file_loc is None:
+                file_loc = 'qteasy/data/'
+            if not self.file_exists(file_loc):
+                raise SystemError('specified file path does not exist')
+            from qteasy import QT_ROOT_PATH
+            self.file_path = QT_ROOT_PATH + file_loc
+
         else:  # source_type == 'database' or 'db'
             # set up connection to the data base
             if host is None:
@@ -719,42 +732,49 @@ class DataSource:
                 self.cursor = self.con.cursor()
                 self.con.commit()
             except Exception as e:
+                print(f'{str(e)}, fall back to file system - NotImplemented')
                 # maybe fallback to file saving:
-                self.file_type = file_type
-                self.file_loc = file_loc
+                # self.file_type = file_type
+                # self.file_path = file_path
                 raise e
             # try to create sqlalchemy engine:
             self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/ts_db')
         pass
 
+    # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
-        """ returns whether a file exists or not
+        """ 检查数据系统文件夹内是否存在对应文件
 
-        :param file_name:
+        :param file_name: 需要检查的文件名（不含扩展名）
         :return:
+        Boolean: 文件存在时返回真，否则返回假
         """
-        from qteasy import QT_ROOT_PATH
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        return path.exists(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        file_path_name = self.file_path + file_name + '.' + self.file_type
+        return path.exists(file_path_name)
 
-    def new_file(self, file_name, dataframe):
-        """ create given dataframe into a new file with file_name
+    def write_file(self, df, file_name):
+        """ write given dataframe into a new file with file_name
 
-        :param dataframe:
-        :param file_name:
+        :param df: 待写入文件的DataFrame
+        :param file_name: 本地文件名（不含扩展名）
         :return:
+        str: file_name 如果数据保存成功，返回完整文件路径名称
         """
-        from qteasy import QT_ROOT_PATH
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        df = self.validated_dataframe(dataframe)
 
-        if self.file_exists(file_name):
-            raise FileExistsError(f'the file with name {file_name} already exists!')
-        # dataframe.to_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        dataframe.reset_index().to_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
-        return file_name
+        file_path_name = self.file_path + file_name
+        if self.file_type == 'csv':
+            df.to_csv(file_path_name + '.csv')
+        elif self.file_type == 'fth':
+            df.reset_index().to_feather(file_path_name + '.fth')
+        elif self.file_type == 'hdf':
+            df.to_hdf(file_path_name + '.hdf')
+        else:  # for some unexpected cases
+            raise TypeError(f'Invalid file type: {self.file_type}')
+        return file_path_name
 
     def del_file(self, file_name):
         """ delete file
@@ -764,54 +784,190 @@ class DataSource:
         """
         raise NotImplementedError
 
-    def open_file(self, file_name):
+    def read_file(self, file_name):
         """ open the file with name file_name and return the df
 
         :param file_name:
         :return:
         """
-        from qteasy import QT_ROOT_PATH
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         if not self.file_exists(file_name):
-            raise FileNotFoundError(f'File {QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT} '
-                                    f'not found!')
+            # 如果文件不存在，则返回空的DataFrame
+            return pd.DataFrame()
 
-        # df = pd.read_csv(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT, index_col=0)
-        df = pd.read_feather(QT_ROOT_PATH + LOCAL_DATA_FOLDER + file_name + LOCAL_DATA_FILE_EXT)
+        file_path_name = self.file_path + file_name
+        if self.file_type == 'csv':
+            df = pd.read_csv(file_path_name + '.csv', index_col=0)
+        elif self.file_type == 'fth':
+            df = pd.read_feather(file_path_name + '.fth')
+        elif self.file_type == 'hdf':
+            df = pd.read_hdf(file_path_name + '.fth')
+        else:  # for some unexpected cases
+            raise TypeError(f'Invalid file type: {self.file_type}')
         df.index = df['date']
         df.drop(columns=['date'], inplace=True)
-        df = self.validated_dataframe(df)
         return df
 
-    # 以下函数是新架构所需要的
-    def read_table_data(self):
+    # 数据库操作层函数，只操作具体的数据表，不操作数据
+    def read_database(self, db_table, shares=None, start=None, end=None):
+        """ 从一张数据库表中读取数据
+
+        :param db_table: 需要读取数据的数据表
+        :param shares: 如果给出shares，则按照shares筛选ts_code（如果表中没有ts_code参数会报错）
+        :param start:  如果给出start同时又给出end，按照"WHERE trade_date BETWEEEN start AND end"的条件筛选
+        :param end:    当没有给出start时，单独给出end无效
+        :return:
+        DataFrame，从数据库中读取的DataFrame
         """
+        #TODO: 这里需要首先检查table的table_structure以便掌握如何筛选等信息
+        ts_code_filter = ''
+        has_ts_code_filter = False
+        date_filter = ''
+        has_date_filter = False
+        if shares is not None:
+            has_ts_code_filter = True
+            ts_code_filter = f'ts_code in {tuple(shares)}'
+        if (start is not None) and (end is not None):
+            # assert start and end are date-like
+            has_date_filter = True
+            date_filter = f'trade_date BETWEEN {start} AND {end}'
+
+        sql = f'SELECT * ' \
+              f'FROM {db_table}\n'
+        if not (has_ts_code_filter or has_date_filter):
+            # No WHERE clause
+            pass
+        elif has_ts_code_filter and has_date_filter:
+            # both WHERE clause
+            sql += f'WHERE {ts_code_filter}' \
+                  f'AND {date_filter}\n'
+        elif has_ts_code_filter and not has_date_filter:
+            # only one WHERE clause
+            sql += f'WHERE {ts_code_filter}\n'
+        elif not has_ts_code_filter and has_date_filter:
+            # only one WHERE clause
+            sql += f'WHERE {date_filter}'
+        sql += 'ORDER BT trade_date'
+
+        df = pd.read_sql_query(sql, con=self.engine)
+        return df
+
+    def write_database(self, df, db_table):
+        """ 将DataFrame存储在数据库表中
+
+        :param df:
+        :param db_table:
+        :return:
+        """
+        df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
+
+    # (逻辑)数据表操作层函数，只在表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
+    def read_table_data(self, table, shares=None, start=None, end=None):
+        """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
+        在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
+
+            TODO: potentially: 如果一张数据表的数据量过大，查询或读取数据将花费太多的时间
+            TODO: 此时应该将表格存储在多张数据库表或多个文件中，本函数应该执行这一项管理工作
+            TODO: 根据所需的数据，从不同的文件或数据库中读取数据并组合成一个DataFrame, 此
+            TODO: 时需要建立索引文件、并通过索引文件快速获取所需的数据，这些工作都在本函数
+            TODO: 中执行
+
+        :param table: str 数据表名称
+        :param shares: list，ts_code筛选条件，为空时给出所有记录
+        :param start: str，YYYYMMDD格式日期，为空时不筛选
+        :param end: str，YYYYMMDD格式日期，当start不为空时有效，筛选日期范围
+
+        :return
+        pd.DataFrame 返回的数据为DataFrame格式
 
         """
-        pass
+        if not isinstance(table, str):
+            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+        if table not in TABLE_SOURCE_MAPPING.keys():
+            raise KeyError(f'Invalid table name.')
+
+        if shares is not None:
+            assert isinstance(shares, (str, list))
+            if isinstance(shares, str):
+                shares = str_to_list(shares)
+
+        if (start is not None) and (end is not None):
+            start = regulate_date_format(start)
+            end = regulate_date_format(end)
+            assert pd.to_datetime(start) <= pd.to_datetime(end)
+
+        if self.source_type == 'file':
+            # 读取table数据
+            df = self.read_file(file_name=table)
+            # 读取数据后只取需要的列和行
+            df = df.loc[df.ts_code in shares]
+
+        elif self.source_type == 'db':
+            df = self.read_database(db_table=table, shares=shares, start=start, end=end)
+        else:  # for unexpected cases:
+            raise TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
+
+        return df
 
     def write_table_data(self, df, table):
-        """
+        """ 将df中的数据写入本地数据表（本地文件或数据库）
+            如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
+            注意：这里并不检查df是否含有重复数据或冗余数据
+
+            TODO: potentially: 如果一张数据表的数据量过大，查询或读取数据将花费太多的时间
+            TODO: 此时应该将表格存储在多张数据库表或多个文件中，本函数应该执行这一项管理工作
+            TODO: 即将数据分成不同的DataFrame，分别保存在不同的表或文件中。 此时需要建立
+            TODO: 索引数据表、并通过索引表快速获取所需的数据，这些工作都在本函数中执行
+
+        :param df: pd.DataFrame 一个数据表，数据表的列名应该与本地数据表定义一致
+        :param table: str 本地数据表名，
+
+        :return
+        None
 
         """
         assert isinstance(df, pd.DataFrame)
-        assert isinstance(table, str)
-        assert table in TABLE_SOURCE_MAPPING.keys()
+        if not isinstance(table, str):
+            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+        if table not in TABLE_SOURCE_MAPPING.keys():
+            raise KeyError(f'Invalid table name.')
         if self.source_type == 'file':
-            raise NotImplementedError
+            self.write_file(df, file_name=table)
+        elif self.source_type == 'db':
+            self.write_database(df, db_table=table)
+
+    def download_and_check_table_data(self, table, channel, **kwargs):
+        """ 从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
+            1，根据channel确定数据源，根据table名下载相应的数据表
+            2，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
+            3，如果datasource type是"db"，删除下载数据中与本地数据重复的部分，仅保留新增数据
+            4，如果datasource type是"file"，将下载的数据与本地数据合并并去重
+            返回处理完毕的dataFrame
+
+        :param table: str, 数据表名，必须是database中定义的数据表
+        :param channel: str，网络数据提供商的名称，指定需要连接的api
+
+        :return:
+        pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
+        """
+        if not isinstance(table, str):
+            raise TypeError(f'table name should be a string, got {type(table)} instead.')
+        if table not in TABLE_SOURCE_MAPPING.keys():
+            raise KeyError(f'Invalid table name')
+        if not isinstance(channel, str):
+            raise TypeError(f'channel should be a string, got {type(channel)} instead.')
+        if channel not in AVAILABLE_CHANNELS:
+            raise KeyError(f'Invalid channel name')
+
+        # 从指定的channel获取数据
+        if channel == 'tushare':
+            from .tsfuncs import acquire_data
+            data = acquire_data(table, **kwargs)
         else:
-            df.to_sql(table, self.engine, index=False, if_exists='append', chunksize=5000)
+            raise NotImplementedError
 
-    def prep_table_data(self, table, **kwargs):
-        """
-
-        """
-        assert isinstance(table, str)
-        assert table in TABLE_SOURCE_MAPPING.keys()
-        from .tsfuncs import acquire_data
-        data = acquire_data(table, **kwargs)
-        # remove excess columns
+        # 删除数据中过多的列
         table_struct = TABLE_SOURCE_MAPPING[table]['structure']
         table_columns = TABLE_STRUCTURES[table_struct]['columns']
         columns_to_drop = [col for col in data.columns if col not in table_columns]
@@ -819,15 +975,16 @@ class DataSource:
             print(f'there are columns to drop, they are\n{columns_to_drop}')
             data.drop(columns=columns_to_drop, inplace=True)
 
-        # TODO: should remove redundant lines, for row items the same as table at same prime key lines
+        dnld_shares = shares
+        dnld_start, dnld_end = start, end
+        local_data = self.read_table_data(table, shares=dnld_shares, dnld_start, dnld_end)
+        if self.source_type == 'file':
+            # 如果source_type是file，需要将下载的数据与本地数据合并后去重
+            local_data = self.read_table_data(table)
+        else:  # self.source_type == 'db' or 'database'
+            # 如果source_type是db，不需要合并数据，但是需要去掉已经存在的数据
+            local_data = self.read_table_data()
         return data
 
-    def download_table_data(self, par1: str, par2: int) -> pd.DataFrame:
-        """
-
-        :param par1:
-        :param par2:
-        :return:
-        """
 
     # 以上函数是新架构需要的
