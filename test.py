@@ -12162,11 +12162,34 @@ class TestDataBase(unittest.TestCase):
     """test local historical file database management methods"""
 
     def setUp(self):
-        pass
+        from qteasy import QT_ROOT_PATH
+        self.qt_root_path = QT_ROOT_PATH
 
     def test_datasource_creation(self):
         """ test creation of all kinds of data sources"""
-        pass
+        ds = DataSource('db', host='localhost', port=3306, user='jackie', password='iama007')
+        self.assertIsInstance(ds, DataSource)
+        self.assertIs(ds.file_type, None)
+        self.assertIs(ds.file_path, None)
+
+        ds = DataSource('file', file_type='csv')
+        self.assertIsInstance(ds, DataSource)
+        self.assertEqual(ds.file_type, 'csv')
+        self.assertEqual(ds.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(ds.engine, None)
+
+        ds = DataSource('file', file_type='hdf')
+        self.assertIsInstance(ds, DataSource)
+        self.assertEqual(ds.file_type, 'hdf')
+        self.assertEqual(ds.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(ds.engine, None)
+
+        ds = DataSource('file', file_type='fth')
+        self.assertIsInstance(ds, DataSource)
+        self.assertEqual(ds.file_type, 'fth')
+        self.assertEqual(ds.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(ds.engine, None)
+
 
     def test_file_exists(self):
         """ test DataSource method file_exists"""

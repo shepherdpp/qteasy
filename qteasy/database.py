@@ -130,21 +130,21 @@ TABLE_STRUCTURES = {
     'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pre_trade_date'],
                          'dtypes':     ['str', 'str', 'str', 'str'],
                          'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
-                         'prime_keys': [0]},  # 交易日历表，每年更新，更新时没有参数
+                         'prime_keys': ['exchange', 'cal_date']},  # 交易日历表，每年更新，更新时没有参数
 
     'stock_basic':      {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
                                         'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
                                         'delist_date', 'is_hs'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str',
+                         'dtypes':     ['varchar(9)', 'varchar(6)', 'var_char(10)', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str',
                                         'str', 'str', 'str', 'str'],
                          'remarks':    ['TS代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
-                         'prime_keys': [0]},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
+                         'prime_keys': ['ts_code']},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
 
     'name_changes':     {'columns':    ['ts_code', 'name', 'start_date', 'end_date', 'ann_date', 'change_reason'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str'],
+                         'dtypes':     ['varchar(9)', 'str', 'str', 'str', 'str', 'str'],
                          'remarks':    ['TS代码', '证券名称', '开始日期', '结束日期', '公告日期', '变更原因'],
-                         'prime_keys': [0]},  # 股票名称变更登记表，更新时按股票名称下载
+                         'prime_keys': ['ts_code', 'ann_date']},  # 股票名称变更登记表，更新时按股票名称下载
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
@@ -193,20 +193,20 @@ TABLE_STRUCTURES = {
     # stock_daily / stock_weekly / stock_monthly / index_daily / index_weekly /
     # index_monthly / fund_daily 等数据表
     # 用于股票、指数以及部分基金的K线数据结构，包括分钟、小时、天、周和月k线，更新时按时间下载，更新时按前两列的内容更新去重
-    'bars':             {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close',
-                                        'change', 'pct_chg', 'vol', 'amount'],
-                         'dtypes':     ['str', 'str', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float'],
+    'bars':             {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'change',
+                                        'pct_chg', 'vol', 'amount'],
+                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'double', 'double'],
                          'remarks':    ['股票代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
-                         'prime_keys': [0, 1]},
+                         'prime_keys': ['ts_code', 'trade_date']},
 
 
     # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
                          'dtypes':     ['str', 'str', 'float'],
-                         'remarks':    ['股票/基金代码', '交易日期', '复权因子'],
-                         'prime_keys': [0, 1]},
+                         'remarks':    ['证券代码', '交易日期', '复权因子'],
+                         'prime_keys': ['ts_code', 'trade_date']},
 
     'fund_nav':         {'columns':    ['ts_code', 'ann_date', 'nav_date', 'unit_nav', 'accum_nav', 'accum_div',
                                         'net_asset', 'total_netasset', 'adj_nav'],
@@ -705,12 +705,13 @@ class DataSource:
                 file_type = 'fth'
             self.file_type = file_type
 
+            from qteasy import QT_ROOT_PATH
             if file_loc is None:
                 file_loc = 'qteasy/data/'
-            if not self.file_exists(file_loc):
-                raise SystemError('specified file path does not exist')
-            from qteasy import QT_ROOT_PATH
+            # if not self.file_exists(file_loc):
+            #     raise SystemError('specified file path does not exist')
             self.file_path = QT_ROOT_PATH + file_loc
+            self.engine = None
 
         else:  # source_type == 'database' or 'db'
             # set up connection to the data base
@@ -739,6 +740,8 @@ class DataSource:
                 raise e
             # try to create sqlalchemy engine:
             self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/ts_db')
+            self.file_path = None
+            self.file_type = None
         pass
 
     # 文件操作层函数，只操作文件，不修改数据
@@ -854,6 +857,24 @@ class DataSource:
         """
         df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
 
+    # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
+    # 目前尚未实现，未来可以改进以便自动化优化数据库结构提升效率
+    def new_db_dable(self, db_table):
+        """ 在数据库中新建一个数据表，并且确保数据表的schema与设置相同
+
+        :param db_table:
+        :return:
+        """
+        raise NotImplementedError
+
+    def alter_db_table(self, db_table):
+        """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
+
+        :param db_table:
+        :return:
+        """
+        raise NotImplementedError
+
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def read_table_data(self, table, shares=None, start=None, end=None):
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
@@ -929,7 +950,7 @@ class DataSource:
         elif self.source_type == 'db':
             self.write_database(df, db_table=table)
 
-    def download_and_check_table_data(self, table, channel, **kwargs):
+    def download_and_check_table_data(self, table, channel, merge_type, **kwargs):
         """ 从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
             1，根据channel确定数据源，根据table名下载相应的数据表
             2，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
@@ -939,6 +960,10 @@ class DataSource:
 
         :param table: str, 数据表名，必须是database中定义的数据表
         :param channel: str，网络数据提供商的名称，指定需要连接的api
+        :param merge_type: str
+            指定如何合并下载数据和本地数据：
+            - 'replace': 如果下载数据与本地数据重复，用下载数据替代本地数据
+            - 'ignore' : 如果下载数据与本地数据重复，忽略下载数据的重复部分
 
         :return:
         pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
@@ -951,32 +976,60 @@ class DataSource:
             raise TypeError(f'channel should be a string, got {type(channel)} instead.')
         if channel not in AVAILABLE_CHANNELS:
             raise KeyError(f'Invalid channel name')
+        if not isinstance(merge_type, str):
+            raise TypeError(f'merge type should be a string, got {type(merge_type)} instead.')
+        if merge_type not in ['ignore', 'update']:
+            raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
 
         # 从指定的channel获取数据
         if channel == 'tushare':
             from .tsfuncs import acquire_data
-            data = acquire_data(table, **kwargs)
+            dnld_data = acquire_data(table, **kwargs)
         else:
             raise NotImplementedError
 
         # 删除数据中过多的列
         table_struct = TABLE_SOURCE_MAPPING[table]['structure']
         table_columns = TABLE_STRUCTURES[table_struct]['columns']
-        columns_to_drop = [col for col in data.columns if col not in table_columns]
+        columns_to_drop = [col for col in dnld_data.columns if col not in table_columns]
         if len(columns_to_drop) > 0:
             print(f'there are columns to drop, they are\n{columns_to_drop}')
-            data.drop(columns=columns_to_drop, inplace=True)
+            dnld_data.drop(columns=columns_to_drop, inplace=True)
 
-        dnld_shares = shares
-        dnld_start, dnld_end = start, end
-        local_data = self.read_table_data(table, shares=dnld_shares, dnld_start, dnld_end)
+        # 删除数据中过多的行数据
+        primary_keys = TABLE_STRUCTURES[table_struct]['primary_key']
+        local_data = self.read_table_data(table)
+        if len(primary_keys) == 1:
+            # df只需要single index
+            local_data.index = local_data[primary_keys]
+            dnld_data.indnex = dnld_data[primary_keys]
+        else:  # len(primary_key) > 1
+            # df需要MultiIndex
+            m_index = pd.MultiIndex.from_frame(local_data[primary_keys])
+            local_data.index = m_index
+            m_index = pd.MultiIndex.from_frame(dnld_data[primary_keys])
+            dnld_data.index = m_index
+        local_data.drop(columnns=primary_keys, inplace=True)
+        dnld_data.drop(columns=primary_keys, inplace=True)
+
+        # 以primary_kays为准处理下载数据与本地数据中的重叠部分：
+        if merge_type == 'ignore':
+            dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
+        else:
+            update_data = local_data(~local_data.index.isin(dnld_data.index))
+            local_data = local_data(~local_data.index.isin(dnld_data.index))
+
         if self.source_type == 'file':
             # 如果source_type是file，需要将下载的数据与本地数据合并后去重
-            local_data = self.read_table_data(table)
+            return pd.concat([local_data, dnld_data])
         else:  # self.source_type == 'db' or 'database'
-            # 如果source_type是db，不需要合并数据，但是需要去掉已经存在的数据
-            local_data = self.read_table_data()
-        return data
+            # 如果source_type是db，不需要合并数据
+            if merge_type == 'ignore':
+                return dnld_data
+            else:
+                # 当需要更新本地数据库中的部分数据时，需要先更新部分数据
+                # self.update_table(update_data, table)
+                return dnld_data
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_dataframes(self, shares, htypes, start, end, freq):
