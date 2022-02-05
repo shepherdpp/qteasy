@@ -9603,16 +9603,19 @@ class TestUtilityFuncs(unittest.TestCase):
         """ test the retry decorator"""
         print(f'test no retry needed functions')
         self.counter = 0
+
         @retry(RetryableError, tries=4, delay=0.1)
         def succeeds():
             self.counter += 1
             return 'success'
+
         r = succeeds()
         self.assertEqual(r, 'success')
         self.assertEqual(self.counter, 1)
 
         print(f'test retry only once')
         self.counter = 0
+
         @retry(RetryableError, tries=4, delay=0.1)
         def fails_once():
             self.counter += 1
@@ -9655,6 +9658,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(self.counter, 3)
 
         print(f'does not retry when unexpected error occurs')
+
         @retry(RetryableError, tries=4, delay=0.1)
         def raise_unexpected_error():
             raise UnexpectedError('unexpected error')
@@ -12164,51 +12168,119 @@ class TestDataBase(unittest.TestCase):
     def setUp(self):
         from qteasy import QT_ROOT_PATH
         self.qt_root_path = QT_ROOT_PATH
+        self.ds_db = DataSource('db', host='localhost', port=3306, user='jackie', password='iama007')
+        self.ds_csv = DataSource('file', file_type='csv')
+        self.ds_hdf = DataSource('file', file_type='hdf')
+        self.ds_fth = DataSource('file', file_type='fth')
+        self.df = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+            'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
+                           '20211113', '20211113', '20211113', '20211113', '20211113'],
+            'open':       [1., 2., 3., 4., 5., 6., 7., 8., 9., 10.],
+            'high':       [2., 3., 4., 5., 6., 7., 8., 9., 10., 1.],
+            'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2.],
+            'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3.]
+        })
+        self.df['trade_date'] = pd.to_datetime(self.df['trade_date'])
+        self.df.index = pd.MultiIndex.from_frame(self.df[['ts_code', 'trade_date']])
+        self.df.drop(columns=['ts_code', 'trade_date'], inplace=True)
 
     def test_datasource_creation(self):
         """ test creation of all kinds of data sources"""
-        ds = DataSource('db', host='localhost', port=3306, user='jackie', password='iama007')
-        self.assertIsInstance(ds, DataSource)
-        self.assertIs(ds.file_type, None)
-        self.assertIs(ds.file_path, None)
+        self.assertIsInstance(self.ds_db, DataSource)
+        self.assertIs(self.ds_db.file_type, None)
+        self.assertIs(self.ds_db.file_path, None)
 
-        ds = DataSource('file', file_type='csv')
-        self.assertIsInstance(ds, DataSource)
-        self.assertEqual(ds.file_type, 'csv')
-        self.assertEqual(ds.file_path, self.qt_root_path + 'qteasy/data/')
-        self.assertIs(ds.engine, None)
+        self.assertIsInstance(self.ds_csv, DataSource)
+        self.assertEqual(self.ds_csv.file_type, 'csv')
+        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(self.ds_csv.engine, None)
 
-        ds = DataSource('file', file_type='hdf')
-        self.assertIsInstance(ds, DataSource)
-        self.assertEqual(ds.file_type, 'hdf')
-        self.assertEqual(ds.file_path, self.qt_root_path + 'qteasy/data/')
-        self.assertIs(ds.engine, None)
+        self.assertIsInstance(self.ds_hdf, DataSource)
+        self.assertEqual(self.ds_hdf.file_type, 'hdf')
+        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(self.ds_hdf.engine, None)
 
-        ds = DataSource('file', file_type='fth')
-        self.assertIsInstance(ds, DataSource)
-        self.assertEqual(ds.file_type, 'fth')
-        self.assertEqual(ds.file_path, self.qt_root_path + 'qteasy/data/')
-        self.assertIs(ds.engine, None)
-
+        self.assertIsInstance(self.ds_fth, DataSource)
+        self.assertEqual(self.ds_fth.file_type, 'fth')
+        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(self.ds_fth.engine, None)
 
     def test_file_exists(self):
         """ test DataSource method file_exists"""
-        pass
+        print(f'returning True while source type is database')
+        self.assertTrue(self.ds_db.file_exists('basic_eps.dat'))
 
-    def test_write_file(self):
-        """ test DataSource method write_file"""
-        pass
+        print(f'test file that existed')
+        import os
+        f_name = self.ds_csv.file_path + 'test_file.csv'
+        f = open(f_name, 'w')
+        f.write('a test csv file')
+        f.close()
+        self.assertTrue(self.ds_csv.file_exists('test_file'))
+        os.remove(f_name)
 
-    def test_read_file(self):
-        """ test DataSource method read_file"""
-        pass
+        f_name = self.ds_csv.file_path + 'test_file.hdf'
+        f = open(f_name, 'w')
+        f.write('a test csv file')
+        f.close()
+        self.assertTrue(self.ds_hdf.file_exists('test_file'))
+        os.remove(f_name)
 
-    def test_read_database(self):
-        """ test DataSource method read_database"""
-        pass
+        f_name = self.ds_csv.file_path + 'test_file.fth'
+        f = open(f_name, 'w')
+        f.write('a test csv file')
+        f.close()
+        self.assertTrue(self.ds_fth.file_exists('test_file'))
+        os.remove(f_name)
 
-    def test_write_database(self):
-        """ test DataSource method write_database"""
+        print(f'test file that does not exist')
+        # 事先删除可能存在于磁盘上的文件，并判断是否存在
+        f_name = self.ds_csv.file_path + "file_that_does_not_exist.csv"
+        try:
+            os.remove(f_name)
+        except:
+            pass
+        f_name = self.ds_hdf.file_path + "file_that_does_not_exist.hdf"
+        try:
+            os.remove(f_name)
+        except:
+            pass
+        f_name = self.ds_fth.file_path + "file_that_does_not_exist.csv"
+        try:
+            os.remove(f_name)
+        except:
+            pass
+        self.assertFalse(self.ds_csv.file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_hdf.file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_fth.file_exists('file_that_does_not_exist'))
+
+    def test_write_and_read_file(self):
+        """ test DataSource method write_file and read_file"""
+        print(f'write a dataframe to all types of local sources')
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{self.df}')
+        self.ds_csv.write_file(self.df, 'test_csv_file')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file'))
+        saved_df = self.ds_csv.read_file('test_csv_file')
+        print(f'df retrieved from saved csv file is\n'
+              f'{saved_df}')
+
+        self.ds_hdf.write_file(self.df, 'test_hdf_file')
+        self.assertTrue(self.ds_hdf.file_exists('test_hdf_file'))
+        saved_df = self.ds_hdf.read_file('test_hdf_file')
+        print(f'df retrieved from saved hdf file is\n'
+              f'{saved_df}')
+
+        self.ds_fth.write_file(self.df, 'test_fth_file')
+        self.assertTrue(self.ds_fth.file_exists('test_fth_file'))
+        saved_df = self.ds_fth.read_file('test_fth_file')
+        print(f'df retrieved from saved fth file is\n'
+              f'{saved_df}')
+
+    def test_write_and_read_database(self):
+        """ test DataSource method read_database and write_database"""
         pass
 
     def test_read_table_data(self):
@@ -12222,7 +12294,6 @@ class TestDataBase(unittest.TestCase):
     def test_download_and_check_table_data(self):
         """ test DataSouce method download_and_check_table_data"""
         pass
-
 
 
 def test_suite(*args):

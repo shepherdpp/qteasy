@@ -752,6 +752,8 @@ class DataSource:
         :return:
         Boolean: 文件存在时返回真，否则返回假
         """
+        if self.source_type == 'db':
+            return True
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         file_path_name = self.file_path + file_name + '.' + self.file_type
@@ -774,7 +776,7 @@ class DataSource:
         elif self.file_type == 'fth':
             df.reset_index().to_feather(file_path_name + '.fth')
         elif self.file_type == 'hdf':
-            df.to_hdf(file_path_name + '.hdf')
+            df.to_hdf(file_path_name + '.hdf', key='df')
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
         return file_path_name
@@ -791,17 +793,24 @@ class DataSource:
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
 
+        # 当文件格式不同的时候，读取出来的df格式会有所不同，这时需要统一格式
+        # 最主要的问题是index的处理方式，SingleIndex和MultiIndex的处理方式
+        # 需要区别对待。
+        # 统一格式的主要问题是：统一读取出的DF是否保留primary-key作为index
+        # （此时当primary_key包含多列时，df包含MultiIndex）。如果保留Index，
+        # 那么按行选择将会比较轻松，如果不保留Index，需要根据column的值选数据
+        # 似乎也没有太大问题。
         file_path_name = self.file_path + file_name
         if self.file_type == 'csv':
-            df = pd.read_csv(file_path_name + '.csv', index_col=0)
+            df = pd.read_csv(file_path_name + '.csv')
+        elif self.file_type == 'hdf':
+            df = pd.read_hdf(file_path_name + '.hdf', 'df')
         elif self.file_type == 'fth':
             df = pd.read_feather(file_path_name + '.fth')
-        elif self.file_type == 'hdf':
-            df = pd.read_hdf(file_path_name + '.fth')
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
-        df.index = df['date']
-        df.drop(columns=['date'], inplace=True)
+        # df.index = df['date']
+        # df.drop(columns=['date'], inplace=True)
         return df
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
