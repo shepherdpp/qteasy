@@ -128,14 +128,15 @@ TABLE_SOURCE_MAPPING = {
 TABLE_STRUCTURES = {
 
     'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pre_trade_date'],
-                         'dtypes':     ['str', 'str', 'str', 'str'],
+                         'dtypes':     ['str', 'TimeStamp', 'str', 'str'],
                          'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
-                         'prime_keys': ['exchange', 'cal_date']},  # 交易日历表，每年更新，更新时没有参数
+                         'prime_keys': [0, 1]},  # 交易日历表，每年更新，更新时没有参数
 
     'stock_basic':      {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
                                         'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
                                         'delist_date', 'is_hs'],
-                         'dtypes':     ['varchar(9)', 'varchar(6)', 'var_char(10)', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str',
+                         'dtypes':     ['varchar(9)', 'varchar(6)', 'var_char(10)', 'str', 'str', 'str', 'str', 'str',
+                                        'str', 'str', 'str',
                                         'str', 'str', 'str', 'str'],
                          'remarks':    ['TS代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
@@ -200,7 +201,6 @@ TABLE_STRUCTURES = {
                          'remarks':    ['股票代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
                          'prime_keys': ['ts_code', 'trade_date']},
-
 
     # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
@@ -672,6 +672,7 @@ class DataSource:
     DataSource对象可以按要求定期刷新或从NDP拉取数据，也可以手动操作
 
     """
+
     def __init__(self,
                  source_type: str,
                  file_type: str = None,
@@ -781,10 +782,12 @@ class DataSource:
             raise TypeError(f'Invalid file type: {self.file_type}')
         return file_path_name
 
-    def read_file(self, file_name):
+    def read_file(self, file_name, primary_key, pk_dtypes):
         """ open the file with name file_name and return the df
 
-        :param file_name:
+        :param file_name: str， 文件名
+        :param primary_key:
+            List, 用于生成primary_key index 的主键
         :return:
         """
         if not isinstance(file_name, str):
@@ -793,20 +796,15 @@ class DataSource:
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
 
-        # 当文件格式不同的时候，读取出来的df格式会有所不同，这时需要统一格式
-        # 最主要的问题是index的处理方式，SingleIndex和MultiIndex的处理方式
-        # 需要区别对待。
-        # 统一格式的主要问题是：统一读取出的DF是否保留primary-key作为index
-        # （此时当primary_key包含多列时，df包含MultiIndex）。如果保留Index，
-        # 那么按行选择将会比较轻松，如果不保留Index，需要根据column的值选数据
-        # 似乎也没有太大问题。
         file_path_name = self.file_path + file_name
         if self.file_type == 'csv':
             df = pd.read_csv(file_path_name + '.csv')
+            set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'hdf':
             df = pd.read_hdf(file_path_name + '.hdf', 'df')
         elif self.file_type == 'fth':
             df = pd.read_feather(file_path_name + '.fth')
+            set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
         # df.index = df['date']
@@ -824,7 +822,6 @@ class DataSource:
         :return:
         DataFrame，从数据库中读取的DataFrame
         """
-        #TODO: 这里需要首先检查table的table_structure以便掌握如何筛选等信息
         ts_code_filter = ''
         has_ts_code_filter = False
         date_filter = ''
@@ -845,14 +842,15 @@ class DataSource:
         elif has_ts_code_filter and has_date_filter:
             # both WHERE clause
             sql += f'WHERE {ts_code_filter}' \
-                  f'AND {date_filter}\n'
+                   f'AND {date_filter}\n'
         elif has_ts_code_filter and not has_date_filter:
             # only one WHERE clause
             sql += f'WHERE {ts_code_filter}\n'
         elif not has_ts_code_filter and has_date_filter:
             # only one WHERE clause
             sql += f'WHERE {date_filter}'
-        sql += 'ORDER BT trade_date'
+        sql += ''
+        print(f'trying to get data from database with SQL: \n"{sql}"')
 
         df = pd.read_sql_query(sql, con=self.engine)
         return df
@@ -868,7 +866,7 @@ class DataSource:
 
     # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
     # 目前尚未实现，未来可以改进以便自动化优化数据库结构提升效率
-    def new_db_dable(self, db_table):
+    def new_db_table(self, db_table):
         """ 在数据库中新建一个数据表，并且确保数据表的schema与设置相同
 
         :param db_table:
@@ -877,6 +875,14 @@ class DataSource:
         raise NotImplementedError
 
     def alter_db_table(self, db_table):
+        """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
+
+        :param db_table:
+        :return:
+        """
+        raise NotImplementedError
+
+    def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
 
         :param db_table:
@@ -919,14 +925,17 @@ class DataSource:
             end = regulate_date_format(end)
             assert pd.to_datetime(start) <= pd.to_datetime(end)
 
-        if self.source_type == 'file':
-            # 读取table数据
-            df = self.read_file(file_name=table)
-            # 读取数据后只取需要的列和行
-            df = df.loc[df.ts_code in shares]
+        primary_key, pk_dtypes = get_table_primary_keys_and_dtype(table)
 
+        if self.source_type == 'file':
+            # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
+            # 但是并未按shares和start/end进行筛选，需要手动筛选
+            df = self.read_file(file_name=table, primary_key=primary_key)
         elif self.source_type == 'db':
+            # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
+            # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
             df = self.read_database(db_table=table, shares=shares, start=start, end=end)
+            set_primary_key_index(df, primary_key, pk_dtypes)
         else:  # for unexpected cases:
             raise TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
 
@@ -1008,18 +1017,8 @@ class DataSource:
         # 删除数据中过多的行数据
         primary_keys = TABLE_STRUCTURES[table_struct]['primary_key']
         local_data = self.read_table_data(table)
-        if len(primary_keys) == 1:
-            # df只需要single index
-            local_data.index = local_data[primary_keys]
-            dnld_data.indnex = dnld_data[primary_keys]
-        else:  # len(primary_key) > 1
-            # df需要MultiIndex
-            m_index = pd.MultiIndex.from_frame(local_data[primary_keys])
-            local_data.index = m_index
-            m_index = pd.MultiIndex.from_frame(dnld_data[primary_keys])
-            dnld_data.index = m_index
-        local_data.drop(columnns=primary_keys, inplace=True)
-        dnld_data.drop(columns=primary_keys, inplace=True)
+        set_primary_key_index(local_data, primary_key=primary_keys)
+        set_primary_key_index(dnld_data, primary_key=primary_keys)
 
         # 以primary_kays为准处理下载数据与本地数据中的重叠部分：
         if merge_type == 'ignore':
@@ -1032,7 +1031,7 @@ class DataSource:
             # 如果source_type是file，需要将下载的数据与本地数据合并后去重
             return pd.concat([local_data, dnld_data])
         else:  # self.source_type == 'db' or 'database'
-            # 如果source_type是db，不需要合并数据
+            # 如果source_type是db，不需要合并数据，且不需要index
             if merge_type == 'ignore':
                 return dnld_data
             else:
@@ -1067,4 +1066,121 @@ class DataSource:
         raise NotImplementedError
 
 
-    # 以上函数是新架构需要的
+# 以下函数是通用df操作函数
+def set_primary_key_index(df, primary_key, pk_dtypes):
+    """ df是一个DataFrame，primary key是df的某一列或多列的列名，将primary key所指的
+    列设置为df的行标签，设置正确的时间日期格式，并删除primary key列后返回新的df
+
+    :param df: 需要操作的DataFrame
+    :param primary_key:
+        List，需要设置为行标签的列名，所有列名必须出现在df的列名中
+    :param pk_dtypes:
+        List, 需要设置为行标签的列的数据类型，日期数据需要小心处理
+    :return:
+        None
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+    if not isinstance(primary_key, list):
+        raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+    all_columns = df.columns
+    if not all(item in all_columns for item in primary_key):
+        raise KeyError(f'primary key contains invalid value')
+
+    # 设置正确的时间日期格式（找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    set_datetime_format_frame(df, primary_key, pk_dtypes)
+
+    # 设置正确的Index或MultiIndex
+    pk_count = len(primary_key)
+    if pk_count == 1:
+        # 当primary key只包含一列时，创建single index
+        df.index = df[primary_key[0]]
+    elif pk_count > 1:
+        # 当primary key包含多列时，创建MultiIndex
+        m_index = pd.MultiIndex.from_frame(df[primary_key])
+        df.index = m_index
+    else:
+        # for other unexpected cases
+        raise ValueError(f'wrong input!')
+    df.drop(columns=primary_key, inplace=True)
+
+    return None
+
+
+def set_primary_key_frame(df, primary_key, pk_dtypes):
+    """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
+        并重设df的index为0，1，2，3，4...
+
+    :param df: 需要操作的df
+    :param primary_key:
+    :param pk_dtypes:
+    :return:
+        DataFrame
+    """
+    if not isinstance(df, pd.DataFrame):
+        raise TypeError(f'df should be a pandas DataFrame, got {type(df)} instead')
+    if not isinstance(primary_key, list):
+        raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+    if not isinstance(pk_dtypes, list):
+        raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
+    idx_columns = list(df.index.names)
+    pk_columns = primary_key
+    # if not all(item in pk_columns for item in primary_key):
+    #     raise KeyError(f'primary key does not fit index names')
+    if idx_columns != [None]:
+        index_frame = df.index.to_frame()
+        for col in idx_columns:
+            df[col] = index_frame[col]
+    df.index = range(len(df))
+    # 此时primary key有可能被放到了columns的最后面，需要将primary key移动到columns的最前面：
+    columns = df.columns.to_list()
+    new_col = [col for col in columns if col not in pk_columns]
+    new_col = pk_columns + new_col
+    df = df.reindex(columns=new_col, copy=False)
+
+    # 设置正确的时间日期格式（找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    set_datetime_format_frame(df, primary_key, pk_dtypes)
+
+    return df
+
+
+def set_datetime_format_frame(df, primary_key, pk_dtypes):
+    """ 根据primary_key的rule为df的主键设置正确的时间日期类型
+
+    :param df: 需要操作的df
+    :param primary_key: 主键列
+    :param pk_dtypes: 主键数据类型，主要关注"date" 和"TimeStamp"
+    :return:
+        None
+    """
+    # 设置正确的时间日期格式（找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    if ("date" in pk_dtypes) or ("TimeStamp" in pk_dtypes):
+        # 需要设置正确的时间日期格式：
+        # 有时候pk会包含多列，可能有多个时间日期，因此需要逐个设置
+        for pk_item, dtype in zip(primary_key, pk_dtypes):
+            if dtype in ['date', 'TimeStamp']:
+                df[pk_item] = pd.to_datetime(df[pk_item])
+    return None
+
+
+def get_table_primary_keys_and_dtype(table):
+    """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
+    :param table:
+        str, 表名称（注意不是表的结构名称）
+    :return
+        Tuple: 包含两个List，第一个List包括主键名称，第二个List包括主键的数据类型
+    """
+    if not isinstance(table, str):
+        raise TypeError(f'table name should be a string, got {type(table)} instead')
+    if table not in TABLE_SOURCE_MAPPING.keys():
+        raise KeyError(f'invalid table name')
+
+    table_structure = TABLE_SOURCE_MAPPING[table]['structure']
+    structure = TABLE_STRUCTURES[table_structure]
+    columns = structure['columns']
+    dtypes = structure['dtypes']
+    pk_loc = structure['primary_keys']
+    primary_keys = [columns[i] for i in pk_loc]
+    pk_dtypes = [dtypes[i] for i in pk_loc]
+
+    return primary_keys, pk_dtypes

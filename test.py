@@ -61,7 +61,7 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
 
-from qteasy.database import DataSource
+from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 
 from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
 
@@ -12182,9 +12182,52 @@ class TestDataBase(unittest.TestCase):
             'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2.],
             'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3.]
         })
-        self.df['trade_date'] = pd.to_datetime(self.df['trade_date'])
-        self.df.index = pd.MultiIndex.from_frame(self.df[['ts_code', 'trade_date']])
-        self.df.drop(columns=['ts_code', 'trade_date'], inplace=True)
+
+        self.df2 = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
+            'name':       ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10'],
+            'industry':   ['industry1', 'industry2', 'industry3', 'industry4', 'industry5',
+                           'industry6', 'industry7', 'industry8', 'industry9', 'industry10'],
+            'area':       ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
+            'market':     ['market1', 'market2', 'market3', 'market4', 'market5',
+                           'market6', 'market7', 'market8', 'market9', 'market10']
+        })
+
+    def test_primary_key_manipulate(self):
+        """ test manipulating DataFrame primary key as indexes and frames
+            with testing functions:
+                set_primary_key_index() and,
+                set_primary_key_frame()
+        """
+        print(f'df before converting primary keys to index:\n{self.df}')
+        set_primary_key_index(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'date'])
+
+        print(f'df after converting primary keys to index:\n{self.df}')
+        self.assertEqual(list(self.df.index.names), ['ts_code', 'trade_date'])
+        self.assertEqual(self.df.index[0], ('000001.SZ', Timestamp('2021-11-12 00:00:00')))
+        self.assertEqual(self.df.columns.to_list(), ['open', 'high', 'low', 'close'])
+
+        res = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'date'])
+        print(f'df after converting primary keys to frame:\n{res}')
+        self.assertEqual(list(res.index.names), [None])
+        self.assertEqual(res.ts_code[0], '000001.SZ')
+        self.assertEqual(res.trade_date[0], Timestamp('2021-11-12 00:00:00'))
+        self.assertEqual(res.columns.to_list(), ['ts_code', 'trade_date', 'open', 'high', 'low', 'close'])
+
+        print(f'df2 before converting primary keys to index:\n{self.df2}')
+        set_primary_key_index(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+
+        print(f'df2 after converting primary keys to index:\n{self.df2}')
+        self.assertEqual(list(self.df2.index.names), ['ts_code'])
+        self.assertEqual(self.df2.index[0], '000001.SZ')
+        self.assertEqual(self.df2.columns.to_list(), ['name', 'industry', 'area', 'market'])
+
+        res = set_primary_key_frame(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        print(f'df2 after converting primary keys to frame:\n{res}')
+        self.assertEqual(list(res.index.names), [None])
+        self.assertEqual(res.ts_code[0], '000001.SZ')
+        self.assertEqual(res.columns.to_list(), ['ts_code', 'name', 'industry', 'area', 'market'])
 
     def test_datasource_creation(self):
         """ test creation of all kinds of data sources"""
@@ -12258,30 +12301,214 @@ class TestDataBase(unittest.TestCase):
 
     def test_write_and_read_file(self):
         """ test DataSource method write_file and read_file"""
-        print(f'write a dataframe to all types of local sources')
+        print(f'write and read a MultiIndex dataframe to all types of local sources')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        set_primary_key_index(df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         print(f'following dataframe with multiple index will be written to disk in all formats:\n'
-              f'{self.df}')
-        self.ds_csv.write_file(self.df, 'test_csv_file')
+              f'{df}')
+        self.ds_csv.write_file(df, 'test_csv_file')
         self.assertTrue(self.ds_csv.file_exists('test_csv_file'))
-        saved_df = self.ds_csv.read_file('test_csv_file')
+        loaded_df = self.ds_csv.read_file('test_csv_file',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['str', 'TimeStamp'])
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved csv file is\n'
-              f'{saved_df}')
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(saved_values, loaded_values))
+        self.assertEqual(list(df.columns), list(loaded_df.columns))
 
-        self.ds_hdf.write_file(self.df, 'test_hdf_file')
+        self.ds_hdf.write_file(df, 'test_hdf_file')
         self.assertTrue(self.ds_hdf.file_exists('test_hdf_file'))
-        saved_df = self.ds_hdf.read_file('test_hdf_file')
+        loaded_df = self.ds_hdf.read_file('test_hdf_file',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['str', 'TimeStamp'])
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved hdf file is\n'
-              f'{saved_df}')
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(saved_values, loaded_values))
+        self.assertEqual(list(df.columns), list(loaded_df.columns))
 
-        self.ds_fth.write_file(self.df, 'test_fth_file')
+        self.ds_fth.write_file(df, 'test_fth_file')
         self.assertTrue(self.ds_fth.file_exists('test_fth_file'))
-        saved_df = self.ds_fth.read_file('test_fth_file')
-        print(f'df retrieved from saved fth file is\n'
-              f'{saved_df}')
+        loaded_df = self.ds_fth.read_file('test_fth_file',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['str', 'TimeStamp'])
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved feather file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(saved_values, loaded_values))
+        self.assertEqual(list(df.columns), list(loaded_df.columns))
+
+        # test writing and reading Single Index dataframe to local files
+        print(f'write and read a MultiIndex dataframe to all types of local files')
+        df2 = set_primary_key_frame(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        set_primary_key_index(df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{df2}')
+        self.ds_csv.write_file(df2, 'test_csv_file2')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file2'))
+        loaded_df = self.ds_csv.read_file('test_csv_file2',
+                                          primary_key=['ts_code'],
+                                          pk_dtypes=['str'])
+        saved_index = df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df2.columns), list(loaded_df.columns))
+
+        self.ds_hdf.write_file(df2, 'test_hdf_file2')
+        self.assertTrue(self.ds_hdf.file_exists('test_hdf_file2'))
+        loaded_df = self.ds_hdf.read_file('test_hdf_file2',
+                                          primary_key=['ts_code'],
+                                          pk_dtypes=['str'])
+        saved_index = df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved hdf file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df2.columns), list(loaded_df.columns))
+
+        self.ds_fth.write_file(df2, 'test_fth_file2')
+        self.assertTrue(self.ds_fth.file_exists('test_fth_file2'))
+        loaded_df = self.ds_fth.read_file('test_fth_file2',
+                                          primary_key=['ts_code'],
+                                          pk_dtypes=['str'])
+        saved_index = df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved feather file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""
-        pass
+        print(f'write and read a MultiIndex dataframe to database')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        print(f'following dataframe with multiple index will be written to local database:\n'
+              f'{df}')
+        con = self.ds_db.con
+        cursor = self.ds_db.cursor
+        TABLE_NAME = 'test_db_table'
+        # 删除数据库中的临时表
+        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        cursor.execute(sql)
+        con.commit()
+
+        self.ds_db.write_database(df, TABLE_NAME)
+        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'retrieve whole data table from database\n'
+              f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(self.df.columns), list(loaded_df.columns))
+        # test reading partial of the datatable
+        loaded_df = self.ds_db.read_database(TABLE_NAME,
+                                             shares=["000001.SZ", "000003.SZ"],
+                                             start='20211112',
+                                             end='20211112')
+        print(f'retrieve partial data table from database with:\n'
+              f'shares = ["000001.SZ", "000003.SZ"]\n'
+              f'start/end = 20211112/20211112\n'
+              f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        saved_index = df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        # 逐一判断读取出来的df的每一行是否正确
+        row, col = saved_values.shape
+        for j in range(col):
+            self.assertEqual(saved_values[0, j], loaded_values[0, j])
+            self.assertEqual(saved_values[2, j], loaded_values[1, j])
+        self.assertEqual(list(self.df.columns), list(loaded_df.columns))
+
+        print(f'write and read a MultiIndex dataframe to database')
+        print(f'following dataframe with multiple inde x will be written to database:\n'
+              f'{self.df2}')
+        TABLE_NAME = 'test_db_table2'
+        # 删除数据库中的临时表
+        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        cursor.execute(sql)
+
+        con.commit()
+        self.ds_db.write_database(self.df2, TABLE_NAME)
+        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        saved_index = self.df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(self.df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
+        # test reading partial of the datatable
+        loaded_df = self.ds_db.read_database(TABLE_NAME,
+                                             shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
+        print(f'retrieve partial data table from database with:\n'
+              f'shares = ["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"]\n'
+              f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        saved_values = np.array(self.df2.values)
+        loaded_values = np.array(loaded_df.values)
+        # 逐一判断读取出来的df的每一行是否正确
+        row, col = saved_values.shape
+        for j in range(col):
+            self.assertEqual(saved_values[0, j], loaded_values[0, j])
+            self.assertEqual(saved_values[2, j], loaded_values[1, j])
+            self.assertEqual(saved_values[3, j], loaded_values[2, j])
+            self.assertEqual(saved_values[4, j], loaded_values[3, j])
+            self.assertEqual(saved_values[8, j], loaded_values[4, j])
+        self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
     def test_read_table_data(self):
         """ test DataSource method read_table_data"""
