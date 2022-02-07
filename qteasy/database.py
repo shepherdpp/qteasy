@@ -1067,7 +1067,10 @@ class DataSource:
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAPPING.keys():
             raise KeyError(f'Invalid table name.')
+        primary_key, pk_dtype = get_table_primary_keys_and_dtype(table)
         if self.source_type == 'file':
+            df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
+            set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             self.write_file(df, file_name=table)
         elif self.source_type == 'db':
             self.write_database(df, db_table=table)
@@ -1142,6 +1145,19 @@ class DataSource:
                 # 当需要更新本地数据库中的部分数据时，需要先更新部分数据
                 # self.update_table(update_data, table)
                 return dnld_data
+
+    def drop_table(self, table):
+        """ 删除本地存储的数据表（操作不可撤销，谨慎使用）
+
+        :param table: 本地数据表的名称
+        :return:
+            None
+        """
+        if self.source_type == 'db':
+            self.drop_db_table(db_table=table)
+        elif self.source_type == 'file':
+            self.drop_file(file_name=table)
+        return None
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_dataframes(self, shares, htypes, start, end, freq):
@@ -1284,7 +1300,7 @@ def get_table_primary_keys_and_dtype(table):
     structure = TABLE_STRUCTURES[table_structure]
     columns = structure['columns']
     dtypes = structure['dtypes']
-    pk_loc = structure['primary_keys']
+    pk_loc = structure['prime_keys']
     primary_keys = [columns[i] for i in pk_loc]
     pk_dtypes = [dtypes[i] for i in pk_loc]
 

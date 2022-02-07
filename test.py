@@ -12591,12 +12591,24 @@ class TestDataBase(unittest.TestCase):
             self.assertEqual(saved_values[8, j], loaded_values[4, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
+    # noinspection PyPep8Naming
     def test_read_write_table_data(self):
         """ test DataSource method read_table_data() and write_table_data()
             will test both built-in tables and user-defined tables
+
+            **WARNING: TABLE WILL BE DELETED! DO NOT run this test on real system!**
+            **警告：请不要在工作系统中进行此项测试，数据表将被删除**
         """
-        # 测试前删除
+        # 测试前删除已经存在的（真实）数据表
+        test_table = 'stock_daily'
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+        for data_source in all_data_sources:
+            data_source.drop_table(test_table)
         # 测试写入标准表数据
+        for data_source in all_data_sources:
+            data_source.write_table_data(self.built_in_df, test_table)
+            df = data_source.read_table_data(test_table)
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
 
     def test_download_and_check_table_data(self):
         """ test DataSouce method download_and_check_table_data"""
