@@ -872,20 +872,99 @@ class DataSource:
     # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
     # 目前尚未实现，未来可以改进以便自动化优化数据库结构提升效率
     def new_db_table(self, db_table, columns, dtypes, primary_key):
-        """ 在数据库中新建一个数据表，并且确保数据表的schema与设置相同
+        """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同
 
         :param db_table:
+            Str: 数据表名
+        :param columns:
+            List: 一个包含若干str的list，表示数据表的所有字段名
+        :param dtypes:
+            List: 一个包含若干str的list，表示数据表所有字段的数据类型
+        :param primary_key:
+            List: 一个包含若干str的list，表示数据表的所有primary_key
         :return:
+            None
         """
-        raise NotImplementedError
+        if self.source_type != 'db':
+            raise TypeError(f'Datasource is not connected to a database')
 
-    def alter_db_table(self, db_table):
-        """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
+        sql = f"CREATE TABLE IF NOT EXISTS {db_table} (\n"
+        for col_name, dtype in zip(columns, dtypes):
+            sql += f"{col_name} {dtype} "
+            if col_name in primary_key:
+                sql += "NOT NULL,\n"
+            else:
+                sql += ",\n"
+        if primary_key is not None:
+            sql += f"PRIMARY KEY ("
+            for pk in primary_key[:-1]:
+                sql += f"{pk}, "
+            sql += f"{primary_key[-1]})\n)"
+        print(f'will execute following sql: \n{sql}\n')
+        self.cursor.execute(sql)
+
+    def alter_db_table(self, db_table, columns, dtypes, primary_key):
+        """ 修改db_table的schema，按照输入参数设置表的字段属性
 
         :param db_table:
+            Str: 数据表名
+        :param columns:
+            List: 一个包含若干str的list，表示数据表的所有字段名
+        :param dtypes:
+            List: 一个包含若干str的list，表示数据表所有字段的数据类型
+        :param primary_key:
+            List: 一个包含若干str的list，表示数据表的所有primary_key
         :return:
+            None
         """
-        raise NotImplementedError
+        if self.source_type != 'db':
+            raise TypeError(f'Datasource is not connected to a database')
+
+        # 获取数据表的columns和datatypes：
+        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
+              f"FROM INFORMATION_SCHEMA.COLUMNS " \
+              f"WHERE TABLE_SCHEMA = Database() " \
+              f"AND table_name = '{db_table}'"
+        print(f'will execute following sql: \n{sql}\n')
+
+        self.cursor.execute(sql)
+        results = self.cursor.fetchall()
+        # 为了方便，将cur_columns和new_columns分别包装成一个字典
+        cur_columns = {}
+        new_columns = {}
+        for col, typ in results:
+            cur_columns[col] = typ
+        for col, typ in zip(columns, dtypes):
+            new_columns[col] = typ
+        print(f'fetched columns and types are: \n{cur_columns}')
+        # to drop some columns
+        col_to_drop = [col for col in cur_columns if col not in columns]
+        print(f'following cols will be dropped from table:\n{col_to_drop}')
+        for col in col_to_drop:
+            sql = f"ALTER TABLE {db_table} \n" \
+                  f"DROP COLUMN {col}"
+            print(f'will execute following sql: \n{sql}\n')
+            # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
+            del cur_columns[col]
+            self.cursor.execute(sql)
+
+        # to add some columns
+        col_to_add = [col for col in columns if col not in cur_columns]
+        print(f'following cols will be added to the table:\n{col_to_add}')
+        for col in col_to_add:
+            sql = f"ALTER TABLE {db_table} \n" \
+                  f"ADD {col} {new_columns[col]}"
+            print(f'will execute following sql: \n{sql}\n')
+            self.cursor.execute(sql)
+
+        # to modify some columns
+        col_to_modify = [col for col in cur_columns if cur_columns[col] != new_columns[col]]
+        print(f'following cols will be modified:\n{col_to_modify}')
+        for col in col_to_modify:
+            sql = f"ALTER TABLE {db_table} \n" \
+                  f"MODIFY COLUMN {col} {new_columns[col]}"
+            print(f'will execute following sql: \n{sql}\n')
+            self.cursor.execute(sql)
 
     def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
@@ -893,7 +972,13 @@ class DataSource:
         :param db_table:
         :return:
         """
-        raise NotImplementedError
+        if self.source_type != 'db':
+            raise TypeError(f'Datasource is not connected to a database')
+        if not isinstance(db_table, str):
+            raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
+        sql = f"DROP TABLE IF EXISTS {db_table}"
+        self.cursor.execute(sql)
+
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def read_table_data(self, table, shares=None, start=None, end=None):

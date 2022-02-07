@@ -12299,6 +12299,48 @@ class TestDataBase(unittest.TestCase):
         self.assertFalse(self.ds_hdf.file_exists('file_that_does_not_exist'))
         self.assertFalse(self.ds_fth.file_exists('file_that_does_not_exist'))
 
+    def test_db_table_operates(self):
+        """ test all database operation functions"""
+        self.ds_db.drop_db_table('new_test_table')
+
+        print(f'test function creating new table')
+        self.ds_db.new_db_table('new_test_table',
+                                ['ts_code', 'trade_date', 'col1', 'col2'],
+                                ['varchar(9)', 'varchar(9)', 'int', 'int'],
+                                ['ts_code', 'trade_date'])
+
+        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
+              f"FROM INFORMATION_SCHEMA.COLUMNS " \
+              f"WHERE TABLE_SCHEMA = Database() " \
+              f"AND table_name = 'new_test_table'"
+        self.ds_db.cursor.execute(sql)
+        results = self.ds_db.cursor.fetchall()
+        # 为了方便，将cur_columns和new_columns分别包装成一个字典
+        test_columns = {}
+        for col, typ in results:
+            test_columns[col] = typ
+        self.assertEqual(list(test_columns.keys()), ['col1', 'col2', 'trade_date', 'ts_code'])
+        self.assertEqual(list(test_columns.values()), ['int', 'int', 'varchar', 'varchar'])
+
+        self.ds_db.alter_db_table('new_test_table',
+                                  ['ts_code', 'col1', 'col2', 'col3', 'col4'],
+                                  ['varchar(9)', 'float', 'float', 'int', 'float'],
+                                  ['ts_code'])
+        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
+              f"FROM INFORMATION_SCHEMA.COLUMNS " \
+              f"WHERE TABLE_SCHEMA = Database() " \
+              f"AND table_name = 'new_test_table'"
+        self.ds_db.cursor.execute(sql)
+        results = self.ds_db.cursor.fetchall()
+        # 为了方便，将cur_columns和new_columns分别包装成一个字典
+        test_columns = {}
+        for col, typ in results:
+            test_columns[col] = typ
+        self.assertEqual(list(test_columns.keys()), ['col1', 'col2', 'col3', 'col4', 'ts_code'])
+        self.assertEqual(list(test_columns.values()), ['float', 'float', 'int', 'float', 'varchar'])
+
+        self.ds_db.drop_db_table('new_test_table')
+
     def test_write_and_read_file(self):
         """ test DataSource method write_file and read_file"""
         print(f'write and read a MultiIndex dataframe to all types of local sources')
