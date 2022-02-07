@@ -617,6 +617,14 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '用于存储历史数据的数据库的端口号，默认值为mysql数据库的端口号3306\n'},
 
+        'local_db_name':        {'Default':   'qt_db',
+                                 'Validator': lambda value: isinstance(value, str) and
+                                                            (len(value) <= 255) and
+                                                            (all(char not in value for
+                                                                 char in '+-/?<>{}[]()|\\!@#$%^&*=~`')),
+                                 'level':     4,
+                                 'text':      '用于存储历史数据的数据库名，默认值为"qt_db"\n'},
+
         'local_db_user':        {'Default':   '',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,

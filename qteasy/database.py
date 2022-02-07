@@ -680,7 +680,8 @@ class DataSource:
                  host: str = None,
                  port: int = None,
                  user: str = None,
-                 password: str = None):
+                 password: str = None,
+                 db: str = None):
         """ 创建一个DataSource 对象，确定本地数据存储方式，
             如果存储方式是文件，确定文件存储位置、文件类型
             如果存储方式是数据库，建立数据库的连接
@@ -720,6 +721,8 @@ class DataSource:
                 host = 'localhost'
             if port is None:
                 port = 3306
+            if db is None:
+                db = 'qt_db'
             if user is None:
                 raise ValueError(f'Missing user name for database connection')
             if password is None:
@@ -729,18 +732,20 @@ class DataSource:
                 self.con = pymysql.connect(host=host,
                                            port=port,
                                            user=user,
-                                           password=password,
-                                           db='ts_db')
+                                           password=password)
+                # 标准的db名称为"qteasy_db"，当db不存在时创建新的db
                 self.cursor = self.con.cursor()
+                sql = f"CREATE DATABASE IF NOT EXISTS {db}"
+                self.cursor.execute(sql)
+                self.con.commit()
+                sql = f"USE {db}"
+                self.cursor.execute(sql)
                 self.con.commit()
             except Exception as e:
                 print(f'{str(e)}, fall back to file system - NotImplemented')
-                # maybe fallback to file saving:
-                # self.file_type = file_type
-                # self.file_path = file_path
                 raise e
-            # try to create sqlalchemy engine:
-            self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/ts_db')
+            # if cursor and connect created then create sqlalchemy engine for dataframe
+            self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
             self.file_path = None
             self.file_type = None
         pass
@@ -866,7 +871,7 @@ class DataSource:
 
     # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
     # 目前尚未实现，未来可以改进以便自动化优化数据库结构提升效率
-    def new_db_table(self, db_table):
+    def new_db_table(self, db_table, columns, dtypes, primary_key):
         """ 在数据库中新建一个数据表，并且确保数据表的schema与设置相同
 
         :param db_table:
