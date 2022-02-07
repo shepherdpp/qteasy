@@ -140,12 +140,12 @@ TABLE_STRUCTURES = {
                                         'str', 'str', 'str', 'str'],
                          'remarks':    ['TS代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
-                         'prime_keys': ['ts_code']},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
+                         'prime_keys': [0]},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
 
     'name_changes':     {'columns':    ['ts_code', 'name', 'start_date', 'end_date', 'ann_date', 'change_reason'],
                          'dtypes':     ['varchar(9)', 'str', 'str', 'str', 'str', 'str'],
                          'remarks':    ['TS代码', '证券名称', '开始日期', '结束日期', '公告日期', '变更原因'],
-                         'prime_keys': ['ts_code', 'ann_date']},  # 股票名称变更登记表，更新时按股票名称下载
+                         'prime_keys': [0, 4]},  # 股票名称变更登记表，更新时按股票名称下载
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
@@ -200,13 +200,13 @@ TABLE_STRUCTURES = {
                                         'float', 'double', 'double'],
                          'remarks':    ['股票代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
-                         'prime_keys': ['ts_code', 'trade_date']},
+                         'prime_keys': [0, 1]},
 
     # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
                          'dtypes':     ['str', 'str', 'float'],
                          'remarks':    ['证券代码', '交易日期', '复权因子'],
-                         'prime_keys': ['ts_code', 'trade_date']},
+                         'prime_keys': [0, 1]},
 
     'fund_nav':         {'columns':    ['ts_code', 'ann_date', 'nav_date', 'unit_nav', 'accum_nav', 'accum_div',
                                         'net_asset', 'total_netasset', 'adj_nav'],
@@ -657,6 +657,7 @@ TABLE_STRUCTURES = {
 }
 
 
+# noinspection SqlDialectInspection
 class DataSource:
     """ DataSource 对象管理存储在本地的历史数据文件或数据库.
 
@@ -1105,10 +1106,10 @@ class DataSource:
             dnld_data.drop(columns=columns_to_drop, inplace=True)
 
         # 删除数据中过多的行数据
-        primary_keys = TABLE_STRUCTURES[table_struct]['primary_key']
+        primary_keys, pk_dtypes = get_table_primary_keys_and_dtype(table)
         local_data = self.read_table_data(table)
-        set_primary_key_index(local_data, primary_key=primary_keys)
-        set_primary_key_index(dnld_data, primary_key=primary_keys)
+        set_primary_key_index(local_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+        set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
 
         # 以primary_kays为准处理下载数据与本地数据中的重叠部分：
         if merge_type == 'ignore':
@@ -1145,7 +1146,6 @@ class DataSource:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
-        self.read_table_data()
         raise NotImplementedError
 
     def refill_local_source(self):
@@ -1197,6 +1197,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
+# noinspection PyUnresolvedReferences
 def set_primary_key_frame(df, primary_key, pk_dtypes):
     """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
         并重设df的index为0，1，2，3，4...
