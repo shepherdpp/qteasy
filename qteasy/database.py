@@ -753,7 +753,7 @@ class DataSource:
 
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
-        """ 检查数据系统文件夹内是否存在对应文件
+        """ 检查文件是否已存在
 
         :param file_name: 需要检查的文件名（不含扩展名）
         :return:
@@ -767,7 +767,7 @@ class DataSource:
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
-        """ write given dataframe into a new file with file_name
+        """ 将df写入本地文件
 
         :param df: 待写入文件的DataFrame
         :param file_name: 本地文件名（不含扩展名）
@@ -794,7 +794,10 @@ class DataSource:
         :param file_name: str， 文件名
         :param primary_key:
             List, 用于生成primary_key index 的主键
+        :param pk_dtypes:
+            List，primary_key的数据类型
         :return:
+            DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
@@ -816,6 +819,18 @@ class DataSource:
         # df.index = df['date']
         # df.drop(columns=['date'], inplace=True)
         return df
+
+    def drop_file(self, file_name):
+        """ 删除本地文件
+
+        :param file_name: 将被删除的文件名
+        :return:
+            None
+        """
+        import os
+        if self.file_exists(file_name):
+            file_path_name = self.file_path + file_name + '.' + self.file_type
+            os.remove(file_path_name)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, shares=None, start=None, end=None):
@@ -871,7 +886,6 @@ class DataSource:
         df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
 
     # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
-    # 目前尚未实现，未来可以改进以便自动化优化数据库结构提升效率
     def new_db_table(self, db_table, columns, dtypes, primary_key):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同
 
@@ -980,7 +994,6 @@ class DataSource:
         sql = f"DROP TABLE IF EXISTS {db_table}"
         self.cursor.execute(sql)
 
-
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def read_table_data(self, table, shares=None, start=None, end=None):
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
@@ -1021,7 +1034,7 @@ class DataSource:
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
-            df = self.read_file(file_name=table, primary_key=primary_key)
+            df = self.read_file(file_name=table, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.source_type == 'db':
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
@@ -1115,7 +1128,7 @@ class DataSource:
         if merge_type == 'ignore':
             dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
         else:
-            update_data = local_data(~local_data.index.isin(dnld_data.index))
+            # update_data = local_data(~local_data.index.isin(dnld_data.index))
             local_data = local_data(~local_data.index.isin(dnld_data.index))
 
         if self.source_type == 'file':
@@ -1201,6 +1214,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
 def set_primary_key_frame(df, primary_key, pk_dtypes):
     """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
         并重设df的index为0，1，2，3，4...
+
 
     :param df: 需要操作的df
     :param primary_key:

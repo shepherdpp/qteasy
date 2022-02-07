@@ -12162,6 +12162,7 @@ class FastExperiments(unittest.TestCase):
         qt.run(op, mode=1, invest_start='20080101', allow_sell_short=True, print_backtest_log=False)
 
 
+# noinspection SqlDialectInspection,PyTypeChecker
 class TestDataBase(unittest.TestCase):
     """test local historical file database management methods"""
 
@@ -12182,7 +12183,6 @@ class TestDataBase(unittest.TestCase):
             'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2.],
             'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3.]
         })
-
         self.df2 = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                            '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
@@ -12192,6 +12192,45 @@ class TestDataBase(unittest.TestCase):
             'area':       ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
             'market':     ['market1', 'market2', 'market3', 'market4', 'market5',
                            'market6', 'market7', 'market8', 'market9', 'market10']
+        })
+        # 以下df用于测试写入/读出系统内置标准数据表
+        self.built_in_df = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+            'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
+                           '20211113', '20211113', '20211113', '20211113', '20211113',
+                           '20211114', '20211114', '20211114', '20211114', '20211114'],
+            'open':       [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
+            'high':       [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
+            'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
+            'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
+            'pre_close':  [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
+            'change':     [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
+            'pct_chg':    [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
+            'vol':        [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
+            'amount':     [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.]
+        })
+        # 以下df用于测试新增数据写入/读出系统内置标准数据表，与第一次写入表中的数据相比，部分数据的
+        # 主键与第一次相同，大部分主键不同。主键相同的数据中，价格与原来的值不同。
+        # 正确的输出应该确保写入本地表的数据中不含重复的主键，用户可以选择用新的数据替换已有数据，或
+        # 者忽略新的数据
+        self.built_in_add_df = pd.DataFrame({
+            'ts_code':    ['000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ',
+                           '000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ',
+                           '000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ'],
+            'trade_date': ['20211115', '20211115', '20211115', '20211115', '20211115',
+                           '20211114', '20211114', '20211114', '20211114', '20211114',
+                           '20211116', '20211116', '20211116', '20211116', '20211116'],
+            'open':       [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
+            'high':       [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
+            'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
+            'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
+            'pre_close':  [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
+            'change':     [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
+            'pct_chg':    [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
+            'vol':        [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
+            'amount':     [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.]
         })
 
     def test_primary_key_manipulate(self):
@@ -12250,36 +12289,36 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_fth.engine, None)
 
-    def test_file_exists(self):
-        """ test DataSource method file_exists"""
+    def test_file_manipulates(self):
+        """ test DataSource method file_exists and drop_file"""
         print(f'returning True while source type is database')
         self.assertTrue(self.ds_db.file_exists('basic_eps.dat'))
 
         print(f'test file that existed')
-        import os
         f_name = self.ds_csv.file_path + 'test_file.csv'
-        f = open(f_name, 'w')
-        f.write('a test csv file')
-        f.close()
+        with open(f_name, 'w') as f:
+            f.write('a test csv file')
         self.assertTrue(self.ds_csv.file_exists('test_file'))
-        os.remove(f_name)
+        self.ds_csv.drop_file('test_file')
+        self.assertFalse(self.ds_csv.file_exists('test_file'))
 
-        f_name = self.ds_csv.file_path + 'test_file.hdf'
-        f = open(f_name, 'w')
-        f.write('a test csv file')
-        f.close()
+        f_name = self.ds_hdf.file_path + 'test_file.hdf'
+        with open(f_name, 'w') as f:
+            f.write('a test csv file')
         self.assertTrue(self.ds_hdf.file_exists('test_file'))
-        os.remove(f_name)
+        self.ds_hdf.drop_file('test_file')
+        self.assertFalse(self.ds_hdf.file_exists('test_file'))
 
-        f_name = self.ds_csv.file_path + 'test_file.fth'
-        f = open(f_name, 'w')
-        f.write('a test csv file')
-        f.close()
+        f_name = self.ds_fth.file_path + 'test_file.fth'
+        with open(f_name, 'w') as f:
+            f.write('a test csv file')
         self.assertTrue(self.ds_fth.file_exists('test_file'))
-        os.remove(f_name)
+        self.ds_fth.drop_file('test_file')
+        self.assertFalse(self.ds_fth.file_exists('test_file'))
 
         print(f'test file that does not exist')
         # 事先删除可能存在于磁盘上的文件，并判断是否存在
+        import os
         f_name = self.ds_csv.file_path + "file_that_does_not_exist.csv"
         try:
             os.remove(f_name)
@@ -12290,7 +12329,7 @@ class TestDataBase(unittest.TestCase):
             os.remove(f_name)
         except:
             pass
-        f_name = self.ds_fth.file_path + "file_that_does_not_exist.csv"
+        f_name = self.ds_fth.file_path + "file_that_does_not_exist.fth"
         try:
             os.remove(f_name)
         except:
@@ -12552,13 +12591,12 @@ class TestDataBase(unittest.TestCase):
             self.assertEqual(saved_values[8, j], loaded_values[4, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
-    def test_read_table_data(self):
-        """ test DataSource method read_table_data"""
-        pass
-
-    def test_write_table_data(self):
-        """ test DataSource method write_table_data"""
-        pass
+    def test_read_write_table_data(self):
+        """ test DataSource method read_table_data() and write_table_data()
+            will test both built-in tables and user-defined tables
+        """
+        # 测试前删除
+        # 测试写入标准表数据
 
     def test_download_and_check_table_data(self):
         """ test DataSouce method download_and_check_table_data"""
