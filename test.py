@@ -12183,6 +12183,28 @@ class TestDataBase(unittest.TestCase):
             'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2.],
             'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3.]
         })
+        # 以下df_add中的数据大部分主键与df相同，但有四行不同，主键与df相同的行数据与df不同，用于测试新增及更新
+        self.df_add = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000006.SZ', '000007.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000006.SZ', '000007.SZ'],
+            'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
+                           '20211113', '20211113', '20211113', '20211113', '20211113'],
+            'open':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'high':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'low':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'close':      [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]
+        })
+        # 以下df_res中的数据是更新后的结果
+        self.df_res = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000001.SZ', '000002.SZ', '000002.SZ', '000003.SZ', '000003.SZ', '000004.SZ',
+                           '000004.SZ', '000005.SZ', '000005.SZ', '000006.SZ', '000006.SZ', '000007.SZ', '000007.SZ'],
+            'trade_date': ['20211112', '20211113', '20211112', '20211113', '20211112', '20211113', '20211112',
+                           '20211113', '20211112', '20211113', '20211112', '20211113', '20211112', '20211113'],
+            'open':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 4.0, 9.0, 5.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+            'high':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 5.0, 10.0, 6.0, 1.0, 10.0, 10.0, 10.0, 10.0],
+            'low':        [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 6.0, 1.0, 7.0, 2.0, 10.0, 10.0, 10.0, 10.0],
+            'close':      [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 7.0, 2.0, 8.0, 3.0, 10.0, 10.0, 10.0, 10.0]
+        })
         self.df2 = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                            '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
@@ -12193,7 +12215,7 @@ class TestDataBase(unittest.TestCase):
             'market':     ['market1', 'market2', 'market3', 'market4', 'market5',
                            'market6', 'market7', 'market8', 'market9', 'market10']
         })
-        # 以下df用于测试写入/读出系统内置标准数据表
+        # 以下df用于测试写入/读出/新增修改系统内置标准数据表
         self.built_in_df = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                            '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
@@ -12358,8 +12380,8 @@ class TestDataBase(unittest.TestCase):
         test_columns = {}
         for col, typ in results:
             test_columns[col] = typ
-        self.assertEqual(list(test_columns.keys()), ['col1', 'col2', 'trade_date', 'ts_code'])
-        self.assertEqual(list(test_columns.values()), ['int', 'int', 'varchar', 'varchar'])
+        self.assertEqual(list(test_columns.keys()), ['ts_code', 'trade_date', 'col1', 'col2'])
+        self.assertEqual(list(test_columns.values()), ['varchar', 'varchar', 'int', 'int'])
 
         self.ds_db.alter_db_table('new_test_table',
                                   ['ts_code', 'col1', 'col2', 'col3', 'col4'],
@@ -12375,8 +12397,8 @@ class TestDataBase(unittest.TestCase):
         test_columns = {}
         for col, typ in results:
             test_columns[col] = typ
-        self.assertEqual(list(test_columns.keys()), ['col1', 'col2', 'col3', 'col4', 'ts_code'])
-        self.assertEqual(list(test_columns.values()), ['float', 'float', 'int', 'float', 'varchar'])
+        self.assertEqual(list(test_columns.keys()), ['ts_code', 'col1', 'col2', 'col3', 'col4'])
+        self.assertEqual(list(test_columns.values()), ['varchar', 'float', 'float', 'int', 'float'])
 
         self.ds_db.drop_db_table('new_test_table')
 
@@ -12511,6 +12533,7 @@ class TestDataBase(unittest.TestCase):
         sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
         cursor.execute(sql)
         con.commit()
+        # 为确保update顺利进行，建立新表并设置primary_key
 
         self.ds_db.write_database(df, TABLE_NAME)
         loaded_df = self.ds_db.read_database(TABLE_NAME)
@@ -12519,7 +12542,7 @@ class TestDataBase(unittest.TestCase):
         saved_values = np.array(df.values)
         loaded_values = np.array(loaded_df.values)
         print(f'retrieve whole data table from database\n'
-              f'df retrieved from saved csv file is\n'
+              f'df retrieved from database is\n'
               f'{loaded_df}\n')
         for i in range(len(saved_index)):
             self.assertEqual(saved_index[i], loaded_index[i])
@@ -12549,14 +12572,14 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
 
         print(f'write and read a MultiIndex dataframe to database')
-        print(f'following dataframe with multiple inde x will be written to database:\n'
+        print(f'following dataframe with multiple index will be written to database:\n'
               f'{self.df2}')
         TABLE_NAME = 'test_db_table2'
         # 删除数据库中的临时表
         sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
         cursor.execute(sql)
-
         con.commit()
+
         self.ds_db.write_database(self.df2, TABLE_NAME)
         loaded_df = self.ds_db.read_database(TABLE_NAME)
         saved_index = self.df2.index.values
@@ -12590,6 +12613,44 @@ class TestDataBase(unittest.TestCase):
             self.assertEqual(saved_values[4, j], loaded_values[3, j])
             self.assertEqual(saved_values[8, j], loaded_values[4, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
+
+    def test_update_database(self):
+        """ test the function update_database()"""
+        print(f'update a database table with new data on same primary key')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        df_add = set_primary_key_frame(self.df_add, primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['str', 'TimeStamp'])
+        df_res = set_primary_key_frame(self.df_res, primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['str', 'TimeStamp'])
+        print(f'following dataframe with be written to an empty database table:\n'
+              f'{df}\n'
+              f'and following dataframe will be used to updated that database table\n'
+              f'{df_add}')
+        TABLE_NAME = 'test_db_table'
+        # 删除数据库中的临时表
+        self.ds_db.drop_table(TABLE_NAME)
+        # 为确保update顺利进行，建立新表并设置primary_key
+        self.ds_db.new_db_table(TABLE_NAME,
+                                columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
+                                dtypes=['varchar(9)', 'date', 'float', 'float', 'float', 'float'],
+                                primary_key=['ts_code', 'trade_date'])
+        self.ds_db.write_database(df, TABLE_NAME)
+        self.ds_db.update_database(df_add, TABLE_NAME, ['ts_code', 'trade_date'])
+        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        saved_index = df_res.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df_res.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'retrieve whole data table from database\n'
+              f'df retrieved from database is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(self.df.columns), list(loaded_df.columns))
 
     # noinspection PyPep8Naming
     def test_read_write_table_data(self):

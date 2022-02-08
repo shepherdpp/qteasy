@@ -834,14 +834,15 @@ class DataSource:
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, shares=None, start=None, end=None):
-        """ 从一张数据库表中读取数据
+        """ 从一张数据库表中读取数据，读取时根据share（ts_code）和dates筛选（如果
+        数据库表有ts_code和trade_date这两个字段）
 
         :param db_table: 需要读取数据的数据表
-        :param shares: 如果给出shares，则按照shares筛选ts_code（如果表中没有ts_code参数会报错）
+        :param shares: 如果给出shares，则按照"WHERE ts_code IN shares"筛选（如果表中没有ts_code参数会报错）
         :param start:  如果给出start同时又给出end，按照"WHERE trade_date BETWEEEN start AND end"的条件筛选
         :param end:    当没有给出start时，单独给出end无效
         :return:
-        DataFrame，从数据库中读取的DataFrame
+            DataFrame，从数据库中读取的DataFrame
         """
         ts_code_filter = ''
         has_ts_code_filter = False
@@ -877,13 +878,44 @@ class DataSource:
         return df
 
     def write_database(self, df, db_table):
-        """ 将DataFrame存储在数据库表中
+        """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
+        与db_table的schema相同
 
-        :param df:
-        :param db_table:
+        :param df: 需要添加的DataFrame
+        :param db_table: 需要添加数据的数据库表
         :return:
+            None
         """
         df.to_sql(db_table, self.engine, index=False, if_exists='append', chunksize=5000)
+
+    def update_database(self, df, db_table, primary_key):
+        """ 用DataFrame中的数据更新数据表中的数据记录，假定
+            df的列与db_table的列相同且顺序也相同
+            在插入数据之前，必须确保表的primary_key已经正确设定
+
+        :param df: 用于更新数据表的数据DataFrame
+        :param db_table: 需要更新的数据表
+        :return:
+            None
+        """
+        tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
+        update_cols = [item for item in tbl_columns if item not in primary_key]
+        df_tuple = tuple(df.itertuples(index=False, name=None))
+        sql = f"INSERT INTO {db_table} ("
+        for col in tbl_columns[:-1]:
+            sql += f"{col}, "
+        sql += f"{tbl_columns[-1]})\nVALUES\n"
+        for val in df_tuple[:-1]:
+            sql += f"{val},\n"
+        sql += f"{df_tuple[-1]}\n" \
+               f"ON DUPLICATE KEY UPDATE\n"
+        for col in update_cols[:-1]:
+            sql += f"{col}=VALUES({col}),\n"
+        sql += f"{update_cols[-1]}=VALUES({update_cols[-1]})"
+        # debug
+        # print(f'following sql will be executed to update data:\n{sql}')
+        self.cursor.execute(sql)
+        self.con.commit()
 
     # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
     def new_db_table(self, db_table, columns, dtypes, primary_key):
@@ -905,9 +937,9 @@ class DataSource:
 
         sql = f"CREATE TABLE IF NOT EXISTS {db_table} (\n"
         for col_name, dtype in zip(columns, dtypes):
-            sql += f"{col_name} {dtype} "
+            sql += f"`{col_name}` {dtype}"
             if col_name in primary_key:
-                sql += "NOT NULL,\n"
+                sql += " NOT NULL,\n"
             else:
                 sql += ",\n"
         if primary_key is not None:
@@ -915,6 +947,7 @@ class DataSource:
             for pk in primary_key[:-1]:
                 sql += f"{pk}, "
             sql += f"{primary_key[-1]})\n)"
+        # debug
         print(f'will execute following sql: \n{sql}\n')
         self.cursor.execute(sql)
 
@@ -935,20 +968,10 @@ class DataSource:
         if self.source_type != 'db':
             raise TypeError(f'Datasource is not connected to a database')
 
-        # 获取数据表的columns和datatypes：
-        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
-              f"FROM INFORMATION_SCHEMA.COLUMNS " \
-              f"WHERE TABLE_SCHEMA = Database() " \
-              f"AND table_name = '{db_table}'"
-        print(f'will execute following sql: \n{sql}\n')
-
-        self.cursor.execute(sql)
-        results = self.cursor.fetchall()
-        # 为了方便，将cur_columns和new_columns分别包装成一个字典
-        cur_columns = {}
+        # 获取数据表的columns和data types：
+        cur_columns = self.get_db_table_schema(db_table)
+        # 将新的columns和dtypes写成Dict形式
         new_columns = {}
-        for col, typ in results:
-            cur_columns[col] = typ
         for col, typ in zip(columns, dtypes):
             new_columns[col] = typ
         print(f'fetched columns and types are: \n{cur_columns}')
@@ -957,7 +980,7 @@ class DataSource:
         print(f'following cols will be dropped from table:\n{col_to_drop}')
         for col in col_to_drop:
             sql = f"ALTER TABLE {db_table} \n" \
-                  f"DROP COLUMN {col}"
+                  f"DROP COLUMN `{col}`"
             print(f'will execute following sql: \n{sql}\n')
             # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
             del cur_columns[col]
@@ -980,6 +1003,30 @@ class DataSource:
                   f"MODIFY COLUMN {col} {new_columns[col]}"
             print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
+
+        # TODO: should also modify the primary keys, to be updated
+        pass
+
+    def get_db_table_schema(self, db_table):
+        """ 获取数据库表的列名称和数据类型
+
+        :param db_table: 需要获取列名的数据库表
+        :return:
+            dict: 一个包含列名和数据类型的Dict: {column1: dtype1, column2: dtype2, ...}
+        """
+        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
+              f"FROM INFORMATION_SCHEMA.COLUMNS " \
+              f"WHERE TABLE_SCHEMA = Database() " \
+              f"AND table_name = '{db_table}'"
+        print(f'will execute following sql: \n{sql}\n')
+
+        self.cursor.execute(sql)
+        results = self.cursor.fetchall()
+        # 为了方便，将cur_columns和new_columns分别包装成一个字典
+        columns = {}
+        for col, typ in results:
+            columns[col] = typ
+        return columns
 
     def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
@@ -1029,7 +1076,7 @@ class DataSource:
             end = regulate_date_format(end)
             assert pd.to_datetime(start) <= pd.to_datetime(end)
 
-        primary_key, pk_dtypes = get_table_primary_keys_and_dtype(table)
+        columns, dtypes, primary_key, pk_dtypes = get_built_in_table_schema(table)
 
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
@@ -1067,15 +1114,16 @@ class DataSource:
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAPPING.keys():
             raise KeyError(f'Invalid table name.')
-        primary_key, pk_dtype = get_table_primary_keys_and_dtype(table)
+        columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
         if self.source_type == 'file':
             df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtype)
             self.write_file(df, file_name=table)
         elif self.source_type == 'db':
+            self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             self.write_database(df, db_table=table)
 
-    def download_and_check_table_data(self, table, channel, merge_type, **kwargs):
+    def download_and_check_table_data(self, table, channel, merge_type, local_df=None, **kwargs):
         """ 从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
             1，根据channel确定数据源，根据table名下载相应的数据表
             2，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
@@ -1084,14 +1132,22 @@ class DataSource:
             返回处理完毕的dataFrame
 
         :param table: str, 数据表名，必须是database中定义的数据表
-        :param channel: str，网络数据提供商的名称，指定需要连接的api
+        :param channel:
+            str: 数据获取渠道，指定需要连接的金融数据API，或直接给出local_df，支持以下选项：
+            - 'local_df': 通过参数传递一个df，该df的columns必须与table的定义相同
+            - 'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分
+            - 'other'   : 其他金融数据API，尚未开发
         :param merge_type: str
             指定如何合并下载数据和本地数据：
             - 'replace': 如果下载数据与本地数据重复，用下载数据替代本地数据
-            - 'ignore' : 如果下载数据与本地数据重复，忽略下载数据的重复部分
+            - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
+        :param local_df: pd.DataFrame
+            如果数据获取渠道为"local_df"，则必须给出此参数
+        :param kwargs:
+            用于下载金融数据的函数参数
 
         :return:
-        pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
+            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
         """
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
@@ -1107,37 +1163,50 @@ class DataSource:
             raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
 
         # 从指定的channel获取数据
-        if channel == 'tushare':
+        if channel == 'local_df':
+            # 通过参数传递一个DF
+            assert local_df is not None, f'a DataFrame must be given while channel == "local_df"'
+            assert isinstance(local_df, pd.DataFrame), \
+                f'local df should be a DataFrame, got {type(local_df)} instead.'
+            dnld_data = local_df
+        elif channel == 'tushare':
+            # 通过tushare的API下载数据
             from .tsfuncs import acquire_data
             dnld_data = acquire_data(table, **kwargs)
         else:
             raise NotImplementedError
 
-        # 删除数据中过多的列
+        # 删除数据中过多的列，不允许出现缺少列
         table_struct = TABLE_SOURCE_MAPPING[table]['structure']
         table_columns = TABLE_STRUCTURES[table_struct]['columns']
-        columns_to_drop = [col for col in dnld_data.columns if col not in table_columns]
+        dnld_columns = dnld_data.columns.to_list()
+        missing_columns = [col for col in table_columns if col not in dnld_columns]
+        if len(missing_columns) > 0:
+            raise ValueError(f'there are missing columns in downloaded df, can not merge to local table')
+        columns_to_drop = [col for col in dnld_columns if col not in table_columns]
         if len(columns_to_drop) > 0:
             print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
 
-        # 删除数据中过多的行数据
-        primary_keys, pk_dtypes = get_table_primary_keys_and_dtype(table)
+        # 将数据的primary_keys设置为df的index，便于寻找两个df的重叠部分
+        column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         local_data = self.read_table_data(table)
         set_primary_key_index(local_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
 
-        # 以primary_kays为准处理下载数据与本地数据中的重叠部分：
+        # 根据merge_type处理重叠部分：
         if merge_type == 'ignore':
+            # 丢弃下载数据中的重叠部分
             dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
         else:
+            # 用下载数据中的重叠部分覆盖本地数据
             # update_data = local_data(~local_data.index.isin(dnld_data.index))
-            local_data = local_data(~local_data.index.isin(dnld_data.index))
+            local_data = local_data[~local_data.index.isin(dnld_data.index)]
 
         if self.source_type == 'file':
             # 如果source_type是file，需要将下载的数据与本地数据合并后去重
             return pd.concat([local_data, dnld_data])
-        else:  # self.source_type == 'db' or 'database'
+        elif self.source_type == 'db':
             # 如果source_type是db，不需要合并数据，且不需要index
             if merge_type == 'ignore':
                 return dnld_data
@@ -1145,6 +1214,8 @@ class DataSource:
                 # 当需要更新本地数据库中的部分数据时，需要先更新部分数据
                 # self.update_table(update_data, table)
                 return dnld_data
+        else:  # unexpected case
+            raise KeyError(f'invalid data source type')
 
     def drop_table(self, table):
         """ 删除本地存储的数据表（操作不可撤销，谨慎使用）
@@ -1284,12 +1355,16 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     return None
 
 
-def get_table_primary_keys_and_dtype(table):
+def get_built_in_table_schema(table):
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
     :param table:
         str, 表名称（注意不是表的结构名称）
     :return
-        Tuple: 包含两个List，第一个List包括主键名称，第二个List包括主键的数据类型
+        Tuple: 包含四个List，包括:
+            columns: 整张表的列名称
+            dtypes: 整张表所有列的数据类型
+            primary_keys: 主键列名称
+            pk_dtypes: 主键列的数据类型
     """
     if not isinstance(table, str):
         raise TypeError(f'table name should be a string, got {type(table)} instead')
@@ -1304,4 +1379,4 @@ def get_table_primary_keys_and_dtype(table):
     primary_keys = [columns[i] for i in pk_loc]
     pk_dtypes = [dtypes[i] for i in pk_loc]
 
-    return primary_keys, pk_dtypes
+    return columns, dtypes, primary_keys, pk_dtypes
