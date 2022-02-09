@@ -12239,20 +12239,20 @@ class TestDataBase(unittest.TestCase):
         # 者忽略新的数据
         self.built_in_add_df = pd.DataFrame({
             'ts_code':    ['000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ',
-                           '000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ',
-                           '000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ'],
+                           '000006.SZ', '000007.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
             'trade_date': ['20211115', '20211115', '20211115', '20211115', '20211115',
-                           '20211114', '20211114', '20211114', '20211114', '20211114',
-                           '20211116', '20211116', '20211116', '20211116', '20211116'],
-            'open':       [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
-            'high':       [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
-            'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
-            'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
-            'pre_close':  [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
-            'change':     [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
-            'pct_chg':    [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
-            'vol':        [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
-            'amount':     [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.]
+                           '20211116', '20211116', '20211116', '20211116', '20211116',
+                           '20211114', '20211114', '20211114', '20211114', '20211114'],
+            'open':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'high':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'low':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'close':      [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'pre_close':  [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'change':     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'pct_chg':    [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'vol':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'amount':     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]
         })
 
     def test_primary_key_manipulate(self):
@@ -12626,17 +12626,17 @@ class TestDataBase(unittest.TestCase):
               f'{df}\n'
               f'and following dataframe will be used to updated that database table\n'
               f'{df_add}')
-        TABLE_NAME = 'test_db_table'
+        table_name = 'test_db_table'
         # 删除数据库中的临时表
-        self.ds_db.drop_table(TABLE_NAME)
+        self.ds_db.drop_table(table_name)
         # 为确保update顺利进行，建立新表并设置primary_key
-        self.ds_db.new_db_table(TABLE_NAME,
+        self.ds_db.new_db_table(table_name,
                                 columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
                                 dtypes=['varchar(9)', 'date', 'float', 'float', 'float', 'float'],
                                 primary_key=['ts_code', 'trade_date'])
-        self.ds_db.write_database(df, TABLE_NAME)
-        self.ds_db.update_database(df_add, TABLE_NAME, ['ts_code', 'trade_date'])
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(df, table_name)
+        self.ds_db.update_database(df_add, table_name, ['ts_code', 'trade_date'])
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = df_res.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(df_res.values)
@@ -12653,7 +12653,7 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
 
     # noinspection PyPep8Naming
-    def test_read_write_table_data(self):
+    def test_download_read_write_table_data(self):
         """ test DataSource method read_table_data() and write_table_data()
             will test both built-in tables and user-defined tables
 
@@ -12671,9 +12671,28 @@ class TestDataBase(unittest.TestCase):
             df = data_source.read_table_data(test_table)
             print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
 
-    def test_download_and_check_table_data(self):
-        """ test DataSouce method download_and_check_table_data"""
-        pass
+        # 测试update table数据到本地文件或数据，合并类型为"ignore"
+        for data_source in all_data_sources:
+            data_source.download_and_check_table_data(test_table, 'df', 'ignore', df=self.built_in_add_df)
+            df = data_source.read_table_data(test_table)
+            print(f'df read from data source after updating with merge type IGNORE:\n'
+                  f'{data_source.source_type}-{data_source.file_type}\n{df}')
+
+        # 测试update table数据到本地文件或数据，合并类型为"update"
+        # 测试前删除已经存在的（真实）数据表
+        test_table = 'stock_daily'
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+        for data_source in all_data_sources:
+            data_source.drop_table(test_table)
+        # 测试写入标准表数据
+        for data_source in all_data_sources:
+            data_source.write_table_data(self.built_in_df, test_table)
+
+        for data_source in all_data_sources:
+            data_source.download_and_check_table_data(test_table, 'df', 'update', df=self.built_in_add_df)
+            df = data_source.read_table_data(test_table)
+            print(f'df read from data source after updating with merge type UPDATE:\n'
+                  f'{data_source.source_type}-{data_source.file_type}\n{df}')
 
 
 def test_suite(*args):

@@ -17,7 +17,7 @@ from os import path
 from .utilfuncs import str_to_list, regulate_date_format
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
-AVAILABLE_CHANNELS = ['tushare']
+AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 
 """ 
 这里定义AVAILABLE_TABLES 以及 TABLE_STRUCTURES
@@ -816,8 +816,6 @@ class DataSource:
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
-        # df.index = df['date']
-        # df.drop(columns=['date'], inplace=True)
         return df
 
     def drop_file(self, file_name):
@@ -872,7 +870,8 @@ class DataSource:
             # only one WHERE clause
             sql += f'WHERE {date_filter}'
         sql += ''
-        print(f'trying to get data from database with SQL: \n"{sql}"')
+        # debug
+        # print(f'trying to get data from database with SQL: \n"{sql}"')
 
         df = pd.read_sql_query(sql, con=self.engine)
         return df
@@ -895,29 +894,30 @@ class DataSource:
 
         :param df: 用于更新数据表的数据DataFrame
         :param db_table: 需要更新的数据表
+        :param primary_key: 数据表的primary_key，必须定义在数据表中，如果数据库表没有primary_key，将append所有数据
         :return:
             None
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
         df_tuple = tuple(df.itertuples(index=False, name=None))
-        sql = f"INSERT INTO {db_table} ("
+        sql = f"INSERT INTO `{db_table}` ("
         for col in tbl_columns[:-1]:
-            sql += f"{col}, "
-        sql += f"{tbl_columns[-1]})\nVALUES\n"
+            sql += f"`{col}`, "
+        sql += f"`{tbl_columns[-1]}`)\nVALUES\n"
         for val in df_tuple[:-1]:
             sql += f"{val},\n"
         sql += f"{df_tuple[-1]}\n" \
                f"ON DUPLICATE KEY UPDATE\n"
         for col in update_cols[:-1]:
-            sql += f"{col}=VALUES({col}),\n"
-        sql += f"{update_cols[-1]}=VALUES({update_cols[-1]})"
+            sql += f"`{col}`=VALUES(`{col}`),\n"
+        sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
         # debug
         # print(f'following sql will be executed to update data:\n{sql}')
         self.cursor.execute(sql)
         self.con.commit()
 
-    # 以下几个数据库操作函数用于改进数据库的结构，提升查询速度，如修改数据格式并建立索引等
+    # 以下几个数据库操作函数用于操作数据库表，可用于优化表结构以提升查询速度，如修改数据格式并建立索引等
     def new_db_table(self, db_table, columns, dtypes, primary_key):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同
 
@@ -948,7 +948,7 @@ class DataSource:
                 sql += f"{pk}, "
             sql += f"{primary_key[-1]})\n)"
         # debug
-        print(f'will execute following sql: \n{sql}\n')
+        # print(f'will execute following sql: \n{sql}\n')
         self.cursor.execute(sql)
 
     def alter_db_table(self, db_table, columns, dtypes, primary_key):
@@ -974,14 +974,17 @@ class DataSource:
         new_columns = {}
         for col, typ in zip(columns, dtypes):
             new_columns[col] = typ
-        print(f'fetched columns and types are: \n{cur_columns}')
+        # debug
+        # print(f'fetched columns and types are: \n{cur_columns}')
         # to drop some columns
         col_to_drop = [col for col in cur_columns if col not in columns]
-        print(f'following cols will be dropped from table:\n{col_to_drop}')
+        # debug
+        # print(f'following cols will be dropped from table:\n{col_to_drop}')
         for col in col_to_drop:
             sql = f"ALTER TABLE {db_table} \n" \
                   f"DROP COLUMN `{col}`"
-            print(f'will execute following sql: \n{sql}\n')
+            # debug
+            # print(f'will execute following sql: \n{sql}\n')
             # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
             del cur_columns[col]
             self.cursor.execute(sql)
@@ -992,7 +995,8 @@ class DataSource:
         for col in col_to_add:
             sql = f"ALTER TABLE {db_table} \n" \
                   f"ADD {col} {new_columns[col]}"
-            print(f'will execute following sql: \n{sql}\n')
+            # debug
+            # print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
 
         # to modify some columns
@@ -1001,7 +1005,8 @@ class DataSource:
         for col in col_to_modify:
             sql = f"ALTER TABLE {db_table} \n" \
                   f"MODIFY COLUMN {col} {new_columns[col]}"
-            print(f'will execute following sql: \n{sql}\n')
+            # debug
+            # print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
 
         # TODO: should also modify the primary keys, to be updated
@@ -1018,7 +1023,8 @@ class DataSource:
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'"
-        print(f'will execute following sql: \n{sql}\n')
+        # debug
+        # print(f'will execute following sql: \n{sql}\n')
 
         self.cursor.execute(sql)
         results = self.cursor.fetchall()
@@ -1092,7 +1098,7 @@ class DataSource:
 
         return df
 
-    def write_table_data(self, df, table):
+    def write_table_data(self, df, table, on_duplicate='ignore'):
         """ 将df中的数据写入本地数据表（本地文件或数据库）
             如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
             注意：这里并不检查df是否含有重复数据或冗余数据
@@ -1104,6 +1110,9 @@ class DataSource:
 
         :param df: pd.DataFrame 一个数据表，数据表的列名应该与本地数据表定义一致
         :param table: str 本地数据表名，
+        :param on_duplicate: str 重复数据处理方式（仅当mode==db的时候有效）
+            -ignore: 默认方式，将全部数据写入数据库表的末尾
+            -update: 将数据写入数据库表中，如果遇到重复的pk则修改表中的内容
 
         :return
         None
@@ -1121,9 +1130,14 @@ class DataSource:
             self.write_file(df, file_name=table)
         elif self.source_type == 'db':
             self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
-            self.write_database(df, db_table=table)
+            if on_duplicate == 'ignore':
+                self.write_database(df, db_table=table)
+            elif on_duplicate == 'update':
+                self.update_database(df, db_table=table, primary_key=primary_key)
+            else:  # for unexpected cases
+                raise KeyError(f'Invalid process mode on duplication: {on_duplicate}')
 
-    def download_and_check_table_data(self, table, channel, merge_type, local_df=None, **kwargs):
+    def download_and_check_table_data(self, table, channel, merge_type, df=None, f_name=None, **kwargs):
         """ 从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
             1，根据channel确定数据源，根据table名下载相应的数据表
             2，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
@@ -1141,8 +1155,10 @@ class DataSource:
             指定如何合并下载数据和本地数据：
             - 'replace': 如果下载数据与本地数据重复，用下载数据替代本地数据
             - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
-        :param local_df: pd.DataFrame
-            如果数据获取渠道为"local_df"，则必须给出此参数
+        :param df: pd.DataFrame 通过传递一个DataFrame获取数据
+            如果数据获取渠道为"df"，则必须给出此参数
+        :param f_name: str 通过本地csv文件或excel文件获取数据
+            如果数据获取方式为"csv"或者"excel"时，必须给出此参数，表示文件的路径
         :param kwargs:
             用于下载金融数据的函数参数
 
@@ -1163,12 +1179,24 @@ class DataSource:
             raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
 
         # 从指定的channel获取数据
-        if channel == 'local_df':
-            # 通过参数传递一个DF
-            assert local_df is not None, f'a DataFrame must be given while channel == "local_df"'
-            assert isinstance(local_df, pd.DataFrame), \
-                f'local df should be a DataFrame, got {type(local_df)} instead.'
-            dnld_data = local_df
+        if channel == 'df':
+            # 通过参数传递的DF获取数据
+            assert df is not None, f'a DataFrame must be given while channel == "df"'
+            assert isinstance(df, pd.DataFrame), \
+                f'local df should be a DataFrame, got {type(df)} instead.'
+            dnld_data = df
+        elif channel == 'csv':
+            # 读取本地csv数据文件获取数据
+            assert df is not None, f'a file path and name must be given while channel == "csv"'
+            assert isinstance(f_name, str), \
+                f'file name should be a string, got {type(df)} instead.'
+            raise NotImplementedError
+        elif channel == 'excel':
+            # 读取本地Excel文件获取数据
+            assert f_name is not None, f'a file path and name must be given while channel == "excel"'
+            assert isinstance(f_name, str), \
+                f'file name should be a string, got {type(df)} instead.'
+            raise NotImplementedError
         elif channel == 'tushare':
             # 通过tushare的API下载数据
             from .tsfuncs import acquire_data
@@ -1176,6 +1204,8 @@ class DataSource:
         else:
             raise NotImplementedError
 
+        column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+        dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         # 删除数据中过多的列，不允许出现缺少列
         table_struct = TABLE_SOURCE_MAPPING[table]['structure']
         table_columns = TABLE_STRUCTURES[table_struct]['columns']
@@ -1189,31 +1219,23 @@ class DataSource:
             dnld_data.drop(columns=columns_to_drop, inplace=True)
 
         # 将数据的primary_keys设置为df的index，便于寻找两个df的重叠部分
-        column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         local_data = self.read_table_data(table)
-        set_primary_key_index(local_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
 
         # 根据merge_type处理重叠部分：
         if merge_type == 'ignore':
             # 丢弃下载数据中的重叠部分
             dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
-        else:
-            # 用下载数据中的重叠部分覆盖本地数据
-            # update_data = local_data(~local_data.index.isin(dnld_data.index))
+        else:  # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地数据中的重叠部分（仅用于本地文件保存的情况）
             local_data = local_data[~local_data.index.isin(dnld_data.index)]
 
         if self.source_type == 'file':
             # 如果source_type是file，需要将下载的数据与本地数据合并后去重
-            return pd.concat([local_data, dnld_data])
+            self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
         elif self.source_type == 'db':
-            # 如果source_type是db，不需要合并数据，且不需要index
-            if merge_type == 'ignore':
-                return dnld_data
-            else:
-                # 当需要更新本地数据库中的部分数据时，需要先更新部分数据
-                # self.update_table(update_data, table)
-                return dnld_data
+            # 如果source_type是db，不需要合并数据
+            dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+            self.write_table_data(dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
             raise KeyError(f'invalid data source type')
 
