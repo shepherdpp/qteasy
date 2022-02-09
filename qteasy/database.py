@@ -1088,6 +1088,15 @@ class DataSource:
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
             df = self.read_file(file_name=table, primary_key=primary_key, pk_dtypes=pk_dtypes)
+            if shares is not None:
+                df = df.loc[df.index.isin(shares, level='ts_code')]
+            if (start is not None) and (end is not None):
+                # 两种方法实现，分别是df.query 以及 df.index.get_level_values()
+                # 第一种方法， df.query
+                df = df.query(f"trade_date >= {start} and trade_date <= {end}")
+                # 第二种方法：df.index.get_level_values()
+                # mask = end >= df.index.get_level_values('trade_date') >= start
+                # df = df[mask]
         elif self.source_type == 'db':
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选

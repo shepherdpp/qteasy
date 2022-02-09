@@ -12668,7 +12668,18 @@ class TestDataBase(unittest.TestCase):
         # 测试写入标准表数据
         for data_source in all_data_sources:
             data_source.write_table_data(self.built_in_df, test_table)
+
+        # 测试完整读出标准表数据
+        for data_source in all_data_sources:
             df = data_source.read_table_data(test_table)
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
+
+        # 测试读出并筛选部分标准表数据
+        for data_source in all_data_sources:
+            df = data_source.read_table_data(test_table,
+                                             shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
+                                             start='20211113',
+                                             end='20211116')
             print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
@@ -12687,12 +12698,20 @@ class TestDataBase(unittest.TestCase):
         # 测试写入标准表数据
         for data_source in all_data_sources:
             data_source.write_table_data(self.built_in_df, test_table)
-
+        # 测试写入新增数据并设置合并类型为"update"
         for data_source in all_data_sources:
             data_source.download_and_check_table_data(test_table, 'df', 'update', df=self.built_in_add_df)
             df = data_source.read_table_data(test_table)
             print(f'df read from data source after updating with merge type UPDATE:\n'
                   f'{data_source.source_type}-{data_source.file_type}\n{df}')
+
+        # 测试读出并筛选部分标准表数据
+        for data_source in all_data_sources:
+            df = data_source.read_table_data(test_table,
+                                             shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
+                                             start='20211113',
+                                             end='20211116')
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
 
 
 def test_suite(*args):
