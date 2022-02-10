@@ -86,7 +86,7 @@ def stock_basic(is_hs: str = None,
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
                    end: str = None,

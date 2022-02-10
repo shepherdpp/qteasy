@@ -12560,7 +12560,9 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
         # test reading partial of the datatable
         loaded_df = self.ds_db.read_database(TABLE_NAME,
+                                             share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ"],
+                                             date_like_pk='trade_date',
                                              start='20211112',
                                              end='20211112')
         print(f'retrieve partial data table from database with:\n'
@@ -12604,6 +12606,7 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
         # test reading partial of the datatable
         loaded_df = self.ds_db.read_database(TABLE_NAME,
+                                             share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
         print(f'retrieve partial data table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"]\n'
@@ -12733,7 +12736,7 @@ class TestDataBase(unittest.TestCase):
                           'trade_calendar':     {'exchange': 'SSE'}
                           }
         tables_to_add = {'stock_daily':        {'share': None,
-                                                'trade_date': '20211113'},
+                                                'trade_date': '20211115'},
                          'stock_weekly':       {'share': None,
                                                 'trade_date': '20211015'},
                          'stock_indicator':    {'shares': None,
@@ -12750,7 +12753,7 @@ class TestDataBase(unittest.TestCase):
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
             df = ds.acquire_table_data(table, 'tushare', 'ignore', **tables_to_test[table])
-            print(f'-- Done! --')
+            print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table data ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.file_type}')
@@ -12761,7 +12764,7 @@ class TestDataBase(unittest.TestCase):
                 print(f'reading table data ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.file_type}')
                 if table != 'trade_calendar':
-                    df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000003.SZ'])
+                    df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000007.SZ', '600067.SH'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200301')
                 print(f'got data from data source {ds.source_type}-{ds.file_type}:\n{df}')
@@ -12770,7 +12773,7 @@ class TestDataBase(unittest.TestCase):
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
             df = ds.acquire_table_data(table, 'tushare', 'ignore', **tables_to_add[table])
-            print(f'-- Done! --')
+            print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table data ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.file_type}')

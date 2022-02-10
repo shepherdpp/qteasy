@@ -13,6 +13,7 @@ import pymysql
 from sqlalchemy import create_engine
 import pandas as pd
 from os import path
+import warnings
 
 from .utilfuncs import str_to_list, regulate_date_format
 
@@ -127,7 +128,7 @@ TABLE_SOURCE_MAPPING = {
 # 定义Table structure，定义所有数据表的主键和内容
 TABLE_STRUCTURES = {
 
-    'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pre_trade_date'],
+    'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
                          'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
                          'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
                          'prime_keys': [0, 1]},  # 交易日历表，每年更新，更新时没有参数
@@ -173,8 +174,9 @@ TABLE_STRUCTURES = {
     'future_basic':     {'columns':    ['ts_code', 'symbol', 'exchange', 'name', 'fut_code', 'multiplier', 'trade_unit',
                                         'per_unit', 'quote_unit', 'quote_unit_desc', 'd_mode_desc', 'list_date',
                                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'float', 'str', 'float', 'str', 'str',
-                                        'str', 'str', 'str', 'str', 'str', 'str'],
+                         'dtypes':     ['varchar(9)', 'varchar(4)', 'varchar(8)', 'varchar(8)', 'varchar(12)', 'float',
+                                        'varchar(4)', 'float', 'varchar(4)', 'text',
+                                        'text', 'date', 'date', 'varchar(6)', 'date', 'varchar(10)'],
                          'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
                                         '交易计量单位', '交易单位(每手)', '报价单位', '最小报价单位说明', '交割方式说明',
                                         '上市日期', '最后交易日期', '交割月份', '最后交割日', '交易时间说明'],
@@ -190,7 +192,7 @@ TABLE_STRUCTURES = {
                          'remarks':    ['证券代码', '交易市场', '合约名称', '合约单位', '标准合约代码', '合约类型', '期权类型',
                                         '行权方式', '行权价格', '结算月', '到期日', '挂牌基准价', '开始交易日期',
                                         '最后交易日期', '最后行权日期', '最后交割日期', '报价单位', '最小价格波幅'],
-                         'prime_keys': [0, 1, 4]},
+                         'prime_keys': [0]},
 
     # 下面的bars表适用于stock_1min / stock_5min / stock_30min / stock_hourly /
     # stock_daily / stock_weekly / stock_monthly / index_daily / index_weekly /
@@ -846,13 +848,19 @@ class DataSource:
             os.remove(file_path_name)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
-    def read_database(self, db_table, shares=None, start=None, end=None):
-        """ 从一张数据库表中读取数据，读取时根据share（ts_code）和dates筛选（如果
-        数据库表有ts_code和trade_date这两个字段）
+    def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
+        """ 从一张数据库表中读取数据，读取时根据share（ts_code）和dates筛选
+            具体筛选的字段通过share_like_pk和date_like_pk两个字段给出
 
         :param db_table: 需要读取数据的数据表
-        :param shares: 如果给出shares，则按照"WHERE ts_code IN shares"筛选（如果表中没有ts_code参数会报错）
-        :param start:  如果给出start同时又给出end，按照"WHERE trade_date BETWEEEN start AND end"的条件筛选
+        :param share_like_pk:
+            用于筛选证券代码的字段名，不同的表中字段名可能不同，用这个字段筛选不同的证券、如股票、基金、指数等
+            当这个参数给出时，必须给出shares参数
+        :param shares: 如果给出shares，则按照"WHERE share_like_pk IN shares"筛选
+        :param date_like_pk:
+            用于筛选日期的主键字段名，不同的表中字段名可能不同，用这个字段筛选需要的记录的时间段
+            当这个参数给出时，必须给出start和end参数
+        :param start:  如果给出start同时又给出end，按照"WHERE date_like_pk BETWEEEN start AND end"的条件筛选
         :param end:    当没有给出start时，单独给出end无效
         :return:
             DataFrame，从数据库中读取的DataFrame
@@ -865,11 +873,11 @@ class DataSource:
         has_date_filter = False
         if shares is not None:
             has_ts_code_filter = True
-            ts_code_filter = f'ts_code in {tuple(shares)}'
+            ts_code_filter = f'{share_like_pk} in {tuple(shares)}'
         if (start is not None) and (end is not None):
             # assert start and end are date-like
             has_date_filter = True
-            date_filter = f'trade_date BETWEEN {start} AND {end}'
+            date_filter = f'{date_like_pk} BETWEEN {start} AND {end}'
 
         sql = f'SELECT * ' \
               f'FROM {db_table}\n'
@@ -1117,26 +1125,48 @@ class DataSource:
             assert pd.to_datetime(start) <= pd.to_datetime(end)
 
         columns, dtypes, primary_key, pk_dtypes = get_built_in_table_schema(table)
+        # 识别primary key中的证券代码列名和日期类型列名，确认是否需要筛选证券代码及日期
+        share_like_pk = None
+        date_like_pk = None
+        if shares is not None:
+            try:
+                share_like_pk = primary_key[pk_dtypes.index('varchar(9)')]
+            except:
+                warnings.warn(f'can not find share-like primary key in the table!\n'
+                              f'passed argument shares will be ignored!', RuntimeWarning)
+        # 识别Primary key中的，并确认是否需要筛选日期型pk
+        if (start is not None) and (end is not None):
+            try:
+                date_like_pk = primary_key[pk_dtypes.index('date')]
+            except:
+                warnings.warn(f'can not find date-like primary key in the table!\n'
+                              f'passed start and end arguments will be ignored!', RuntimeWarning)
 
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
             df = self.read_file(file_name=table, primary_key=primary_key, pk_dtypes=pk_dtypes)
-            if shares is not None:
-                df = df.loc[df.index.isin(shares, level='ts_code')]
-            if (start is not None) and (end is not None):
-                # 两种方法实现，分别是df.query 以及 df.index.get_level_values()
+            if share_like_pk is not None:
+                df = df.loc[df.index.isin(shares, level=share_like_pk)]
+
+            if date_like_pk is not None:
+                # 两种方法实现筛选，分别是df.query 以及 df.index.get_level_values()
                 # 第一种方法， df.query
-                # df = df.query(f"trade_date >= {start} and trade_date <= {end}")
+                # df = df.query(f"{date_like_pk} >= {start} and {date_like_pk} <= {end}")
                 # 第二种方法：df.index.get_level_values()
-                m1 = df.index.get_level_values('trade_date') >= start
-                m2 = df.index.get_level_values('trade_date') <= end
+                m1 = df.index.get_level_values(date_like_pk) >= start
+                m2 = df.index.get_level_values(date_like_pk) <= end
                 df = df[m1 & m2]
         elif self.source_type == 'db':
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
             self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
-            df = self.read_database(db_table=table, shares=shares, start=start, end=end)
+            df = self.read_database(db_table=table,
+                                    share_like_pk=share_like_pk,
+                                    shares=shares,
+                                    date_like_pk=date_like_pk,
+                                    start=start,
+                                    end=end)
             set_primary_key_index(df, primary_key, pk_dtypes)
         else:  # for unexpected cases:
             raise TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
