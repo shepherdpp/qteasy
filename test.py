@@ -12169,7 +12169,12 @@ class TestDataBase(unittest.TestCase):
     def setUp(self):
         from qteasy import QT_ROOT_PATH
         self.qt_root_path = QT_ROOT_PATH
-        self.ds_db = DataSource('db', host='localhost', port=3306, user='jackie', password='iama007')
+        self.ds_db = DataSource('db',
+                                host='localhost',
+                                port=3306,
+                                user='jackie',
+                                password='iama007',
+                                db='test_db')
         self.ds_csv = DataSource('file', file_type='csv')
         self.ds_hdf = DataSource('file', file_type='hdf')
         self.ds_fth = DataSource('file', file_type='fth')
@@ -12363,12 +12368,14 @@ class TestDataBase(unittest.TestCase):
     def test_db_table_operates(self):
         """ test all database operation functions"""
         self.ds_db.drop_db_table('new_test_table')
+        self.assertFalse(self.ds_db.db_table_exists('new_test_table'))
 
         print(f'test function creating new table')
         self.ds_db.new_db_table('new_test_table',
                                 ['ts_code', 'trade_date', 'col1', 'col2'],
                                 ['varchar(9)', 'varchar(9)', 'int', 'int'],
                                 ['ts_code', 'trade_date'])
+        self.ds_db.db_table_exists('new_test_table')
 
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
@@ -12653,7 +12660,7 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
 
     # noinspection PyPep8Naming
-    def test_download_read_write_table_data(self):
+    def test_read_write_update_table_data(self):
         """ test DataSource method read_table_data() and write_table_data()
             will test both built-in tables and user-defined tables
 
@@ -12684,7 +12691,8 @@ class TestDataBase(unittest.TestCase):
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
-            data_source.download_and_check_table_data(test_table, 'df', 'ignore', df=self.built_in_add_df)
+            df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
+            data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
             print(f'df read from data source after updating with merge type IGNORE:\n'
                   f'{data_source.source_type}-{data_source.file_type}\n{df}')
@@ -12700,7 +12708,8 @@ class TestDataBase(unittest.TestCase):
             data_source.write_table_data(self.built_in_df, test_table)
         # 测试写入新增数据并设置合并类型为"update"
         for data_source in all_data_sources:
-            data_source.download_and_check_table_data(test_table, 'df', 'update', df=self.built_in_add_df)
+            df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
+            data_source.update_table_data(test_table, df, 'update')
             df = data_source.read_table_data(test_table)
             print(f'df read from data source after updating with merge type UPDATE:\n'
                   f'{data_source.source_type}-{data_source.file_type}\n{df}')
@@ -12712,6 +12721,70 @@ class TestDataBase(unittest.TestCase):
                                              start='20211113',
                                              end='20211116')
             print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
+
+    def test_download_update_table_data(self):
+        """ test downloading data from tushare"""
+        tables_to_test = {'stock_daily':        {'share': None,
+                                                 'trade_date': '20211112'},
+                          'stock_weekly':       {'share': None,
+                                                 'trade_date': '20211008'},
+                          'stock_indicator':    {'shares': None,
+                                                 'trade_date': '20211112'},
+                          'trade_calendar':     {'exchange': 'SSE'}
+                          }
+        tables_to_add = {'stock_daily':        {'share': None,
+                                                'trade_date': '20211113'},
+                         'stock_weekly':       {'share': None,
+                                                'trade_date': '20211015'},
+                         'stock_indicator':    {'shares': None,
+                                                'trade_date': '20211113'},
+                         'trade_calendar':     {'exchange': 'SZSE'}
+                         }
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+
+        for table in tables_to_test:
+            # 删除已有的表
+            for ds in all_data_sources:
+                ds.drop_table(table)
+            # 下载并写入数据到表中
+            print(f'downloading table data ({table}) with parameter: \n'
+                  f'{tables_to_test[table]}')
+            df = ds.acquire_table_data(table, 'tushare', 'ignore', **tables_to_test[table])
+            print(f'-- Done! --')
+            for ds in all_data_sources:
+                print(f'updating IGNORE table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.file_type}')
+                ds.update_table_data(table, df, 'ignore')
+                print(f'-- Done! --')
+
+            for ds in all_data_sources:
+                print(f'reading table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.file_type}')
+                if table != 'trade_calendar':
+                    df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000003.SZ'])
+                else:
+                    df = ds.read_table_data(table, start='20200101', end='20200301')
+                print(f'got data from data source {ds.source_type}-{ds.file_type}:\n{df}')
+
+            # 下载数据并添加到表中
+            print(f'downloading table data ({table}) with parameter: \n'
+                  f'{tables_to_add[table]}')
+            df = ds.acquire_table_data(table, 'tushare', 'ignore', **tables_to_add[table])
+            print(f'-- Done! --')
+            for ds in all_data_sources:
+                print(f'updating UPDATE table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.file_type}')
+                ds.update_table_data(table, df, 'ignore')
+                print(f'-- Done! --')
+
+            for ds in all_data_sources:
+                print(f'reading table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.file_type}')
+                if table != 'trade_calendar':
+                    df = ds.read_table_data(table, shares=['000004.SZ', '000005.SZ', '000006.SZ'])
+                else:
+                    df = ds.read_table_data(table, start='20200101', end='20200301')
+                print(f'got data from data source {ds.source_type}-{ds.file_type}:\n{df}')
 
 
 def test_suite(*args):

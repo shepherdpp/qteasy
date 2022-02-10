@@ -128,30 +128,30 @@ TABLE_SOURCE_MAPPING = {
 TABLE_STRUCTURES = {
 
     'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pre_trade_date'],
-                         'dtypes':     ['str', 'TimeStamp', 'str', 'str'],
+                         'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
                          'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
                          'prime_keys': [0, 1]},  # 交易日历表，每年更新，更新时没有参数
 
     'stock_basic':      {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
                                         'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
                                         'delist_date', 'is_hs'],
-                         'dtypes':     ['varchar(9)', 'varchar(6)', 'var_char(10)', 'str', 'str', 'str', 'str', 'str',
-                                        'str', 'str', 'str',
-                                        'str', 'str', 'str', 'str'],
-                         'remarks':    ['TS代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
+                         'dtypes':     ['varchar(9)', 'varchar(6)', 'var_char(10)', 'varchar(10)', 'varchar(10)',
+                                        'varchar(50)', 'varchar(50)', 'varchar(6)', 'varchar(6)', 'varchar(6)',
+                                        'varchar(6)', 'varchar(4)', 'date', 'date', 'tinyint'],
+                         'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
                          'prime_keys': [0]},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
 
     'name_changes':     {'columns':    ['ts_code', 'name', 'start_date', 'end_date', 'ann_date', 'change_reason'],
-                         'dtypes':     ['varchar(9)', 'str', 'str', 'str', 'str', 'str'],
-                         'remarks':    ['TS代码', '证券名称', '开始日期', '结束日期', '公告日期', '变更原因'],
+                         'dtypes':     ['varchar(9)', 'varchar(8)', 'date', 'date', 'date', 'varchar(10)'],
+                         'remarks':    ['证券代码', '证券名称', '开始日期', '结束日期', '公告日期', '变更原因'],
                          'prime_keys': [0, 4]},  # 股票名称变更登记表，更新时按股票名称下载
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'float', 'str',
-                                        'str', 'str', 'str'],
-                         'remarks':    ['TS代码', '简称', '指数全称', '市场', '发布方', '指数风格', '指数类别', '基期', '基点',
+                         'dtypes':     ['varchar(9)', 'varchar(8)', 'varchar(40)', 'varchar(8)', 'varchar(20)',
+                                        'varchar(6)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
+                         'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方', '指数风格', '指数类别', '基期', '基点',
                                         '发布日期', '加权方式', '描述', '终止日期'],
                          'prime_keys': [0]},
 
@@ -160,10 +160,11 @@ TABLE_STRUCTURES = {
                                         'c_fee', 'duration_year', 'p_value', 'min_amount', 'exp_return', 'benchmark',
                                         'status', 'invest_type', 'type', 'trustee', 'purc_startdate', 'redm_startdate',
                                         'market'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'str', 'str', 'str',
-                                        'str', 'str', 'str', 'str', 'str'],
-                         'remarks':    ['基金代码', '简称', '管理人', '托管人', '投资类型', '成立日期', '到期日期', '上市时间',
+                         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(20)', 'varchar(4)', 'date',
+                                        'date', 'date', 'date', 'date', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'text', 'varchar(2)', 'varchar(10)', 'varchar(10)',
+                                        'varchar(10)', 'date', 'date', 'varchar(2)'],
+                         'remarks':    ['证券代码', '简称', '管理人', '托管人', '投资类型', '成立日期', '到期日期', '上市时间',
                                         '发行日期', '退市日期', '发行份额(亿)', '管理费', '托管费', '存续期', '面值',
                                         '起点金额(万元)', '预期收益率', '业绩比较基准', '存续状态D摘牌 I发行 L已上市',
                                         '投资风格', '基金类型', '受托人', '日常申购起始日', '日常赎回起始日', 'E场内O场外'],
@@ -174,7 +175,7 @@ TABLE_STRUCTURES = {
                                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
                          'dtypes':     ['str', 'str', 'str', 'str', 'str', 'float', 'str', 'float', 'str', 'str',
                                         'str', 'str', 'str', 'str', 'str', 'str'],
-                         'remarks':    ['合约代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
+                         'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
                                         '交易计量单位', '交易单位(每手)', '报价单位', '最小报价单位说明', '交割方式说明',
                                         '上市日期', '最后交易日期', '交割月份', '最后交割日', '交易时间说明'],
                          'prime_keys': [0]},
@@ -183,12 +184,13 @@ TABLE_STRUCTURES = {
                                         'exercise_type', 'exercise_price', 's_month', 'maturity_date', 'list_price',
                                         'list_date', 'delist_date', 'last_edate', 'last_ddate', 'quote_unit',
                                         'min_price_chg'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'float', 'str', 'str',
-                                        'float', 'str', 'str', 'str', 'str', 'str', 'str'],
-                         'remarks':    ['TS代码', '交易市场', '合约名称', '合约单位', '标准合约代码', '合约类型', '期权类型',
+                         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(10)', 'varchar(10)', 'varchar(12)',
+                                        'varchar(6)', 'varchar(6)', 'varchar(6)', 'float', 'varchar(2)', 'date',
+                                        'float', 'date', 'date', 'date', 'date', 'varchar(6)', 'varchar(6)'],
+                         'remarks':    ['证券代码', '交易市场', '合约名称', '合约单位', '标准合约代码', '合约类型', '期权类型',
                                         '行权方式', '行权价格', '结算月', '到期日', '挂牌基准价', '开始交易日期',
                                         '最后交易日期', '最后行权日期', '最后交割日期', '报价单位', '最小价格波幅'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1, 4]},
 
     # 下面的bars表适用于stock_1min / stock_5min / stock_30min / stock_hourly /
     # stock_daily / stock_weekly / stock_monthly / index_daily / index_weekly /
@@ -198,87 +200,89 @@ TABLE_STRUCTURES = {
                                         'pct_chg', 'vol', 'amount'],
                          'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'double', 'double'],
-                         'remarks':    ['股票代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
+                         'remarks':    ['证券代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
                          'prime_keys': [0, 1]},
 
     # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
-                         'dtypes':     ['str', 'str', 'float'],
+                         'dtypes':     ['varchar(9)', 'date', 'tinyint'],
                          'remarks':    ['证券代码', '交易日期', '复权因子'],
                          'prime_keys': [0, 1]},
 
     'fund_nav':         {'columns':    ['ts_code', 'ann_date', 'nav_date', 'unit_nav', 'accum_nav', 'accum_div',
                                         'net_asset', 'total_netasset', 'adj_nav'],
-                         'dtypes':     ['str', 'str', 'str', 'float', 'float', 'float', 'float', 'float', 'float'],
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
+                                        'float'],
                          'remarks':    ['TS代码', '公告日期', '净值日期', '单位净值', '累计净值', '累计分红', '资产净值',
                                         '合计资产净值', '复权单位净值'],
                          'prime_keys': [0, 1]},
 
     'fund_share':       {'columns':    ['ts_code', 'trade_date', 'fd_share'],
-                         'dtypes':     ['str', 'str', 'float'],
-                         'remarks':    ['基金代码', '变动日期，格式YYYYMMDD', '基金份额（万）'],
+                         'dtypes':     ['varchar(9)', 'date', 'float'],
+                         'remarks':    ['证券代码', '变动日期，格式YYYYMMDD', '基金份额（万）'],
                          'prime_keys': [0, 1]},
 
     'fund_manager':     {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'birth_year', 'edu', 'nationality',
                                         'begin_date', 'end_date', 'resume'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str', 'str'],
-                         'remarks':    ['基金代码', '公告日期', '基金经理姓名', '性别', '出生年份', '学历', '国籍', '任职日期',
+                         'dtypes':     ['varchar(9)', 'date', 'varchar(6)', 'varchar(2)', 'year', 'varchar(30)',
+                                        'varchar(4)', 'date', 'date', 'text'],
+                         'remarks':    ['证券代码', '公告日期', '基金经理姓名', '性别', '出生年份', '学历', '国籍', '任职日期',
                                         '离任日期', '简历'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1]},
 
     'future_daily':     {'columns':    ['ts_code', 'trade_date', 'pre_close', 'pre_settle', 'open', 'high', 'low',
                                         'close', 'settle', 'change1', 'change2', 'vol', 'amount', 'oi', 'oi_chg',
                                         'delv_settle'],
-                         'dtypes':     ['str', 'str', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'float'],
-                         'remarks':    ['TS合约代码', '交易日期', '昨收盘价', '昨结算价', '开盘价', '最高价', '最低价',
+                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'float', 'double', 'double', 'double', 'double', 'float'],
+                         'remarks':    ['证券代码', '交易日期', '昨收盘价', '昨结算价', '开盘价', '最高价', '最低价',
                                         '收盘价', '结算价', '涨跌1 收盘价-昨结算价', '涨跌2 结算价-昨结算价', '成交量(手)',
                                         '成交金额(万元)', '持仓量(手)', '持仓量变化', '交割结算价'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1]},
 
     'stock_indicator':  {'columns':    ['ts_code', 'trade_date', 'close', 'turnover_rate', 'turnover_rate_f',
                                         'volume_ratio', 'pe', 'pe_ttm', 'pb', 'ps', 'ps_ttm', 'dv_ratio', 'dv_ttm',
                                         'total_share', 'float_share', 'free_share', 'total_mv', 'circ_mv'],
-                         'dtypes':     ['str', 'str', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float'],
-                         'remarks':    ['TS股票代码', '交易日期', '当日收盘价', '换手率（%）', '换手率（自由流通股）', '量比',
+                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'float', 'float', 'float', 'double', 'double', 'double',
+                                        'double', 'double'],
+                         'remarks':    ['证券代码', '交易日期', '当日收盘价', '换手率（%）', '换手率（自由流通股）', '量比',
                                         '市盈率（总市值/净利润， 亏损的PE为空）', '市盈率（TTM，亏损的PE为空）',
                                         '市净率（总市值/净资产）', '市销率', '市销率（TTM）', '股息率 （%）',
                                         '股息率（TTM）（%）', '总股本 （万股）', '流通股本 （万股）', '自由流通股本 （万）',
                                         '总市值 （万元）', '流通市值（万元）'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1]},
 
     'stock_indicator2': {'columns':    ['ts_code', 'trade_date', 'name', 'pct_change', 'close', 'change', 'open',
                                         'high', 'low', 'pre_close', 'vol_ratio', 'turn_over', 'swing', 'vol', 'amount',
                                         'selling', 'buying', 'total_share', 'float_share', 'pe', 'industry', 'area',
                                         'float_mv', 'total_mv', 'avg_price', 'strength', 'activity', 'avg_turnover',
                                         'attack', 'interval_3', 'interval_6'],
-                         'dtypes':     ['str', 'str', 'str', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'str', 'str', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float'],
-                         'remarks':    ['股票代码', '交易日期', '股票名称', '涨跌幅', '收盘价', '涨跌额', '开盘价', '最高价',
+                         'dtypes':     ['varchar(9)', 'date', 'str', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'varchar(8)', 'varchar(8)', 'float', 'float', 'float',
+                                        'float', 'float', 'float', 'float', 'float'],
+                         'remarks':    ['证券代码', '交易日期', '股票名称', '涨跌幅', '收盘价', '涨跌额', '开盘价', '最高价',
                                         '最低价', '昨收价', '量比', '换手率', '振幅', '成交量', '成交额', '内盘（主动卖，手）',
                                         '外盘（主动买， 手）', '总股本(亿)', '流通股本(亿)', '市盈(动)', '所属行业', '所属地域',
                                         '流通市值', '总市值', '平均价', '强弱度(%)', '活跃度(%)', '笔换手', '攻击波(%)',
                                         '近3月涨幅', '近6月涨幅'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 2]},
 
     'index_indicator':  {'columns':    ['ts_code', 'trade_date', 'total_mv', 'float_mv', 'total_share', 'float_share',
                                         'free_share', 'turnover_rate', 'turnover_rate_f', 'pe', 'pe_ttm', 'pb'],
-                         'dtypes':     ['str', 'str', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float'],
-                         'remarks':    ['TS代码', '交易日期', '当日总市值（元）', '当日流通市值（元）', '当日总股本（股）',
+                         'dtypes':     ['varchar(9)', 'date', 'double', 'double', 'double', 'double', 'double', 'float',
+                                        'float', 'float', 'float', 'float'],
+                         'remarks':    ['证券代码', '交易日期', '当日总市值（元）', '当日流通市值（元）', '当日总股本（股）',
                                         '当日流通股本（股）', '当日自由流通股本（股）', '换手率', '换手率(基于自由流通股本)',
                                         '市盈率', '市盈率TTM', '市净率'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1]},
 
     'index_weight':     {'columns':    ['index_code', 'con_code', 'trade_date', 'weight'],
-                         'dtypes':     ['str', 'str', 'str', 'float'],
+                         'dtypes':     ['varchar(9)', 'varchar(9)', 'date', 'float'],
                          'remarks':    ['指数代码', '成分代码', '交易日期', '权重'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 2]},
 
     'income':           {'columns':    ['ts_code', 'ann_date', 'f_ann_date', 'end_date', 'report_type', 'comp_type',
                                         'end_type', 'basic_eps', 'diluted_eps', 'total_revenue', 'revenue',
@@ -303,7 +307,7 @@ TABLE_STRUCTURES = {
                                         'net_expo_hedging_benefits', 'oth_impair_loss_assets', 'total_opcost',
                                         'amodcost_fin_assets', 'oth_income', 'asset_disp_income',
                                         'continued_net_profit', 'end_net_profit', 'update_flag'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'date', 'varchar(6)', 'varchar(6)', 'varchar(6)',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
@@ -314,8 +318,8 @@ TABLE_STRUCTURES = {
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'str'],
-                         'remarks':    ['TS代码', '公告日期', '实际公告日期', '报告期', '报告类型 见底部表',
+                                        'float', 'float', 'float', 'float', 'float', 'float', 'str'],
+                         'remarks':    ['证券代码', '公告日期', '实际公告日期', '报告期', '报告类型 见底部表',
                                         '公司类型(1一般工商业2银行3保险4证券)', '报告期类型', '基本每股收益', '稀释每股收益',
                                         '营业总收入', '营业收入', '利息收入', '已赚保费', '手续费及佣金收入', '手续费及佣金净收入',
                                         '其他经营净收益', '加:其他业务净收益', '保险业务收入', '减:分出保费',
@@ -378,7 +382,8 @@ TABLE_STRUCTURES = {
                                         'oth_eq_ppbond', 'receiv_financing', 'use_right_assets', 'lease_liab',
                                         'contract_assets', 'contract_liab', 'accounts_receiv_bill', 'accounts_pay',
                                         'oth_rcv_total', 'fix_assets_total', 'update_flag'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'date', 'varchar(10)', 'varchar(10)',
+                                        'varchar(10)', 'double', 'double', 'double', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
@@ -397,8 +402,8 @@ TABLE_STRUCTURES = {
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'str'],
-                         'remarks':    ['TS股票代码', '公告日期', '实际公告日期', '报告期', '报表类型', '公司类型', '报告期类型',
+                                        'varchar(2)'],
+                         'remarks':    ['证券代码', '公告日期', '实际公告日期', '报告期', '报表类型', '公司类型', '报告期类型',
                                         '期末总股本', '资本公积金', '未分配利润', '盈余公积金', '专项储备', '货币资金',
                                         '交易性金融资产', '应收票据', '应收账款', '其他应收款', '预付款项', '应收股利',
                                         '应收利息', '存货', '长期待摊费用', '一年内到期的非流动资产', '结算备付金', '拆出资金',
@@ -463,7 +468,8 @@ TABLE_STRUCTURES = {
                                         'net_dism_capital_add', 'net_cash_rece_sec', 'credit_impa_loss',
                                         'use_right_asset_dep', 'oth_loss_asset', 'end_bal_cash', 'beg_bal_cash',
                                         'end_bal_cash_equ', 'beg_bal_cash_equ', 'update_flag'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'str', 'str', 'str', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'date', 'varchar(10)', 'varchar(10)',
+                                        'varchar(10)', 'double', 'double', 'double', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
@@ -474,8 +480,8 @@ TABLE_STRUCTURES = {
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'str'],
-                         'remarks':    ['TS股票代码', '公告日期', '实际公告日期', '报告期', '公司类型', '报表类型', '报告期类型',
+                                        'float', 'float', 'float', 'varchar(2)'],
+                         'remarks':    ['证券代码', '公告日期', '实际公告日期', '报告期', '公司类型', '报表类型', '报告期类型',
                                         '净利润', '财务费用', '销售商品、提供劳务收到的现金', '收到的税费返还',
                                         '客户存款和同业存放款项净增加额', '向中央银行借款净增加额', '向其他金融机构拆入资金净增加额',
                                         '收到原保险合同保费取得的现金', '保户储金净增加额', '收到再保业务现金净额',
@@ -545,7 +551,7 @@ TABLE_STRUCTURES = {
                                         'tr_yoy', 'or_yoy', 'q_gr_yoy', 'q_gr_qoq', 'q_sales_yoy', 'q_sales_qoq',
                                         'q_op_yoy', 'q_op_qoq', 'q_profit_yoy', 'q_profit_qoq', 'q_netprofit_yoy',
                                         'q_netprofit_qoq', 'equity_yoy', 'rd_exp', 'update_flag'],
-                         'dtypes':     ['str', 'str', 'str', 'float', 'float', 'float', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
@@ -565,8 +571,8 @@ TABLE_STRUCTURES = {
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'str'],
-                         'remarks':    ['TS代码', '公告日期', '报告期', '基本每股收益', '稀释每股收益', '每股营业总收入',
+                                        'float', 'float', 'float', 'float', 'float', 'float', 'varchar(4)'],
+                         'remarks':    ['证券代码', '公告日期', '报告期', '基本每股收益', '稀释每股收益', '每股营业总收入',
                                         '每股营业收入', '每股资本公积', '每股盈余公积', '每股未分配利润', '非经常性损益',
                                         '扣除非经常性损益后的净利润（扣非净利润）', '毛利', '流动比率', '速动比率', '保守速动比率',
                                         '存货周转天数', '应收账款周转天数', '存货周转率', '应收账款周转率', '流动资产周转率',
@@ -619,18 +625,18 @@ TABLE_STRUCTURES = {
                                         '营业利润环比增长率(%)(单季度)', '净利润同比增长率(%)(单季度)',
                                         '净利润环比增长率(%)(单季度)', '归属母公司股东的净利润同比增长率(%)(单季度)',
                                         '归属母公司股东的净利润环比增长率(%)(单季度)', '净资产同比增长率', '研发费用', '更新标识'],
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1]},
 
     'forecast':         {'columns':    ['ts_code', 'ann_date', 'end_date', 'type', 'p_change_min', 'p_change_max',
                                         'net_profit_min', 'net_profit_max', 'last_parent_net', 'first_ann_date',
                                         'summary', 'change_reason'],
-                         'dtypes':     ['str', 'str', 'str', 'str', 'float', 'float', 'float', 'float', 'float',
-                                        'str', 'str', 'str'],
-                         'remarks':    ['TS股票代码', '公告日期', '报告期', '业绩预告类型', '预告净利润变动幅度下限（%）',
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'varchar(9)', 'float', 'float', 'double',
+                                        'double', 'double', 'date', 'varchar(10)', 'text'],
+                         'remarks':    ['证券代码', '公告日期', '报告期', '业绩预告类型', '预告净利润变动幅度下限（%）',
                                         '预告净利润变动幅度上限（%）', '预告净利润下限（万元）', '预告净利润上限（万元）',
                                         '上年同期归属母公司净利润', '首次公告日', '业绩预告摘要', '业绩变动原因'],
                          # 业绩预告类型包括：预增/预减/扭亏/首亏/续亏/续盈/略增/略减
-                         'prime_keys': [0]},
+                         'prime_keys': [0, 1]},
 
     'express':          {'columns':    ['ts_code', 'ann_date', 'end_date', 'revenue', 'operate_profit', 'total_profit',
                                         'n_income', 'total_assets', 'total_hldr_eqy_exc_min_int', 'diluted_eps',
@@ -639,11 +645,11 @@ TABLE_STRUCTURES = {
                                         'growth_bps', 'or_last_year', 'op_last_year', 'tp_last_year', 'np_last_year',
                                         'eps_last_year', 'open_net_assets', 'open_bps', 'perf_summary', 'is_audit',
                                         'remark'],
-                         'dtypes':     ['str', 'str', 'str', 'float', 'float', 'float', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(9)', 'date', 'date', 'double', 'double', 'double', 'double', 'double',
+                                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'str', 'int', 'str'],
-                         'remarks':    ['TS股票代码', '公告日期', '报告期', '营业收入(元)', '营业利润(元)', '利润总额(元)',
+                                        'float', 'float', 'float', 'float', 'str', 'varchar(9)', 'text'],
+                         'remarks':    ['证券代码', '公告日期', '报告期', '营业收入(元)', '营业利润(元)', '利润总额(元)',
                                         '净利润(元)', '总资产(元)', '股东权益合计(不含少数股东权益)(元)', '每股收益(摊薄)(元)',
                                         '净资产收益率(摊薄)(%)', '去年同期修正后净利润', '每股净资产', '同比增长率:营业收入',
                                         '同比增长率:营业利润', '同比增长率:利润总额', '同比增长率:归属母公司股东的净利润',
@@ -652,7 +658,7 @@ TABLE_STRUCTURES = {
                                         '去年同期营业收入', '去年同期营业利润', '去年同期利润总额', '去年同期净利润',
                                         '去年同期每股收益', '期初净资产', '期初每股净资产', '业绩简要说明', '是否审计： 1是 0否',
                                         '备注'],
-                         'prime_keys': [0]}
+                         'prime_keys': [0, 1]}
 
 }
 
@@ -694,6 +700,7 @@ class DataSource:
         if source_type == 'database':
             source_type = 'db'
         self.source_type = source_type
+        self._table_list = []
 
         if self.source_type == 'file':
             # set up file type and file location
@@ -716,7 +723,7 @@ class DataSource:
             self.file_path = QT_ROOT_PATH + file_loc
             self.engine = None
 
-        else:  # source_type == 'database' or 'db'
+        elif source_type == 'db':
             # set up connection to the data base
             if host is None:
                 host = 'localhost'
@@ -749,7 +756,15 @@ class DataSource:
             self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
             self.file_path = None
             self.file_type = None
-        pass
+        else:
+            # for unexpected cases
+            raise KeyError(f'invalid source type: {source_type}')
+
+    # 属性
+    @property
+    def tables(self):
+        """ 所有已经建立的tables的清单"""
+        return self._table_list
 
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
@@ -842,6 +857,8 @@ class DataSource:
         :return:
             DataFrame，从数据库中读取的DataFrame
         """
+        if not self.db_table_exists(db_table):
+            return pd.DataFrame()
         ts_code_filter = ''
         has_ts_code_filter = False
         date_filter = ''
@@ -918,6 +935,20 @@ class DataSource:
         self.con.commit()
 
     # 以下几个数据库操作函数用于操作数据库表，可用于优化表结构以提升查询速度，如修改数据格式并建立索引等
+    def db_table_exists(self, db_table):
+        """ 检查数据库中是否存在db_table这张表
+
+        :param db_table:
+        :return:
+        """
+        sql = f"SHOW TABLES LIKE '{db_table}'"
+        # debug
+        # print(f'will execute this SQL:\n{sql}')
+        self.cursor.execute(sql)
+        self.con.commit()
+        res = self.cursor.fetchall()
+        return len(res) > 0
+
     def new_db_table(self, db_table, columns, dtypes, primary_key):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同
 
@@ -948,8 +979,11 @@ class DataSource:
                 sql += f"{pk}, "
             sql += f"{primary_key[-1]})\n)"
         # debug
-        # print(f'will execute following sql: \n{sql}\n')
-        self.cursor.execute(sql)
+        try:
+            self.cursor.execute(sql)
+        except:
+            print(f'error encountered during executing sql: \n{sql}\n')
+        self.con.commit()
 
     def alter_db_table(self, db_table, columns, dtypes, primary_key):
         """ 修改db_table的schema，按照输入参数设置表的字段属性
@@ -1093,13 +1127,15 @@ class DataSource:
             if (start is not None) and (end is not None):
                 # 两种方法实现，分别是df.query 以及 df.index.get_level_values()
                 # 第一种方法， df.query
-                df = df.query(f"trade_date >= {start} and trade_date <= {end}")
+                # df = df.query(f"trade_date >= {start} and trade_date <= {end}")
                 # 第二种方法：df.index.get_level_values()
-                # mask = end >= df.index.get_level_values('trade_date') >= start
-                # df = df[mask]
+                m1 = df.index.get_level_values('trade_date') >= start
+                m2 = df.index.get_level_values('trade_date') <= end
+                df = df[m1 & m2]
         elif self.source_type == 'db':
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
+            self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
             df = self.read_database(db_table=table, shares=shares, start=start, end=end)
             set_primary_key_index(df, primary_key, pk_dtypes)
         else:  # for unexpected cases:
@@ -1146,13 +1182,10 @@ class DataSource:
             else:  # for unexpected cases
                 raise KeyError(f'Invalid process mode on duplication: {on_duplicate}')
 
-    def download_and_check_table_data(self, table, channel, merge_type, df=None, f_name=None, **kwargs):
-        """ 从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
+    def acquire_table_data(self, table, channel, df=None, f_name=None, **kwargs):
+        """从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
             1，根据channel确定数据源，根据table名下载相应的数据表
-            2，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
-            3，如果datasource type是"db"，删除下载数据中与本地数据重复的部分，仅保留新增数据
-            4，如果datasource type是"file"，将下载的数据与本地数据合并并去重
-            返回处理完毕的dataFrame
+            2，处理获取的df的格式，确保为只含简单range-index的格式
 
         :param table: str, 数据表名，必须是database中定义的数据表
         :param channel:
@@ -1160,10 +1193,6 @@ class DataSource:
             - 'local_df': 通过参数传递一个df，该df的columns必须与table的定义相同
             - 'tushare' : 从Tushare API获取金融数据，请自行申请相应权限和积分
             - 'other'   : 其他金融数据API，尚未开发
-        :param merge_type: str
-            指定如何合并下载数据和本地数据：
-            - 'replace': 如果下载数据与本地数据重复，用下载数据替代本地数据
-            - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
         :param df: pd.DataFrame 通过传递一个DataFrame获取数据
             如果数据获取渠道为"df"，则必须给出此参数
         :param f_name: str 通过本地csv文件或excel文件获取数据
@@ -1172,7 +1201,7 @@ class DataSource:
             用于下载金融数据的函数参数
 
         :return:
-            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
+            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
         """
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
@@ -1182,11 +1211,8 @@ class DataSource:
             raise TypeError(f'channel should be a string, got {type(channel)} instead.')
         if channel not in AVAILABLE_CHANNELS:
             raise KeyError(f'Invalid channel name')
-        if not isinstance(merge_type, str):
-            raise TypeError(f'merge type should be a string, got {type(merge_type)} instead.')
-        if merge_type not in ['ignore', 'update']:
-            raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
 
+        column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         # 从指定的channel获取数据
         if channel == 'df':
             # 通过参数传递的DF获取数据
@@ -1212,6 +1238,36 @@ class DataSource:
             dnld_data = acquire_data(table, **kwargs)
         else:
             raise NotImplementedError
+
+        return set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+
+    def update_table_data(self, table, df, merge_type):
+        """ 检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤：
+
+            1，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
+            2，如果datasource type是"db"，删除下载数据中与本地数据重复的部分，仅保留新增数据
+            3，如果datasource type是"file"，将下载的数据与本地数据合并并去重
+            返回处理完毕的dataFrame
+
+        :param table: str, 数据表名，必须是database中定义的数据表
+        :param merge_type: str
+            指定如何合并下载数据和本地数据：
+            - 'replace': 如果下载数据与本地数据重复，用下载数据替代本地数据
+            - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
+        :param df: pd.DataFrame 通过传递一个DataFrame获取数据
+            如果数据获取渠道为"df"，则必须给出此参数
+
+        :return:
+            pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式
+        """
+        if not isinstance(df, pd.DataFrame):
+            raise TypeError(f'df should be a dataframe, got {type(df)} instead')
+        if not isinstance(merge_type, str):
+            raise TypeError(f'merge type should be a string, got {type(merge_type)} instead.')
+        if merge_type not in ['ignore', 'update']:
+            raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
+
+        dnld_data = df
 
         column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
@@ -1348,8 +1404,6 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
         raise TypeError(f'primary key should be a list, got {type(primary_key)} instead')
     idx_columns = list(df.index.names)
     pk_columns = primary_key
-    # if not all(item in pk_columns for item in primary_key):
-    #     raise KeyError(f'primary key does not fit index names')
     if idx_columns != [None]:
         index_frame = df.index.to_frame()
         for col in idx_columns:
