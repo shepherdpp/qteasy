@@ -24,11 +24,11 @@ VALID_STOCK_CODE_SUFFIX = ['.SZ', '.SH', '.HK']
 def acquire_data(table, **kwargs):
     """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
     # function map 定义了table与tushare函数之间的对应关系，以便调用正确的函数下载数据
-    from .database import TABLE_SOURCE_MAPPING
+    from .database import TABLE_SOURCE_MAPPING, TABLE_SOURCE_MAPPING_COLUMNS
     assert isinstance(table, str), TypeError(f'A string should be given as table name, got {type(table)} instead')
     assert table in TABLE_SOURCE_MAPPING.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
 
-    func_name = TABLE_SOURCE_MAPPING[table]['tushare']
+    func_name = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('tushare')]
     func = globals()[func_name]
 
     return func(**kwargs)

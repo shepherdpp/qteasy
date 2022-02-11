@@ -58,7 +58,6 @@ from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, s
 from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
-from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
@@ -12752,7 +12751,7 @@ class TestDataBase(unittest.TestCase):
             # 下载并写入数据到表中
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
-            df = ds.acquire_table_data(table, 'tushare', 'ignore', **tables_to_test[table])
+            df = self.ds_csv.acquire_table_data(table, 'tushare', 'ignore', **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table data ({table}) from tushare for '
@@ -12772,7 +12771,7 @@ class TestDataBase(unittest.TestCase):
             # 下载数据并添加到表中
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
-            df = ds.acquire_table_data(table, 'tushare', 'ignore', **tables_to_add[table])
+            df = self.ds_hdf.acquire_table_data(table, 'tushare', 'ignore', **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table data ({table}) from tushare for '
@@ -12786,8 +12785,34 @@ class TestDataBase(unittest.TestCase):
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000004.SZ', '000005.SZ', '000006.SZ'])
                 else:
-                    df = ds.read_table_data(table, start='20200101', end='20200301')
+                    df = ds.read_table_data(table, start='20200101', end='20200201')
                 print(f'got data from data source {ds.source_type}-{ds.file_type}:\n{df}')
+
+            # 删除所有的表
+            for ds in all_data_sources:
+                ds.drop_table(table)
+
+    def test_get_history_panel_data(self):
+        """ test getting data, use real database """
+        # all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+        ds = DataSource(source_type='db',
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        shares = ['000001.SZ', '000002.SZ']
+        htypes = 'pe, close, open, swing, strength'
+        start = '20210101'
+        end = '20210301'
+        asset_type = 'E, IDX'
+        freq = 'd'
+        adj = 'none'
+        ds.get_history_dataframes(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj=adj)
 
 
 def test_suite(*args):

@@ -42,3 +42,4 @@ ani_plot.py
 .idea/modules.xml
 .idea/qteasy.iml
 .idea/vcs.xml
+qteasy/qteasy.cnf

@@ -15,7 +15,9 @@ import pandas as pd
 from os import path
 import warnings
 
-from .utilfuncs import str_to_list, regulate_date_format
+from .utilfuncs import AVAILABLE_ASSET_TYPES
+from .utilfuncs import str_to_list, regulate_date_format, TIME_FREQ_STRINGS
+from .history import stack_dataframes
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
@@ -25,104 +27,68 @@ AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 """
 DATA_MAPPING_TABLE = []
 
-# 定义所有的数据表，并定义数据表的结构、tushare来源和更新规则
+# 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
+# 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
+TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'table_usage', 'asset_type', 'freq', 'tushare', 'tushare_args']
 TABLE_SOURCE_MAPPING = {
 
-    'trade_calendar':   {'structure':   'trade_calendar',
-                         'tushare':     'trade_calendar',
-                         'tushare_arg': ''},
+    'trade_calendar':   ['trade_calendar', 'cal', 'none', 'none', 'trade_calendar', ''],
 
-    'stock_basic':      {'structure':   'stock_basic',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'stock_basic':      ['stock_basic', 'basics', 'E', 'none', 'stock_basic', ''],
 
-    'stock_names':      {'structure':   'name_changes',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'stock_names':      ['name_changes', 'basics', 'E', 'none', 'name_changes', ''],
 
-    'index_basic':      {'structure':   'index_basic',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'index_basic':      ['index_basic', 'basics', 'IDX', 'none',  'index_basic', ''],
 
-    'fund_basic':       {'structure':   'fund_basic',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'fund_basic':       ['fund_basic', 'basics', 'FD', 'none',  'fund_basic', ''],
 
-    'future_basic':     {'structure':   'future_basic',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'future_basic':     ['future_basic', 'basics', 'FT', 'none', '', ''],
 
-    'opt_basic':        {'structure':   'opt_basic',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'opt_basic':        ['opt_basic', 'basics', 'OPT', 'none', '', ''],
 
-    'stock_1min':       {'structure':   'bars',
-                         'tushare':     'stk_mins',
-                         'tushare_arg': ''},
+    'stock_1min':       ['bars', 'data', 'E', '1min', 'stk_mins', ''],
 
-    'stock_5min':       {'structure':   'bars',
-                         'tushare':     'stk_mins',
-                         'tushare_arg': ''},
+    'stock_5min':       ['bars', 'data', 'E', '5min', 'stk_mins', ''],
 
-    'stock_15min':      {'structure':   'bars',
-                         'tushare':     'stk_mins',
-                         'tushare_arg': ''},
+    'stock_15min':      ['bars', 'data', 'E', '15min', 'stk_mins', ''],
 
-    'stock_30min':      {'structure':   'bars',
-                         'tushare':     'stk_mins',
-                         'tushare_arg': ''},
+    'stock_30min':      ['bars', 'data', 'E', '30min', 'stk_mins', ''],
 
-    'stock_hour':       {'structure':   'bars',
-                         'tushare':     'stk_mins',
-                         'tushare_arg': ''},
+    'stock_hour':       ['bars', 'data', 'E', '60min', 'stk_mins', ''],
 
-    'stock_daily':      {'structure':   'bars',
-                         'tushare':     'daily',
-                         'tushare_arg': ''},
+    'stock_daily':      ['bars', 'data', 'E', 'd', 'daily', ''],
 
-    'stock_weekly':     {'structure':   'bars',
-                         'tushare':     'weekly',
-                         'tushare_arg': ''},
+    'stock_weekly':     ['bars', 'data', 'E', 'w', 'weekly', ''],
 
-    'stock_monthly':    {'structure':   'bars',
-                         'tushare':     'monthly',
-                         'tushare_arg': ''},
+    'stock_monthly':    ['bars', 'data', 'E', 'm', 'monthly', ''],
 
-    'index_daily':      {'structure':   'bars',
-                         'tushare':     'index_daily',
-                         'tushare_arg': ''},
+    'index_daily':      ['bars', 'data', 'IDX', 'd', 'index_daily', ''],
 
-    'index_weekly':     {'structure':   'bars',
-                         'tushare':     'index_weekly',
-                         'tushare_arg': ''},
+    'index_weekly':     ['bars', 'data', 'IDX', 'w', 'index_weekly', ''],
 
-    'index_monthly':    {'structure':   'bars',
-                         'tushare':     'index_monthly',
-                         'tushare_arg': ''},
+    'index_monthly':    ['bars', 'data', 'IDX', 'm', 'index_monthly', ''],
 
-    'fund_daily':       {'structure':   'bars',
-                         'tushare':     'fund_daily',
-                         'tushare_arg': ''},
+    'fund_daily':       ['bars', 'data', 'FD', 'd', 'fund_daily', ''],
 
-    'stock_adj_factor': {'structure':   'adj_factors',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'fund_nav':         ['fund_nav', 'data', 'FD', 'd', 'fund_nav', ''],
 
-    'fund_adj_factor':  {'structure':   'adj_factors',
-                         'tushare':     '',
-                         'tushare_arg': ''},
+    'fund_share':       ['fund_share', 'events', 'FD', 'none', 'fund_share', ''],
 
-    'stock_indicator':  {'structure':   'stock_indicator',
-                         'tushare':     'daily_basic',
-                         'tushare_arg': ''},
+    'fund_manager':     ['fund_manager', 'events', 'FD', 'none', 'fund_manager', ''],
 
-    'stock_indicator2': {'structure':   'stock_indicator2',
-                         'tushare':     'daily_basic2',
-                         'tushare_arg': ''},
+    'future_daily':     ['future_daily', 'data', 'FT', 'd', 'future_daily', ''],
 
-    'index_indicator':  {'structure':   'index_indicator',
-                         'tushare':     'index_daily_basic',
-                         'tushare_arg': ''},
+    'stock_adj_factor': ['adj_factors', 'adj', 'E', 'd', 'adj_factors', ''],
+
+    'fund_adj_factor':  ['adj_factors', 'adj', 'FD', 'd', 'adj_factors', ''],
+
+    'stock_indicator':  ['stock_indicator', 'data', 'E', 'd', 'daily_basic', ''],
+
+    'stock_indicator2': ['stock_indicator2', 'data', 'E', 'd', 'daily_basic2', ''],
+
+    'index_indicator':  ['index_indicator', 'data', 'IDX', 'd', 'index_daily_basic', ''],
+
+    'index_weight':     ['index_weight', 'comp', 'IDX', 'd', 'index_weight', ''],
 
 }
 # 定义Table structure，定义所有数据表的主键和内容
@@ -208,7 +174,7 @@ TABLE_STRUCTURES = {
 
     # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
-                         'dtypes':     ['varchar(9)', 'date', 'tinyint'],
+                         'dtypes':     ['varchar(9)', 'date', 'double'],
                          'remarks':    ['证券代码', '交易日期', '复权因子'],
                          'prime_keys': [0, 1]},
 
@@ -261,7 +227,7 @@ TABLE_STRUCTURES = {
                                         'selling', 'buying', 'total_share', 'float_share', 'pe', 'industry', 'area',
                                         'float_mv', 'total_mv', 'avg_price', 'strength', 'activity', 'avg_turnover',
                                         'attack', 'interval_3', 'interval_6'],
-                         'dtypes':     ['varchar(9)', 'date', 'str', 'float', 'float', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'varchar(8)', 'varchar(8)', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float'],
@@ -270,7 +236,7 @@ TABLE_STRUCTURES = {
                                         '外盘（主动买， 手）', '总股本(亿)', '流通股本(亿)', '市盈(动)', '所属行业', '所属地域',
                                         '流通市值', '总市值', '平均价', '强弱度(%)', '活跃度(%)', '笔换手', '攻击波(%)',
                                         '近3月涨幅', '近6月涨幅'],
-                         'prime_keys': [0, 2]},
+                         'prime_keys': [0, 1]},
 
     'index_indicator':  {'columns':    ['ts_code', 'trade_date', 'total_mv', 'float_mv', 'total_share', 'float_share',
                                         'free_share', 'turnover_rate', 'turnover_rate_f', 'pe', 'pe_ttm', 'pb'],
@@ -887,7 +853,7 @@ class DataSource:
         elif has_ts_code_filter and has_date_filter:
             # both WHERE clause
             sql += f'WHERE {ts_code_filter}' \
-                   f'AND {date_filter}\n'
+                   f' AND {date_filter}\n'
         elif has_ts_code_filter and not has_date_filter:
             # only one WHERE clause
             sql += f'WHERE {ts_code_filter}\n'
@@ -989,8 +955,8 @@ class DataSource:
         # debug
         try:
             self.cursor.execute(sql)
-        except:
-            print(f'error encountered during executing sql: \n{sql}\n')
+        except Exception as e:
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
         self.con.commit()
 
     def alter_db_table(self, db_table, columns, dtypes, primary_key):
@@ -1146,6 +1112,8 @@ class DataSource:
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
             df = self.read_file(file_name=table, primary_key=primary_key, pk_dtypes=pk_dtypes)
+            if df.empty:
+                return df
             if share_like_pk is not None:
                 df = df.loc[df.index.isin(shares, level=share_like_pk)]
 
@@ -1161,12 +1129,19 @@ class DataSource:
             # 读取数据库表，从数据库表中读取的DataFrame并未设置primary_key index，因此
             # 需要手动设置index，但是读取的数据已经按shares/start/end筛选，无需手动筛选
             self.new_db_table(db_table=table, columns=columns, dtypes=dtypes, primary_key=primary_key)
+            if share_like_pk is None:
+                shares = None
+            if date_like_pk is None:
+                start = None
+                end = None
             df = self.read_database(db_table=table,
                                     share_like_pk=share_like_pk,
                                     shares=shares,
                                     date_like_pk=date_like_pk,
                                     start=start,
                                     end=end)
+            if df.empty:
+                return df
             set_primary_key_index(df, primary_key, pk_dtypes)
         else:  # for unexpected cases:
             raise TypeError(f'Invalid value DataSource.source_type: {self.source_type}')
@@ -1176,12 +1151,12 @@ class DataSource:
     def write_table_data(self, df, table, on_duplicate='ignore'):
         """ 将df中的数据写入本地数据表（本地文件或数据库）
             如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
-            注意：这里并不检查df是否含有重复数据或冗余数据
+            如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定
 
-            TODO: potentially: 如果一张数据表的数据量过大，查询或读取数据将花费太多的时间
-            TODO: 此时应该将表格存储在多张数据库表或多个文件中，本函数应该执行这一项管理工作
-            TODO: 即将数据分成不同的DataFrame，分别保存在不同的表或文件中。 此时需要建立
-            TODO: 索引数据表、并通过索引表快速获取所需的数据，这些工作都在本函数中执行
+            TODO: potentially: 如果一张数据表的数据量过大，除非将数据存储在数据库中，
+            TODO: 如果将所有数据存储在一个文件中将导致读取速度下降，本函数应该进行分表工作，
+            TODO: 即将数据分成不同的DataFrame，分别保存在不同的文件中。 此时需要建立
+            TODO: 索引数据文件、并通过索引表快速获取所需的数据，这些工作都在本函数中执行
 
         :param df: pd.DataFrame 一个数据表，数据表的列名应该与本地数据表定义一致
         :param table: str 本地数据表名，
@@ -1302,7 +1277,7 @@ class DataSource:
         column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         # 删除数据中过多的列，不允许出现缺少列
-        table_struct = TABLE_SOURCE_MAPPING[table]['structure']
+        table_struct = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('structure')]
         table_columns = TABLE_STRUCTURES[table_struct]['columns']
         dnld_columns = dnld_data.columns.to_list()
         missing_columns = [col for col in table_columns if col not in dnld_columns]
@@ -1348,23 +1323,133 @@ class DataSource:
         return None
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
-    def get_history_dataframes(self, shares, htypes, start, end, freq):
+    def get_history_dataframes(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
             HistoryPanel对象，用于策略的运行、回测或优化测试。
 
-        :param shares:
-
-        :param htypes:
-        :param start:
-        :param end:
-        :param freq:
+        :param shares: [str, list]
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+        :param htypes: [str, list]
+            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     'open, high, low, close'
+             - list:    ['open', 'high', 'low', 'close']
+        :param start: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间（如果可用）
+        :param end: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间（如果可用）
+        :param freq: str
+            获取的历史数据的频率，包括以下选项：
+             - 1/5/15/30min 1/5/15/30分钟频率周期数据（如K线）
+             - H/D/W/M 分别代表小时/天/周/月 周期数据（如K线）
+        :param asset_type: str, list
+            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+             - any: 可以获取任意资产类型的证券数据（默认值）
+             - E:   只获取股票类型证券的数据
+             - IDX: 只获取指数类型证券的数据
+             - FT:  只获取期货类型证券的数据
+             - FD:  只获取基金类型证券的数据
+        :param adj: str
+            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+             - none: 不复权（默认值）
+             - back: 后复权
+             - forward: 前复权
 
         :return:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
-        raise NotImplementedError
+        # 检查数据合法性：
+        if not isinstance(shares, (str, list)):
+            raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
+        if isinstance(shares, list):
+            if not all(isinstance(item, str) for item in shares):
+                raise TypeError(f'all items in shares list should be a string, got otherwise')
 
+        if not isinstance(htypes, (str, list)):
+            raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+        if isinstance(htypes, str):
+            htypes = str_to_list(htypes)
+        if isinstance(htypes, list):
+            if not all(isinstance(item, str) for item in htypes):
+                raise TypeError(f'all items in htypes list should be a string, got otherwise')
+
+        if (not isinstance(start, str)) and (not isinstance(end, str)):
+            raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
+
+        if not isinstance(freq, str):
+            raise TypeError(f'freq should be a string, got {type(freq)} instead')
+        if freq.upper() not in TIME_FREQ_STRINGS:
+            raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+
+        if not isinstance(asset_type, (str, list)):
+            raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
+        if isinstance(asset_type, str):
+            asset_type = str_to_list(asset_type)
+        if not all(isinstance(item, str) for item in asset_type):
+            raise KeyError(f'not all items in asset type are strings')
+        if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
+            raise KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
+        if any(item.upper() == 'ANY' for item in asset_type):
+            asset_type = AVAILABLE_ASSET_TYPES
+
+        if not isinstance(adj, str):
+            raise TypeError(f'adj type should be a string, got {type(adj)} instead')
+        if adj.upper() not in ['NONE', 'BACK', 'FORWARD']:
+            raise KeyError(f"invalid adj type, which should be anyone of ['NONE', 'BACK', 'FORWARD']")
+
+        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+        tables_to_search = table_map.loc[((table_map.table_usage == 'data') &
+                                          table_map.asset_type.isin(asset_type)) &
+                                         (table_map.freq == freq)].index.to_list()
+        # 根据资产代码、起止日期查询所需的数据,删除不需要的数据
+        table_data_read = {}
+        table_data_columns = {}
+        for tbl in tables_to_search:
+            df = self.read_table_data(tbl, shares=shares, start=start, end=end)
+            if not df.empty:
+                cols_to_remove = [col for col in df.columns if col not in htypes]
+                df.drop(columns=cols_to_remove, inplace=True)
+            table_data_read[tbl] = df
+            table_data_columns[tbl] = df.columns
+            # debug
+            # print(f'got data from table {tbl}:\n{df}')
+
+        # 如果需要复权数据，计算复权后的数据
+        if adj != 'none':
+            raise NotImplementedError
+
+        # 提取数据，生成单个数据类型的dataframe
+        df_by_htypes = {}
+        for htyp in htypes:
+            for tbl in tables_to_search:
+                if htyp in table_data_columns[tbl]:
+                    df = table_data_read[tbl]
+                    if not df.empty:
+                        htyp_series = df[htyp]
+                        df_by_htypes[htyp] = htyp_series.unstack(level=0)
+                        # debug
+                        # print(f'got un stacked dataframe for htype {htyp} from table {tbl}:\n'
+                        #       f'{df_by_htypes[htyp]}')
+
+        # 将DataFrame打包后输出, 注意此时可能有重复数据
+        # debug
+        # for typ in df_by_htypes:
+        #     print(f'got df for htype {typ}:\n{df_by_htypes[typ]}')
+        result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
+        # debug
+        print(f'got history panel: \n{result_hp}')
+        return result_hp
+
+    # 顶层函数，用于定期计划性获取数据的操作函数
     def refill_local_source(self):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
@@ -1486,7 +1571,7 @@ def get_built_in_table_schema(table):
     if table not in TABLE_SOURCE_MAPPING.keys():
         raise KeyError(f'invalid table name')
 
-    table_structure = TABLE_SOURCE_MAPPING[table]['structure']
+    table_structure = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('structure')]
     structure = TABLE_STRUCTURES[table_structure]
     columns = structure['columns']
     dtypes = structure['dtypes']

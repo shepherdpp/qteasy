@@ -58,11 +58,11 @@ qt_local_configs = {}  # 存储本地配置文件的配置
 QT_ROOT_PATH = str(Path('.').resolve()) + '/'
 # 读取configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
 try:
-    with open(QT_ROOT_PATH+'qteasy/configurations.txt') as f:
+    with open(QT_ROOT_PATH+'qteasy/qteasy.cnf') as f:
         config_lines = f.readlines()
 except:
     # 新建文件：
-    f = open(QT_ROOT_PATH + 'qteasy/configurations.txt', 'w')
+    f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
     f.close()
     config_lines = []  # 本地配置文件行
 
@@ -85,6 +85,18 @@ except:
 
 # 读取其他本地配置属性，更新QT_CONFIG
 configure(**qt_local_configs)
+
+# 建立默认的本地数据源
+QT_DATA_SOURCE = DataSource(
+        source_type=QT_CONFIG['local_data_source'],
+        file_type=QT_CONFIG['local_data_file_type'],
+        file_loc=QT_CONFIG['local_data_file_path'],
+        host=QT_CONFIG['local_db_host'],
+        port=QT_CONFIG['local_db_port'],
+        user=QT_CONFIG['local_db_user'],
+        password=QT_CONFIG['local_db_password'],
+        db=QT_CONFIG['local_db_name']
+)
 
 np.seterr(divide='ignore', invalid='ignore')
 
