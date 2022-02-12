@@ -820,30 +820,6 @@ class HistoryPanel():
         """
         raise NotImplementedError
 
-    # TODO implement this method
-    def to_csv(self):
-        """ save a HistoryPanel object to csv file
-
-        :return:
-        """
-        raise NotImplementedError
-
-    # TODO implement this method
-    def to_hdf(self):
-        """ save a HistoryPanel object to hdf file
-
-        :return:
-        """
-        raise NotImplementedError
-
-    # TODO implement this method
-    def to_db(self):
-        """ save HistoryPanel to a database or to update the database with current HistoryPanel
-
-        :return:
-        """
-        raise NotImplementedError
-
 
 # TODO implement this method
 def csv_to_hp():

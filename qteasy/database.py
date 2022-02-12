@@ -21,6 +21,7 @@ from .history import stack_dataframes
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
+ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
 
 """ 
 这里定义AVAILABLE_TABLES 以及 TABLE_STRUCTURES
@@ -80,7 +81,7 @@ TABLE_SOURCE_MAPPING = {
 
     'stock_adj_factor': ['adj_factors', 'adj', 'E', 'd', 'adj_factors', ''],
 
-    'fund_adj_factor':  ['adj_factors', 'adj', 'FD', 'd', 'adj_factors', ''],
+    'fund_adj_factor':  ['adj_factors', 'adj', 'FD', 'd', 'fund_adj', ''],
 
     'stock_indicator':  ['stock_indicator', 'data', 'E', 'd', 'daily_basic', ''],
 
@@ -629,6 +630,16 @@ TABLE_STRUCTURES = {
                          'prime_keys': [0, 1]}
 
 }
+
+
+class DataConflictWarning(Warning):
+    """ Warning Type: Data conflict detected"""
+    pass
+
+
+class MissingDataWarning(Warning):
+    """ Warning Type: Local Data Missing"""
+    pass
 
 
 # noinspection SqlDialectInspection
@@ -1407,13 +1418,15 @@ class DataSource:
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        tables_to_search = table_map.loc[((table_map.table_usage == 'data') &
-                                          table_map.asset_type.isin(asset_type)) &
-                                         (table_map.freq == freq)].index.to_list()
+        tables_to_read = table_map.loc[(table_map.table_usage == 'data') &
+                                       (table_map.asset_type.isin(asset_type)) &
+                                       (table_map.freq == freq)].index.to_list()
+        # debug
+        # print(f'tables to read: {tables_to_read}\n')
         # 根据资产代码、起止日期查询所需的数据,删除不需要的数据
         table_data_read = {}
         table_data_columns = {}
-        for tbl in tables_to_search:
+        for tbl in tables_to_read:
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
                 cols_to_remove = [col for col in df.columns if col not in htypes]
@@ -1421,32 +1434,86 @@ class DataSource:
             table_data_read[tbl] = df
             table_data_columns[tbl] = df.columns
             # debug
-            # print(f'got data from table {tbl}:\n{df}')
-
-        # 如果需要复权数据，计算复权后的数据
-        if adj != 'none':
-            raise NotImplementedError
+            # print(f'got data from table {tbl}:\n{df}\n')
 
         # 提取数据，生成单个数据类型的dataframe
-        df_by_htypes = {}
+        df_by_htypes = {k:v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
-            for tbl in tables_to_search:
+            for tbl in tables_to_read:
                 if htyp in table_data_columns[tbl]:
                     df = table_data_read[tbl]
                     if not df.empty:
                         htyp_series = df[htyp]
-                        df_by_htypes[htyp] = htyp_series.unstack(level=0)
+                        new_df = htyp_series.unstack(level=0)
+                        old_df = df_by_htypes[htyp]
+                        # 使用两种方法实现df的合并，分别是merge()和join()
+                        # df_by_htypes[htyp] = old_df.merge(new_df,
+                        #                                   how='outer',
+                        #                                   left_index=True,
+                        #                                   right_index=True,
+                        #                                   suffixes=('', '_y'))
+                        df_by_htypes[htyp] = old_df.join(new_df,
+                                                         how='outer',
+                                                         rsuffix='_y')
                         # debug
                         # print(f'got un stacked dataframe for htype {htyp} from table {tbl}:\n'
-                        #       f'{df_by_htypes[htyp]}')
+                        #       f'{new_df}\n'
+                        #       f'=============================================================')
+        # 如果在历史数据合并时发现列名称冲突，发出警告信息，并删除后添加的列
+        conflict_cols = ''
+        for htyp in htypes:
+            df_columns = df_by_htypes[htyp].columns.to_list()
+            col_with_suffix = [col for col in df_columns if col[-2:] == '_y']
+            if len(col_with_suffix) > 0:
+                df_by_htypes[htyp].drop(columns=col_with_suffix, inplace=True)
+                conflict_cols += f'd-type {htyp} conflicts in {list(set(col[:-2] for col in col_with_suffix))};\n'
+            # debug
+            # print(f'got dataframe data for htype {htyp}:\n'
+            #       f'columns: {df_by_htypes[htyp].columns}\n'
+            #       f'{df_by_htypes[htyp].head()}\n')
+        if conflict_cols != '':
+            warnings.warn(f'\nConflict data encountered, some types of data are loaded from multiple tables, '
+                          f'conflicting data might be discarded:\n'
+                          f'{conflict_cols}', DataConflictWarning)
 
-        # 将DataFrame打包后输出, 注意此时可能有重复数据
-        # debug
-        # for typ in df_by_htypes:
-        #     print(f'got df for htype {typ}:\n{df_by_htypes[typ]}')
+        # 如果需要复权数据，计算复权价格
+        if adj != 'none':
+            # 下载复权因子
+            adj_factors = {}
+            adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
+                                               table_map.asset_type.isin(asset_type)].index.to_list()
+            # debug
+            # print(f'adj tables to read: {adj_tables_to_read}\n')
+            for tbl in adj_tables_to_read:
+                adj_df = self.read_table_data(tbl, shares=shares, start=start, end=end)
+                if not adj_df.empty:
+                    adj_df = adj_df['adj_factor'].unstack(level=0)
+                adj_factors[tbl] = adj_df
+                # debug
+                # print(f'got adj data from table {tbl}:\n{adj_df}')
+                # 后复权 = 当日最新价 × 当日复权因子
+                # 前复权 = 当日复权价 ÷ 最新复权因子
+
+            # 根据复权因子更新所有可复权数据
+            prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]
+            # debug
+            # print(f'prices to adjust is: {prices_to_adjust}')
+            for htyp in prices_to_adjust:
+                price_df = df_by_htypes[htyp]
+                all_ts_codes = price_df.columns
+                comb_factors = 1.0
+                for af in adj_factors:
+                    comb_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
+                # debug
+                # print(f'got combined adj factors: \n{comb_factors}')
+                price_df *= comb_factors
+                if adj == 'forward':
+                    price_df /= comb_factors.iloc[-1]
+                # print(f'got adjusted prices for {htyp} like: \n{price_df}')
+
         result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
         # debug
-        print(f'got history panel: \n{result_hp}')
+        # print(f'got history panel: \n{result_hp}')
         return result_hp
 
     # 顶层函数，用于定期计划性获取数据的操作函数

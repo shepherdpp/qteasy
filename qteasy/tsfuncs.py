@@ -421,6 +421,57 @@ def index_monthly(index=None,
     return pro.index_monthly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
 
 
+@retry(Exception)
+def fund_daily(fund=None,
+               trade_date=None,
+               start=None,
+               end=None):
+    """
+
+    :param fund:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_daily(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def adj_factors(shares=None,
+                trade_date=None,
+                start=None,
+                end=None):
+    """
+
+    :param shares:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.adj_factor(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def fund_adj(shares=None,
+             trade_date=None,
+             start=None,
+             end=None):
+    """
+
+    :param shares:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_adj(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
+
+
 @lru_cache(maxsize=16)
 def get_bar(shares: object,
             start: object,

@@ -12156,9 +12156,28 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        op = qt.Operator(strategies=[MyStg()], signal_type='pt')
-        op.set_parameter(0, (25, 123, 0.01))
-        qt.run(op, mode=1, invest_start='20080101', allow_sell_short=True, print_backtest_log=False)
+        ds = DataSource(source_type='db',
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        # 从tushare下载数据：
+        # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+        #                              '000005.SH', '000006.SH', '000300.SH'])
+        shares = ['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+                  '000005.SH', '000006.SH', '000300.SH']
+        start = '20210101'
+        end = '20211231'
+        dates = pd.date_range(start='20210101', end='20210331', freq='d')
+        dates = list(dates.strftime('%Y%m%d'))
+        table = ['stock_indicator2']
+        # for share in shares:
+        for trade_date in dates:
+            df = ds.acquire_table_data(table=table[0], channel='tushare', trade_date=trade_date)
+            # df = ds.acquire_table_data(table=table[0], channel='tushare', index=share, start=start, end=end)
+            # print(f'got df: \n{df.head()}')
+            ds.update_table_data(table=table[0], df=df, merge_type='ignore')
+            time_str = pd.to_datetime('now').strftime('%Y/%m/%d-%H:%M:%S')
+            print(f'data written in table {table} for date {trade_date} at time: {time_str}!')
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -12793,26 +12812,51 @@ class TestDataBase(unittest.TestCase):
                 ds.drop_table(table)
 
     def test_get_history_panel_data(self):
-        """ test getting data, use real database """
+        """ test getting data, from real database """
         # all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
         ds = DataSource(source_type='db',
                         user='jackie',
                         password='iama007',
                         db='ts_db')
-        shares = ['000001.SZ', '000002.SZ']
+        shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
         start = '20210101'
         end = '20210301'
-        asset_type = 'E, IDX'
+        asset_type = 'E, IDX, FD'
         freq = 'd'
-        adj = 'none'
-        ds.get_history_dataframes(shares=shares,
-                                  htypes=htypes,
-                                  start=start,
-                                  end=end,
-                                  asset_type=asset_type,
-                                  freq=freq,
-                                  adj=adj)
+        adj = 'back'
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=htypes,
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq=freq,
+                                       adj=adj)
+        print(f'got history panel with backward price recover:\n{hp}')
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=htypes,
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq=freq,
+                                       adj='forward')
+        print(f'got history panel with forward price recover:\n{hp}')
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=htypes,
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq=freq,
+                                       adj='forward')
+        print(f'got history panel with price:\n{hp}')
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=['open', 'high', 'low', 'close', 'vol'],
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq='w',
+                                       adj='forward')
+        print(f'got history panel with price:\n{hp}')
 
 
 def test_suite(*args):
