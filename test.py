@@ -61,6 +61,7 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
+from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
 from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
 
@@ -12155,29 +12156,29 @@ class FastExperiments(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_fast_experiments(self):
-        ds = DataSource(source_type='db',
-                        user='jackie',
-                        password='iama007',
-                        db='ts_db')
-        # 从tushare下载数据：
-        # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-        #                              '000005.SH', '000006.SH', '000300.SH'])
-        shares = ['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-                  '000005.SH', '000006.SH', '000300.SH']
-        start = '20210101'
-        end = '20211231'
-        dates = pd.date_range(start='20210101', end='20210331', freq='d')
-        dates = list(dates.strftime('%Y%m%d'))
-        table = ['stock_indicator2']
-        # for share in shares:
-        for trade_date in dates:
-            df = ds.acquire_table_data(table=table[0], channel='tushare', trade_date=trade_date)
-            # df = ds.acquire_table_data(table=table[0], channel='tushare', index=share, start=start, end=end)
-            # print(f'got df: \n{df.head()}')
-            ds.update_table_data(table=table[0], df=df, merge_type='ignore')
-            time_str = pd.to_datetime('now').strftime('%Y/%m/%d-%H:%M:%S')
-            print(f'data written in table {table} for date {trade_date} at time: {time_str}!')
+    # def test_fast_experiments(self):
+    #     ds = DataSource(source_type='db',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     # 从tushare下载数据：
+    #     # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+    #     #                              '000005.SH', '000006.SH', '000300.SH'])
+    #     shares = ['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+    #               '000005.SH', '000006.SH', '000300.SH']
+    #     start = '20210101'
+    #     end = '20211231'
+    #     dates = pd.date_range(start='20210203', end='20210331', freq='d')
+    #     dates = list(dates.strftime('%Y%m%d'))
+    #     table = ['stock_indicator2']
+    #     # for share in shares:
+    #     for trade_date in dates:
+    #         df = ds.acquire_table_data(table=table[0], channel='tushare', trade_date=trade_date)
+    #         # df = ds.acquire_table_data(table=table[0], channel='tushare', index=share, start=start, end=end)
+    #         # print(f'got df: \n{df.head()}')
+    #         ds.update_table_data(table=table[0], df=df, merge_type='ignore')
+    #         time_str = pd.to_datetime('now').strftime('%Y/%m/%d-%H:%M:%S')
+    #         print(f'data written in table {table} for date {trade_date} at time: {time_str}!')
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -12187,6 +12188,7 @@ class TestDataBase(unittest.TestCase):
     def setUp(self):
         from qteasy import QT_ROOT_PATH
         self.qt_root_path = QT_ROOT_PATH
+        # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
         self.ds_db = DataSource('db',
                                 host='localhost',
                                 port=3306,
@@ -12206,16 +12208,16 @@ class TestDataBase(unittest.TestCase):
             'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2.],
             'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3.]
         })
-        # 以下df_add中的数据大部分主键与df相同，但有四行不同，主键与df相同的行数据与df不同，用于测试新增及更新
+        # 以下df_add中的数据大部分主键与df相同，但有四行不同，且含有NaN与None值主键与df相同的行数据与df不同，用于测试新增及更新
         self.df_add = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000006.SZ', '000007.SZ',
                            '000001.SZ', '000002.SZ', '000003.SZ', '000006.SZ', '000007.SZ'],
             'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
                            '20211113', '20211113', '20211113', '20211113', '20211113'],
-            'open':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'open':       [10., 10., 10., None, 10., 10., 10., 10., 10., 10.],
             'high':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
-            'low':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
-            'close':      [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]
+            'low':        [10., 10., 10., 10., 10., np.nan, 10., 10., 10., 10.],
+            'close':      [10., 10., 10., 10., 10., 10., np.nan, 10., 10., 10.]
         })
         # 以下df_res中的数据是更新后的结果
         self.df_res = pd.DataFrame({
@@ -12223,10 +12225,10 @@ class TestDataBase(unittest.TestCase):
                            '000004.SZ', '000005.SZ', '000005.SZ', '000006.SZ', '000006.SZ', '000007.SZ', '000007.SZ'],
             'trade_date': ['20211112', '20211113', '20211112', '20211113', '20211112', '20211113', '20211112',
                            '20211113', '20211112', '20211113', '20211112', '20211113', '20211112', '20211113'],
-            'open':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 4.0, 9.0, 5.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+            'open':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 4.0, 9.0, 5.0, 10.0, np.nan, 10.0, 10.0, 10.0],
             'high':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 5.0, 10.0, 6.0, 1.0, 10.0, 10.0, 10.0, 10.0],
-            'low':        [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 6.0, 1.0, 7.0, 2.0, 10.0, 10.0, 10.0, 10.0],
-            'close':      [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 7.0, 2.0, 8.0, 3.0, 10.0, 10.0, 10.0, 10.0]
+            'low':        [10.0, np.nan, 10.0, 10.0, 10.0, 10.0, 6.0, 1.0, 7.0, 2.0, 10.0, 10.0, 10.0, 10.0],
+            'close':      [10.0, 10.0, 10.0, np.nan, 10.0, 10.0, 7.0, 2.0, 8.0, 3.0, 10.0, 10.0, 10.0, 10.0]
         })
         self.df2 = pd.DataFrame({
             'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
@@ -12312,6 +12314,22 @@ class TestDataBase(unittest.TestCase):
         self.assertEqual(list(res.index.names), [None])
         self.assertEqual(res.ts_code[0], '000001.SZ')
         self.assertEqual(res.columns.to_list(), ['ts_code', 'name', 'industry', 'area', 'market'])
+
+        # test get_primary_key_range
+        res = get_primary_key_range(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'date'])
+        print(f'get primary key range of df:\n{res}')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(item in ['000004.SZ', '000002.SZ', '000005.SZ', '000003.SZ', '000001.SZ'] for
+                            item in res['shares']))
+        self.assertEqual(res['start'], pd.to_datetime('20211112'))
+        self.assertEqual(res['end'], pd.to_datetime('20211113'))
+
+        res = get_primary_key_range(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        print(f'get primary key range of df:\n{res}')
+        target_list = ['000001.SZ', '000002.SZ', '000003.SZ', '000005.SZ', '000009.SZ',
+                       '000006.SZ', '000008.SZ', '000004.SZ', '000007.SZ', '000010.SZ']
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(item in target_list for item in res['shares']))
 
     def test_datasource_creation(self):
         """ test creation of all kinds of data sources"""
@@ -12677,18 +12695,18 @@ class TestDataBase(unittest.TestCase):
         rows, cols = saved_values.shape
         for i in range(rows):
             for j in range(cols):
-                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+                if pd.isna(saved_values[i, j]):
+                    self.assertTrue(pd.isna(loaded_values[i, j]))
+                else:
+                    self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
 
     # noinspection PyPep8Naming
     def test_read_write_update_table_data(self):
         """ test DataSource method read_table_data() and write_table_data()
             will test both built-in tables and user-defined tables
-
-            **WARNING: TABLE WILL BE DELETED! DO NOT run this test on real system!**
-            **警告：请不要在工作系统中进行此项测试，数据表将被删除**
         """
-        # 测试前删除已经存在的（真实）数据表
+        # 测试前删除已经存在的数据表
         test_table = 'stock_daily'
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
         for data_source in all_data_sources:
@@ -12701,6 +12719,23 @@ class TestDataBase(unittest.TestCase):
         for data_source in all_data_sources:
             df = data_source.read_table_data(test_table)
             print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
+            ts_codes = ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                        '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                        '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ']
+            trade_dates = pd.to_datetime(
+                    ['20211112', '20211112', '20211112', '20211112', '20211112',
+                     '20211113', '20211113', '20211113', '20211113', '20211113',
+                     '20211114', '20211114', '20211114', '20211114', '20211114']
+            )
+            cols = ['open', 'high', 'low', 'close', 'pre_close', 'change', 'pct_chg', 'vol', 'amount']
+            for tc, td in zip(ts_codes, trade_dates):
+                df_val = df.loc[(tc, td)].values
+                tdf = self.built_in_df
+                t_val = tdf.loc[(tdf.ts_code == tc) & (tdf.trade_date == td)][cols].values
+                print(f'on row: {tc}, {td}\n'
+                      f'data read from local source: {df_val}\n'
+                      f'data from origin dataframe : {t_val}')
+                self.assertTrue(np.allclose(df_val, t_val))
 
         # 测试读出并筛选部分标准表数据
         for data_source in all_data_sources:
@@ -12751,15 +12786,19 @@ class TestDataBase(unittest.TestCase):
                                                  'trade_date': '20211008'},
                           'stock_indicator':    {'shares': None,
                                                  'trade_date': '20211112'},
-                          'trade_calendar':     {'exchange': 'SSE'}
+                          'trade_calendar':     {'exchange': 'SSE',
+                                                 'start': '19910701',
+                                                 'end': '19920701'}
                           }
         tables_to_add = {'stock_daily':        {'share': None,
                                                 'trade_date': '20211115'},
                          'stock_weekly':       {'share': None,
                                                 'trade_date': '20211015'},
                          'stock_indicator':    {'shares': None,
-                                                'trade_date': '20211113'},
-                         'trade_calendar':     {'exchange': 'SZSE'}
+                                                'trade_date': '20211115'},
+                         'trade_calendar':     {'exchange': 'SZSE',
+                                                'start': '19910701',
+                                                'end': '19920701'}
                          }
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
 
@@ -12770,7 +12809,7 @@ class TestDataBase(unittest.TestCase):
             # 下载并写入数据到表中
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
-            df = self.ds_csv.acquire_table_data(table, 'tushare', 'ignore', **tables_to_test[table])
+            df = self.ds_csv.acquire_table_data(table, 'tushare', **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table data ({table}) from tushare for '
@@ -12790,12 +12829,12 @@ class TestDataBase(unittest.TestCase):
             # 下载数据并添加到表中
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
-            df = self.ds_hdf.acquire_table_data(table, 'tushare', 'ignore', **tables_to_add[table])
+            df = self.ds_hdf.acquire_table_data(table, 'tushare', **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table data ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.file_type}')
-                ds.update_table_data(table, df, 'ignore')
+                ds.update_table_data(table, df, 'update')
                 print(f'-- Done! --')
 
             for ds in all_data_sources:
@@ -12813,8 +12852,9 @@ class TestDataBase(unittest.TestCase):
 
     def test_get_history_panel_data(self):
         """ test getting data, from real database """
-        # all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
         ds = DataSource(source_type='db',
+                        host='192.168.2.11',
+                        port=3306,
                         user='jackie',
                         password='iama007',
                         db='ts_db')

@@ -894,12 +894,7 @@ def check_and_prepare_hist_data(operator, config):
             htypes=operator.op_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
-            adj='hfq',
-            chanel=config.hist_data_channel,
-            parallel=config.hist_dnld_parallel,
-            delay=config.hist_dnld_delay,
-            delay_every=config.hist_dnld_delay_evy,
-            progress=config.hist_dnld_prog_bar) if run_mode <= 1 else HistoryPanel()
+            adj='hfq') if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     # TODO: 此处应该根据回测价格顺序模式调整bt_price_types的价格
     bt_price_types = operator.bt_price_types
@@ -915,12 +910,7 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  adj='hfq',
-                                  chanel=config.hist_data_channel,
-                                  parallel=config.hist_dnld_parallel,
-                                  delay=config.hist_dnld_delay,
-                                  delay_every=config.hist_dnld_delay_evy,
-                                  progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
+                                  adj='hfq') if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
     hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) -
                                                              pd.Timedelta(int(window_length * 1.6), 'd')),
@@ -929,12 +919,7 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  adj='hfq',
-                                  chanel=config.hist_data_channel,
-                                  parallel=config.hist_dnld_parallel,
-                                  delay=config.hist_dnld_delay,
-                                  delay_every=config.hist_dnld_delay_evy,
-                                  progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
+                                  adj='hfq') if run_mode == 2 else HistoryPanel()
 
     hist_test_loop = hist_test.slice(htypes=bt_price_types)
     hist_test_loop.fillinf(0)
@@ -951,12 +936,7 @@ def check_and_prepare_hist_data(operator, config):
                                         htypes=config.ref_asset_dtype,
                                         freq=operator.op_data_freq,
                                         asset_type=config.ref_asset_type,
-                                        adj='hfq',
-                                        chanel=config.hist_data_channel,
-                                        parallel=config.hist_dnld_parallel,
-                                        delay=config.hist_dnld_delay,
-                                        delay_every=config.hist_dnld_delay_evy,
-                                        progress=config.hist_dnld_prog_bar)
+                                        adj='hfq')
                       ).to_dataframe(htype='close')
 
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \

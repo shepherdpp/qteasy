@@ -642,7 +642,7 @@ class MissingDataWarning(Warning):
     pass
 
 
-# noinspection SqlDialectInspection
+# noinspection SqlDialectInspection,PyTypeChecker
 class DataSource:
     """ DataSource 对象管理存储在本地的历史数据文件或数据库.
 
@@ -850,7 +850,11 @@ class DataSource:
         has_date_filter = False
         if shares is not None:
             has_ts_code_filter = True
-            ts_code_filter = f'{share_like_pk} in {tuple(shares)}'
+            share_count = len(shares)
+            if share_count > 1:
+                ts_code_filter = f'{share_like_pk} in {tuple(shares)}'
+            else:
+                ts_code_filter = f'{share_like_pk} = "{shares[0]}"'
         if (start is not None) and (end is not None):
             # assert start and end are date-like
             has_date_filter = True
@@ -902,21 +906,23 @@ class DataSource:
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
+        df = df.where(pd.notnull(df), None)
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO `{db_table}` ("
         for col in tbl_columns[:-1]:
             sql += f"`{col}`, "
-        sql += f"`{tbl_columns[-1]}`)\nVALUES\n"
-        for val in df_tuple[:-1]:
-            sql += f"{val},\n"
-        sql += f"{df_tuple[-1]}\n" \
-               f"ON DUPLICATE KEY UPDATE\n"
+        sql += f"`{tbl_columns[-1]}`)\nVALUES\n("
+        for val in tbl_columns[:-1]:
+            sql += "%s, "
+        sql += "%s)\n" \
+               "ON DUPLICATE KEY UPDATE\n"
         for col in update_cols[:-1]:
             sql += f"`{col}`=VALUES(`{col}`),\n"
         sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
         # debug
-        # print(f'following sql will be executed to update data:\n{sql}')
-        self.cursor.execute(sql)
+        # print(f'following sql will be executed to update database:\n{sql}\n'
+        #       f'with first 5 parameters: \n{df_tuple[:5]}')
+        self.cursor.executemany(sql, df_tuple)
         self.con.commit()
 
     # 以下几个数据库操作函数用于操作数据库表，可用于优化表结构以提升查询速度，如修改数据格式并建立索引等
@@ -1007,6 +1013,7 @@ class DataSource:
             # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
             del cur_columns[col]
             self.cursor.execute(sql)
+            self.con.commit()
 
         # to add some columns
         col_to_add = [col for col in columns if col not in cur_columns]
@@ -1017,6 +1024,7 @@ class DataSource:
             # debug
             # print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
+            self.con.commit()
 
         # to modify some columns
         col_to_modify = [col for col in cur_columns if cur_columns[col] != new_columns[col]]
@@ -1027,6 +1035,7 @@ class DataSource:
             # debug
             # print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
+            self.con.commit()
 
         # TODO: should also modify the primary keys, to be updated
         pass
@@ -1046,6 +1055,7 @@ class DataSource:
         # print(f'will execute following sql: \n{sql}\n')
 
         self.cursor.execute(sql)
+        self.con.commit()
         results = self.cursor.fetchall()
         # 为了方便，将cur_columns和new_columns分别包装成一个字典
         columns = {}
@@ -1065,6 +1075,7 @@ class DataSource:
             raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
         sql = f"DROP TABLE IF EXISTS {db_table}"
         self.cursor.execute(sql)
+        self.con.commit()
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def read_table_data(self, table, shares=None, start=None, end=None):
@@ -1150,7 +1161,7 @@ class DataSource:
                                     shares=shares,
                                     date_like_pk=date_like_pk,
                                     start=start,
-                                    end=end)
+                                     end=end)
             if df.empty:
                 return df
             set_primary_key_index(df, primary_key, pk_dtypes)
@@ -1257,7 +1268,7 @@ class DataSource:
 
         return set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
 
-    def update_table_data(self, table, df, merge_type):
+    def update_table_data(self, table, df, merge_type='update'):
         """ 检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤：
 
             1，检查下载后的数据表的列名是否与数据表的定义相同，删除多余的列
@@ -1268,7 +1279,7 @@ class DataSource:
         :param table: str, 数据表名，必须是database中定义的数据表
         :param merge_type: str
             指定如何合并下载数据和本地数据：
-            - 'replace': 如果下载数据与本地数据重复，用下载数据替代本地数据
+            - 'update': 默认值，如果下载数据与本地数据重复，用下载数据替代本地数据
             - 'ignore' : 如果下载数据与本地数据重复，忽略重复部分
         :param df: pd.DataFrame 通过传递一个DataFrame获取数据
             如果数据获取渠道为"df"，则必须给出此参数
@@ -1284,6 +1295,8 @@ class DataSource:
             raise KeyError(f'Invalid merge type, should be either "ignore" or "update"')
 
         dnld_data = df
+        if dnld_data.empty:
+            return
 
         column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
@@ -1299,26 +1312,42 @@ class DataSource:
             print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
 
-        # 将数据的primary_keys设置为df的index，便于寻找两个df的重叠部分
-        local_data = self.read_table_data(table)
-        set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-
-        # 根据merge_type处理重叠部分：
-        if merge_type == 'ignore':
-            # 丢弃下载数据中的重叠部分
-            dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
-        else:  # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地数据中的重叠部分（仅用于本地文件保存的情况）
-            local_data = local_data[~local_data.index.isin(dnld_data.index)]
+        # 下载local_data，将其与dnld_data进行对比，找出相同部分并删除这部分数据，避免重复保存
+        # 当数据表内容很多时，操作完整下载local_data会非常费时，因此需要限制下载的数据范围 - 22-02-13
+        # 目前的想法包括：(以下方法都仅限于source_type == 'db' 的情形)
+        # 1， 找到dnld_data的primary_key范围，下载的数据限定在这个范围内：
+        # 2， 如果以"update"方法更新数据库，则不需要下载local_data，直接使用
+        #       "INSERT INTO ... ON DUPLICATE KEY UPDATE ..." 更新表内容
 
         if self.source_type == 'file':
-            # 如果source_type是file，需要将下载的数据与本地数据合并后去重
+            # 如果source_type == 'file'，需要将下载的数据与本地数据合并，本地数据必须全部下载，
+            # 数据量大后非常费时
+            # 因此本地文件系统承载的数据量非常有限
+            local_data = self.read_table_data(table)
+            set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+            # 根据merge_type处理重叠部分：
+            if merge_type == 'ignore':
+                # 丢弃下载数据中的重叠部分
+                dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
+            elif merge_type == 'update':  # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地数据中的重叠部分（仅用于本地文件保存的情况）
+                local_data = local_data[~local_data.index.isin(dnld_data.index)]
+            else:  # for unexpected cases
+                raise KeyError(f'Invalid merge type, got "{merge_type}"')
             self.write_table_data(pd.concat([local_data, dnld_data]), table=table)
         elif self.source_type == 'db':
-            # 如果source_type是db，不需要合并数据
+            # 如果source_type == 'db'，不需要合并数据，当merge_type == 'update'时，甚至不需要下载
+            # 本地数据
+            if merge_type == 'ignore':
+                dnld_data_range = get_primary_key_range(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+                local_data = self.read_table_data(table, **dnld_data_range)
+                set_primary_key_index(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+                dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
             dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
             self.write_table_data(dnld_data, table=table, on_duplicate=merge_type)
         else:  # unexpected case
             raise KeyError(f'invalid data source type')
+
+        return
 
     def drop_table(self, table):
         """ 删除本地存储的数据表（操作不可撤销，谨慎使用）
@@ -1507,7 +1536,7 @@ class DataSource:
                 # debug
                 # print(f'got combined adj factors: \n{comb_factors}')
                 price_df *= comb_factors
-                if adj == 'forward':
+                if adj == 'forward' and len(comb_factors) > 1:
                     price_df /= comb_factors.iloc[-1]
                 # print(f'got adjusted prices for {htyp} like: \n{price_df}')
 
@@ -1622,6 +1651,32 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     return None
 
 
+def get_primary_key_range(df, primary_key, pk_dtypes):
+    """ 给定一个dataframe，给出这个df表的主键的范围，用于下载数据时用作传入参数
+        如果主键类型为string，则给出一个list，包含所有的元素
+        如果主键类型为date，则给出上下界
+
+    :param df: 需要操作的df
+    :param primary_key: 以列表形式给出的primary_key列名
+    :param pk_dtypes: primary_key的数据类型
+    :return:
+        dict，形式为{primary_key1: [values], 'start': start_date, 'end': end_date}
+    """
+    if df.index.name is not None:
+        df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
+    res = {}
+    for pk, dtype in zip(primary_key, pk_dtypes):
+        if (dtype == 'str') or (dtype[:-3] == 'varchar'):
+            res['shares'] = (list(set(df[pk].values)))
+        elif dtype.lower() in ['date', 'timestamp', 'datetime']:
+            res['start'] = df[pk].min()
+            res['end'] = df[pk].max()
+        else:
+            raise KeyError(f'invalid dtype: {dtype}')
+    return res
+
+
+# noinspection PyTypeChecker
 def get_built_in_table_schema(table):
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
     :param table:
