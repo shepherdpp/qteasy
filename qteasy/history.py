@@ -1071,12 +1071,14 @@ def get_history_panel(start,
     """
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
-    dfs = ds.get_history_dataframes(shares=shares,
-                                    htypes=htypes,
-                                    start=start,
-                                    end=end,
-                                    freq=freq,
-                                    asset_type=asset_type,
-                                    adj=adj)
-    result_hp = stack_dataframes(dfs, stack_along='htypes')
+    now = (pd.to_datetime('now') + pd.Timedelta(8, 'h')).strftime('%Y-%m-%d %H:%M:%S')
+    print(f'[{now}]: loading data via datasource: {ds.source_type}-{ds.file_type}\n'
+          f'for shares: {shares}@{htypes} from {start} til {end}')
+    result_hp = ds.get_history_dataframes(shares=shares,
+                                          htypes=htypes,
+                                          start=start,
+                                          end=end,
+                                          freq=freq,
+                                          asset_type=asset_type,
+                                          adj=adj)
     return result_hp

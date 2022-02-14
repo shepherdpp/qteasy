@@ -9766,7 +9766,7 @@ class TestTushare(unittest.TestCase):
         shares = '000300.SH'
         start = '20180101'
         end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='I')
+        df = get_bar(shares=shares, start=start, end=end, asset_type='IDX')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         df.info()
@@ -11250,9 +11250,9 @@ class TestQT(unittest.TestCase):
 
         qt.configure(reference_asset='000300.SH',
                      mode=1,
-                     ref_asset_type='I',
+                     ref_asset_type='IDX',
                      asset_pool='000300.SH',
-                     asset_type='I',
+                     asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
                      trade_batch_size=0,
@@ -11717,7 +11717,7 @@ class TestQT(unittest.TestCase):
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
                      reference_asset='000300.SH',
-                     ref_asset_type='I',
+                     ref_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181231',
@@ -11768,7 +11768,7 @@ class TestQT(unittest.TestCase):
                                                         '上海']),
                      asset_type='E',
                      reference_asset='000300.SH',
-                     ref_asset_type='I',
+                     ref_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20171228',
@@ -11852,7 +11852,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.configure(invest_start='20200113',
                      invest_end='20210413',
                      asset_pool='000300.SH',
-                     asset_type='I',
+                     asset_type='IDX',
                      reference_asset='000300.SH',
                      opti_sample_count=100)
 
@@ -12156,29 +12156,32 @@ class FastExperiments(unittest.TestCase):
     def setUp(self):
         pass
 
-    # def test_fast_experiments(self):
-    #     ds = DataSource(source_type='db',
-    #                     user='jackie',
-    #                     password='iama007',
-    #                     db='ts_db')
-    #     # 从tushare下载数据：
-    #     # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-    #     #                              '000005.SH', '000006.SH', '000300.SH'])
-    #     shares = ['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-    #               '000005.SH', '000006.SH', '000300.SH']
-    #     start = '20210101'
-    #     end = '20211231'
-    #     dates = pd.date_range(start='20210203', end='20210331', freq='d')
-    #     dates = list(dates.strftime('%Y%m%d'))
-    #     table = ['stock_indicator2']
-    #     # for share in shares:
-    #     for trade_date in dates:
-    #         df = ds.acquire_table_data(table=table[0], channel='tushare', trade_date=trade_date)
-    #         # df = ds.acquire_table_data(table=table[0], channel='tushare', index=share, start=start, end=end)
-    #         # print(f'got df: \n{df.head()}')
-    #         ds.update_table_data(table=table[0], df=df, merge_type='ignore')
-    #         time_str = pd.to_datetime('now').strftime('%Y/%m/%d-%H:%M:%S')
-    #         print(f'data written in table {table} for date {trade_date} at time: {time_str}!')
+    def test_fast_experiments(self):
+        ds = DataSource(source_type='db',
+                        host='192.168.2.11',
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        # 从tushare下载数据：
+        # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+        #                              '000005.SH', '000006.SH', '000300.SH'])
+        shares = ['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+                  '000005.SH', '000006.SH', '000300.SH']
+        start = '19900101'
+        end = '20211231'
+        dates = pd.date_range(start='20210203', end='20210331', freq='d')
+        dates = list(dates.strftime('%Y%m%d'))
+        markets = ['MSCI', 'CSI', 'SSE', 'SZSE', 'CICC', 'SW', 'OTH']
+        table = ['index_basic']
+        for market in markets[-3:]:
+        # for share in shares:
+        # for trade_date in dates:
+            # df = ds.acquire_table_data(table=table[0], channel='tushare', trade_date=trade_date)
+            df = ds.acquire_table_data(table=table[0], channel='tushare', market=market)
+            print(f'got df: \n{df.iloc[810:820]}')
+            ds.update_table_data(table=table[0], df=df, merge_type='update')
+            time_str = pd.to_datetime('now').strftime('%Y/%m/%d-%H:%M:%S')
+            print(f'data written in table {table} for market {market} at time: {time_str}!')
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

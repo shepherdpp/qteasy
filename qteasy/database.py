@@ -71,7 +71,7 @@ TABLE_SOURCE_MAPPING = {
 
     'fund_daily':       ['bars', 'data', 'FD', 'd', 'fund_daily', ''],
 
-    'fund_nav':         ['fund_nav', 'data', 'FD', 'd', 'fund_nav', ''],
+    'fund_nav':         ['fund_nav', 'data', 'FD', 'd', 'fund_net_value', ''],
 
     'fund_share':       ['fund_share', 'events', 'FD', 'none', 'fund_share', ''],
 
@@ -117,8 +117,8 @@ TABLE_STRUCTURES = {
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
-                         'dtypes':     ['varchar(9)', 'varchar(8)', 'varchar(40)', 'varchar(8)', 'varchar(20)',
-                                        'varchar(6)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
+                         'dtypes':     ['varchar(15)', 'varchar(40)', 'varchar(80)', 'varchar(8)', 'varchar(20)',
+                                        'varchar(12)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
                          'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方', '指数风格', '指数类别', '基期', '基点',
                                         '发布日期', '加权方式', '描述', '终止日期'],
                          'prime_keys': [0]},
@@ -229,9 +229,9 @@ TABLE_STRUCTURES = {
                                         'float_mv', 'total_mv', 'avg_price', 'strength', 'activity', 'avg_turnover',
                                         'attack', 'interval_3', 'interval_6'],
                          'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'varchar(8)', 'varchar(8)', 'float', 'float', 'float',
-                                        'float', 'float', 'float', 'float', 'float'],
+                                        'float', 'float', 'float', 'float', 'float', 'double', 'double', 'double',
+                                        'double', 'double', 'float', 'varchar(8)', 'varchar(8)', 'float', 'float',
+                                        'float', 'float', 'float', 'float', 'float', 'float'],
                          'remarks':    ['证券代码', '交易日期', '股票名称', '涨跌幅', '收盘价', '涨跌额', '开盘价', '最高价',
                                         '最低价', '昨收价', '量比', '换手率', '振幅', '成交量', '成交额', '内盘（主动卖，手）',
                                         '外盘（主动买， 手）', '总股本(亿)', '流通股本(亿)', '市盈(动)', '所属行业', '所属地域',
@@ -1309,7 +1309,8 @@ class DataSource:
             raise ValueError(f'there are missing columns in downloaded df, can not merge to local table')
         columns_to_drop = [col for col in dnld_columns if col not in table_columns]
         if len(columns_to_drop) > 0:
-            print(f'there are columns to drop, they are\n{columns_to_drop}')
+            # debug
+            # print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
 
         # 下载local_data，将其与dnld_data进行对比，找出相同部分并删除这部分数据，避免重复保存

@@ -511,15 +511,15 @@ def _valid_qt_kwargs():
                                  'level':     0,
                                  'text':      '可用投资产品池，投资组合基于池中的产品创建'},
 
-        'asset_type':           {'Default':   'I',  #
+        'asset_type':           {'Default':   'IDX',  #
                                  'Validator': lambda value: isinstance(value, str)
                                                             and _validate_asset_type(value),
                                  'level':     0,
                                  'text':      '投资产品的资产类型，包括：\n'
-                                              'I  : 指数\n'
-                                              'E  : 股票\n'
-                                              'F  : 期货\n'
-                                              'FD : 基金\n'},
+                                              'IDX  : 指数\n'
+                                              'E    : 股票\n'
+                                              'FT   : 期货\n'
+                                              'FD   : 基金\n'},
 
         'trade_batch_size':     {'Default':   0.0,
                                  'Validator': lambda value: isinstance(value, (int, float))
@@ -654,14 +654,14 @@ def _valid_qt_kwargs():
                                               '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                                               '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'ref_asset_type':       {'Default':   'I',
+        'ref_asset_type':       {'Default':   'IDX',
                                  'Validator': lambda value: _validate_asset_type(value),
                                  'level':     1,
                                  'text':      '参考价格的资产类型，包括：\n'
-                                              'I  : 指数\n'
-                                              'E  : 股票\n'
-                                              'F  : 期货\n'
-                                              'FD : 基金\n'},
+                                              'IDX  : 指数\n'
+                                              'E    : 股票\n'
+                                              'FT   : 期货\n'
+                                              'FD   : 基金\n'},
 
         'ref_asset_dtype':      {'Default':   'close',
                                  'Validator': lambda value: value in PRICE_TYPE_DATA,
@@ -1289,7 +1289,8 @@ def _validate_asset_type(value):
     :param value:
     :return:
     """
-    return value in ['I', 'E', 'F', 'FD']
+    from .database import AVAILABLE_ASSET_TYPES
+    return value in AVAILABLE_ASSET_TYPES
 
 
 def _is_datelike(value):

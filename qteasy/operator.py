@@ -1045,7 +1045,7 @@ class Operator:
         invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
             np_dates_in_hist = np.array(invest_dates_in_hist)
-            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist == False)[0])]
+            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist is False)[0])]
             raise ValueError(f'Cash investment should be on trading days, '
                              f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数

@@ -102,8 +102,13 @@ class Strategy:
         assert isinstance(par_count, int)
         assert isinstance(pars, (tuple, list, dict))
 
-        assert par_count == len(par_types)
-        assert par_count == len(par_bounds_or_enums)
+        if par_types is None:
+            assert par_count == 0
+        elif par_bounds_or_enums is None:
+            assert par_count == 0
+        else:
+            assert par_count == len(par_types)
+            assert par_count == len(par_bounds_or_enums)
 
         if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
             self._par_bounds_or_enums = []

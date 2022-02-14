@@ -1369,15 +1369,15 @@ def top_list(trade_date: str = None,
 
 # Index Data
 # ==================
-@lru_cache(maxsize=16)
-def index_basic(fund: str = None,
+@retry(Exception)
+def index_basic(index: str = None,
                 name: str = None,
                 market: str = None,
                 publisher: str = None,
                 category: str = None) -> pd.DataFrame:
     """ 获取大盘指数的基本信息如名称代码等
 
-    :param fund: 指数代码
+    :param index: 指数代码
     :param name: 指数简称
     :param market: 交易所或服务商(默认SSE)，包括：
                     MSCI:    MSCI指数
@@ -1391,31 +1391,19 @@ def index_basic(fund: str = None,
     :param category: 指数类别
     :return: pd.DataFrame
         column          type    description
-        ts_code		    str	    TS代码
-        name            str     简称
-        management      str     发行方公司
-        custodian       str     托管方
-        fund_type       str     基金类型
-        found_date      str     成立日期
-        due_date        str     退市日期
-        list_date       str     上市日期
-        issue_date      str     发行日期
-        delist_date     str     退市日期
-        issue_amount    str     发行量
-        m_fee           str     管理费
-        c_fee           str     托管费
-        duration_year   str     运行时长
-        p_value         str     发行净值
-        min_amount      str     最小交易量
-        exp_return      str     期望回报
-        benchmark       str     业绩基准
-        status          str     状态
-        invest_type     str     投资类型
-        type            str     类型
-        trustee         str     受托人
-        purc_startdate  str     pure开始日期
-        redm_startdate  str     redm开始日期
-        market          str     市场
+        ts_code	        str	    TS代码
+        name	        str	    简称
+        fullname	    str	    指数全称
+        market	        str	    市场
+        publisher	    str	    发布方
+        index_type	    str	    指数风格
+        category	    str	    指数类别
+        base_date	    str	    基期
+        base_point	    float	基点
+        list_date	    str	    发布日期
+        weight_rule	    str	    加权方式
+        desc	        str	    描述
+        exp_date	    str	    终止日期
     example:
         index_basic(market='SW')
     output:
@@ -1435,12 +1423,15 @@ def index_basic(fund: str = None,
                 17        801023.SI    石油开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
                 18        801024.SI    采掘服务Ⅱ       SW申万      二级行业指数  19991230      1000.0
     """
+    fields = 'ts_code, name, fullname, market, publisher, index_type, category, ' \
+             'base_date, base_point, list_date, weight_rule, desc, exp_date'
     pro = ts.pro_api()
-    return pro.index_basic(ts_code=fund,
+    return pro.index_basic(ts_code=index,
                            name=name,
                            market=market,
                            publisher=publisher,
-                           category=category)
+                           category=category,
+                           fields=fields)
 
 
 @lru_cache(maxsize=16)
@@ -1595,17 +1586,15 @@ def fund_basic(market: str = None,
                           status=status)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def fund_net_value(fund: str = None,
-                   date: str = None,
-                   market: str = None,
-                   fields: str = None) -> pd.DataFrame:
+                   trade_date: str = None,
+                   market: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
     :param fund: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
-    :param date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
+    :param trade_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
     :param market: str, 交易市场类型: E场内 O场外
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
         column          type  default   description
         ts_code		    str	    Y	    TS代码
@@ -1628,13 +1617,10 @@ def fund_net_value(fund: str = None,
         4     165509.SZ  1.835449
         ...         ...       ...
     """
-    if fields is None:
-        fields = 'ts_code, ann_date, end_date, unit_nav, accum_nav, accum_div, net_asset, total_netasset, adj_nav'
     pro = ts.pro_api()
     return pro.fund_nav(ts_code=fund,
-                        end_date=date,
-                        market=market,
-                        fields=fields)
+                        nav_date=trade_date,
+                        market=market)
 
 
 # Futures & Options Data
