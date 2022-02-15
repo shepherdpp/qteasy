@@ -8827,469 +8827,6 @@ class TestHistoryPanel(unittest.TestCase):
         # test get only one line of data
         pass
 
-    def test_get_price_type_raw_data(self):
-        shares = '000039.SZ, 600748.SH, 000040.SZ'
-        start = '20200101'
-        end = '20200131'
-        htypes = 'open, high, low, close'
-
-        target_price_000039 = [[9.45, 9.49, 9.12, 9.17],
-                               [9.46, 9.56, 9.4, 9.5],
-                               [9.7, 9.76, 9.5, 9.51],
-                               [9.7, 9.75, 9.7, 9.72],
-                               [9.73, 9.77, 9.7, 9.73],
-                               [9.83, 9.85, 9.71, 9.72],
-                               [9.85, 9.85, 9.75, 9.79],
-                               [9.96, 9.96, 9.83, 9.86],
-                               [9.87, 9.94, 9.77, 9.93],
-                               [9.82, 9.9, 9.76, 9.87],
-                               [9.8, 9.85, 9.77, 9.82],
-                               [9.84, 9.86, 9.71, 9.72],
-                               [9.83, 9.93, 9.81, 9.86],
-                               [9.7, 9.87, 9.7, 9.82],
-                               [9.83, 9.86, 9.69, 9.79],
-                               [9.8, 9.94, 9.8, 9.86]]
-
-        target_price_600748 = [[5.68, 5.68, 5.32, 5.37],
-                               [5.62, 5.68, 5.46, 5.65],
-                               [5.72, 5.72, 5.61, 5.62],
-                               [5.76, 5.77, 5.6, 5.73],
-                               [5.78, 5.84, 5.73, 5.75],
-                               [5.89, 5.91, 5.76, 5.77],
-                               [6.03, 6.04, 5.87, 5.89],
-                               [5.94, 6.07, 5.94, 6.02],
-                               [5.96, 5.98, 5.88, 5.97],
-                               [6.04, 6.06, 5.95, 5.96],
-                               [5.98, 6.04, 5.96, 6.03],
-                               [6.1, 6.11, 5.89, 5.94],
-                               [6.02, 6.12, 6., 6.1],
-                               [5.96, 6.05, 5.88, 6.01],
-                               [6.03, 6.03, 5.95, 5.99],
-                               [6.02, 6.12, 5.99, 5.99]]
-
-        target_price_000040 = [[3.63, 3.83, 3.63, 3.65],
-                               [3.99, 4.07, 3.97, 4.03],
-                               [4.1, 4.11, 3.93, 3.95],
-                               [4.12, 4.13, 4.06, 4.11],
-                               [4.13, 4.19, 4.07, 4.13],
-                               [4.27, 4.28, 4.11, 4.12],
-                               [4.37, 4.38, 4.25, 4.29],
-                               [4.34, 4.5, 4.32, 4.41],
-                               [4.28, 4.35, 4.2, 4.34],
-                               [4.41, 4.43, 4.29, 4.31],
-                               [4.42, 4.45, 4.36, 4.41],
-                               [4.51, 4.56, 4.33, 4.35],
-                               [4.35, 4.55, 4.31, 4.55],
-                               [4.3, 4.41, 4.22, 4.36],
-                               [4.27, 4.44, 4.23, 4.34],
-                               [4.23, 4.27, 4.18, 4.25]]
-
-        print(f'test get price type raw data with single thread')
-        df_list = get_price_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, freq='d')
-        self.assertIsInstance(df_list, dict)
-        self.assertEqual(len(df_list), 3)
-        self.assertTrue(np.allclose(df_list['000039.SZ'].values, np.array(target_price_000039)))
-        self.assertTrue(np.allclose(df_list['600748.SH'].values, np.array(target_price_600748)))
-        self.assertTrue(np.allclose(df_list['000040.SZ'].values, np.array(target_price_000040)))
-        print(f'in get financial report type raw data, got DataFrames: \n"000039.SZ":\n'
-              f'{df_list["000039.SZ"]}\n"600748.SH":\n'
-              f'{df_list["600748.SH"]}\n"000040.SZ":\n{df_list["000040.SZ"]}')
-
-        print(f'test get price type raw data with with multi threads')
-        df_list = get_price_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, freq='d', parallel=10)
-        self.assertIsInstance(df_list, dict)
-        self.assertEqual(len(df_list), 3)
-        self.assertTrue(np.allclose(df_list['000039.SZ'].values, np.array(target_price_000039)))
-        self.assertTrue(np.allclose(df_list['600748.SH'].values, np.array(target_price_600748)))
-        self.assertTrue(np.allclose(df_list['000040.SZ'].values, np.array(target_price_000040)))
-        print(f'in get financial report type raw data, got DataFrames: \n"000039.SZ":\n'
-              f'{df_list["000039.SZ"]}\n"600748.SH":\n'
-              f'{df_list["600748.SH"]}\n"000040.SZ":\n{df_list["000040.SZ"]}')
-
-    def test_get_financial_report_type_raw_data(self):
-        shares = '000039.SZ, 600748.SH, 000040.SZ'
-        start = '20160101'
-        end = '20201231'
-        htypes = 'eps,basic_eps,diluted_eps,total_revenue,revenue,total_share,' \
-                 'cap_rese,undistr_porfit,surplus_rese,net_profit'
-
-        target_eps_000039 = [[1.41],
-                             [0.1398],
-                             [-0.0841],
-                             [-0.1929],
-                             [0.37],
-                             [0.1357],
-                             [0.1618],
-                             [0.1191],
-                             [1.11],
-                             [0.759],
-                             [0.3061],
-                             [0.1409],
-                             [0.81],
-                             [0.4187],
-                             [0.2554],
-                             [0.1624],
-                             [0.14],
-                             [-0.0898],
-                             [-0.1444],
-                             [0.1291]]
-        target_eps_600748 = [[0.41],
-                             [0.22],
-                             [0.22],
-                             [0.09],
-                             [0.42],
-                             [0.23],
-                             [0.22],
-                             [0.09],
-                             [0.36],
-                             [0.16],
-                             [0.15],
-                             [0.07],
-                             [0.47],
-                             [0.19],
-                             [0.12],
-                             [0.07],
-                             [0.32],
-                             [0.22],
-                             [0.14],
-                             [0.07]]
-        target_eps_000040 = [[-0.6866],
-                             [-0.134],
-                             [-0.189],
-                             [-0.036],
-                             [-0.6435],
-                             [0.05],
-                             [0.062],
-                             [0.0125],
-                             [0.8282],
-                             [1.05],
-                             [0.985],
-                             [0.811],
-                             [0.41],
-                             [0.242],
-                             [0.113],
-                             [0.027],
-                             [0.19],
-                             [0.17],
-                             [0.17],
-                             [0.064]]
-
-        target_basic_eps_000039 = [[1.3980000e-01, 1.3980000e-01, 6.3591954e+10, 6.3591954e+10],
-                                   [-8.4100000e-02, -8.4100000e-02, 3.9431807e+10, 3.9431807e+10],
-                                   [-1.9290000e-01, -1.9290000e-01, 1.5852177e+10, 1.5852177e+10],
-                                   [3.7000000e-01, 3.7000000e-01, 8.5815341e+10, 8.5815341e+10],
-                                   [1.3570000e-01, 1.3430000e-01, 6.1660271e+10, 6.1660271e+10],
-                                   [1.6180000e-01, 1.6040000e-01, 4.2717729e+10, 4.2717729e+10],
-                                   [1.1910000e-01, 1.1900000e-01, 1.9099547e+10, 1.9099547e+10],
-                                   [1.1100000e+00, 1.1000000e+00, 9.3497622e+10, 9.3497622e+10],
-                                   [7.5900000e-01, 7.5610000e-01, 6.6906147e+10, 6.6906147e+10],
-                                   [3.0610000e-01, 3.0380000e-01, 4.3560398e+10, 4.3560398e+10],
-                                   [1.4090000e-01, 1.4050000e-01, 1.9253639e+10, 1.9253639e+10],
-                                   [8.1000000e-01, 8.1000000e-01, 7.6299930e+10, 7.6299930e+10],
-                                   [4.1870000e-01, 4.1710000e-01, 5.3962706e+10, 5.3962706e+10],
-                                   [2.5540000e-01, 2.5440000e-01, 3.3387152e+10, 3.3387152e+10],
-                                   [1.6240000e-01, 1.6200000e-01, 1.4675987e+10, 1.4675987e+10],
-                                   [1.4000000e-01, 1.4000000e-01, 5.1111652e+10, 5.1111652e+10],
-                                   [-8.9800000e-02, -8.9800000e-02, 3.4982614e+10, 3.4982614e+10],
-                                   [-1.4440000e-01, -1.4440000e-01, 2.3542843e+10, 2.3542843e+10],
-                                   [1.2910000e-01, 1.2860000e-01, 1.0412416e+10, 1.0412416e+10],
-                                   [7.2000000e-01, 7.1000000e-01, 5.8685804e+10, 5.8685804e+10]]
-        target_basic_eps_600748 = [[2.20000000e-01, 2.20000000e-01, 5.29423397e+09, 5.29423397e+09],
-                                   [2.20000000e-01, 2.20000000e-01, 4.49275653e+09, 4.49275653e+09],
-                                   [9.00000000e-02, 9.00000000e-02, 1.59067065e+09, 1.59067065e+09],
-                                   [4.20000000e-01, 4.20000000e-01, 8.86555586e+09, 8.86555586e+09],
-                                   [2.30000000e-01, 2.30000000e-01, 5.44850143e+09, 5.44850143e+09],
-                                   [2.20000000e-01, 2.20000000e-01, 4.34978927e+09, 4.34978927e+09],
-                                   [9.00000000e-02, 9.00000000e-02, 1.73793793e+09, 1.73793793e+09],
-                                   [3.60000000e-01, 3.60000000e-01, 8.66375241e+09, 8.66375241e+09],
-                                   [1.60000000e-01, 1.60000000e-01, 4.72875116e+09, 4.72875116e+09],
-                                   [1.50000000e-01, 1.50000000e-01, 3.76879016e+09, 3.76879016e+09],
-                                   [7.00000000e-02, 7.00000000e-02, 1.31785454e+09, 1.31785454e+09],
-                                   [4.70000000e-01, 4.70000000e-01, 7.23391685e+09, 7.23391685e+09],
-                                   [1.90000000e-01, 1.90000000e-01, 3.76072215e+09, 3.76072215e+09],
-                                   [1.20000000e-01, 1.20000000e-01, 2.35845364e+09, 2.35845364e+09],
-                                   [7.00000000e-02, 7.00000000e-02, 1.03831865e+09, 1.03831865e+09],
-                                   [3.20000000e-01, 3.20000000e-01, 6.48880919e+09, 6.48880919e+09],
-                                   [2.20000000e-01, 2.20000000e-01, 3.72209142e+09, 3.72209142e+09],
-                                   [1.40000000e-01, 1.40000000e-01, 2.22563924e+09, 2.22563924e+09],
-                                   [7.00000000e-02, 7.00000000e-02, 8.96647052e+08, 8.96647052e+08],
-                                   [4.80000000e-01, 4.80000000e-01, 6.61917508e+09, 6.61917508e+09]]
-        target_basic_eps_000040 = [[-1.34000000e-01, -1.34000000e-01, 2.50438755e+09, 2.50438755e+09],
-                                   [-1.89000000e-01, -1.89000000e-01, 1.32692347e+09, 1.32692347e+09],
-                                   [-3.60000000e-02, -3.60000000e-02, 5.59073338e+08, 5.59073338e+08],
-                                   [-6.43700000e-01, -6.43700000e-01, 6.80576162e+09, 6.80576162e+09],
-                                   [5.00000000e-02, 5.00000000e-02, 6.38891620e+09, 6.38891620e+09],
-                                   [6.20000000e-02, 6.20000000e-02, 5.23267082e+09, 5.23267082e+09],
-                                   [1.25000000e-02, 1.25000000e-02, 2.22420874e+09, 2.22420874e+09],
-                                   [8.30000000e-01, 8.30000000e-01, 8.67628947e+09, 8.67628947e+09],
-                                   [1.05000000e+00, 1.05000000e+00, 5.29431716e+09, 5.29431716e+09],
-                                   [9.85000000e-01, 9.85000000e-01, 3.56822382e+09, 3.56822382e+09],
-                                   [8.11000000e-01, 8.11000000e-01, 1.06613439e+09, 1.06613439e+09],
-                                   [4.10000000e-01, 4.10000000e-01, 8.13102532e+09, 8.13102532e+09],
-                                   [2.42000000e-01, 2.42000000e-01, 5.17971521e+09, 5.17971521e+09],
-                                   [1.13000000e-01, 1.13000000e-01, 3.21704120e+09, 3.21704120e+09],
-                                   [2.70000000e-02, 2.70000000e-02, 8.41966738e+08, 8.24272235e+08],
-                                   [1.90000000e-01, 1.90000000e-01, 3.77350171e+09, 3.77350171e+09],
-                                   [1.70000000e-01, 1.70000000e-01, 2.38643892e+09, 2.38643892e+09],
-                                   [1.70000000e-01, 1.70000000e-01, 1.29127117e+09, 1.29127117e+09],
-                                   [6.40000000e-02, 6.40000000e-02, 6.03256858e+08, 6.03256858e+08],
-                                   [1.30000000e-01, 1.30000000e-01, 1.66572918e+09, 1.66572918e+09]]
-
-        target_total_share_000039 = [[3.5950140e+09, 4.8005360e+09, 2.1573660e+10, 3.5823430e+09],
-                                     [3.5860750e+09, 4.8402300e+09, 2.0750827e+10, 3.5823430e+09],
-                                     [3.5860750e+09, 4.9053550e+09, 2.0791307e+10, 3.5823430e+09],
-                                     [3.5845040e+09, 4.8813110e+09, 2.1482857e+10, 3.5823430e+09],
-                                     [3.5831490e+09, 4.9764250e+09, 2.0926816e+10, 3.2825850e+09],
-                                     [3.5825310e+09, 4.8501270e+09, 2.1020418e+10, 3.2825850e+09],
-                                     [2.9851110e+09, 5.4241420e+09, 2.2438350e+10, 3.2825850e+09],
-                                     [2.9849890e+09, 4.1284000e+09, 2.2082769e+10, 3.2825850e+09],
-                                     [2.9849610e+09, 4.0838010e+09, 2.1045994e+10, 3.2815350e+09],
-                                     [2.9849560e+09, 4.2491510e+09, 1.9694345e+10, 3.2815350e+09],
-                                     [2.9846970e+09, 4.2351600e+09, 2.0016361e+10, 3.2815350e+09],
-                                     [2.9828890e+09, 4.2096630e+09, 1.9734494e+10, 3.2815350e+09],
-                                     [2.9813960e+09, 3.4564240e+09, 1.8562738e+10, 3.2793790e+09],
-                                     [2.9803530e+09, 3.0759650e+09, 1.8076208e+10, 3.2793790e+09],
-                                     [2.9792680e+09, 3.1376690e+09, 1.7994776e+10, 3.2793790e+09],
-                                     [2.9785770e+09, 3.1265850e+09, 1.7495053e+10, 3.2793790e+09],
-                                     [2.9783640e+09, 3.1343850e+09, 1.6740840e+10, 3.2035780e+09],
-                                     [2.9783590e+09, 3.1273880e+09, 1.6578389e+10, 3.2035780e+09],
-                                     [2.9782780e+09, 3.1169280e+09, 1.8047639e+10, 3.2035780e+09],
-                                     [2.9778200e+09, 3.1818630e+09, 1.7663145e+10, 3.2035780e+09]]
-        target_total_share_600748 = [[1.84456289e+09, 2.60058426e+09, 5.72443733e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.60058426e+09, 5.72096899e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.60058426e+09, 5.65738237e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.60058426e+09, 5.50257806e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.59868164e+09, 5.16741523e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 2.59684471e+09, 5.14677280e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 2.59684471e+09, 4.94955591e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 2.59684471e+09, 4.79001451e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 3.11401684e+09, 4.46326988e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.11596723e+09, 4.45419136e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.11596723e+09, 4.39652948e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.18007783e+09, 4.26608403e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.78417688e+09, 3.65651701e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.65806574e+09, 3.65651701e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.62063090e+09, 3.65651701e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.50063915e+09, 3.65651701e+08],
-                                     [1.41889453e+09, 3.55940850e+09, 3.22272993e+09, 3.62124939e+08],
-                                     [1.41889453e+09, 3.56129650e+09, 3.11477476e+09, 3.62124939e+08],
-                                     [1.41889453e+09, 3.59632888e+09, 3.06836903e+09, 3.62124939e+08],
-                                     [1.08337087e+09, 3.37400726e+07, 3.00918704e+09, 3.62124939e+08]]
-        target_total_share_000040 = [[1.48687387e+09, 1.06757900e+10, 8.31900755e+08, 2.16091994e+08],
-                                     [1.48687387e+09, 1.06757900e+10, 7.50177302e+08, 2.16091994e+08],
-                                     [1.48687387e+09, 1.06757899e+10, 9.90255974e+08, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06757899e+10, 1.03109866e+09, 2.16091994e+08],
-                                     [1.48687387e+09, 1.06757910e+10, 2.07704745e+09, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06757910e+10, 2.09608665e+09, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06803833e+10, 2.13354083e+09, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06804090e+10, 2.11489364e+09, 2.16123282e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 2.42939924e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 2.34220254e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 2.16390368e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 1.07961915e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 8.58866066e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 6.87024393e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 5.71554565e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 5.54241222e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361726e+09, 5.10059576e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361726e+09, 4.59351639e+08, 1.88489589e+08],
-                                     [4.69593364e+08, 2.78355875e+08, 4.13430814e+08, 1.88489589e+08],
-                                     [4.69593364e+08, 2.74235459e+08, 3.83557678e+08, 1.88489589e+08]]
-
-        target_net_profit_000039 = [[np.nan],
-                                    [2.422180e+08],
-                                    [np.nan],
-                                    [2.510113e+09],
-                                    [np.nan],
-                                    [1.102220e+09],
-                                    [np.nan],
-                                    [4.068455e+09],
-                                    [np.nan],
-                                    [1.315957e+09],
-                                    [np.nan],
-                                    [3.158415e+09],
-                                    [np.nan],
-                                    [1.066509e+09],
-                                    [np.nan],
-                                    [7.349830e+08],
-                                    [np.nan],
-                                    [-5.411600e+08],
-                                    [np.nan],
-                                    [2.271961e+09]]
-        target_net_profit_600748 = [[np.nan],
-                                    [4.54341757e+08],
-                                    [np.nan],
-                                    [9.14476670e+08],
-                                    [np.nan],
-                                    [5.25360283e+08],
-                                    [np.nan],
-                                    [9.24502415e+08],
-                                    [np.nan],
-                                    [4.66560302e+08],
-                                    [np.nan],
-                                    [9.15265285e+08],
-                                    [np.nan],
-                                    [2.14639674e+08],
-                                    [np.nan],
-                                    [7.45093049e+08],
-                                    [np.nan],
-                                    [2.10967312e+08],
-                                    [np.nan],
-                                    [6.04572711e+08]]
-        target_net_profit_000040 = [[np.nan],
-                                    [-2.82458846e+08],
-                                    [np.nan],
-                                    [-9.57130872e+08],
-                                    [np.nan],
-                                    [9.22114527e+07],
-                                    [np.nan],
-                                    [1.12643819e+09],
-                                    [np.nan],
-                                    [1.31715269e+09],
-                                    [np.nan],
-                                    [5.39940093e+08],
-                                    [np.nan],
-                                    [1.51440838e+08],
-                                    [np.nan],
-                                    [1.75339071e+08],
-                                    [np.nan],
-                                    [8.04740415e+07],
-                                    [np.nan],
-                                    [6.20445815e+07]]
-
-        print('test get financial data, in multi thread mode')
-        df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=4)
-        self.assertIsInstance(df_list, tuple)
-        self.assertEqual(len(df_list), 4)
-        self.assertEqual(len(df_list[0]), 3)
-        self.assertEqual(len(df_list[1]), 3)
-        self.assertEqual(len(df_list[2]), 3)
-        self.assertEqual(len(df_list[3]), 3)
-        # 检查确认所有数据类型正确
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for subdict in df_list for item in subdict.values()))
-        # 检查是否有空数据
-        print(all(item.empty for subdict in df_list for item in subdict.values()))
-        # 检查获取的每组数据正确，且所有数据的顺序一致, 如果取到空数据，则忽略
-        if df_list[0]['000039.SZ'].empty:
-            print(f'income data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000039.SZ'].values, target_basic_eps_000039))
-        if df_list[0]['600748.SH'].empty:
-            print(f'income data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['600748.SH'].values, target_basic_eps_600748))
-        if df_list[0]['000040.SZ'].empty:
-            print(f'income data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000040.SZ'].values, target_basic_eps_000040))
-
-        if df_list[1]['000039.SZ'].empty:
-            print(f'indicator data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000039.SZ'].values, target_eps_000039))
-        if df_list[1]['600748.SH'].empty:
-            print(f'indicator data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['600748.SH'].values, target_eps_600748))
-        if df_list[1]['000040.SZ'].empty:
-            print(f'indicator data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000040.SZ'].values, target_eps_000040))
-
-        if df_list[2]['000039.SZ'].empty:
-            print(f'balance data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000039.SZ'].values, target_total_share_000039))
-        if df_list[2]['600748.SH'].empty:
-            print(f'balance data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['600748.SH'].values, target_total_share_600748))
-        if df_list[2]['000040.SZ'].empty:
-            print(f'balance data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000040.SZ'].values, target_total_share_000040))
-
-        if df_list[3]['000039.SZ'].empty:
-            print(f'cash flow data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000039.SZ'].values, target_net_profit_000039, equal_nan=True))
-        if df_list[3]['600748.SH'].empty:
-            print(f'cash flow data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['600748.SH'].values, target_net_profit_600748, equal_nan=True))
-        if df_list[3]['000040.SZ'].empty:
-            print(f'cash flow data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000040.SZ'].values, target_net_profit_000040, equal_nan=True))
-
-        print('test get financial data, in single thread mode')
-        df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=0)
-        self.assertIsInstance(df_list, tuple)
-        self.assertEqual(len(df_list), 4)
-        self.assertEqual(len(df_list[0]), 3)
-        self.assertEqual(len(df_list[1]), 3)
-        self.assertEqual(len(df_list[2]), 3)
-        self.assertEqual(len(df_list[3]), 3)
-        # 检查确认所有数据类型正确
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for subdict in df_list for item in subdict.values()))
-        # 检查是否有空数据，因为网络问题，有可能会取到空数据
-        self.assertFalse(all(item.empty for subdict in df_list for item in subdict.values()))
-        # 检查获取的每组数据正确，且所有数据的顺序一致, 如果取到空数据，则忽略
-        if df_list[0]['000039.SZ'].empty:
-            print(f'income data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000039.SZ'].values, target_basic_eps_000039))
-        if df_list[0]['600748.SH'].empty:
-            print(f'income data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['600748.SH'].values, target_basic_eps_600748))
-        if df_list[0]['000040.SZ'].empty:
-            print(f'income data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000040.SZ'].values, target_basic_eps_000040))
-
-        if df_list[1]['000039.SZ'].empty:
-            print(f'indicator data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000039.SZ'].values, target_eps_000039))
-        if df_list[1]['600748.SH'].empty:
-            print(f'indicator data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['600748.SH'].values, target_eps_600748))
-        if df_list[1]['000040.SZ'].empty:
-            print(f'indicator data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000040.SZ'].values, target_eps_000040))
-
-        if df_list[2]['000039.SZ'].empty:
-            print(f'balance data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000039.SZ'].values, target_total_share_000039))
-        if df_list[2]['600748.SH'].empty:
-            print(f'balance data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['600748.SH'].values, target_total_share_600748))
-        if df_list[2]['000040.SZ'].empty:
-            print(f'balance data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000040.SZ'].values, target_total_share_000040))
-
-        if df_list[3]['000039.SZ'].empty:
-            print(f'cash flow data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000039.SZ'].values, target_net_profit_000039, equal_nan=True))
-        if df_list[3]['600748.SH'].empty:
-            print(f'cash flow data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['600748.SH'].values, target_net_profit_600748, equal_nan=True))
-        if df_list[3]['000040.SZ'].empty:
-            print(f'cash flow data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000040.SZ'].values, target_net_profit_000040, equal_nan=True))
-
-    def test_get_composite_type_raw_data(self):
-        pass
-
 
 class RetryableError(Exception):
     """ 用于retry测试的自定义Error Type"""
@@ -12165,23 +11702,32 @@ class FastExperiments(unittest.TestCase):
         # 从tushare下载数据：
         # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
         #                              '000005.SH', '000006.SH', '000300.SH'])
-        shares = ['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-                  '000005.SH', '000006.SH', '000300.SH']
-        start = '19900101'
-        end = '20211231'
-        dates = pd.date_range(start='20210203', end='20210331', freq='d')
+        indexes = ds.read_table_data(table='index_basic').index.to_list()
+        print(indexes[:10])
+        tables = ['index_daily']
+        table = tables[0]
+        for idx in indexes[150:]:
+            df = ds.acquire_table_data(table=table, channel='tushare', index=idx)
+            ds.update_table_data(table, df)
+            time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
+            print(f'{len(df)} rows of data written in table {table} for index {idx} at time: {time_str}!')
+
+    def test_fast_experiments2(self):
+        ds = DataSource(source_type='db',
+                        host='localhost',
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        dates = pd.date_range(start='20031227', end='20220211')
         dates = list(dates.strftime('%Y%m%d'))
-        markets = ['MSCI', 'CSI', 'SSE', 'SZSE', 'CICC', 'SW', 'OTH']
-        table = ['index_basic']
-        for market in markets[-3:]:
-        # for share in shares:
-        # for trade_date in dates:
-            # df = ds.acquire_table_data(table=table[0], channel='tushare', trade_date=trade_date)
-            df = ds.acquire_table_data(table=table[0], channel='tushare', market=market)
-            print(f'got df: \n{df.iloc[810:820]}')
-            ds.update_table_data(table=table[0], df=df, merge_type='update')
-            time_str = pd.to_datetime('now').strftime('%Y/%m/%d-%H:%M:%S')
-            print(f'data written in table {table} for market {market} at time: {time_str}!')
+        tables = ['fund_nav']
+        table = tables[0]
+        for dt in dates:
+            df = ds.acquire_table_data(table=table, channel='tushare', trade_date=dt)
+            # print(f'got data for date {dt} like \n{df}')
+            ds.update_table_data(table, df)
+            time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
+            print(f'{len(df)} rows of data written in table {table} for date {dt} at time: {time_str}!')
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -12419,7 +11965,8 @@ class TestDataBase(unittest.TestCase):
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
-              f"AND table_name = 'new_test_table'"
+              f"AND table_name = 'new_test_table'" \
+              f"ORDER BY ordinal_position"
         self.ds_db.cursor.execute(sql)
         results = self.ds_db.cursor.fetchall()
         # 为了方便，将cur_columns和new_columns分别包装成一个字典
@@ -12436,7 +11983,8 @@ class TestDataBase(unittest.TestCase):
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
-              f"AND table_name = 'new_test_table'"
+              f"AND table_name = 'new_test_table'" \
+              f"ORDER BY ordinal_position"
         self.ds_db.cursor.execute(sql)
         results = self.ds_db.cursor.fetchall()
         # 为了方便，将cur_columns和new_columns分别包装成一个字典

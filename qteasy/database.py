@@ -59,7 +59,7 @@ TABLE_SOURCE_MAPPING = {
 
     'stock_daily':      ['bars', 'data', 'E', 'd', 'daily', ''],
 
-    'stock_weekly':     ['bars', 'data', 'E', 'w', 'weekly', ''],
+    'stock_weekly':     ['bars2', 'data', 'E', 'w', 'weekly', ''],
 
     'stock_monthly':    ['bars', 'data', 'E', 'm', 'monthly', ''],
 
@@ -117,8 +117,8 @@ TABLE_STRUCTURES = {
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
-                         'dtypes':     ['varchar(15)', 'varchar(40)', 'varchar(80)', 'varchar(8)', 'varchar(20)',
-                                        'varchar(12)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
+                         'dtypes':     ['varchar(24)', 'varchar(40)', 'varchar(80)', 'varchar(8)', 'varchar(30)',
+                                        'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
                          'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方', '指数风格', '指数类别', '基期', '基点',
                                         '发布日期', '加权方式', '描述', '终止日期'],
                          'prime_keys': [0]},
@@ -173,17 +173,25 @@ TABLE_STRUCTURES = {
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
                          'prime_keys': [0, 1]},
 
+    'bars2':            {'columns':    ['ts_code', 'trade_date', 'close', 'open', 'high', 'low', 'pre_close', 'change',
+                                        'pct_chg', 'vol', 'amount'],
+                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float', 'double', 'double'],
+                         'remarks':    ['证券代码', '交易日期', '收盘价', '开盘价', '最高价', '最低价', '昨收价', '涨跌额',
+                                        '涨跌幅', '成交量 （手）', '成交额 （千元）'],
+                         'prime_keys': [0, 1]},
+
     # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
                          'dtypes':     ['varchar(9)', 'date', 'double'],
                          'remarks':    ['证券代码', '交易日期', '复权因子'],
                          'prime_keys': [0, 1]},
 
-    'fund_nav':         {'columns':    ['ts_code', 'ann_date', 'nav_date', 'unit_nav', 'accum_nav', 'accum_div',
+    'fund_nav':         {'columns':    ['ts_code', 'nav_date', 'ann_date', 'unit_nav', 'accum_nav', 'accum_div',
                                         'net_asset', 'total_netasset', 'adj_nav'],
-                         'dtypes':     ['varchar(9)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
+                         'dtypes':     ['varchar(24)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
                                         'float'],
-                         'remarks':    ['TS代码', '公告日期', '净值日期', '单位净值', '累计净值', '累计分红', '资产净值',
+                         'remarks':    ['TS代码', '净值日期', '公告日期', '单位净值', '累计净值', '累计分红', '资产净值',
                                         '合计资产净值', '复权单位净值'],
                          'prime_keys': [0, 1]},
 
@@ -919,11 +927,13 @@ class DataSource:
         for col in update_cols[:-1]:
             sql += f"`{col}`=VALUES(`{col}`),\n"
         sql += f"`{update_cols[-1]}`=VALUES(`{update_cols[-1]}`)"
-        # debug
-        # print(f'following sql will be executed to update database:\n{sql}\n'
-        #       f'with first 5 parameters: \n{df_tuple[:5]}')
-        self.cursor.executemany(sql, df_tuple)
-        self.con.commit()
+        try:
+            self.cursor.executemany(sql, df_tuple)
+            self.con.commit()
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
+                               f'{sql} \nwith parameters (first 50 shown):\n{df_tuple[:50]}')
 
     # 以下几个数据库操作函数用于操作数据库表，可用于优化表结构以提升查询速度，如修改数据格式并建立索引等
     def db_table_exists(self, db_table):
@@ -1050,7 +1060,8 @@ class DataSource:
         sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
               f"FROM INFORMATION_SCHEMA.COLUMNS " \
               f"WHERE TABLE_SCHEMA = Database() " \
-              f"AND table_name = '{db_table}'"
+              f"AND table_name = '{db_table}'" \
+              f"ORDER BY ordinal_position"
         # debug
         # print(f'will execute following sql: \n{sql}\n')
 
@@ -1312,14 +1323,12 @@ class DataSource:
             # debug
             # print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
-
-        # 下载local_data，将其与dnld_data进行对比，找出相同部分并删除这部分数据，避免重复保存
-        # 当数据表内容很多时，操作完整下载local_data会非常费时，因此需要限制下载的数据范围 - 22-02-13
-        # 目前的想法包括：(以下方法都仅限于source_type == 'db' 的情形)
-        # 1， 找到dnld_data的primary_key范围，下载的数据限定在这个范围内：
-        # 2， 如果以"update"方法更新数据库，则不需要下载local_data，直接使用
-        #       "INSERT INTO ... ON DUPLICATE KEY UPDATE ..." 更新表内容
-
+        # 检查df与table的column顺序是否一致
+        dnld_columns = dnld_data.columns.to_list()
+        if any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
+            raise KeyError(f'downloaded data does not fit table schema:\n'
+                           f'df columns: {dnld_columns}\n'
+                           f'tbl schema: {table_columns}')
         if self.source_type == 'file':
             # 如果source_type == 'file'，需要将下载的数据与本地数据合并，本地数据必须全部下载，
             # 数据量大后非常费时

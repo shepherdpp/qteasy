@@ -1598,8 +1598,8 @@ def fund_net_value(fund: str = None,
     :return: pd.DataFrame
         column          type  default   description
         ts_code		    str	    Y	    TS代码
+        nav_date	    str	    Y	    净值日期
         ann_date	    str	    Y      	公告日期
-        end_date	    str	    Y	    截止日期
         unit_nav	    float	Y	    单位净值
         accum_nav	    float	Y	    累计净值
         accum_div	    float	Y   	累计分红
