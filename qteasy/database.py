@@ -59,7 +59,7 @@ TABLE_SOURCE_MAPPING = {
 
     'stock_daily':      ['bars', 'data', 'E', 'd', 'daily', ''],
 
-    'stock_weekly':     ['bars2', 'data', 'E', 'w', 'weekly', ''],
+    'stock_weekly':     ['bars', 'data', 'E', 'w', 'weekly', ''],
 
     'stock_monthly':    ['bars', 'data', 'E', 'm', 'monthly', ''],
 
@@ -170,14 +170,6 @@ TABLE_STRUCTURES = {
                          'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'double', 'double'],
                          'remarks':    ['证券代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
-                                        '涨跌幅', '成交量 （手）', '成交额 （千元）'],
-                         'prime_keys': [0, 1]},
-
-    'bars2':            {'columns':    ['ts_code', 'trade_date', 'close', 'open', 'high', 'low', 'pre_close', 'change',
-                                        'pct_chg', 'vol', 'amount'],
-                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'double', 'double'],
-                         'remarks':    ['证券代码', '交易日期', '收盘价', '开盘价', '最高价', '最低价', '昨收价', '涨跌额',
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
                          'prime_keys': [0, 1]},
 
@@ -914,6 +906,8 @@ class DataSource:
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
+        if any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns)):
+            raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notnull(df), None)
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO `{db_table}` ("
@@ -1186,6 +1180,9 @@ class DataSource:
             如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
             如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定
 
+            注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查
+            请使用update_table_data()来更新或写入数据到本地数据库
+
             TODO: potentially: 如果一张数据表的数据量过大，除非将数据存储在数据库中，
             TODO: 如果将所有数据存储在一个文件中将导致读取速度下降，本函数应该进行分表工作，
             TODO: 即将数据分成不同的DataFrame，分别保存在不同的文件中。 此时需要建立
@@ -1309,26 +1306,25 @@ class DataSource:
         if dnld_data.empty:
             return
 
-        column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+        table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
-        # 删除数据中过多的列，不允许出现缺少列
-        table_struct = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('structure')]
-        table_columns = TABLE_STRUCTURES[table_struct]['columns']
         dnld_columns = dnld_data.columns.to_list()
+        # 根据Constraints，添加相应的列（通常为NULL列）
         missing_columns = [col for col in table_columns if col not in dnld_columns]
         if len(missing_columns) > 0:
             raise ValueError(f'there are missing columns in downloaded df, can not merge to local table')
+        # 删除数据中过多的列，不允许出现缺少列
         columns_to_drop = [col for col in dnld_columns if col not in table_columns]
         if len(columns_to_drop) > 0:
             # debug
-            # print(f'there are columns to drop, they are\n{columns_to_drop}')
+            print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
-        # 检查df与table的column顺序是否一致
-        dnld_columns = dnld_data.columns.to_list()
+        # 确保df与table的column顺序一致
         if any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
-            raise KeyError(f'downloaded data does not fit table schema:\n'
-                           f'df columns: {dnld_columns}\n'
-                           f'tbl schema: {table_columns}')
+            dnld_data = dnld_data.reindex(columns=table_columns, copy=False)
+            print(f'downloaded data does not fit table schema:\n'
+                  f'df columns: {dnld_columns}\n'
+                  f'tbl schema: {table_columns}')
         if self.source_type == 'file':
             # 如果source_type == 'file'，需要将下载的数据与本地数据合并，本地数据必须全部下载，
             # 数据量大后非常费时
