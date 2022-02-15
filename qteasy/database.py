@@ -103,9 +103,9 @@ TABLE_STRUCTURES = {
     'stock_basic':      {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
                                         'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
                                         'delist_date', 'is_hs'],
-                         'dtypes':     ['varchar(9)', 'varchar(6)', 'var_char(10)', 'varchar(10)', 'varchar(10)',
-                                        'varchar(50)', 'varchar(50)', 'varchar(6)', 'varchar(6)', 'varchar(6)',
-                                        'varchar(6)', 'varchar(4)', 'date', 'date', 'tinyint'],
+                         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(10)', 'varchar(10)',
+                                        'varchar(50)', 'varchar(80)', 'varchar(40)', 'varchar(6)', 'varchar(6)',
+                                        'varchar(6)', 'varchar(4)', 'date', 'date', 'varchar(2)'],
                          'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
                          'prime_keys': [0]},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
@@ -180,11 +180,11 @@ TABLE_STRUCTURES = {
                          'prime_keys': [0, 1]},
 
     'fund_nav':         {'columns':    ['ts_code', 'nav_date', 'ann_date', 'unit_nav', 'accum_nav', 'accum_div',
-                                        'net_asset', 'total_netasset', 'adj_nav'],
+                                        'net_asset', 'total_netasset', 'adj_nav', 'update_flag'],
                          'dtypes':     ['varchar(24)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
-                                        'float'],
+                                        'float', 'tinyint'],
                          'remarks':    ['TS代码', '净值日期', '公告日期', '单位净值', '累计净值', '累计分红', '资产净值',
-                                        '合计资产净值', '复权单位净值'],
+                                        '合计资产净值', '复权单位净值', '更新标记'],
                          'prime_keys': [0, 1]},
 
     'fund_share':       {'columns':    ['ts_code', 'trade_date', 'fd_share'],

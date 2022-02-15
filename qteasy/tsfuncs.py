@@ -39,17 +39,11 @@ def acquire_data(table, **kwargs):
 # ==================
 
 
-@lru_cache(maxsize=16)
-def stock_basic(is_hs: str = None,
-                list_status: str = None,
-                exchange: str = None,
-                fields: str = None):
+@retry(Exception)
+def stock_basic(exchange: str = None):
     """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
 
-    :param is_hs: optinal, 是否沪深港通标的，N否 H沪股通 S深股通
-    :param list_status: optional, 上市状态： L上市 D退市 P暂停上市
     :param exchange: optional, 交易所 SSE上交所 SZSE深交所 HKEX港交所(未上线)
-    :param fields: 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
     :return: pd.DataFrame:
         column      type    description
         ts_code,    str,    TS代码
@@ -67,23 +61,17 @@ def stock_basic(is_hs: str = None,
         delist_date,str,    退市日期
         is_hs,      str,    是否沪深港通标的，N否 H沪股通 S深股通
     """
-    if is_hs is None:
-        is_hs = ''
-    if list_status is None:
-        list_status = 'L'
+    is_hs = ''
+    list_status = 'L'
     if exchange is None:
         exchange = ''
-    if fields is None:
-        fields = 'ts_code,symbol,name,area,industry,list_date'
+    fields = 'ts_code,symbol,name,area,industry,fullname, enname, cnspell, market, exchange, curr_type, list_status, ' \
+             'list_date, delist_date, is_hs'
     pro = ts.pro_api()
-    try:
-        return pro.stock_basic(exchange=exchange,
-                               list_status=list_status,
-                               is_hs=is_hs,
-                               fields=fields)
-    except:
-        print(f'ERROR OCCURRED during acquiring basic share info, empty dataframe is created!')
-        return pd.DataFrame()
+    return pro.stock_basic(exchange=exchange,
+                           list_status=list_status,
+                           is_hs=is_hs,
+                           fields=fields)
 
 
 @retry(Exception)
