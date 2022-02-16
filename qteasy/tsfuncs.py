@@ -135,7 +135,7 @@ def name_change(shares: str = None,
         4       600848.SH   ST自仪     20010508    20061008         ST
         5       600848.SH   自仪股份  19940324      20010507         其他
     """
-    fields = 'ts_code,name,start_date,end_date,change_reason'
+    fields = 'ts_code,start_date,name,end_date,ann_date,change_reason'
     pro = ts.pro_api()
     return pro.namechange(ts_code=shares,
                           start_date=start,
@@ -486,7 +486,7 @@ def fund_manager(fund=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_share(ts_code=fund, ann_date=ann_date, offset=offset)
+    return pro.fund_manager(ts_code=fund, ann_date=ann_date, offset=offset)
 
 
 # Finance Data

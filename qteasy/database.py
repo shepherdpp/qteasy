@@ -89,7 +89,7 @@ TABLE_SOURCE_MAPPING = {
 
     'index_indicator':  ['index_indicator', 'data', 'IDX', 'd', 'index_daily_basic', ''],
 
-    'index_weight':     ['index_weight', 'comp', 'IDX', 'd', 'composite', ''],
+    'index_weight':     ['index_weight', 'comp', 'IDX', 'm', 'composite', ''],
 
     'income':           ['income', 'data', 'E', 'q', 'income', ''],
 
@@ -122,10 +122,10 @@ TABLE_STRUCTURES = {
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
                          'prime_keys': [0]},
 
-    'name_changes':     {'columns':    ['ts_code', 'name', 'start_date', 'end_date', 'ann_date', 'change_reason'],
-                         'dtypes':     ['varchar(9)', 'varchar(8)', 'date', 'date', 'date', 'varchar(10)'],
-                         'remarks':    ['证券代码', '证券名称', '开始日期', '结束日期', '公告日期', '变更原因'],
-                         'prime_keys': [0, 4]},
+    'name_changes':     {'columns':    ['ts_code', 'start_date', 'name', 'end_date', 'ann_date', 'change_reason'],
+                         'dtypes':     ['varchar(9)', 'date', 'varchar(8)', 'date', 'date', 'varchar(10)'],
+                         'remarks':    ['证券代码', '开始日期', '证券名称', '结束日期', '公告日期', '变更原因'],
+                         'prime_keys': [0, 1]},
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
@@ -153,9 +153,9 @@ TABLE_STRUCTURES = {
     'future_basic':     {'columns':    ['ts_code', 'symbol', 'exchange', 'name', 'fut_code', 'multiplier', 'trade_unit',
                                         'per_unit', 'quote_unit', 'quote_unit_desc', 'd_mode_desc', 'list_date',
                                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
-                         'dtypes':     ['varchar(9)', 'varchar(4)', 'varchar(8)', 'varchar(8)', 'varchar(12)', 'float',
-                                        'varchar(4)', 'float', 'varchar(4)', 'text',
-                                        'text', 'date', 'date', 'varchar(6)', 'date', 'varchar(10)'],
+                         'dtypes':     ['varchar(24)', 'varchar(12)', 'varchar(8)', 'varchar(40)', 'varchar(12)',
+                                        'float', 'varchar(4)', 'float', 'varchar(4)', 'text', 'text', 'date', 'date',
+                                        'varchar(6)', 'date', 'varchar(40)'],
                          'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
                                         '交易计量单位', '交易单位(每手)', '报价单位', '最小报价单位说明', '交割方式说明',
                                         '上市日期', '最后交易日期', '交割月份', '最后交割日', '交易时间说明'],
@@ -165,8 +165,8 @@ TABLE_STRUCTURES = {
                                         'exercise_type', 'exercise_price', 's_month', 'maturity_date', 'list_price',
                                         'list_date', 'delist_date', 'last_edate', 'last_ddate', 'quote_unit',
                                         'min_price_chg'],
-                         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(10)', 'varchar(10)', 'varchar(12)',
-                                        'varchar(6)', 'varchar(6)', 'varchar(6)', 'float', 'varchar(2)', 'date',
+                         'dtypes':     ['varchar(24)', 'varchar(6)', 'varchar(50)', 'varchar(10)', 'varchar(12)',
+                                        'varchar(6)', 'varchar(6)', 'varchar(6)', 'float', 'varchar(8)', 'date',
                                         'float', 'date', 'date', 'date', 'date', 'varchar(6)', 'varchar(6)'],
                          'remarks':    ['证券代码', '交易市场', '合约名称', '合约单位', '标准合约代码', '合约类型', '期权类型',
                                         '行权方式', '行权价格', '结算月', '到期日', '挂牌基准价', '开始交易日期',
@@ -260,10 +260,10 @@ TABLE_STRUCTURES = {
                                         '市盈率', '市盈率TTM', '市净率'],
                          'prime_keys': [0, 1]},
 
-    'index_weight':     {'columns':    ['index_code', 'con_code', 'trade_date', 'weight'],
-                         'dtypes':     ['varchar(9)', 'varchar(9)', 'date', 'float'],
-                         'remarks':    ['指数代码', '成分代码', '交易日期', '权重'],
-                         'prime_keys': [0, 2]},
+    'index_weight':     {'columns':    ['index_code', 'trade_date', 'con_code', 'weight'],
+                         'dtypes':     ['varchar(24)', 'date', 'varchar(9)', 'float'],
+                         'remarks':    ['指数代码', '交易日期', '成分代码', '权重'],
+                         'prime_keys': [0, 1]},
 
     'income':           {'columns':    ['ts_code', 'ann_date', 'f_ann_date', 'end_date', 'report_type', 'comp_type',
                                         'end_type', 'basic_eps', 'diluted_eps', 'total_revenue', 'revenue',
@@ -920,7 +920,7 @@ class DataSource:
         update_cols = [item for item in tbl_columns if item not in primary_key]
         if any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns)):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
-        df = df.where(pd.notnull(df), None)
+        df = df.where(pd.notna(df), None)
         df_tuple = tuple(df.itertuples(index=False, name=None))
         sql = f"INSERT INTO `{db_table}` ("
         for col in tbl_columns[:-1]:
