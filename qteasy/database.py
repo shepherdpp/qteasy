@@ -37,25 +37,25 @@ TABLE_SOURCE_MAPPING = {
 
     'stock_basic':      ['stock_basic', 'basics', 'E', 'none', 'stock_basic', ''],
 
-    'stock_names':      ['name_changes', 'basics', 'E', 'none', 'name_changes', ''],
+    'stock_names':      ['name_changes', 'basics', 'E', 'none', 'name_change', ''],
 
     'index_basic':      ['index_basic', 'basics', 'IDX', 'none',  'index_basic', ''],
 
     'fund_basic':       ['fund_basic', 'basics', 'FD', 'none',  'fund_basic', ''],
 
-    'future_basic':     ['future_basic', 'basics', 'FT', 'none', '', ''],
+    'future_basic':     ['future_basic', 'basics', 'FT', 'none', 'future_basic', ''],
 
-    'opt_basic':        ['opt_basic', 'basics', 'OPT', 'none', '', ''],
+    'opt_basic':        ['opt_basic', 'basics', 'OPT', 'none', 'options_basic', ''],
 
-    'stock_1min':       ['bars', 'data', 'E', '1min', 'stk_mins', ''],
+    'stock_1min':       ['bars', 'data', 'E', '1min', 'mins', ''],
 
-    'stock_5min':       ['bars', 'data', 'E', '5min', 'stk_mins', ''],
+    'stock_5min':       ['bars', 'data', 'E', '5min', 'mins', ''],
 
-    'stock_15min':      ['bars', 'data', 'E', '15min', 'stk_mins', ''],
+    'stock_15min':      ['bars', 'data', 'E', '15min', 'mins', ''],
 
-    'stock_30min':      ['bars', 'data', 'E', '30min', 'stk_mins', ''],
+    'stock_30min':      ['bars', 'data', 'E', '30min', 'mins', ''],
 
-    'stock_hour':       ['bars', 'data', 'E', '60min', 'stk_mins', ''],
+    'stock_hour':       ['bars', 'data', 'E', '60min', 'mins', ''],
 
     'stock_daily':      ['bars', 'data', 'E', 'd', 'daily', ''],
 
@@ -89,16 +89,28 @@ TABLE_SOURCE_MAPPING = {
 
     'index_indicator':  ['index_indicator', 'data', 'IDX', 'd', 'index_daily_basic', ''],
 
-    'index_weight':     ['index_weight', 'comp', 'IDX', 'd', 'index_weight', ''],
+    'index_weight':     ['index_weight', 'comp', 'IDX', 'd', 'composite', ''],
+
+    'income':           ['income', 'data', 'E', 'q', 'income', ''],
+
+    'balance':          ['balance', 'data', 'E', 'q', 'balance', ''],
+
+    'cash_flow':        ['cash_flow', 'data', 'E', 'q', 'cashflow', ''],
+
+    'financial':        ['financial', 'data', 'E', 'q', 'indicators', ''],
+
+    'forecast':         ['forecast', 'data', 'E', 'q', 'forecast', ''],
+
+    'express':          ['express', 'data', 'E', 'q', 'express', ''],
 
 }
-# 定义Table structure，定义所有数据表的主键和内容
+# 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_STRUCTURES = {
 
     'trade_calendar':   {'columns':    ['exchange', 'cal_date', 'is_open', 'pretrade_date'],
                          'dtypes':     ['varchar(9)', 'date', 'tinyint', 'date'],
                          'remarks':    ['交易所', '日期', '是否交易', '上一交易日'],
-                         'prime_keys': [0, 1]},  # 交易日历表，每年更新，更新时没有参数
+                         'prime_keys': [0, 1]},
 
     'stock_basic':      {'columns':    ['ts_code', 'symbol', 'name', 'area', 'industry', 'fullname', 'enname',
                                         'cnspell', 'market', 'exchange', 'curr_type', 'list_status', 'list_date',
@@ -108,12 +120,12 @@ TABLE_STRUCTURES = {
                                         'varchar(6)', 'varchar(4)', 'date', 'date', 'varchar(2)'],
                          'remarks':    ['证券代码', '股票代码', '股票名称', '地域', '所属行业', '股票全称', '英文全称', '拼音缩写',
                                         '市场类型', '交易所代码', '交易货币', '上市状态', '上市日期', '退市日期', '是否沪深港通'],
-                         'prime_keys': [0]},  # 股票基本信息表，每一支股票的基本信息如名称等，更新时全表下载并去重
+                         'prime_keys': [0]},
 
     'name_changes':     {'columns':    ['ts_code', 'name', 'start_date', 'end_date', 'ann_date', 'change_reason'],
                          'dtypes':     ['varchar(9)', 'varchar(8)', 'date', 'date', 'date', 'varchar(10)'],
                          'remarks':    ['证券代码', '证券名称', '开始日期', '结束日期', '公告日期', '变更原因'],
-                         'prime_keys': [0, 4]},  # 股票名称变更登记表，更新时按股票名称下载
+                         'prime_keys': [0, 4]},
 
     'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
                                         'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
@@ -128,7 +140,7 @@ TABLE_STRUCTURES = {
                                         'c_fee', 'duration_year', 'p_value', 'min_amount', 'exp_return', 'benchmark',
                                         'status', 'invest_type', 'type', 'trustee', 'purc_startdate', 'redm_startdate',
                                         'market'],
-                         'dtypes':     ['varchar(9)', 'varchar(6)', 'varchar(20)', 'varchar(20)', 'varchar(4)', 'date',
+                         'dtypes':     ['varchar(24)', 'varchar(24)', 'varchar(20)', 'varchar(20)', 'varchar(8)', 'date',
                                         'date', 'date', 'date', 'date', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'text', 'varchar(2)', 'varchar(10)', 'varchar(10)',
                                         'varchar(10)', 'date', 'date', 'varchar(2)'],
@@ -1309,22 +1321,25 @@ class DataSource:
         table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         dnld_columns = dnld_data.columns.to_list()
-        # 根据Constraints，添加相应的列（通常为NULL列）
+        # 如果table中的相当部分（25%）不能从df中找到，判断df与table完全不匹配，报错
+        # 否则判断df基本与table匹配，根据Constraints，添加缺少的列（通常为NULL列）
         missing_columns = [col for col in table_columns if col not in dnld_columns]
-        if len(missing_columns) > 0:
-            raise ValueError(f'there are missing columns in downloaded df, can not merge to local table')
+        if len(missing_columns) >= (len(table_columns) * 0.25):
+            raise ValueError(f'there are too many missing columns in downloaded df, can not merge to local table')
+        else:
+            pass  # 在后面调整列顺序时会同时添加缺的列并调整顺序
         # 删除数据中过多的列，不允许出现缺少列
         columns_to_drop = [col for col in dnld_columns if col not in table_columns]
         if len(columns_to_drop) > 0:
             # debug
-            print(f'there are columns to drop, they are\n{columns_to_drop}')
+            # print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
         # 确保df与table的column顺序一致
-        if any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
+        if len(missing_columns)>0 or any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
             dnld_data = dnld_data.reindex(columns=table_columns, copy=False)
-            print(f'downloaded data does not fit table schema:\n'
-                  f'df columns: {dnld_columns}\n'
-                  f'tbl schema: {table_columns}')
+            # print(f'downloaded data does not fit table schema:\n'
+            #       f'df columns: {dnld_columns}\n'
+            #       f'tbl schema: {table_columns}')
         if self.source_type == 'file':
             # 如果source_type == 'file'，需要将下载的数据与本地数据合并，本地数据必须全部下载，
             # 数据量大后非常费时

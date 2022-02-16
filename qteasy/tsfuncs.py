@@ -105,14 +105,12 @@ def trade_calendar(exchange: str = 'SSE',
         return list(pd.to_datetime(trade_cal.cal_date))
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def name_change(shares: str = None,
                 start: str = None,
-                end: str = None,
-                fields: str = None):
+                end: str = None):
     """ 历史名称变更记录
 
-    :param fields:
     :param shares:
     :param start:
     :param end:
@@ -137,8 +135,7 @@ def name_change(shares: str = None,
         4       600848.SH   ST自仪     20010508    20061008         ST
         5       600848.SH   自仪股份  19940324      20010507         其他
     """
-    if fields is None:
-        fields = 'ts_code,name,start_date,end_date,change_reason'
+    fields = 'ts_code,name,start_date,end_date,change_reason'
     pro = ts.pro_api()
     return pro.namechange(ts_code=shares,
                           start_date=start,
@@ -460,138 +457,41 @@ def fund_adj(shares=None,
     return pro.fund_adj(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@lru_cache(maxsize=16)
-def get_bar(shares: object,
-            start: object,
-            end: object,
-            asset_type: object = 'E',
-            adj: object = 'hfq',
-            freq: object = 'D',
-            ma: object = None) -> pd.DataFrame:
-    """ 获取指数或股票的复权历史价格
-
-    input:
-    :param shares: str, 证券代码
-    :param start: str, 开始日期 (格式：YYYYMMDD)
-    :param end: str, 结束日期 (格式：YYYYMMDD)
-    :param asset_type: str, 资产类别：E股票 I沪深指数 C数字货币 F期货 FD基金 O期权，默认E
-    :param adj: str, 复权类型(只针对股票)：None未复权 qfq前复权 hfq后复权 , 默认None
-    :param freq: str, 数据频度 ：1MIN表示1分钟（1/5/15/30/60分钟） D日线 ，默认D
-    :param ma: str, 均线，支持任意周期的均价和均量，输入任意合理int数值
-    return: pd.DataFrame
-    column          type    description
-    ts_code         str     证券代码
-    trade_date      str     交易日期，格式YYYYMMDD
-    open            float   开盘价
-    high            float   最高价
-    low             float   最低价
-    close           float   收盘价
-    pre_close       float   前一收盘价
-    change          float   收盘价涨跌
-    pct_chg         float   收盘价涨跌百分比
-    vol             float   交易量
-    amount          float   交易额
-    example:
-    获取日k线数据，前复权：
-    get_bar(share='000001.SZ', adj='qfq', start_date='20180101', end_date='20181011')
-    获取周K线数据，后复权：
-    get_bar(share='000001.SZ', freq='W', adj='hfq', start_date='20180101', end_date='20181011')
-    output:
-    前复权日K线数据
-           ts_code trade_date     open     high      low    close  pre_close  change  pct_chg         vol       amount
-    0    000001.SZ   20181011  10.0500  10.1600   9.7000   9.8600    10.4500 -0.5900  -5.6459  1995143.83  1994186.611
-    1    000001.SZ   20181010  10.5400  10.6600  10.3800  10.4500    10.5600 -0.1100  -1.0417   995200.08  1045666.180
-    2    000001.SZ   20181009  10.4600  10.7000  10.3900  10.5600    10.4500  0.1100   1.0526  1064084.26  1117946.550
-    3    000001.SZ   20181008  10.7000  10.7900  10.4500  10.4500    11.0500 -0.6000  -5.4299  1686358.52  1793455.283
-    4    000001.SZ   20180928  10.7800  11.2700  10.7800  11.0500    10.7400  0.3100   2.8864  2110242.67  2331358.288
+@retry(Exception)
+def fund_share(fund=None,
+               trade_date=None,
+               start=None,
+               end=None):
     """
-    if isinstance(shares, list):
-        shares = list_to_str_format(shares)
-    # 尽管get_bar函数支持多个shares的数据批量下载，但是批量下载存在诸多问题，因此不支持同时下载多个股票的数据
-    assert isinstance(shares, str)
-    assert len(str_to_list(shares)) == 1, \
-        f'Should download data for one and only one share at a time, got {len(str_to_list(shares))} shares'
-    # TODO: 单个股票的数据量太大时，需要分批下载，当单个股票的需求数据量超过十年时，将数据切成十年长的数个分段，分别下载
-    start_date = next_market_trade_day(start)
-    end_date = pd.to_datetime(end)
-    history_date_list = [start_date]
-    ten_year_after_start = start_date + pd.Timedelta(3650, 'd')
-    while ten_year_after_start < end_date:
-        history_date_list.append(ten_year_after_start)
-        ten_year_after_start = ten_year_after_start + pd.Timedelta(3650, 'd')
-    history_date_list.append(end_date)
-    res_dfs = []
-    left_retry = 5
-    while left_retry > 0:
-        try:
-            df = ts.pro_bar(ts_code=shares,
-                            start_date=start,
-                            end_date=end,
-                            asset=asset_type,
-                            adj=adj,
-                            freq=freq,
-                            ma=ma)
-        except:
-            print(f'ERROR OCCURS during downloading price/volume data for {shares}, None is created!')
-            df = None
 
-        if df is None and (adj is not None):
-            # 因为读取出错导致未取到数据，添加一个空的数据框占位，不改变参数重复读取直至读取到数据为止
-            # 当adj不为None时，pro_bar即使运行正确，也不会输出空DF，而是生成None，因此这种情况不属于出错情况，需要排除
-            df = pd.DataFrame(columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
-                                       'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-            res_dfs.append(df)
-            left_retry -= 1
-            continue
-
-        if not df.empty:
-            # 读取到了数据，且读取数据时未出错，确认数据是否完整
-            # TODO: 此处需确认，仅通过close是否nan判断数据是否存在，可能存在漏洞，需要判断一行中任意数据是否存在nan值
-            df_without_nan = df.loc[~np.isnan(df.close)]
-            # 从已经获取的数据中，找到最早的一个时间点，计算它的前一天，这一天会成为下一次下载的时间终点
-            acquired_start_date = pd.to_datetime(df_without_nan.trade_date.min()) - pd.Timedelta(1, 'd')
-            res_dfs.append(df_without_nan)
-            # 判断数据是否完整读取
-            if len(df) == 5000 or acquired_start_date >= start_date:
-                # 本次读取的数据不完整，还有剩余的数据未读取
-                # 下一次读取数据起点不变，终点变为前一次的起点的前一天
-                end = regulate_date_format(acquired_start_date)
-            else:
-                # 数据已经读取完整
-                break
-
-        else:  # df.empty
-            # 如果数据读取未出错，但读取的是空数据框，说明已经没有其他数据，则结束读取
-            res_dfs.append(df)
-            break
-
-    # 所有的数据读取到后，完成数据连接
-    res = pd.concat(res_dfs, axis=0)
-
-    return res
-
-
-@lru_cache(maxsize=16)
-def get_index(index: str,
-              start: str,
-              end: str,
-              freq: str = 'D',
-              ma: list = None) -> object:
-    """ 获取指数的历史价格数据的快捷通道，实际上调用get_bar实现
-
-    :param index:
+    :param fund: 基金代码，支持多只基金同时提取，用逗号分隔
+    :param trade_date:  交易变动日期，格式YYYYMMDD
     :param start:
     :param end:
-    :param freq:
-    :param ma:
     :return:
     """
-    return get_bar(shares=index, start=start, end=end, asset_type='I', adj='None', freq=freq, ma=ma)
+    pro = ts.pro_api()
+    return pro.fund_share(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception)
+def fund_manager(fund=None,
+                 ann_date=None,
+                 offset=None):
+    """
+
+    :param fund: 基金代码，支持多只基金同时提取，用逗号分隔
+    :param ann_date:  公告日期，格式YYYYMMDD
+    :param offset:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_share(ts_code=fund, ann_date=ann_date, offset=offset)
 
 
 # Finance Data
 # ================
-@lru_cache(maxsize=16)
+@retry(Exception)
 def income(share: str,
            rpt_date: str = None,
            start: str = None,
@@ -727,7 +627,7 @@ def income(share: str,
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def balance(share: str,
             rpt_date: str = None,
             start: str = None,
@@ -933,7 +833,7 @@ def balance(share: str,
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def cashflow(share: str,
              rpt_date: str = None,
              start: str = None,
@@ -1091,7 +991,7 @@ def cashflow(share: str,
         return pd.DataFrame()
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def indicators(share: str,
                rpt_date: str = None,
                start: str = None,
@@ -1476,7 +1376,7 @@ def index_indicators(trade_date: str = None,
                                 fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def composite(index: str = None,
               trade_date: str = None,
               start: str = None,
@@ -1515,7 +1415,7 @@ def composite(index: str = None,
 # Funds Data
 # =============
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def fund_basic(market: str = None,
                status: str = None) -> pd.DataFrame:
     """ 获取基金列表
@@ -1567,8 +1467,6 @@ def fund_basic(market: str = None,
     """
     if market is None:
         market = 'E'
-    if status is None:
-        status = 'L'
     pro = ts.pro_api()
     return pro.fund_basic(market=market,
                           status=status)
@@ -1614,15 +1512,13 @@ def fund_net_value(fund: str = None,
 # Futures & Options Data
 # ===============
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def future_basic(exchange: str = None,
-                 future_type: str = None,
-                 fields: str = None) -> pd.DataFrame:
+                 future_type: str = None) -> pd.DataFrame:
     """ 获取期货合约列表数据
 
     :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
     :param future_type: str, 合约类型 (1 普通合约 2主力与连续合约 默认取全部)
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return:
         column          type    default description
         ts_code		    str	    Y	    合约代码
@@ -1642,7 +1538,7 @@ def future_basic(exchange: str = None,
         last_ddate	    str	    Y	    最后交割日
         trade_time_desc	str	    N	    交易时间说明
     example:
-        future_basic(exchange='DCE', fut_type='1', fields='ts_code,symbol,name,list_date,delist_date')
+        future_basic(exchange='DCE', fut_type='1')
     output:
                 ts_code  symbol      name   list_date    delist_date
         0      P0805.DCE   P0805   棕榈油0805  20071029    20080516
@@ -1655,8 +1551,8 @@ def future_basic(exchange: str = None,
     """
     if exchange is None:
         exchange = 'CFFEX'
-    if fields is None:
-        fields = 'ts_code,symbol,name,list_date,delist_date,d_mode_desc'
+    fields = 'ts_code,symbol,name,fut_code,multiplier,trade_unit,per_unit,quote_unit,quote_unit_desc,d_mode_desc,' \
+             'list_date,delist_date,d_month,last_ddate,trade_time_desc'
     pro = ts.pro_api()
     return pro.fut_basic(exchange=exchange,
                          fut_type=future_type,
@@ -1665,13 +1561,11 @@ def future_basic(exchange: str = None,
 
 @lru_cache(maxsize=16)
 def options_basic(exchange: str = None,
-                  option_type: str = None,
-                  fields: str = None) -> pd.DataFrame:
+                  call_put: str = None) -> pd.DataFrame:
     """ 获取期权合约信息
 
     :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
-    :param option_type: str, 期权类型 (??)
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :param call_put: str, 期权类型
     :return pd.DataFrame
         column          type    default description
         ts_code		    str	    Y   	TS代码
@@ -1703,13 +1597,11 @@ def options_basic(exchange: str = None,
         4    M1707-P-2500.DCE  豆粕期权1707认沽2500            美式  20170410    20170607
         5    M1803-C-2550.DCE  豆粕期权1803认购2550            美式  20170407    20180207
     """
-    if exchange is None:
-        exchange = 'CFFEX'
-    if fields is None:
-        fields = 'ts_code,name,opt_code,opt_type,list_date,list_price,exercise_type,exercise_price'
+    fields = 'ts_code,exchange,name,per_unit,opt_code,opt_type,call_put,exercise_type,exercise_price,s_month,' \
+             'maturity_date,list_price,list_date,delist_date,last_edate,last_ddate,quote_unit,min_price_chg'
     pro = ts.pro_api()
     return pro.opt_basic(exchange=exchange,
-                         call_put=option_type,
+                         call_put=call_put,
                          fields=fields)
 
 
@@ -1718,8 +1610,7 @@ def future_daily(trade_date: str = None,
                  future: str = None,
                  exchange: str = None,
                  start: str = None,
-                 end: str = None,
-                 fields: str = None) -> pd.DataFrame:
+                 end: str = None) -> pd.DataFrame:
     """ 期货日线行情数据
 
     :param trade_date: str, 交易日期
@@ -1727,7 +1618,6 @@ def future_daily(trade_date: str = None,
     :param exchange: str, 交易所代码
     :param start: str, 开始日期
     :param end: str, 结束日期
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
         column      type    default description
         ts_code		str	    Y	    TS合约代码
@@ -1757,10 +1647,8 @@ def future_daily(trade_date: str = None,
         4    CU1811.SHF   20181107    49670.0     49630.0  49640.0   ...   -170.0  26850.0  664040.10  38330.0 -4560.0
         ..          ...        ...        ...         ...      ...   ...      ...      ...        ...      ...     ...
     """
-    if future is None and trade_date is None:
-        raise ValueError(f'one of future and trade_date should be given!')
-    if fields is None:
-        fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,change1,change2,vol,amount,oi,oi_chg'
+    fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,' \
+             'settle,change1,change2,vol,amount,oi,oi_chg,delv_settle'
     pro = ts.pro_api()
     return pro.fut_daily(trade_date=trade_date,
                          ts_code=future,

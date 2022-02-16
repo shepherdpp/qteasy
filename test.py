@@ -11718,7 +11718,7 @@ class FastExperiments(unittest.TestCase):
                         user='jackie',
                         password='iama007',
                         db='ts_db')
-        dates = pd.date_range(start='20031227', end='20220211')
+        dates = pd.date_range(start='20110820', end='20220216')
         dates = list(dates.strftime('%Y%m%d'))
         tables = ['fund_nav']
         table = tables[0]
@@ -11728,6 +11728,28 @@ class FastExperiments(unittest.TestCase):
             ds.update_table_data(table, df)
             time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
             print(f'{len(df)} rows of data written in table {table} for date {dt} at time: {time_str}!')
+
+    def test_fast_experiments3(self):
+        ds = DataSource(source_type='db',
+                        host='192.168.2.11',
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        # 从tushare下载数据：
+        # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+        #                              '000005.SH', '000006.SH', '000300.SH'])
+        dates = pd.date_range(start='20070911', end='20220216')
+        dates = list(dates.strftime('%Y%m%d'))
+        tables = ['fund_daily']
+        for table in tables:
+            for date in dates:
+                df = ds.acquire_table_data(table=table, channel='tushare', trade_date=date)
+                print('data read', end='-')
+                ds.update_table_data(table, df)
+                time_str = (pd.to_datetime('now')+pd.Timedelta(8,'H')).strftime('%Y/%m/%d-%H:%M:%S')
+                print(f'{len(df)} rows of data written in table {table} for date {date} at time: {time_str}!')
+
+print(f'task completed!')
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
