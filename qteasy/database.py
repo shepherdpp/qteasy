@@ -194,7 +194,7 @@ TABLE_STRUCTURES = {
     'fund_nav':         {'columns':    ['ts_code', 'nav_date', 'ann_date', 'unit_nav', 'accum_nav', 'accum_div',
                                         'net_asset', 'total_netasset', 'adj_nav', 'update_flag'],
                          'dtypes':     ['varchar(24)', 'date', 'date', 'float', 'float', 'float', 'double', 'double',
-                                        'float', 'tinyint'],
+                                        'float', 'varchar(2)'],
                          'remarks':    ['TS代码', '净值日期', '公告日期', '单位净值', '累计净值', '累计分红', '资产净值',
                                         '合计资产净值', '复权单位净值', '更新标记'],
                          'prime_keys': [0, 1]},
@@ -918,7 +918,7 @@ class DataSource:
         """
         tbl_columns = tuple(self.get_db_table_schema(db_table).keys())
         update_cols = [item for item in tbl_columns if item not in primary_key]
-        if any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns)):
+        if (len(df.columns) != len(tbl_columns)) or (any(i_d != i_t for i_d, i_t in zip(df.columns, tbl_columns))):
             raise KeyError(f'df columns {df.columns.to_list()} does not fit table schema {list(tbl_columns)}')
         df = df.where(pd.notna(df), None)
         df_tuple = tuple(df.itertuples(index=False, name=None))

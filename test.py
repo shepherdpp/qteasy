@@ -18,8 +18,8 @@ from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
 
-from qteasy.tsfuncs import income, indicators, name_change, get_bar
-from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
+from qteasy.tsfuncs import income, indicators, name_change
+from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
 from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic, stock_company
@@ -9287,99 +9287,6 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
-    def test_get_bar(self):
-        print(f'test tushare function: get_bar')
-        print(f'test type: one share asset type E')
-        shares = '600748.SH'
-        start = '20180101'
-        end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end)
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
-        print(f'test type: one share asset type I')
-        shares = '000300.SH'
-        start = '20180101'
-        end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='IDX')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
-        print(f'test type: one share asset type E lots of data')
-        shares = '000001.SZ'
-        start = '19910101'
-        end = '20201231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='E')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        self.assertEqual(len(df), 7053)
-        self.assertEqual(len(df.loc[np.isnan(df.close)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.open)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.high)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.low)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.pre_close)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.change)]), 0)
-        print(df.iloc[4986])
-        print(df.iloc[4987])
-        self.assertEqual(df.iloc[4986].trade_date, "19991008")
-        self.assertAlmostEqual(df.iloc[4986].open, 485.235, 2)
-        self.assertAlmostEqual(df.iloc[4986].high, 490.296, 2)
-        self.assertAlmostEqual(df.iloc[4986].low, 474.691, 2)
-        self.assertAlmostEqual(df.iloc[4986].close, 477.221, 2)
-        self.assertAlmostEqual(df.iloc[4986].pre_close, 491.139, 2)
-        self.assertAlmostEqual(df.iloc[4986].change, -13.9181, 2)
-        self.assertEqual(df.iloc[4987].trade_date, "19990930")
-        self.assertAlmostEqual(df.iloc[4987].open, 499.786, 2)
-        self.assertAlmostEqual(df.iloc[4987].high, 505.901, 2)
-        self.assertAlmostEqual(df.iloc[4987].low, 488.82, 2)
-        self.assertAlmostEqual(df.iloc[4987].close, 491.139, 2)
-        self.assertAlmostEqual(df.iloc[4987].pre_close, 499.575, 2)
-        self.assertAlmostEqual(df.iloc[4987].change, -8.4352, 2)
-        # test all close prices are equal to next pre_close
-        total_unfit = 0
-        for i in range(7052):
-            cur_close = df.iloc[i + 1].close
-            pre_close = df.iloc[i].pre_close
-            if abs(cur_close - pre_close) > 1:
-                print(f'found discrepencies in close data:'
-                      f'cur_close: {cur_close}, pre_close: {pre_close} @ iloc[{i}]\n'
-                      f'{df.iloc[i:i + 2]}')
-                total_unfit += 1
-        self.assertLessEqual(total_unfit, 5)
-        df.info()
-        print(df)
-
-        print(f'test type: multiple shares asset type E, raise Error')
-        shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
-        start = '20180101'
-        end = '20191231'
-        self.assertRaises(AssertionError, get_bar, shares=shares, start=start, end=end, asset_type='E')
-
-        print(f'test type: multiple shares asset type E, with freq = "30min" -> authority issue!')
-        shares = '000620.SZ,000667.SZ'
-        start = '20180101'
-        end = '20191231'
-        # df = get_bar(shares=shares, start=start, end=end, asset_type='E', freq='30min')
-        # self.assertIsInstance(df, pd.DataFrame)
-        # self.assertFalse(df.empty)
-        # df.info()
-        # print(df.head(30))
-
-    def test_get_index(self):
-        print(f'test tushare function: get_index')
-        index = '000300.SH'
-        start = '20180101'
-        end = '20191231'
-        df = get_index(index=index, start=start, end=end)
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
     def test_income(self):
         print(f'test tushare function: income')
         shares = '600748.SH'
@@ -11718,7 +11625,7 @@ class FastExperiments(unittest.TestCase):
                         user='jackie',
                         password='iama007',
                         db='ts_db')
-        dates = pd.date_range(start='20110820', end='20220216')
+        dates = pd.date_range(start='20110819', end='20220216')
         dates = list(dates.strftime('%Y%m%d'))
         tables = ['fund_nav']
         table = tables[0]
@@ -11738,7 +11645,7 @@ class FastExperiments(unittest.TestCase):
         # 从tushare下载数据：
         # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
         #                              '000005.SH', '000006.SH', '000300.SH'])
-        dates = pd.date_range(start='20070911', end='20220216')
+        dates = pd.date_range(start='20191211', end='20220216')
         dates = list(dates.strftime('%Y%m%d'))
         tables = ['fund_daily']
         for table in tables:
