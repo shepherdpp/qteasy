@@ -298,7 +298,6 @@ def mins(share: object = None,
          start=None,
          end=None,
          freq=None):
-    # TODO: 应该可以通过"trade_date"来读取一根K线, 需要测试api
     # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，所以必须先获取权限后下载
     pro = ts.pro_api()
     return pro.stk_mins(ts_code=share, start_date=start, end_date=end, freq=freq)

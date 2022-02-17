@@ -15,6 +15,8 @@ import pandas as pd
 from os import path
 import warnings
 
+from concurrent.futures import ProcessPoolExecutor, as_completed
+
 from .utilfuncs import AVAILABLE_ASSET_TYPES
 from .utilfuncs import str_to_list, regulate_date_format, TIME_FREQ_STRINGS
 from .history import stack_dataframes
@@ -30,78 +32,117 @@ DATA_MAPPING_TABLE = []
 
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
-TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'table_usage', 'asset_type', 'freq', 'tushare', 'tushare_args']
+# comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
+TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_args',
+                                'fill_arg_type', 'arg_boe']
 TABLE_SOURCE_MAPPING = {
 
-    'trade_calendar':   ['trade_calendar', 'cal', 'none', 'none', 'trade_calendar', ''],
+    'trade_calendar':
+        ['trade_calendar', 'desc', 'cal', 'none', 'none', 'trade_calendar', '', '', ''],
 
-    'stock_basic':      ['stock_basic', 'basics', 'E', 'none', 'stock_basic', ''],
+    'stock_basic':
+        ['stock_basic', 'desc', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE'],
 
-    'stock_names':      ['name_changes', 'basics', 'E', 'none', 'name_change', ''],
+    'stock_names':
+        ['name_changes', 'desc', 'basics', 'E', 'none', 'name_change', '', '', ''],
 
-    'index_basic':      ['index_basic', 'basics', 'IDX', 'none',  'index_basic', ''],
+    'index_basic':
+        ['index_basic', 'desc', 'basics', 'IDX', 'none',  'index_basic', 'market', 'list',
+         'SSE,MSCI,CSI,SZSE,CICC,SW,OTH'],
 
-    'fund_basic':       ['fund_basic', 'basics', 'FD', 'none',  'fund_basic', ''],
+    'fund_basic':
+        ['fund_basic', 'desc', 'basics', 'FD', 'none',  'fund_basic', 'market', 'list', 'E,O'],
 
-    'future_basic':     ['future_basic', 'basics', 'FT', 'none', 'future_basic', ''],
+    'future_basic':
+        ['future_basic', 'desc', 'basics', 'FT', 'none', 'future_basic', 'exchange', 'list', 'CFFEX,DCE,CZCE,SHFE,INE'],
 
-    'opt_basic':        ['opt_basic', 'basics', 'OPT', 'none', 'options_basic', ''],
+    'opt_basic':
+        ['opt_basic', 'desc', 'basics', 'OPT', 'none', 'options_basic', 'exchange', 'list',
+         'SSE,SZSE,CFFEX,DCE,CZCE,SHFE'],
 
-    'stock_1min':       ['bars', 'data', 'E', '1min', 'mins', ''],
+    'stock_1min':
+        ['bars', 'desc', 'data', 'E', '1min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
 
-    'stock_5min':       ['bars', 'data', 'E', '5min', 'mins', ''],
+    'stock_5min':
+        ['bars', 'desc', 'data', 'E', '5min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
 
-    'stock_15min':      ['bars', 'data', 'E', '15min', 'mins', ''],
+    'stock_15min':
+        ['bars', 'desc', 'data', 'E', '15min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
 
-    'stock_30min':      ['bars', 'data', 'E', '30min', 'mins', ''],
+    'stock_30min':
+        ['bars', 'desc', 'data', 'E', '30min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
 
-    'stock_hour':       ['bars', 'data', 'E', '60min', 'mins', ''],
+    'stock_hour':
+        ['bars', 'desc', 'data', 'E', '60min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
 
-    'stock_daily':      ['bars', 'data', 'E', 'd', 'daily', ''],
+    'stock_daily':
+        ['bars', 'desc', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211,now'],
 
-    'stock_weekly':     ['bars', 'data', 'E', 'w', 'weekly', ''],
+    'stock_weekly':
+        ['bars', 'desc', 'data', 'E', 'w', 'weekly', 'trade_date', 'datetime', '19901221,now'],
 
-    'stock_monthly':    ['bars', 'data', 'E', 'm', 'monthly', ''],
+    'stock_monthly':
+        ['bars', 'desc', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211,now'],
 
-    'index_daily':      ['bars', 'data', 'IDX', 'd', 'index_daily', ''],
+    'index_daily':
+        ['bars', 'desc', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_col', 'fund_basic,ts_code'],
 
-    'index_weekly':     ['bars', 'data', 'IDX', 'w', 'index_weekly', ''],
+    'index_weekly':
+        ['bars', 'desc', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705,now'],
 
-    'index_monthly':    ['bars', 'data', 'IDX', 'm', 'index_monthly', ''],
+    'index_monthly':
+        ['bars', 'desc', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', ''],
 
-    'fund_daily':       ['bars', 'data', 'FD', 'd', 'fund_daily', ''],
+    'fund_daily':
+        ['bars', 'desc', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417,now'],
 
-    'fund_nav':         ['fund_nav', 'data', 'FD', 'd', 'fund_net_value', ''],
+    'fund_nav':
+        ['fund_nav', 'desc', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107,now'],
 
-    'fund_share':       ['fund_share', 'events', 'FD', 'none', 'fund_share', ''],
+    'fund_share':
+        ['fund_share', 'desc', 'events', 'FD', 'none', 'fund_share', '', '', ''],
 
-    'fund_manager':     ['fund_manager', 'events', 'FD', 'none', 'fund_manager', ''],
+    'fund_manager':
+        ['fund_manager', 'desc', 'events', 'FD', 'none', 'fund_manager', '', '', ''],
 
-    'future_daily':     ['future_daily', 'data', 'FT', 'd', 'future_daily', ''],
+    'future_daily':
+        ['future_daily', 'desc', 'data', 'FT', 'd', 'future_daily', '', '', ''],
 
-    'stock_adj_factor': ['adj_factors', 'adj', 'E', 'd', 'adj_factors', ''],
+    'stock_adj_factor':
+        ['adj_factors', 'desc', 'adj', 'E', 'd', 'adj_factors', '', '', ''],
 
-    'fund_adj_factor':  ['adj_factors', 'adj', 'FD', 'd', 'fund_adj', ''],
+    'fund_adj_factor':
+        ['adj_factors', 'desc', 'adj', 'FD', 'd', 'fund_adj', '', '', ''],
 
-    'stock_indicator':  ['stock_indicator', 'data', 'E', 'd', 'daily_basic', ''],
+    'stock_indicator':
+        ['stock_indicator', 'desc', 'data', 'E', 'd', 'daily_basic', '', '', ''],
 
-    'stock_indicator2': ['stock_indicator2', 'data', 'E', 'd', 'daily_basic2', ''],
+    'stock_indicator2':
+        ['stock_indicator2', 'desc', 'data', 'E', 'd', 'daily_basic2', '', '', ''],
 
-    'index_indicator':  ['index_indicator', 'data', 'IDX', 'd', 'index_daily_basic', ''],
+    'index_indicator':
+        ['index_indicator', 'desc', 'data', 'IDX', 'd', 'index_daily_basic', '', '', ''],
 
-    'index_weight':     ['index_weight', 'comp', 'IDX', 'm', 'composite', ''],
+    'index_weight':
+        ['index_weight', 'desc', 'comp', 'IDX', 'm', 'composite', '', '', ''],
 
-    'income':           ['income', 'data', 'E', 'q', 'income', ''],
+    'income':
+        ['income', 'desc', 'data', 'E', 'q', 'income', '', '', ''],
 
-    'balance':          ['balance', 'data', 'E', 'q', 'balance', ''],
+    'balance':
+        ['balance', 'desc', 'data', 'E', 'q', 'balance', '', '', ''],
 
-    'cash_flow':        ['cash_flow', 'data', 'E', 'q', 'cashflow', ''],
+    'cash_flow':
+        ['cash_flow', 'desc', 'data', 'E', 'q', 'cashflow', '', '', ''],
 
-    'financial':        ['financial', 'data', 'E', 'q', 'indicators', ''],
+    'financial':
+        ['financial', 'desc', 'data', 'E', 'q', 'indicators', '', '', ''],
 
-    'forecast':         ['forecast', 'data', 'E', 'q', 'forecast', ''],
+    'forecast':
+        ['forecast', 'desc', 'data', 'E', 'q', 'forecast', '', '', ''],
 
-    'express':          ['express', 'data', 'E', 'q', 'express', ''],
+    'express':
+        ['express', 'desc', 'data', 'E', 'q', 'express', '', '', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -1567,12 +1608,41 @@ class DataSource:
         return result_hp
 
     # 顶层函数，用于定期计划性获取数据的操作函数
-    def refill_local_source(self):
+    def refill_local_source(self, tables,
+                            date_fill_to=None,
+                            date_back_fill_to=None,
+                            date_start=None,
+                            date_end=None,
+                            merge_type='update',
+                            parallel=True,
+                            process_count=16):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
         :return:
         """
-        raise NotImplementedError
+        for table in tables:
+            table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+            table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+            print(table_map)
+            fill_type = table_map[table].fill_type
+            if fill_type != 'datetime':
+                print(f'warning: table fill type ({fill_type}) for table {table} is not datetime, can not be filled!')
+                continue
+            freq = table_map[table].freq
+            all_kwargs = pd.date_range(start=date_start, end=date_end, freq=freq)
+            if parallel:
+                proc_pool = ProcessPoolExecutor(process_count)
+                futures = {proc_pool.submit(self.acquire_table_data, table, 'tushare', **kwargs):
+                               kwargs
+                           for kwargs
+                           in all_kwargs}
+                for f in as_completed(futures):
+                    df = f.result()
+                    self.update_table_data(table, df, merge_type=merge_type)
+            else:
+                for kwargs in all_kwargs:
+                    df = self.acquire_table_data(table, 'tushares', **kwargs)
+                    self.update_table_data(table, df, merge_type=merge_type)
 
 
 # 以下函数是通用df操作函数
