@@ -17,9 +17,10 @@ import warnings
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from .utilfuncs import AVAILABLE_ASSET_TYPES
+from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format
 from .utilfuncs import str_to_list, regulate_date_format, TIME_FREQ_STRINGS
 from .history import stack_dataframes
+from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
@@ -33,7 +34,7 @@ DATA_MAPPING_TABLE = []
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
 # comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
-TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_args',
+TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_boe']
 TABLE_SOURCE_MAPPING = {
 
@@ -109,19 +110,19 @@ TABLE_SOURCE_MAPPING = {
         ['future_daily', 'desc', 'data', 'FT', 'd', 'future_daily', '', '', ''],
 
     'stock_adj_factor':
-        ['adj_factors', 'desc', 'adj', 'E', 'd', 'adj_factors', '', '', ''],
+        ['adj_factors', 'desc', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', ''],
 
     'fund_adj_factor':
-        ['adj_factors', 'desc', 'adj', 'FD', 'd', 'fund_adj', '', '', ''],
+        ['adj_factors', 'desc', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'datetime', ''],
 
     'stock_indicator':
-        ['stock_indicator', 'desc', 'data', 'E', 'd', 'daily_basic', '', '', ''],
+        ['stock_indicator', 'desc', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', 'desc', 'data', 'E', 'd', 'daily_basic2', '', '', ''],
+        ['stock_indicator2', 'desc', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'datetime', ''],
 
     'index_indicator':
-        ['index_indicator', 'desc', 'data', 'IDX', 'd', 'index_daily_basic', '', '', ''],
+        ['index_indicator', 'desc', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime', ''],
 
     'index_weight':
         ['index_weight', 'desc', 'comp', 'IDX', 'm', 'composite', '', '', ''],
@@ -807,7 +808,7 @@ class DataSource:
         Boolean: 文件存在时返回真，否则返回假
         """
         if self.source_type == 'db':
-            return True
+            raise RuntimeError('can not check file system while source type is "db"')
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
         file_path_name = self.file_path + file_name + '.' + self.file_type
@@ -989,6 +990,8 @@ class DataSource:
         :param db_table:
         :return:
         """
+        if self.source_type == 'file':
+            raise RuntimeError('can not connect to database while source type is "file"')
         sql = f"SHOW TABLES LIKE '{db_table}'"
         # debug
         # print(f'will execute this SQL:\n{sql}')
@@ -1136,6 +1139,19 @@ class DataSource:
         self.con.commit()
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
+    def table_data_exists(self, table):
+        """ 逻辑层函数，判断数据表是否存在
+
+        :param table: 数据表名称
+        :return:
+        """
+        if self.source_type == 'db':
+            return self.db_table_exists(db_table=table)
+        elif self.source_type == 'file':
+            return self.file_exists(table)
+        else:
+            raise KeyError(f'invalid source_type: {self.source_type}')
+
     def read_table_data(self, table, shares=None, start=None, end=None):
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
@@ -1178,14 +1194,14 @@ class DataSource:
             try:
                 share_like_pk = primary_key[pk_dtypes.index('varchar(9)')]
             except:
-                warnings.warn(f'can not find share-like primary key in the table!\n'
+                warnings.warn(f'can not find share-like primary key in the table {table}!\n'
                               f'passed argument shares will be ignored!', RuntimeWarning)
         # 识别Primary key中的，并确认是否需要筛选日期型pk
         if (start is not None) and (end is not None):
             try:
                 date_like_pk = primary_key[pk_dtypes.index('date')]
             except:
-                warnings.warn(f'can not find date-like primary key in the table!\n'
+                warnings.warn(f'can not find date-like primary key in the table {table}!\n'
                               f'passed start and end arguments will be ignored!', RuntimeWarning)
 
         if self.source_type == 'file':
@@ -1294,25 +1310,27 @@ class DataSource:
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAPPING.keys():
-            raise KeyError(f'Invalid table name')
+            raise KeyError(f'Invalid table name {table}')
         if not isinstance(channel, str):
             raise TypeError(f'channel should be a string, got {type(channel)} instead.')
         if channel not in AVAILABLE_CHANNELS:
-            raise KeyError(f'Invalid channel name')
+            raise KeyError(f'Invalid channel name {channel}')
 
         column, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         # 从指定的channel获取数据
         if channel == 'df':
             # 通过参数传递的DF获取数据
-            assert df is not None, f'a DataFrame must be given while channel == "df"'
-            assert isinstance(df, pd.DataFrame), \
-                f'local df should be a DataFrame, got {type(df)} instead.'
+            if df is None:
+                raise ValueError(f'a DataFrame must be given while channel == "df"')
+            if not isinstance(df, pd.DataFrame):
+                raise TypeError(f'local df should be a DataFrame, got {type(df)} instead.')
             dnld_data = df
         elif channel == 'csv':
             # 读取本地csv数据文件获取数据
-            assert df is not None, f'a file path and name must be given while channel == "csv"'
-            assert isinstance(f_name, str), \
-                f'file name should be a string, got {type(df)} instead.'
+            if f_name is None:
+                raise ValueError(f'a file path and name must be given while channel == "csv"')
+            if not isinstance(f_name, str):
+                raise TypeError(f'file name should be a string, got {type(df)} instead.')
             raise NotImplementedError
         elif channel == 'excel':
             # 读取本地Excel文件获取数据
@@ -1322,12 +1340,12 @@ class DataSource:
             raise NotImplementedError
         elif channel == 'tushare':
             # 通过tushare的API下载数据
-            from .tsfuncs import acquire_data
             dnld_data = acquire_data(table, **kwargs)
         else:
             raise NotImplementedError
-
-        return set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+        res = dnld_data
+        res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
+        return res
 
     def update_table_data(self, table, df, merge_type='update'):
         """ 检查输入的df，去掉不符合要求的列或行后，将数据合并到table中，包括以下步骤：
@@ -1411,7 +1429,7 @@ class DataSource:
 
         return
 
-    def drop_table(self, table):
+    def drop_table_data(self, table):
         """ 删除本地存储的数据表（操作不可撤销，谨慎使用）
 
         :param table: 本地数据表的名称
@@ -1423,6 +1441,14 @@ class DataSource:
         elif self.source_type == 'file':
             self.drop_file(file_name=table)
         return None
+
+    def get_table_data_coverage(self, table):
+        """ 获取本地数据表内容的覆盖范围，对于时间类型，返回min/max/count
+
+        :param table:
+        :return:
+        """
+        raise NotImplementedError
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_dataframes(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
@@ -1528,7 +1554,7 @@ class DataSource:
             # print(f'got data from table {tbl}:\n{df}\n')
 
         # 提取数据，生成单个数据类型的dataframe
-        df_by_htypes = {k:v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
+        df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
             for tbl in tables_to_read:
                 if htyp in table_data_columns[tbl]:
@@ -1608,41 +1634,112 @@ class DataSource:
         return result_hp
 
     # 顶层函数，用于定期计划性获取数据的操作函数
-    def refill_local_source(self, tables,
+    def refill_local_source(self,
+                            tables,
                             date_fill_to=None,
-                            date_back_fill_to=None,
-                            date_start=None,
-                            date_end=None,
+                            date_fill_back_to=None,
+                            start_date=None,
+                            end_date=None,
                             merge_type='update',
                             parallel=True,
                             process_count=16):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
+        :param tables:
+        :param date_fill_to:
+        :param date_fill_back_to:
+        :param start_date:
+        :param end_date:
+        :param merge_type:
+        :param parallel:
+        :param process_count:
         :return:
         """
+        if not isinstance(tables, (str, list)):
+            raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
+        if isinstance(tables, str):
+            if len(tables) == 0:
+                raise KeyError(f'invalid input, tables can not be empty string')
+            tables = str_to_list(tables)
+        if not all(isinstance(item, str) for item in tables):
+            raise TypeError(f'some items in tables list are not string: '
+                            f'{[item for item in tables if not isinstance(item, str)]}')
+        if not all(item in TABLE_SOURCE_MAPPING for item in tables):
+            raise KeyError(f'some items in tables list are not valid: '
+                           f'{[item for item in tables if item not in TABLE_SOURCE_MAPPING]}')
+        if tables == 'all':
+            tables = list(TABLE_SOURCE_MAPPING.keys())
+
+        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+        # print(table_map)
+        import time
         for table in tables:
-            table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-            table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-            print(table_map)
-            fill_type = table_map[table].fill_type
-            if fill_type != 'datetime':
-                print(f'warning: table fill type ({fill_type}) for table {table} is not datetime, can not be filled!')
+            # debug
+            # print(f'started to refill data table {table}...')
+            if self.table_data_exists(table):
+                pass
+                # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
+            arg_names = str_to_list(table_map.loc[table].fill_arg_name)
+            if (len(arg_names) > 1) or (len(arg_names) <= 0):
+                print(f'warning: currently only one data coverage fill argument is supported, got '
+                      f'{len(arg_names)} arguments are defined for table {table}, will skip this '
+                      f'table')
                 continue
-            freq = table_map[table].freq
-            all_kwargs = pd.date_range(start=date_start, end=date_end, freq=freq)
+            fill_type = table_map.loc[table].fill_arg_type
+            if fill_type != 'datetime':
+                print(f'warning: table fill type ({fill_type}) for table {table} is not datetime, '
+                      f'can not be filled at the moment! currently only datetime type of tables can '
+                      f'be filled.')
+                continue
+            freq = table_map.loc[table].freq
+            print(f'filling table: \n'
+                  f'table: <{table}>, with {fill_type} type argument: {arg_names[0]} @  {freq} ... ')
+            if freq == 'w':
+                freq = 'w-Fri'  # 确保通过w获取的数据都在周五
+
+            # 开始生成所有的参数
+            all_kwargs = None
+            date_coverage = []
+            if (date_fill_to is None) and (date_fill_back_to is None):
+                # 根据start_date和end_date生成数据获取区间
+                date_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
+                date_coverage = list(date_coverage.strftime('%Y%m%d'))
+                arg_name = arg_names[0]
+                all_kwargs = ({arg_name: val} for val in date_coverage)
+
+                # debug
+                # print(f'created date_coverage: \nstarts: {date_coverage[0]}, ends: {date_coverage[-1]}, \n'
+                #       f'kwargs created:')
+            else:
+                print(f'currently date_fill_to and date_fill_back_to should only be None, otherwise '
+                      f'not supported')
+            # 开始循环下载并更新数据
+            completed = 0
+            total = len(date_coverage)
+            st = time.time()
             if parallel:
-                proc_pool = ProcessPoolExecutor(process_count)
-                futures = {proc_pool.submit(self.acquire_table_data, table, 'tushare', **kwargs):
-                               kwargs
-                           for kwargs
-                           in all_kwargs}
+                proc_pool = ProcessPoolExecutor()
+                futures = {proc_pool.submit(acquire_data, table, **kw): kw
+                           for kw in all_kwargs}
                 for f in as_completed(futures):
                     df = f.result()
+                    completed += 1
                     self.update_table_data(table, df, merge_type=merge_type)
+                    time_elapsed = time.time() - st
+                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                  estimation=True, short_form=False)
+                    progress_bar(completed, total, f'time left: {time_remain}')
             else:
                 for kwargs in all_kwargs:
-                    df = self.acquire_table_data(table, 'tushares', **kwargs)
+                    df = self.acquire_table_data(table, 'tushare', **kwargs)
+                    completed += 1
                     self.update_table_data(table, df, merge_type=merge_type)
+                    time_elapsed = time.time() - st
+                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                  estimation=True, short_form=False)
+                    progress_bar(completed, total, f'time left: {time_remain}')
+            print('task completed!')
 
 
 # 以下函数是通用df操作函数

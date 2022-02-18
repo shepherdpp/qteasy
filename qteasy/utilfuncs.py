@@ -48,7 +48,7 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 }
 
 
-def retry(exception_to_check, tries=7, delay=1., backoff=2., logger=None):
+def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=None):
     """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
 
     :param exception_to_check: 需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
@@ -59,6 +59,8 @@ def retry(exception_to_check, tries=7, delay=1., backoff=2., logger=None):
     :type delay: float
     :param backoff: 延迟倍增乘数，每多一次重试延迟时间就延长该倍数
     :type backoff: float
+    :param mute: 静默功能，True时不打印信息也不输出logings
+    :type mute: Boolean default False
     :param logger: 日志logger对象. 如果给出None, 则打印结果
     :type logger: logging.Logger 对象
     """
@@ -72,10 +74,11 @@ def retry(exception_to_check, tries=7, delay=1., backoff=2., logger=None):
                     return f(*args, **kwargs)
                 except exception_to_check as e:
                     msg = f'{str(e)}, Retrying in {mdelay} seconds...'
-                    if logger:
-                        logger.warning(msg)
-                    else:
-                        print(msg)
+                    if not mute:
+                        if logger:
+                            logger.warning(msg)
+                        else:
+                            print(msg)
                     time.sleep(mdelay)
                     mtries -= 1
                     mdelay *= backoff
@@ -356,12 +359,15 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bool = False):
+def progress_bar(prog: int, total: int = 100, comments: str = '',
+                 show_time_remain: bool = False,
+                 short_form: bool = False):
     """根据输入的数字生成进度条字符串并刷新
 
     :param prog: 当前进度，用整数表示
     :param total:  总体进度，默认为100
     :param comments:  需要显示在进度条中的文字信息
+    :param show_time_remain: Bool, True时显示预计剩余时间
     :param short_form:  显示
     """
     if total > 0:

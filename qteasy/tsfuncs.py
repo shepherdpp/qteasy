@@ -30,8 +30,8 @@ def acquire_data(table, **kwargs):
 
     func_name = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('tushare')]
     func = globals()[func_name]
-
-    return func(**kwargs)
+    res = func(**kwargs)
+    return res
 
 
 # Tushare functions:
@@ -254,7 +254,7 @@ def stock_company(shares: str = None,
 
 # Bar price data
 # ==================
-@retry(Exception)
+@retry(Exception, mute=True)
 def daily_basic(shares: object = None,
                 trade_date: object = None,
                 start: object = None,
@@ -267,7 +267,7 @@ def daily_basic(shares: object = None,
                            end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def daily_basic2(shares: object = None,
                  trade_date: object = None,
                  start: object = None,
@@ -280,7 +280,7 @@ def daily_basic2(shares: object = None,
                          end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def index_daily_basic(shares: object = None,
                       trade_date: object = None,
                       start: object = None,
@@ -293,7 +293,7 @@ def index_daily_basic(shares: object = None,
                                 end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def mins(share: object = None,
          start=None,
          end=None,
@@ -303,7 +303,7 @@ def mins(share: object = None,
     return pro.stk_mins(ts_code=share, start_date=start, end_date=end, freq=freq)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def daily(share=None,
           trade_date=None,
           start=None,
@@ -320,7 +320,7 @@ def daily(share=None,
     return pro.daily(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def weekly(share=None,
            trade_date=None,
            start=None,
@@ -337,7 +337,7 @@ def weekly(share=None,
     return pro.weekly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def monthly(share=None,
             trade_date=None,
             start=None,
@@ -354,7 +354,7 @@ def monthly(share=None,
     return pro.monthly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def index_daily(index=None,
                 trade_date=None,
                 start=None,
@@ -422,7 +422,7 @@ def fund_daily(fund=None,
     return pro.fund_daily(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def adj_factors(shares=None,
                 trade_date=None,
                 start=None,
@@ -439,7 +439,7 @@ def adj_factors(shares=None,
     return pro.adj_factor(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def fund_adj(shares=None,
              trade_date=None,
              start=None,

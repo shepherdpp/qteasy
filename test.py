@@ -11602,7 +11602,7 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         ds = DataSource(source_type='db',
-                        host='192.168.2.11',
+                        host='localhost',
                         user='jackie',
                         password='iama007',
                         db='ts_db')
@@ -11625,36 +11625,27 @@ class FastExperiments(unittest.TestCase):
                         user='jackie',
                         password='iama007',
                         db='ts_db')
-        dates = pd.date_range(start='20110819', end='20220216')
-        dates = list(dates.strftime('%Y%m%d'))
-        tables = ['fund_nav']
-        table = tables[0]
-        for dt in dates:
-            df = ds.acquire_table_data(table=table, channel='tushare', trade_date=dt)
-            # print(f'got data for date {dt} like \n{df}')
-            ds.update_table_data(table, df)
-            time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
-            print(f'{len(df)} rows of data written in table {table} for date {dt} at time: {time_str}!')
+        ds.refill_local_source(tables='stock_daily, stock_adj_factor',
+                               start_date='20000101',
+                               end_date='20000201',
+                               parallel=False)
 
     def test_fast_experiments3(self):
         ds = DataSource(source_type='db',
-                        host='192.168.2.11',
+                        host='localhost',
                         user='jackie',
                         password='iama007',
                         db='ts_db')
         # 从tushare下载数据：
         # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
         #                              '000005.SH', '000006.SH', '000300.SH'])
-        dates = pd.date_range(start='20191211', end='20220216')
+        dates = pd.date_range(start='20070918', end='20220217')
         dates = list(dates.strftime('%Y%m%d'))
-        tables = ['fund_daily']
-        for table in tables:
-            for date in dates:
-                df = ds.acquire_table_data(table=table, channel='tushare', trade_date=date)
-                print('data read', end='-')
-                ds.update_table_data(table, df)
-                time_str = (pd.to_datetime('now')+pd.Timedelta(8,'H')).strftime('%Y/%m/%d-%H:%M:%S')
-                print(f'{len(df)} rows of data written in table {table} for date {date} at time: {time_str}!')
+        tables = ['fund_adj_factor']
+        ds.refill_local_source(tables='fund_adj_factor',
+                               start_date='20070918',
+                               end_date='20220217',
+                               parallel=True)
 
 print(f'task completed!')
 
@@ -12154,7 +12145,7 @@ class TestDataBase(unittest.TestCase):
               f'{df_add}')
         table_name = 'test_db_table'
         # 删除数据库中的临时表
-        self.ds_db.drop_table(table_name)
+        self.ds_db.drop_table_data(table_name)
         # 为确保update顺利进行，建立新表并设置primary_key
         self.ds_db.new_db_table(table_name,
                                 columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
@@ -12190,7 +12181,7 @@ class TestDataBase(unittest.TestCase):
         test_table = 'stock_daily'
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
         for data_source in all_data_sources:
-            data_source.drop_table(test_table)
+            data_source.drop_table_data(test_table)
         # 测试写入标准表数据
         for data_source in all_data_sources:
             data_source.write_table_data(self.built_in_df, test_table)
@@ -12238,7 +12229,7 @@ class TestDataBase(unittest.TestCase):
         test_table = 'stock_daily'
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
         for data_source in all_data_sources:
-            data_source.drop_table(test_table)
+            data_source.drop_table_data(test_table)
         # 测试写入标准表数据
         for data_source in all_data_sources:
             data_source.write_table_data(self.built_in_df, test_table)
@@ -12285,7 +12276,7 @@ class TestDataBase(unittest.TestCase):
         for table in tables_to_test:
             # 删除已有的表
             for ds in all_data_sources:
-                ds.drop_table(table)
+                ds.drop_table_data(table)
             # 下载并写入数据到表中
             print(f'downloading table data ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
@@ -12328,7 +12319,7 @@ class TestDataBase(unittest.TestCase):
 
             # 删除所有的表
             for ds in all_data_sources:
-                ds.drop_table(table)
+                ds.drop_table_data(table)
 
     def test_get_history_panel_data(self):
         """ test getting data, from real database """
