@@ -925,7 +925,9 @@ class TestCoreSubFuncs(unittest.TestCase):
 
     def test_get_stock_pool(self):
         print(f'start test building stock pool function\n')
-        share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
+        ds = qteasy.QT_DATA_SOURCE
+        share_basics = ds.read_table_data('stock_basic')[['ts_code', 'symbol', 'name', 'area', 'industry',
+                                                          'market', 'list_date', 'exchange']]
 
         print(f'\nselect all stocks by area')
         stock_pool = qt.get_stock_pool(area='上海')

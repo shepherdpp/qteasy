@@ -100,7 +100,8 @@ class Strategy:
         self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
         # TODO: parameter validation should take place here
         assert isinstance(par_count, int)
-        assert isinstance(pars, (tuple, list, dict))
+        if pars is not None:
+            assert isinstance(pars, (tuple, list, dict))
 
         if par_types is None:
             assert par_count == 0

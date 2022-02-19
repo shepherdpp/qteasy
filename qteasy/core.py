@@ -22,6 +22,7 @@ from warnings import warn
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
+import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
 from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
@@ -705,8 +706,9 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
-    FIELDS = 'ts_code,symbol,name,area,industry,market,list_date,exchange'
-    share_basics = stock_basic(fields=FIELDS)
+    ds = qteasy.QT_DATA_SOURCE
+    share_basics = ds.read_table_data('stock_basic')[['ts_code', 'symbol', 'name', 'area', 'industry',
+                                                      'market', 'list_date', 'exchange']]
     if share_basics is None or share_basics.empty:
         return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)

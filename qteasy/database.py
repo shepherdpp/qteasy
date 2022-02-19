@@ -17,7 +17,7 @@ import warnings
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format
+from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import str_to_list, regulate_date_format, TIME_FREQ_STRINGS
 from .history import stack_dataframes
 from .tsfuncs import acquire_data
@@ -107,7 +107,10 @@ TABLE_SOURCE_MAPPING = {
         ['fund_manager', 'desc', 'events', 'FD', 'none', 'fund_manager', '', '', ''],
 
     'future_daily':
-        ['future_daily', 'desc', 'data', 'FT', 'd', 'future_daily', '', '', ''],
+        ['future_daily', 'desc', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', ''],
+
+    'options_daily':
+        ['options_daily', 'desc', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', ''],
 
     'stock_adj_factor':
         ['adj_factors', 'desc', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', ''],
@@ -257,11 +260,19 @@ TABLE_STRUCTURES = {
     'future_daily':     {'columns':    ['ts_code', 'trade_date', 'pre_close', 'pre_settle', 'open', 'high', 'low',
                                         'close', 'settle', 'change1', 'change2', 'vol', 'amount', 'oi', 'oi_chg',
                                         'delv_settle'],
-                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(20)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'double', 'double', 'double', 'double', 'float'],
                          'remarks':    ['证券代码', '交易日期', '昨收盘价', '昨结算价', '开盘价', '最高价', '最低价',
                                         '收盘价', '结算价', '涨跌1 收盘价-昨结算价', '涨跌2 结算价-昨结算价', '成交量(手)',
                                         '成交金额(万元)', '持仓量(手)', '持仓量变化', '交割结算价'],
+                         'prime_keys': [0, 1]},
+
+    'options_daily':    {'columns':    ['ts_code', 'trade_date', 'exchange', 'pre_settle', 'pre_close', 'open', 'high',
+                                        'low', 'close', 'settle', 'vol', 'amount', 'oi'],
+                         'dtypes':     ['varchar(20)', 'date', 'varchar(8)', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'float', 'double', 'double', 'double'],
+                         'remarks':    ['证券代码', '交易日期', '交易市场', '昨结算价', '昨收盘价', '开盘价', '最高价', '最低价',
+                                        '收盘价', '结算价', '成交量(手)', '成交金额(万元)', '持仓量(手)'],
                          'prime_keys': [0, 1]},
 
     'stock_indicator':  {'columns':    ['ts_code', 'trade_date', 'close', 'turnover_rate', 'turnover_rate_f',
@@ -1704,19 +1715,22 @@ class DataSource:
             if (date_fill_to is None) and (date_fill_back_to is None):
                 # 根据start_date和end_date生成数据获取区间
                 date_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
-                date_coverage = list(date_coverage.strftime('%Y%m%d'))
+                if (freq == 'm') or (freq == 'w-Fri'):
+                    # 当freq为m或者w时，生成的日期并不连续，不一定会找到交易日，需要找到最近的交易日
+                    date_coverage = map(nearest_market_trade_day, date_coverage)
+                date_coverage = list(pd.to_datetime(list(date_coverage)).strftime('%Y%m%d'))
                 arg_name = arg_names[0]
                 all_kwargs = ({arg_name: val} for val in date_coverage)
 
-                # debug
-                # print(f'created date_coverage: \nstarts: {date_coverage[0]}, ends: {date_coverage[-1]}, \n'
-                #       f'kwargs created:')
             else:
                 print(f'currently date_fill_to and date_fill_back_to should only be None, otherwise '
                       f'not supported')
             # 开始循环下载并更新数据
             completed = 0
             total = len(date_coverage)
+            # print(f'filling started, kwargs are:')
+            # for kw in all_kwargs:
+            #     print(kw)
             st = time.time()
             if parallel:
                 proc_pool = ProcessPoolExecutor()

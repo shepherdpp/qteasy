@@ -371,7 +371,7 @@ def index_daily(index=None,
     return pro.index_daily(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def index_weekly(index=None,
                  trade_date=None,
                  start=None,
@@ -388,7 +388,7 @@ def index_weekly(index=None,
     return pro.index_weekly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def index_monthly(index=None,
                   trade_date=None,
                   start=None,
@@ -405,7 +405,7 @@ def index_monthly(index=None,
     return pro.index_monthly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def fund_daily(fund=None,
                trade_date=None,
                start=None,
@@ -456,7 +456,7 @@ def fund_adj(shares=None,
     return pro.fund_adj(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def fund_share(fund=None,
                trade_date=None,
                start=None,
@@ -473,7 +473,7 @@ def fund_share(fund=None,
     return pro.fund_share(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def fund_manager(fund=None,
                  ann_date=None,
                  offset=None):
@@ -1604,7 +1604,7 @@ def options_basic(exchange: str = None,
                          fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception, mute=True)
 def future_daily(trade_date: str = None,
                  future: str = None,
                  exchange: str = None,
@@ -1657,7 +1657,7 @@ def future_daily(trade_date: str = None,
                          fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception, mute=True)
 def options_daily(trade_date: str = None,
                   option: str = None,
                   exchange: str = None,
@@ -1708,8 +1708,7 @@ def options_daily(trade_date: str = None,
     """
     if option is None and trade_date is None:
         raise ValueError(f'one of future and trade_date should be given!')
-    if fields is None:
-        fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,settle,vol,amount,oi'
+    fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,settle,vol,amount,oi'
     pro = ts.pro_api()
     return pro.opt_daily(trade_date=trade_date,
                          ts_code=option,
