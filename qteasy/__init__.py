@@ -79,7 +79,7 @@ for line in config_lines:
 try:
     TUSHARE_TOKEN = qt_local_configs['tushare_token']
     ts.set_token(TUSHARE_TOKEN)
-except:
+except Exception as e:
     warn('tushare token was not loaded, features might not work properly!',
          RuntimeWarning)
 
@@ -97,6 +97,12 @@ QT_DATA_SOURCE = DataSource(
         password=QT_CONFIG['local_db_password'],
         db=QT_CONFIG['local_db_name']
 )
+
+QT_TRADE_CALENDAR = QT_DATA_SOURCE.read_table_data('trade_calendar')
+if not QT_TRADE_CALENDAR.empty:
+    QT_TRADE_CALENDAR = QT_TRADE_CALENDAR
+else:
+    QT_TRADE_CALENDAR = None
 
 np.seterr(divide='ignore', invalid='ignore')
 

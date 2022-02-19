@@ -24,7 +24,7 @@ from datetime import datetime
 
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
-from .utilfuncs import is_market_trade_day, next_market_trade_day, prev_market_trade_day, weekday_name
+from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -878,7 +878,7 @@ def check_and_prepare_hist_data(operator, config):
         if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日且22:00以后
             invest_end = regulate_date_format(current_date)
         else:  # 非交易日，或交易日21:00以前，查询到前一个交易日
-            invest_end = regulate_date_format(prev_market_trade_day(current_date))
+            invest_end = regulate_date_format(nearest_market_trade_day(current_date))
     else:
         invest_end = config.invest_end
     # 设置优化区间和测试区间的结束日期

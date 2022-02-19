@@ -12,7 +12,7 @@ import logging
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
-from qteasy.utilfuncs import weekday_name, prev_market_trade_day, is_number_like, list_truncate, input_to_list
+from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
@@ -9059,8 +9059,8 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(pd.to_datetime(next_trade_day(date_christmas)),
                          pd.to_datetime(date_christmas))
 
-    def test_prev_market_trade_day(self):
-        """ test the function prev_market_trade_day()
+    def test_nearest_market_trade_day(self):
+        """ test the function nearest_market_trade_day()
         """
         date_trade = '20210401'
         date_holiday = '20210102'
@@ -9073,21 +9073,21 @@ class TestUtilityFuncs(unittest.TestCase):
         date_too_late = '20230105'
         date_christmas = '20201225'
         prev_christmas_xhkg = '20201224'
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_trade)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_trade)),
                          pd.to_datetime(date_trade))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_holiday)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_holiday)),
                          pd.to_datetime(prev_holiday))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_weekend)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_weekend)),
                          pd.to_datetime(prev_weekend))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_seems_trade_day)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_seems_trade_day)),
                          pd.to_datetime(prev_seems_trade_day))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_too_early)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_too_early)),
                          None)
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_too_late)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_too_late)),
                          None)
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_christmas, 'SSE')),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'SSE')),
                          pd.to_datetime(date_christmas))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_christmas, 'XHKG')),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'XHKG')),
                          pd.to_datetime(prev_christmas_xhkg))
 
     def test_next_market_trade_day(self):
@@ -11600,54 +11600,46 @@ class FastExperiments(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_fast_experiments(self):
-        ds = DataSource(source_type='db',
-                        host='localhost',
-                        user='jackie',
-                        password='iama007',
-                        db='ts_db')
-        # 从tushare下载数据：
-        # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-        #                              '000005.SH', '000006.SH', '000300.SH'])
-        indexes = ds.read_table_data(table='index_basic').index.to_list()
-        print(indexes[:10])
-        tables = ['index_daily']
-        table = tables[0]
-        for idx in indexes[150:]:
-            df = ds.acquire_table_data(table=table, channel='tushare', index=idx)
-            ds.update_table_data(table, df)
-            time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
-            print(f'{len(df)} rows of data written in table {table} for index {idx} at time: {time_str}!')
-
-    def test_fast_experiments2(self):
-        ds = DataSource(source_type='db',
-                        host='localhost',
-                        user='jackie',
-                        password='iama007',
-                        db='ts_db')
-        ds.refill_local_source(tables='stock_daily, stock_adj_factor',
-                               start_date='20000101',
-                               end_date='20000201',
-                               parallel=False)
-
-    def test_fast_experiments3(self):
-        ds = DataSource(source_type='db',
-                        host='localhost',
-                        user='jackie',
-                        password='iama007',
-                        db='ts_db')
-        # 从tushare下载数据：
-        # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-        #                              '000005.SH', '000006.SH', '000300.SH'])
-        dates = pd.date_range(start='20070918', end='20220217')
-        dates = list(dates.strftime('%Y%m%d'))
-        tables = ['fund_adj_factor']
-        ds.refill_local_source(tables='fund_adj_factor',
-                               start_date='20070918',
-                               end_date='20220217',
-                               parallel=True)
-
-print(f'task completed!')
+    # def test_fast_experiments(self):
+    #     ds = DataSource(source_type='db',
+    #                     host='localhost',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     # 从tushare下载数据：
+    #     # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+    #     #                              '000005.SH', '000006.SH', '000300.SH'])
+    #     indexes = ds.read_table_data(table='index_basic').index.to_list()
+    #     print(indexes[:10])
+    #     tables = ['index_daily']
+    #     table = tables[0]
+    #     for idx in indexes[150:]:
+    #         df = ds.acquire_table_data(table=table, channel='tushare', index=idx)
+    #         ds.update_table_data(table, df)
+    #         time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
+    #         print(f'{len(df)} rows of data written in table {table} for index {idx} at time: {time_str}!')
+    #
+    # def test_fast_experiments2(self):
+    #     ds = DataSource(source_type='db',
+    #                     host='localhost',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     ds.refill_local_source(tables='stock_daily, stock_adj_factor',
+    #                            start_date='20000101',
+    #                            end_date='20000201',
+    #                            parallel=False)
+    #
+    # def test_fast_experiments3(self):
+    #     ds = DataSource(source_type='db',
+    #                     host='localhost',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     ds.refill_local_source(tables='fund_adj_factor',
+    #                            start_date='20070918',
+    #                            end_date='20220217',
+    #                            parallel=True)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

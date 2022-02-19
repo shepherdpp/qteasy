@@ -474,12 +474,45 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
                                                       'IB',
                                                       'XHKG']:
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
-    non_trade_days = qteasy.tsfuncs.trade_calendar(exchange=exchange, is_open=0)
-    return _date not in non_trade_days
+    if qteasy.QT_TRADE_CALENDAR is not None:
+        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        is_open = exchange_trade_cal.loc[_date].is_open
+        return is_open == 1
+    else:
+        raise NotImplementedError
 
 
 def prev_market_trade_day(date, exchange='SSE'):
-    """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
+    """ 根据交易所发布的交易日历找到某一日的上一交易日，需要提前准备QT_TRADE_CALENDAR数据
+        返回值：
+        - 如果date是交易日，则返回上一个交易日，如2020-12-24是交易日，它的前一天也是交易日，返回上一日2020-12-23
+        - 如果date不是交易日，则返回它最近交易日的上一个交易日，如2020-12-25不是交易日，但2020-12-24是交易日，则
+            返回2020-12-24的上一交易日即2020-12-23
+
+    :param date:
+    :param exchange:
+    :return:
+    """
+    try:
+        _date = pd.to_datetime(date)
+    except Exception as ex:
+        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise
+    if qteasy.QT_TRADE_CALENDAR is not None:
+        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
+        return pretrade_date
+    else:
+        raise NotImplementedError
+
+
+
+def nearest_market_trade_day(date, exchange='SSE'):
+    """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
+        返回值：
+        - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
+        - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
+
 
     :param date:
         :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
