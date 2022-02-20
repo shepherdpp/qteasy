@@ -224,7 +224,7 @@ TABLE_STRUCTURES = {
     # 用于股票、指数以及部分基金的K线数据结构，包括分钟、小时、天、周和月k线，更新时按时间下载，更新时按前两列的内容更新去重
     'bars':             {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'change',
                                         'pct_chg', 'vol', 'amount'],
-                         'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
+                         'dtypes':     ['varchar(20)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'double', 'double'],
                          'remarks':    ['证券代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
@@ -757,7 +757,7 @@ class DataSource:
                 raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
             if file_type == 'feather':
                 file_type = 'fth'
-            self.file_type = file_type
+            self.connection_type = file_type
 
             from qteasy import QT_ROOT_PATH
             if file_loc is None:
@@ -798,8 +798,8 @@ class DataSource:
                 raise e
             # if cursor and connect created then create sqlalchemy engine for dataframe
             self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
+            self.connection_type = f'mysql://{host}@{port}'
             self.file_path = None
-            self.file_type = None
         else:
             # for unexpected cases
             raise KeyError(f'invalid source type: {source_type}')
@@ -822,7 +822,7 @@ class DataSource:
             raise RuntimeError('can not check file system while source type is "db"')
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_path_name = self.file_path + file_name + '.' + self.connection_type
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
@@ -837,14 +837,14 @@ class DataSource:
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
 
         file_path_name = self.file_path + file_name
-        if self.file_type == 'csv':
+        if self.connection_type == 'csv':
             df.to_csv(file_path_name + '.csv')
-        elif self.file_type == 'fth':
+        elif self.connection_type == 'fth':
             df.reset_index().to_feather(file_path_name + '.fth')
-        elif self.file_type == 'hdf':
+        elif self.connection_type == 'hdf':
             df.to_hdf(file_path_name + '.hdf', key='df')
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.file_type}')
+            raise TypeError(f'Invalid file type: {self.connection_type}')
         return file_path_name
 
     def read_file(self, file_name, primary_key, pk_dtypes):
@@ -865,16 +865,16 @@ class DataSource:
             return pd.DataFrame()
 
         file_path_name = self.file_path + file_name
-        if self.file_type == 'csv':
+        if self.connection_type == 'csv':
             df = pd.read_csv(file_path_name + '.csv')
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
-        elif self.file_type == 'hdf':
+        elif self.connection_type == 'hdf':
             df = pd.read_hdf(file_path_name + '.hdf', 'df')
-        elif self.file_type == 'fth':
+        elif self.connection_type == 'fth':
             df = pd.read_feather(file_path_name + '.fth')
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.file_type}')
+            raise TypeError(f'Invalid file type: {self.connection_type}')
         return df
 
     def drop_file(self, file_name):
@@ -886,7 +886,7 @@ class DataSource:
         """
         import os
         if self.file_exists(file_name):
-            file_path_name = self.file_path + file_name + '.' + self.file_type
+            file_path_name = self.file_path + file_name + '.' + self.connection_type
             os.remove(file_path_name)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
@@ -1203,7 +1203,8 @@ class DataSource:
         date_like_pk = None
         if shares is not None:
             try:
-                share_like_pk = primary_key[pk_dtypes.index('varchar(9)')]
+                varchar_like_dtype = [item for item in pk_dtypes if item[:7] == 'varchar'][0]
+                share_like_pk = primary_key[pk_dtypes.index(varchar_like_dtype)]
             except:
                 warnings.warn(f'can not find share-like primary key in the table {table}!\n'
                               f'passed argument shares will be ignored!', RuntimeWarning)
@@ -1868,7 +1869,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
         df = set_primary_key_frame(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
     res = {}
     for pk, dtype in zip(primary_key, pk_dtypes):
-        if (dtype == 'str') or (dtype[:-3] == 'varchar'):
+        if (dtype == 'str') or (dtype[:7] == 'varchar'):
             res['shares'] = (list(set(df[pk].values)))
         elif dtype.lower() in ['date', 'timestamp', 'datetime']:
             res['start'] = df[pk].min()

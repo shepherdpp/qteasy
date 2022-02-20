@@ -19,6 +19,7 @@ from matplotlib.ticker import StrMethodFormatter
 import pandas as pd
 import numpy as np
 
+import qteasy
 from .history import get_history_panel
 from .tsfuncs import stock_basic, fund_basic, future_basic, index_basic
 from .utilfuncs import time_str_format, list_to_str_format
@@ -452,20 +453,21 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
                'I':  'Index 指数',
                'F':  'Futures 期货',
                'FD': 'Fund 基金'}
+    ds = qteasy.QT_DATA_SOURCE
     if asset_type == 'E':
-        basic_info = stock_basic(fields='ts_code,symbol,name,fullname,area,industry,list_date')
+        basic_info = ds.read_table_data('stock_basic')
     elif asset_type == 'I':
         # 获取指数的基本信息
-        basic_info = index_basic()
+        basic_info = ds.read_table_data('index_basic')
     elif asset_type == 'F':
         # 获取期货的基本信息
-        basic_info = future_basic()
+        basic_info = ds.read_table_data('future_basic')
     elif asset_type == 'FD':
         # 获取基金的基本信息
-        basic_info = fund_basic()
+        basic_info = ds.read_table_data('fund_basic')
     else:
         raise KeyError(f'Wrong asset type: [{asset_type}]')
-    this_stock = basic_info.loc[basic_info.ts_code == stock]
+    this_stock = basic_info.loc[stock]
     if this_stock.empty:
         raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type}!')
     # 设置历史数据获取区间的开始日期为股票上市第一天
@@ -483,7 +485,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
-                             adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
+                             adj=adj).to_dataframe(share=stock)
     # 返回股票的名称和全称
     share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
     data.rename({'vol': 'volume'}, axis='columns', inplace=True)

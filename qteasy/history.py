@@ -1062,7 +1062,7 @@ def get_history_panel(start,
     from qteasy import QT_DATA_SOURCE
     ds = QT_DATA_SOURCE
     now = (pd.to_datetime('now') + pd.Timedelta(8, 'h')).strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{now}]: loading data via datasource: {ds.source_type}-{ds.file_type}\n'
+    print(f'[{now}]: loading data via datasource: {ds.source_type}-{ds.connection_type}\n'
           f'for shares: {shares}@{htypes} from {start} til {end}')
     result_hp = ds.get_history_dataframes(shares=shares,
                                           htypes=htypes,

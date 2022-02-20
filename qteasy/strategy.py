@@ -99,19 +99,30 @@ class Strategy:
         self._par_count = par_count  # 策略参数的元素个数
         self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
         # TODO: parameter validation should take place here
-        assert isinstance(par_count, int)
+        if not isinstance(par_count, int):
+            raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
         if pars is not None:
             assert isinstance(pars, (tuple, list, dict))
 
         if par_types is None:
-            assert par_count == 0
-        elif par_bounds_or_enums is None:
-            assert par_count == 0
-        else:
-            assert par_count == len(par_types)
-            assert par_count == len(par_bounds_or_enums)
+            par_types = []
+            assert par_count == 0, f'parameter count (par_count) should be 0 when parameter type is None'
+
+        if not isinstance(par_types, (str, list)):
+            raise TypeError(f'parameter types (par_types) should be a string or list of strings, '
+                            f'got {type(par_types)} instead')
+        if isinstance(par_types, str):
+            par_types = str_to_list(par_types)
+
+        if not par_count == len(par_types):
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter types, '
+                           f'which imply {len(par_types)} parameters')
+        if not par_count == len(par_bounds_or_enums):
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter bounds or enums, '
+                           f'which imply {len(par_types)} parameters')
 
         if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
+            assert par_count == 0, f'parameter count (par_count) should be 0 when parameter bounds are None'
             self._par_bounds_or_enums = []
         else:
             self._par_bounds_or_enums = par_bounds_or_enums

@@ -707,7 +707,8 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
         raise KeyError()
 
     ds = qteasy.QT_DATA_SOURCE
-    share_basics = ds.read_table_data('stock_basic')[['ts_code', 'symbol', 'name', 'area', 'industry',
+    # ts_code是dataframe的index
+    share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
                                                       'market', 'list_date', 'exchange']]
     if share_basics is None or share_basics.empty:
         return []
@@ -716,14 +717,15 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
 
     for column, targets in zip(kwargs.keys(), kwargs.values()):
         if column == 'index':
-            pass
+            # 暂时不支持通过指数筛选股票
+            raise NotImplementedError
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
 
-    return list(share_basics['ts_code'].values)
+    return list(share_basics.index.values)
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整

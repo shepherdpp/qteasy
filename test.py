@@ -9,6 +9,8 @@ import itertools
 import datetime
 import logging
 
+from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR
+
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
@@ -925,7 +927,7 @@ class TestCoreSubFuncs(unittest.TestCase):
 
     def test_get_stock_pool(self):
         print(f'start test building stock pool function\n')
-        ds = qteasy.QT_DATA_SOURCE
+        ds = QT_DATA_SOURCE
         share_basics = ds.read_table_data('stock_basic')[['ts_code', 'symbol', 'name', 'area', 'industry',
                                                           'market', 'list_date', 'exchange']]
 
@@ -9581,7 +9583,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchanging in market\n'
               f'===============================')
-        df = fund_net_value(date=trade_date, market='E')
+        df = fund_net_value(trade_date=trade_date, market='E')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9590,7 +9592,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchange outside market\n'
               f'===============================')
-        df = fund_net_value(date=trade_date, market='O')
+        df = fund_net_value(trade_date=trade_date, market='O')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9611,7 +9613,7 @@ class TestTushare(unittest.TestCase):
               f'===============================')
         fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
         trade_date = '20201009'
-        df = fund_net_value(fund=fund, date=trade_date)
+        df = fund_net_value(fund=fund, trade_date=trade_date)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9697,7 +9699,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 3, error raising when both future and trade_date are None\n'
               f'==============================================================')
-        self.assertRaises(ValueError, future_daily, start=start, end=end)
+        self.assertRaises(ValueError, options_daily, start=start, end=end)
 
 
 class TestTAFuncs(unittest.TestCase):
@@ -11797,28 +11799,28 @@ class TestDataBase(unittest.TestCase):
     def test_datasource_creation(self):
         """ test creation of all kinds of data sources"""
         self.assertIsInstance(self.ds_db, DataSource)
-        self.assertIs(self.ds_db.file_type, None)
+        self.assertEqual(self.ds_db.connection_type, 'mysql://localhost@3306')
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)
-        self.assertEqual(self.ds_csv.file_type, 'csv')
+        self.assertEqual(self.ds_csv.connection_type, 'csv')
         self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
-        self.assertEqual(self.ds_hdf.file_type, 'hdf')
+        self.assertEqual(self.ds_hdf.connection_type, 'hdf')
         self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
-        self.assertEqual(self.ds_fth.file_type, 'fth')
+        self.assertEqual(self.ds_fth.connection_type, 'fth')
         self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_fth.engine, None)
 
     def test_file_manipulates(self):
         """ test DataSource method file_exists and drop_file"""
         print(f'returning True while source type is database')
-        self.assertTrue(self.ds_db.file_exists('basic_eps.dat'))
+        self.assertRaises(RuntimeError, self.ds_db.file_exists, 'basic_eps.dat')
 
         print(f'test file that existed')
         f_name = self.ds_csv.file_path + 'test_file.csv'
@@ -12183,7 +12185,7 @@ class TestDataBase(unittest.TestCase):
         # 测试完整读出标准表数据
         for data_source in all_data_sources:
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
             ts_codes = ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                         '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                         '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ']
@@ -12208,7 +12210,7 @@ class TestDataBase(unittest.TestCase):
                                              shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
                                              start='20211113',
                                              end='20211116')
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
@@ -12216,7 +12218,7 @@ class TestDataBase(unittest.TestCase):
             data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
             print(f'df read from data source after updating with merge type IGNORE:\n'
-                  f'{data_source.source_type}-{data_source.file_type}\n{df}')
+                  f'{data_source.source_type}-{data_source.connection_type}\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"update"
         # 测试前删除已经存在的（真实）数据表
@@ -12233,7 +12235,7 @@ class TestDataBase(unittest.TestCase):
             data_source.update_table_data(test_table, df, 'update')
             df = data_source.read_table_data(test_table)
             print(f'df read from data source after updating with merge type UPDATE:\n'
-                  f'{data_source.source_type}-{data_source.file_type}\n{df}')
+                  f'{data_source.source_type}-{data_source.connection_type}\n{df}')
 
         # 测试读出并筛选部分标准表数据
         for data_source in all_data_sources:
@@ -12241,7 +12243,7 @@ class TestDataBase(unittest.TestCase):
                                              shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
                                              start='20211113',
                                              end='20211116')
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.file_type} \nis:\n{df}')
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
 
     def test_download_update_table_data(self):
         """ test downloading data from tushare"""
@@ -12278,18 +12280,18 @@ class TestDataBase(unittest.TestCase):
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating IGNORE table data ({table}) from tushare for '
-                      f'datasource: {ds.source_type}-{ds.file_type}')
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'ignore')
                 print(f'-- Done! --')
 
             for ds in all_data_sources:
                 print(f'reading table data ({table}) from tushare for '
-                      f'datasource: {ds.source_type}-{ds.file_type}')
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000007.SZ', '600067.SH'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200301')
-                print(f'got data from data source {ds.source_type}-{ds.file_type}:\n{df}')
+                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
 
             # 下载数据并添加到表中
             print(f'downloading table data ({table}) with parameter: \n'
@@ -12298,18 +12300,18 @@ class TestDataBase(unittest.TestCase):
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
                 print(f'updating UPDATE table data ({table}) from tushare for '
-                      f'datasource: {ds.source_type}-{ds.file_type}')
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'update')
                 print(f'-- Done! --')
 
             for ds in all_data_sources:
                 print(f'reading table data ({table}) from tushare for '
-                      f'datasource: {ds.source_type}-{ds.file_type}')
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000004.SZ', '000005.SZ', '000006.SZ'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200201')
-                print(f'got data from data source {ds.source_type}-{ds.file_type}:\n{df}')
+                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
 
             # 删除所有的表
             for ds in all_data_sources:
@@ -12318,7 +12320,7 @@ class TestDataBase(unittest.TestCase):
     def test_get_history_panel_data(self):
         """ test getting data, from real database """
         ds = DataSource(source_type='db',
-                        host='192.168.2.11',
+                        host='192.168.2.9',
                         port=3306,
                         user='jackie',
                         password='iama007',

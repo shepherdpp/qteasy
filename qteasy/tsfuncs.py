@@ -249,7 +249,7 @@ def stock_company(shares: str = None,
     if fields is None:
         fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
     pro = ts.pro_api()
-    return pro.stock_comapany(ts_code=shares, exchange=exchange, fields=fields)
+    return pro.stock_company(ts_code=shares, exchange=exchange, fields=fields)
 
 
 # Bar price data
@@ -1646,6 +1646,8 @@ def future_daily(trade_date: str = None,
         4    CU1811.SHF   20181107    49670.0     49630.0  49640.0   ...   -170.0  26850.0  664040.10  38330.0 -4560.0
         ..          ...        ...        ...         ...      ...   ...      ...      ...        ...      ...     ...
     """
+    if (future is None) and (trade_date is None):
+        raise ValueError(f'future code and trade date can not be both None, should provide at least one of them!')
     fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,' \
              'settle,change1,change2,vol,amount,oi,oi_chg,delv_settle'
     pro = ts.pro_api()
