@@ -1,12 +1,14 @@
 # coding=utf-8
-# operator.py
+# ======================================
+# File:     operator.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-21
+# Desc:
+#   Operator Class definition.
+# ======================================
 
-# ======================================
-# This file contains Operator class, that
-# merges and applies investment strategies
-# to generate operation signals with
-# given history data.
-# ======================================
+
 import warnings
 
 import numpy as np

@@ -1,12 +1,11 @@
 # coding=utf-8
-# core.py
-
 # ======================================
-# This file contains core functions and
-# core Classes. Such as looping and
-# optimizations, Configs and Spaces, etc.
-# 2021 Chinese New Year update ^_^
-# Happy New Year and prosperous in 2021!!
+# File:     core.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-16
+# Desc:
+#   Core functions and Classes of qteasy.
 # ======================================
 
 # here's some test codes
@@ -32,8 +31,7 @@ from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
     _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
-from ._arg_validators import _validate_key_and_value, _update_config_kwargs
-from .tsfuncs import stock_basic
+from ._arg_validators import _update_config_kwargs
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
@@ -223,12 +221,12 @@ def _loop_step(signal_type: int,
         # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
         amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0)
         # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((op < 0) & (own_amounts >= 0), op * total_value, 0)
+        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * total_value, 0)
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 =交易信号 * 当前总资产
-            cash_to_spend += np.where((op > 0) & (own_amounts == 0), op * total_value, 0)
+            cash_to_spend += np.where((op < 0) & (own_amounts == 0), op * total_value, 0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op * own_amounts, 0)
 

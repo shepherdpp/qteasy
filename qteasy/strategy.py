@@ -1,11 +1,12 @@
 # coding=utf-8
-# strategy.py
-
 # ======================================
-# This file contains all built-in
-# strategies that inherited from
-# Strategy class and its sub-classes.
-# 2021 Chinese New Year Update - 2
+# File:     strategy.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-27
+# Desc:
+#   Strategy Base Classes and its derived
+#   Classes.
 # ======================================
 
 import numpy as np
@@ -117,15 +118,17 @@ class Strategy:
         if not par_count == len(par_types):
             raise KeyError(f'parameter count ({par_count}) does not fit parameter types, '
                            f'which imply {len(par_types)} parameters')
-        if not par_count == len(par_bounds_or_enums):
-            raise KeyError(f'parameter count ({par_count}) does not fit parameter bounds or enums, '
-                           f'which imply {len(par_types)} parameters')
 
         if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
             assert par_count == 0, f'parameter count (par_count) should be 0 when parameter bounds are None'
             self._par_bounds_or_enums = []
         else:
+            assert isinstance(par_bounds_or_enums, (list, tuple))
             self._par_bounds_or_enums = par_bounds_or_enums
+        if not par_count == len(self._par_bounds_or_enums):
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter bounds or enums, '
+                           f'which imply {len(par_types)} parameters')
+
         # 依赖的历史数据频率
         self._data_freq = data_freq
         # 策略生成采样频率，即策略操作信号的生成频率

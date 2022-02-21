@@ -1,12 +1,11 @@
 # coding=utf-8
-# database.py
-
 # ======================================
-# This file contains DataSource class, that
-# maintains and manages local historical
-# data in a specific folder, and provide
-# seamless historical data operation for
-# qteasy.
+# File:     database.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-11-29
+# Desc:
+#   Local historical data management.
 # ======================================
 
 import pymysql
@@ -1734,7 +1733,7 @@ class DataSource:
             #     print(kw)
             st = time.time()
             if parallel:
-                proc_pool = ProcessPoolExecutor()
+                proc_pool = ProcessPoolExecutor(max_workers=process_count)
                 futures = {proc_pool.submit(acquire_data, table, **kw): kw
                            for kw in all_kwargs}
                 for f in as_completed(futures):

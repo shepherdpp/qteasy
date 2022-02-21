@@ -1,18 +1,16 @@
 # coding=utf-8
-# history.py
-
 # ======================================
-# This file contains history data related
-# Classes and functions. Such as
-# HistoryPanel class, and historical
-# data downloading functions based on
-# tushare
+# File:     history.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-16
+# Desc:
+#   HistoryPanel Class, and more history
+#   data manipulating functions.
 # ======================================
 
 import pandas as pd
 import numpy as np
-from warnings import warn
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
 

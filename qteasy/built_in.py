@@ -1,12 +1,11 @@
 # coding=utf-8
-# build_in.py
-
 # ======================================
-# This file contains concrete strategy
-# classes that are inherited form
-# strategy.Strategy class and its sub
-# classes like strategy.RollingTiming
-# etc.
+# File:     built_in.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-27
+# Desc:
+#   Qteasy built-in Strategies.
 # ======================================
 
 import numpy as np

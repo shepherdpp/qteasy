@@ -1,10 +1,11 @@
 # coding=utf-8
-# utilfuncs.py
-
 # ======================================
-# This file contains all functions that
-# might be shared among different files
-# in qteasy.
+# File:     utilfuncs.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-21
+# Desc:
+#   Commonly used utility functions.
 # ======================================
 
 import numpy as np
@@ -18,7 +19,7 @@ TIME_FREQ_STRINGS = ['TICK',
                      'T',
                      'MIN', '1MIN', '5MIN', '15MIN', '30MIN',
                      'H',
-                     'D',
+                     'D', '5D', '10D',
                      'W',
                      'M',
                      'Q',

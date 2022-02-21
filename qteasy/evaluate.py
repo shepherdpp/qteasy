@@ -1,9 +1,11 @@
 # coding=utf-8
-# evaluate.py
-
 # ======================================
-# This file contains functions that are
-# used to evaluate back testing results.
+# File:     evaluate.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-11-07
+# Desc:
+#   Back-test result evaluation functions.
 # ======================================
 
 import numpy as np

@@ -1,10 +1,12 @@
 # coding=utf-8
-# _arg_validators.py
-
 # ======================================
-# This file contains validators and dict
-# constructive codes for run kwargs,
-# and related other functions.
+# File:     _arg_validators.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-10-09
+# Desc:
+#   Global level parameters and settings
+#   of qteasy.
 # ======================================
 
 import pandas as pd

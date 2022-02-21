@@ -1,12 +1,12 @@
 # coding=utf-8
-# finance.py
-
 # ======================================
-# This file contains classes that are
-# related to investment financial figures
-# such as operation cost (Cost class) and
-# investment plans (CashPlan class) as
-# well more related functions.
+# File:     finance.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-30
+# Desc:
+#   Back-test trade cost calculation and
+#   Cash investment simulation functions.
 # ======================================
 
 import numpy as np

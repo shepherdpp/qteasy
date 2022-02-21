@@ -1,3 +1,14 @@
+# coding=utf-8
+# ======================================
+# File:     test.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-12
+# Desc:
+#   Unittest for all qteasy
+#   functionalities.
+# ======================================
+
 import unittest
 import qteasy as qt
 import pandas as pd
@@ -928,22 +939,22 @@ class TestCoreSubFuncs(unittest.TestCase):
     def test_get_stock_pool(self):
         print(f'start test building stock pool function\n')
         ds = QT_DATA_SOURCE
-        share_basics = ds.read_table_data('stock_basic')[['ts_code', 'symbol', 'name', 'area', 'industry',
+        share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
                                                           'market', 'list_date', 'exchange']]
 
         print(f'\nselect all stocks by area')
         stock_pool = qt.get_stock_pool(area='上海')
         print(f'{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "上海"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].eq('上海').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].eq('上海').all())
 
         print(f'\nselect all stocks by multiple areas')
         stock_pool = qt.get_stock_pool(area='贵州,北京,天津')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are in list of ["贵州", "北京", "天津"]\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].isin(['贵州',
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['贵州',
                                                                                               '北京',
                                                                                               '天津']).all())
 
@@ -951,45 +962,47 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "四川", and industry in ["银行", "金融"]\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['industry'].isin(['银行', '金融']).all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].isin(['四川']).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['四川']).all())
 
         print(f'\nselect all stocks by industry')
         stock_pool = qt.get_stock_pool(industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["银行", "金融"]\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['industry'].isin(['银行', '金融']).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
 
         print(f'\nselect all stocks by market')
         stock_pool = qt.get_stock_pool(market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['market'].isin(['主板']).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
 
         print(f'\nselect all stocks by market and list date')
         stock_pool = qt.get_stock_pool(date='2000-01-01', market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板", and list date after "2000-01-01"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['market'].isin(['主板']).all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['list_date'].le('2000-01-01').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
+        date = pd.to_datetime('2000-01-01')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by list date')
         stock_pool = qt.get_stock_pool(date='1997-01-01')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all list date after "1997-01-01"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['list_date'].le('1997-01-01').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        date = pd.to_datetime('1997-01-01')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by exchange')
         stock_pool = qt.get_stock_pool(exchange='SSE')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are "SSE"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['exchange'].eq('SSE').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['exchange'].eq('SSE').all())
 
         print(f'\nselect all stocks by industry, area and list date')
         industry_list = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
@@ -1007,10 +1020,11 @@ class TestCoreSubFuncs(unittest.TestCase):
                                        area=area_list)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are "SSE"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['list_date'].le('1998-01-01').all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['industry'].isin(industry_list).all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].isin(area_list).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        date = pd.to_datetime('1998-01-01')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(area_list).all())
 
         self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
         self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
@@ -9305,8 +9319,8 @@ class TestTushare(unittest.TestCase):
         self.assertTrue(df.empty)
 
         df = income(share=shares,
-                    start=start,
-                    end=end)
+                    start='20170101',
+                    end='20220101')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         print(f'Test income: extracted single share income: \n{df}')
@@ -9405,8 +9419,8 @@ class TestTushare(unittest.TestCase):
         self.assertTrue(df.empty)
 
         df = indicators(share=shares,
-                        start=start,
-                        end=end)
+                        start='20150101',
+                        end='20220101')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         print(f'\nTest indicators 2: extracted indicator: \n{df}')
@@ -9618,8 +9632,8 @@ class TestTushare(unittest.TestCase):
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         self.assertEqual(set(df.ts_code.unique()), set(str_to_list(fund)))
-        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
-              f'they are: \n{list(df.trade_date.unique())}')
+        print(f'found in df records in {df.index.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.index.unique())}')
 
     def test_future_basic(self):
         print(f'test tushare function: future_basic')
