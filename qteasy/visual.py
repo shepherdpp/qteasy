@@ -1,12 +1,12 @@
 # coding=utf-8
-# -*- coding: utf-8 -*-
-# visual.py
-
-# =====================================4
-# This file contains components for the qt
-# to establish visual outputs of price data
-# loop result and strategy optimization
-# results as well
+# ======================================
+# File:     visual.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-08-23
+# Desc:
+#   Functions for visual output and
+#   effects.
 # ======================================
 
 import mplfinance as mpf
@@ -14,13 +14,12 @@ from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
-from matplotlib.ticker import StrMethodFormatter
 
 import pandas as pd
 import numpy as np
 
+import qteasy
 from .history import get_history_panel
-from .tsfuncs import stock_basic, fund_basic, future_basic, index_basic
 from .utilfuncs import time_str_format, list_to_str_format
 from .tafuncs import macd, dema, rsi, bbands, ma
 
@@ -452,24 +451,25 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
                'I':  'Index 指数',
                'F':  'Futures 期货',
                'FD': 'Fund 基金'}
+    ds = qteasy.QT_DATA_SOURCE
     if asset_type == 'E':
-        basic_info = stock_basic(fields='ts_code,symbol,name,fullname,area,industry,list_date')
+        basic_info = ds.read_table_data('stock_basic')
     elif asset_type == 'I':
         # 获取指数的基本信息
-        basic_info = index_basic()
+        basic_info = ds.read_table_data('index_basic')
     elif asset_type == 'F':
         # 获取期货的基本信息
-        basic_info = future_basic()
+        basic_info = ds.read_table_data('future_basic')
     elif asset_type == 'FD':
         # 获取基金的基本信息
-        basic_info = fund_basic()
+        basic_info = ds.read_table_data('fund_basic')
     else:
         raise KeyError(f'Wrong asset type: [{asset_type}]')
-    this_stock = basic_info.loc[basic_info.ts_code == stock]
+    this_stock = basic_info.loc[stock]
     if this_stock.empty:
         raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type}!')
     # 设置历史数据获取区间的开始日期为股票上市第一天
-    start_date = pd.to_datetime(this_stock.list_date.values[0]).strftime('%Y-%m-%d')
+    start_date = pd.to_datetime(this_stock.list_date).strftime('%Y-%m-%d')
     # 设置历史数据获取最后一天，只有现在的时间在23:00以后时才设置为今天，否则就设置为昨天
     # now获取的日期时间是格林尼治标准时间，计算中国的时间需要加8小时（中国在东八区）
     now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
@@ -478,12 +478,12 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     else:
         end = pd.to_datetime('today') - pd.Timedelta(now.weekday() - 4, 'd')
     end_date = end.strftime('%Y-%m-%d')
-    name = this_stock.name.values[0]
+    name = this_stock.name
     # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
-                             adj=adj, chanel='local', parallel=10).to_dataframe(share=stock)
+                             adj=adj).to_dataframe(share=stock)
     # 返回股票的名称和全称
     share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
     data.rename({'vol': 'volume'}, axis='columns', inplace=True)

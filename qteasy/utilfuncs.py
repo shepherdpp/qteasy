@@ -1,28 +1,30 @@
 # coding=utf-8
-# utilfuncs.py
-
 # ======================================
-# This file contains all functions that
-# might be shared among different files
-# in qteasy.
+# File:     utilfuncs.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-21
+# Desc:
+#   Commonly used utility functions.
 # ======================================
 
 import numpy as np
 import pandas as pd
 import sys
 import qteasy
-from pandas import Timestamp
-from datetime import datetime
+import time
+from functools import wraps
 
 TIME_FREQ_STRINGS = ['TICK',
                      'T',
-                     'MIN',
+                     'MIN', '1MIN', '5MIN', '15MIN', '30MIN',
                      'H',
-                     'D', '5D', '10D', '20D',
+                     'D', '5D', '10D',
                      'W',
                      'M',
                      'Q',
                      'Y']
+AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
 PROGRESS_BAR = {0:  '----------------------------------------', 1: '#---------------------------------------',
                 2:  '##--------------------------------------', 3: '###-------------------------------------',
                 4:  '####------------------------------------', 5: '#####-----------------------------------',
@@ -45,6 +47,47 @@ PROGRESS_BAR = {0:  '----------------------------------------', 1: '#-----------
                 38: '######################################--', 39: '#######################################-',
                 40: '########################################'
                 }
+
+
+def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=None):
+    """一个装饰器，当被装饰的函数抛出异常时，反复重试直至次数耗尽，重试前等待并延长等待时间.
+
+    :param exception_to_check: 需要检测的异常，当发生此异常时重试，可以用tuple给出多个异常
+    :type exception_to_check: Exception 或 tuple
+    :param tries: 最终放弃前的尝试次数
+    :type tries: int
+    :param delay: 第一次重试前等待的延迟时间（秒）
+    :type delay: float
+    :param backoff: 延迟倍增乘数，每多一次重试延迟时间就延长该倍数
+    :type backoff: float
+    :param mute: 静默功能，True时不打印信息也不输出logings
+    :type mute: Boolean default False
+    :param logger: 日志logger对象. 如果给出None, 则打印结果
+    :type logger: logging.Logger 对象
+    """
+    def deco_retry(f):
+
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except exception_to_check as e:
+                    msg = f'{str(e)}, Retrying in {mdelay} seconds...'
+                    if not mute:
+                        if logger:
+                            logger.warning(msg)
+                        else:
+                            print(msg)
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
 
 
 def mask_to_signal(lst):
@@ -317,12 +360,15 @@ def list_to_str_format(str_list: [list, str]) -> str:
     return res[0:-1]
 
 
-def progress_bar(prog: int, total: int = 100, comments: str = '', short_form: bool = False):
+def progress_bar(prog: int, total: int = 100, comments: str = '',
+                 show_time_remain: bool = False,
+                 short_form: bool = False):
     """根据输入的数字生成进度条字符串并刷新
 
     :param prog: 当前进度，用整数表示
     :param total:  总体进度，默认为100
     :param comments:  需要显示在进度条中的文字信息
+    :param show_time_remain: Bool, True时显示预计剩余时间
     :param short_form:  显示
     """
     if total > 0:
@@ -429,12 +475,45 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
                                                       'IB',
                                                       'XHKG']:
         raise TypeError(f'exchange \'{exchange}\' is not a valid input')
-    non_trade_days = qteasy.tsfuncs.trade_calendar(exchange=exchange, is_open=0)
-    return _date not in non_trade_days
+    if qteasy.QT_TRADE_CALENDAR is not None:
+        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        is_open = exchange_trade_cal.loc[_date].is_open
+        return is_open == 1
+    else:
+        raise NotImplementedError
 
 
 def prev_market_trade_day(date, exchange='SSE'):
-    """ 根据交易所发布的交易日历找到它的前一个交易日，准确性高但需要读取网络数据，因此效率较低
+    """ 根据交易所发布的交易日历找到某一日的上一交易日，需要提前准备QT_TRADE_CALENDAR数据
+        返回值：
+        - 如果date是交易日，则返回上一个交易日，如2020-12-24是交易日，它的前一天也是交易日，返回上一日2020-12-23
+        - 如果date不是交易日，则返回它最近交易日的上一个交易日，如2020-12-25不是交易日，但2020-12-24是交易日，则
+            返回2020-12-24的上一交易日即2020-12-23
+
+    :param date:
+    :param exchange:
+    :return:
+    """
+    try:
+        _date = pd.to_datetime(date)
+    except Exception as ex:
+        ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
+        raise
+    if qteasy.QT_TRADE_CALENDAR is not None:
+        exchange_trade_cal = qteasy.QT_TRADE_CALENDAR.loc[exchange]
+        pretrade_date = exchange_trade_cal.loc[_date].pretrade_date
+        return pretrade_date
+    else:
+        raise NotImplementedError
+
+
+
+def nearest_market_trade_day(date, exchange='SSE'):
+    """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
+        返回值：
+        - 如果date是交易日，返回当日，如2020-12-24日是交易日，返回2020-12-24
+        - 如果date不是交易日，返回date的前一个交易日，如2020-12-25是休息日，但它的前一天是交易日，因此返回2020-12-24
+
 
     :param date:
         :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象

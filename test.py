@@ -1,3 +1,14 @@
+# coding=utf-8
+# ======================================
+# File:     test.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-12
+# Desc:
+#   Unittest for all qteasy
+#   functionalities.
+# ======================================
+
 import unittest
 import qteasy as qt
 import pandas as pd
@@ -7,17 +18,21 @@ import math
 from numpy import int64
 import itertools
 import datetime
+import logging
+
+from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
-from qteasy.utilfuncs import next_market_trade_day, unify, mask_to_signal, list_or_slice, labels_to_dict
-from qteasy.utilfuncs import weekday_name, prev_market_trade_day, is_number_like, list_truncate, input_to_list
+from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
+from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
+
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
 from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
 
-from qteasy.tsfuncs import income, indicators, name_change, get_bar
-from qteasy.tsfuncs import stock_basic, trade_calendar, new_share, get_index
+from qteasy.tsfuncs import income, indicators, name_change
+from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
 from qteasy.tsfuncs import balance, cashflow, top_list, index_indicators, composite
 from qteasy.tsfuncs import future_basic, future_daily, options_basic, options_daily
 from qteasy.tsfuncs import fund_basic, fund_net_value, index_basic, stock_company
@@ -56,10 +71,10 @@ from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, s
 from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
-from qteasy.history import get_financial_report_type_raw_data, get_price_type_raw_data
 from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
 
-from qteasy.database import DataSource
+from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
+from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
 from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
 
@@ -923,21 +938,23 @@ class TestCoreSubFuncs(unittest.TestCase):
 
     def test_get_stock_pool(self):
         print(f'start test building stock pool function\n')
-        share_basics = stock_basic(fields='ts_code,symbol,name,area,industry,market,list_date,exchange')
+        ds = QT_DATA_SOURCE
+        share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
+                                                          'market', 'list_date', 'exchange']]
 
         print(f'\nselect all stocks by area')
         stock_pool = qt.get_stock_pool(area='上海')
         print(f'{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "上海"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].eq('上海').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].eq('上海').all())
 
         print(f'\nselect all stocks by multiple areas')
         stock_pool = qt.get_stock_pool(area='贵州,北京,天津')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are in list of ["贵州", "北京", "天津"]\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].isin(['贵州',
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['贵州',
                                                                                               '北京',
                                                                                               '天津']).all())
 
@@ -945,45 +962,47 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "四川", and industry in ["银行", "金融"]\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['industry'].isin(['银行', '金融']).all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].isin(['四川']).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['四川']).all())
 
         print(f'\nselect all stocks by industry')
         stock_pool = qt.get_stock_pool(industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["银行", "金融"]\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['industry'].isin(['银行', '金融']).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
 
         print(f'\nselect all stocks by market')
         stock_pool = qt.get_stock_pool(market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['market'].isin(['主板']).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
 
         print(f'\nselect all stocks by market and list date')
         stock_pool = qt.get_stock_pool(date='2000-01-01', market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板", and list date after "2000-01-01"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['market'].isin(['主板']).all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['list_date'].le('2000-01-01').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
+        date = pd.to_datetime('2000-01-01')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by list date')
         stock_pool = qt.get_stock_pool(date='1997-01-01')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all list date after "1997-01-01"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['list_date'].le('1997-01-01').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        date = pd.to_datetime('1997-01-01')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by exchange')
         stock_pool = qt.get_stock_pool(exchange='SSE')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are "SSE"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['exchange'].eq('SSE').all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['exchange'].eq('SSE').all())
 
         print(f'\nselect all stocks by industry, area and list date')
         industry_list = ['银行', '全国地产', '互联网', '环境保护', '区域地产',
@@ -1001,10 +1020,11 @@ class TestCoreSubFuncs(unittest.TestCase):
                                        area=area_list)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are "SSE"\n'
-              f'{share_basics[np.isin(share_basics.ts_code, stock_pool)].head()}')
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['list_date'].le('1998-01-01').all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['industry'].isin(industry_list).all())
-        self.assertTrue(share_basics[np.isin(share_basics.ts_code, stock_pool)]['area'].isin(area_list).all())
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+        date = pd.to_datetime('1998-01-01')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(area_list).all())
 
         self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
         self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
@@ -5816,13 +5836,8 @@ class MyStg(qt.RollingTiming):
                 stg_name='CUSTOM ROLLING TIMING STRATEGY',
                 stg_text='Customized Rolling Timing Strategy for Testing',
                 data_types='close',
-                window_length=100,
+                window_length=200,
         )
-
-        print(f'=====================\n====================\n'
-              f'custom strategy initialized, \npars: {self.pars}\npar_count:{self.par_count}\npar_types:'
-              f'{self.par_types}\n'
-              f'{self.info()}')
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
@@ -5843,7 +5858,7 @@ class MyStg(qt.RollingTiming):
 
         if f_ma > s_ma_u:  # 当快均线在慢均线停止范围以上时，持有多头头寸
             return 1
-        elif s_ma_l < f_ma < s_ma_u:  # 当均线在停止边界以内时，平仓
+        elif s_ma_l <= f_ma <= s_ma_u:  # 当均线在停止边界以内时，平仓
             return 0
         else:  # f_ma < s_ma_l   当快均线在慢均线停止范围以下时，持有空头头寸
             return -1
@@ -8830,473 +8845,32 @@ class TestHistoryPanel(unittest.TestCase):
         # test get only one line of data
         pass
 
-    def test_get_price_type_raw_data(self):
-        shares = '000039.SZ, 600748.SH, 000040.SZ'
-        start = '20200101'
-        end = '20200131'
-        htypes = 'open, high, low, close'
 
-        target_price_000039 = [[9.45, 9.49, 9.12, 9.17],
-                               [9.46, 9.56, 9.4, 9.5],
-                               [9.7, 9.76, 9.5, 9.51],
-                               [9.7, 9.75, 9.7, 9.72],
-                               [9.73, 9.77, 9.7, 9.73],
-                               [9.83, 9.85, 9.71, 9.72],
-                               [9.85, 9.85, 9.75, 9.79],
-                               [9.96, 9.96, 9.83, 9.86],
-                               [9.87, 9.94, 9.77, 9.93],
-                               [9.82, 9.9, 9.76, 9.87],
-                               [9.8, 9.85, 9.77, 9.82],
-                               [9.84, 9.86, 9.71, 9.72],
-                               [9.83, 9.93, 9.81, 9.86],
-                               [9.7, 9.87, 9.7, 9.82],
-                               [9.83, 9.86, 9.69, 9.79],
-                               [9.8, 9.94, 9.8, 9.86]]
+class RetryableError(Exception):
+    """ 用于retry测试的自定义Error Type"""
+    pass
 
-        target_price_600748 = [[5.68, 5.68, 5.32, 5.37],
-                               [5.62, 5.68, 5.46, 5.65],
-                               [5.72, 5.72, 5.61, 5.62],
-                               [5.76, 5.77, 5.6, 5.73],
-                               [5.78, 5.84, 5.73, 5.75],
-                               [5.89, 5.91, 5.76, 5.77],
-                               [6.03, 6.04, 5.87, 5.89],
-                               [5.94, 6.07, 5.94, 6.02],
-                               [5.96, 5.98, 5.88, 5.97],
-                               [6.04, 6.06, 5.95, 5.96],
-                               [5.98, 6.04, 5.96, 6.03],
-                               [6.1, 6.11, 5.89, 5.94],
-                               [6.02, 6.12, 6., 6.1],
-                               [5.96, 6.05, 5.88, 6.01],
-                               [6.03, 6.03, 5.95, 5.99],
-                               [6.02, 6.12, 5.99, 5.99]]
 
-        target_price_000040 = [[3.63, 3.83, 3.63, 3.65],
-                               [3.99, 4.07, 3.97, 4.03],
-                               [4.1, 4.11, 3.93, 3.95],
-                               [4.12, 4.13, 4.06, 4.11],
-                               [4.13, 4.19, 4.07, 4.13],
-                               [4.27, 4.28, 4.11, 4.12],
-                               [4.37, 4.38, 4.25, 4.29],
-                               [4.34, 4.5, 4.32, 4.41],
-                               [4.28, 4.35, 4.2, 4.34],
-                               [4.41, 4.43, 4.29, 4.31],
-                               [4.42, 4.45, 4.36, 4.41],
-                               [4.51, 4.56, 4.33, 4.35],
-                               [4.35, 4.55, 4.31, 4.55],
-                               [4.3, 4.41, 4.22, 4.36],
-                               [4.27, 4.44, 4.23, 4.34],
-                               [4.23, 4.27, 4.18, 4.25]]
+class AnotherRetryableError(Exception):
+    """ 用于retry测试的自定义Error Type"""
+    pass
 
-        print(f'test get price type raw data with single thread')
-        df_list = get_price_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, freq='d')
-        self.assertIsInstance(df_list, dict)
-        self.assertEqual(len(df_list), 3)
-        self.assertTrue(np.allclose(df_list['000039.SZ'].values, np.array(target_price_000039)))
-        self.assertTrue(np.allclose(df_list['600748.SH'].values, np.array(target_price_600748)))
-        self.assertTrue(np.allclose(df_list['000040.SZ'].values, np.array(target_price_000040)))
-        print(f'in get financial report type raw data, got DataFrames: \n"000039.SZ":\n'
-              f'{df_list["000039.SZ"]}\n"600748.SH":\n'
-              f'{df_list["600748.SH"]}\n"000040.SZ":\n{df_list["000040.SZ"]}')
 
-        print(f'test get price type raw data with with multi threads')
-        df_list = get_price_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, freq='d', parallel=10)
-        self.assertIsInstance(df_list, dict)
-        self.assertEqual(len(df_list), 3)
-        self.assertTrue(np.allclose(df_list['000039.SZ'].values, np.array(target_price_000039)))
-        self.assertTrue(np.allclose(df_list['600748.SH'].values, np.array(target_price_600748)))
-        self.assertTrue(np.allclose(df_list['000040.SZ'].values, np.array(target_price_000040)))
-        print(f'in get financial report type raw data, got DataFrames: \n"000039.SZ":\n'
-              f'{df_list["000039.SZ"]}\n"600748.SH":\n'
-              f'{df_list["600748.SH"]}\n"000040.SZ":\n{df_list["000040.SZ"]}')
-
-    def test_get_financial_report_type_raw_data(self):
-        shares = '000039.SZ, 600748.SH, 000040.SZ'
-        start = '20160101'
-        end = '20201231'
-        htypes = 'eps,basic_eps,diluted_eps,total_revenue,revenue,total_share,' \
-                 'cap_rese,undistr_porfit,surplus_rese,net_profit'
-
-        target_eps_000039 = [[1.41],
-                             [0.1398],
-                             [-0.0841],
-                             [-0.1929],
-                             [0.37],
-                             [0.1357],
-                             [0.1618],
-                             [0.1191],
-                             [1.11],
-                             [0.759],
-                             [0.3061],
-                             [0.1409],
-                             [0.81],
-                             [0.4187],
-                             [0.2554],
-                             [0.1624],
-                             [0.14],
-                             [-0.0898],
-                             [-0.1444],
-                             [0.1291]]
-        target_eps_600748 = [[0.41],
-                             [0.22],
-                             [0.22],
-                             [0.09],
-                             [0.42],
-                             [0.23],
-                             [0.22],
-                             [0.09],
-                             [0.36],
-                             [0.16],
-                             [0.15],
-                             [0.07],
-                             [0.47],
-                             [0.19],
-                             [0.12],
-                             [0.07],
-                             [0.32],
-                             [0.22],
-                             [0.14],
-                             [0.07]]
-        target_eps_000040 = [[-0.6866],
-                             [-0.134],
-                             [-0.189],
-                             [-0.036],
-                             [-0.6435],
-                             [0.05],
-                             [0.062],
-                             [0.0125],
-                             [0.8282],
-                             [1.05],
-                             [0.985],
-                             [0.811],
-                             [0.41],
-                             [0.242],
-                             [0.113],
-                             [0.027],
-                             [0.19],
-                             [0.17],
-                             [0.17],
-                             [0.064]]
-
-        target_basic_eps_000039 = [[1.3980000e-01, 1.3980000e-01, 6.3591954e+10, 6.3591954e+10],
-                                   [-8.4100000e-02, -8.4100000e-02, 3.9431807e+10, 3.9431807e+10],
-                                   [-1.9290000e-01, -1.9290000e-01, 1.5852177e+10, 1.5852177e+10],
-                                   [3.7000000e-01, 3.7000000e-01, 8.5815341e+10, 8.5815341e+10],
-                                   [1.3570000e-01, 1.3430000e-01, 6.1660271e+10, 6.1660271e+10],
-                                   [1.6180000e-01, 1.6040000e-01, 4.2717729e+10, 4.2717729e+10],
-                                   [1.1910000e-01, 1.1900000e-01, 1.9099547e+10, 1.9099547e+10],
-                                   [1.1100000e+00, 1.1000000e+00, 9.3497622e+10, 9.3497622e+10],
-                                   [7.5900000e-01, 7.5610000e-01, 6.6906147e+10, 6.6906147e+10],
-                                   [3.0610000e-01, 3.0380000e-01, 4.3560398e+10, 4.3560398e+10],
-                                   [1.4090000e-01, 1.4050000e-01, 1.9253639e+10, 1.9253639e+10],
-                                   [8.1000000e-01, 8.1000000e-01, 7.6299930e+10, 7.6299930e+10],
-                                   [4.1870000e-01, 4.1710000e-01, 5.3962706e+10, 5.3962706e+10],
-                                   [2.5540000e-01, 2.5440000e-01, 3.3387152e+10, 3.3387152e+10],
-                                   [1.6240000e-01, 1.6200000e-01, 1.4675987e+10, 1.4675987e+10],
-                                   [1.4000000e-01, 1.4000000e-01, 5.1111652e+10, 5.1111652e+10],
-                                   [-8.9800000e-02, -8.9800000e-02, 3.4982614e+10, 3.4982614e+10],
-                                   [-1.4440000e-01, -1.4440000e-01, 2.3542843e+10, 2.3542843e+10],
-                                   [1.2910000e-01, 1.2860000e-01, 1.0412416e+10, 1.0412416e+10],
-                                   [7.2000000e-01, 7.1000000e-01, 5.8685804e+10, 5.8685804e+10]]
-        target_basic_eps_600748 = [[2.20000000e-01, 2.20000000e-01, 5.29423397e+09, 5.29423397e+09],
-                                   [2.20000000e-01, 2.20000000e-01, 4.49275653e+09, 4.49275653e+09],
-                                   [9.00000000e-02, 9.00000000e-02, 1.59067065e+09, 1.59067065e+09],
-                                   [4.20000000e-01, 4.20000000e-01, 8.86555586e+09, 8.86555586e+09],
-                                   [2.30000000e-01, 2.30000000e-01, 5.44850143e+09, 5.44850143e+09],
-                                   [2.20000000e-01, 2.20000000e-01, 4.34978927e+09, 4.34978927e+09],
-                                   [9.00000000e-02, 9.00000000e-02, 1.73793793e+09, 1.73793793e+09],
-                                   [3.60000000e-01, 3.60000000e-01, 8.66375241e+09, 8.66375241e+09],
-                                   [1.60000000e-01, 1.60000000e-01, 4.72875116e+09, 4.72875116e+09],
-                                   [1.50000000e-01, 1.50000000e-01, 3.76879016e+09, 3.76879016e+09],
-                                   [7.00000000e-02, 7.00000000e-02, 1.31785454e+09, 1.31785454e+09],
-                                   [4.70000000e-01, 4.70000000e-01, 7.23391685e+09, 7.23391685e+09],
-                                   [1.90000000e-01, 1.90000000e-01, 3.76072215e+09, 3.76072215e+09],
-                                   [1.20000000e-01, 1.20000000e-01, 2.35845364e+09, 2.35845364e+09],
-                                   [7.00000000e-02, 7.00000000e-02, 1.03831865e+09, 1.03831865e+09],
-                                   [3.20000000e-01, 3.20000000e-01, 6.48880919e+09, 6.48880919e+09],
-                                   [2.20000000e-01, 2.20000000e-01, 3.72209142e+09, 3.72209142e+09],
-                                   [1.40000000e-01, 1.40000000e-01, 2.22563924e+09, 2.22563924e+09],
-                                   [7.00000000e-02, 7.00000000e-02, 8.96647052e+08, 8.96647052e+08],
-                                   [4.80000000e-01, 4.80000000e-01, 6.61917508e+09, 6.61917508e+09]]
-        target_basic_eps_000040 = [[-1.34000000e-01, -1.34000000e-01, 2.50438755e+09, 2.50438755e+09],
-                                   [-1.89000000e-01, -1.89000000e-01, 1.32692347e+09, 1.32692347e+09],
-                                   [-3.60000000e-02, -3.60000000e-02, 5.59073338e+08, 5.59073338e+08],
-                                   [-6.43700000e-01, -6.43700000e-01, 6.80576162e+09, 6.80576162e+09],
-                                   [5.00000000e-02, 5.00000000e-02, 6.38891620e+09, 6.38891620e+09],
-                                   [6.20000000e-02, 6.20000000e-02, 5.23267082e+09, 5.23267082e+09],
-                                   [1.25000000e-02, 1.25000000e-02, 2.22420874e+09, 2.22420874e+09],
-                                   [8.30000000e-01, 8.30000000e-01, 8.67628947e+09, 8.67628947e+09],
-                                   [1.05000000e+00, 1.05000000e+00, 5.29431716e+09, 5.29431716e+09],
-                                   [9.85000000e-01, 9.85000000e-01, 3.56822382e+09, 3.56822382e+09],
-                                   [8.11000000e-01, 8.11000000e-01, 1.06613439e+09, 1.06613439e+09],
-                                   [4.10000000e-01, 4.10000000e-01, 8.13102532e+09, 8.13102532e+09],
-                                   [2.42000000e-01, 2.42000000e-01, 5.17971521e+09, 5.17971521e+09],
-                                   [1.13000000e-01, 1.13000000e-01, 3.21704120e+09, 3.21704120e+09],
-                                   [2.70000000e-02, 2.70000000e-02, 8.41966738e+08, 8.24272235e+08],
-                                   [1.90000000e-01, 1.90000000e-01, 3.77350171e+09, 3.77350171e+09],
-                                   [1.70000000e-01, 1.70000000e-01, 2.38643892e+09, 2.38643892e+09],
-                                   [1.70000000e-01, 1.70000000e-01, 1.29127117e+09, 1.29127117e+09],
-                                   [6.40000000e-02, 6.40000000e-02, 6.03256858e+08, 6.03256858e+08],
-                                   [1.30000000e-01, 1.30000000e-01, 1.66572918e+09, 1.66572918e+09]]
-
-        target_total_share_000039 = [[3.5950140e+09, 4.8005360e+09, 2.1573660e+10, 3.5823430e+09],
-                                     [3.5860750e+09, 4.8402300e+09, 2.0750827e+10, 3.5823430e+09],
-                                     [3.5860750e+09, 4.9053550e+09, 2.0791307e+10, 3.5823430e+09],
-                                     [3.5845040e+09, 4.8813110e+09, 2.1482857e+10, 3.5823430e+09],
-                                     [3.5831490e+09, 4.9764250e+09, 2.0926816e+10, 3.2825850e+09],
-                                     [3.5825310e+09, 4.8501270e+09, 2.1020418e+10, 3.2825850e+09],
-                                     [2.9851110e+09, 5.4241420e+09, 2.2438350e+10, 3.2825850e+09],
-                                     [2.9849890e+09, 4.1284000e+09, 2.2082769e+10, 3.2825850e+09],
-                                     [2.9849610e+09, 4.0838010e+09, 2.1045994e+10, 3.2815350e+09],
-                                     [2.9849560e+09, 4.2491510e+09, 1.9694345e+10, 3.2815350e+09],
-                                     [2.9846970e+09, 4.2351600e+09, 2.0016361e+10, 3.2815350e+09],
-                                     [2.9828890e+09, 4.2096630e+09, 1.9734494e+10, 3.2815350e+09],
-                                     [2.9813960e+09, 3.4564240e+09, 1.8562738e+10, 3.2793790e+09],
-                                     [2.9803530e+09, 3.0759650e+09, 1.8076208e+10, 3.2793790e+09],
-                                     [2.9792680e+09, 3.1376690e+09, 1.7994776e+10, 3.2793790e+09],
-                                     [2.9785770e+09, 3.1265850e+09, 1.7495053e+10, 3.2793790e+09],
-                                     [2.9783640e+09, 3.1343850e+09, 1.6740840e+10, 3.2035780e+09],
-                                     [2.9783590e+09, 3.1273880e+09, 1.6578389e+10, 3.2035780e+09],
-                                     [2.9782780e+09, 3.1169280e+09, 1.8047639e+10, 3.2035780e+09],
-                                     [2.9778200e+09, 3.1818630e+09, 1.7663145e+10, 3.2035780e+09]]
-        target_total_share_600748 = [[1.84456289e+09, 2.60058426e+09, 5.72443733e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.60058426e+09, 5.72096899e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.60058426e+09, 5.65738237e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.60058426e+09, 5.50257806e+09, 4.58026529e+08],
-                                     [1.84456289e+09, 2.59868164e+09, 5.16741523e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 2.59684471e+09, 5.14677280e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 2.59684471e+09, 4.94955591e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 2.59684471e+09, 4.79001451e+09, 4.44998882e+08],
-                                     [1.84456289e+09, 3.11401684e+09, 4.46326988e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.11596723e+09, 4.45419136e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.11596723e+09, 4.39652948e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.18007783e+09, 4.26608403e+09, 4.01064256e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.78417688e+09, 3.65651701e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.65806574e+09, 3.65651701e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.62063090e+09, 3.65651701e+08],
-                                     [1.84456289e+09, 3.10935622e+09, 3.50063915e+09, 3.65651701e+08],
-                                     [1.41889453e+09, 3.55940850e+09, 3.22272993e+09, 3.62124939e+08],
-                                     [1.41889453e+09, 3.56129650e+09, 3.11477476e+09, 3.62124939e+08],
-                                     [1.41889453e+09, 3.59632888e+09, 3.06836903e+09, 3.62124939e+08],
-                                     [1.08337087e+09, 3.37400726e+07, 3.00918704e+09, 3.62124939e+08]]
-        target_total_share_000040 = [[1.48687387e+09, 1.06757900e+10, 8.31900755e+08, 2.16091994e+08],
-                                     [1.48687387e+09, 1.06757900e+10, 7.50177302e+08, 2.16091994e+08],
-                                     [1.48687387e+09, 1.06757899e+10, 9.90255974e+08, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06757899e+10, 1.03109866e+09, 2.16091994e+08],
-                                     [1.48687387e+09, 1.06757910e+10, 2.07704745e+09, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06757910e+10, 2.09608665e+09, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06803833e+10, 2.13354083e+09, 2.16123282e+08],
-                                     [1.48687387e+09, 1.06804090e+10, 2.11489364e+09, 2.16123282e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 2.42939924e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 2.34220254e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 2.16390368e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 1.07961915e+09, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 8.58866066e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 6.87024393e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 5.71554565e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361727e+09, 5.54241222e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361726e+09, 5.10059576e+08, 1.88489589e+08],
-                                     [1.33717327e+09, 8.87361726e+09, 4.59351639e+08, 1.88489589e+08],
-                                     [4.69593364e+08, 2.78355875e+08, 4.13430814e+08, 1.88489589e+08],
-                                     [4.69593364e+08, 2.74235459e+08, 3.83557678e+08, 1.88489589e+08]]
-
-        target_net_profit_000039 = [[np.nan],
-                                    [2.422180e+08],
-                                    [np.nan],
-                                    [2.510113e+09],
-                                    [np.nan],
-                                    [1.102220e+09],
-                                    [np.nan],
-                                    [4.068455e+09],
-                                    [np.nan],
-                                    [1.315957e+09],
-                                    [np.nan],
-                                    [3.158415e+09],
-                                    [np.nan],
-                                    [1.066509e+09],
-                                    [np.nan],
-                                    [7.349830e+08],
-                                    [np.nan],
-                                    [-5.411600e+08],
-                                    [np.nan],
-                                    [2.271961e+09]]
-        target_net_profit_600748 = [[np.nan],
-                                    [4.54341757e+08],
-                                    [np.nan],
-                                    [9.14476670e+08],
-                                    [np.nan],
-                                    [5.25360283e+08],
-                                    [np.nan],
-                                    [9.24502415e+08],
-                                    [np.nan],
-                                    [4.66560302e+08],
-                                    [np.nan],
-                                    [9.15265285e+08],
-                                    [np.nan],
-                                    [2.14639674e+08],
-                                    [np.nan],
-                                    [7.45093049e+08],
-                                    [np.nan],
-                                    [2.10967312e+08],
-                                    [np.nan],
-                                    [6.04572711e+08]]
-        target_net_profit_000040 = [[np.nan],
-                                    [-2.82458846e+08],
-                                    [np.nan],
-                                    [-9.57130872e+08],
-                                    [np.nan],
-                                    [9.22114527e+07],
-                                    [np.nan],
-                                    [1.12643819e+09],
-                                    [np.nan],
-                                    [1.31715269e+09],
-                                    [np.nan],
-                                    [5.39940093e+08],
-                                    [np.nan],
-                                    [1.51440838e+08],
-                                    [np.nan],
-                                    [1.75339071e+08],
-                                    [np.nan],
-                                    [8.04740415e+07],
-                                    [np.nan],
-                                    [6.20445815e+07]]
-
-        print('test get financial data, in multi thread mode')
-        df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=4)
-        self.assertIsInstance(df_list, tuple)
-        self.assertEqual(len(df_list), 4)
-        self.assertEqual(len(df_list[0]), 3)
-        self.assertEqual(len(df_list[1]), 3)
-        self.assertEqual(len(df_list[2]), 3)
-        self.assertEqual(len(df_list[3]), 3)
-        # 检查确认所有数据类型正确
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for subdict in df_list for item in subdict.values()))
-        # 检查是否有空数据
-        print(all(item.empty for subdict in df_list for item in subdict.values()))
-        # 检查获取的每组数据正确，且所有数据的顺序一致, 如果取到空数据，则忽略
-        if df_list[0]['000039.SZ'].empty:
-            print(f'income data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000039.SZ'].values, target_basic_eps_000039))
-        if df_list[0]['600748.SH'].empty:
-            print(f'income data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['600748.SH'].values, target_basic_eps_600748))
-        if df_list[0]['000040.SZ'].empty:
-            print(f'income data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000040.SZ'].values, target_basic_eps_000040))
-
-        if df_list[1]['000039.SZ'].empty:
-            print(f'indicator data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000039.SZ'].values, target_eps_000039))
-        if df_list[1]['600748.SH'].empty:
-            print(f'indicator data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['600748.SH'].values, target_eps_600748))
-        if df_list[1]['000040.SZ'].empty:
-            print(f'indicator data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000040.SZ'].values, target_eps_000040))
-
-        if df_list[2]['000039.SZ'].empty:
-            print(f'balance data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000039.SZ'].values, target_total_share_000039))
-        if df_list[2]['600748.SH'].empty:
-            print(f'balance data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['600748.SH'].values, target_total_share_600748))
-        if df_list[2]['000040.SZ'].empty:
-            print(f'balance data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000040.SZ'].values, target_total_share_000040))
-
-        if df_list[3]['000039.SZ'].empty:
-            print(f'cash flow data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000039.SZ'].values, target_net_profit_000039, equal_nan=True))
-        if df_list[3]['600748.SH'].empty:
-            print(f'cash flow data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['600748.SH'].values, target_net_profit_600748, equal_nan=True))
-        if df_list[3]['000040.SZ'].empty:
-            print(f'cash flow data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000040.SZ'].values, target_net_profit_000040, equal_nan=True))
-
-        print('test get financial data, in single thread mode')
-        df_list = get_financial_report_type_raw_data(start=start, end=end, shares=shares, htypes=htypes, parallel=0)
-        self.assertIsInstance(df_list, tuple)
-        self.assertEqual(len(df_list), 4)
-        self.assertEqual(len(df_list[0]), 3)
-        self.assertEqual(len(df_list[1]), 3)
-        self.assertEqual(len(df_list[2]), 3)
-        self.assertEqual(len(df_list[3]), 3)
-        # 检查确认所有数据类型正确
-        self.assertTrue(all(isinstance(item, pd.DataFrame) for subdict in df_list for item in subdict.values()))
-        # 检查是否有空数据，因为网络问题，有可能会取到空数据
-        self.assertFalse(all(item.empty for subdict in df_list for item in subdict.values()))
-        # 检查获取的每组数据正确，且所有数据的顺序一致, 如果取到空数据，则忽略
-        if df_list[0]['000039.SZ'].empty:
-            print(f'income data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000039.SZ'].values, target_basic_eps_000039))
-        if df_list[0]['600748.SH'].empty:
-            print(f'income data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['600748.SH'].values, target_basic_eps_600748))
-        if df_list[0]['000040.SZ'].empty:
-            print(f'income data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[0]['000040.SZ'].values, target_basic_eps_000040))
-
-        if df_list[1]['000039.SZ'].empty:
-            print(f'indicator data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000039.SZ'].values, target_eps_000039))
-        if df_list[1]['600748.SH'].empty:
-            print(f'indicator data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['600748.SH'].values, target_eps_600748))
-        if df_list[1]['000040.SZ'].empty:
-            print(f'indicator data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[1]['000040.SZ'].values, target_eps_000040))
-
-        if df_list[2]['000039.SZ'].empty:
-            print(f'balance data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000039.SZ'].values, target_total_share_000039))
-        if df_list[2]['600748.SH'].empty:
-            print(f'balance data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['600748.SH'].values, target_total_share_600748))
-        if df_list[2]['000040.SZ'].empty:
-            print(f'balance data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[2]['000040.SZ'].values, target_total_share_000040))
-
-        if df_list[3]['000039.SZ'].empty:
-            print(f'cash flow data for "000039.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000039.SZ'].values, target_net_profit_000039, equal_nan=True))
-        if df_list[3]['600748.SH'].empty:
-            print(f'cash flow data for "600748.SH" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['600748.SH'].values, target_net_profit_600748, equal_nan=True))
-        if df_list[3]['000040.SZ'].empty:
-            print(f'cash flow data for "000040.SZ" is empty')
-        else:
-            self.assertTrue(np.allclose(df_list[3]['000040.SZ'].values, target_net_profit_000040, equal_nan=True))
-
-    def test_get_composite_type_raw_data(self):
-        pass
+class UnexpectedError(Exception):
+    """ 用于retry测试的自定义Error Type"""
+    pass
 
 
 class TestUtilityFuncs(unittest.TestCase):
     def setUp(self):
         pass
+
+    def test_unify(self):
+        n1 = 2
+        self.assertEqual(unify(n1), 2)
+        n2 = np.array([[1., 1., 1., 1.], [0., 1., 0., 1.]])
+        n3 = np.array([[.25, .25, .25, .25], [0., .5, 0., .5]])
+        self.assertTrue(np.allclose(unify(n2), n3))
 
     def test_time_string_format(self):
         print('Testing qt.time_string_format() function:')
@@ -9426,7 +9000,7 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_list_truncate(self):
         """ test util func list_truncate()"""
-        l = [1,2,3,4,5]
+        l = [1, 2, 3, 4, 5]
         ls = list_truncate(l, 2)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
@@ -9503,8 +9077,8 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(pd.to_datetime(next_trade_day(date_christmas)),
                          pd.to_datetime(date_christmas))
 
-    def test_prev_market_trade_day(self):
-        """ test the function prev_market_trade_day()
+    def test_nearest_market_trade_day(self):
+        """ test the function nearest_market_trade_day()
         """
         date_trade = '20210401'
         date_holiday = '20210102'
@@ -9517,21 +9091,21 @@ class TestUtilityFuncs(unittest.TestCase):
         date_too_late = '20230105'
         date_christmas = '20201225'
         prev_christmas_xhkg = '20201224'
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_trade)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_trade)),
                          pd.to_datetime(date_trade))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_holiday)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_holiday)),
                          pd.to_datetime(prev_holiday))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_weekend)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_weekend)),
                          pd.to_datetime(prev_weekend))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_seems_trade_day)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_seems_trade_day)),
                          pd.to_datetime(prev_seems_trade_day))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_too_early)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_too_early)),
                          None)
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_too_late)),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_too_late)),
                          None)
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_christmas, 'SSE')),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'SSE')),
                          pd.to_datetime(date_christmas))
-        self.assertEqual(pd.to_datetime(prev_market_trade_day(date_christmas, 'XHKG')),
+        self.assertEqual(pd.to_datetime(nearest_market_trade_day(date_christmas, 'XHKG')),
                          pd.to_datetime(prev_christmas_xhkg))
 
     def test_next_market_trade_day(self):
@@ -9579,6 +9153,90 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(is_number_like('abc'))
         self.assertFalse(is_number_like('0.32a'))
         self.assertFalse(is_number_like('0-2'))
+
+    def test_retry_decorator(self):
+        """ test the retry decorator"""
+        print(f'test no retry needed functions')
+        self.counter = 0
+
+        @retry(RetryableError, tries=4, delay=0.1)
+        def succeeds():
+            self.counter += 1
+            return 'success'
+
+        r = succeeds()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 1)
+
+        print(f'test retry only once')
+        self.counter = 0
+
+        @retry(RetryableError, tries=4, delay=0.1)
+        def fails_once():
+            self.counter += 1
+            if self.counter < 2:
+                raise RetryableError('failed')
+            else:
+                return 'success'
+
+        r = fails_once()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 2)
+
+        print(f'test retry limit is reached')
+        self.counter = 0
+
+        @retry(RetryableError, tries=4, delay=0.1)
+        def always_fails():
+            self.counter += 1
+            raise RetryableError('failed')
+
+        with self.assertRaises(RetryableError):
+            always_fails()
+        self.assertEqual(self.counter, 4)
+
+        print(f'test checking for multiple exceptions')
+        self.counter = 0
+
+        @retry((RetryableError, AnotherRetryableError), tries=4, delay=0.1)
+        def raise_multiple_exceptions():
+            self.counter += 1
+            if self.counter == 1:
+                raise RetryableError('a retryable error')
+            elif self.counter == 2:
+                raise AnotherRetryableError('another retryable error')
+            else:
+                return 'success'
+
+        r = raise_multiple_exceptions()
+        self.assertEqual(r, 'success')
+        self.assertEqual(self.counter, 3)
+
+        print(f'does not retry when unexpected error occurs')
+
+        @retry(RetryableError, tries=4, delay=0.1)
+        def raise_unexpected_error():
+            raise UnexpectedError('unexpected error')
+
+        with self.assertRaises(UnexpectedError):
+            raise_unexpected_error()
+
+        print(f'test recording info with a logger')
+        self.counter = 0
+        # set up the logger object
+        sh = logging.StreamHandler()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(sh)
+
+        @retry(RetryableError, tries=4, delay=0.1, logger=logger)
+        def fails_once():
+            self.counter += 1
+            if self.counter < 2:
+                raise RetryableError('failed')
+            else:
+                return 'success'
+
+        fails_once()
 
 
 class TestTushare(unittest.TestCase):
@@ -9647,99 +9305,6 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
-    def test_get_bar(self):
-        print(f'test tushare function: get_bar')
-        print(f'test type: one share asset type E')
-        shares = '600748.SH'
-        start = '20180101'
-        end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end)
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
-        print(f'test type: one share asset type I')
-        shares = '000300.SH'
-        start = '20180101'
-        end = '20191231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='I')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
-        print(f'test type: one share asset type E lots of data')
-        shares = '000001.SZ'
-        start = '19910101'
-        end = '20201231'
-        df = get_bar(shares=shares, start=start, end=end, asset_type='E')
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        self.assertEqual(len(df), 7053)
-        self.assertEqual(len(df.loc[np.isnan(df.close)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.open)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.high)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.low)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.pre_close)]), 0)
-        self.assertEqual(len(df.loc[np.isnan(df.change)]), 0)
-        print(df.iloc[4986])
-        print(df.iloc[4987])
-        self.assertEqual(df.iloc[4986].trade_date, "19991008")
-        self.assertAlmostEqual(df.iloc[4986].open, 485.235, 2)
-        self.assertAlmostEqual(df.iloc[4986].high, 490.296, 2)
-        self.assertAlmostEqual(df.iloc[4986].low, 474.691, 2)
-        self.assertAlmostEqual(df.iloc[4986].close, 477.221, 2)
-        self.assertAlmostEqual(df.iloc[4986].pre_close, 491.139, 2)
-        self.assertAlmostEqual(df.iloc[4986].change, -13.9181, 2)
-        self.assertEqual(df.iloc[4987].trade_date, "19990930")
-        self.assertAlmostEqual(df.iloc[4987].open, 499.786, 2)
-        self.assertAlmostEqual(df.iloc[4987].high, 505.901, 2)
-        self.assertAlmostEqual(df.iloc[4987].low, 488.82, 2)
-        self.assertAlmostEqual(df.iloc[4987].close, 491.139, 2)
-        self.assertAlmostEqual(df.iloc[4987].pre_close, 499.575, 2)
-        self.assertAlmostEqual(df.iloc[4987].change, -8.4352, 2)
-        # test all close prices are equal to next pre_close
-        total_unfit = 0
-        for i in range(7052):
-            cur_close = df.iloc[i + 1].close
-            pre_close = df.iloc[i].pre_close
-            if abs(cur_close - pre_close) > 1:
-                print(f'found discrepencies in close data:'
-                      f'cur_close: {cur_close}, pre_close: {pre_close} @ iloc[{i}]\n'
-                      f'{df.iloc[i:i + 2]}')
-                total_unfit += 1
-        self.assertLessEqual(total_unfit, 5)
-        df.info()
-        print(df)
-
-        print(f'test type: multiple shares asset type E, raise Error')
-        shares = '600748.SH,000616.SZ,000620.SZ,000667.SZ'
-        start = '20180101'
-        end = '20191231'
-        self.assertRaises(AssertionError, get_bar, shares=shares, start=start, end=end, asset_type='E')
-
-        print(f'test type: multiple shares asset type E, with freq = "30min" -> authority issue!')
-        shares = '000620.SZ,000667.SZ'
-        start = '20180101'
-        end = '20191231'
-        # df = get_bar(shares=shares, start=start, end=end, asset_type='E', freq='30min')
-        # self.assertIsInstance(df, pd.DataFrame)
-        # self.assertFalse(df.empty)
-        # df.info()
-        # print(df.head(30))
-
-    def test_get_index(self):
-        print(f'test tushare function: get_index')
-        index = '000300.SH'
-        start = '20180101'
-        end = '20191231'
-        df = get_index(index=index, start=start, end=end)
-        self.assertIsInstance(df, pd.DataFrame)
-        self.assertFalse(df.empty)
-        df.info()
-        print(df.head(10))
-
     def test_income(self):
         print(f'test tushare function: income')
         shares = '600748.SH'
@@ -9754,8 +9319,8 @@ class TestTushare(unittest.TestCase):
         self.assertTrue(df.empty)
 
         df = income(share=shares,
-                    start=start,
-                    end=end)
+                    start='20170101',
+                    end='20220101')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         print(f'Test income: extracted single share income: \n{df}')
@@ -9854,8 +9419,8 @@ class TestTushare(unittest.TestCase):
         self.assertTrue(df.empty)
 
         df = indicators(share=shares,
-                        start=start,
-                        end=end)
+                        start='20150101',
+                        end='20220101')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         print(f'\nTest indicators 2: extracted indicator: \n{df}')
@@ -10032,7 +9597,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchanging in market\n'
               f'===============================')
-        df = fund_net_value(date=trade_date, market='E')
+        df = fund_net_value(trade_date=trade_date, market='E')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -10041,7 +9606,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchange outside market\n'
               f'===============================')
-        df = fund_net_value(date=trade_date, market='O')
+        df = fund_net_value(trade_date=trade_date, market='O')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -10062,13 +9627,13 @@ class TestTushare(unittest.TestCase):
               f'===============================')
         fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
         trade_date = '20201009'
-        df = fund_net_value(fund=fund, date=trade_date)
+        df = fund_net_value(fund=fund, trade_date=trade_date)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         self.assertEqual(set(df.ts_code.unique()), set(str_to_list(fund)))
-        print(f'found in df records in {df.trade_date.nunique()} unique trade dates\n'
-              f'they are: \n{list(df.trade_date.unique())}')
+        print(f'found in df records in {df.index.nunique()} unique trade dates\n'
+              f'they are: \n{list(df.index.unique())}')
 
     def test_future_basic(self):
         print(f'test tushare function: future_basic')
@@ -10148,7 +9713,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 3, error raising when both future and trade_date are None\n'
               f'==============================================================')
-        self.assertRaises(ValueError, future_daily, start=start, end=end)
+        self.assertRaises(ValueError, options_daily, start=start, end=end)
 
 
 class TestTAFuncs(unittest.TestCase):
@@ -11147,9 +10712,9 @@ class TestQT(unittest.TestCase):
 
         qt.configure(reference_asset='000300.SH',
                      mode=1,
-                     ref_asset_type='I',
+                     ref_asset_type='IDX',
                      asset_pool='000300.SH',
-                     asset_type='I',
+                     asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
                      trade_batch_size=0,
@@ -11614,7 +11179,7 @@ class TestQT(unittest.TestCase):
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
                      reference_asset='000300.SH',
-                     ref_asset_type='I',
+                     ref_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181231',
@@ -11665,7 +11230,7 @@ class TestQT(unittest.TestCase):
                                                         '上海']),
                      asset_type='E',
                      reference_asset='000300.SH',
-                     ref_asset_type='I',
+                     ref_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20171228',
@@ -11749,7 +11314,7 @@ class TestBuiltIns(unittest.TestCase):
         qt.configure(invest_start='20200113',
                      invest_end='20210413',
                      asset_pool='000300.SH',
-                     asset_type='I',
+                     asset_type='IDX',
                      reference_asset='000300.SH',
                      opti_sample_count=100)
 
@@ -11757,7 +11322,7 @@ class TestBuiltIns(unittest.TestCase):
         op = qt.Operator(strategies=['crossline'])
         op.set_parameter(0, pars=(35, 120, 10, 'buy'))
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1, invest_start='20080103')
+        qt.run(op, mode=1, invest_start='20080103', allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11774,7 +11339,7 @@ class TestBuiltIns(unittest.TestCase):
     def test_dma(self):
         op = qt.Operator(strategies=['dma'])
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
+        qt.run(op, mode=1, allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
@@ -12053,100 +11618,766 @@ class FastExperiments(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_fast_experiments(self):
-        op = qt.Operator(strategies=[MyStg()], signal_type='pt')
-        qt.run(op, mode=1)
+    # def test_fast_experiments(self):
+    #     ds = DataSource(source_type='db',
+    #                     host='localhost',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     # 从tushare下载数据：
+    #     # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
+    #     #                              '000005.SH', '000006.SH', '000300.SH'])
+    #     indexes = ds.read_table_data(table='index_basic').index.to_list()
+    #     print(indexes[:10])
+    #     tables = ['index_daily']
+    #     table = tables[0]
+    #     for idx in indexes[150:]:
+    #         df = ds.acquire_table_data(table=table, channel='tushare', index=idx)
+    #         ds.update_table_data(table, df)
+    #         time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
+    #         print(f'{len(df)} rows of data written in table {table} for index {idx} at time: {time_str}!')
+    #
+    # def test_fast_experiments2(self):
+    #     ds = DataSource(source_type='db',
+    #                     host='localhost',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     ds.refill_local_source(tables='stock_daily, stock_adj_factor',
+    #                            start_date='20000101',
+    #                            end_date='20000201',
+    #                            parallel=False)
+    #
+    # def test_fast_experiments3(self):
+    #     ds = DataSource(source_type='db',
+    #                     host='localhost',
+    #                     user='jackie',
+    #                     password='iama007',
+    #                     db='ts_db')
+    #     ds.refill_local_source(tables='fund_adj_factor',
+    #                            start_date='20070918',
+    #                            end_date='20220217',
+    #                            parallel=True)
 
 
+# noinspection SqlDialectInspection,PyTypeChecker
 class TestDataBase(unittest.TestCase):
     """test local historical file database management methods"""
 
     def setUp(self):
-        self.data_source = DataSource()
+        from qteasy import QT_ROOT_PATH
+        self.qt_root_path = QT_ROOT_PATH
+        # 使用测试数据库进行除"test_get_history_panel()"以外的其他全部测试
+        self.ds_db = DataSource('db',
+                                host='localhost',
+                                port=3306,
+                                user='jackie',
+                                password='iama007',
+                                db='test_db')
+        self.ds_csv = DataSource('file', file_type='csv')
+        self.ds_hdf = DataSource('file', file_type='hdf')
+        self.ds_fth = DataSource('file', file_type='fth')
+        self.df = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+            'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
+                           '20211113', '20211113', '20211113', '20211113', '20211113'],
+            'open':       [1., 2., 3., 4., 5., 6., 7., 8., 9., 10.],
+            'high':       [2., 3., 4., 5., 6., 7., 8., 9., 10., 1.],
+            'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2.],
+            'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3.]
+        })
+        # 以下df_add中的数据大部分主键与df相同，但有四行不同，且含有NaN与None值主键与df相同的行数据与df不同，用于测试新增及更新
+        self.df_add = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000006.SZ', '000007.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000006.SZ', '000007.SZ'],
+            'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
+                           '20211113', '20211113', '20211113', '20211113', '20211113'],
+            'open':       [10., 10., 10., None, 10., 10., 10., 10., 10., 10.],
+            'high':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'low':        [10., 10., 10., 10., 10., np.nan, 10., 10., 10., 10.],
+            'close':      [10., 10., 10., 10., 10., 10., np.nan, 10., 10., 10.]
+        })
+        # 以下df_res中的数据是更新后的结果
+        self.df_res = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000001.SZ', '000002.SZ', '000002.SZ', '000003.SZ', '000003.SZ', '000004.SZ',
+                           '000004.SZ', '000005.SZ', '000005.SZ', '000006.SZ', '000006.SZ', '000007.SZ', '000007.SZ'],
+            'trade_date': ['20211112', '20211113', '20211112', '20211113', '20211112', '20211113', '20211112',
+                           '20211113', '20211112', '20211113', '20211112', '20211113', '20211112', '20211113'],
+            'open':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 4.0, 9.0, 5.0, 10.0, np.nan, 10.0, 10.0, 10.0],
+            'high':       [10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 5.0, 10.0, 6.0, 1.0, 10.0, 10.0, 10.0, 10.0],
+            'low':        [10.0, np.nan, 10.0, 10.0, 10.0, 10.0, 6.0, 1.0, 7.0, 2.0, 10.0, 10.0, 10.0, 10.0],
+            'close':      [10.0, 10.0, 10.0, np.nan, 10.0, 10.0, 7.0, 2.0, 8.0, 3.0, 10.0, 10.0, 10.0, 10.0]
+        })
+        self.df2 = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
+            'name':       ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10'],
+            'industry':   ['industry1', 'industry2', 'industry3', 'industry4', 'industry5',
+                           'industry6', 'industry7', 'industry8', 'industry9', 'industry10'],
+            'area':       ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
+            'market':     ['market1', 'market2', 'market3', 'market4', 'market5',
+                           'market6', 'market7', 'market8', 'market9', 'market10']
+        })
+        # 以下df用于测试写入/读出/新增修改系统内置标准数据表
+        self.built_in_df = pd.DataFrame({
+            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+            'trade_date': ['20211112', '20211112', '20211112', '20211112', '20211112',
+                           '20211113', '20211113', '20211113', '20211113', '20211113',
+                           '20211114', '20211114', '20211114', '20211114', '20211114'],
+            'open':       [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
+            'high':       [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
+            'low':        [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
+            'close':      [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
+            'pre_close':  [1., 2., 3., 4., 5., 6., 7., 8., 9., 10., 6., 7., 8., 9., 10.],
+            'change':     [2., 3., 4., 5., 6., 7., 8., 9., 10., 1., 7., 8., 9., 10., 1.],
+            'pct_chg':    [3., 4., 5., 6., 7., 8., 9., 10., 1., 2., 8., 9., 10., 1., 2.],
+            'vol':        [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.],
+            'amount':     [4., 5., 6., 7., 8., 9., 10., 1., 2., 3., 9., 10., 1., 2., 3.]
+        })
+        # 以下df用于测试新增数据写入/读出系统内置标准数据表，与第一次写入表中的数据相比，部分数据的
+        # 主键与第一次相同，大部分主键不同。主键相同的数据中，价格与原来的值不同。
+        # 正确的输出应该确保写入本地表的数据中不含重复的主键，用户可以选择用新的数据替换已有数据，或
+        # 者忽略新的数据
+        self.built_in_add_df = pd.DataFrame({
+            'ts_code':    ['000006.SZ', '000007.SZ', '000008.SZ', '000004.SZ', '000005.SZ',
+                           '000006.SZ', '000007.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                           '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ'],
+            'trade_date': ['20211115', '20211115', '20211115', '20211115', '20211115',
+                           '20211116', '20211116', '20211116', '20211116', '20211116',
+                           '20211114', '20211114', '20211114', '20211114', '20211114'],
+            'open':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'high':       [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'low':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'close':      [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'pre_close':  [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'change':     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'pct_chg':    [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'vol':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
+            'amount':     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]
+        })
 
-    def test_get_and_update_data(self):
-        # import pdb;
-        # pdb.set_trace()
+    def test_primary_key_manipulate(self):
+        """ test manipulating DataFrame primary key as indexes and frames
+            with testing functions:
+                set_primary_key_index() and,
+                set_primary_key_frame()
+        """
+        print(f'df before converting primary keys to index:\n{self.df}')
+        set_primary_key_index(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'date'])
 
-        # print(f'test expanded date time idx_range from 2020 07 01')
-        ds = self.data_source
-        # hp = ds.get_and_update_data(start='20200901',
-        #                             end='20201231',
-        #                             freq='d',
-        #                             shares=['600748.SH', '000616.SZ', '000620.SZ', '000667.SZ',
-        #                                     '000001.SZ', '000002.SZ'],
-        #                             htypes=['close'],
-        #                             adj='hfq',
-        #                             parallel=10)
-        # hp.info()
-        # hp = qt.HistoryPanel()
-        # print(hp)
-        #
-        # print(f'test different share scope, added 000005.SZ')
-        # hp = ds.get_and_update_data(start='20200101',
-        #                             end='20200901',
-        #                             freq='d',
-        #                             shares=['600748.SH', '000616.SZ', '000620.SZ', '000005.SZ'],
-        #                             htypes=['close', 'open'],
-        #                             parallel=0)
-        # hp.info()
-        # hp = qt.HistoryPanel()
-        #
-        # print(f'test getting and updating adjusted price data')
-        # hp = ds.get_and_update_data(start='20180101',
-        #                             end='20211201',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['close', 'open', 'high', 'low'],
-        #                             adj='hfq',
-        #                             parallel=16,
-        #                             delay=180,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
+        print(f'df after converting primary keys to index:\n{self.df}')
+        self.assertEqual(list(self.df.index.names), ['ts_code', 'trade_date'])
+        self.assertEqual(self.df.index[0], ('000001.SZ', Timestamp('2021-11-12 00:00:00')))
+        self.assertEqual(self.df.columns.to_list(), ['open', 'high', 'low', 'close'])
 
-        # print(f'test getting and updating refresh data')
-        # hp = ds.get_and_update_data(start='19950101',
-        #                             end='20211231',
-        #                             freq='d',
-        #                             shares=['000812.SZ', '600748.SH', '000616.SZ',
-        #                                     '000620.SZ', '000667.SZ', '000001.SZ'],
-        #                             htypes='open, high, low, close, vol',
-        #                             refresh=True,
-        #                             parallel=10,
-        #                             delay=125,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
+        res = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'date'])
+        print(f'df after converting primary keys to frame:\n{res}')
+        self.assertEqual(list(res.index.names), [None])
+        self.assertEqual(res.ts_code[0], '000001.SZ')
+        self.assertEqual(res.trade_date[0], Timestamp('2021-11-12 00:00:00'))
+        self.assertEqual(res.columns.to_list(), ['ts_code', 'trade_date', 'open', 'high', 'low', 'close'])
 
-        # print(f'test getting and updating refresh data')
-        # hp = ds.get_and_update_data(start='20060101',
-        #                             end='20201231',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['vol'],
-        #                             parallel=10,
-        #                             delay=125,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
-        #
-        # print(f'test getting and updating lots of mixed data')
-        # hp = ds.get_and_update_data(start='19950101',
-        #                             end='20200901',
-        #                             freq='d',
-        #                             shares=qt.get_stock_pool(date='today',
-        #                                                      market='主板,中小板'),
-        #                             htypes=['close', 'open', 'high', 'low', 'net_profit',
-        #                                     'finan_exp', 'total_share', 'eps',
-        #                                     'dt_eps', 'total_revenue_ps', 'cap_rese'],
-        #                             parallel=10,
-        #                             delay=125,
-        #                             delay_every=80)
-        # hp.info()
-        # hp = qt.HistoryPanel()
+        print(f'df2 before converting primary keys to index:\n{self.df2}')
+        set_primary_key_index(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+
+        print(f'df2 after converting primary keys to index:\n{self.df2}')
+        self.assertEqual(list(self.df2.index.names), ['ts_code'])
+        self.assertEqual(self.df2.index[0], '000001.SZ')
+        self.assertEqual(self.df2.columns.to_list(), ['name', 'industry', 'area', 'market'])
+
+        res = set_primary_key_frame(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        print(f'df2 after converting primary keys to frame:\n{res}')
+        self.assertEqual(list(res.index.names), [None])
+        self.assertEqual(res.ts_code[0], '000001.SZ')
+        self.assertEqual(res.columns.to_list(), ['ts_code', 'name', 'industry', 'area', 'market'])
+
+        # test get_primary_key_range
+        res = get_primary_key_range(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'date'])
+        print(f'get primary key range of df:\n{res}')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(item in ['000004.SZ', '000002.SZ', '000005.SZ', '000003.SZ', '000001.SZ'] for
+                            item in res['shares']))
+        self.assertEqual(res['start'], pd.to_datetime('20211112'))
+        self.assertEqual(res['end'], pd.to_datetime('20211113'))
+
+        res = get_primary_key_range(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        print(f'get primary key range of df:\n{res}')
+        target_list = ['000001.SZ', '000002.SZ', '000003.SZ', '000005.SZ', '000009.SZ',
+                       '000006.SZ', '000008.SZ', '000004.SZ', '000007.SZ', '000010.SZ']
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(item in target_list for item in res['shares']))
+
+    def test_datasource_creation(self):
+        """ test creation of all kinds of data sources"""
+        self.assertIsInstance(self.ds_db, DataSource)
+        self.assertEqual(self.ds_db.connection_type, 'mysql://localhost@3306')
+        self.assertIs(self.ds_db.file_path, None)
+
+        self.assertIsInstance(self.ds_csv, DataSource)
+        self.assertEqual(self.ds_csv.connection_type, 'csv')
+        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(self.ds_csv.engine, None)
+
+        self.assertIsInstance(self.ds_hdf, DataSource)
+        self.assertEqual(self.ds_hdf.connection_type, 'hdf')
+        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(self.ds_hdf.engine, None)
+
+        self.assertIsInstance(self.ds_fth, DataSource)
+        self.assertEqual(self.ds_fth.connection_type, 'fth')
+        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertIs(self.ds_fth.engine, None)
+
+    def test_file_manipulates(self):
+        """ test DataSource method file_exists and drop_file"""
+        print(f'returning True while source type is database')
+        self.assertRaises(RuntimeError, self.ds_db.file_exists, 'basic_eps.dat')
+
+        print(f'test file that existed')
+        f_name = self.ds_csv.file_path + 'test_file.csv'
+        with open(f_name, 'w') as f:
+            f.write('a test csv file')
+        self.assertTrue(self.ds_csv.file_exists('test_file'))
+        self.ds_csv.drop_file('test_file')
+        self.assertFalse(self.ds_csv.file_exists('test_file'))
+
+        f_name = self.ds_hdf.file_path + 'test_file.hdf'
+        with open(f_name, 'w') as f:
+            f.write('a test csv file')
+        self.assertTrue(self.ds_hdf.file_exists('test_file'))
+        self.ds_hdf.drop_file('test_file')
+        self.assertFalse(self.ds_hdf.file_exists('test_file'))
+
+        f_name = self.ds_fth.file_path + 'test_file.fth'
+        with open(f_name, 'w') as f:
+            f.write('a test csv file')
+        self.assertTrue(self.ds_fth.file_exists('test_file'))
+        self.ds_fth.drop_file('test_file')
+        self.assertFalse(self.ds_fth.file_exists('test_file'))
+
+        print(f'test file that does not exist')
+        # 事先删除可能存在于磁盘上的文件，并判断是否存在
+        import os
+        f_name = self.ds_csv.file_path + "file_that_does_not_exist.csv"
+        try:
+            os.remove(f_name)
+        except:
+            pass
+        f_name = self.ds_hdf.file_path + "file_that_does_not_exist.hdf"
+        try:
+            os.remove(f_name)
+        except:
+            pass
+        f_name = self.ds_fth.file_path + "file_that_does_not_exist.fth"
+        try:
+            os.remove(f_name)
+        except:
+            pass
+        self.assertFalse(self.ds_csv.file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_hdf.file_exists('file_that_does_not_exist'))
+        self.assertFalse(self.ds_fth.file_exists('file_that_does_not_exist'))
+
+    def test_db_table_operates(self):
+        """ test all database operation functions"""
+        self.ds_db.drop_db_table('new_test_table')
+        self.assertFalse(self.ds_db.db_table_exists('new_test_table'))
+
+        print(f'test function creating new table')
+        self.ds_db.new_db_table('new_test_table',
+                                ['ts_code', 'trade_date', 'col1', 'col2'],
+                                ['varchar(9)', 'varchar(9)', 'int', 'int'],
+                                ['ts_code', 'trade_date'])
+        self.ds_db.db_table_exists('new_test_table')
+
+        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
+              f"FROM INFORMATION_SCHEMA.COLUMNS " \
+              f"WHERE TABLE_SCHEMA = Database() " \
+              f"AND table_name = 'new_test_table'" \
+              f"ORDER BY ordinal_position"
+        self.ds_db.cursor.execute(sql)
+        results = self.ds_db.cursor.fetchall()
+        # 为了方便，将cur_columns和new_columns分别包装成一个字典
+        test_columns = {}
+        for col, typ in results:
+            test_columns[col] = typ
+        self.assertEqual(list(test_columns.keys()), ['ts_code', 'trade_date', 'col1', 'col2'])
+        self.assertEqual(list(test_columns.values()), ['varchar', 'varchar', 'int', 'int'])
+
+        self.ds_db.alter_db_table('new_test_table',
+                                  ['ts_code', 'col1', 'col2', 'col3', 'col4'],
+                                  ['varchar(9)', 'float', 'float', 'int', 'float'],
+                                  ['ts_code'])
+        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
+              f"FROM INFORMATION_SCHEMA.COLUMNS " \
+              f"WHERE TABLE_SCHEMA = Database() " \
+              f"AND table_name = 'new_test_table'" \
+              f"ORDER BY ordinal_position"
+        self.ds_db.cursor.execute(sql)
+        results = self.ds_db.cursor.fetchall()
+        # 为了方便，将cur_columns和new_columns分别包装成一个字典
+        test_columns = {}
+        for col, typ in results:
+            test_columns[col] = typ
+        self.assertEqual(list(test_columns.keys()), ['ts_code', 'col1', 'col2', 'col3', 'col4'])
+        self.assertEqual(list(test_columns.values()), ['varchar', 'float', 'float', 'int', 'float'])
+
+        self.ds_db.drop_db_table('new_test_table')
+
+    def test_write_and_read_file(self):
+        """ test DataSource method write_file and read_file"""
+        print(f'write and read a MultiIndex dataframe to all types of local sources')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        set_primary_key_index(df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{df}')
+        self.ds_csv.write_file(df, 'test_csv_file')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file'))
+        loaded_df = self.ds_csv.read_file('test_csv_file',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['str', 'TimeStamp'])
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(saved_values, loaded_values))
+        self.assertEqual(list(df.columns), list(loaded_df.columns))
+
+        self.ds_hdf.write_file(df, 'test_hdf_file')
+        self.assertTrue(self.ds_hdf.file_exists('test_hdf_file'))
+        loaded_df = self.ds_hdf.read_file('test_hdf_file',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['str', 'TimeStamp'])
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved hdf file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(saved_values, loaded_values))
+        self.assertEqual(list(df.columns), list(loaded_df.columns))
+
+        self.ds_fth.write_file(df, 'test_fth_file')
+        self.assertTrue(self.ds_fth.file_exists('test_fth_file'))
+        loaded_df = self.ds_fth.read_file('test_fth_file',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['str', 'TimeStamp'])
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved feather file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(saved_values, loaded_values))
+        self.assertEqual(list(df.columns), list(loaded_df.columns))
+
+        # test writing and reading Single Index dataframe to local files
+        print(f'write and read a MultiIndex dataframe to all types of local files')
+        df2 = set_primary_key_frame(self.df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        set_primary_key_index(df2, primary_key=['ts_code'], pk_dtypes=['str'])
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{df2}')
+        self.ds_csv.write_file(df2, 'test_csv_file2')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file2'))
+        loaded_df = self.ds_csv.read_file('test_csv_file2',
+                                          primary_key=['ts_code'],
+                                          pk_dtypes=['str'])
+        saved_index = df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df2.columns), list(loaded_df.columns))
+
+        self.ds_hdf.write_file(df2, 'test_hdf_file2')
+        self.assertTrue(self.ds_hdf.file_exists('test_hdf_file2'))
+        loaded_df = self.ds_hdf.read_file('test_hdf_file2',
+                                          primary_key=['ts_code'],
+                                          pk_dtypes=['str'])
+        saved_index = df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved hdf file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df2.columns), list(loaded_df.columns))
+
+        self.ds_fth.write_file(df2, 'test_fth_file2')
+        self.assertTrue(self.ds_fth.file_exists('test_fth_file2'))
+        loaded_df = self.ds_fth.read_file('test_fth_file2',
+                                          primary_key=['ts_code'],
+                                          pk_dtypes=['str'])
+        saved_index = df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved feather file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df2.columns), list(loaded_df.columns))
+
+    def test_write_and_read_database(self):
+        """ test DataSource method read_database and write_database"""
+        print(f'write and read a MultiIndex dataframe to database')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        print(f'following dataframe with multiple index will be written to local database:\n'
+              f'{df}')
+        con = self.ds_db.con
+        cursor = self.ds_db.cursor
+        TABLE_NAME = 'test_db_table'
+        # 删除数据库中的临时表
+        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        cursor.execute(sql)
+        con.commit()
+        # 为确保update顺利进行，建立新表并设置primary_key
+
+        self.ds_db.write_database(df, TABLE_NAME)
+        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        saved_index = df.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'retrieve whole data table from database\n'
+              f'df retrieved from database is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(self.df.columns), list(loaded_df.columns))
+        # test reading partial of the datatable
+        loaded_df = self.ds_db.read_database(TABLE_NAME,
+                                             share_like_pk='ts_code',
+                                             shares=["000001.SZ", "000003.SZ"],
+                                             date_like_pk='trade_date',
+                                             start='20211112',
+                                             end='20211112')
+        print(f'retrieve partial data table from database with:\n'
+              f'shares = ["000001.SZ", "000003.SZ"]\n'
+              f'start/end = 20211112/20211112\n'
+              f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        saved_index = df.index.values
+        saved_values = np.array(df.values)
+        loaded_values = np.array(loaded_df.values)
+        # 逐一判断读取出来的df的每一行是否正确
+        row, col = saved_values.shape
+        for j in range(col):
+            self.assertEqual(saved_values[0, j], loaded_values[0, j])
+            self.assertEqual(saved_values[2, j], loaded_values[1, j])
+        self.assertEqual(list(self.df.columns), list(loaded_df.columns))
+
+        print(f'write and read a MultiIndex dataframe to database')
+        print(f'following dataframe with multiple index will be written to database:\n'
+              f'{self.df2}')
+        TABLE_NAME = 'test_db_table2'
+        # 删除数据库中的临时表
+        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        cursor.execute(sql)
+        con.commit()
+
+        self.ds_db.write_database(self.df2, TABLE_NAME)
+        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        saved_index = self.df2.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(self.df2.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
+        # test reading partial of the datatable
+        loaded_df = self.ds_db.read_database(TABLE_NAME,
+                                             share_like_pk='ts_code',
+                                             shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
+        print(f'retrieve partial data table from database with:\n'
+              f'shares = ["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"]\n'
+              f'df retrieved from saved csv file is\n'
+              f'{loaded_df}\n')
+        saved_values = np.array(self.df2.values)
+        loaded_values = np.array(loaded_df.values)
+        # 逐一判断读取出来的df的每一行是否正确
+        row, col = saved_values.shape
+        for j in range(col):
+            self.assertEqual(saved_values[0, j], loaded_values[0, j])
+            self.assertEqual(saved_values[2, j], loaded_values[1, j])
+            self.assertEqual(saved_values[3, j], loaded_values[2, j])
+            self.assertEqual(saved_values[4, j], loaded_values[3, j])
+            self.assertEqual(saved_values[8, j], loaded_values[4, j])
+        self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
+
+    def test_update_database(self):
+        """ test the function update_database()"""
+        print(f'update a database table with new data on same primary key')
+        df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
+        df_add = set_primary_key_frame(self.df_add, primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['str', 'TimeStamp'])
+        df_res = set_primary_key_frame(self.df_res, primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['str', 'TimeStamp'])
+        print(f'following dataframe with be written to an empty database table:\n'
+              f'{df}\n'
+              f'and following dataframe will be used to updated that database table\n'
+              f'{df_add}')
+        table_name = 'test_db_table'
+        # 删除数据库中的临时表
+        self.ds_db.drop_table_data(table_name)
+        # 为确保update顺利进行，建立新表并设置primary_key
+        self.ds_db.new_db_table(table_name,
+                                columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close'],
+                                dtypes=['varchar(9)', 'date', 'float', 'float', 'float', 'float'],
+                                primary_key=['ts_code', 'trade_date'])
+        self.ds_db.write_database(df, table_name)
+        self.ds_db.update_database(df_add, table_name, ['ts_code', 'trade_date'])
+        loaded_df = self.ds_db.read_database(table_name)
+        saved_index = df_res.index.values
+        loaded_index = loaded_df.index.values
+        saved_values = np.array(df_res.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'retrieve whole data table from database\n'
+              f'df retrieved from database is\n'
+              f'{loaded_df}\n')
+        for i in range(len(saved_index)):
+            self.assertEqual(saved_index[i], loaded_index[i])
+        rows, cols = saved_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                if pd.isna(saved_values[i, j]):
+                    self.assertTrue(pd.isna(loaded_values[i, j]))
+                else:
+                    self.assertEqual(saved_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(self.df.columns), list(loaded_df.columns))
+
+    # noinspection PyPep8Naming
+    def test_read_write_update_table_data(self):
+        """ test DataSource method read_table_data() and write_table_data()
+            will test both built-in tables and user-defined tables
+        """
+        # 测试前删除已经存在的数据表
+        test_table = 'stock_daily'
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+        for data_source in all_data_sources:
+            data_source.drop_table_data(test_table)
+        # 测试写入标准表数据
+        for data_source in all_data_sources:
+            data_source.write_table_data(self.built_in_df, test_table)
+
+        # 测试完整读出标准表数据
+        for data_source in all_data_sources:
+            df = data_source.read_table_data(test_table)
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            ts_codes = ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                        '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                        '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ']
+            trade_dates = pd.to_datetime(
+                    ['20211112', '20211112', '20211112', '20211112', '20211112',
+                     '20211113', '20211113', '20211113', '20211113', '20211113',
+                     '20211114', '20211114', '20211114', '20211114', '20211114']
+            )
+            cols = ['open', 'high', 'low', 'close', 'pre_close', 'change', 'pct_chg', 'vol', 'amount']
+            for tc, td in zip(ts_codes, trade_dates):
+                df_val = df.loc[(tc, td)].values
+                tdf = self.built_in_df
+                t_val = tdf.loc[(tdf.ts_code == tc) & (tdf.trade_date == td)][cols].values
+                print(f'on row: {tc}, {td}\n'
+                      f'data read from local source: {df_val}\n'
+                      f'data from origin dataframe : {t_val}')
+                self.assertTrue(np.allclose(df_val, t_val))
+
+        # 测试读出并筛选部分标准表数据
+        for data_source in all_data_sources:
+            df = data_source.read_table_data(test_table,
+                                             shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
+                                             start='20211113',
+                                             end='20211116')
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+
+        # 测试update table数据到本地文件或数据，合并类型为"ignore"
+        for data_source in all_data_sources:
+            df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
+            data_source.update_table_data(test_table, df, 'ignore')
+            df = data_source.read_table_data(test_table)
+            print(f'df read from data source after updating with merge type IGNORE:\n'
+                  f'{data_source.source_type}-{data_source.connection_type}\n{df}')
+
+        # 测试update table数据到本地文件或数据，合并类型为"update"
+        # 测试前删除已经存在的（真实）数据表
+        test_table = 'stock_daily'
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+        for data_source in all_data_sources:
+            data_source.drop_table_data(test_table)
+        # 测试写入标准表数据
+        for data_source in all_data_sources:
+            data_source.write_table_data(self.built_in_df, test_table)
+        # 测试写入新增数据并设置合并类型为"update"
+        for data_source in all_data_sources:
+            df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
+            data_source.update_table_data(test_table, df, 'update')
+            df = data_source.read_table_data(test_table)
+            print(f'df read from data source after updating with merge type UPDATE:\n'
+                  f'{data_source.source_type}-{data_source.connection_type}\n{df}')
+
+        # 测试读出并筛选部分标准表数据
+        for data_source in all_data_sources:
+            df = data_source.read_table_data(test_table,
+                                             shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
+                                             start='20211113',
+                                             end='20211116')
+            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+
+    def test_download_update_table_data(self):
+        """ test downloading data from tushare"""
+        tables_to_test = {'stock_daily':        {'share': None,
+                                                 'trade_date': '20211112'},
+                          'stock_weekly':       {'share': None,
+                                                 'trade_date': '20211008'},
+                          'stock_indicator':    {'shares': None,
+                                                 'trade_date': '20211112'},
+                          'trade_calendar':     {'exchange': 'SSE',
+                                                 'start': '19910701',
+                                                 'end': '19920701'}
+                          }
+        tables_to_add = {'stock_daily':        {'share': None,
+                                                'trade_date': '20211115'},
+                         'stock_weekly':       {'share': None,
+                                                'trade_date': '20211015'},
+                         'stock_indicator':    {'shares': None,
+                                                'trade_date': '20211115'},
+                         'trade_calendar':     {'exchange': 'SZSE',
+                                                'start': '19910701',
+                                                'end': '19920701'}
+                         }
+        all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
+
+        for table in tables_to_test:
+            # 删除已有的表
+            for ds in all_data_sources:
+                ds.drop_table_data(table)
+            # 下载并写入数据到表中
+            print(f'downloading table data ({table}) with parameter: \n'
+                  f'{tables_to_test[table]}')
+            df = self.ds_csv.acquire_table_data(table, 'tushare', **tables_to_test[table])
+            print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
+            for ds in all_data_sources:
+                print(f'updating IGNORE table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
+                ds.update_table_data(table, df, 'ignore')
+                print(f'-- Done! --')
+
+            for ds in all_data_sources:
+                print(f'reading table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
+                if table != 'trade_calendar':
+                    df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000007.SZ', '600067.SH'])
+                else:
+                    df = ds.read_table_data(table, start='20200101', end='20200301')
+                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
+
+            # 下载数据并添加到表中
+            print(f'downloading table data ({table}) with parameter: \n'
+                  f'{tables_to_add[table]}')
+            df = self.ds_hdf.acquire_table_data(table, 'tushare', **tables_to_add[table])
+            print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
+            for ds in all_data_sources:
+                print(f'updating UPDATE table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
+                ds.update_table_data(table, df, 'update')
+                print(f'-- Done! --')
+
+            for ds in all_data_sources:
+                print(f'reading table data ({table}) from tushare for '
+                      f'datasource: {ds.source_type}-{ds.connection_type}')
+                if table != 'trade_calendar':
+                    df = ds.read_table_data(table, shares=['000004.SZ', '000005.SZ', '000006.SZ'])
+                else:
+                    df = ds.read_table_data(table, start='20200101', end='20200201')
+                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
+
+            # 删除所有的表
+            for ds in all_data_sources:
+                ds.drop_table_data(table)
+
+    def test_get_history_panel_data(self):
+        """ test getting data, from real database """
+        ds = DataSource(source_type='db',
+                        host='192.168.2.9',
+                        port=3306,
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
+        htypes = 'pe, close, open, swing, strength'
+        start = '20210101'
+        end = '20210301'
+        asset_type = 'E, IDX, FD'
+        freq = 'd'
+        adj = 'back'
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=htypes,
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq=freq,
+                                       adj=adj)
+        print(f'got history panel with backward price recover:\n{hp}')
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=htypes,
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq=freq,
+                                       adj='forward')
+        print(f'got history panel with forward price recover:\n{hp}')
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=htypes,
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq=freq,
+                                       adj='forward')
+        print(f'got history panel with price:\n{hp}')
+        hp = ds.get_history_dataframes(shares=shares,
+                                       htypes=['open', 'high', 'low', 'close', 'vol'],
+                                       start=start,
+                                       end=end,
+                                       asset_type=asset_type,
+                                       freq='w',
+                                       adj='forward')
+        print(f'got history panel with price:\n{hp}')
 
 
 def test_suite(*args):

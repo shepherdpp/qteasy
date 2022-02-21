@@ -1,12 +1,11 @@
 # coding=utf-8
-# core.py
-
 # ======================================
-# This file contains core functions and
-# core Classes. Such as looping and
-# optimizations, Configs and Spaces, etc.
-# 2021 Chinese New Year update ^_^
-# Happy New Year and prosperous in 2021!!
+# File:     core.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-16
+# Desc:
+#   Core functions and Classes of qteasy.
 # ======================================
 
 # here's some test codes
@@ -22,17 +21,17 @@ from warnings import warn
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
+import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
-from .utilfuncs import is_market_trade_day, next_market_trade_day, prev_market_trade_day, weekday_name
+from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
     _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
-from ._arg_validators import _validate_key_and_value, _update_config_kwargs
-from .tsfuncs import stock_basic
+from ._arg_validators import _update_config_kwargs
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
@@ -222,12 +221,12 @@ def _loop_step(signal_type: int,
         # 当持有份额大于零时，平多仓：卖出数量 =交易信号 * 持仓份额，此时持仓份额需大于零
         amounts_to_sell = np.where((op < 0) & (own_amounts > 0), op * own_amounts, 0)
         # 当持有份额不小于0时，开多仓：买入金额 =交易信号 * 当前总资产，此时不能持有空头头寸
-        cash_to_spend = np.where((op < 0) & (own_amounts >= 0), op * total_value, 0)
+        cash_to_spend = np.where((op > 0) & (own_amounts >= 0), op * total_value, 0)
 
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 =交易信号 * 当前总资产
-            cash_to_spend += np.where((op > 0) & (own_amounts == 0), op * total_value, 0)
+            cash_to_spend += np.where((op < 0) & (own_amounts == 0), op * total_value, 0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op * own_amounts, 0)
 
@@ -705,8 +704,10 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
 
-    FIELDS = 'ts_code,symbol,name,area,industry,market,list_date,exchange'
-    share_basics = stock_basic(fields=FIELDS)
+    ds = qteasy.QT_DATA_SOURCE
+    # ts_code是dataframe的index
+    share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
+                                                      'market', 'list_date', 'exchange']]
     if share_basics is None or share_basics.empty:
         return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
@@ -714,14 +715,15 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
 
     for column, targets in zip(kwargs.keys(), kwargs.values()):
         if column == 'index':
-            pass
+            # 暂时不支持通过指数筛选股票
+            raise NotImplementedError
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
 
-    return list(share_basics['ts_code'].values)
+    return list(share_basics.index.values)
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
@@ -878,7 +880,7 @@ def check_and_prepare_hist_data(operator, config):
         if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日且22:00以后
             invest_end = regulate_date_format(current_date)
         else:  # 非交易日，或交易日21:00以前，查询到前一个交易日
-            invest_end = regulate_date_format(prev_market_trade_day(current_date))
+            invest_end = regulate_date_format(nearest_market_trade_day(current_date))
     else:
         invest_end = config.invest_end
     # 设置优化区间和测试区间的结束日期
@@ -894,12 +896,7 @@ def check_and_prepare_hist_data(operator, config):
             htypes=operator.op_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
-            adj='hfq',
-            chanel=config.hist_data_channel,
-            parallel=config.hist_dnld_parallel,
-            delay=config.hist_dnld_delay,
-            delay_every=config.hist_dnld_delay_evy,
-            progress=config.hist_dnld_prog_bar) if run_mode <= 1 else HistoryPanel()
+            adj='back') if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     # TODO: 此处应该根据回测价格顺序模式调整bt_price_types的价格
     bt_price_types = operator.bt_price_types
@@ -915,12 +912,7 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  adj='hfq',
-                                  chanel=config.hist_data_channel,
-                                  parallel=config.hist_dnld_parallel,
-                                  delay=config.hist_dnld_delay,
-                                  delay_every=config.hist_dnld_delay_evy,
-                                  progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
+                                  adj='back') if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
     hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) -
                                                              pd.Timedelta(int(window_length * 1.6), 'd')),
@@ -929,12 +921,7 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  adj='hfq',
-                                  chanel=config.hist_data_channel,
-                                  parallel=config.hist_dnld_parallel,
-                                  delay=config.hist_dnld_delay,
-                                  delay_every=config.hist_dnld_delay_evy,
-                                  progress=config.hist_dnld_prog_bar) if run_mode == 2 else HistoryPanel()
+                                  adj='back') if run_mode == 2 else HistoryPanel()
 
     hist_test_loop = hist_test.slice(htypes=bt_price_types)
     hist_test_loop.fillinf(0)
@@ -951,12 +938,7 @@ def check_and_prepare_hist_data(operator, config):
                                         htypes=config.ref_asset_dtype,
                                         freq=operator.op_data_freq,
                                         asset_type=config.ref_asset_type,
-                                        adj='hfq',
-                                        chanel=config.hist_data_channel,
-                                        parallel=config.hist_dnld_parallel,
-                                        delay=config.hist_dnld_delay,
-                                        delay_every=config.hist_dnld_delay_evy,
-                                        progress=config.hist_dnld_prog_bar)
+                                        adj='back')
                       ).to_dataframe(htype='close')
 
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \

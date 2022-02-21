@@ -1,12 +1,14 @@
 # coding=utf-8
-# operator.py
+# ======================================
+# File:     operator.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-02-21
+# Desc:
+#   Operator Class definition.
+# ======================================
 
-# ======================================
-# This file contains Operator class, that
-# merges and applies investment strategies
-# to generate operation signals with
-# given history data.
-# ======================================
+
 import warnings
 
 import numpy as np
@@ -1045,7 +1047,7 @@ class Operator:
         invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
             np_dates_in_hist = np.array(invest_dates_in_hist)
-            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist == False)[0])]
+            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist is False)[0])]
             raise ValueError(f'Cash investment should be on trading days, '
                              f'following dates are not valid!\n{where_not_in}')
         # 确保op的策略都设置了参数

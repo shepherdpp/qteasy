@@ -1,40 +1,46 @@
 # coding=utf-8
-# tsfuncs.py
-
 # ======================================
-# This file contains wrapper functions
-# based on tushare, that allows
-# downloading financial data from website.
+# File:     tsfuncs.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-07-30
+# Desc:
+#   Interfaces to tushare data api.
 # ======================================
 
 import pandas as pd
-import numpy as np
-import time
 import tushare as ts
-from functools import lru_cache
-from .utilfuncs import regulate_date_format, list_to_str_format, str_to_list, next_market_trade_day
 
-VALID_STOCK_CODE_SUFFIX = ['.SZ', '.SH', '.HK']
+from .utilfuncs import regulate_date_format, list_to_str_format
+from .utilfuncs import retry
 
 
-# TODO: Usability improvements:
-# TODO: 1: 增加可供qt调用的高级函数，用于以下场景
-# TODO:     1   - 根据基本条件获取个股清单，如行业、规模、地域、交易所等
-# TODO:     2   - 。
+# tsfuncs interface function
+# call this function to extract data for tables defined in DataSource module
+# interface function should be defined in all data provider modules
+def acquire_data(table, **kwargs):
+    """ DataSource模块的接口函数，根据根据table的内容调用相应的tushare API下载数据，并以DataFrame的形式返回数据"""
+    # function map 定义了table与tushare函数之间的对应关系，以便调用正确的函数下载数据
+    from .database import TABLE_SOURCE_MAPPING, TABLE_SOURCE_MAPPING_COLUMNS
+    assert isinstance(table, str), TypeError(f'A string should be given as table name, got {type(table)} instead')
+    assert table in TABLE_SOURCE_MAPPING.keys(), ValueError(f'Invalid table name, {table} is not a valid table name')
+
+    func_name = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('tushare')]
+    func = globals()[func_name]
+    res = func(**kwargs)
+    return res
+
+
+# Tushare functions:
 # Basic Market Data
 # ==================
 
-@lru_cache(maxsize=16)
-def stock_basic(is_hs: str = None,
-                list_status: str = None,
-                exchange: str = None,
-                fields: str = None):
+
+@retry(Exception)
+def stock_basic(exchange: str = None):
     """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
 
-    :param is_hs: optinal, 是否沪深港通标的，N否 H沪股通 S深股通
-    :param list_status: optional, 上市状态： L上市 D退市 P暂停上市
     :param exchange: optional, 交易所 SSE上交所 SZSE深交所 HKEX港交所(未上线)
-    :param fields: 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
     :return: pd.DataFrame:
         column      type    description
         ts_code,    str,    TS代码
@@ -52,26 +58,20 @@ def stock_basic(is_hs: str = None,
         delist_date,str,    退市日期
         is_hs,      str,    是否沪深港通标的，N否 H沪股通 S深股通
     """
-    if is_hs is None:
-        is_hs = ''
-    if list_status is None:
-        list_status = 'L'
+    is_hs = ''
+    list_status = 'L'
     if exchange is None:
         exchange = ''
-    if fields is None:
-        fields = 'ts_code,symbol,name,area,industry,list_date'
+    fields = 'ts_code,symbol,name,area,industry,fullname, enname, cnspell, market, exchange, curr_type, list_status, ' \
+             'list_date, delist_date, is_hs'
     pro = ts.pro_api()
-    try:
-        return pro.stock_basic(exchange=exchange,
-                               list_status=list_status,
-                               is_hs=is_hs,
-                               fields=fields)
-    except:
-        print(f'ERROR OCCURRED during acquiring basic share info, empty dataframe is created!')
-        return pd.DataFrame()
+    return pro.stock_basic(exchange=exchange,
+                           list_status=list_status,
+                           is_hs=is_hs,
+                           fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
                    end: str = None,
@@ -102,14 +102,12 @@ def trade_calendar(exchange: str = 'SSE',
         return list(pd.to_datetime(trade_cal.cal_date))
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def name_change(shares: str = None,
                 start: str = None,
-                end: str = None,
-                fields: str = None):
+                end: str = None):
     """ 历史名称变更记录
 
-    :param fields:
     :param shares:
     :param start:
     :param end:
@@ -134,8 +132,7 @@ def name_change(shares: str = None,
         4       600848.SH   ST自仪     20010508    20061008         ST
         5       600848.SH   自仪股份  19940324      20010507         其他
     """
-    if fields is None:
-        fields = 'ts_code,name,start_date,end_date,change_reason'
+    fields = 'ts_code,start_date,name,end_date,ann_date,change_reason'
     pro = ts.pro_api()
     return pro.namechange(ts_code=shares,
                           start_date=start,
@@ -143,7 +140,7 @@ def name_change(shares: str = None,
                           fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception, mute=True)
 def new_share(start: str = None,
               end: str = None) -> pd.DataFrame:
     """
@@ -202,7 +199,7 @@ def new_share(start: str = None,
     return pro.new_share(start_date=start, end_date=end)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def stock_company(shares: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:
@@ -249,143 +246,248 @@ def stock_company(shares: str = None,
     if fields is None:
         fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
     pro = ts.pro_api()
-    return pro.stock_comapany(ts_code=shares, exchange=exchange, fields=fields)
+    return pro.stock_company(ts_code=shares, exchange=exchange, fields=fields)
 
 
 # Bar price data
 # ==================
-@lru_cache(maxsize=16)
-def get_bar(shares: object,
-            start: object,
-            end: object,
-            asset_type: object = 'E',
-            adj: object = 'hfq',
-            freq: object = 'D',
-            ma: object = None) -> pd.DataFrame:
-    """ 获取指数或股票的复权历史价格
+@retry(Exception, mute=True)
+def daily_basic(shares: object = None,
+                trade_date: object = None,
+                start: object = None,
+                end: object = None) -> pd.DataFrame:
+    """ tushare function wrapper: """
+    pro = ts.pro_api()
+    return pro.daily_basic(ts_code=shares,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
 
-    input:
-    :param shares: str, 证券代码
-    :param start: str, 开始日期 (格式：YYYYMMDD)
-    :param end: str, 结束日期 (格式：YYYYMMDD)
-    :param asset_type: str, 资产类别：E股票 I沪深指数 C数字货币 F期货 FD基金 O期权，默认E
-    :param adj: str, 复权类型(只针对股票)：None未复权 qfq前复权 hfq后复权 , 默认None
-    :param freq: str, 数据频度 ：1MIN表示1分钟（1/5/15/30/60分钟） D日线 ，默认D
-    :param ma: str, 均线，支持任意周期的均价和均量，输入任意合理int数值
-    return: pd.DataFrame
-    column          type    description
-    ts_code         str     证券代码
-    trade_date      str     交易日期，格式YYYYMMDD
-    open            float   开盘价
-    high            float   最高价
-    low             float   最低价
-    close           float   收盘价
-    pre_close       float   前一收盘价
-    change          float   收盘价涨跌
-    pct_chg         float   收盘价涨跌百分比
-    vol             float   交易量
-    amount          float   交易额
-    example:
-    获取日k线数据，前复权：
-    get_bar(share='000001.SZ', adj='qfq', start_date='20180101', end_date='20181011')
-    获取周K线数据，后复权：
-    get_bar(share='000001.SZ', freq='W', adj='hfq', start_date='20180101', end_date='20181011')
-    output:
-    前复权日K线数据
-           ts_code trade_date     open     high      low    close  pre_close  change  pct_chg         vol       amount
-    0    000001.SZ   20181011  10.0500  10.1600   9.7000   9.8600    10.4500 -0.5900  -5.6459  1995143.83  1994186.611
-    1    000001.SZ   20181010  10.5400  10.6600  10.3800  10.4500    10.5600 -0.1100  -1.0417   995200.08  1045666.180
-    2    000001.SZ   20181009  10.4600  10.7000  10.3900  10.5600    10.4500  0.1100   1.0526  1064084.26  1117946.550
-    3    000001.SZ   20181008  10.7000  10.7900  10.4500  10.4500    11.0500 -0.6000  -5.4299  1686358.52  1793455.283
-    4    000001.SZ   20180928  10.7800  11.2700  10.7800  11.0500    10.7400  0.3100   2.8864  2110242.67  2331358.288
+
+@retry(Exception, mute=True)
+def daily_basic2(shares: object = None,
+                 trade_date: object = None,
+                 start: object = None,
+                 end: object = None) -> pd.DataFrame:
+    """ tushare function wrapper: """
+    pro = ts.pro_api()
+    return pro.bak_daily(ts_code=shares,
+                         trade_date=trade_date,
+                         start_date=start,
+                         end_date=end)
+
+
+@retry(Exception, mute=True)
+def index_daily_basic(shares: object = None,
+                      trade_date: object = None,
+                      start: object = None,
+                      end: object = None) -> pd.DataFrame:
+    """ tushare function wrapper: """
+    pro = ts.pro_api()
+    return pro.index_dailybasic(ts_code=shares,
+                                trade_date=trade_date,
+                                start_date=start,
+                                end_date=end)
+
+
+@retry(Exception, mute=True)
+def mins(share: object = None,
+         start=None,
+         end=None,
+         freq=None):
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，所以必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.stk_mins(ts_code=share, start_date=start, end_date=end, freq=freq)
+
+
+@retry(Exception, mute=True)
+def daily(share=None,
+          trade_date=None,
+          start=None,
+          end=None):
     """
-    if isinstance(shares, list):
-        shares = list_to_str_format(shares)
-    # 尽管get_bar函数支持多个shares的数据批量下载，但是批量下载存在诸多问题，因此不支持同时下载多个股票的数据
-    assert isinstance(shares, str)
-    assert len(str_to_list(shares)) == 1, \
-        f'Should download data for one and only one share at a time, got {len(str_to_list(shares))} shares'
-    # TODO: 单个股票的数据量太大时，需要分批下载，当单个股票的需求数据量超过十年时，将数据切成十年长的数个分段，分别下载
-    start_date = next_market_trade_day(start)
-    end_date = pd.to_datetime(end)
-    history_date_list = [start_date]
-    ten_year_after_start = start_date + pd.Timedelta(3650, 'd')
-    while ten_year_after_start < end_date:
-        history_date_list.append(ten_year_after_start)
-        ten_year_after_start = ten_year_after_start + pd.Timedelta(3650, 'd')
-    history_date_list.append(end_date)
-    res_dfs = []
-    left_retry = 5
-    while left_retry > 0:
-        try:
-            df = ts.pro_bar(ts_code=shares,
-                            start_date=start,
-                            end_date=end,
-                            asset=asset_type,
-                            adj=adj,
-                            freq=freq,
-                            ma=ma)
-        except:
-            print(f'ERROR OCCURS during downloading price/volume data for {shares}, None is created!')
-            df = None
 
-        if df is None and (adj is not None):
-            # 因为读取出错导致未取到数据，添加一个空的数据框占位，不改变参数重复读取直至读取到数据为止
-            # 当adj不为None时，pro_bar即使运行正确，也不会输出空DF，而是生成None，因此这种情况不属于出错情况，需要排除
-            df = pd.DataFrame(columns=['ts_code', 'trade_date', 'open', 'high', 'low', 'close',
-                                       'pre_close', 'change', 'pct_chg', 'vol', 'amount'])
-            res_dfs.append(df)
-            left_retry -= 1
-            continue
-
-        if not df.empty:
-            # 读取到了数据，且读取数据时未出错，确认数据是否完整
-            # TODO: 此处需确认，仅通过close是否nan判断数据是否存在，可能存在漏洞，需要判断一行中任意数据是否存在nan值
-            df_without_nan = df.loc[~np.isnan(df.close)]
-            # 从已经获取的数据中，找到最早的一个时间点，计算它的前一天，这一天会成为下一次下载的时间终点
-            acquired_start_date = pd.to_datetime(df_without_nan.trade_date.min()) - pd.Timedelta(1, 'd')
-            res_dfs.append(df_without_nan)
-            # 判断数据是否完整读取
-            if len(df) == 5000 or acquired_start_date >= start_date:
-                # 本次读取的数据不完整，还有剩余的数据未读取
-                # 下一次读取数据起点不变，终点变为前一次的起点的前一天
-                end = regulate_date_format(acquired_start_date)
-            else:
-                # 数据已经读取完整
-                break
-
-        else:  # df.empty
-            # 如果数据读取未出错，但读取的是空数据框，说明已经没有其他数据，则结束读取
-            res_dfs.append(df)
-            break
-
-    # 所有的数据读取到后，完成数据连接
-    res = pd.concat(res_dfs, axis=0)
-
-    return res
-
-
-@lru_cache(maxsize=16)
-def get_index(index: str,
-              start: str,
-              end: str,
-              freq: str = 'D',
-              ma: list = None) -> object:
-    """ 获取指数的历史价格数据的快捷通道，实际上调用get_bar实现
-
-    :param index:
+    :param share:
+    :param trade_date:
     :param start:
     :param end:
-    :param freq:
-    :param ma:
     :return:
     """
-    return get_bar(shares=index, start=start, end=end, asset_type='I', adj='None', freq=freq, ma=ma)
+    pro = ts.pro_api()
+    return pro.daily(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def weekly(share=None,
+           trade_date=None,
+           start=None,
+           end=None):
+    """
+
+    :param share:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.weekly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def monthly(share=None,
+            trade_date=None,
+            start=None,
+            end=None):
+    """
+
+    :param share:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.monthly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def index_daily(index=None,
+                trade_date=None,
+                start=None,
+                end=None):
+    """
+
+    :param index:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.index_daily(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def index_weekly(index=None,
+                 trade_date=None,
+                 start=None,
+                 end=None):
+    """
+
+    :param index:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.index_weekly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def index_monthly(index=None,
+                  trade_date=None,
+                  start=None,
+                  end=None):
+    """
+
+    :param index:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.index_monthly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def fund_daily(fund=None,
+               trade_date=None,
+               start=None,
+               end=None):
+    """
+
+    :param fund:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_daily(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def adj_factors(shares=None,
+                trade_date=None,
+                start=None,
+                end=None):
+    """
+
+    :param shares:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.adj_factor(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def fund_adj(shares=None,
+             trade_date=None,
+             start=None,
+             end=None):
+    """
+
+    :param shares:
+    :param trade_date:
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_adj(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def fund_share(fund=None,
+               trade_date=None,
+               start=None,
+               end=None):
+    """
+
+    :param fund: 基金代码，支持多只基金同时提取，用逗号分隔
+    :param trade_date:  交易变动日期，格式YYYYMMDD
+    :param start:
+    :param end:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_share(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
+
+
+@retry(Exception, mute=True)
+def fund_manager(fund=None,
+                 ann_date=None,
+                 offset=None):
+    """
+
+    :param fund: 基金代码，支持多只基金同时提取，用逗号分隔
+    :param ann_date:  公告日期，格式YYYYMMDD
+    :param offset:
+    :return:
+    """
+    pro = ts.pro_api()
+    return pro.fund_manager(ts_code=fund, ann_date=ann_date, offset=offset)
 
 
 # Finance Data
 # ================
-@lru_cache(maxsize=16)
+@retry(Exception)
 def income(share: str,
            rpt_date: str = None,
            start: str = None,
@@ -489,39 +591,43 @@ def income(share: str,
                end='20180730',
                fields='ts_code,ann_date,f_ann_date,report_type,comp_type,basic_eps,diluted_eps')
     """
-    BASIC_FIELDS = 'ts_code,ann_date,report_type,comp_type,basic_eps,diluted_eps'
-    assert isinstance(share, str), f'share code should be a string, got {type(share)} instead!'
-    assert len(share) == 9 and (share[6:] in VALID_STOCK_CODE_SUFFIX), \
-        f'share code \'{share}\' not valid, please check your input'
     if fields is None:
-        fields = BASIC_FIELDS
+        fields = 'ts_code, ann_date, f_ann_date, end_date, report_type, comp_type, end_type, basic_eps, diluted_eps, ' \
+                 'total_revenue, revenue, int_income, prem_earned, comm_income, n_commis_income, n_oth_income, ' \
+                 'n_oth_b_income, prem_income, out_prem, une_prem_reser, reins_income, n_sec_tb_income, ' \
+                 'n_sec_uw_income, n_asset_mg_income, oth_b_income, fv_value_chg_gain, invest_income, ' \
+                 'ass_invest_income, forex_gain, total_cogs, oper_cost, int_exp, comm_exp, biz_tax_surchg, sell_exp, ' \
+                 'admin_exp, fin_exp, assets_impair_loss, prem_refund, compens_payout, reser_insur_liab, div_payt, ' \
+                 'reins_exp, oper_exp, compens_payout_refu, insur_reser_refu, reins_cost_refund, other_bus_cost, ' \
+                 'operate_profit, non_oper_income, non_oper_exp, nca_disploss, total_profit, income_tax, n_income, ' \
+                 'n_income_attr_p, minority_gain, oth_compr_income, t_compr_income, compr_inc_attr_p, ' \
+                 'compr_inc_attr_m_s, ebit, ebitda, insurance_exp, undist_profit, distable_profit, rd_exp, ' \
+                 'fin_exp_int_exp, fin_exp_int_inc, transfer_surplus_rese, transfer_housing_imprest, transfer_oth,' \
+                 'adj_lossgain, withdra_legal_surplus, withdra_legal_pubfund, withdra_biz_devfund, withdra_rese_fund,' \
+                 'withdra_oth_ersu, workers_welfare, distr_profit_shrhder, prfshare_payable_dvd, ' \
+                 'comshare_payable_dvd, capit_comstock_div, net_after_nr_lp_correct, credit_impa_loss, ' \
+                 'net_expo_hedging_benefits, oth_impair_loss_assets, total_opcost, amodcost_fin_assets, oth_income, ' \
+                 'asset_disp_income, continued_net_profit, end_net_profit, update_flag'
     if isinstance(share, list):
         share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
-    start = regulate_date_format(start)
-    end = regulate_date_format(end)
-    # print(f'in tushare function income, got args: \nshare: {share}\nstart / end: {start}/{end} \nfields:{fields}')
-    try:
-        res = pro.income(ts_code=share,
-                         ann_date=rpt_date,
-                         start_date=start,
-                         end_date=end,
-                         period=period,
-                         report_type=report_type,
-                         comp_type=comp_type,
-                         fields=fields)
-        if isinstance(res, pd.DataFrame):
-            return res.astype('float')
-        else:
-            return pd.DataFrame()
-    except:
-        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
-        return pd.DataFrame()
+    if start is not None:
+        start = regulate_date_format(start)
+    if end is not None:
+        end = regulate_date_format(end)
+    return pro.income(ts_code=share,
+                      ann_date=rpt_date,
+                      start_date=start,
+                      end_date=end,
+                      period=period,
+                      report_type=report_type,
+                      comp_type=comp_type,
+                      fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def balance(share: str,
             rpt_date: str = None,
             start: str = None,
@@ -701,7 +807,33 @@ def balance(share: str,
                  fields='ts_code,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese')
     """
     if fields is None:
-        fields = 'share,ann_date,f_ann_date,end_date,report_type,comp_type,cap_rese'
+        fields = 'ts_code, ann_date, f_ann_date, end_date, report_type, comp_type, end_type, total_share, cap_rese, ' \
+                 'undistr_porfit, surplus_rese, special_rese, money_cap, trad_asset, notes_receiv, accounts_receiv, ' \
+                 'oth_receiv, prepayment, div_receiv, int_receiv, inventories, amor_exp, nca_within_1y, sett_rsrv, ' \
+                 'loanto_oth_bank_fi, premium_receiv, reinsur_receiv, reinsur_res_receiv, pur_resale_fa, ' \
+                 'oth_cur_assets, total_cur_assets, fa_avail_for_sale, htm_invest, lt_eqt_invest, ' \
+                 'invest_real_estate, time_deposits, oth_assets, lt_rec, fix_assets, cip, const_materials, ' \
+                 'fixed_assets_disp, produc_bio_assets, oil_and_gas_assets, intan_assets, r_and_d, goodwill, ' \
+                 'lt_amor_exp, defer_tax_assets, decr_in_disbur, oth_nca, total_nca, cash_reser_cb, ' \
+                 'depos_in_oth_bfi, prec_metals, deriv_assets, rr_reins_une_prem, rr_reins_outstd_cla, ' \
+                 'rr_reins_lins_liab, rr_reins_lthins_liab, refund_depos, ph_pledge_loans, refund_cap_depos, ' \
+                 'indep_acct_assets, client_depos, client_prov, transac_seat_fee, invest_as_receiv, total_assets, ' \
+                 'lt_borr, st_borr, cb_borr, depos_ib_deposits, loan_oth_bank, trading_fl, notes_payable, ' \
+                 'acct_payable, adv_receipts, sold_for_repur_fa, comm_payable, payroll_payable, taxes_payable, ' \
+                 'int_payable, div_payable, oth_payable, acc_exp, deferred_inc, st_bonds_payable, ' \
+                 'payable_to_reinsurer, rsrv_insur_cont, acting_trading_sec, acting_uw_sec, non_cur_liab_due_1y, ' \
+                 'oth_cur_liab, total_cur_liab, bond_payable, lt_payable, specific_payables, estimated_liab, ' \
+                 'defer_tax_liab, defer_inc_non_cur_liab, oth_ncl, total_ncl, depos_oth_bfi, deriv_liab, depos, ' \
+                 'agency_bus_liab, oth_liab, prem_receiv_adva, depos_received, ph_invest, reser_une_prem, ' \
+                 'reser_outstd_claims, reser_lins_liab, reser_lthins_liab, indept_acc_liab, pledge_borr, ' \
+                 'indem_payable, policy_div_payable, total_liab, treasury_share, ordin_risk_reser, forex_differ, ' \
+                 'invest_loss_unconf, minority_int, total_hldr_eqy_exc_min_int, total_hldr_eqy_inc_min_int, ' \
+                 'total_liab_hldr_eqy, lt_payroll_payable, oth_comp_income, oth_eqt_tools, oth_eqt_tools_p_shr, ' \
+                 'lending_funds, acc_receivable, st_fin_payable, payables, hfs_assets, hfs_sales, cost_fin_assets, ' \
+                 'fair_value_fin_assets, cip_total, oth_pay_total, long_pay_total, debt_invest, oth_debt_invest, ' \
+                 'oth_eq_invest, oth_illiq_fin_assets, oth_eq_ppbond, receiv_financing, use_right_assets, ' \
+                 'lease_liab, contract_assets, contract_liab, accounts_receiv_bill, accounts_pay, oth_rcv_total, ' \
+                 'fix_assets_total, update_flag'
     if isinstance(share, list):
         share = list_to_str_format(share)
     if isinstance(fields, list):
@@ -709,25 +841,18 @@ def balance(share: str,
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    try:
-        res = pro.balancesheet(ts_code=share,
-                               ann_date=rpt_date,
-                               start_date=start,
-                               end_date=end,
-                               period=period,
-                               report_type=report_type,
-                               comp_type=comp_type,
-                               fields=fields)
-        if isinstance(res, pd.DataFrame):
-            return res.astype('float')
-        else:
-            return pd.DataFrame()
-    except:
-        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
-        return pd.DataFrame()
+    res = pro.balancesheet(ts_code=share,
+                           ann_date=rpt_date,
+                           start_date=start,
+                           end_date=end,
+                           period=period,
+                           report_type=report_type,
+                           comp_type=comp_type,
+                           fields=fields)
+    return res
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def cashflow(share: str,
              rpt_date: str = None,
              start: str = None,
@@ -859,7 +984,27 @@ def cashflow(share: str,
                  fields = 'fa_fnc_leases, end_bal_cash, beg_bal_cash')
     """
     if fields is None:
-        fields = 'share,ann_date,net_profit,finan_exp,end_bal_cash,beg_bal_cash'
+        fields = 'ts_code, ann_date, f_ann_date, end_date, comp_type, report_type, end_type, net_profit, finan_exp, ' \
+                 'c_fr_sale_sg, recp_tax_rends, n_depos_incr_fi, n_incr_loans_cb, n_inc_borr_oth_fi,' \
+                 'prem_fr_orig_contr, n_incr_insured_dep, n_reinsur_prem, n_incr_disp_tfa, ifc_cash_incr,' \
+                 ' n_incr_disp_faas, n_incr_loans_oth_bank, n_cap_incr_repur, c_fr_oth_operate_a, c_inf_fr_operate_a,' \
+                 ' c_paid_goods_s, c_paid_to_for_empl, c_paid_for_taxes, n_incr_clt_loan_adv, n_incr_dep_cbob,' \
+                 ' c_pay_claims_orig_inco, pay_handling_chrg, pay_comm_insur_plcy, oth_cash_pay_oper_act,' \
+                 ' st_cash_out_act, n_cashflow_act, oth_recp_ral_inv_act, c_disp_withdrwl_invest,' \
+                 ' c_recp_return_invest, n_recp_disp_fiolta, n_recp_disp_sobu, stot_inflows_inv_act,' \
+                 ' c_pay_acq_const_fiolta, c_paid_invest, n_disp_subs_oth_biz, oth_pay_ral_inv_act,' \
+                 ' n_incr_pledge_loan, stot_out_inv_act, n_cashflow_inv_act, c_recp_borrow, proc_issue_bonds,' \
+                 ' oth_cash_recp_ral_fnc_act, stot_cash_in_fnc_act, free_cashflow, c_prepay_amt_borr,' \
+                 ' c_pay_dist_dpcp_int_exp, incl_dvd_profit_paid_sc_ms, oth_cashpay_ral_fnc_act,' \
+                 ' stot_cashout_fnc_act, n_cash_flows_fnc_act, eff_fx_flu_cash, n_incr_cash_cash_equ,' \
+                 ' c_cash_equ_beg_period, c_cash_equ_end_period, c_recp_cap_contrib, incl_cash_rec_saims,' \
+                 ' uncon_invest_loss, prov_depr_assets, depr_fa_coga_dpba, amort_intang_assets,' \
+                 ' lt_amort_deferred_exp, decr_deferred_exp, incr_acc_exp, loss_disp_fiolta, loss_scr_fa,' \
+                 ' loss_fv_chg, invest_loss, decr_def_inc_tax_assets, incr_def_inc_tax_liab, decr_inventories,' \
+                 ' decr_oper_payable, incr_oper_payable, others, im_net_cashflow_oper_act, conv_debt_into_cap,' \
+                 ' conv_copbonds_due_within_1y, fa_fnc_leases, im_n_incr_cash_equ, net_dism_capital_add,' \
+                 ' net_cash_rece_sec, credit_impa_loss, use_right_asset_dep, oth_loss_asset, end_bal_cash,' \
+                 ' beg_bal_cash, end_bal_cash_equ, beg_bal_cash_equ, update_flag'
     if isinstance(share, list):
         share = list_to_str_format(share)
     if isinstance(fields, list):
@@ -867,25 +1012,18 @@ def cashflow(share: str,
     pro = ts.pro_api()
     start = regulate_date_format(start)
     end = regulate_date_format(end)
-    try:
-        res = pro.cashflow(ts_code=share,
-                           ann_date=rpt_date,
-                           start_date=start,
-                           end_date=end,
-                           period=period,
-                           report_type=report_type,
-                           comp_type=comp_type,
-                           fields=fields)
-        if isinstance(res, pd.DataFrame):
-            return res.astype('float')
-        else:
-            return pd.DataFrame()
-    except:
-        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
-        return pd.DataFrame()
+    res = pro.cashflow(ts_code=share,
+                       ann_date=rpt_date,
+                       start_date=start,
+                       end_date=end,
+                       period=period,
+                       report_type=report_type,
+                       comp_type=comp_type,
+                       fields=fields)
+    return res
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def indicators(share: str,
                rpt_date: str = None,
                start: str = None,
@@ -1080,31 +1218,174 @@ def indicators(share: str,
         4   600000.SH  20181031  1.440    1.44            4.3305      4.3305
     """
     if fields is None:
-        fields = 'ts_code,ann_date,eps,dt_eps,total_revenue_ps,revenue_ps'
+        fields = 'ts_code, ann_date, end_date, eps, dt_eps, total_revenue_ps, revenue_ps, capital_rese_ps,' \
+                 ' surplus_rese_ps, undist_profit_ps, extra_item, profit_dedt, gross_margin, current_ratio,' \
+                 ' quick_ratio, cash_ratio, invturn_days, arturn_days, inv_turn, ar_turn, ca_turn, fa_turn,' \
+                 ' assets_turn, op_income, valuechange_income, interst_income, daa, ebit, ebitda, fcff, fcfe,' \
+                 ' current_exint, noncurrent_exint, interestdebt, netdebt, tangible_asset, working_capital,' \
+                 ' networking_capital, invest_capital, retained_earnings, diluted2_eps, bps, ocfps, retainedps, cfps,' \
+                 ' ebit_ps, fcff_ps, fcfe_ps, netprofit_margin, grossprofit_margin, cogs_of_sales, expense_of_sales,' \
+                 ' profit_to_gr, saleexp_to_gr, adminexp_of_gr, finaexp_of_gr, impai_ttm, gc_of_gr, op_of_gr,' \
+                 ' ebit_of_gr, roe, roe_waa, roe_dt, roa, npta, roic, roe_yearly, roa2_yearly, roe_avg,' \
+                 ' opincome_of_ebt, investincome_of_ebt, n_op_profit_of_ebt, tax_to_ebt, dtprofit_to_profit,' \
+                 ' salescash_to_or, ocf_to_or, ocf_to_opincome, capitalized_to_da, debt_to_assets, assets_to_eqt,' \
+                 ' dp_assets_to_eqt, ca_to_assets, nca_to_assets, tbassets_to_totalassets, int_to_talcap,' \
+                 ' eqt_to_talcapital, currentdebt_to_debt, longdeb_to_debt, ocf_to_shortdebt, debt_to_eqt,' \
+                 ' eqt_to_debt, eqt_to_interestdebt, tangibleasset_to_debt, tangasset_to_intdebt,' \
+                 ' tangibleasset_to_netdebt, ocf_to_debt, ocf_to_interestdebt, ocf_to_netdebt, ebit_to_interest,' \
+                 ' longdebt_to_workingcapital, ebitda_to_debt, turn_days, roa_yearly, roa_dp, fixed_assets,' \
+                 ' profit_prefin_exp, non_op_profit, op_to_ebt, nop_to_ebt, ocf_to_profit, cash_to_liqdebt,' \
+                 ' cash_to_liqdebt_withinterest, op_to_liqdebt, op_to_debt, roic_yearly, total_fa_trun,' \
+                 ' profit_to_op, q_opincome, q_investincome, q_dtprofit, q_eps, q_netprofit_margin,' \
+                 ' q_gsprofit_margin, q_exp_to_sales, q_profit_to_gr, q_saleexp_to_gr, q_adminexp_to_gr,' \
+                 ' q_finaexp_to_gr, q_impair_to_gr_ttm, q_gc_to_gr, q_op_to_gr, q_roe, q_dt_roe, q_npta,' \
+                 ' q_opincome_to_ebt, q_investincome_to_ebt, q_dtprofit_to_profit, q_salescash_to_or, q_ocf_to_sales,' \
+                 ' q_ocf_to_or, basic_eps_yoy, dt_eps_yoy, cfps_yoy, op_yoy, ebt_yoy, netprofit_yoy,' \
+                 ' dt_netprofit_yoy, ocf_yoy, roe_yoy, bps_yoy, assets_yoy, eqt_yoy, tr_yoy, or_yoy, q_gr_yoy,' \
+                 ' q_gr_qoq, q_sales_yoy, q_sales_qoq, q_op_yoy, q_op_qoq, q_profit_yoy, q_profit_qoq,' \
+                 ' q_netprofit_yoy, q_netprofit_qoq, equity_yoy, rd_exp, update_flag'
     if isinstance(share, list):
         share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     pro = ts.pro_api()
+    res = pro.fina_indicator(ts_code=share,
+                             ann_date=rpt_date,
+                             start_date=start,
+                             end_date=end,
+                             period=period,
+                             fields=fields)
+    return res
+
+
+@retry(Exception)
+def forecast(share: str,
+             ann_date: str,
+             start: str,
+             end: str,
+             period: str,
+             type: str):
+    """ 获取上市公司的业绩预报
+
+    :param share:
+    :param ann_date:
+    :param start:
+    :param end:
+    :param period:
+    :param type:
+    :return:
+    DataFrame:
+    column          type    description
+    ts_code		    str	    TS股票代码
+    ann_date	    str	    公告日期
+    end_date	    str	    报告期
+    type		    str	    业绩预告类型(预增/预减/扭亏/首亏/续亏/续盈/略增/略减)
+    p_change_min	float	预告净利润变动幅度下限（%）
+    p_change_max	float	预告净利润变动幅度上限（%）
+    net_profit_min	float	预告净利润下限（万元）
+    net_profit_max	float	预告净利润上限（万元）
+    last_parent_net	float	上年同期归属母公司净利润
+    first_ann_date	str	    首次公告日
+    summary		    str	    业绩预告摘要
+    change_reason	str	    业绩变动原因
+
+    """
+    fields = 'ts_code, ann_date, end_date, type, p_change_min, p_change_max, net_profit_min, net_profit_max,' \
+             ' last_parent_net, first_ann_date, summary, change_reason'
+    pro = ts.pro_api()
     try:
-        res = pro.fina_indicator(ts_code=share,
-                                 ann_date=rpt_date,
-                                 start_date=start,
-                                 end_date=end,
-                                 period=period,
-                                 fields=fields)
-        if isinstance(res, pd.DataFrame):
-            return res.astype('float')
-        else:
-            return pd.DataFrame()
-    except:
-        print(f'ERROR OCCURS during downloading historical data {fields} for {share}, empty dataframe is created!')
-        return pd.DataFrame()
+        return pro.forecast_vip(ts_code=share,
+                                ann_date=ann_date,
+                                start_date=start,
+                                end_date=end,
+                                period=period,
+                                type=type,
+                                fields=fields)
+    except Exception as e:
+        return pro.forecast(ts_code=share,
+                            ann_date=ann_date,
+                            start_date=start,
+                            end_date=end,
+                            period=period,
+                            type=type,
+                            fields=fields)
+
+
+@retry(Exception)
+def express(share: str,
+            ann_date: str,
+            start: str,
+            end: str,
+            period: str):
+    """ 获取上市公司的业绩快报
+
+    :param share:
+    :param ann_date:
+    :param start:
+    :param end:
+    :param period:
+    :return:
+    DataFrame:
+    column              type        description
+    ts_code		        str	        TS股票代码
+    ann_date	        str	        公告日期
+    end_date	        str	        报告期
+    revenue		        float	    营业收入(元)
+    operate_profit	    float	    营业利润(元)
+    total_profit	    float	    利润总额(元)
+    n_income	        float	    净利润(元)
+    total_assets	    float	    总资产(元)
+    total_hldr_eqy_
+    exc_min_int	        float	    股东权益合计(不含少数股东权益)(元)
+    diluted_eps	        float	    每股收益(摊薄)(元)
+    diluted_roe	        float	    净资产收益率(摊薄)(%)
+    yoy_net_profit	    float	    去年同期修正后净利润
+    bps		            float	    每股净资产
+    yoy_sales	        float	    同比增长率:营业收入
+    yoy_op		        float	    同比增长率:营业利润
+    yoy_tp		        float	    同比增长率:利润总额
+    yoy_dedu_np	        float	    同比增长率:归属母公司股东的净利润
+    yoy_eps		        float	    同比增长率:基本每股收益
+    yoy_roe		        float	    同比增减:加权平均净资产收益率
+    growth_assets	    float	    比年初增长率:总资产
+    yoy_equity	        float	    比年初增长率:归属母公司的股东权益
+    growth_bps	        float	    比年初增长率:归属于母公司股东的每股净资产
+    or_last_year	    float	    去年同期营业收入
+    op_last_year	    float	    去年同期营业利润
+    tp_last_year	    float	    去年同期利润总额
+    np_last_year	    float	    去年同期净利润
+    eps_last_year	    float	    去年同期每股收益
+    open_net_assets	    float	    期初净资产
+    open_bps	        float	    期初每股净资产
+    perf_summary	    str	        业绩简要说明
+    is_audit	        int	        是否审计： 1是 0否
+    remark		        str	        备注
+    """
+    fields = 'ts_code, ann_date, end_date, revenue, operate_profit, total_profit, n_income, total_assets, ' \
+             'total_hldr_eqy_exc_min_int, diluted_eps, diluted_roe, yoy_net_profit, bps, yoy_sales, yoy_op,' \
+             ' yoy_tp, yoy_dedu_np, yoy_eps, yoy_roe, growth_assets, yoy_equity, growth_bps, or_last_year,' \
+             ' op_last_year, tp_last_year, np_last_year, eps_last_year, open_net_assets, open_bps, perf_summary,' \
+             ' is_audit, remark'
+    pro = ts.pro_api()
+    try:
+        return pro.express_vip(ts_code=share,
+                               ann_date=ann_date,
+                               start_date=start,
+                               end_date=end,
+                               period=period,
+                               fields=fields)
+    except Exception as e:
+        return pro.express(ts_code=share,
+                           ann_date=ann_date,
+                           start_date=start,
+                           end_date=end,
+                           period=period,
+                           fields=fields)
 
 
 # Market Data
 # =================
-@lru_cache(maxsize=16)
+@retry(Exception)
 def top_list(trade_date: str = None,
              shares: str = None,
              fields: str = None) -> pd.DataFrame:
@@ -1151,15 +1432,15 @@ def top_list(trade_date: str = None,
 
 # Index Data
 # ==================
-@lru_cache(maxsize=16)
-def index_basic(fund: str = None,
+@retry(Exception)
+def index_basic(index: str = None,
                 name: str = None,
                 market: str = None,
                 publisher: str = None,
                 category: str = None) -> pd.DataFrame:
     """ 获取大盘指数的基本信息如名称代码等
 
-    :param fund: 指数代码
+    :param index: 指数代码
     :param name: 指数简称
     :param market: 交易所或服务商(默认SSE)，包括：
                     MSCI:    MSCI指数
@@ -1173,31 +1454,19 @@ def index_basic(fund: str = None,
     :param category: 指数类别
     :return: pd.DataFrame
         column          type    description
-        ts_code		    str	    TS代码
-        name            str     简称
-        management      str     发行方公司
-        custodian       str     托管方
-        fund_type       str     基金类型
-        found_date      str     成立日期
-        due_date        str     退市日期
-        list_date       str     上市日期
-        issue_date      str     发行日期
-        delist_date     str     退市日期
-        issue_amount    str     发行量
-        m_fee           str     管理费
-        c_fee           str     托管费
-        duration_year   str     运行时长
-        p_value         str     发行净值
-        min_amount      str     最小交易量
-        exp_return      str     期望回报
-        benchmark       str     业绩基准
-        status          str     状态
-        invest_type     str     投资类型
-        type            str     类型
-        trustee         str     受托人
-        purc_startdate  str     pure开始日期
-        redm_startdate  str     redm开始日期
-        market          str     市场
+        ts_code	        str	    TS代码
+        name	        str	    简称
+        fullname	    str	    指数全称
+        market	        str	    市场
+        publisher	    str	    发布方
+        index_type	    str	    指数风格
+        category	    str	    指数类别
+        base_date	    str	    基期
+        base_point	    float	基点
+        list_date	    str	    发布日期
+        weight_rule	    str	    加权方式
+        desc	        str	    描述
+        exp_date	    str	    终止日期
     example:
         index_basic(market='SW')
     output:
@@ -1217,15 +1486,18 @@ def index_basic(fund: str = None,
                 17        801023.SI    石油开采Ⅱ       SW申万      二级行业指数  19991230      1000.0
                 18        801024.SI    采掘服务Ⅱ       SW申万      二级行业指数  19991230      1000.0
     """
+    fields = 'ts_code, name, fullname, market, publisher, index_type, category, ' \
+             'base_date, base_point, list_date, weight_rule, desc, exp_date'
     pro = ts.pro_api()
-    return pro.index_basic(ts_code=fund,
+    return pro.index_basic(ts_code=index,
                            name=name,
                            market=market,
                            publisher=publisher,
-                           category=category)
+                           category=category,
+                           fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception, mute=True)
 def index_indicators(trade_date: str = None,
                      index: str = None,
                      start: str = None,
@@ -1279,7 +1551,7 @@ def index_indicators(trade_date: str = None,
                                 fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def composite(index: str = None,
               trade_date: str = None,
               start: str = None,
@@ -1318,7 +1590,7 @@ def composite(index: str = None,
 # Funds Data
 # =============
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def fund_basic(market: str = None,
                status: str = None) -> pd.DataFrame:
     """ 获取基金列表
@@ -1370,29 +1642,25 @@ def fund_basic(market: str = None,
     """
     if market is None:
         market = 'E'
-    if status is None:
-        status = 'L'
     pro = ts.pro_api()
     return pro.fund_basic(market=market,
                           status=status)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def fund_net_value(fund: str = None,
-                   date: str = None,
-                   market: str = None,
-                   fields: str = None) -> pd.DataFrame:
+                   trade_date: str = None,
+                   market: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
     :param fund: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
-    :param date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
+    :param trade_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
     :param market: str, 交易市场类型: E场内 O场外
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
         column          type  default   description
         ts_code		    str	    Y	    TS代码
+        nav_date	    str	    Y	    净值日期
         ann_date	    str	    Y      	公告日期
-        end_date	    str	    Y	    截止日期
         unit_nav	    float	Y	    单位净值
         accum_nav	    float	Y	    累计净值
         accum_div	    float	Y   	累计分红
@@ -1410,27 +1678,22 @@ def fund_net_value(fund: str = None,
         4     165509.SZ  1.835449
         ...         ...       ...
     """
-    if fields is None:
-        fields = 'ts_code, ann_date, end_date, unit_nav, accum_nav, accum_div, net_asset, total_netasset, adj_nav'
     pro = ts.pro_api()
     return pro.fund_nav(ts_code=fund,
-                        end_date=date,
-                        market=market,
-                        fields=fields)
+                        nav_date=trade_date,
+                        market=market)
 
 
 # Futures & Options Data
 # ===============
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def future_basic(exchange: str = None,
-                 future_type: str = None,
-                 fields: str = None) -> pd.DataFrame:
+                 future_type: str = None) -> pd.DataFrame:
     """ 获取期货合约列表数据
 
     :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
     :param future_type: str, 合约类型 (1 普通合约 2主力与连续合约 默认取全部)
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return:
         column          type    default description
         ts_code		    str	    Y	    合约代码
@@ -1450,7 +1713,7 @@ def future_basic(exchange: str = None,
         last_ddate	    str	    Y	    最后交割日
         trade_time_desc	str	    N	    交易时间说明
     example:
-        future_basic(exchange='DCE', fut_type='1', fields='ts_code,symbol,name,list_date,delist_date')
+        future_basic(exchange='DCE', fut_type='1')
     output:
                 ts_code  symbol      name   list_date    delist_date
         0      P0805.DCE   P0805   棕榈油0805  20071029    20080516
@@ -1463,23 +1726,21 @@ def future_basic(exchange: str = None,
     """
     if exchange is None:
         exchange = 'CFFEX'
-    if fields is None:
-        fields = 'ts_code,symbol,name,list_date,delist_date,d_mode_desc'
+    fields = 'ts_code,symbol,name,fut_code,multiplier,trade_unit,per_unit,quote_unit,quote_unit_desc,d_mode_desc,' \
+             'list_date,delist_date,d_month,last_ddate,trade_time_desc'
     pro = ts.pro_api()
     return pro.fut_basic(exchange=exchange,
                          fut_type=future_type,
                          fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception)
 def options_basic(exchange: str = None,
-                  option_type: str = None,
-                  fields: str = None) -> pd.DataFrame:
+                  call_put: str = None) -> pd.DataFrame:
     """ 获取期权合约信息
 
     :param exchange: str, 交易所代码 CFFEX-中金所 DCE-大商所 CZCE-郑商所 SHFE-上期所 INE-上海国际能源交易中心
-    :param option_type: str, 期权类型 (??)
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
+    :param call_put: str, 期权类型
     :return pd.DataFrame
         column          type    default description
         ts_code		    str	    Y   	TS代码
@@ -1511,23 +1772,20 @@ def options_basic(exchange: str = None,
         4    M1707-P-2500.DCE  豆粕期权1707认沽2500            美式  20170410    20170607
         5    M1803-C-2550.DCE  豆粕期权1803认购2550            美式  20170407    20180207
     """
-    if exchange is None:
-        exchange = 'CFFEX'
-    if fields is None:
-        fields = 'ts_code,name,opt_code,opt_type,list_date,list_price,exercise_type,exercise_price'
+    fields = 'ts_code,exchange,name,per_unit,opt_code,opt_type,call_put,exercise_type,exercise_price,s_month,' \
+             'maturity_date,list_price,list_date,delist_date,last_edate,last_ddate,quote_unit,min_price_chg'
     pro = ts.pro_api()
     return pro.opt_basic(exchange=exchange,
-                         call_put=option_type,
+                         call_put=call_put,
                          fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception, mute=True)
 def future_daily(trade_date: str = None,
                  future: str = None,
                  exchange: str = None,
                  start: str = None,
-                 end: str = None,
-                 fields: str = None) -> pd.DataFrame:
+                 end: str = None) -> pd.DataFrame:
     """ 期货日线行情数据
 
     :param trade_date: str, 交易日期
@@ -1535,7 +1793,6 @@ def future_daily(trade_date: str = None,
     :param exchange: str, 交易所代码
     :param start: str, 开始日期
     :param end: str, 结束日期
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
         column      type    default description
         ts_code		str	    Y	    TS合约代码
@@ -1565,10 +1822,10 @@ def future_daily(trade_date: str = None,
         4    CU1811.SHF   20181107    49670.0     49630.0  49640.0   ...   -170.0  26850.0  664040.10  38330.0 -4560.0
         ..          ...        ...        ...         ...      ...   ...      ...      ...        ...      ...     ...
     """
-    if future is None and trade_date is None:
-        raise ValueError(f'one of future and trade_date should be given!')
-    if fields is None:
-        fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,change1,change2,vol,amount,oi,oi_chg'
+    if (future is None) and (trade_date is None):
+        raise ValueError(f'future code and trade date can not be both None, should provide at least one of them!')
+    fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,' \
+             'settle,change1,change2,vol,amount,oi,oi_chg,delv_settle'
     pro = ts.pro_api()
     return pro.fut_daily(trade_date=trade_date,
                          ts_code=future,
@@ -1578,13 +1835,12 @@ def future_daily(trade_date: str = None,
                          fields=fields)
 
 
-@lru_cache(maxsize=16)
+@retry(Exception, tries=10, mute=True)  # 接口有访问次数限制，因此增加delay
 def options_daily(trade_date: str = None,
                   option: str = None,
                   exchange: str = None,
                   start: str = None,
-                  end: str = None,
-                  fields: str = None) -> pd.DataFrame:
+                  end: str = None) -> pd.DataFrame:
     """ 获取期权日线行情
 
     :param trade_date: str, 交易日期
@@ -1592,7 +1848,6 @@ def options_daily(trade_date: str = None,
     :param exchange: str, 交易所代码
     :param start: str, 开始日期
     :param end: str, 结束日期
-    :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
     :return: pd.DataFrame
         column      type    default description
         ts_code		str	    Y   	TS代码
@@ -1629,8 +1884,7 @@ def options_daily(trade_date: str = None,
     """
     if option is None and trade_date is None:
         raise ValueError(f'one of future and trade_date should be given!')
-    if fields is None:
-        fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,settle,vol,amount,oi'
+    fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,settle,vol,amount,oi'
     pro = ts.pro_api()
     return pro.opt_daily(trade_date=trade_date,
                          ts_code=option,

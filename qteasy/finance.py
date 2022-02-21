@@ -1,12 +1,12 @@
 # coding=utf-8
-# finance.py
-
 # ======================================
-# This file contains classes that are
-# related to investment financial figures
-# such as operation cost (Cost class) and
-# investment plans (CashPlan class) as
-# well more related functions.
+# File:     finance.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-30
+# Desc:
+#   Back-test trade cost calculation and
+#   Cash investment simulation functions.
 # ======================================
 
 import numpy as np
@@ -28,7 +28,7 @@ cost_numba_spec = [
 
 # @jitclass(cost_numba_spec)
 class Cost:
-    """ 交易成本类，用于在回测过程中对交易成本进行估算
+    """ 交易成本类，用于在回测过程中估算交易成本
 
     交易成本的估算依赖四种类型的成本：
     1,  fixed_fee：固定费用，在交易过程中产生的固定现金费用，与交易金额和交易量无关，买入与卖出固定费用可以不同

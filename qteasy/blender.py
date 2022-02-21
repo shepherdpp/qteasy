@@ -1,14 +1,12 @@
 # coding=utf-8
-# blender.py
-
 # ======================================
-# This file contains a functions that are
-# used for parsing and evaluating
-# operator signal blending expressions.
-# including expression parsing functions
-# and basic signal operators, the atomic
-# signal operation functions are defined
-# in util functions
+# File:     blender.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2021-08-29
+# Desc:
+#   Strategy blending functions and
+#   blender string parsers.
 # ======================================
 
 import numpy as np

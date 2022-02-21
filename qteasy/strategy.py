@@ -1,11 +1,12 @@
 # coding=utf-8
-# strategy.py
-
 # ======================================
-# This file contains all built-in
-# strategies that inherited from
-# Strategy class and its sub-classes.
-# 2021 Chinese New Year Update - 2
+# File:     strategy.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-27
+# Desc:
+#   Strategy Base Classes and its derived
+#   Classes.
 # ======================================
 
 import numpy as np
@@ -99,16 +100,35 @@ class Strategy:
         self._par_count = par_count  # 策略参数的元素个数
         self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
         # TODO: parameter validation should take place here
-        assert isinstance(par_count, int)
-        assert isinstance(pars, (tuple, list, dict))
+        if not isinstance(par_count, int):
+            raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
+        if pars is not None:
+            assert isinstance(pars, (tuple, list, dict))
 
-        assert par_count == len(par_types)
-        assert par_count == len(par_bounds_or_enums)
+        if par_types is None:
+            par_types = []
+            assert par_count == 0, f'parameter count (par_count) should be 0 when parameter type is None'
+
+        if not isinstance(par_types, (str, list)):
+            raise TypeError(f'parameter types (par_types) should be a string or list of strings, '
+                            f'got {type(par_types)} instead')
+        if isinstance(par_types, str):
+            par_types = str_to_list(par_types)
+
+        if not par_count == len(par_types):
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter types, '
+                           f'which imply {len(par_types)} parameters')
 
         if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
+            assert par_count == 0, f'parameter count (par_count) should be 0 when parameter bounds are None'
             self._par_bounds_or_enums = []
         else:
+            assert isinstance(par_bounds_or_enums, (list, tuple))
             self._par_bounds_or_enums = par_bounds_or_enums
+        if not par_count == len(self._par_bounds_or_enums):
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter bounds or enums, '
+                           f'which imply {len(par_types)} parameters')
+
         # 依赖的历史数据频率
         self._data_freq = data_freq
         # 策略生成采样频率，即策略操作信号的生成频率

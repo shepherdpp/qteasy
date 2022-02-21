@@ -1,10 +1,11 @@
 # coding=utf-8
-# tafuncs.py
-
 # ======================================
-# This file contains wrapper functions
-# that allow TA-lib functions to be
-# used in qtesay
+# File:     tafuncs.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-27
+# Desc:
+#   Interfaces to ta-lib functions.
 # ======================================
 
 from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOINT, MIDPRICE, SAR, SAREXT, \

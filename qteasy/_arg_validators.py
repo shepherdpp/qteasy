@@ -1,10 +1,12 @@
 # coding=utf-8
-# _arg_validators.py
-
 # ======================================
-# This file contains validators and dict
-# constructive codes for run kwargs,
-# and related other functions.
+# File:     _arg_validators.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-10-09
+# Desc:
+#   Global level parameters and settings
+#   of qteasy.
 # ======================================
 
 import pandas as pd
@@ -469,7 +471,6 @@ class ConfigDict(dict):
 
         即：
         config.attr = config['attr']
-
     """
 
     def __init__(self, *args, **kwargs):
@@ -512,15 +513,15 @@ def _valid_qt_kwargs():
                                  'level':     0,
                                  'text':      '可用投资产品池，投资组合基于池中的产品创建'},
 
-        'asset_type':           {'Default':   'I',  #
+        'asset_type':           {'Default':   'IDX',  #
                                  'Validator': lambda value: isinstance(value, str)
                                                             and _validate_asset_type(value),
                                  'level':     0,
                                  'text':      '投资产品的资产类型，包括：\n'
-                                              'I  : 指数\n'
-                                              'E  : 股票\n'
-                                              'F  : 期货\n'
-                                              'FD : 基金\n'},
+                                              'IDX  : 指数\n'
+                                              'E    : 股票\n'
+                                              'FT   : 期货\n'
+                                              'FD   : 基金\n'},
 
         'trade_batch_size':     {'Default':   0.0,
                                  'Validator': lambda value: isinstance(value, (int, float))
@@ -580,12 +581,63 @@ def _valid_qt_kwargs():
                                  'text':      '如果True，策略参数寻优时使用GPU加速计算\n'
                                               '<本功能目前尚未实现! NotImplemented>'},
 
-        'hist_data_channel':    {'Default':   'local',
-                                 'Validator': lambda value: isinstance(value, str) and value in ['local', 'online'],
+        'local_data_source':    {'Default':   'file',
+                                 'Validator': lambda value: isinstance(value, str) and value in ['file',
+                                                                                                 'database',
+                                                                                                 'db'],
                                  'level':     4,
-                                 'text':      '确定如何获取历史数据：\n'
-                                              'local   - 优先从本地读取历史数据，未存储在本地的数据再从网上下载，并确保本地数据更新\n'
-                                              'online  - 从网上下载数据，不更新本地数据'},
+                                 'text':      '确定本地历史数据存储方式：\n'
+                                              'file      - 历史数据以本地文件的形式存储，\n'
+                                              '           文件格式在"local_data_file_type"属性中指定，包括csv/hdf等多种选项\n'
+                                              'database - 历史数据存储在一个mysql数据库中\n'
+                                              '           选择此选项时，需要在配置文件中配置数据库的连接信息\n'
+                                              'db       - 等同于"database"'},
+
+        'local_data_file_type':  {'Default':   'csv',
+                                 'Validator': lambda value: isinstance(value, str) and value in ['csv',
+                                                                                                 'hdf',
+                                                                                                 'feather',
+                                                                                                 'fth'],
+                                 'level':     4,
+                                 'text':      '确定本地历史数据文件的存储格式：\n'
+                                              'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
+                                              'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
+                                              'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
+
+        'local_data_file_path':  {'Default':   'qteasy/data/',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '确定本地历史数据文件存储路径\n'},
+
+        'local_db_host':        {'Default':   'localhost',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '用于存储历史数据的数据库的主机名，该数据库应该为mysql数据库或MariaDB\n'},
+
+        'local_db_port':        {'Default':   3306,
+                                 'Validator': lambda value: isinstance(value, int) and 1024 < value < 49151,
+                                 'level':     4,
+                                 'text':      '用于存储历史数据的数据库的端口号，默认值为mysql数据库的端口号3306\n'},
+
+        'local_db_name':        {'Default':   'qt_db',
+                                 'Validator': lambda value: isinstance(value, str) and
+                                                            (len(value) <= 255) and
+                                                            (all(char not in value for
+                                                                 char in '+-/?<>{}[]()|\\!@#$%^&*=~`')),
+                                 'level':     4,
+                                 'text':      '用于存储历史数据的数据库名，默认值为"qt_db"\n'},
+
+        'local_db_user':        {'Default':   '',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '访问数据库的用户名，该用户需具备足够的操作权限\n'
+                                              '建议通过配置文件配置数据库用户名和密码'},
+
+        'local_db_password':    {'Default':   '',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '数据库的访问密码\n\n'
+                                              '建议通过配置文件配置数据库用户名和密码'},
 
         'print_backtest_log':   {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
@@ -604,14 +656,14 @@ def _valid_qt_kwargs():
                                               '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                                               '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'ref_asset_type':       {'Default':   'I',
+        'ref_asset_type':       {'Default':   'IDX',
                                  'Validator': lambda value: _validate_asset_type(value),
                                  'level':     1,
                                  'text':      '参考价格的资产类型，包括：\n'
-                                              'I  : 指数\n'
-                                              'E  : 股票\n'
-                                              'F  : 期货\n'
-                                              'FD : 基金\n'},
+                                              'IDX  : 指数\n'
+                                              'E    : 股票\n'
+                                              'FT   : 期货\n'
+                                              'FD   : 基金\n'},
 
         'ref_asset_dtype':      {'Default':   'close',
                                  'Validator': lambda value: value in PRICE_TYPE_DATA,
@@ -1239,7 +1291,8 @@ def _validate_asset_type(value):
     :param value:
     :return:
     """
-    return value in ['I', 'E', 'F', 'FD']
+    from .database import AVAILABLE_ASSET_TYPES
+    return value in AVAILABLE_ASSET_TYPES
 
 
 def _is_datelike(value):

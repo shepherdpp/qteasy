@@ -1,11 +1,12 @@
 # coding=utf-8
-# space.py
-
 # ======================================
-# This file contains Space class and
-# ResultPool class. both are critical
-# classes for strategy parameter
-# optimization.
+# File:     space.py
+# Author:   Jackie PENG
+# Contact:  jackie.pengzhao@gmail.com
+# Created:  2020-09-30
+# Desc:
+#   parameter Space Class and ResultPool
+#   Class for strategy optimization.
 # ======================================
 
 import numpy as np
