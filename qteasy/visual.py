@@ -30,6 +30,9 @@ register_matplotlib_converters()
 ValidAddPlots = ['macd',
                  'dma',
                  'trix']
+
+ValidPlotTypes = ['candle', 'renko', 'ohlc']
+
 title_font = {'fontname': 'pingfang HK',
               'size':     '16',
               'color':    'black',
@@ -72,14 +75,19 @@ normal_font = {'fontname': 'Arial',
 
 # 动态交互式蜡烛图类
 class InterCandle:
-    def __init__(self, data, stock_name, style, idx_start=0, idx_range=100):
+    def __init__(self, data, title, plot_type, style, idx_start=0, idx_range=100):
         self.pressed = False
         self.xpress = None
 
         # 初始化交互式K线图对象，历史数据作为唯一的参数用于初始化对象
+        if not isinstance(data, pd.DataFrame):
+            raise TypeError(f'data should be a DataFrame, got {type(data)} instead.')
         self.data = data
+        if plot_type not in ValidPlotTypes:
+            raise KeyError(f'Invalid plot type, plot type shoule be one of {ValidPlotTypes}')
+        self.plot_type = plot_type
         self.style = style
-        self.stock_name = stock_name
+        self.plot_title = title
         # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
         self.idx_start = idx_start
         self.idx_range = idx_range
@@ -100,7 +108,7 @@ class InterCandle:
         self.ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=self.ax1)
         self.ax3.set_ylabel('macd')
         # 初始化figure对象，在figure上预先放置文本并设置格式，文本内容根据需要显示的数据实时更新
-        self.t1 = fig.text(0.50, 0.94, f'{self.stock_name}', **title_font)
+        self.t1 = fig.text(0.50, 0.94, f'{self.plot_title}', **title_font)
         self.t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
         self.t3 = fig.text(0.14, 0.89, f'', **large_red_font)
         self.t4 = fig.text(0.14, 0.86, f'', **small_red_font)
@@ -123,57 +131,11 @@ class InterCandle:
         self.t21 = fig.text(0.85, 0.86, '昨收: ', **normal_label_font)
         self.t22 = fig.text(0.85, 0.86, f'', **normal_font)
 
-        plot_data = self.data
-        data_len = len(plot_data)
-
-        # 绘制图表:
-        # 绘制K线图
-        self.lines, self.polys = candlestick2_ohlc(self.ax1,
-                                                   plot_data.open,
-                                                   plot_data.high,
-                                                   plot_data.low,
-                                                   plot_data.close, width=0.6, colorup='r', colordown='g')
-        # 区分红色和绿色K线，分别绘制红色和绿色的交易量柱子
-        volume_up = np.where(plot_data.open > plot_data.close, plot_data.volume, 0)
-        volume_down = np.where(plot_data.open <= plot_data.close, plot_data.volume, 0)
-        self.vup = self.ax2.bar(np.arange(data_len),
-                                volume_up, width=0.8, color='r')
-        self.vdn = self.ax2.bar(np.arange(data_len),
-                                volume_down, width=0.8, color='g')
-
-        # 生成移动均线，并绘制四条移动均线
-        self.ma1, self.ma2, self.ma3, self.ma4 = self.ax1.plot(np.arange(data_len),
-                                                               plot_data[['MA5', 'MA10', 'MA20', 'MA60']])
-        # 生成布林带线，并绘制三条布林带线，初始状态下，设置布林带线不可见
-        self.bbu, self.bbm, self.bbl = self.ax1.plot(np.arange(data_len),
-                                                     plot_data[['bb-u', 'bb-m', 'bb-l']])
-        self.bbu.set_visible(False)
-        self.bbm.set_visible(False)
-        self.bbl.set_visible(False)
-        # 生成macd线和柱，初始状态下，MACD线可见
-        self.macd_m, self.macd_s = self.ax3.plot(np.arange(data_len), plot_data[['macd-m', 'macd-s']])
-        # MACD线的红绿两色柱子需要分别生成并绘制
-        macd_bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
-        macd_bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
-        self.macd_rbars = self.ax3.bar(np.arange(data_len), macd_bar_r, color='r')
-        self.macd_gbars = self.ax3.bar(np.arange(data_len), macd_bar_g, color='g')
-        # 生成rsi线和上下界，并设置RSI线不可见
-        self.rsi_up, = self.ax3.plot(np.arange(data_len), [75] * len(plot_data), color=(0.75, 0.5, 0.5))
-        self.rsi_dn, = self.ax3.plot(np.arange(data_len), [30] * len(plot_data), color=(0.5, 0.75, 0.5))
-        self.rsi, = self.ax3.plot(np.arange(data_len), plot_data['rsi'])
-        self.rsi_up.set_visible(False)
-        self.rsi_dn.set_visible(False)
-        self.rsi.set_visible(False)
-        # 生成dema线，并设置DEMA线不可见
-        self.dema, = self.ax3.plot(np.arange(data_len), plot_data['dema'])
-        self.dema.set_visible(False)
-
-        # 设置三张图表的显示界限
-
         fig.canvas.mpl_connect('button_press_event', self.on_press)
         fig.canvas.mpl_connect('button_release_event', self.on_release)
         fig.canvas.mpl_connect('motion_notify_event', self.on_motion)
         fig.canvas.mpl_connect('scroll_event', self.on_scroll)
+        fig.canvas.mpl_connect('key_press_event', self.on_key_press)
 
     def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
@@ -208,11 +170,11 @@ class InterCandle:
                  ax=self.ax1,
                  volume=self.ax2,
                  addplot=ap,
-                 type='candle',
+                 type=self.plot_type,
                  style=self.style,
                  datetime_format='%Y-%m',
                  xrotation=0)
-        plt.show()
+        self.fig.show()
 
     def refresh_texts(self, display_data):
         """ 更新K线图上的价格文本
@@ -240,7 +202,6 @@ class InterCandle:
         self.t3.set_color(close_number_color)
         self.t4.set_color(close_number_color)
         self.t5.set_color(close_number_color)
-        plt.show()
 
     def on_press(self, event):
         # 如果点击范围不在ax1或ax3范围内则退出
@@ -251,7 +212,7 @@ class InterCandle:
         self.pressed = True
         self.xpress = event.xdata
         self.cur_xlim = self.ax1.get_xlim()
-        print(f'cur_xlim is {self.cur_xlim}')
+        print(f'key pressed! cur_xlim is {self.cur_xlim}')
 
         # 当当前鼠标点击模式为双击时，继续检查更新K线图
         if event.dblclick == 1:
@@ -265,7 +226,7 @@ class InterCandle:
                     self.avg_type = 'ma'
                 # 更新K线图
             # 当点击位置在ax3范围内时，切换当前indicator类型，在macd/dma/rsi/kdj之间循环
-            else:  # event.inaxes == self.ax3
+            if event.inaxes == self.ax3:
                 if self.indicator == 'macd':
                     self.indicator = 'dma'
                 elif self.indicator == 'dma':
@@ -284,11 +245,12 @@ class InterCandle:
         if self.xpress is None:
             return
         dx = int(event.xdata - self.xpress)
+        data_length = len(self.data)
         self.idx_start -= dx
         if self.idx_start <= 0:
             self.idx_start = 0
-        if self.idx_start >= len(self.data) - 100:
-            self.idx_start = len(self.data) - 100
+        if self.idx_start >= data_length - self.idx_range:
+            self.idx_start = data_length - self.idx_range
 
     def on_motion(self, event):
         """当鼠标移动时，如果鼠标已经按下，计算鼠标水平移动距离，并根据水平距离计算K线平移距离"""
@@ -302,8 +264,8 @@ class InterCandle:
         # 设定平移的左右界限，如果平移后超出界限，则不再平移
         if new_start <= 0:
             new_start = 0
-        if new_start >= len(self.data) - 100:
-            new_start = len(self.data) - 100
+        if new_start >= len(self.data) - self.idx_range:
+            new_start = len(self.data) - self.idx_range
         # 根据水平距离重新绘制K线图
         self.ax1.clear()
         self.ax2.clear()
@@ -341,6 +303,34 @@ class InterCandle:
         self.refresh_texts(self.data.iloc[self.idx_start])
         self.refresh_plot(self.idx_start, self.idx_range)
 
+    # 键盘按下处理
+    def on_key_press(self, event):
+        data_length = len(self.data)
+        if event.key == 'a':  # avg_type, 在ma,bb,none之间循环
+            if self.avg_type == 'ma':
+                self.avg_type = 'bb'
+            elif self.avg_type == 'bb':
+                self.avg_type = 'none'
+            elif self.avg_type == 'none':
+                self.avg_type = 'ma'
+        elif event.key == 'up':  # 向上，看仔细1倍
+            if self.idx_range > 60:
+                self.idx_range = self.idx_range // 2
+        elif event.key == 'down':  # 向下，看多1倍标的
+            if self.idx_range <= 480:
+                self.idx_range = self.idx_range * 2
+        elif event.key == 'left':
+            if self.idx_start > self.idx_range // 2:
+                self.idx_start = self.idx_start - self.idx_range // 2
+        elif event.key == 'right':
+            if self.idx_start < data_length - self.idx_range // 2:
+                self.idx_start = self.idx_start + self.idx_range // 2
+        self.ax1.clear()
+        self.ax2.clear()
+        self.ax3.clear()
+        self.refresh_texts(self.data.iloc[self.idx_start])
+        self.refresh_plot(self.idx_start, self.idx_range)
+
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
@@ -372,7 +362,8 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
               indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
-    assert plot_type is not None
+    if plot_type is None:
+        plot_type = 'candle'
     if end is None:
         now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
         if now.hour >= 23:
@@ -385,7 +376,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         mav = [5, 10, 20, 60]
     end = pd.to_datetime(end)
     start = pd.to_datetime(start)
-    # 当stock_data没有给出时，则从网上或本地获取股票数据
+    # 当stock_data没有给出时，则从本地获取股票数据
     if stock_data is None:
         assert stock is not None
         if 'adj' in kwargs:
@@ -425,10 +416,18 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     if not no_visual:
         idx_start = np.searchsorted(daily.index, start)
         idx_range = np.searchsorted(daily.index, end) - idx_start
-        my_candle = InterCandle(data=daily, stock_name=share_name, style=my_style,
-                                idx_start=idx_start, idx_range=idx_range)
+        my_candle = InterCandle(data=daily,
+                                title=share_name,
+                                plot_type=plot_type,
+                                style=my_style,
+                                idx_start=idx_start,
+                                idx_range=idx_range)
         my_candle.refresh_texts(daily.iloc[idx_start + idx_range - 1])
         my_candle.refresh_plot(idx_start, idx_range)
+        # 如果需要动态图表，需要传入特别的参数以进入交互模式
+        dynamic = False
+        if dynamic:
+            raise NotImplementedError
     return daily
 
 
@@ -447,17 +446,18 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
         tuple：(pd.DataFrame, share_name)
     """
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
-    name_of = {'E':  'Stock 股票',
-               'I':  'Index 指数',
-               'F':  'Futures 期货',
-               'FD': 'Fund 基金'}
+    name_of = {'E':     'Stock 股票',
+               'IDX':   'Index 指数',
+               'FT':    'Futures 期货',
+               'FD':    'Fund 基金',
+               'OPT':   'Options 期权'}
     ds = qteasy.QT_DATA_SOURCE
     if asset_type == 'E':
         basic_info = ds.read_table_data('stock_basic')
-    elif asset_type == 'I':
+    elif asset_type == 'IDX':
         # 获取指数的基本信息
         basic_info = ds.read_table_data('index_basic')
-    elif asset_type == 'F':
+    elif asset_type == 'FT':
         # 获取期货的基本信息
         basic_info = ds.read_table_data('future_basic')
     elif asset_type == 'FD':
