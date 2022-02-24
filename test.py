@@ -11266,13 +11266,12 @@ class TestVisual(unittest.TestCase):
         print(f'get data from mpf plot function')
         daily = qt.ohlc('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=False)
         daily.drop(columns=['volume'], inplace=True)
-        print(f'test plot mpf data directly from DataFrame without volume')
-        import pdb; pdb.set_trace()
-        qt.ohlc(stock_data=daily, no_visual=False)
+        print(f'test plot mpf data directly from DataFrame without volume and different mav')
+        qt.ohlc(stock_data=daily, start='2020-04-01', end='20200601', mav=[9, 12, 26], no_visual=False)
 
     def test_candle(self):
         print(f'test mpf plot in candle form')
-        self.data = qt.candle('513100.SH', start='2021-12-01', asset_type='FD')
+        self.data = qt.candle('513100.SH', start='2020-12-01', end='20210131', asset_type='FD')
         print(f'get data from mpf plot function for adj = "none"')
         qt.candle('000002.SZ', start='2018-12-01', end='2019-01-31', asset_type='E', adj='none')
         print(f'get data from mpf plot function for adj = "back"')
@@ -11287,7 +11286,7 @@ class TestVisual(unittest.TestCase):
         daily = qt.renko('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=True)
         daily.drop(columns=['volume'], inplace=True)
         print(f'test plot mpf data directly from DataFrame without volume')
-        qt.renko(stock_data=daily, no_visual=True)
+        qt.renko(stock_data=daily, start='2020-04-01', end='20200601', no_visual=True)
 
     def test_indicators(self):
         print(f'test mpf plot in candle form with indicator dema')

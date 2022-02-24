@@ -75,13 +75,16 @@ normal_font = {'fontname': 'Arial',
 
 # 动态交互式蜡烛图类
 class InterCandle:
-    def __init__(self, data, title, plot_type, style, idx_start=0, idx_range=100):
+    def __init__(self, data, title, plot_type, style):
         self.pressed = False
         self.xpress = None
 
         # 初始化交互式K线图对象，历史数据作为唯一的参数用于初始化对象
         if not isinstance(data, pd.DataFrame):
             raise TypeError(f'data should be a DataFrame, got {type(data)} instead.')
+        if not all(must_col in data.columns for must_col in ['open', 'close', 'high', 'low']):
+            raise KeyError(f'data does not contain proper data - at least all columns in '
+                           f'["open", "high", "low", "close"] should be in data')
         self.data = data
         if plot_type not in ValidPlotTypes:
             raise KeyError(f'Invalid plot type, plot type shoule be one of {ValidPlotTypes}')
@@ -89,8 +92,8 @@ class InterCandle:
         self.style = style
         self.plot_title = title
         # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
-        self.idx_start = idx_start
-        self.idx_range = idx_range
+        self.idx_start = 0
+        self.idx_range = 100
         # 设置ax1图表中显示的均线类型
         self.avg_type = 'ma'
         self.indicator = 'macd'
@@ -144,7 +147,8 @@ class InterCandle:
         # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
         plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
         if self.avg_type == 'ma':
-            ap.append(mpf.make_addplot(plot_data[['MA5', 'MA10', 'MA20', 'MA60']], ax=self.ax1))
+            ma_to_plot = [col for col in plot_data.columns if col[:2] == 'MA']
+            ap.append(mpf.make_addplot(plot_data[ma_to_plot], ax=self.ax1))
         elif self.avg_type == 'bb':
             ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
         else:
@@ -402,7 +406,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
             share_name = 'stock'
     # 如果给出或获取的数据没有volume列，则生成空数据列
     if 'volume' not in daily.columns:
-        daily['volume'] = np.nan
+        daily['volume'] = 0
     daily = _add_indicators(daily, mav=mav)
 
     my_color = mpf.make_marketcolors(up='r',
@@ -419,9 +423,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         my_candle = InterCandle(data=daily,
                                 title=share_name,
                                 plot_type=plot_type,
-                                style=my_style,
-                                idx_start=idx_start,
-                                idx_range=idx_range)
+                                style=my_style)
         my_candle.refresh_texts(daily.iloc[idx_start + idx_range - 1])
         my_candle.refresh_plot(idx_start, idx_range)
         # 如果需要动态图表，需要传入特别的参数以进入交互模式
@@ -519,9 +521,12 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
         rsi_par = (14,)
     if bb_par is None:
         bb_par = (20, 2, 2, 0)
-    # 在DataFrame中增加均线信息：
+    # 在DataFrame中增加均线信息,并先删除已有的均线：
     assert isinstance(mav, (list, tuple))
     assert all(isinstance(item, int) for item in mav)
+    mav_to_drop = [col for col in data.columns if col[:2] == 'MA']
+    if len(mav_to_drop) > 0:
+        data.drop(columns=mav_to_drop, inplace=True)
     for value in mav:
         data['MA' + str(value)] = ma(data.close, timeperiod=value)  # 以后还可以加上不同的ma_type
     data['change'] = np.round(data['close'] - data['close'].shift(1), 3)
