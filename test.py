@@ -11262,47 +11262,46 @@ class TestVisual(unittest.TestCase):
 
     def test_ohlc(self):
         print(f'test mpf plot in ohlc form')
-        qt.ohlc(stock='513100.SH', start='2020-04-01', asset_type='FD', no_visual=False)
+        qt.ohlc(stock='513100.SH', start='2021-04-01', end='20210515', asset_type='FD', no_visual=False)
         print(f'get data from mpf plot function')
-        daily = qt.ohlc('513100.SH', start='2020-04-01', asset_type='FD', no_visual=False)
+        daily = qt.ohlc('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=False)
         daily.drop(columns=['volume'], inplace=True)
         print(f'test plot mpf data directly from DataFrame without volume')
+        import pdb; pdb.set_trace()
         qt.ohlc(stock_data=daily, no_visual=False)
 
     def test_candle(self):
         print(f'test mpf plot in candle form')
-        self.data = qt.candle('513100.SH', start='2020-12-01', asset_type='FD')
+        self.data = qt.candle('513100.SH', start='2021-12-01', asset_type='FD')
         print(f'get data from mpf plot function for adj = "none"')
-        qt.candle('000002.SZ', start='2018-12-01', end='2019-03-31', asset_type='E', adj='none')
+        qt.candle('000002.SZ', start='2018-12-01', end='2019-01-31', asset_type='E', adj='none')
         print(f'get data from mpf plot function for adj = "back"')
-        qt.candle('600000.SH', start='2018-12-01', end='2019-03-31', asset_type='E', adj='back')
+        qt.candle('600000.SH', start='2018-12-01', end='2019-01-31', asset_type='E', adj='back')
         print(f'test plot mpf data with indicator macd')
         qt.candle(stock_data=self.data, indicator='macd', indicator_par=(12, 26, 9))
 
     def test_renko(self):
         print(f'test mpf plot in renko form')
-        qt.renko('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        qt.renko('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=True)
         print(f'get data from mpf plot function')
-        daily = qt.renko('513100.SH', start='2020-04-01', asset_type='FD', no_visual=True)
+        daily = qt.renko('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=True)
         daily.drop(columns=['volume'], inplace=True)
         print(f'test plot mpf data directly from DataFrame without volume')
         qt.renko(stock_data=daily, no_visual=True)
 
     def test_indicators(self):
         print(f'test mpf plot in candle form with indicator dema')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='dema', indicator_par=(20,))
+        qt.candle('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', indicator='dema',
+                  indicator_par=(20,))
         print(f'test mpf plot in candle form with indicator rsi')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='rsi', indicator_par=(12,))
+        qt.candle('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', indicator='rsi',
+                  indicator_par=(12,))
         print(f'test mpf plot in candle form with indicator macd')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='macd', indicator_par=(12, 26, 9))
+        qt.candle('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', indicator='macd',
+                  indicator_par=(12, 26, 9))
         print(f'test mpf plot in candle form with indicator bbands')
-        qt.candle('513100.SH', start='2020-04-01', asset_type='FD', indicator='bbands', indicator_par=(12, 26, 9))
-
-    def test_prepare_mpf_data(self):
-        """
-
-        :return:
-        """
+        qt.candle('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', indicator='bbands',
+                  indicator_par=(12, 26, 9))
 
 
 class TestBuiltIns(unittest.TestCase):

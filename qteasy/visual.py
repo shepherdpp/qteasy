@@ -180,7 +180,7 @@ class InterCandle:
         """ 更新K线图上的价格文本
         """
         # display_data是一个交易日内的所有数据，将这些数据分别填入figure对象上的文本中
-        self.t3.set_text(f'{display_data["open"]:.3f} / {display_data["close"]:.3f}')
+        self.t3.set_text(f'{display_data["open"]:.2f} / {display_data["close"]:.2f}')
         self.t4.set_text(f'{display_data["change"]:.3f}')
         self.t5.set_text(f'[{display_data["pct_change"]:.3f}%]')
         self.t6.set_text(f'{display_data.name.date()}')
@@ -478,7 +478,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     else:
         end = pd.to_datetime('today') - pd.Timedelta(now.weekday() - 4, 'd')
     end_date = end.strftime('%Y-%m-%d')
-    name = this_stock.name
+    name = this_stock['name']
     # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
