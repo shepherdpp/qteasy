@@ -323,7 +323,7 @@ def eval_beta(looped_value, reference_value, reference_data):
         return beta
 
 
-def eval_sharp(looped_value, total_invest, riskfree_interest_rate: float = 0.0035):
+def eval_sharp(looped_value, riskfree_interest_rate: float = 0.0035):
     """ 夏普比率。表示每承受一单位总风险，会产生多少的超额报酬。
 
     具体计算方法为 (策略年化收益率 - 回测起始交易日的无风险利率) / 策略收益波动率 。

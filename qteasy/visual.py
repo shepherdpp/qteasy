@@ -10,7 +10,6 @@
 # ======================================
 
 import mplfinance as mpf
-from mplfinance.original_flavor import candlestick2_ohlc
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.ticker as mtick
@@ -27,9 +26,13 @@ from pandas.plotting import register_matplotlib_converters
 
 register_matplotlib_converters()
 
-ValidAddPlots = ['macd',
-                 'dma',
-                 'trix']
+ValidCandlePlotIndicators = ['macd',
+                             'dema',
+                             'rsi']
+
+ValidCandlePlotMATypes = ['ma',
+                          'ema'
+                          'bb']
 
 ValidPlotTypes = ['candle', 'renko', 'ohlc']
 
@@ -75,11 +78,31 @@ normal_font = {'fontname': 'Arial',
 
 # 动态交互式蜡烛图类
 class InterCandle:
-    def __init__(self, data, title, plot_type, style):
+    """ 一个动态交互式图表类，基于matplotlib和mplfinance实现，在合适的backend显示时，
+        支持以下鼠标及键盘交互操作：
+
+            1, 鼠标点击K线图区域，左右拖放平移K线图
+            2, 鼠标滚轮在K线图区域滚动，放大或缩小K线图的显示范围
+            3, 鼠标双击K线图区域，切换不同的均线类型：移动平均及布林带线
+            4, 鼠标在指标图区域双击，切换不同的指标类型：macd、rsi、dema等
+            5, 按键盘左右键平移K线图
+            6, 按键盘上下键放大或缩小K线图的显示范围
+            7, 按键盘a键切换不同的指标类型
+
+    """
+    def __init__(self, data, title_info, plot_type, style, avg_type, indicator):
+        """ 初始化动态图表对象，初始化属性
+
+        :param data: 需要显示的数据
+        :param title_info: 需要显示的图表标题以及指标显示信息
+        :param plot_type: K线图类型： candle 蜡烛图， ohlc: K线图，
+        :param style: 一个图表style对象，确定K线图或蜡烛图的颜色风格
+        :param avg_type: 均线类型： ma：移动平均线，bb：布林带线
+        :param indicator: 指标类型：macd，rsi，dema
+        """
         self.pressed = False
         self.xpress = None
 
-        # 初始化交互式K线图对象，历史数据作为唯一的参数用于初始化对象
         if not isinstance(data, pd.DataFrame):
             raise TypeError(f'data should be a DataFrame, got {type(data)} instead.')
         if not all(must_col in data.columns for must_col in ['open', 'close', 'high', 'low']):
@@ -90,13 +113,15 @@ class InterCandle:
             raise KeyError(f'Invalid plot type, plot type shoule be one of {ValidPlotTypes}')
         self.plot_type = plot_type
         self.style = style
-        self.plot_title = title
+        # title_info是一个用"/"分隔的字符串，包含以下信息：title, mav, bb_par, macd_par, rsi_par, dema_par
+        self.plot_title, self.mav, self.bb_par, self.macd_par, self.rsi_par, self.dema_par = \
+            tuple(title_info.split('/'))
         # 设置初始化的K线图显示区间起点为0，即显示第0到第99个交易日的数据（前100个数据）
         self.idx_start = 0
         self.idx_range = 100
         # 设置ax1图表中显示的均线类型
-        self.avg_type = 'ma'
-        self.indicator = 'macd'
+        self.avg_type = avg_type
+        self.indicator = indicator
 
         self.cur_xlim = None
 
@@ -107,9 +132,8 @@ class InterCandle:
         self.ax1.set_xbound(0, 100)
         # self.ax1.set_xticklabels(data.index)
         self.ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=self.ax1)
-        self.ax2.set_ylabel('volume')
+        self.ax2.set_ylabel('This is not Volume')
         self.ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=self.ax1)
-        self.ax3.set_ylabel('macd')
         # 初始化figure对象，在figure上预先放置文本并设置格式，文本内容根据需要显示的数据实时更新
         self.t1 = fig.text(0.50, 0.94, f'{self.plot_title}', **title_font)
         self.t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
@@ -146,33 +170,42 @@ class InterCandle:
         ap = []
         # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
         plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
+        ylabel='Price'
         if self.avg_type == 'ma':
+            ylabel = 'Price, MA:' + self.mav
             ma_to_plot = [col for col in plot_data.columns if col[:2] == 'MA']
-            ap.append(mpf.make_addplot(plot_data[ma_to_plot], ax=self.ax1))
+            ap.append(mpf.make_addplot(plot_data[ma_to_plot],
+                                       ax=self.ax1))
         elif self.avg_type == 'bb':
-            ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']], ax=self.ax1))
+            ylabel = f'Price, BBands:{self.bb_par}'
+            ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']],
+                                       ax=self.ax1))
         else:
             pass  # 不添加任何均线
         # 添加指标，根据指标类型添加MACD或RSI或DEMA
         if self.indicator == 'macd':
-            ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']], ylabel='macd', ax=self.ax3))
+            ap.append(mpf.make_addplot(plot_data[['macd-m', 'macd-s']],
+                                       ylabel=f'macd: \n{self.macd_par}',
+                                       ax=self.ax3))
             bar_r = np.where(plot_data['macd-h'] > 0, plot_data['macd-h'], 0)
             bar_g = np.where(plot_data['macd-h'] <= 0, plot_data['macd-h'], 0)
             ap.append(mpf.make_addplot(bar_r, type='bar', color='red', ax=self.ax3))
             ap.append(mpf.make_addplot(bar_g, type='bar', color='green', ax=self.ax3))
-            self.ax3.set_ylabel('macd')
         elif self.indicator == 'rsi':
             ap.append(mpf.make_addplot([75] * len(plot_data), color=(0.75, 0.6, 0.6), ax=self.ax3))
             ap.append(mpf.make_addplot([30] * len(plot_data), color=(0.6, 0.75, 0.6), ax=self.ax3))
-            ap.append(mpf.make_addplot(plot_data['rsi'], ylabel='rsi', ax=self.ax3))
-            self.ax3.set_ylabel('rsi')
+            ap.append(mpf.make_addplot(plot_data['rsi'],
+                                       ylabel=f'rsi: \n{self.rsi_par}',
+                                       ax=self.ax3))
         else:  # indicator == 'dema'
-            ap.append(mpf.make_addplot(plot_data['dema'], ylabel='dema', ax=self.ax3))
-            self.ax3.set_ylabel('dema')
+            ap.append(mpf.make_addplot(plot_data['dema'],
+                                       ylabel=f'dema: \n{self.dema_par}',
+                                       ax=self.ax3))
         # 绘制图表
         mpf.plot(plot_data,
                  ax=self.ax1,
                  volume=self.ax2,
+                 ylabel=ylabel,
                  addplot=ap,
                  type=self.plot_type,
                  style=self.style,
@@ -362,7 +395,7 @@ def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, as
 
 
 def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
-              asset_type='E', plot_type=None, no_visual=False, mav=None, indicator=None,
+              asset_type='E', plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
               indicator_par=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
@@ -392,22 +425,25 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         # 因此_prepare_mpf_data()函数应该返回一个包含所有历史价格以及相关指标的DataFrame
         daily, share_name = _get_mpf_data(stock=stock,
                                           asset_type=asset_type,
-                                          adj=adj,
-                                          mav=mav,
-                                          indicator=indicator,
-                                          indicator_par=indicator_par)
-        has_volume = True
+                                          adj=adj)
     else:
         assert isinstance(stock_data, pd.DataFrame)
         assert all(col in stock_data.columns for col in ['open', 'high', 'low', 'close'])
         daily = stock_data
-        has_volume = 'volume' in stock_data.columns
         if share_name is None:
             share_name = 'stock'
     # 如果给出或获取的数据没有volume列，则生成空数据列
     if 'volume' not in daily.columns:
         daily['volume'] = 0
-    daily = _add_indicators(daily, mav=mav)
+    # 处理并生成indicator
+    if indicator is None:
+        indicator = 'macd'
+    if indicator not in ValidCandlePlotIndicators + ValidCandlePlotMATypes:
+        raise KeyError(f'Invalid indicator: ({indicator})')
+    kwargs[indicator] = indicator_par
+    daily, parameters = _add_indicators(daily,
+                                        mav=mav,
+                                        **kwargs)
 
     my_color = mpf.make_marketcolors(up='r',
                                      down='g',
@@ -417,13 +453,17 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     my_style = mpf.make_mpf_style(marketcolors=my_color,
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
+    # 设置plot title info
+    plot_title_info = f'{share_name}/{parameters}'
     if not no_visual:
         idx_start = np.searchsorted(daily.index, start)
         idx_range = np.searchsorted(daily.index, end) - idx_start
         my_candle = InterCandle(data=daily,
-                                title=share_name,
+                                title_info=plot_title_info,
                                 plot_type=plot_type,
-                                style=my_style)
+                                style=my_style,
+                                avg_type=avg_type,
+                                indicator=indicator)
         my_candle.refresh_texts(daily.iloc[idx_start + idx_range - 1])
         my_candle.refresh_plot(idx_start, idx_range)
         # 如果需要动态图表，需要传入特别的参数以进入交互模式
@@ -433,7 +473,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     return daily
 
 
-def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicator=None, indicator_par=None):
+def _get_mpf_data(stock, asset_type='E', adj='none', freq='d'):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
 
@@ -441,9 +481,6 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
     :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
     :param freq: 价格周期，d——日K线，5min——五分钟k线
-    :param mav: 移动平均线，一个tuple，包含数个integer，代表均线周期
-    :param indicator: str，指标，如MACD等
-    :param indicator_par:
     :return:
         tuple：(pd.DataFrame, share_name)
     """
@@ -493,7 +530,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', mav=None, indicat
     return data, share_name
 
 
-def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, dema_par=None):
+def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, dema_par=None, **kwargs):
     """ data是一只股票的历史K线数据，包括O/H/L/C/V五组数据或者O/H/L/C四组数据
         并根据这些数据生成以下数据，加入到data中：
 
@@ -508,7 +545,9 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
         - rsi
 
     :param data:
-    :return: pd.DataFrame
+    :return:
+        tuple:
+        (pd.DataFrame, str) 添加指标的价格数据表，所有指标的参数字符串，以"/"分隔
     """
     if mav is None:
         mav = (5, 10, 20)
@@ -527,10 +566,13 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     mav_to_drop = [col for col in data.columns if col[:2] == 'MA']
     if len(mav_to_drop) > 0:
         data.drop(columns=mav_to_drop, inplace=True)
-    for value in mav:
-        data['MA' + str(value)] = ma(data.close, timeperiod=value)  # 以后还可以加上不同的ma_type
-    data['change'] = np.round(data['close'] - data['close'].shift(1), 3)
-    data['pct_change'] = np.round(data['change'] / data['close'] * 100, 2)
+    # 排除close收盘价中的nan值：
+    close = data.close.iloc[np.where(~np.isnan(data.close))]
+
+    for value in mav:  # 需要处理数据中的nan值，否则会输出全nan值
+        data['MA' + str(value)] = ma(close, timeperiod=value)  # 以后还可以加上不同的ma_type
+    data['change'] = np.round(close - close.shift(1), 3)
+    data['pct_change'] = np.round(data['change'] / close * 100, 2)
     data['value'] = np.round(data['close'] * data['volume'] / 1000000, 2)
     data['upper_lim'] = np.round(data['close'] * 1.1, 3)
     data['lower_lim'] = np.round(data['close'] * 0.9, 3)
@@ -538,12 +580,14 @@ def _add_indicators(data, mav=None, bb_par=None, macd_par=None, rsi_par=None, de
     data['average'] = data[['open', 'close', 'high', 'low']].mean(axis=1)
     data['volrate'] = data['volume']
     # 添加不同的indicator
-    data['dema'] = dema(data.close, *dema_par)
-    data['macd-m'], data['macd-s'], data['macd-h'] = macd(data.close, *macd_par)
-    data['rsi'] = rsi(data.close, *rsi_par)
-    data['bb-u'], data['bb-m'], data['bb-l'] = bbands(data.close, *bb_par)
+    data['dema'] = dema(close, *dema_par)
+    data['macd-m'], data['macd-s'], data['macd-h'] = macd(close, *macd_par)
+    data['rsi'] = rsi(close, *rsi_par)
+    data['bb-u'], data['bb-m'], data['bb-l'] = bbands(close, *bb_par)
 
-    return data
+    parameter_string = f'{mav}/{bb_par}/{macd_par}/{rsi_par}/{dema_par}'
+
+    return data, parameter_string
 
 
 def _plot_loop_result(loop_results: dict, config):

@@ -11276,8 +11276,19 @@ class TestVisual(unittest.TestCase):
         qt.candle('000002.SZ', start='2018-12-01', end='2019-01-31', asset_type='E', adj='none')
         print(f'get data from mpf plot function for adj = "back"')
         qt.candle('600000.SH', start='2018-12-01', end='2019-01-31', asset_type='E', adj='back')
+        print(f'get data from mpf plot function for other parameters')
+        qt.candle('600000.SH', start='2018-12-01', end='2019-01-31',
+                  asset_type='E',
+                  adj='back',
+                  mav=[9, 12, 6],
+                  avg_type='bb',
+                  indicator='rsi',
+                  indicator_par=(12,))
         print(f'test plot mpf data with indicator macd')
-        qt.candle(stock_data=self.data, indicator='macd', indicator_par=(12, 26, 9))
+        qt.candle(stock_data=self.data,
+                  start='20201101',
+                  end='20201231',
+                  indicator='macd', indicator_par=(12, 26, 9))
 
     def test_renko(self):
         print(f'test mpf plot in renko form')
