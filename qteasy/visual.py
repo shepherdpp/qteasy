@@ -43,12 +43,12 @@ title_font = {'fontname': 'pingfang HK',
               'va':       'bottom',
               'ha':       'center'}
 large_red_font = {'fontname': 'Arial',
-                  'size':     '24',
+                  'size':     '22',
                   'color':    'red',
                   'weight':   'bold',
                   'va':       'bottom'}
 large_green_font = {'fontname': 'Arial',
-                    'size':     '24',
+                    'size':     '22',
                     'color':    'green',
                     'weight':   'bold',
                     'va':       'bottom'}

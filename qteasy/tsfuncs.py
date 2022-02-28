@@ -612,11 +612,11 @@ def income(share: str,
         share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
-    pro = ts.pro_api()
     if start is not None:
         start = regulate_date_format(start)
     if end is not None:
         end = regulate_date_format(end)
+    pro = ts.pro_api()
     return pro.income(ts_code=share,
                       ann_date=rpt_date,
                       start_date=start,
@@ -838,9 +838,11 @@ def balance(share: str,
         share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
+    if start is not None:
+        start = regulate_date_format(start)
+    if end is not None:
+        end = regulate_date_format(end)
     pro = ts.pro_api()
-    start = regulate_date_format(start)
-    end = regulate_date_format(end)
     res = pro.balancesheet(ts_code=share,
                            ann_date=rpt_date,
                            start_date=start,
@@ -1009,9 +1011,11 @@ def cashflow(share: str,
         share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
+    if start is not None:
+        start = regulate_date_format(start)
+    if end is not None:
+        end = regulate_date_format(end)
     pro = ts.pro_api()
-    start = regulate_date_format(start)
-    end = regulate_date_format(end)
     res = pro.cashflow(ts_code=share,
                        ann_date=rpt_date,
                        start_date=start,
@@ -1248,6 +1252,10 @@ def indicators(share: str,
         share = list_to_str_format(share)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
+    if start is not None:
+        start = regulate_date_format(start)
+    if end is not None:
+        end = regulate_date_format(end)
     pro = ts.pro_api()
     res = pro.fina_indicator(ts_code=share,
                              ann_date=rpt_date,
@@ -1259,12 +1267,12 @@ def indicators(share: str,
 
 
 @retry(Exception)
-def forecast(share: str,
-             ann_date: str,
-             start: str,
-             end: str,
-             period: str,
-             type: str):
+def forecast(share: str = None,
+             ann_date: str = None,
+             start: str = None,
+             end: str = None,
+             period: str = None,
+             type: str = None):
     """ 获取上市公司的业绩预报
 
     :param share:
@@ -1292,6 +1300,10 @@ def forecast(share: str,
     """
     fields = 'ts_code, ann_date, end_date, type, p_change_min, p_change_max, net_profit_min, net_profit_max,' \
              ' last_parent_net, first_ann_date, summary, change_reason'
+    if start is not None:
+        start = regulate_date_format(start)
+    if end is not None:
+        end = regulate_date_format(end)
     pro = ts.pro_api()
     try:
         return pro.forecast_vip(ts_code=share,
@@ -1312,11 +1324,11 @@ def forecast(share: str,
 
 
 @retry(Exception)
-def express(share: str,
-            ann_date: str,
-            start: str,
-            end: str,
-            period: str):
+def express(share: str = None,
+            ann_date: str = None,
+            start: str = None,
+            end: str = None,
+            period: str = None):
     """ 获取上市公司的业绩快报
 
     :param share:
@@ -1366,6 +1378,10 @@ def express(share: str,
              ' yoy_tp, yoy_dedu_np, yoy_eps, yoy_roe, growth_assets, yoy_equity, growth_bps, or_last_year,' \
              ' op_last_year, tp_last_year, np_last_year, eps_last_year, open_net_assets, open_bps, perf_summary,' \
              ' is_audit, remark'
+    if start is not None:
+        start = regulate_date_format(start)
+    if end is not None:
+        end = regulate_date_format(end)
     pro = ts.pro_api()
     try:
         return pro.express_vip(ts_code=share,
