@@ -34,11 +34,11 @@ DATA_MAPPING_TABLE = []
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
 # comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                                'fill_arg_type', 'arg_boe']
+                                'fill_arg_type', 'arg_rng']
 TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
-        ['trade_calendar', 'desc', 'cal', 'none', 'none', 'trade_calendar', '', '', ''],
+        ['trade_calendar', 'desc', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list', 'SSE,SZSE,BSE'],
 
     'stock_basic':
         ['stock_basic', 'desc', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE'],
@@ -61,43 +61,43 @@ TABLE_SOURCE_MAPPING = {
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE'],
 
     'stock_1min':
-        ['bars', 'desc', 'data', 'E', '1min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
+        ['bars', 'desc', 'data', 'E', '1min', 'mins', 'share', 'table_index', 'stock_basic'],
 
     'stock_5min':
-        ['bars', 'desc', 'data', 'E', '5min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
+        ['bars', 'desc', 'data', 'E', '5min', 'mins', 'share', 'table_index', 'stock_basic'],
 
     'stock_15min':
-        ['bars', 'desc', 'data', 'E', '15min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
+        ['bars', 'desc', 'data', 'E', '15min', 'mins', 'share', 'table_index', 'stock_basic'],
 
     'stock_30min':
-        ['bars', 'desc', 'data', 'E', '30min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
+        ['bars', 'desc', 'data', 'E', '30min', 'mins', 'share', 'table_index', 'stock_basic'],
 
     'stock_hour':
-        ['bars', 'desc', 'data', 'E', '60min', 'mins', 'share', 'table_col', 'stock_basic,ts_code'],
+        ['bars', 'desc', 'data', 'E', '60min', 'mins', 'share', 'table_index', 'stock_basic'],
 
     'stock_daily':
-        ['bars', 'desc', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211,now'],
+        ['bars', 'desc', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211'],
 
     'stock_weekly':
-        ['bars', 'desc', 'data', 'E', 'w', 'weekly', 'trade_date', 'datetime', '19901221,now'],
+        ['bars', 'desc', 'data', 'E', 'w', 'weekly', 'trade_date', 'datetime', '19901221'],
 
     'stock_monthly':
-        ['bars', 'desc', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211,now'],
+        ['bars', 'desc', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211'],
 
     'index_daily':
-        ['bars', 'desc', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_col', 'fund_basic,ts_code'],
+        ['bars', 'desc', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic'],
 
     'index_weekly':
-        ['bars', 'desc', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705,now'],
+        ['bars', 'desc', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705'],
 
     'index_monthly':
         ['bars', 'desc', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', ''],
 
     'fund_daily':
-        ['bars', 'desc', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417,now'],
+        ['bars', 'desc', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417'],
 
     'fund_nav':
-        ['fund_nav', 'desc', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107,now'],
+        ['fund_nav', 'desc', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107'],
 
     'fund_share':
         ['fund_share', 'desc', 'events', 'FD', 'none', 'fund_share', '', '', ''],
@@ -121,31 +121,31 @@ TABLE_SOURCE_MAPPING = {
         ['stock_indicator', 'desc', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', 'desc', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'datetime', ''],
+        ['stock_indicator2', 'desc', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'datetime', '19990101'],
 
     'index_indicator':
         ['index_indicator', 'desc', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime', ''],
 
     'index_weight':
-        ['index_weight', 'desc', 'comp', 'IDX', 'm', 'composite', '', '', ''],
+        ['index_weight', 'desc', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20000101'],
 
     'income':
-        ['income', 'desc', 'data', 'E', 'q', 'income', '', '', ''],
+        ['income', 'desc', 'data', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic'],
 
     'balance':
-        ['balance', 'desc', 'data', 'E', 'q', 'balance', '', '', ''],
+        ['balance', 'desc', 'data', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic'],
 
     'cashflow':
-        ['cashflow', 'desc', 'data', 'E', 'q', 'cashflow', '', '', ''],
+        ['cashflow', 'desc', 'data', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic'],
 
     'financial':
-        ['financial', 'desc', 'data', 'E', 'q', 'indicators', '', '', ''],
+        ['financial', 'desc', 'data', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic'],
 
     'forecast':
-        ['forecast', 'desc', 'data', 'E', 'q', 'forecast', '', '', ''],
+        ['forecast', 'desc', 'data', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic'],
 
     'express':
-        ['express', 'desc', 'data', 'E', 'q', 'express', '', '', ''],
+        ['express', 'desc', 'data', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic'],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -312,7 +312,7 @@ TABLE_STRUCTURES = {
     'index_weight':     {'columns':    ['index_code', 'trade_date', 'con_code', 'weight'],
                          'dtypes':     ['varchar(24)', 'date', 'varchar(9)', 'float'],
                          'remarks':    ['指数代码', '交易日期', '成分代码', '权重'],
-                         'prime_keys': [0, 1]},
+                         'prime_keys': [0, 1, 2]},
 
     'income':           {'columns':    ['ts_code', 'end_date', 'ann_date', 'f_ann_date', 'report_type', 'comp_type',
                                         'end_type', 'basic_eps', 'diluted_eps', 'total_revenue', 'revenue',
@@ -733,6 +733,14 @@ class DataSource:
             如果存储方式是文件，确定文件存储位置、文件类型
             如果存储方式是数据库，建立数据库的连接
 
+        :param source_type:
+        :param file_type:
+        :param file_loc:
+        :param host:
+        :param port:
+        :param user:
+        :param password:
+        :param db
         :param kwargs: the args can be improved in the future
         """
 
@@ -800,7 +808,6 @@ class DataSource:
             # for unexpected cases
             raise KeyError(f'invalid source type: {source_type}')
 
-    # 属性
     @property
     def tables(self):
         """ 所有已经建立的tables的清单"""
@@ -1695,51 +1702,52 @@ class DataSource:
         for table in tables:
             # debug
             # print(f'started to refill data table {table}...')
+            cur_table_info = table_map.loc[table]
             if self.table_data_exists(table):
                 pass
                 # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
-            arg_names = str_to_list(table_map.loc[table].fill_arg_name)
+            arg_names = str_to_list(cur_table_info.fill_arg_name)
             if (len(arg_names) > 1) or (len(arg_names) <= 0):
                 print(f'warning: currently only one data coverage fill argument is supported, got '
                       f'{len(arg_names)} arguments are defined for table {table}, will skip this '
                       f'table')
                 continue
-            fill_type = table_map.loc[table].fill_arg_type
-            if fill_type != 'datetime':
-                print(f'warning: table fill type ({fill_type}) for table {table} is not datetime, '
-                      f'can not be filled at the moment! currently only datetime type of tables can '
-                      f'be filled.')
-                continue
-            freq = table_map.loc[table].freq
+            fill_type = cur_table_info.fill_arg_type
+            if fill_type not in ['datetime', 'list', 'table_index']:
+                raise KeyError(f'invalid fill type: {fill_type}')
+            freq = cur_table_info.freq
             print(f'filling table: \n'
                   f'table: <{table}>, with {fill_type} type argument: {arg_names[0]} @  {freq} ... ')
             if freq == 'w':
                 freq = 'w-Fri'  # 确保通过w获取的数据都在周五
 
-            # 开始生成所有的参数
-            all_kwargs = None
-            date_coverage = []
-            if (date_fill_to is None) and (date_fill_back_to is None):
-                # 根据start_date和end_date生成数据获取区间
-                date_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
-                if (freq == 'm') or (freq == 'w-Fri'):
-                    # 当freq为m或者w时，生成的日期并不连续，不一定会找到交易日，需要找到最近的交易日
-                    date_coverage = map(nearest_market_trade_day, date_coverage)
-                date_coverage = list(pd.to_datetime(list(date_coverage)).strftime('%Y%m%d'))
-                arg_name = arg_names[0]
-                all_kwargs = ({arg_name: val} for val in date_coverage)
+            # 开始生成所有的参数，参数的生成取决于fill_arg_type
+            arg_coverage = []
+            if fill_type == 'datetime':
+                if (date_fill_to is None) and (date_fill_back_to is None):
+                    # 根据start_date和end_date生成数据获取区间
+                    arg_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
+                    if (freq == 'm') or (freq == 'w-Fri'):
+                        # 当freq为m或者w时，生成的日期并不连续，不一定会找到交易日，需要找到最近的交易日
+                        arg_coverage = map(nearest_market_trade_day, arg_coverage)
+                    arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
+                else:
+                    print(f'currently date_fill_to and date_fill_back_to should only be None, otherwise '
+                          f'not supported')
+            elif fill_type == 'list':
+                arg_coverage = str_to_list(cur_table_info.arg_rng)
+            elif fill_type == 'table_index':
+                source_table = self.read_table_data(cur_table_info.arg_rng)
+                arg_coverage = source_table.index.to_list()
+            arg_name = arg_names[0]
+            all_kwargs = ({arg_name: val} for val in arg_coverage)
 
-            else:
-                print(f'currently date_fill_to and date_fill_back_to should only be None, otherwise '
-                      f'not supported')
             # 开始循环下载并更新数据
             completed = 0
-            total = len(date_coverage)
-            # print(f'filling started, kwargs are:')
-            # for kw in all_kwargs:
-            #     print(kw)
+            total = len(arg_coverage)
             st = time.time()
             if parallel:
+                # move this proc_pool creation out of loop
                 proc_pool = ProcessPoolExecutor(max_workers=process_count)
                 futures = {proc_pool.submit(acquire_data, table, **kw): kw
                            for kw in all_kwargs}
@@ -1750,7 +1758,8 @@ class DataSource:
                     time_elapsed = time.time() - st
                     time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                   estimation=True, short_form=False)
-                    progress_bar(completed, total, f'time left: {time_remain}')
+                    time_passed = time_str_format(time_elapsed, short_form=True)
+                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
             else:
                 for kwargs in all_kwargs:
                     df = self.acquire_table_data(table, 'tushare', **kwargs)
@@ -1759,7 +1768,8 @@ class DataSource:
                     time_elapsed = time.time() - st
                     time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                   estimation=True, short_form=False)
-                    progress_bar(completed, total, f'time left: {time_remain}')
+                    time_passed = time_str_format(time_elapsed, short_form=True)
+                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
             print('task completed!')
 
 

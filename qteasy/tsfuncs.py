@@ -487,7 +487,7 @@ def fund_manager(fund=None,
 
 # Finance Data
 # ================
-@retry(Exception)
+@retry(Exception, mute=True)
 def income(share: str,
            rpt_date: str = None,
            start: str = None,
@@ -627,7 +627,7 @@ def income(share: str,
                       fields=fields)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def balance(share: str,
             rpt_date: str = None,
             start: str = None,
@@ -854,7 +854,7 @@ def balance(share: str,
     return res
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def cashflow(share: str,
              rpt_date: str = None,
              start: str = None,
@@ -1027,7 +1027,7 @@ def cashflow(share: str,
     return res
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def indicators(share: str,
                rpt_date: str = None,
                start: str = None,
@@ -1266,7 +1266,7 @@ def indicators(share: str,
     return res
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def forecast(share: str = None,
              ann_date: str = None,
              start: str = None,
@@ -1323,7 +1323,7 @@ def forecast(share: str = None,
                             fields=fields)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def express(share: str = None,
             ann_date: str = None,
             start: str = None,
@@ -1401,7 +1401,7 @@ def express(share: str = None,
 
 # Market Data
 # =================
-@retry(Exception)
+@retry(Exception, mute=True)
 def top_list(trade_date: str = None,
              shares: str = None,
              fields: str = None) -> pd.DataFrame:
@@ -1567,7 +1567,7 @@ def index_indicators(trade_date: str = None,
                                 fields=fields)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def composite(index: str = None,
               trade_date: str = None,
               start: str = None,
@@ -1606,7 +1606,7 @@ def composite(index: str = None,
 # Funds Data
 # =============
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def fund_basic(market: str = None,
                status: str = None) -> pd.DataFrame:
     """ 获取基金列表
@@ -1663,7 +1663,7 @@ def fund_basic(market: str = None,
                           status=status)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def fund_net_value(fund: str = None,
                    trade_date: str = None,
                    market: str = None) -> pd.DataFrame:
