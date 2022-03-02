@@ -91,7 +91,7 @@ TABLE_SOURCE_MAPPING = {
         ['bars', 'desc', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705'],
 
     'index_monthly':
-        ['bars', 'desc', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', ''],
+        ['bars', 'desc', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', '19910731'],
 
     'fund_daily':
         ['bars', 'desc', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417'],
@@ -106,46 +106,46 @@ TABLE_SOURCE_MAPPING = {
         ['fund_manager', 'desc', 'events', 'FD', 'none', 'fund_manager', '', '', ''],
 
     'future_daily':
-        ['future_daily', 'desc', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', ''],
+        ['future_daily', 'desc', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417'],
 
     'options_daily':
-        ['options_daily', 'desc', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', ''],
+        ['options_daily', 'desc', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209'],
 
     'stock_adj_factor':
-        ['adj_factors', 'desc', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', ''],
+        ['adj_factors', 'desc', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', '19901219'],
 
     'fund_adj_factor':
-        ['adj_factors', 'desc', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'datetime', ''],
+        ['adj_factors', 'desc', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'datetime', '19980407'],
 
     'stock_indicator':
-        ['stock_indicator', 'desc', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', ''],
+        ['stock_indicator', 'desc', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', '19990101'],
 
     'stock_indicator2':
         ['stock_indicator2', 'desc', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'datetime', '19990101'],
 
     'index_indicator':
-        ['index_indicator', 'desc', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime', ''],
+        ['index_indicator', 'desc', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime', '20040102'],
 
     'index_weight':
-        ['index_weight', 'desc', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20000101'],
+        ['index_weight', 'desc', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408'],
 
     'income':
-        ['income', 'desc', 'data', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic'],
+        ['income', 'desc', 'data', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic'],
 
     'balance':
-        ['balance', 'desc', 'data', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic'],
+        ['balance', 'desc', 'data', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic'],
 
     'cashflow':
-        ['cashflow', 'desc', 'data', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic'],
+        ['cashflow', 'desc', 'data', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic'],
 
     'financial':
-        ['financial', 'desc', 'data', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic'],
+        ['financial', 'desc', 'data', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic'],
 
     'forecast':
-        ['forecast', 'desc', 'data', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic'],
+        ['forecast', 'desc', 'data', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic'],
 
     'express':
-        ['express', 'desc', 'data', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic'],
+        ['express', 'desc', 'data', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic'],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -310,7 +310,7 @@ TABLE_STRUCTURES = {
                          'prime_keys': [0, 1]},
 
     'index_weight':     {'columns':    ['index_code', 'trade_date', 'con_code', 'weight'],
-                         'dtypes':     ['varchar(24)', 'date', 'varchar(9)', 'float'],
+                         'dtypes':     ['varchar(24)', 'date', 'varchar(20)', 'float'],
                          'remarks':    ['指数代码', '交易日期', '成分代码', '权重'],
                          'prime_keys': [0, 1, 2]},
 
