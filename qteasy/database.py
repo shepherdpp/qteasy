@@ -33,6 +33,7 @@ DATA_MAPPING_TABLE = []
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
 # comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
+TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp']
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_constraints']
 TABLE_SOURCE_MAPPING = {
@@ -44,7 +45,7 @@ TABLE_SOURCE_MAPPING = {
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', ''],
 
     'stock_names':
-        ['name_changes', '股票名称变更', 'basics', 'E', 'none', 'name_change', '', '', '', ''],
+        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'shares', 'table_index', 'stock_basic', ''],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none',  'index_basic', 'market', 'list',
@@ -80,16 +81,16 @@ TABLE_SOURCE_MAPPING = {
         ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211', ''],
 
     'stock_weekly':
-        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'datetime', '19901221', ''],
+        ['bars', '股票周线行情', 'data', 'E', 'w-Fri', 'weekly', 'trade_date', 'datetime', '19901221', ''],
 
     'stock_monthly':
         ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211', ''],
 
     'index_daily':
-        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic', ''],
+        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'index', 'table_index', 'index_basic', ''],
 
     'index_weekly':
-        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705', ''],
+        ['bars', '指数周线行情', 'data', 'IDX', 'w-Fri', 'index_weekly', 'trade_date', 'datetime', '19910705', ''],
 
     'index_monthly':
         ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', '19910731', ''],
@@ -122,32 +123,33 @@ TABLE_SOURCE_MAPPING = {
         ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', '19990101', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'datetime', '19990101', ''],
+        ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date', '19990101',
+         ''],
 
     'index_indicator':
-        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime', '20040102'
-            , ''],
+        ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
+         '20040102', ''],
 
     'index_weight':
         ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', ''],
 
     'income':
-        ['income', '上市公司利润表', 'data', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', ''],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'data', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', ''],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'data', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', ''],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', ''],
 
     'financial':
-        ['financial', '上市公司财务指标', 'data', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', ''],
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'data', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', ''],
 
     'express':
-        ['express', '上市公司财报快报', 'data', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -186,9 +188,9 @@ TABLE_STRUCTURES = {
                                         'c_fee', 'duration_year', 'p_value', 'min_amount', 'exp_return', 'benchmark',
                                         'status', 'invest_type', 'type', 'trustee', 'purc_startdate', 'redm_startdate',
                                         'market'],
-                         'dtypes':     ['varchar(24)', 'varchar(24)', 'varchar(20)', 'varchar(20)', 'varchar(8)', 'date',
-                                        'date', 'date', 'date', 'date', 'float', 'float', 'float', 'float', 'float',
-                                        'float', 'float', 'text', 'varchar(2)', 'varchar(10)', 'varchar(10)',
+                         'dtypes':     ['varchar(24)', 'varchar(24)', 'varchar(20)', 'varchar(20)', 'varchar(8)',
+                                        'date', 'date', 'date', 'date', 'date', 'float', 'float', 'float', 'float',
+                                        'float', 'float', 'float', 'text', 'varchar(2)', 'varchar(10)', 'varchar(10)',
                                         'varchar(10)', 'date', 'date', 'varchar(2)'],
                          'remarks':    ['证券代码', '简称', '管理人', '托管人', '投资类型', '成立日期', '到期日期', '上市时间',
                                         '发行日期', '退市日期', '发行份额(亿)', '管理费', '托管费', '存续期', '面值',
@@ -246,14 +248,14 @@ TABLE_STRUCTURES = {
                          'prime_keys': [0, 1]},
 
     'fund_share':       {'columns':    ['ts_code', 'trade_date', 'fd_share'],
-                         'dtypes':     ['varchar(9)', 'date', 'float'],
+                         'dtypes':     ['varchar(20)', 'date', 'float'],
                          'remarks':    ['证券代码', '变动日期，格式YYYYMMDD', '基金份额（万）'],
                          'prime_keys': [0, 1]},
 
     'fund_manager':     {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'birth_year', 'edu', 'nationality',
                                         'begin_date', 'end_date', 'resume'],
-                         'dtypes':     ['varchar(9)', 'date', 'varchar(6)', 'varchar(2)', 'year', 'varchar(30)',
-                                        'varchar(4)', 'date', 'date', 'text'],
+                         'dtypes':     ['varchar(20)', 'date', 'varchar(20)', 'varchar(2)', 'varchar(12)',
+                                        'varchar(30)', 'varchar(4)', 'date', 'date', 'text'],
                          'remarks':    ['证券代码', '公告日期', '基金经理姓名', '性别', '出生年份', '学历', '国籍', '任职日期',
                                         '离任日期', '简历'],
                          'prime_keys': [0, 1]},
@@ -296,7 +298,7 @@ TABLE_STRUCTURES = {
                          'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'double', 'double',
                                         'double', 'double', 'double', 'double', 'double', 'double',
                                         'double', 'double', 'double', 'double', 'double', 'float', 'float'],
-                         'remarks':    ['证券代码', '交易日期', '量比', '换手率', '振幅', '**成交量',
+                         'remarks':    ['证券代码', '交易日期', '量比', '换手率', '振幅', '内盘（主动卖，手）',
                                         '外盘（主动买， 手）', '总股本(亿)', '流通股本(亿)', '市盈(动)',
                                         '流通市值', '总市值', '平均价', '强弱度(%)', '活跃度(%)', '笔换手', '攻击波(%)',
                                         '近3月涨幅', '近6月涨幅'],
@@ -313,7 +315,7 @@ TABLE_STRUCTURES = {
 
     'index_weight':     {'columns':    ['index_code', 'trade_date', 'con_code', 'weight'],
                          'dtypes':     ['varchar(24)', 'date', 'varchar(20)', 'float'],
-                         'remarks':    ['指数代码', '交易日期', '成分代码', '权重'],
+                         'remarks':    ['指数代码', '交易日期', '成分代码', '权重(%)'],
                          'prime_keys': [0, 1, 2]},
 
     'income':           {'columns':    ['ts_code', 'end_date', 'ann_date', 'f_ann_date', 'report_type', 'comp_type',
@@ -743,7 +745,6 @@ class DataSource:
         :param user:
         :param password:
         :param db
-        :param kwargs: the args can be improved in the future
         """
 
         assert source_type in ['file', 'database', 'db'], ValueError()
@@ -1138,8 +1139,6 @@ class DataSource:
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'" \
               f"ORDER BY ordinal_position"
-        # debug
-        # print(f'will execute following sql: \n{sql}\n')
 
         self.cursor.execute(sql)
         self.con.commit()
@@ -1182,11 +1181,10 @@ class DataSource:
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
 
-            TODO: potentially: 如果一张数据表的数据量过大，查询或读取数据将花费太多的时间
-            TODO: 此时应该将表格存储在多张数据库表或多个文件中，本函数应该执行这一项管理工作
-            TODO: 根据所需的数据，从不同的文件或数据库中读取数据并组合成一个DataFrame, 此
-            TODO: 时需要建立索引文件、并通过索引文件快速获取所需的数据，这些工作都在本函数
-            TODO: 中执行
+            TODO: potentially: 如果一张数据表的数据量过大，除非将数据存储在数据库中，
+            TODO: 如果将所有数据存储在一个文件中将导致读取速度下降，本函数应该进行分表工作，
+            TODO: 即将数据分成不同的DataFrame，分别保存在不同的文件中。 此时需要建立
+            TODO: 索引数据文件、并通过索引表快速获取所需的数据，这些工作都在本函数中执行
 
         :param table: str 数据表名称
         :param shares: list，ts_code筛选条件，为空时给出所有记录
@@ -1423,7 +1421,7 @@ class DataSource:
             # print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
         # 确保df与table的column顺序一致
-        if len(missing_columns)>0 or any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
+        if len(missing_columns) > 0 or any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
             dnld_data = dnld_data.reindex(columns=table_columns, copy=False)
             # print(f'downloaded data does not fit table schema:\n'
             #       f'df columns: {dnld_columns}\n'
@@ -1665,10 +1663,13 @@ class DataSource:
 
     # 顶层函数，用于定期计划性获取数据的操作函数
     def refill_local_source(self,
-                            tables,
-                            channel='tushare',
+                            tables=None,
+                            dtypes=None,
+                            freqs=None,
+                            asset_types=None,
                             start_date=None,
                             end_date=None,
+                            code_range=None,
                             merge_type='update',
                             parallel=True,
                             process_count=None):
@@ -1679,57 +1680,128 @@ class DataSource:
             例如，下面两种方式都合法且相同：
                 table='stock_indicator, stock_daily, income, stock_adj_factor'
                 table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']
-            如果 table='all', 则表示所有的table
-        :param channel:
-            补充本地数据表的数据来源，只能选择支持的网络数据API
+            除了直接给出表名称以外，还可以通过表类型指明多个表，可以同时输入多个类型的表：
+                - 'all'     : 表示所有的表
+                - 'cal'     : 交易日历表
+                - 'basics'  : 所有的基础信息表
+                - 'adj'     : 所有的复权因子表
+                - 'data'    : 所有的历史数据表
+                - 'events'  : 所有的历史事件表（如股票更名、更换基金经理、基金份额变动等）
+                - 'report'  : 财务报表
+                - 'comp'    : 指数成分表
+
+        :param dtypes:
+            通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
+            如果给出了tables，则dtypes参数会被忽略
+
+        :param freqs:
+            通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
+            如果tables != all时，给出freq会排除掉freq与之不符的数据表
+
+        :param asset_types:
+            通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
+            如果tables != all时，给出asset_type会排除掉与之不符的数据表
+
         :param start_date:
+            限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+
         :param end_date:
+            限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+
+        :param code_range:
+            限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
+            可以多种形式确定范围，以下输入均为合法输入：
+            - '000001'
+                没有指定asset_types时，000001.SZ, 000001.SH ... 等所有代码都会被选中下载
+                如果指定asset_types，只有符合类型的证券数据会被下载
+            - '000001, 000002, 000003'
+            - ['000001', '000002', '000003']
+                两种写法等效，列表中列举出的证券数据会被下载
+            - '000001:000300'
+                从'000001'开始到'000300'之间的所有证券数据都会被下载
+
         :param merge_type: str
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
             - 'update' 默认值，使用获取的数据更新本地数据的重复部分
             - 'ignore' 忽略获取数据中的重复部分
+
         :param parallel: Bool
             是否启用多线程下载数据
             - True:  启用多线程下载数据
             - False: 禁用多线程下载
+
         :param process_count: int
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+
         :return:
         """
-        if not isinstance(tables, (str, list)):
-            raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
-        if isinstance(tables, str):
-            if tables.lower() == 'all':
-                tables = list(TABLE_SOURCE_MAPPING.keys())
-            if len(tables) == 0:
-                raise KeyError(f'invalid input, tables can not be empty string')
-            tables = str_to_list(tables)
-        if not all(isinstance(item, str) for item in tables):
-            raise TypeError(f'some items in tables list are not string: '
-                            f'{[item for item in tables if not isinstance(item, str)]}')
-        if not all(item in TABLE_SOURCE_MAPPING for item in tables):
-            raise KeyError(f'some items in tables list are not valid: '
-                           f'{[item for item in tables if item not in TABLE_SOURCE_MAPPING]}')
+        # 1 参数合法性检查
+        if tables is not None:
+            valid_table_values = list(TABLE_SOURCE_MAPPING.keys()) + TABLE_USAGES + ['all']
+            if not isinstance(tables, (str, list)):
+                raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
+            if isinstance(tables, str):
+                if len(tables) == 0:
+                    raise KeyError(f'invalid input, tables can not be empty string')
+                tables = str_to_list(tables)
+            if not all(isinstance(item, str) for item in tables):
+                raise TypeError(f'some items in tables list are not string: '
+                                f'{[item for item in tables if not isinstance(item, str)]}')
+            if not all(item.lower() in valid_table_values for item in tables):
+                raise KeyError(f'some items in tables list are not valid: '
+                               f'{[item for item in tables if item not in valid_table_values]}')
+        else:  # tables is None
+            tables = []
+            if dtypes is None:
+                raise ValueError(f'dtype or tables should be given, got both None')
+            if not isinstance(dtypes, (str, list)):
+                raise TypeError(f'dtypes should be a list of a string, got {type(dtypes)} instead.')
+            if isinstance(dtypes, str):
+                if len(dtypes) == 0:
+                    raise KeyError(f'invalid input, tables can not be empty string')
+                dtypes = str_to_list(dtypes)
 
-        if not isinstance(channel, str):
-            raise TypeError(f'channel should be a string, got {type(channel)} instead')
-        if channel not in ['tushare', 'csv', 'excel']:
-            raise KeyError(f'Invalid channel!')
+        if code_range is not None:
+            if not isinstance(code_range, (str, list)):
+                raise TypeError(f'code_range should be a string or list, got {type(code_range)} instead.')
 
+        # 2 生成需要处理的数据表清单 tables
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        # print(table_map)
-        proc_pool = None
-        if parallel:
-            proc_pool = ProcessPoolExecutor(max_workers=process_count)
+        tables_to_refill = set()
+        tables = [item.lower() for item in tables]
+        if 'all' in tables:
+            tables_to_refill.update(TABLE_SOURCE_MAPPING)
+        else:
+            for item in tables:
+                if item in TABLE_SOURCE_MAPPING:
+                    tables_to_refill.add(item)
+                elif item in TABLE_USAGES:
+                    tables_to_refill.update(
+                            table_map.loc[table_map.table_usage == item].index.to_list()
+                    )
+            for item in dtypes:
+                for tbl, structure in table_map.structure.iteritems():
+                    if item in TABLE_STRUCTURES[structure]['columns']:
+                        tables_to_refill.add(tbl)
+
+            if freqs is not None:
+                for freq in str_to_list(freqs):
+                    tables_to_refill.difference_update(
+                            table_map.loc[table_map.freq == freq].index.to_list()
+                    )
+            if asset_types is not None:
+                for a_type in str_to_list(asset_types):
+                    tables_to_refill.difference_update(
+                            table_map.loc[table_map.asset_type == a_type].index.to_list()
+                    )
+        # debug
+        print(f'following tables will be re-filled:\n{tables_to_refill}')
 
         import time
-        for table in tables:
+        for table in tables_to_refill:
             cur_table_info = table_map.loc[table]
-            if self.table_data_exists(table) and merge_type.lower() == 'ignore':
-                # TODO: 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
-                pass
-                # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
+            # 3 生成数据下载参数序列
             arg_names = str_to_list(cur_table_info.fill_arg_name)
             if (len(arg_names) > 1) or (len(arg_names) <= 0):
                 print(f'warning: currently only one data coverage fill argument is supported, got '
@@ -1737,30 +1809,36 @@ class DataSource:
                       f'table')
                 continue
             fill_type = cur_table_info.fill_arg_type
-            if fill_type not in ['datetime', 'list', 'table_index']:
-                raise KeyError(f'invalid fill type: {fill_type}')
             freq = cur_table_info.freq
-            print(f'filling table: \n'
-                  f'table: <{table}>, with {fill_type} type argument: {arg_names[0]} @  {freq} ... ')
-            if freq == 'w':
-                freq = 'w-Fri'  # 确保通过w获取的数据都在周五
 
             # 开始生成所有的参数，参数的生成取决于fill_arg_type
-            arg_coverage = []
-            if fill_type == 'datetime':
+            if (fill_type == 'datetime') or (fill_type == 'trade_date'):
                 # 根据start_date和end_date生成数据获取区间
+                if start_date is None:
+                    start_date = cur_table_info.arg_rng
+                start_date = pd.to_datetime(start_date).strftime('%Y%m%d')
+                if end_date is None:
+                    end_date = 'today'
+                end_date = pd.to_datetime(end_date).strftime('%Y%m%d')
                 arg_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
                 if (freq == 'm') or (freq == 'w-Fri'):
-                    # 当freq为m或者w时，生成的日期并不连续，不一定会找到交易日，需要找到最近的交易日
+                    # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
                     arg_coverage = map(nearest_market_trade_day, arg_coverage)
                 arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
-
             elif fill_type == 'list':
                 arg_coverage = str_to_list(cur_table_info.arg_rng)
-
             elif fill_type == 'table_index':
                 source_table = self.read_table_data(cur_table_info.arg_rng)
                 arg_coverage = source_table.index.to_list()
+            else:
+                arg_coverage = []
+
+            # 处理数据下载参数序列，剔除已经存在的数据key
+            if self.table_data_exists(table) and merge_type.lower() == 'ignore':
+                # TODO: 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
+                pass
+                # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
+            # 生成所有的参数
             arg_name = arg_names[0]
             all_kwargs = ({arg_name: val} for val in arg_coverage)
 
@@ -1769,12 +1847,13 @@ class DataSource:
             total = len(arg_coverage)
             st = time.time()
             if parallel:
+                proc_pool = ProcessPoolExecutor(max_workers=process_count)
                 futures = {proc_pool.submit(acquire_data, table, **kw): kw
                            for kw in all_kwargs}
                 for f in as_completed(futures):
                     df = f.result()
                     completed += 1
-                    self.update_table_data(table, df, merge_type=merge_type)
+                    self.update_table_data(table, df)
                     time_elapsed = time.time() - st
                     time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                   estimation=True, short_form=False)
@@ -1782,9 +1861,9 @@ class DataSource:
                     progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
             else:
                 for kwargs in all_kwargs:
-                    df = self.acquire_table_data(table, channel, **kwargs)
+                    df = self.acquire_table_data(table, **kwargs)
                     completed += 1
-                    self.update_table_data(table, df, merge_type=merge_type)
+                    self.update_table_data(table, df)
                     time_elapsed = time.time() - st
                     time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                   estimation=True, short_form=False)
