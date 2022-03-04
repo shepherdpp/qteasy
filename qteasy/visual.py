@@ -32,7 +32,8 @@ ValidCandlePlotIndicators = ['macd',
 
 ValidCandlePlotMATypes = ['ma',
                           'ema'
-                          'bb']
+                          'bb',
+                          'bbands']
 
 ValidPlotTypes = ['candle', 'renko', 'ohlc']
 
@@ -97,7 +98,7 @@ class InterCandle:
         :param title_info: 需要显示的图表标题以及指标显示信息
         :param plot_type: K线图类型： candle 蜡烛图， ohlc: K线图，
         :param style: 一个图表style对象，确定K线图或蜡烛图的颜色风格
-        :param avg_type: 均线类型： ma：移动平均线，bb：布林带线
+        :param avg_type: 均线类型： ma：移动平均线，bb / bbands：布林带线
         :param indicator: 指标类型：macd，rsi，dema
         """
         self.pressed = False
@@ -110,7 +111,7 @@ class InterCandle:
                            f'["open", "high", "low", "close"] should be in data')
         self.data = data
         if plot_type not in ValidPlotTypes:
-            raise KeyError(f'Invalid plot type, plot type shoule be one of {ValidPlotTypes}')
+            raise KeyError(f'Invalid plot type, plot type should be one of {ValidPlotTypes}')
         self.plot_type = plot_type
         self.style = style
         # title_info是一个用"/"分隔的字符串，包含以下信息：title, mav, bb_par, macd_par, rsi_par, dema_par
@@ -120,8 +121,8 @@ class InterCandle:
         self.idx_start = 0
         self.idx_range = 100
         # 设置ax1图表中显示的均线类型
-        self.avg_type = avg_type
-        self.indicator = indicator
+        self.avg_type = avg_type.lower()
+        self.indicator = indicator.lower()
 
         self.cur_xlim = None
 
@@ -176,7 +177,7 @@ class InterCandle:
             ma_to_plot = [col for col in plot_data.columns if col[:2] == 'MA']
             ap.append(mpf.make_addplot(plot_data[ma_to_plot],
                                        ax=self.ax1))
-        elif self.avg_type == 'bb':
+        elif self.avg_type in ['bb', 'bbands']:
             ylabel = f'Price, BBands:{self.bb_par}'
             ap.append(mpf.make_addplot(plot_data[['bb-u', 'bb-m', 'bb-l']],
                                        ax=self.ax1))

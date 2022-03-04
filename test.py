@@ -11627,46 +11627,21 @@ class FastExperiments(unittest.TestCase):
     def setUp(self):
         pass
 
-    # def test_fast_experiments(self):
-    #     ds = DataSource(source_type='db',
-    #                     host='localhost',
-    #                     user='jackie',
-    #                     password='iama007',
-    #                     db='ts_db')
-    #     # 从tushare下载数据：
-    #     # shares = list_to_str_format(['000001.SH', '000002.SH', '000003.SH', '000004.SH',
-    #     #                              '000005.SH', '000006.SH', '000300.SH'])
-    #     indexes = ds.read_table_data(table='index_basic').index.to_list()
-    #     print(indexes[:10])
-    #     tables = ['index_daily']
-    #     table = tables[0]
-    #     for idx in indexes[150:]:
-    #         df = ds.acquire_table_data(table=table, channel='tushare', index=idx)
-    #         ds.update_table_data(table, df)
-    #         time_str = (pd.to_datetime('now') + pd.Timedelta(8, 'H')).strftime('%Y/%m/%d-%H:%M:%S')
-    #         print(f'{len(df)} rows of data written in table {table} for index {idx} at time: {time_str}!')
-    #
-    # def test_fast_experiments2(self):
-    #     ds = DataSource(source_type='db',
-    #                     host='localhost',
-    #                     user='jackie',
-    #                     password='iama007',
-    #                     db='ts_db')
-    #     ds.refill_local_source(tables='stock_daily, stock_adj_factor',
-    #                            start_date='20000101',
-    #                            end_date='20000201',
-    #                            parallel=False)
-    #
-    # def test_fast_experiments3(self):
-    #     ds = DataSource(source_type='db',
-    #                     host='localhost',
-    #                     user='jackie',
-    #                     password='iama007',
-    #                     db='ts_db')
-    #     ds.refill_local_source(tables='fund_adj_factor',
-    #                            start_date='20070918',
-    #                            end_date='20220217',
-    #                            parallel=True)
+    def test_fast_experiments(self):
+        pass
+
+    def test_fast_experiments2(self):
+        ds = DataSource(source_type='db',
+                        host='localhost',
+                        user='jackie',
+                        password='iama007',
+                        db='ts_db')
+        ds.refill_local_source(tables='stock_daily, stock_adj_factor',
+                               dtypes='open, close, PE, PE_TTM',
+                               freqs='D',
+                               start_date='20000101',
+                               end_date='20000201',
+                               parallel=False)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

@@ -39,7 +39,8 @@ TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type'
 TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
-        ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list', 'SSE,SZSE,BSE', ''],
+        ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
+         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', ''],
 
     'stock_basic':
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', ''],
@@ -746,40 +747,20 @@ class DataSource:
         :param password:
         :param db
         """
-
-        assert source_type in ['file', 'database', 'db'], ValueError()
-        if source_type == 'database':
-            source_type = 'db'
-        self.source_type = source_type
+        if not isinstance(source_type, str):
+            raise TypeError(f'source type should be a string, got {type(source_type)} instead.')
+        if source_type.lower() not in ['file', 'database', 'db']:
+            raise ValueError(f'invalid source_type')
         self._table_list = []
 
-        if self.source_type == 'file':
-            # set up file type and file location
-            if file_type is None:
-                file_type = 'fth'
-            if not isinstance(file_type, str):
-                raise TypeError(f'file type should be a string, got {type(file_type)} instead!')
-            file_type = file_type.lower()
-            if file_type not in AVAILABLE_DATA_FILE_TYPES:
-                raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
-            if file_type == 'feather':
-                file_type = 'fth'
-            self.connection_type = file_type
-
-            from qteasy import QT_ROOT_PATH
-            if file_loc is None:
-                file_loc = 'qteasy/data/'
-            # if not self.file_exists(file_loc):
-            #     raise SystemError('specified file path does not exist')
-            self.file_path = QT_ROOT_PATH + file_loc
-            self.engine = None
-
-        elif source_type == 'db':
+        if source_type.lower() in ['db', 'database']:
             # set up connection to the data base
             if host is None:
                 host = 'localhost'
             if port is None:
                 port = 3306
+            if not isinstance(port, int):
+                raise TypeError(f'port should be of type int')
             if db is None:
                 db = 'qt_db'
             if user is None:
@@ -788,6 +769,7 @@ class DataSource:
                 raise ValueError(f'Missing password for database connection')
             # try to create pymysql connections
             try:
+                self.source_type = 'db'
                 self.con = pymysql.connect(host=host,
                                            port=port,
                                            user=user,
@@ -800,16 +782,34 @@ class DataSource:
                 sql = f"USE {db}"
                 self.cursor.execute(sql)
                 self.con.commit()
+                # if cursor and connect created then create sqlalchemy engine for dataframe
+                self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
+                self.connection_type = f'db:mysql://{host}@{port}/{db}'
+                self.file_path = None
             except Exception as e:
-                print(f'{str(e)}, fall back to file system - NotImplemented')
-                raise e
-            # if cursor and connect created then create sqlalchemy engine for dataframe
-            self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
-            self.connection_type = f'mysql://{host}@{port}'
-            self.file_path = None
-        else:
-            # for unexpected cases
-            raise KeyError(f'invalid source type: {source_type}')
+                warnings.warn(f'{str(e)}, data source fall back to file system', RuntimeWarning)
+                source_type = 'file'
+
+        if source_type.lower() == 'file':
+            # set up file type and file location
+            if file_type is None:
+                file_type = 'fth'
+            if not isinstance(file_type, str):
+                raise TypeError(f'file type should be a string, got {type(file_type)} instead!')
+            file_type = file_type.lower()
+            if file_type not in AVAILABLE_DATA_FILE_TYPES:
+                raise KeyError(f'file type not recognized, supported file types are csv / hdf / feather')
+            if file_type == 'feather':
+                file_type = 'fth'
+            from qteasy import QT_ROOT_PATH
+            if file_loc is None:
+                file_loc = 'qteasy/data/'
+            # if not self.file_exists(file_loc):
+            #     raise SystemError('specified file path does not exist')
+            self.file_path = QT_ROOT_PATH + file_loc
+            self.engine = None
+            self.source_type = 'file'
+            self.connection_type = f'file://{file_type}@{file_loc}'
 
     @property
     def tables(self):
@@ -825,6 +825,12 @@ class DataSource:
         tbl_struct = TABLE_SOURCE_MAPPING[table][0]
         df = pd.DataFrame(TABLE_STRUCTURES[tbl_struct])
         print(df)
+
+    def __repr__(self):
+        return self.connection_type
+
+    def __str__(self):
+        return f'DataSource Object: {self.__repr__()}'
 
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
@@ -1010,7 +1016,6 @@ class DataSource:
             raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
                                f'{sql} \nwith parameters (first 50 shown):\n{df_tuple[:50]}')
 
-    # 以下几个数据库操作函数用于操作数据库表，可用于优化表结构以提升查询速度，如修改数据格式并建立索引等
     def db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
 
@@ -1681,7 +1686,7 @@ class DataSource:
                 table='stock_indicator, stock_daily, income, stock_adj_factor'
                 table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']
             除了直接给出表名称以外，还可以通过表类型指明多个表，可以同时输入多个类型的表：
-                - 'all'     : 表示所有的表
+                - 'all'     : 所有的表
                 - 'cal'     : 交易日历表
                 - 'basics'  : 所有的基础信息表
                 - 'adj'     : 所有的复权因子表
@@ -1736,30 +1741,24 @@ class DataSource:
         :return:
         """
         # 1 参数合法性检查
-        if tables is not None:
-            valid_table_values = list(TABLE_SOURCE_MAPPING.keys()) + TABLE_USAGES + ['all']
-            if not isinstance(tables, (str, list)):
-                raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
-            if isinstance(tables, str):
-                if len(tables) == 0:
-                    raise KeyError(f'invalid input, tables can not be empty string')
-                tables = str_to_list(tables)
-            if not all(isinstance(item, str) for item in tables):
-                raise TypeError(f'some items in tables list are not string: '
-                                f'{[item for item in tables if not isinstance(item, str)]}')
-            if not all(item.lower() in valid_table_values for item in tables):
-                raise KeyError(f'some items in tables list are not valid: '
-                               f'{[item for item in tables if item not in valid_table_values]}')
-        else:  # tables is None
+        if (tables is None) and (dtypes is None):
+            raise KeyError(f'tables and dtypes can not both be None.')
+        if tables is None:
             tables = []
-            if dtypes is None:
-                raise ValueError(f'dtype or tables should be given, got both None')
-            if not isinstance(dtypes, (str, list)):
-                raise TypeError(f'dtypes should be a list of a string, got {type(dtypes)} instead.')
-            if isinstance(dtypes, str):
-                if len(dtypes) == 0:
-                    raise KeyError(f'invalid input, tables can not be empty string')
-                dtypes = str_to_list(dtypes)
+        if dtypes is None:
+            dtypes = []
+        valid_table_values = list(TABLE_SOURCE_MAPPING.keys()) + TABLE_USAGES + ['all']
+        if not isinstance(tables, (str, list)):
+            raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
+        if isinstance(tables, str):
+            tables = str_to_list(tables)
+        if not all(item.lower() in valid_table_values for item in tables):
+            raise KeyError(f'some items in tables list are not valid: '
+                           f'{[item for item in tables if item not in valid_table_values]}')
+        if not isinstance(dtypes, (str, list)):
+            raise TypeError(f'dtypes should be a list of a string, got {type(dtypes)} instead.')
+        if isinstance(dtypes, str):
+            dtypes = str_to_list(dtypes)
 
         if code_range is not None:
             if not isinstance(code_range, (str, list)):
@@ -1802,6 +1801,7 @@ class DataSource:
         for table in tables_to_refill:
             cur_table_info = table_map.loc[table]
             # 3 生成数据下载参数序列
+            print(f'refilling data for table: {table}\nCreating parameter list:')
             arg_names = str_to_list(cur_table_info.fill_arg_name)
             if (len(arg_names) > 1) or (len(arg_names) <= 0):
                 print(f'warning: currently only one data coverage fill argument is supported, got '
@@ -1833,6 +1833,9 @@ class DataSource:
             else:
                 arg_coverage = []
 
+            # debug
+            print(f'following parameters are covered:\n{arg_coverage}' )
+
             # 处理数据下载参数序列，剔除已经存在的数据key
             if self.table_data_exists(table) and merge_type.lower() == 'ignore':
                 # TODO: 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
@@ -1846,29 +1849,29 @@ class DataSource:
             completed = 0
             total = len(arg_coverage)
             st = time.time()
-            if parallel:
-                proc_pool = ProcessPoolExecutor(max_workers=process_count)
-                futures = {proc_pool.submit(acquire_data, table, **kw): kw
-                           for kw in all_kwargs}
-                for f in as_completed(futures):
-                    df = f.result()
-                    completed += 1
-                    self.update_table_data(table, df)
-                    time_elapsed = time.time() - st
-                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                  estimation=True, short_form=False)
-                    time_passed = time_str_format(time_elapsed, short_form=True)
-                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
-            else:
-                for kwargs in all_kwargs:
-                    df = self.acquire_table_data(table, **kwargs)
-                    completed += 1
-                    self.update_table_data(table, df)
-                    time_elapsed = time.time() - st
-                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                  estimation=True, short_form=False)
-                    time_passed = time_str_format(time_elapsed, short_form=True)
-                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+            # if parallel:
+            #     proc_pool = ProcessPoolExecutor(max_workers=process_count)
+            #     futures = {proc_pool.submit(acquire_data, table, **kw): kw
+            #                for kw in all_kwargs}
+            #     for f in as_completed(futures):
+            #         df = f.result()
+            #         completed += 1
+            #         self.update_table_data(table, df)
+            #         time_elapsed = time.time() - st
+            #         time_remain = time_str_format((total - completed) * time_elapsed / completed,
+            #                                       estimation=True, short_form=False)
+            #         time_passed = time_str_format(time_elapsed, short_form=True)
+            #         progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+            # else:
+            #     for kwargs in all_kwargs:
+            #         df = self.acquire_table_data(table, **kwargs)
+            #         completed += 1
+            #         self.update_table_data(table, df)
+            #         time_elapsed = time.time() - st
+            #         time_remain = time_str_format((total - completed) * time_elapsed / completed,
+            #                                       estimation=True, short_form=False)
+            #         time_passed = time_str_format(time_elapsed, short_form=True)
+            #         progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
             print('task completed!')
 
 
