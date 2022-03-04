@@ -11631,16 +11631,14 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments2(self):
-        ds = DataSource(source_type='db',
-                        host='localhost',
-                        user='jackie',
-                        password='iama007',
-                        db='ts_db')
-        ds.refill_local_source(tables='stock_daily, stock_adj_factor',
+        ds = QT_DATA_SOURCE
+        ds.refill_local_source(tables='stock_daily, stock_adj_factor, report',
                                dtypes='open, close, PE, PE_TTM',
-                               freqs='D',
+                               freqs='D, 30Min, w, Q',
+                               asset_types='E,IDX',
                                start_date='20000101',
                                end_date='20000201',
+                               code_range='000001:000300',
                                parallel=False)
 
 

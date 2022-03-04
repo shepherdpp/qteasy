@@ -33,124 +33,131 @@ DATA_MAPPING_TABLE = []
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
 # comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
-TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp']
+TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report']
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                                'fill_arg_type', 'arg_rng', 'arg_constraints']
+                                'fill_arg_type', 'arg_rng', 'arg_trade_day_only', 'arg_allow_start_end']
 TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
-         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', ''],
+         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', ''],
 
     'stock_basic':
-        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', ''],
+        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', ''],
 
     'stock_names':
-        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'shares', 'table_index', 'stock_basic', ''],
+        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'shares', 'table_index', 'stock_basic', '',
+         ''],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none',  'index_basic', 'market', 'list',
-         'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', ''],
+         'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', ''],
 
     'fund_basic':
-        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none',  'fund_basic', 'market', 'list', 'E,O', ''],
+        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none',  'fund_basic', 'market', 'list', 'E,O', '', ''],
 
     'future_basic':
         ['future_basic', '期货基本信息', 'basics', 'FT', 'none', 'future_basic', 'exchange', 'list',
-         'CFFEX,DCE,CZCE,SHFE,INE', ''],
+         'CFFEX,DCE,CZCE,SHFE,INE', '', ''],
 
     'opt_basic':
         ['opt_basic', '期权基本信息', 'basics', 'OPT', 'none', 'options_basic', 'exchange', 'list',
-         'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', ''],
+         'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', ''],
 
     'stock_1min':
-        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'share', 'table_index', 'stock_basic', ''],
+        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
 
     'stock_5min':
-        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'share', 'table_index', 'stock_basic', ''],
+        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
 
     'stock_15min':
-        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'share', 'table_index', 'stock_basic', ''],
+        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
 
     'stock_30min':
-        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'share', 'table_index', 'stock_basic', ''],
+        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
 
     'stock_hour':
-        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'share', 'table_index', 'stock_basic', ''],
+        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
 
     'stock_daily':
-        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211', ''],
+        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211', 'Y', ''],
 
     'stock_weekly':
-        ['bars', '股票周线行情', 'data', 'E', 'w-Fri', 'weekly', 'trade_date', 'datetime', '19901221', ''],
+        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'datetime', '19901221', '', ''],
 
     'stock_monthly':
-        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211', ''],
+        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211', '', ''],
 
     'index_daily':
-        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'index', 'table_index', 'index_basic', ''],
+        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'index', 'table_index', 'index_basic', '', ''],
 
     'index_weekly':
-        ['bars', '指数周线行情', 'data', 'IDX', 'w-Fri', 'index_weekly', 'trade_date', 'datetime', '19910705', ''],
+        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705', '', ''],
 
     'index_monthly':
-        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', '19910731', ''],
+        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', '19910731', '', ''],
 
     'fund_daily':
-        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417', ''],
+        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417', '', ''],
 
     'fund_nav':
-        ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107', ''],
+        ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107', '',
+         ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'fund', 'table_index', 'fund_basic', ''],
+        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'fund', 'table_index', 'fund_basic', '', ''],
 
     'fund_manager':
-        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'fund', 'table_index', 'fund_basic', ''],
+        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'fund', 'table_index', 'fund_basic', '',
+         ''],
 
     'future_daily':
-        ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', ''],
+        ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
+         ''],
 
     'options_daily':
-        ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209', ''],
+        ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209', '',
+         ''],
 
     'stock_adj_factor':
-        ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', '19901219', ''],
+        ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', '19901219', '',
+         ''],
 
     'fund_adj_factor':
-        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'datetime', '19980407', ''],
+        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'datetime', '19980407', '', ''],
 
     'stock_indicator':
-        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', '19990101', ''],
+        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', '19990101', 'Y',
+         ''],
 
     'stock_indicator2':
         ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date', '19990101',
-         ''],
+         'Y', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
-         '20040102', ''],
+         '20040102', 'Y', ''],
 
     'index_weight':
-        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', ''],
+        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', ''],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', '', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', '', ''],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', ''],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', '', ''],
 
     'financial':
-        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', ''],
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', '', ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', '', ''],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', '', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -1777,23 +1784,31 @@ class DataSource:
                     tables_to_refill.add(item)
                 elif item in TABLE_USAGES:
                     tables_to_refill.update(
-                            table_map.loc[table_map.table_usage == item].index.to_list()
+                            table_map.loc[table_map.table_usage == item.lower()].index.to_list()
                     )
             for item in dtypes:
                 for tbl, structure in table_map.structure.iteritems():
-                    if item in TABLE_STRUCTURES[structure]['columns']:
+                    if item.lower() in TABLE_STRUCTURES[structure]['columns']:
                         tables_to_refill.add(tbl)
 
             if freqs is not None:
+                tables_to_keep = set()
                 for freq in str_to_list(freqs):
-                    tables_to_refill.difference_update(
-                            table_map.loc[table_map.freq == freq].index.to_list()
+                    tables_to_keep.update(
+                            table_map.loc[table_map.freq == freq.lower()].index.to_list()
                     )
+                tables_to_refill.intersection_update(
+                        tables_to_keep
+                )
             if asset_types is not None:
+                tables_to_keep = set()
                 for a_type in str_to_list(asset_types):
-                    tables_to_refill.difference_update(
-                            table_map.loc[table_map.asset_type == a_type].index.to_list()
+                    tables_to_keep.update(
+                            table_map.loc[table_map.asset_type == a_type.upper()].index.to_list()
                     )
+                tables_to_refill.intersection_update(
+                        tables_to_keep
+                )
         # debug
         print(f'following tables will be re-filled:\n{tables_to_refill}')
 
@@ -1812,29 +1827,37 @@ class DataSource:
             freq = cur_table_info.freq
 
             # 开始生成所有的参数，参数的生成取决于fill_arg_type
+            if start_date is None:
+                start_date = cur_table_info.arg_rng
+            start_date = pd.to_datetime(start_date).strftime('%Y%m%d')
+            if end_date is None:
+                end_date = 'today'
+            end_date = pd.to_datetime(end_date).strftime('%Y%m%d')
+            additional_args = {}
             if (fill_type == 'datetime') or (fill_type == 'trade_date'):
                 # 根据start_date和end_date生成数据获取区间
-                if start_date is None:
-                    start_date = cur_table_info.arg_rng
-                start_date = pd.to_datetime(start_date).strftime('%Y%m%d')
-                if end_date is None:
-                    end_date = 'today'
-                end_date = pd.to_datetime(end_date).strftime('%Y%m%d')
                 arg_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
+                if freq == 'w':
+                    freq = 'w-Fri'
                 if (freq == 'm') or (freq == 'w-Fri'):
                     # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
                     arg_coverage = map(nearest_market_trade_day, arg_coverage)
+                # TODO: if fill_type == trade_date, should remove all none trade dates
+                if (fill_type == 'trade_date') and (freq == 'd'):
+                    pass # raise NotImplementedError
                 arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
             elif fill_type == 'list':
                 arg_coverage = str_to_list(cur_table_info.arg_rng)
+                # TODO: only if additional argument is allowed
+                additional_args = {'start_date': start_date, 'end_date': end_date}
             elif fill_type == 'table_index':
                 source_table = self.read_table_data(cur_table_info.arg_rng)
                 arg_coverage = source_table.index.to_list()
+                # TODO: only if additional argument is allowed
+                additional_args = {'start_date': start_date, 'end_date': end_date}
+                # TODO: filter code by range
             else:
                 arg_coverage = []
-
-            # debug
-            print(f'following parameters are covered:\n{arg_coverage}' )
 
             # 处理数据下载参数序列，剔除已经存在的数据key
             if self.table_data_exists(table) and merge_type.lower() == 'ignore':
@@ -1843,7 +1866,12 @@ class DataSource:
                 # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
             # 生成所有的参数
             arg_name = arg_names[0]
-            all_kwargs = ({arg_name: val} for val in arg_coverage)
+            all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage)
+            # debug
+            print(f'following parameters will be passed to download api:')
+            for i in range(5):
+                print(next(all_kwargs), end=', ')
+            print('...')
 
             # 开始循环下载并更新数据
             completed = 0
