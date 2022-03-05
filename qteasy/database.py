@@ -17,7 +17,7 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
-from .utilfuncs import str_to_list, regulate_date_format, TIME_FREQ_STRINGS
+from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
 from .history import stack_dataframes
 from .tsfuncs import acquire_data
 
@@ -35,7 +35,7 @@ DATA_MAPPING_TABLE = []
 # comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
 TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report']
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                                'fill_arg_type', 'arg_rng', 'arg_trade_day_only', 'arg_allow_start_end']
+                                'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end']
 TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
@@ -65,51 +65,52 @@ TABLE_SOURCE_MAPPING = {
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', ''],
 
     'stock_1min':
-        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
+        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_5min':
-        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
+        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_15min':
-        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
+        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_30min':
-        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
+        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_hour':
-        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'share', 'table_index', 'stock_basic', '', ''],
+        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_daily':
-        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'datetime', '19901211', 'Y', ''],
+        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', 'y'],
 
     'stock_weekly':
-        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'datetime', '19901221', '', ''],
+        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'trade_date', '19901221', '', 'y'],
 
     'stock_monthly':
-        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'datetime', '19901211', '', ''],
+        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', 'y'],
 
     'index_daily':
-        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'index', 'table_index', 'index_basic', '', ''],
+        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'index', 'table_index', 'index_basic', 'SH,CSI,SZ',
+         'y'],
 
     'index_weekly':
-        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'datetime', '19910705', '', ''],
+        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'trade_date', '19910705', '', ''],
 
     'index_monthly':
-        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'datetime', '19910731', '', ''],
+        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', ''],
 
     'fund_daily':
-        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'datetime', '19980417', '', ''],
+        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'trade_date', '19980417', '', ''],
 
     'fund_nav':
         ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107', '',
          ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'fund', 'table_index', 'fund_basic', '', ''],
+        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'fund', 'table_index', 'fund_basic', '', 'y'],
 
     'fund_manager':
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'fund', 'table_index', 'fund_basic', '',
-         ''],
+         'y'],
 
     'future_daily':
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
@@ -120,7 +121,7 @@ TABLE_SOURCE_MAPPING = {
          ''],
 
     'stock_adj_factor':
-        ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'datetime', '19901219', '',
+        ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'trade_date', '19901219', '',
          ''],
 
     'fund_adj_factor':
@@ -142,22 +143,23 @@ TABLE_SOURCE_MAPPING = {
         ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', '', ''],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', '', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', '', ''],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'financial':
-        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', '', ''],
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', '',
+         'y'],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', '', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', '', 'y'],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', '', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', '', 'y'],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -734,13 +736,13 @@ class DataSource:
 
     def __init__(self,
                  source_type: str,
-                 file_type: str = None,
-                 file_loc: str = None,
-                 host: str = None,
-                 port: int = None,
+                 file_type: str = 'fth',
+                 file_loc: str = 'qteasy/data/',
+                 host: str = 'localhost',
+                 port: int = 3306,
                  user: str = None,
                  password: str = None,
-                 db: str = None):
+                 db: str = 'qt_db'):
         """ 创建一个DataSource 对象，确定本地数据存储方式，
             如果存储方式是文件，确定文件存储位置、文件类型
             如果存储方式是数据库，建立数据库的连接
@@ -762,14 +764,8 @@ class DataSource:
 
         if source_type.lower() in ['db', 'database']:
             # set up connection to the data base
-            if host is None:
-                host = 'localhost'
-            if port is None:
-                port = 3306
             if not isinstance(port, int):
                 raise TypeError(f'port should be of type int')
-            if db is None:
-                db = 'qt_db'
             if user is None:
                 raise ValueError(f'Missing user name for database connection')
             if password is None:
@@ -792,6 +788,7 @@ class DataSource:
                 # if cursor and connect created then create sqlalchemy engine for dataframe
                 self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
                 self.connection_type = f'db:mysql://{host}@{port}/{db}'
+                self.file_type = None
                 self.file_path = None
             except Exception as e:
                 warnings.warn(f'{str(e)}, data source fall back to file system', RuntimeWarning)
@@ -799,8 +796,6 @@ class DataSource:
 
         if source_type.lower() == 'file':
             # set up file type and file location
-            if file_type is None:
-                file_type = 'fth'
             if not isinstance(file_type, str):
                 raise TypeError(f'file type should be a string, got {type(file_type)} instead!')
             file_type = file_type.lower()
@@ -809,14 +804,13 @@ class DataSource:
             if file_type == 'feather':
                 file_type = 'fth'
             from qteasy import QT_ROOT_PATH
-            if file_loc is None:
-                file_loc = 'qteasy/data/'
             # if not self.file_exists(file_loc):
             #     raise SystemError('specified file path does not exist')
             self.file_path = QT_ROOT_PATH + file_loc
             self.engine = None
             self.source_type = 'file'
-            self.connection_type = f'file://{file_type}@{file_loc}'
+            self.file_type = file_type
+            self.connection_type = f'file://{file_type}@qt_root/{file_loc}'
 
     @property
     def tables(self):
@@ -851,7 +845,7 @@ class DataSource:
             raise RuntimeError('can not check file system while source type is "db"')
         if not isinstance(file_name, str):
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        file_path_name = self.file_path + file_name + '.' + self.connection_type
+        file_path_name = self.file_path + file_name + '.' + self.file_type
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
@@ -866,14 +860,14 @@ class DataSource:
             raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
 
         file_path_name = self.file_path + file_name
-        if self.connection_type == 'csv':
+        if self.file_type == 'csv':
             df.to_csv(file_path_name + '.csv')
-        elif self.connection_type == 'fth':
+        elif self.file_type == 'fth':
             df.reset_index().to_feather(file_path_name + '.fth')
-        elif self.connection_type == 'hdf':
+        elif self.file_type == 'hdf':
             df.to_hdf(file_path_name + '.hdf', key='df')
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.connection_type}')
+            raise TypeError(f'Invalid file type: {self.file_type}')
         return file_path_name
 
     def read_file(self, file_name, primary_key, pk_dtypes):
@@ -894,16 +888,16 @@ class DataSource:
             return pd.DataFrame()
 
         file_path_name = self.file_path + file_name
-        if self.connection_type == 'csv':
+        if self.file_type == 'csv':
             df = pd.read_csv(file_path_name + '.csv')
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
-        elif self.connection_type == 'hdf':
+        elif self.file_type == 'hdf':
             df = pd.read_hdf(file_path_name + '.hdf', 'df')
-        elif self.connection_type == 'fth':
+        elif self.file_type == 'fth':
             df = pd.read_feather(file_path_name + '.fth')
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
-            raise TypeError(f'Invalid file type: {self.connection_type}')
+            raise TypeError(f'Invalid file type: {self.file_type}')
         return df
 
     def drop_file(self, file_name):
@@ -915,7 +909,7 @@ class DataSource:
         """
         import os
         if self.file_exists(file_name):
-            file_path_name = self.file_path + file_name + '.' + self.connection_type
+            file_path_name = self.file_path + file_name + '.' + self.file_type
             os.remove(file_path_name)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
@@ -1682,7 +1676,7 @@ class DataSource:
                             start_date=None,
                             end_date=None,
                             code_range=None,
-                            merge_type='update',
+                            merge_type='ignore',
                             parallel=True,
                             process_count=None):
         """ 补充本地数据，手动或自动运行补充本地数据库
@@ -1734,8 +1728,8 @@ class DataSource:
 
         :param merge_type: str
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
-            - 'update' 默认值，使用获取的数据更新本地数据的重复部分
-            - 'ignore' 忽略获取数据中的重复部分
+            - 'ignore' 默认值，不下载重复的数据
+            - 'update' 下载并更新本地数据的重复部分
 
         :param parallel: Bool
             是否启用多线程下载数据
@@ -1767,9 +1761,17 @@ class DataSource:
         if isinstance(dtypes, str):
             dtypes = str_to_list(dtypes)
 
+        code_start = None
+        code_end = None
         if code_range is not None:
             if not isinstance(code_range, (str, list)):
                 raise TypeError(f'code_range should be a string or list, got {type(code_range)} instead.')
+            if isinstance(code_range, str):
+                if len(str_to_list(code_range, ':')) == 2:
+                    code_start, code_end = str_to_list(code_range, ':')
+                    code_range = None
+                else:
+                    code_range = str_to_list(code_range, ',')
 
         # 2 生成需要处理的数据表清单 tables
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
@@ -1809,53 +1811,69 @@ class DataSource:
                 tables_to_refill.intersection_update(
                         tables_to_keep
                 )
-        # debug
-        print(f'following tables will be re-filled:\n{tables_to_refill}')
+
+            dependent_tables = set()
+            for table in tables_to_refill:
+                cur_table = table_map.loc[table]
+                fill_type = cur_table.fill_arg_type
+                if fill_type == 'trade_date':
+                    dependent_tables.add('trade_calendar')
+                elif fill_type == 'table_index':
+                    dependent_tables.add(cur_table.arg_rng)
+            tables_to_refill.update(dependent_tables)
 
         import time
-        for table in tables_to_refill:
+        for table in table_map.index:
+            if table not in tables_to_refill:
+                continue
             cur_table_info = table_map.loc[table]
             # 3 生成数据下载参数序列
             print(f'refilling data for table: {table}\nCreating parameter list:')
-            arg_names = str_to_list(cur_table_info.fill_arg_name)
-            if (len(arg_names) > 1) or (len(arg_names) <= 0):
-                print(f'warning: currently only one data coverage fill argument is supported, got '
-                      f'{len(arg_names)} arguments are defined for table {table}, will skip this '
-                      f'table')
-                continue
+            arg_name = cur_table_info.fill_arg_name
             fill_type = cur_table_info.fill_arg_type
             freq = cur_table_info.freq
 
             # 开始生成所有的参数，参数的生成取决于fill_arg_type
-            if start_date is None:
-                start_date = cur_table_info.arg_rng
-            start_date = pd.to_datetime(start_date).strftime('%Y%m%d')
-            if end_date is None:
-                end_date = 'today'
-            end_date = pd.to_datetime(end_date).strftime('%Y%m%d')
+            if fill_type in ['datetime', 'trade_date']:
+                if start_date is None:
+                    start = cur_table_info.arg_rng
+                else:
+                    start = start_date
+                start = pd.to_datetime(start).strftime('%Y%m%d')
+                if end_date is None:
+                    end = 'today'
+                else:
+                    end = end_date
+                end = pd.to_datetime(end).strftime('%Y%m%d')
+            allow_start_end = (cur_table_info.arg_allow_start_end.lower() == 'y')
             additional_args = {}
-            if (fill_type == 'datetime') or (fill_type == 'trade_date'):
+            if fill_type in ['datetime', 'trade_date']:
                 # 根据start_date和end_date生成数据获取区间
-                arg_coverage = pd.date_range(start=start_date, end=end_date, freq=freq)
-                if freq == 'w':
-                    freq = 'w-Fri'
-                if (freq == 'm') or (freq == 'w-Fri'):
-                    # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
-                    arg_coverage = map(nearest_market_trade_day, arg_coverage)
-                # TODO: if fill_type == trade_date, should remove all none trade dates
-                if (fill_type == 'trade_date') and (freq == 'd'):
-                    pass # raise NotImplementedError
+                arg_coverage = pd.date_range(start=start, end=end, freq=freq)
+
+                if fill_type == 'trade_date':
+                    if freq.lower() in ['m', 'w', 'w-Fri']:
+                        # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
+                        arg_coverage = map(nearest_market_trade_day, arg_coverage)
+                    if freq == 'd':
+                        arg_coverage = (date for date in arg_coverage if not is_market_trade_day(date))
                 arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
             elif fill_type == 'list':
                 arg_coverage = str_to_list(cur_table_info.arg_rng)
-                # TODO: only if additional argument is allowed
-                additional_args = {'start_date': start_date, 'end_date': end_date}
+                if allow_start_end:
+                    additional_args = {'start_date': start, 'end_date': end}
             elif fill_type == 'table_index':
+                suffix = str_to_list(cur_table_info.arg_allowed_code_suffix)
                 source_table = self.read_table_data(cur_table_info.arg_rng)
                 arg_coverage = source_table.index.to_list()
-                # TODO: only if additional argument is allowed
-                additional_args = {'start_date': start_date, 'end_date': end_date}
-                # TODO: filter code by range
+                if code_start is not None:
+                    arg_coverage = (code for code in arg_coverage if (code_start <= code.split('.')[0] <= code_end))
+                if code_range is not None:
+                    arg_coverage = (code for code in arg_coverage if code.split('.')[0] in code_range)
+                if suffix:
+                    arg_coverage = (code for code in arg_coverage if code.split('.')[1] in suffix)
+                if allow_start_end:
+                    additional_args = {'start_date': start, 'end_date': end}
             else:
                 arg_coverage = []
 
@@ -1865,41 +1883,35 @@ class DataSource:
                 pass
                 # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
             # 生成所有的参数
-            arg_name = arg_names[0]
             all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage)
-            # debug
-            print(f'following parameters will be passed to download api:')
-            for i in range(5):
-                print(next(all_kwargs), end=', ')
-            print('...')
 
             # 开始循环下载并更新数据
             completed = 0
-            total = len(arg_coverage)
+            total = len(list(arg_coverage))
             st = time.time()
-            # if parallel:
-            #     proc_pool = ProcessPoolExecutor(max_workers=process_count)
-            #     futures = {proc_pool.submit(acquire_data, table, **kw): kw
-            #                for kw in all_kwargs}
-            #     for f in as_completed(futures):
-            #         df = f.result()
-            #         completed += 1
-            #         self.update_table_data(table, df)
-            #         time_elapsed = time.time() - st
-            #         time_remain = time_str_format((total - completed) * time_elapsed / completed,
-            #                                       estimation=True, short_form=False)
-            #         time_passed = time_str_format(time_elapsed, short_form=True)
-            #         progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
-            # else:
-            #     for kwargs in all_kwargs:
-            #         df = self.acquire_table_data(table, **kwargs)
-            #         completed += 1
-            #         self.update_table_data(table, df)
-            #         time_elapsed = time.time() - st
-            #         time_remain = time_str_format((total - completed) * time_elapsed / completed,
-            #                                       estimation=True, short_form=False)
-            #         time_passed = time_str_format(time_elapsed, short_form=True)
-            #         progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+            if parallel:
+                proc_pool = ProcessPoolExecutor(max_workers=process_count)
+                futures = {proc_pool.submit(acquire_data, table, **kw): kw
+                           for kw in all_kwargs}
+                for f in as_completed(futures):
+                    df = f.result()
+                    completed += 1
+                    self.update_table_data(table, df)
+                    time_elapsed = time.time() - st
+                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                  estimation=True, short_form=False)
+                    time_passed = time_str_format(time_elapsed, short_form=True)
+                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+            else:
+                for kwargs in all_kwargs:
+                    df = self.acquire_table_data(table, 'tushare', **kwargs)
+                    completed += 1
+                    self.update_table_data(table, df)
+                    time_elapsed = time.time() - st
+                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                  estimation=True, short_form=False)
+                    time_passed = time_str_format(time_elapsed, short_form=True)
+                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
             print('task completed!')
 
 

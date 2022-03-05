@@ -11631,19 +11631,22 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments2(self):
-        ds = QT_DATA_SOURCE
-        ds.refill_local_source(tables='stock_daily, stock_adj_factor, report',
-                               dtypes='open, close, PE, PE_TTM',
-                               freqs='D, 30Min, w, Q',
+        ds = qt.DataSource('file')
+        print(ds)
+        ds.refill_local_source(tables='stock_daily',
+                               dtypes=None,
+                               freqs=None,
                                asset_types='E,IDX',
-                               start_date='20000101',
-                               end_date='20000201',
-                               code_range='000001:000300',
+                               start_date='20220101',
+                               end_date=None,
+                               code_range='000001:000005',
                                parallel=False)
+        df = ds.read_table_data('stock_daily')
+        print(df)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
-class TestDataBase(unittest.TestCase):
+class TestDataSource(unittest.TestCase):
     """test local historical file database management methods"""
 
     def setUp(self):
@@ -11795,21 +11798,24 @@ class TestDataBase(unittest.TestCase):
     def test_datasource_creation(self):
         """ test creation of all kinds of data sources"""
         self.assertIsInstance(self.ds_db, DataSource)
-        self.assertEqual(self.ds_db.connection_type, 'mysql://localhost@3306')
+        self.assertEqual(self.ds_db.connection_type, 'db:mysql://localhost@3306/test_db')
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)
-        self.assertEqual(self.ds_csv.connection_type, 'csv')
+        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_csv.file_type, 'csv')
         self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
-        self.assertEqual(self.ds_hdf.connection_type, 'hdf')
+        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_hdf.file_type, 'hdf')
         self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
-        self.assertEqual(self.ds_fth.connection_type, 'fth')
+        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_fth.file_type, 'fth')
         self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_fth.engine, None)
 
