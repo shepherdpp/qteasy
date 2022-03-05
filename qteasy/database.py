@@ -40,7 +40,7 @@ TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
-         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', ''],
+         'SSE,SZSE', '', ''],  # 'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE'
 
     'stock_basic':
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', ''],
@@ -1678,7 +1678,8 @@ class DataSource:
                             code_range=None,
                             merge_type='ignore',
                             parallel=True,
-                            process_count=None):
+                            process_count=None,
+                            trunk_size=100):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
         :param tables:
@@ -1738,6 +1739,10 @@ class DataSource:
 
         :param process_count: int
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+
+        :param trunk_size: int
+            保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
+            再批量保存到本地，trunk_size即批量，默认值100
 
         :return:
         """
@@ -1856,7 +1861,7 @@ class DataSource:
                         # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
                         arg_coverage = map(nearest_market_trade_day, arg_coverage)
                     if freq == 'd':
-                        arg_coverage = (date for date in arg_coverage if not is_market_trade_day(date))
+                        arg_coverage = (date for date in arg_coverage if is_market_trade_day(date))
                 arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
             elif fill_type == 'list':
                 arg_coverage = str_to_list(cur_table_info.arg_rng)
@@ -1882,13 +1887,14 @@ class DataSource:
                 # TODO: 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
                 pass
                 # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
-            # 生成所有的参数
+
+            # 生成所有的参数, 开始循环下载并更新数据
             all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage)
 
-            # 开始循环下载并更新数据
             completed = 0
             total = len(list(arg_coverage))
             st = time.time()
+            dnld_data = pd.DataFrame()
             if parallel:
                 proc_pool = ProcessPoolExecutor(max_workers=process_count)
                 futures = {proc_pool.submit(acquire_data, table, **kw): kw
@@ -1896,23 +1902,35 @@ class DataSource:
                 for f in as_completed(futures):
                     df = f.result()
                     completed += 1
-                    self.update_table_data(table, df)
+                    if completed % trunk_size:
+                        dnld_data = pd.concat([dnld_data, df])
+                    else:
+                        self.update_table_data(table, dnld_data)
+                        dnld_data = pd.DataFrame()
                     time_elapsed = time.time() - st
                     time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                   estimation=True, short_form=False)
                     time_passed = time_str_format(time_elapsed, short_form=True)
                     progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+
+                self.update_table_data(table, dnld_data)
             else:
                 for kwargs in all_kwargs:
                     df = self.acquire_table_data(table, 'tushare', **kwargs)
                     completed += 1
-                    self.update_table_data(table, df)
+                    if completed % trunk_size:
+                        dnld_data = pd.concat([dnld_data, df])
+                    else:
+                        self.update_table_data(table, dnld_data)
+                        dnld_data = pd.DataFrame()
                     time_elapsed = time.time() - st
                     time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                   estimation=True, short_form=False)
                     time_passed = time_str_format(time_elapsed, short_form=True)
                     progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
-            print('task completed!')
+
+                self.update_table_data(table, dnld_data)
+            print('\ntask completed!')
 
 
 # 以下函数是通用df操作函数

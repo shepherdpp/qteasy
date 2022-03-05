@@ -11631,18 +11631,20 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments2(self):
-        ds = qt.DataSource('file')
-        print(ds)
-        ds.refill_local_source(tables='stock_daily',
-                               dtypes=None,
-                               freqs=None,
-                               asset_types='E,IDX',
-                               start_date='20220101',
-                               end_date=None,
-                               code_range='000001:000005',
-                               parallel=False)
-        df = ds.read_table_data('stock_daily')
-        print(df)
+        ds = qt.DataSource('db', user='jackie', password='iama007')
+        # ds = qt.DataSource('file')
+        # print(ds)
+        # ds.refill_local_source(tables='stock_daily',
+        #                        dtypes=None,
+        #                        freqs=None,
+        #                        asset_types='E,IDX',
+        #                        start_date='20220101',
+        #                        end_date=None,
+        #                        code_range='000001:000005',
+        #                        parallel=True)
+        # df = ds.read_table_data('stock_daily', start='20220201', end='20220215',
+        #                         shares='000001.SZ, 600000.SH, 000006.SZ, 871981.BJ')
+        # print(df)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
