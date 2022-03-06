@@ -32,7 +32,7 @@ DATA_MAPPING_TABLE = []
 
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
-# comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_data()函数的docstring
+# comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_source()函数的docstring
 TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report']
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end']
@@ -80,13 +80,13 @@ TABLE_SOURCE_MAPPING = {
         ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_daily':
-        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', 'y'],
+        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', ''],
 
     'stock_weekly':
-        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'trade_date', '19901221', '', 'y'],
+        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'trade_date', '19901221', '', ''],
 
     'stock_monthly':
-        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', 'y'],
+        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', ''],
 
     'index_daily':
         ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic', 'SH,CSI,SZ',
@@ -106,7 +106,7 @@ TABLE_SOURCE_MAPPING = {
          ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', 'y'],
+        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', ''],
 
     'fund_manager':
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic', '',
@@ -125,10 +125,10 @@ TABLE_SOURCE_MAPPING = {
          ''],
 
     'fund_adj_factor':
-        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'datetime', '19980407', '', ''],
+        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', ''],
 
     'stock_indicator':
-        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'datetime', '19990101', 'Y',
+        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', 'Y',
          ''],
 
     'stock_indicator2':
@@ -143,23 +143,24 @@ TABLE_SOURCE_MAPPING = {
         ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', ''],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
+         ''],
 
     'financial':
         ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', '',
-         'y'],
+         ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', ''],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -866,7 +867,7 @@ class DataSource:
             df.to_hdf(file_path_name + '.hdf', key='df')
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
-        return file_path_name
+        return len(df)
 
     def read_file(self, file_name, primary_key, pk_dtypes):
         """ open the file with name file_name and return the df
@@ -1860,7 +1861,7 @@ class DataSource:
                 continue
             cur_table_info = table_map.loc[table]
             # 3 生成数据下载参数序列
-            print(f'refilling data for table: {table}\nCreating parameter list:')
+            print(f'refilling data for table: {table}')
             arg_name = cur_table_info.fill_arg_name
             fill_type = cur_table_info.fill_arg_type
             freq = cur_table_info.freq
@@ -1892,7 +1893,7 @@ class DataSource:
             elif fill_type == 'list':
                 arg_coverage = str_to_list(cur_table_info.arg_rng)
                 if allow_start_end:
-                    additional_args = {'start_date': start, 'end_date': end}
+                    additional_args = {'start': start, 'end': end}
             elif fill_type == 'table_index':
                 suffix = str_to_list(cur_table_info.arg_allowed_code_suffix)
                 source_table = self.read_table_data(cur_table_info.arg_rng)
@@ -1904,7 +1905,7 @@ class DataSource:
                 if suffix:
                     arg_coverage = (code for code in arg_coverage if code.split('.')[1] in suffix)
                 if allow_start_end:
-                    additional_args = {'start_date': start, 'end_date': end}
+                    additional_args = {'start': start, 'end': end}
             else:
                 arg_coverage = []
 
@@ -1912,53 +1913,60 @@ class DataSource:
             if self.table_data_exists(table) and merge_type.lower() == 'ignore':
                 # 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
                 already_existed = self.get_table_data_coverage(table, arg_name)
-                print(f'already existed: \n{already_existed}')
                 arg_coverage = [arg for arg in arg_coverage if arg not in already_existed]
-                print(f'after removal\n{arg_coverage}')
 
             # 生成所有的参数, 开始循环下载并更新数据
             all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage)
 
             completed = 0
             total = len(list(arg_coverage))
+            total_written = 0
             st = time.time()
             dnld_data = pd.DataFrame()
-            if parallel:
-                proc_pool = ProcessPoolExecutor(max_workers=process_count)
-                futures = {proc_pool.submit(acquire_data, table, **kw): kw
-                           for kw in all_kwargs}
-                for f in as_completed(futures):
-                    df = f.result()
-                    completed += 1
-                    if completed % trunk_size:
-                        dnld_data = pd.concat([dnld_data, df])
-                    else:
-                        self.update_table_data(table, dnld_data)
-                        dnld_data = pd.DataFrame()
-                    time_elapsed = time.time() - st
-                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                  estimation=True, short_form=False)
-                    time_passed = time_str_format(time_elapsed, short_form=True)
-                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+            try:
+                if parallel:
+                    proc_pool = ProcessPoolExecutor(max_workers=process_count)
+                    futures = {proc_pool.submit(acquire_data, table, **kw): kw
+                               for kw in all_kwargs}
+                    for f in as_completed(futures):
+                        df = f.result()
+                        if completed % trunk_size:
+                            dnld_data = pd.concat([dnld_data, df])
+                        else:
+                            self.update_table_data(table, dnld_data)
+                            dnld_data = pd.DataFrame()
+                        completed += 1
+                        total_written += len(df)
+                        time_elapsed = time.time() - st
+                        time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                      estimation=True, short_form=False)
+                        time_passed = time_str_format(time_elapsed, short_form=True)
+                        progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
 
-                self.update_table_data(table, dnld_data)
-            else:
-                for kwargs in all_kwargs:
-                    df = self.acquire_table_data(table, 'tushare', **kwargs)
-                    completed += 1
-                    if completed % trunk_size:
-                        dnld_data = pd.concat([dnld_data, df])
-                    else:
-                        self.update_table_data(table, dnld_data)
-                        dnld_data = pd.DataFrame()
-                    time_elapsed = time.time() - st
-                    time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                  estimation=True, short_form=False)
-                    time_passed = time_str_format(time_elapsed, short_form=True)
-                    progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+                    self.update_table_data(table, dnld_data)
+                else:
+                    for kwargs in all_kwargs:
+                        df = self.acquire_table_data(table, 'tushare', **kwargs)
+                        if completed % trunk_size:
+                            dnld_data = pd.concat([dnld_data, df])
+                        else:
+                            self.update_table_data(table, dnld_data)
+                            dnld_data = pd.DataFrame()
+                        completed += 1
+                        total_written += len(df)  # TODO: total_written should be better calculated
+                        time_elapsed = time.time() - st
+                        time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                      estimation=True, short_form=False)
+                        time_passed = time_str_format(time_elapsed, short_form=True)
+                        progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
 
-                self.update_table_data(table, dnld_data)
-            print('\ntask completed!')
+                    self.update_table_data(table, dnld_data)
+                print(f'\ntasks completed! {completed} data acquired with {total} {arg_name} params '
+                      f'from {arg_coverage[0]} to {arg_coverage[-1]}'
+                      f'with {additional_args}\n'
+                      f'{total_written} rows of data written to {self}:\n')
+            except Exception as e:
+                print(f'\n{e}, process interrupted after {total_written} rows written, will proceed with next table!')
 
 
 # 以下函数是通用df操作函数
