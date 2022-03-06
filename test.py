@@ -12333,21 +12333,21 @@ class TestDataSource(unittest.TestCase):
 
     def test_download_update_table_data(self):
         """ test downloading data from tushare"""
-        tables_to_test = {'stock_daily':        {'share': None,
+        tables_to_test = {'stock_daily':        {'ts_code': None,
                                                  'trade_date': '20211112'},
-                          'stock_weekly':       {'share': None,
+                          'stock_weekly':       {'ts_code': None,
                                                  'trade_date': '20211008'},
-                          'stock_indicator':    {'shares': None,
+                          'stock_indicator':    {'ts_code': None,
                                                  'trade_date': '20211112'},
                           'trade_calendar':     {'exchange': 'SSE',
                                                  'start': '19910701',
                                                  'end': '19920701'}
                           }
-        tables_to_add = {'stock_daily':        {'share': None,
+        tables_to_add = {'stock_daily':        {'ts_code': None,
                                                 'trade_date': '20211115'},
-                         'stock_weekly':       {'share': None,
+                         'stock_weekly':       {'ts_code': None,
                                                 'trade_date': '20211015'},
-                         'stock_indicator':    {'shares': None,
+                         'stock_indicator':    {'ts_code': None,
                                                 'trade_date': '20211115'},
                          'trade_calendar':     {'exchange': 'SZSE',
                                                 'start': '19910701',

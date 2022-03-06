@@ -46,7 +46,7 @@ TABLE_SOURCE_MAPPING = {
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', ''],
 
     'stock_names':
-        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'shares', 'table_index', 'stock_basic', '',
+        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic', '',
          ''],
 
     'index_basic':
@@ -65,19 +65,19 @@ TABLE_SOURCE_MAPPING = {
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', ''],
 
     'stock_1min':
-        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_5min':
-        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_15min':
-        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_30min':
-        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_hour':
-        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_daily':
         ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', 'y'],
@@ -89,7 +89,7 @@ TABLE_SOURCE_MAPPING = {
         ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', 'y'],
 
     'index_daily':
-        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'index', 'table_index', 'index_basic', 'SH,CSI,SZ',
+        ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic', 'SH,CSI,SZ',
          'y'],
 
     'index_weekly':
@@ -106,10 +106,10 @@ TABLE_SOURCE_MAPPING = {
          ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'fund', 'table_index', 'fund_basic', '', 'y'],
+        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', 'y'],
 
     'fund_manager':
-        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'fund', 'table_index', 'fund_basic', '',
+        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic', '',
          'y'],
 
     'future_daily':
@@ -143,23 +143,23 @@ TABLE_SOURCE_MAPPING = {
         ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'financial':
-        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'share', 'table_index', 'stock_basic', '',
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', '',
          'y'],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'share', 'table_index', 'stock_basic', '', 'y'],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -945,7 +945,7 @@ class DataSource:
         :param date_like_pk:
             用于筛选日期的主键字段名，不同的表中字段名可能不同，用这个字段筛选需要的记录的时间段
             当这个参数给出时，必须给出start和end参数
-        :param start:  如果给出start同时又给出end，按照"WHERE date_like_pk BETWEEEN start AND end"的条件筛选
+        :param start:  如果给出start同时又给出end，按照"WHERE date_like_pk BETWEEN start AND end"的条件筛选
         :param end:    当没有给出start时，单独给出end无效
         :return:
             DataFrame，从数据库中读取的DataFrame
@@ -1517,16 +1517,14 @@ class DataSource:
         self._table_list.difference_update([table])
         return None
 
-    def get_table_data_coverage(self, table):
-        """ 获取本地数据表内容的覆盖范围，取出数据表的"fill_arg_name"列中的去重值并返回
+    def get_table_data_coverage(self, table, column):
+        """ 获取本地数据表内容的覆盖范围，取出数据表的"column"列中的去重值并返回
 
         :param table: 数据表的名称
+        :param column: 需要去重并返回的数据列
         :return:
             List, 代表数据覆盖范围的列表
         """
-        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        column = table_map.loc[table].fill_arg_name
         if self.source_type == 'db':
             return self.get_db_table_coverage(table, column)
         elif self.source_type == 'file':
@@ -1912,8 +1910,8 @@ class DataSource:
 
             # 处理数据下载参数序列，剔除已经存在的数据key
             if self.table_data_exists(table) and merge_type.lower() == 'ignore':
-                # TODO: 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
-                already_existed = self.get_table_data_coverage(table)
+                # 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
+                already_existed = self.get_table_data_coverage(table, arg_name)
                 print(f'already existed: \n{already_existed}')
                 arg_coverage = [arg for arg in arg_coverage if arg not in already_existed]
                 print(f'after removal\n{arg_coverage}')

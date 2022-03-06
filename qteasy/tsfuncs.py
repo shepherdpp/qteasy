@@ -103,12 +103,12 @@ def trade_calendar(exchange: str = 'SSE',
 
 
 @retry(Exception)
-def name_change(shares: str = None,
+def name_change(ts_code: str = None,
                 start: str = None,
                 end: str = None):
     """ 历史名称变更记录
 
-    :param shares:
+    :param ts_code:
     :param start:
     :param end:
     :return: pd.DataFrame
@@ -134,7 +134,7 @@ def name_change(shares: str = None,
     """
     fields = 'ts_code,start_date,name,end_date,ann_date,change_reason'
     pro = ts.pro_api()
-    return pro.namechange(ts_code=shares,
+    return pro.namechange(ts_code=ts_code,
                           start_date=start,
                           end_date=end,
                           fields=fields)
@@ -200,12 +200,12 @@ def new_share(start: str = None,
 
 
 @retry(Exception)
-def stock_company(shares: str = None,
+def stock_company(ts_code: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:
     """
 
-    :param shares: str, 股票代码
+    :param ts_code: str, 股票代码
     :param exchange: str, 交易所代码 ，SSE上交所 SZSE深交所
     :param fields: str, 逗号分隔的字段名称字符串，可选字段包括输出参数中的任意组合
     :return: pd.DataFrame
@@ -246,249 +246,249 @@ def stock_company(shares: str = None,
     if fields is None:
         fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
     pro = ts.pro_api()
-    return pro.stock_company(ts_code=shares, exchange=exchange, fields=fields)
+    return pro.stock_company(ts_code=ts_code, exchange=exchange, fields=fields)
 
 
 # Bar price data
 # ==================
 @retry(Exception, mute=True)
-def daily_basic(shares: object = None,
+def daily_basic(ts_code: object = None,
                 trade_date: object = None,
                 start: object = None,
                 end: object = None) -> pd.DataFrame:
     """ tushare function wrapper: """
     pro = ts.pro_api()
-    return pro.daily_basic(ts_code=shares,
+    return pro.daily_basic(ts_code=ts_code,
                            trade_date=trade_date,
                            start_date=start,
                            end_date=end)
 
 
 @retry(Exception, mute=True)
-def daily_basic2(shares: object = None,
+def daily_basic2(ts_code: object = None,
                  trade_date: object = None,
                  start: object = None,
                  end: object = None) -> pd.DataFrame:
     """ tushare function wrapper: """
     pro = ts.pro_api()
-    return pro.bak_daily(ts_code=shares,
+    return pro.bak_daily(ts_code=ts_code,
                          trade_date=trade_date,
                          start_date=start,
                          end_date=end)
 
 
 @retry(Exception, mute=True)
-def index_daily_basic(shares: object = None,
+def index_daily_basic(ts_code: object = None,
                       trade_date: object = None,
                       start: object = None,
                       end: object = None) -> pd.DataFrame:
     """ tushare function wrapper: """
     pro = ts.pro_api()
-    return pro.index_dailybasic(ts_code=shares,
+    return pro.index_dailybasic(ts_code=ts_code,
                                 trade_date=trade_date,
                                 start_date=start,
                                 end_date=end)
 
 
 @retry(Exception, mute=True)
-def mins(share: object = None,
+def mins(ts_code: object = None,
          start=None,
          end=None,
          freq=None):
     # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，所以必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=share, start_date=start, end_date=end, freq=freq)
+    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq=freq)
 
 
 @retry(Exception, mute=True)
-def daily(share=None,
+def daily(ts_code=None,
           trade_date=None,
           start=None,
           end=None):
     """
 
-    :param share:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.daily(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def weekly(share=None,
+def weekly(ts_code=None,
            trade_date=None,
            start=None,
            end=None):
     """
 
-    :param share:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.weekly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def monthly(share=None,
+def monthly(ts_code=None,
             trade_date=None,
             start=None,
             end=None):
     """
 
-    :param share:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.monthly(ts_code=share, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def index_daily(index=None,
+def index_daily(ts_code=None,
                 trade_date=None,
                 start=None,
                 end=None):
     """
 
-    :param index:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.index_daily(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.index_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def index_weekly(index=None,
+def index_weekly(ts_code=None,
                  trade_date=None,
                  start=None,
                  end=None):
     """
 
-    :param index:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.index_weekly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.index_weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def index_monthly(index=None,
+def index_monthly(ts_code=None,
                   trade_date=None,
                   start=None,
                   end=None):
     """
 
-    :param index:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.index_monthly(ts_code=index, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.index_monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def fund_daily(fund=None,
+def fund_daily(ts_code=None,
                trade_date=None,
                start=None,
                end=None):
     """
 
-    :param fund:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_daily(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.fund_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def adj_factors(shares=None,
+def adj_factors(ts_code=None,
                 trade_date=None,
                 start=None,
                 end=None):
     """
 
-    :param shares:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.adj_factor(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.adj_factor(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def fund_adj(shares=None,
+def fund_adj(ts_code=None,
              trade_date=None,
              start=None,
              end=None):
     """
 
-    :param shares:
+    :param ts_code:
     :param trade_date:
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_adj(ts_code=shares, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.fund_adj(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def fund_share(fund=None,
+def fund_share(ts_code=None,
                trade_date=None,
                start=None,
                end=None):
     """
 
-    :param fund: 基金代码，支持多只基金同时提取，用逗号分隔
+    :param ts_code: 基金代码，支持多只基金同时提取，用逗号分隔
     :param trade_date:  交易变动日期，格式YYYYMMDD
     :param start:
     :param end:
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_share(ts_code=fund, trade_date=trade_date, start_date=start, end_date=end)
+    return pro.fund_share(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
 
 
 @retry(Exception, mute=True)
-def fund_manager(fund=None,
+def fund_manager(ts_code=None,
                  ann_date=None,
                  offset=None):
     """
 
-    :param fund: 基金代码，支持多只基金同时提取，用逗号分隔
+    :param ts_code: 基金代码，支持多只基金同时提取，用逗号分隔
     :param ann_date:  公告日期，格式YYYYMMDD
     :param offset:
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_manager(ts_code=fund, ann_date=ann_date, offset=offset)
+    return pro.fund_manager(ts_code=ts_code, ann_date=ann_date, offset=offset)
 
 
 # Finance Data
 # ================
 @retry(Exception, mute=True)
-def income(share: str,
+def income(ts_code: str,
            rpt_date: str = None,
            start: str = None,
            end: str = None,
@@ -499,7 +499,7 @@ def income(share: str,
     """ 获取上市公司财务利润表数据
 
     :rtype: pd.DataFrame
-    :param share: 股票代码，注意一次只能读取一只股票的数据
+    :param ts_code: 股票代码，注意一次只能读取一只股票的数据
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
     :param end: optional 公告结束日期
@@ -587,7 +587,7 @@ def income(share: str,
         distable_profit	    float	Y	可分配利润
         update_flag	        str	    N	更新标识，0未修改1更正过
     :example
-        income(share='600000.SH', start_date='20180101',
+        income(ts_code='600000.SH', start_date='20180101',
                end='20180730',
                fields='ts_code,ann_date,f_ann_date,report_type,comp_type,basic_eps,diluted_eps')
     """
@@ -608,8 +608,8 @@ def income(share: str,
                  'comshare_payable_dvd, capit_comstock_div, net_after_nr_lp_correct, credit_impa_loss, ' \
                  'net_expo_hedging_benefits, oth_impair_loss_assets, total_opcost, amodcost_fin_assets, oth_income, ' \
                  'asset_disp_income, continued_net_profit, end_net_profit, update_flag'
-    if isinstance(share, list):
-        share = list_to_str_format(share)
+    if isinstance(ts_code, list):
+        ts_code = list_to_str_format(ts_code)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     if start is not None:
@@ -617,7 +617,7 @@ def income(share: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    return pro.income(ts_code=share,
+    return pro.income(ts_code=ts_code,
                       ann_date=rpt_date,
                       start_date=start,
                       end_date=end,
@@ -628,7 +628,7 @@ def income(share: str,
 
 
 @retry(Exception, mute=True)
-def balance(share: str,
+def balance(ts_code: str,
             rpt_date: str = None,
             start: str = None,
             end: str = None,
@@ -638,7 +638,7 @@ def balance(share: str,
             fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据资产负债表
 
-    :param share: 股票代码
+    :param ts_code: 股票代码
     :param rpt_date: optional 公告日期
     :param start: optional 公告开始日期
     :param end: optional 公告结束日期
@@ -834,8 +834,8 @@ def balance(share: str,
                  'oth_eq_invest, oth_illiq_fin_assets, oth_eq_ppbond, receiv_financing, use_right_assets, ' \
                  'lease_liab, contract_assets, contract_liab, accounts_receiv_bill, accounts_pay, oth_rcv_total, ' \
                  'fix_assets_total, update_flag'
-    if isinstance(share, list):
-        share = list_to_str_format(share)
+    if isinstance(ts_code, list):
+        ts_code = list_to_str_format(ts_code)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     if start is not None:
@@ -843,7 +843,7 @@ def balance(share: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.balancesheet(ts_code=share,
+    res = pro.balancesheet(ts_code=ts_code,
                            ann_date=rpt_date,
                            start_date=start,
                            end_date=end,
@@ -855,7 +855,7 @@ def balance(share: str,
 
 
 @retry(Exception, mute=True)
-def cashflow(share: str,
+def cashflow(ts_code: str,
              rpt_date: str = None,
              start: str = None,
              end: str = None,
@@ -865,7 +865,7 @@ def cashflow(share: str,
              fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据现金流量表
 
-    :param share:                     股票代码
+    :param ts_code:                     股票代码
     :param rpt_date: optional           公告日期
     :param start: optional         公告开始日期
     :param end: optional           公告结束日期
@@ -1007,8 +1007,8 @@ def cashflow(share: str,
                  ' conv_copbonds_due_within_1y, fa_fnc_leases, im_n_incr_cash_equ, net_dism_capital_add,' \
                  ' net_cash_rece_sec, credit_impa_loss, use_right_asset_dep, oth_loss_asset, end_bal_cash,' \
                  ' beg_bal_cash, end_bal_cash_equ, beg_bal_cash_equ, update_flag'
-    if isinstance(share, list):
-        share = list_to_str_format(share)
+    if isinstance(ts_code, list):
+        ts_code = list_to_str_format(ts_code)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     if start is not None:
@@ -1016,7 +1016,7 @@ def cashflow(share: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.cashflow(ts_code=share,
+    res = pro.cashflow(ts_code=ts_code,
                        ann_date=rpt_date,
                        start_date=start,
                        end_date=end,
@@ -1028,7 +1028,7 @@ def cashflow(share: str,
 
 
 @retry(Exception, mute=True)
-def indicators(share: str,
+def indicators(ts_code: str,
                rpt_date: str = None,
                start: str = None,
                end: str = None,
@@ -1036,7 +1036,7 @@ def indicators(share: str,
                fields: [str, list] = None) -> pd.DataFrame:
     """ 获取上市公司财务数据——财务指标
 
-    :param share: str, TS股票代码,e.g. 600001.SH/000001.SZ
+    :param ts_code: str, TS股票代码,e.g. 600001.SH/000001.SZ
     :param rpt_date: str, 公告日期
     :param start: str, 报告期开始日期
     :param end: str, 报告期结束日期
@@ -1248,8 +1248,8 @@ def indicators(share: str,
                  ' dt_netprofit_yoy, ocf_yoy, roe_yoy, bps_yoy, assets_yoy, eqt_yoy, tr_yoy, or_yoy, q_gr_yoy,' \
                  ' q_gr_qoq, q_sales_yoy, q_sales_qoq, q_op_yoy, q_op_qoq, q_profit_yoy, q_profit_qoq,' \
                  ' q_netprofit_yoy, q_netprofit_qoq, equity_yoy, rd_exp, update_flag'
-    if isinstance(share, list):
-        share = list_to_str_format(share)
+    if isinstance(ts_code, list):
+        ts_code = list_to_str_format(ts_code)
     if isinstance(fields, list):
         fields = list_to_str_format(fields)
     if start is not None:
@@ -1257,7 +1257,7 @@ def indicators(share: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.fina_indicator(ts_code=share,
+    res = pro.fina_indicator(ts_code=ts_code,
                              ann_date=rpt_date,
                              start_date=start,
                              end_date=end,
@@ -1267,7 +1267,7 @@ def indicators(share: str,
 
 
 @retry(Exception, mute=True)
-def forecast(share: str = None,
+def forecast(ts_code: str = None,
              ann_date: str = None,
              start: str = None,
              end: str = None,
@@ -1275,7 +1275,7 @@ def forecast(share: str = None,
              type: str = None):
     """ 获取上市公司的业绩预报
 
-    :param share:
+    :param ts_code:
     :param ann_date:
     :param start:
     :param end:
@@ -1306,7 +1306,7 @@ def forecast(share: str = None,
         end = regulate_date_format(end)
     pro = ts.pro_api()
     try:
-        return pro.forecast_vip(ts_code=share,
+        return pro.forecast_vip(ts_code=ts_code,
                                 ann_date=ann_date,
                                 start_date=start,
                                 end_date=end,
@@ -1314,7 +1314,7 @@ def forecast(share: str = None,
                                 type=type,
                                 fields=fields)
     except Exception as e:
-        return pro.forecast(ts_code=share,
+        return pro.forecast(ts_code=ts_code,
                             ann_date=ann_date,
                             start_date=start,
                             end_date=end,
@@ -1324,14 +1324,14 @@ def forecast(share: str = None,
 
 
 @retry(Exception, mute=True)
-def express(share: str = None,
+def express(ts_code: str = None,
             ann_date: str = None,
             start: str = None,
             end: str = None,
             period: str = None):
     """ 获取上市公司的业绩快报
 
-    :param share:
+    :param ts_code:
     :param ann_date:
     :param start:
     :param end:
@@ -1384,14 +1384,14 @@ def express(share: str = None,
         end = regulate_date_format(end)
     pro = ts.pro_api()
     try:
-        return pro.express_vip(ts_code=share,
+        return pro.express_vip(ts_code=ts_code,
                                ann_date=ann_date,
                                start_date=start,
                                end_date=end,
                                period=period,
                                fields=fields)
     except Exception as e:
-        return pro.express(ts_code=share,
+        return pro.express(ts_code=ts_code,
                            ann_date=ann_date,
                            start_date=start,
                            end_date=end,
@@ -1449,14 +1449,14 @@ def top_list(trade_date: str = None,
 # Index Data
 # ==================
 @retry(Exception)
-def index_basic(index: str = None,
+def index_basic(ts_code: str = None,
                 name: str = None,
                 market: str = None,
                 publisher: str = None,
                 category: str = None) -> pd.DataFrame:
     """ 获取大盘指数的基本信息如名称代码等
 
-    :param index: 指数代码
+    :param ts_code: 指数代码
     :param name: 指数简称
     :param market: 交易所或服务商(默认SSE)，包括：
                     MSCI:    MSCI指数
@@ -1505,7 +1505,7 @@ def index_basic(index: str = None,
     fields = 'ts_code, name, fullname, market, publisher, index_type, category, ' \
              'base_date, base_point, list_date, weight_rule, desc, exp_date'
     pro = ts.pro_api()
-    return pro.index_basic(ts_code=index,
+    return pro.index_basic(ts_code=ts_code,
                            name=name,
                            market=market,
                            publisher=publisher,
@@ -1515,7 +1515,7 @@ def index_basic(index: str = None,
 
 @retry(Exception, mute=True)
 def index_indicators(trade_date: str = None,
-                     index: str = None,
+                     ts_code: str = None,
                      start: str = None,
                      end: str = None,
                      fields: str = None) -> pd.DataFrame:
@@ -1526,7 +1526,7 @@ def index_indicators(trade_date: str = None,
             3，给定特定的index，并指定start和end，获取指定指数在历史区间中的每天的数据
 
     :param trade_date: str, 交易日期 （格式：YYYYMMDD，比如20181018，下同）
-    :param index: str, TS代码
+    :param ts_code: str, TS代码
     :param start: str, 开始日期
     :param end: str, 结束日期
     :param fields: str, 输出数据字段，结果DataFrame的数据列名，用逗号分隔
@@ -1561,7 +1561,7 @@ def index_indicators(trade_date: str = None,
         fields = 'ts_code,trade_date,turnover_rate,pe,pe_ttm,pb'
     pro = ts.pro_api()
     return pro.index_dailybasic(trade_date=trade_date,
-                                ts_code=index,
+                                ts_code=ts_code,
                                 start_date=start,
                                 end_date=end,
                                 fields=fields)
