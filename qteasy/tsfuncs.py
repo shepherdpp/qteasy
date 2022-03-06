@@ -36,7 +36,7 @@ def acquire_data(table, **kwargs):
 # ==================
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def stock_basic(exchange: str = None):
     """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
 
@@ -1448,7 +1448,7 @@ def top_list(trade_date: str = None,
 
 # Index Data
 # ==================
-@retry(Exception)
+@retry(Exception, mute=True)
 def index_basic(ts_code: str = None,
                 name: str = None,
                 market: str = None,
@@ -1665,12 +1665,12 @@ def fund_basic(market: str = None,
 
 @retry(Exception, mute=True)
 def fund_net_value(fund: str = None,
-                   trade_date: str = None,
+                   nav_date: str = None,
                    market: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
     :param fund: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
-    :param trade_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
+    :param nav_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
     :param market: str, 交易市场类型: E场内 O场外
     :return: pd.DataFrame
         column          type  default   description
@@ -1696,14 +1696,14 @@ def fund_net_value(fund: str = None,
     """
     pro = ts.pro_api()
     return pro.fund_nav(ts_code=fund,
-                        nav_date=trade_date,
+                        nav_date=nav_date,
                         market=market)
 
 
 # Futures & Options Data
 # ===============
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def future_basic(exchange: str = None,
                  future_type: str = None) -> pd.DataFrame:
     """ 获取期货合约列表数据
@@ -1750,7 +1750,7 @@ def future_basic(exchange: str = None,
                          fields=fields)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def options_basic(exchange: str = None,
                   call_put: str = None) -> pd.DataFrame:
     """ 获取期权合约信息

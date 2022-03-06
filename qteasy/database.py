@@ -102,7 +102,7 @@ TABLE_SOURCE_MAPPING = {
         ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'trade_date', '19980417', '', ''],
 
     'fund_nav':
-        ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'trade_date', 'datetime', '20000107', '',
+        ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'nav_date', 'datetime', '20000107', '',
          ''],
 
     'fund_share':
@@ -213,8 +213,8 @@ TABLE_STRUCTURES = {
                                         'per_unit', 'quote_unit', 'quote_unit_desc', 'd_mode_desc', 'list_date',
                                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
                          'dtypes':     ['varchar(24)', 'varchar(12)', 'varchar(8)', 'varchar(40)', 'varchar(12)',
-                                        'float', 'varchar(4)', 'float', 'varchar(4)', 'text', 'text', 'date', 'date',
-                                        'varchar(6)', 'date', 'varchar(40)'],
+                                        'float', 'varchar(4)', 'float', 'varchar(80)', 'varchar(80)', 'varchar(20)',
+                                        'date', 'date', 'varchar(6)', 'date', 'varchar(40)'],
                          'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
                                         '交易计量单位', '交易单位(每手)', '报价单位', '最小报价单位说明', '交割方式说明',
                                         '上市日期', '最后交易日期', '交割月份', '最后交割日', '交易时间说明'],
