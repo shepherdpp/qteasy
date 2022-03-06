@@ -40,7 +40,7 @@ TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
-         'SSE,SZSE', '', ''],  # 'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE'
+         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', ''],
 
     'stock_basic':
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', ''],
@@ -760,7 +760,7 @@ class DataSource:
             raise TypeError(f'source type should be a string, got {type(source_type)} instead.')
         if source_type.lower() not in ['file', 'database', 'db']:
             raise ValueError(f'invalid source_type')
-        self._table_list = []
+        self._table_list = set()
 
         if source_type.lower() in ['db', 'database']:
             # set up connection to the data base
@@ -788,6 +788,8 @@ class DataSource:
                 # if cursor and connect created then create sqlalchemy engine for dataframe
                 self.engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{db}')
                 self.connection_type = f'db:mysql://{host}@{port}/{db}'
+                self.host = host
+                self.port = port
                 self.file_type = None
                 self.file_path = None
             except Exception as e:
@@ -810,28 +812,24 @@ class DataSource:
             self.engine = None
             self.source_type = 'file'
             self.file_type = file_type
+            self.file_loc = file_loc
             self.connection_type = f'file://{file_type}@qt_root/{file_loc}'
 
     @property
     def tables(self):
         """ 所有已经建立的tables的清单"""
-        return self._table_list
-
-    def table_schema(self, table):
-        """ 显示或打印table schema
-
-        :param table:
-        :return:
-        """
-        tbl_struct = TABLE_SOURCE_MAPPING[table][0]
-        df = pd.DataFrame(TABLE_STRUCTURES[tbl_struct])
-        print(df)
+        return list(self._table_list)
 
     def __repr__(self):
-        return self.connection_type
+        if self.source_type == 'db':
+            return f'DataSource(\'db\', \'{self.host}\', {self.port})'
+        elif self.source_type == 'file':
+            return f'DataSource(\'file\', \'{self.file_loc}\', \'{self.file_type}\')'
+        else:
+            return
 
     def __str__(self):
-        return f'DataSource Object: {self.__repr__()}'
+        return self.connection_type
 
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
@@ -899,6 +897,28 @@ class DataSource:
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
         return df
+
+    def get_file_table_coverage(self, table, column, primary_key, pk_dtypes):
+        """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
+
+        :param table:
+        :param column:
+        :param primary_key
+        :param pk_dtypes
+        :return:
+        """
+        if not self.file_exists(table):
+            return list()
+        df = self.read_file(table, primary_key, pk_dtypes)
+        if df.empty:
+            return list()
+        if column in list(df.index.names):
+            res = df.index.get_level_values(column).unique()
+        else:
+            res = list(df[column].unique())
+        if isinstance(res[0], pd.Timestamp):
+            res = res.strftime('%Y%m%d')
+        return list(res)
 
     def drop_file(self, file_name):
         """ 删除本地文件
@@ -1016,6 +1036,26 @@ class DataSource:
             self.con.rollback()
             raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
                                f'{sql} \nwith parameters (first 50 shown):\n{df_tuple[:50]}')
+
+    def get_db_table_coverage(self, table, column):
+        """ 检查数据库表关键列的内容，去重后返回该列的内容清单
+
+        :param table: 数据表名
+        :param column: 数据表的字段名
+        :return:
+        """
+        import datetime
+        if not self.db_table_exists(table):
+            return list()
+        sql = f'SELECT DISTINCT `{column}`' \
+              f'FROM `{table}`'
+        self.cursor.execute(sql)
+        self.con.commit()
+
+        res = [item[0] for item in self.cursor.fetchall()]
+        if isinstance(res[0], datetime.datetime):
+            res = list(pd.to_datetime(res).strftime('%Y%m%d'))
+        return res
 
     def db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
@@ -1316,6 +1356,7 @@ class DataSource:
                 self.update_database(df, db_table=table, primary_key=primary_key)
             else:  # for unexpected cases
                 raise KeyError(f'Invalid process mode on duplication: {on_duplicate}')
+        self._table_list.add(table)
 
     def acquire_table_data(self, table, channel, df=None, f_name=None, **kwargs):
         """从网络获取本地数据表的数据，并进行内容写入前的预检查：包含以下步骤：
@@ -1473,15 +1514,26 @@ class DataSource:
             self.drop_db_table(db_table=table)
         elif self.source_type == 'file':
             self.drop_file(file_name=table)
+        self._table_list.difference_update([table])
         return None
 
     def get_table_data_coverage(self, table):
-        """ 获取本地数据表内容的覆盖范围，对于时间类型，返回min/max/count
+        """ 获取本地数据表内容的覆盖范围，取出数据表的"fill_arg_name"列中的去重值并返回
 
-        :param table:
+        :param table: 数据表的名称
         :return:
+            List, 代表数据覆盖范围的列表
         """
-        raise NotImplementedError
+        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+        column = table_map.loc[table].fill_arg_name
+        if self.source_type == 'db':
+            return self.get_db_table_coverage(table, column)
+        elif self.source_type == 'file':
+            columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
+            return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes)
+        else:
+            raise TypeError(f'Invalid source type: {self.source_type}')
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_dataframes(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
@@ -1572,9 +1624,6 @@ class DataSource:
         tables_to_read = table_map.loc[(table_map.table_usage == 'data') &
                                        (table_map.asset_type.isin(asset_type)) &
                                        (table_map.freq == freq)].index.to_list()
-        # debug
-        # print(f'tables to read: {tables_to_read}\n')
-        # 根据资产代码、起止日期查询所需的数据,删除不需要的数据
         table_data_read = {}
         table_data_columns = {}
         for tbl in tables_to_read:
@@ -1584,8 +1633,6 @@ class DataSource:
                 df.drop(columns=cols_to_remove, inplace=True)
             table_data_read[tbl] = df
             table_data_columns[tbl] = df.columns
-            # debug
-            # print(f'got data from table {tbl}:\n{df}\n')
 
         # 提取数据，生成单个数据类型的dataframe
         df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
@@ -1606,10 +1653,6 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
-                        # debug
-                        # print(f'got un stacked dataframe for htype {htyp} from table {tbl}:\n'
-                        #       f'{new_df}\n'
-                        #       f'=============================================================')
         # 如果在历史数据合并时发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
         for htyp in htypes:
@@ -1618,10 +1661,6 @@ class DataSource:
             if len(col_with_suffix) > 0:
                 df_by_htypes[htyp].drop(columns=col_with_suffix, inplace=True)
                 conflict_cols += f'd-type {htyp} conflicts in {list(set(col[:-2] for col in col_with_suffix))};\n'
-            # debug
-            # print(f'got dataframe data for htype {htyp}:\n'
-            #       f'columns: {df_by_htypes[htyp].columns}\n'
-            #       f'{df_by_htypes[htyp].head()}\n')
         if conflict_cols != '':
             warnings.warn(f'\nConflict data encountered, some types of data are loaded from multiple tables, '
                           f'conflicting data might be discarded:\n'
@@ -1630,41 +1669,30 @@ class DataSource:
         # 如果需要复权数据，计算复权价格
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
+            # 后复权价 = 当日最新价 × 当日复权因子
+            # 前复权价 = 当日复权价 ÷ 最新复权因子
             adj_factors = {}
             adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
                                                table_map.asset_type.isin(asset_type)].index.to_list()
-            # debug
-            # print(f'adj tables to read: {adj_tables_to_read}\n')
             for tbl in adj_tables_to_read:
                 adj_df = self.read_table_data(tbl, shares=shares, start=start, end=end)
                 if not adj_df.empty:
                     adj_df = adj_df['adj_factor'].unstack(level=0)
                 adj_factors[tbl] = adj_df
-                # debug
-                # print(f'got adj data from table {tbl}:\n{adj_df}')
-                # 后复权 = 当日最新价 × 当日复权因子
-                # 前复权 = 当日复权价 ÷ 最新复权因子
 
             # 根据复权因子更新所有可复权数据
             prices_to_adjust = [item for item in htypes if item in ADJUSTABLE_PRICE_TYPES]
-            # debug
-            # print(f'prices to adjust is: {prices_to_adjust}')
             for htyp in prices_to_adjust:
                 price_df = df_by_htypes[htyp]
                 all_ts_codes = price_df.columns
                 comb_factors = 1.0
                 for af in adj_factors:
                     comb_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
-                # debug
-                # print(f'got combined adj factors: \n{comb_factors}')
                 price_df *= comb_factors
                 if adj.lower() in ['forward', 'fw', 'f'] and len(comb_factors) > 1:
                     price_df /= comb_factors.iloc[-1]
-                # print(f'got adjusted prices for {htyp} like: \n{price_df}')
 
         result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
-        # debug
-        # print(f'got history panel: \n{result_hp}')
         return result_hp
 
     # 顶层函数，用于定期计划性获取数据的操作函数
@@ -1745,6 +1773,7 @@ class DataSource:
             再批量保存到本地，trunk_size即批量，默认值100
 
         :return:
+            None
         """
         # 1 参数合法性检查
         if (tables is None) and (dtypes is None):
@@ -1839,17 +1868,16 @@ class DataSource:
             freq = cur_table_info.freq
 
             # 开始生成所有的参数，参数的生成取决于fill_arg_type
-            if fill_type in ['datetime', 'trade_date']:
-                if start_date is None:
-                    start = cur_table_info.arg_rng
-                else:
-                    start = start_date
-                start = pd.to_datetime(start).strftime('%Y%m%d')
-                if end_date is None:
-                    end = 'today'
-                else:
-                    end = end_date
-                end = pd.to_datetime(end).strftime('%Y%m%d')
+            if (start_date is None) and (fill_type in ['datetime', 'trade_date']):
+                start = cur_table_info.arg_rng
+            else:
+                start = start_date
+            start = pd.to_datetime(start).strftime('%Y%m%d')
+            if end_date is None:
+                end = 'today'
+            else:
+                end = end_date
+            end = pd.to_datetime(end).strftime('%Y%m%d')
             allow_start_end = (cur_table_info.arg_allow_start_end.lower() == 'y')
             additional_args = {}
             if fill_type in ['datetime', 'trade_date']:
@@ -1885,8 +1913,10 @@ class DataSource:
             # 处理数据下载参数序列，剔除已经存在的数据key
             if self.table_data_exists(table) and merge_type.lower() == 'ignore':
                 # TODO: 当数据已经存在，且合并模式为"更新数据"时，从计划下载的数据范围中剔除已经存在的部分
-                pass
-                # tbl_start_date, tbl_end_date, tbl_date_count = self.get_table_data_coverage(table)
+                already_existed = self.get_table_data_coverage(table)
+                print(f'already existed: \n{already_existed}')
+                arg_coverage = [arg for arg in arg_coverage if arg not in already_existed]
+                print(f'after removal\n{arg_coverage}')
 
             # 生成所有的参数, 开始循环下载并更新数据
             all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage)
@@ -1978,7 +2008,6 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
 def set_primary_key_frame(df, primary_key, pk_dtypes):
     """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
         并重设df的index为0，1，2，3，4...
-
 
     :param df: 需要操作的df
     :param primary_key:

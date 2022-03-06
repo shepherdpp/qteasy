@@ -11631,20 +11631,21 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments2(self):
-        ds = qt.DataSource('db', user='jackie', password='iama007')
-        # ds = qt.DataSource('file')
-        # print(ds)
-        # ds.refill_local_source(tables='stock_daily',
-        #                        dtypes=None,
-        #                        freqs=None,
-        #                        asset_types='E,IDX',
-        #                        start_date='20220101',
-        #                        end_date=None,
-        #                        code_range='000001:000005',
-        #                        parallel=True)
-        # df = ds.read_table_data('stock_daily', start='20220201', end='20220215',
-        #                         shares='000001.SZ, 600000.SH, 000006.SZ, 871981.BJ')
-        # print(df)
+        # ds = qt.DataSource('db', user='jackie', password='iama007')
+        ds = qt.DataSource('file', file_type='csv')
+        print(ds)
+        ds.refill_local_source(tables='stock_daily',
+                               dtypes=None,
+                               freqs=None,
+                               asset_types='E,IDX',
+                               start_date='20211220',
+                               end_date=None,
+                               merge_type='ignore',
+                               code_range='000001:000010',
+                               parallel=True)
+        df = ds.read_table_data('stock_daily', start='20220201', end='20220215',
+                                shares='000001.SZ, 600000.SH, 000006.SZ, 871981.BJ')
+        print(df)
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -11745,6 +11746,23 @@ class TestDataSource(unittest.TestCase):
             'vol':        [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.],
             'amount':     [10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10., 10.]
         })
+
+    def test_properties(self):
+        """test properties"""
+        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_db.__str__(), 'db:mysql://localhost@3306/test_db')
+
+        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'qteasy/data/', 'csv')")
+        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'qteasy/data/', 'hdf')")
+        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'qteasy/data/', 'fth')")
+        self.assertEqual(self.ds_db.__repr__(), "DataSource('db', 'localhost', 3306)")
+
+        self.assertEqual(self.ds_csv.tables, [])
+        self.assertEqual(self.ds_hdf.tables, [])
+        self.assertEqual(self.ds_fth.tables, [])
+        self.assertEqual(self.ds_db.tables, [])
 
     def test_primary_key_manipulate(self):
         """ test manipulating DataFrame primary key as indexes and frames
@@ -12034,6 +12052,51 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
+        print(f'Test getting file table coverages')
+        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'ts_code',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'])
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
+        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'ts_code',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'])
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
+        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'ts_code',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'])
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
+
+        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'trade_date',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'])
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113'])
+        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'trade_date',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'])
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113'])
+        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'trade_date',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'])
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113'])
+
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""
         print(f'write and read a MultiIndex dataframe to database')
@@ -12102,7 +12165,7 @@ class TestDataSource(unittest.TestCase):
         loaded_index = loaded_df.index.values
         saved_values = np.array(self.df2.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'df retrieved from saved csv file is\n'
+        print(f'df retrieved from database is\n'
               f'{loaded_df}\n')
         for i in range(len(saved_index)):
             self.assertEqual(saved_index[i], loaded_index[i])
@@ -12130,6 +12193,20 @@ class TestDataSource(unittest.TestCase):
             self.assertEqual(saved_values[4, j], loaded_values[3, j])
             self.assertEqual(saved_values[8, j], loaded_values[4, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
+
+        print(f'Test getting database table coverages')
+        cov = self.ds_db.get_db_table_coverage(TABLE_NAME, 'ts_code')
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ",
+                          "000006.SZ", "000007.SZ", "000008.SZ", "000009.SZ", "000010.SZ"])
+
+        cov = self.ds_db.get_db_table_coverage('test_db_table', 'trade_date')
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113'])
 
     def test_update_database(self):
         """ test the function update_database()"""
@@ -12248,6 +12325,11 @@ class TestDataSource(unittest.TestCase):
                                              start='20211113',
                                              end='20211116')
             print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+
+        self.assertEqual(self.ds_csv.tables, ['stock_daily'])
+        self.assertEqual(self.ds_hdf.tables, ['stock_daily'])
+        self.assertEqual(self.ds_fth.tables, ['stock_daily'])
+        self.assertEqual(self.ds_db.tables, ['stock_daily'])
 
     def test_download_update_table_data(self):
         """ test downloading data from tushare"""

@@ -71,7 +71,7 @@ def stock_basic(exchange: str = None):
                            fields=fields)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
                    end: str = None,
