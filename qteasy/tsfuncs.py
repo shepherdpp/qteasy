@@ -1664,12 +1664,12 @@ def fund_basic(market: str = None,
 
 
 @retry(Exception, mute=True)
-def fund_net_value(fund: str = None,
+def fund_net_value(ts_code: str = None,
                    nav_date: str = None,
                    market: str = None) -> pd.DataFrame:
     """ 获取公募基金净值数据
 
-    :param fund: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
+    :param ts_code: str, TS基金代码 （二选一）如果可用，给出该基金的历史净值记录
     :param nav_date: str, 净值日期 （二选一）如果可用，给出该日期所有基金的净值记录
     :param market: str, 交易市场类型: E场内 O场外
     :return: pd.DataFrame
@@ -1695,7 +1695,7 @@ def fund_net_value(fund: str = None,
         ...         ...       ...
     """
     pro = ts.pro_api()
-    return pro.fund_nav(ts_code=fund,
+    return pro.fund_nav(ts_code=ts_code,
                         nav_date=nav_date,
                         market=market)
 

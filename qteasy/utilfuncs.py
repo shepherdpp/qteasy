@@ -437,7 +437,8 @@ def next_trade_day(date):
 
 
 def is_market_trade_day(date, exchange: str = 'SSE'):
-    """ 根据交易所发布的交易日历判断一个日期是否是交易日，准确性高但需要读取网络数据，因此效率低
+    """ 根据交易所发布的交易日历判断一个日期是否是交易日，
+        要求在本地DataSource中必须存在'trade_calendar'表，否则报错
 
     :param date:
         :type date: obj datetime-like 可以转化为时间日期格式的字符串或其他类型对象
@@ -462,7 +463,6 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         ex.extra_info = f'{date} is not a valid date time format, cannot be converted to timestamp'
         raise
     assert _date is not None, f'{date} is not a valide date'
-    # TODO: 有必要将"market_trade_day_range"设定为系统参数
     if _date < pd.to_datetime('19910101') or _date > pd.to_datetime('20221231'):
         return False
     if not isinstance(exchange, str) and exchange in ['SSE',
@@ -651,3 +651,35 @@ def is_number_like(key: [str, int, float]) -> bool:
                 return False
         return True
     return False
+
+
+def match_ts_code(code: str):
+    """ 根据输入的证券代码查找匹配的ts_code，
+        输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
+
+    :param code: 字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
+    :return:
+        Dict {'E': [equity codes],
+              'IDX': [],
+              'FD': [],
+              'FT': []}
+    """
+    ds = qteasy.QT_DATA_SOURCE
+    df_s = ds.read_table_data('stock_basic')
+    df_i = ds.read_table_data('index_basic')
+    df_f = ds.read_table_data('fund_basic')
+    df_ft = ds.read_table_data('future_basic')
+    df_o = ds.read_table_data('options_basic')
+
+    df_i['symbol'] = [item.split('.')[0] for item in df_i.index]
+    df_f['symbol'] = [item.split('.')[0] for item in df_f.index]
+    df_o['symbol'] = [item.split('.')[0] for item in df_o.index]
+
+    res = {}
+    count = 0
+    for b, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], ['E', 'IDX', 'FD', 'FT', 'OPT']):
+        ts_code = b.loc[b.symbol == code].index.to_list()
+        count += len(ts_code)
+        res.update({asset_type: ts_code})
+    res.update({'count': count})
+    return res

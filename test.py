@@ -9266,13 +9266,13 @@ class TestTushare(unittest.TestCase):
         shares = '600748.SH'
         start = '20180101'
         end = '20191231'
-        df = name_change(shares=shares)
+        df = name_change(ts_code=shares)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         df.info()
         print(df.head(10))
 
-        df = name_change(shares=shares, start=start, end=end)
+        df = name_change(ts_code=shares, start=start, end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
         df.info()
@@ -9299,7 +9299,7 @@ class TestTushare(unittest.TestCase):
     def test_stock_company(self):
         print(f'test tushare function: stock_company')
         shares = '600748.SH'
-        df = stock_company(shares=shares)
+        df = stock_company(ts_code=shares)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
         df.info()
@@ -9311,14 +9311,14 @@ class TestTushare(unittest.TestCase):
         rpt_date = '20181231'
         start = '20180101'
         end = '20191231'
-        df = income(share=shares,
+        df = income(ts_code=shares,
                     rpt_date=rpt_date,
                     start=start,
                     end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
 
-        df = income(share=shares,
+        df = income(ts_code=shares,
                     start='20170101',
                     end='20220101')
         self.assertIsInstance(df, pd.DataFrame)
@@ -9329,7 +9329,7 @@ class TestTushare(unittest.TestCase):
         shares = '000010.SZ'
         fields = 'ts_code,ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps,total_revenue,revenue, ' \
                  'int_income, prem_earned, comm_income, n_commis_income, n_oth_income, n_oth_b_income'
-        df = income(share=shares,
+        df = income(ts_code=shares,
                     start=start,
                     end=end,
                     fields=fields)
@@ -9340,7 +9340,7 @@ class TestTushare(unittest.TestCase):
         shares = '000010.SZ'
         fields = 'ts_code,ann_date,end_date,report_type,comp_type,basic_eps,diluted_eps,total_revenue,revenue, ' \
                  'int_income, prem_earned, comm_income, n_commis_income, n_oth_income, n_oth_b_income'
-        df = income(share=shares,
+        df = income(ts_code=shares,
                     start=start,
                     end='20210307',
                     fields=fields)
@@ -9356,7 +9356,7 @@ class TestTushare(unittest.TestCase):
                  'int_income, prem_earned, comm_income, n_commis_income, n_oth_income, n_oth_b_income, ' \
                  'prem_income, out_prem, une_prem_reser, reins_income, n_sec_tb_income, n_sec_uw_income, ' \
                  'n_asset_mg_income'
-        df = income(share=shares,
+        df = income(ts_code=shares,
                     start=start,
                     end=end,
                     fields=fields)
@@ -9372,7 +9372,7 @@ class TestTushare(unittest.TestCase):
         fields = 'special_rese, money_cap,trad_asset,notes_receiv,accounts_receiv,oth_receiv,' \
                  'prepayment,div_receiv,int_receiv,inventories,amor_exp, nca_within_1y,sett_rsrv' \
                  ',loanto_oth_bank_fi,premium_receiv,reinsur_receiv,reinsur_res_receiv'
-        df = balance(share=shares,
+        df = balance(ts_code=shares,
                      start=start,
                      end=end,
                      fields=fields)
@@ -9397,7 +9397,7 @@ class TestTushare(unittest.TestCase):
         shares = '000039.SZ'
         start = '20080101'
         end = '20201231'
-        df = cashflow(share=shares,
+        df = cashflow(ts_code=shares,
                       start=start,
                       end=end,
                       fields=fields)
@@ -9411,14 +9411,14 @@ class TestTushare(unittest.TestCase):
         rpt_date = '20180101'
         start = '20180101'
         end = '20191231'
-        df = indicators(share=shares,
+        df = indicators(ts_code=shares,
                         rpt_date=rpt_date,
                         start=start,
                         end=end)
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
 
-        df = indicators(share=shares,
+        df = indicators(ts_code=shares,
                         start='20150101',
                         end='20220101')
         self.assertIsInstance(df, pd.DataFrame)
@@ -9480,14 +9480,14 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: test single index single date\n'
               f'=====================================')
-        df = index_indicators(trade_date=trade_date, index=index)
+        df = index_indicators(trade_date=trade_date, ts_code=index)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
 
         print(f'test 2: test single index in date idx_range\n'
               f'=======================================')
-        df = index_indicators(index=index, start=start, end=end)
+        df = index_indicators(ts_code=index, start=start, end=end)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9495,7 +9495,7 @@ class TestTushare(unittest.TestCase):
         print(f'test 3: test multiple specific indices in single date\n'
               f'=====================================================')
         index = '000300.SH, 000001.SH'  # tushare does not support multiple indices in index_indicators
-        df = index_indicators(trade_date=trade_date, index=index)
+        df = index_indicators(trade_date=trade_date, ts_code=index)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertTrue(df.empty)
@@ -9597,7 +9597,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchanging in market\n'
               f'===============================')
-        df = fund_net_value(trade_date=trade_date, market='E')
+        df = fund_net_value(nav_date=trade_date, market='E')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9606,7 +9606,7 @@ class TestTushare(unittest.TestCase):
 
         print(f'test 1: find all funds in one specific date, exchange outside market\n'
               f'===============================')
-        df = fund_net_value(trade_date=trade_date, market='O')
+        df = fund_net_value(nav_date=trade_date, market='O')
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9616,7 +9616,7 @@ class TestTushare(unittest.TestCase):
         print(f'test 2: find value of one fund in history\n'
               f'===============================')
         fund = '512960.SH'
-        df = fund_net_value(fund=fund)
+        df = fund_net_value(ts_code=fund)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)
@@ -9627,7 +9627,7 @@ class TestTushare(unittest.TestCase):
               f'===============================')
         fund = '511770.SH, 511650.SH, 511950.SH, 002760.OF, 002759.OF'
         trade_date = '20201009'
-        df = fund_net_value(fund=fund, trade_date=trade_date)
+        df = fund_net_value(ts_code=fund, nav_date=trade_date)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertIsInstance(df, pd.DataFrame)
         self.assertFalse(df.empty)

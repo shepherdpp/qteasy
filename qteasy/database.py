@@ -15,6 +15,7 @@ from os import path
 import warnings
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
+from functools import lru_cache
 
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
@@ -214,7 +215,7 @@ TABLE_STRUCTURES = {
                                         'delist_date', 'd_month', 'last_ddate', 'trade_time_desc'],
                          'dtypes':     ['varchar(24)', 'varchar(12)', 'varchar(8)', 'varchar(40)', 'varchar(12)',
                                         'float', 'varchar(4)', 'float', 'varchar(80)', 'varchar(80)', 'varchar(20)',
-                                        'date', 'date', 'varchar(6)', 'date', 'varchar(40)'],
+                                        'date', 'date', 'varchar(6)', 'date', 'varchar(80)'],
                          'remarks':    ['证券代码', '交易标识', '交易市场', '中文简称', '合约产品代码', '合约乘数',
                                         '交易计量单位', '交易单位(每手)', '报价单位', '最小报价单位说明', '交割方式说明',
                                         '上市日期', '最后交易日期', '交割月份', '最后交割日', '交易时间说明'],
@@ -1036,7 +1037,8 @@ class DataSource:
         except Exception as e:
             self.con.rollback()
             raise RuntimeError(f'Error during inserting data to table {db_table} with following sql:\n'
-                               f'{sql} \nwith parameters (first 50 shown):\n{df_tuple[:50]}')
+                               f'Exception:\n{e}\n'
+                               f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
 
     def get_db_table_coverage(self, table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
@@ -1224,6 +1226,7 @@ class DataSource:
         else:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
+    @lru_cache(maxsize=16)
     def read_table_data(self, table, shares=None, start=None, end=None):
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
@@ -1245,7 +1248,7 @@ class DataSource:
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAPPING.keys():
-            raise KeyError(f'Invalid table name.')
+            raise KeyError(f'Invalid table name: {table}.')
 
         if shares is not None:
             assert isinstance(shares, (str, list))
@@ -1962,11 +1965,13 @@ class DataSource:
 
                     self.update_table_data(table, dnld_data)
                 print(f'\ntasks completed! {completed} data acquired with {total} {arg_name} params '
-                      f'from {arg_coverage[0]} to {arg_coverage[-1]}'
-                      f'with {additional_args}\n'
-                      f'{total_written} rows of data written to {self}:\n')
+                      f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
+                if len(additional_args) > 0:
+                    print(f'with additional arguments: {additional_args}\n')
+                print(f'{total_written} rows of data written to {self}:\n')
             except Exception as e:
-                print(f'\n{e}, process interrupted after {total_written} rows written, will proceed with next table!')
+                self.update_table_data(table, dnld_data)
+                print(f'\n{e}, process interrupted, tried to write {total_written} rows, will proceed with next table!')
 
 
 # 以下函数是通用df操作函数
@@ -2091,6 +2096,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
 
 
 # noinspection PyTypeChecker
+@lru_cache(maxsize=16)
 def get_built_in_table_schema(table):
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
     :param table:
