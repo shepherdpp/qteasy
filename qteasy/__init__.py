@@ -36,7 +36,7 @@ QT_ROOT_PATH = str(Path('.').resolve()) + '/'
 try:
     with open(QT_ROOT_PATH+'qteasy/qteasy.cnf') as f:
         config_lines = f.readlines()
-except:
+except Exception as e:
     # 新建文件：
     f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
     f.close()

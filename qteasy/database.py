@@ -1707,6 +1707,7 @@ class DataSource:
                             end_date=None,
                             code_range=None,
                             merge_type='ignore',
+                            reversed_par_seq=False,
                             parallel=True,
                             process_count=None,
                             trunk_size=100):
@@ -1762,8 +1763,13 @@ class DataSource:
             - 'ignore' 默认值，不下载重复的数据
             - 'update' 下载并更新本地数据的重复部分
 
+        :param reversed_par_seq: Bool
+            是否逆序参数下载数据， 默认False
+            - True:  逆序参数下载数据
+            - False: 顺序参数下载数据
+
         :param parallel: Bool
-            是否启用多线程下载数据
+            是否启用多线程下载数据，默认True
             - True:  启用多线程下载数据
             - False: 禁用多线程下载
 
@@ -1874,7 +1880,8 @@ class DataSource:
                 start = cur_table_info.arg_rng
             else:
                 start = start_date
-            start = pd.to_datetime(start).strftime('%Y%m%d')
+            if start is not None:
+                start = pd.to_datetime(start).strftime('%Y%m%d')
             if end_date is None:
                 end = 'today'
             else:
@@ -1902,11 +1909,11 @@ class DataSource:
                 source_table = self.read_table_data(cur_table_info.arg_rng)
                 arg_coverage = source_table.index.to_list()
                 if code_start is not None:
-                    arg_coverage = (code for code in arg_coverage if (code_start <= code.split('.')[0] <= code_end))
+                    arg_coverage = [code for code in arg_coverage if (code_start <= code.split('.')[0] <= code_end)]
                 if code_range is not None:
-                    arg_coverage = (code for code in arg_coverage if code.split('.')[0] in code_range)
+                    arg_coverage = [code for code in arg_coverage if code.split('.')[0] in code_range]
                 if suffix:
-                    arg_coverage = (code for code in arg_coverage if code.split('.')[1] in suffix)
+                    arg_coverage = [code for code in arg_coverage if code.split('.')[1] in suffix]
                 if allow_start_end:
                     additional_args = {'start': start, 'end': end}
             else:
@@ -1919,7 +1926,10 @@ class DataSource:
                 arg_coverage = [arg for arg in arg_coverage if arg not in already_existed]
 
             # 生成所有的参数, 开始循环下载并更新数据
-            all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage)
+            if reversed_par_seq:
+                all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage[::-1])
+            else:
+                all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage[::-1])
 
             completed = 0
             total = len(list(arg_coverage))
@@ -1943,8 +1953,7 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        time_passed = time_str_format(time_elapsed, short_form=True)
-                        progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+                        progress_bar(completed, total, f'<dnld: {total_written}> time left: {time_remain}')
 
                     self.update_table_data(table, dnld_data)
                 else:
@@ -1960,8 +1969,7 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        time_passed = time_str_format(time_elapsed, short_form=True)
-                        progress_bar(completed, total, f'<{time_passed}> time left: {time_remain}')
+                        progress_bar(completed, total, f'<dnld: {total_written}> time left: {time_remain}')
 
                     self.update_table_data(table, dnld_data)
                 print(f'\ntasks completed! {completed} data acquired with {total} {arg_name} params '
