@@ -11628,24 +11628,25 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        pass
+        qt.candle('000001', mav=[9, 12, 26], adj='f')
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')
-        ds = qt.DataSource('file', file_type='csv')
-        print(ds)
-        ds.refill_local_source(tables='stock_daily',
-                               dtypes=None,
-                               freqs=None,
-                               asset_types='E,IDX',
-                               start_date='20211220',
-                               end_date=None,
-                               merge_type='ignore',
-                               code_range='000001:000010',
-                               parallel=True)
-        df = ds.read_table_data('stock_daily', start='20220201', end='20220215',
-                                shares='000001.SZ, 600000.SH, 000006.SZ, 871981.BJ')
-        print(df)
+        # ds = qt.DataSource('file', file_type='csv')
+        # print(ds)
+        # ds.refill_local_source(tables='stock_daily',
+        #                        dtypes=None,
+        #                        freqs=None,
+        #                        asset_types='E,IDX',
+        #                        start_date='20211220',
+        #                        end_date=None,
+        #                        merge_type='ignore',
+        #                        code_range='000001:000010',
+        #                        parallel=True)
+        # df = ds.read_table_data('stock_daily', start='20220201', end='20220215',
+        #                         shares='000001.SZ, 600000.SH, 000006.SZ, 871981.BJ')
+        # print(df)
+        pass
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

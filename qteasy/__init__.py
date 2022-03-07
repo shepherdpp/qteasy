@@ -19,7 +19,7 @@ from .history import HistoryPanel
 from .history import csv_to_hp, hdf_to_hp, dataframe_to_hp, stack_dataframes
 from .operator import Operator
 from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSelecting
-from .visual import candle, ohlc, renko
+from .visual import candle
 from .built_in import *
 from .finance import CashPlan, Cost
 from .database import DataSource

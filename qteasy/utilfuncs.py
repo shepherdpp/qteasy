@@ -669,7 +669,7 @@ def match_ts_code(code: str):
     df_i = ds.read_table_data('index_basic')
     df_f = ds.read_table_data('fund_basic')
     df_ft = ds.read_table_data('future_basic')
-    df_o = ds.read_table_data('options_basic')
+    df_o = ds.read_table_data('opt_basic')
 
     df_i['symbol'] = [item.split('.')[0] for item in df_i.index]
     df_f['symbol'] = [item.split('.')[0] for item in df_f.index]
@@ -677,9 +677,23 @@ def match_ts_code(code: str):
 
     res = {}
     count = 0
-    for b, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], ['E', 'IDX', 'FD', 'FT', 'OPT']):
+    for b, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], AVAILABLE_ASSET_TYPES):
         ts_code = b.loc[b.symbol == code].index.to_list()
         count += len(ts_code)
         res.update({asset_type: ts_code})
     res.update({'count': count})
     return res
+
+
+def match_ts_name(name: str, fuzz: bool = False):
+    """ 根据输入的证券名称查找匹配的ts_code，
+        输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
+
+    :param name: 证券名称，支持通配符，支持模糊查找，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
+    :return:
+        Dict {'E': [equity codes],
+              'IDX': [],
+              'FD': [],
+              'FT': []}
+    """
+    raise NotImplementedError

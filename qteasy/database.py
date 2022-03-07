@@ -1226,7 +1226,6 @@ class DataSource:
         else:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
-    @lru_cache(maxsize=16)
     def read_table_data(self, table, shares=None, start=None, end=None):
         """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end

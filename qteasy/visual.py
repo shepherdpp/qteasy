@@ -16,10 +16,11 @@ import matplotlib.ticker as mtick
 
 import pandas as pd
 import numpy as np
+import warnings
 
 import qteasy
 from .history import get_history_panel
-from .utilfuncs import time_str_format, list_to_str_format
+from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, AVAILABLE_ASSET_TYPES
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
@@ -371,30 +372,113 @@ class InterCandle:
 
 
 # TODO: simplify and merge these three functions
-def candle(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
-           no_visual=False, **kwargs):
-    """plot stock data or extracted data in candle form"""
-    return _mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                     end=end, asset_type=asset_type, plot_type='candle', no_visual=no_visual,
-                     **kwargs)
+def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, plot_type='candle',
+           interactive=True, **kwargs):
+    """ 获取股票或证券的K线数据，并显示股票的K线图
+
+    :param stock: str,
+        简化证券代码、完整证券代码或股票名称，根据该代码或名称匹配准确的证券代码
+        如果给出股票名称，支持使用%、？等通配符、支持模糊查找
+        如果匹配到多个证券代码，将打印出提示，并选择第一个匹配的证券代码输出图表
+
+    :param start: str, datetime, TimeStamp
+        K线图的起始日期
+
+    :param end: str, datetime, TimeStamp
+        K线图的终止日期
+
+    :param stock_data: pd.DataFrame
+        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数
+
+    :param asset_type: str
+        证券类型，包含：
+        - E:    股票
+        - IDX:  指数
+        - FD:   基金
+        - FT:   期货
+        - OPT:  期权
+
+    :param plot_type: str
+        输出图表的类型，包括以下选项
+        - candle:   显示蜡烛图
+        - ohlc:     显示OHLC K线图
+        - renko:    显示RENKO图
+        - none:     只返回数据，不显示图表
+
+    :param interactive: Bool
+        是否输出可交互式图表
+        （受matplotlib的backend限制，某些环境下交互式图表不可用，详情请参见
+        https://matplotlib.org/stable/users/explain/backends.html）
+
+    :param kwargs:
+        用于传递至K线图的更多参数，包括：
+        - adj:          str, 复权参数： none，back，forward
+        - mav:          list, 移动均线周期
+        - avg_type:     str, 均线类型，包括ma，bbands
+        - indicator:    str, 指标类型，包括macd，rsi，dema
+        - bb_par:       tuple, 布林带线参数
+        - macd_par:     tuple, MACD参数
+        - rsi_par:      tuple, RSI指标参数
+        - dema_par:     tuple, DEMA指标参数
+
+    :return:
+        pd.DataFrame, 包含相应股票数据的DataFrame
+    """
+    no_visual = False
+    if not isinstance(plot_type, str):
+        raise TypeError(f'plot type should be a string, got {type(plot_type)} instead.')
+    if plot_type.lower() in ['candle', 'cdl', 'c']:
+        plot_type = 'candle'
+    elif plot_type.lower() in ['ohlc', 'o']:
+        plot_type = 'ohlc'
+    elif plot_type.lower() in ['renko', 'r']:
+        plot_type = 'renko'
+    elif plot_type.lower() in ['none', 'n']:
+        plot_type = 'none'
+        no_visual = True
+    else:
+        raise KeyError(f'Invalid plot type: {plot_type}')
+
+    matched_codes = []
+    if stock is not None:
+        if not isinstance(stock, str):
+            raise TypeError(f'stock should be a string, got {type(stock)} instead.')
+        stock_part = len(stock.split('.'))
+        if stock_part> 2:
+            raise KeyError(f'invalid stock code or name {stock}, please check your input.')
+        elif stock_part == 1:
+            code_matched = match_ts_code(stock)
+            match_count = code_matched['count']
+            if match_count == 0:
+                raise KeyError(f'Sorry, can not find a match ts_code with {stock}')
+            elif match_count >= 1:
+                if asset_type is None:
+                    matched_asset_types = []
+                    for atype in AVAILABLE_ASSET_TYPES:
+                        if len(code_matched[atype]) >= 1:
+                            matched_codes.extend(code_matched[atype])
+                            matched_asset_types.append(atype)
+                    asset_type = matched_asset_types[0]
+                else:
+                    matched_codes.append(code_matched[asset_type])
+            else:
+                raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
+            if len(matched_codes) > 1:
+                warnings.warn(f'More than one matching code is found with input ({stock}):\n'
+                              f'{matched_codes}'
+                              f'\nonly the first will be used to plot.')
+        elif stock_part == 2:
+            matched_codes.append(stock)
+        else:
+            raise RuntimeError(f'Unknown Error, got invalid stock {stock}')
+    if asset_type is None:
+        asset_type = 'E'
+
+    return _mpf_plot(stock_data=stock_data, share_name=None, stock=matched_codes[0], start=start, end=end,
+                     asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, interactive=interactive, **kwargs)
 
 
-def ohlc(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
-         no_visual=False, **kwargs):
-    """plot stock data or extracted data in ohlc form"""
-    return _mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                     end=end, asset_type=asset_type, plot_type='ohlc', no_visual=no_visual,
-                     **kwargs)
-
-
-def renko(stock=None, start=None, end=None, stock_data=None, share_name=None, asset_type='E',
-          no_visual=False, **kwargs):
-    """plot stock data or extracted data in renko form"""
-    return _mpf_plot(stock_data=stock_data, share_name=share_name, stock=stock, start=start,
-                     end=end, asset_type=asset_type, plot_type='renko', no_visual=no_visual,
-                     **kwargs)
-
-
+# TODO: 这里indicator_par应该删除，直接使用bb_par, macd_par, rsi_par, dema_par等参数
 def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
               asset_type='E', plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
               indicator_par=None, **kwargs):
@@ -417,7 +501,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     # 当stock_data没有给出时，则从本地获取股票数据
     if stock_data is None:
         assert stock is not None
-        if 'adj' in kwargs:
+        if {'adj' in kwargs} and (asset_type.upper() in ['E', 'FD']):
             adj = kwargs['adj']
         else:
             adj = 'none'
