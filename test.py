@@ -11260,15 +11260,6 @@ class TestVisual(unittest.TestCase):
 
     """
 
-    def test_ohlc(self):
-        print(f'test mpf plot in ohlc form')
-        qt.ohlc(stock='513100.SH', start='2021-04-01', end='20210515', asset_type='FD', no_visual=False)
-        print(f'get data from mpf plot function')
-        daily = qt.ohlc('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=False)
-        daily.drop(columns=['volume'], inplace=True)
-        print(f'test plot mpf data directly from DataFrame without volume and different mav')
-        qt.ohlc(stock_data=daily, start='2020-04-01', end='20200601', mav=[9, 12, 26], no_visual=False)
-
     def test_candle(self):
         print(f'test mpf plot in candle form')
         self.data = qt.candle('513100.SH', start='2020-12-01', end='20210131', asset_type='FD')
@@ -11289,15 +11280,16 @@ class TestVisual(unittest.TestCase):
                   start='20201101',
                   end='20201231',
                   indicator='macd', indicator_par=(12, 26, 9))
-
-    def test_renko(self):
-        print(f'test mpf plot in renko form')
-        qt.renko('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=True)
-        print(f'get data from mpf plot function')
-        daily = qt.renko('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', no_visual=True)
-        daily.drop(columns=['volume'], inplace=True)
-        print(f'test plot mpf data directly from DataFrame without volume')
-        qt.renko(stock_data=daily, start='2020-04-01', end='20200601', no_visual=True)
+        print('test candle with pre_defined simple parameters')
+        print('all following function calls will generate correct plot')
+        qt.candle('000001')
+        qt.candle('000001', asset_type='E')
+        qt.candle('000001', asset_type='IDX')
+        qt.candle('000001', asset_type='E', adj='f')
+        qt.candle('000001', mav=[9, 12, 26], adj='b')
+        qt.candle('000300')
+        qt.candle('000300', asset_type='IDX')
+        qt.candle()
 
     def test_indicators(self):
         print(f'test mpf plot in candle form with indicator dema')

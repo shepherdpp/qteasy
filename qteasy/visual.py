@@ -501,13 +501,10 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     # 当stock_data没有给出时，则从本地获取股票数据
     if stock_data is None:
         assert stock is not None
-        if {'adj' in kwargs} and (asset_type.upper() in ['E', 'FD']):
+        if ('adj' in kwargs) and (asset_type.upper() in ['E', 'FD']):
             adj = kwargs['adj']
         else:
             adj = 'none'
-        # 准备股票数据，为了实现动态图表，应该获取一只股票在全历史周期内的所有价格数据，并且在全周期上计算
-        # 所需的均线以及指标数据，显示的时候只显示其中一部分即可，并且可以使用鼠标缩放平移
-        # 因此_prepare_mpf_data()函数应该返回一个包含所有历史价格以及相关指标的DataFrame
         daily, share_name = _get_mpf_data(stock=stock,
                                           asset_type=asset_type,
                                           adj=adj)
