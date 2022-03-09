@@ -372,7 +372,7 @@ class InterCandle:
 
 
 # TODO: simplify and merge these three functions
-def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, plot_type='candle',
+def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, market=None, plot_type='candle',
            interactive=True, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
 
@@ -389,6 +389,12 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, p
 
     :param stock_data: pd.DataFrame
         直接用于K线图的数据，如果给出stock_data，则忽略其他的参数
+
+    :param market: str
+        证券所属的市场分类，包含：
+        - SH
+        - SZ
+        - CZC
 
     :param asset_type: str
         证券类型，包含：
@@ -460,7 +466,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, p
                             matched_asset_types.append(atype)
                     asset_type = matched_asset_types[0]
                 else:
-                    matched_codes.append(code_matched[asset_type])
+                    matched_codes.extend(code_matched[asset_type])
             else:
                 raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
             if len(matched_codes) > 1:
@@ -473,8 +479,11 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, p
             raise RuntimeError(f'Unknown Error, got invalid stock {stock}')
     if asset_type is None:
         asset_type = 'E'
-
-    return _mpf_plot(stock_data=stock_data, share_name=None, stock=matched_codes[0], start=start, end=end,
+    if len(matched_codes) == 0:
+        stock = None
+    else:
+        stock = matched_codes[0]
+    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end,
                      asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, interactive=interactive, **kwargs)
 
 
@@ -508,12 +517,17 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         daily, share_name = _get_mpf_data(stock=stock,
                                           asset_type=asset_type,
                                           adj=adj)
+        if daily.empty:
+            print(f'history data for {stock} can not be found!')
+            return
     else:
-        assert isinstance(stock_data, pd.DataFrame)
-        assert all(col in stock_data.columns for col in ['open', 'high', 'low', 'close'])
         daily = stock_data
         if share_name is None:
             share_name = 'stock'
+    assert isinstance(daily, pd.DataFrame), f'stock data is not a DataFrame, got {type(daily)}'
+    assert all(col in daily.columns for col in ['open', 'high', 'low', 'close']), \
+        f"price data missing, can not find " \
+        f"{[col for col in ['open', 'high', 'low', 'close'] if col not in daily.columns]}"
     # 如果给出或获取的数据没有volume列，则生成空数据列
     if 'volume' not in daily.columns:
         daily['volume'] = 0
@@ -590,7 +604,12 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d'):
     if this_stock.empty:
         raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type}!')
     # 设置历史数据获取区间的开始日期为股票上市第一天
-    start_date = pd.to_datetime(this_stock.list_date).strftime('%Y-%m-%d')
+
+    l_date = this_stock.list_date
+    if l_date is None:
+        start_date = '2000-01-01'
+    else:
+        start_date = pd.to_datetime(l_date).strftime('%Y-%m-%d')
     # 设置历史数据获取最后一天，只有现在的时间在23:00以后时才设置为今天，否则就设置为昨天
     # now获取的日期时间是格林尼治标准时间，计算中国的时间需要加8小时（中国在东八区）
     now = pd.to_datetime('now') + pd.Timedelta(8, 'h')

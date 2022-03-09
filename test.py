@@ -11289,7 +11289,6 @@ class TestVisual(unittest.TestCase):
         qt.candle('000001', mav=[9, 12, 26], adj='b')
         qt.candle('000300')
         qt.candle('000300', asset_type='IDX')
-        qt.candle()
 
     def test_indicators(self):
         print(f'test mpf plot in candle form with indicator dema')
