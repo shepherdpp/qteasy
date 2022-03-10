@@ -1069,8 +1069,6 @@ class DataSource:
         if self.source_type == 'file':
             raise RuntimeError('can not connect to database while source type is "file"')
         sql = f"SHOW TABLES LIKE '{db_table}'"
-        # debug
-        # print(f'will execute this SQL:\n{sql}')
         self.cursor.execute(sql)
         self.con.commit()
         res = self.cursor.fetchall()
@@ -1105,12 +1103,12 @@ class DataSource:
             for pk in primary_key[:-1]:
                 sql += f"{pk}, "
             sql += f"{primary_key[-1]})\n)"
-        # debug
         try:
             self.cursor.execute(sql)
+            self.con.commit()
         except Exception as e:
+            self.con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
-        self.con.commit()
 
     def alter_db_table(self, db_table, columns, dtypes, primary_key):
         """ 修改db_table的schema，按照输入参数设置表的字段属性
@@ -1135,17 +1133,11 @@ class DataSource:
         new_columns = {}
         for col, typ in zip(columns, dtypes):
             new_columns[col] = typ
-        # debug
-        # print(f'fetched columns and types are: \n{cur_columns}')
         # to drop some columns
         col_to_drop = [col for col in cur_columns if col not in columns]
-        # debug
-        # print(f'following cols will be dropped from table:\n{col_to_drop}')
         for col in col_to_drop:
             sql = f"ALTER TABLE {db_table} \n" \
                   f"DROP COLUMN `{col}`"
-            # debug
-            # print(f'will execute following sql: \n{sql}\n')
             # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
             del cur_columns[col]
             self.cursor.execute(sql)
@@ -1157,8 +1149,6 @@ class DataSource:
         for col in col_to_add:
             sql = f"ALTER TABLE {db_table} \n" \
                   f"ADD {col} {new_columns[col]}"
-            # debug
-            # print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
             self.con.commit()
 
@@ -1168,8 +1158,6 @@ class DataSource:
         for col in col_to_modify:
             sql = f"ALTER TABLE {db_table} \n" \
                   f"MODIFY COLUMN {col} {new_columns[col]}"
-            # debug
-            # print(f'will execute following sql: \n{sql}\n')
             self.cursor.execute(sql)
             self.con.commit()
 
@@ -1274,8 +1262,8 @@ class DataSource:
         if (start is not None) and (end is not None):
             try:
                 date_like_pk = primary_key[pk_dtypes.index('date')]
-            except:
-                warnings.warn(f'can not find date-like primary key in the table {table}!\n'
+            except Exception as e:
+                warnings.warn(f'{e}\ncan not find date-like primary key in the table {table}!\n'
                               f'passed start and end arguments will be ignored!', RuntimeWarning)
 
         if self.source_type == 'file':
@@ -1309,7 +1297,7 @@ class DataSource:
                                     shares=shares,
                                     date_like_pk=date_like_pk,
                                     start=start,
-                                     end=end)
+                                    end=end)
             if df.empty:
                 return df
             set_primary_key_index(df, primary_key, pk_dtypes)
@@ -1420,7 +1408,6 @@ class DataSource:
             dnld_data = acquire_data(table, **kwargs)
         else:
             raise NotImplementedError
-        res = dnld_data
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         return res
 
@@ -1467,15 +1454,10 @@ class DataSource:
         # 删除数据中过多的列，不允许出现缺少列
         columns_to_drop = [col for col in dnld_columns if col not in table_columns]
         if len(columns_to_drop) > 0:
-            # debug
-            # print(f'there are columns to drop, they are\n{columns_to_drop}')
             dnld_data.drop(columns=columns_to_drop, inplace=True)
         # 确保df与table的column顺序一致
         if len(missing_columns) > 0 or any(item_d != item_t for item_d, item_t in zip(dnld_columns, table_columns)):
             dnld_data = dnld_data.reindex(columns=table_columns, copy=False)
-            # print(f'downloaded data does not fit table schema:\n'
-            #       f'df columns: {dnld_columns}\n'
-            #       f'tbl schema: {table_columns}')
         if self.source_type == 'file':
             # 如果source_type == 'file'，需要将下载的数据与本地数据合并，本地数据必须全部下载，
             # 数据量大后非常费时
