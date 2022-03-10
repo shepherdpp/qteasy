@@ -26,6 +26,7 @@ from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
+from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
@@ -11619,7 +11620,7 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.candle('000001', mav=[9, 12, 26], adj='f')
+        pass
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')
@@ -11637,7 +11638,36 @@ class FastExperiments(unittest.TestCase):
         # df = ds.read_table_data('stock_daily', start='20220201', end='20220215',
         #                         shares='000001.SZ, 600000.SH, 000006.SZ, 871981.BJ')
         # print(df)
-        pass
+        print(_lev_ratio('abc', 'ABC'))
+        print(_lev_ratio('abcdefg', 'abDdefh'))
+        print(_lev_ratio('中国移动', '中国移动总公司'))
+        print(_lev_ratio('平安', '平安银行股份有限公司'))
+        print(_lev_ratio('中国平安', '平安银行股份有限公司'))
+        print(_lev_ratio('平安', '万科企业股份有限公司'))
+
+        print(_partial_lev_ratio('abc', 'ABC'))
+        print(_partial_lev_ratio('abcdefg', 'abDdefh'))
+        print(_partial_lev_ratio('中国移动', '中国移动总公司'))
+        print(_partial_lev_ratio('平安', '平安银行股份有限公司'))
+        print(_partial_lev_ratio('中国平安', '平安银行股份有限公司'))
+        print(_partial_lev_ratio('平安', '万科企业股份有限公司'))
+        print(_partial_lev_ratio('常辅股份', '常州电站辅机股份有限公司'))
+
+        print(_partial_lev_ratio('平?', '万科企业股份有限公司'))
+        print(_partial_lev_ratio('常?股份', '常州电站辅机股份有限公司'))
+
+        wordlist = ["color", "colour", "work", "working", "fox", "worker", "working"]
+        print(_wildcard_match('col?r', wordlist))
+        print(_wildcard_match('col*r', wordlist))
+        print(_wildcard_match('wor.?', wordlist))
+        print(_wildcard_match('?o?', wordlist))
+
+    def test_time(self):
+        print(match_ts_code('000001'))
+        print(match_ts_code('中国电信'))
+        print(match_ts_code('嘉实服务'))
+        print(match_ts_code('?集集团'))
+        print(match_ts_code('格力'))
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

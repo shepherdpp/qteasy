@@ -1962,6 +1962,19 @@ class DataSource:
                 self.update_table_data(table, dnld_data)
                 print(f'\n{e}, process interrupted, tried to write {total_written} rows, will proceed with next table!')
 
+    @lru_cache()
+    def get_all_basic_tables(self):
+        """ 一个快速获取所有basic数据表的函数，缓存处理以加快速度
+
+        :return:
+        """
+        df_s = self.read_table_data('stock_basic')
+        df_i = self.read_table_data('index_basic')
+        df_f = self.read_table_data('fund_basic')
+        df_ft = self.read_table_data('future_basic')
+        df_o = self.read_table_data('opt_basic')
+        return df_s, df_i, df_f, df_ft, df_o
+
 
 # 以下函数是通用df操作函数
 def set_primary_key_index(df, primary_key, pk_dtypes):

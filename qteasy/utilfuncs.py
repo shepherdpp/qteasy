@@ -13,6 +13,7 @@ import pandas as pd
 import sys
 import qteasy
 import time
+from numba import njit
 from functools import wraps
 
 TIME_FREQ_STRINGS = ['TICK',
@@ -65,6 +66,7 @@ def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=
     :param logger: 日志logger对象. 如果给出None, 则打印结果
     :type logger: logging.Logger 对象
     """
+
     def deco_retry(f):
 
         @wraps(f)
@@ -507,7 +509,6 @@ def prev_market_trade_day(date, exchange='SSE'):
         raise NotImplementedError
 
 
-
 def nearest_market_trade_day(date, exchange='SSE'):
     """ 根据交易所发布的交易日历找到某一日的最近交易日，需要提前准备QT_TRADE_CALENDAR数据
         返回值：
@@ -653,11 +654,14 @@ def is_number_like(key: [str, int, float]) -> bool:
     return False
 
 
-def match_ts_code(code: str):
-    """ 根据输入的证券代码查找匹配的ts_code，
+def match_ts_code(code: str, asset_types='all'):
+    """ 根据输入匹配证券代码或证券名称
+        如果输入字符串全部为数字，则匹配证券代码ts_code，否则匹配证券名称
+        该函数需要使用所有的basic数据表
         输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
 
     :param code: 字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
+    :param asset_types: str
     :return:
         Dict {'E': [equity codes],
               'IDX': [],
@@ -665,35 +669,122 @@ def match_ts_code(code: str):
               'FT': []}
     """
     ds = qteasy.QT_DATA_SOURCE
-    df_s = ds.read_table_data('stock_basic')
-    df_i = ds.read_table_data('index_basic')
-    df_f = ds.read_table_data('fund_basic')
-    df_ft = ds.read_table_data('future_basic')
-    df_o = ds.read_table_data('opt_basic')
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_tables()
 
-    df_i['symbol'] = [item.split('.')[0] for item in df_i.index]
-    df_f['symbol'] = [item.split('.')[0] for item in df_f.index]
-    df_o['symbol'] = [item.split('.')[0] for item in df_o.index]
-
-    res = {}
+    code_matched = {}
     count = 0
-    for b, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], AVAILABLE_ASSET_TYPES):
-        ts_code = b.loc[b.symbol == code].index.to_list()
-        count += len(ts_code)
-        res.update({asset_type: ts_code})
-    res.update({'count': count})
-    return res
+    if all(char.isdigit() for char in code):
+        df_i['symbol'] = [item.split('.')[0] for item in df_i.index]
+        df_f['symbol'] = [item.split('.')[0] for item in df_f.index]
+        df_o['symbol'] = [item.split('.')[0] for item in df_o.index]
+
+        for b, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], AVAILABLE_ASSET_TYPES):
+            ts_code = b.loc[b.symbol == code].index.to_list()
+            count += len(ts_code)
+            code_matched.update({asset_type: ts_code})
+    else:
+        s_names = df_s.name.to_list()
+        i_names = df_i.name.to_list()
+        f_names = df_f.name.to_list()
+
+        for names, asset_type in zip([s_names, i_names, f_names], AVAILABLE_ASSET_TYPES):
+            if ('?' in code) or ('*' in code):
+                matched = _wildcard_match(code, names)
+            else:
+                matched = [item for item in names if _partial_lev_ratio(code, item) >= 0.75]
+            code_matched[asset_type] = matched
+            count += len(matched)
+
+    code_matched.update({'count': count})
+
+    return code_matched
 
 
-def match_ts_name(name: str, fuzz: bool = False):
-    """ 根据输入的证券名称查找匹配的ts_code，
-        输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
+@njit()
+def _lev_ratio(s, t):
+    """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio
+    此处忽略大小写字母的区别
 
-    :param name: 证券名称，支持通配符，支持模糊查找，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
+    :param s: str  第一个字符串
+    :param t: str  第二个字符串
     :return:
-        Dict {'E': [equity codes],
-              'IDX': [],
-              'FD': [],
-              'FT': []}
+        float： 两个字符串的levenshtein ratio
     """
-    raise NotImplementedError
+    s = s.lower()
+    t = t.lower()
+    # Initialize matrix of zeros
+    rows = len(s) + 1
+    cols = len(t) + 1
+    distance = np.zeros((rows, cols))
+
+    # Populate matrix of zeros with the indeces of each character of both strings
+    for i in range(1, rows):
+        for k in range(1, cols):
+            distance[i][0] = i
+            distance[0][k] = k
+
+    # Iterate over the matrix to compute the cost of deletions,insertions and/or substitutions
+    for col in range(1, cols):
+        for row in range(1, rows):
+            if s[row - 1] == t[col - 1]:
+                cost = 0  # If the characters are the same in the two strings in a given position [i,j] then the cost
+                # is 0
+            else:
+                cost = 2
+            distance[row][col] = min(distance[row - 1][col] + 1,  # Cost of deletions
+                                     distance[row][col - 1] + 1,  # Cost of insertions
+                                     distance[row - 1][col - 1] + cost)  # Cost of substitutions
+    # Computation of the Levenshtein Distance Ratio
+    ratio = ((len(s) + len(t)) - distance[row][col]) / (len(s) + len(t))
+    return ratio
+
+
+@njit()
+def _partial_lev_ratio(s, t):
+    """ 比较两个字符串的局部相似度，将较短的字符串与较长字符串的所有字串进行比较，计算所有的相似度，
+        返回最大相似度
+        此处忽略大小写的区别
+
+    :param s: str  第一个字符串
+    :param t: str  第二个字符串
+    :return:
+        两个字符串的局部相似度值
+    """
+    s = s.lower()
+    t = t.lower()
+    if len(s) > len(t):
+        longer = s
+        shorter = t
+    else:
+        longer = t
+        shorter = s
+    l_short = len(shorter)
+    l_long = len(longer)
+    length = l_long - l_short + 1
+    ratios = np.zeros((length, ))
+
+    for i in range(length):
+        ratios[i] = _lev_ratio(shorter, longer[i:i+l_short])
+
+    return ratios.max()
+
+
+def _wildcard_match(mode, wordlist):
+    """ 在字符串列表或序列中搜索符合模式的字符串
+
+    :param mode: str  带通配符wildcard的字符串
+    :param wordlist: iterable  一个列表、元组、生成器或任何可循环的对象，包含一系列需要匹配的字符串
+    :return:
+        list: 匹配成功的字符串
+    """
+    import re
+
+    mode = mode.replace('.', '').replace('.+', '')
+    mode = mode.replace('?', '.').replace('*', '.+')
+    res = []
+
+    for word in wordlist:
+        if re.match(mode, word):
+            res.append(word)
+
+    return res
