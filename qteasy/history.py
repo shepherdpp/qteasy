@@ -12,6 +12,7 @@
 import pandas as pd
 import numpy as np
 
+import qteasy
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
 
 
@@ -1044,7 +1045,8 @@ def get_history_panel(start,
                       shares,
                       htypes,
                       asset_type: str,
-                      adj: str,):
+                      adj: str,
+                      data_source):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -1055,18 +1057,24 @@ def get_history_panel(start,
     :param htypes:
     :param asset_type: str
     :param adj:
+    :param data_source: DataSource Object
     :return:
     """
-    from qteasy import QT_DATA_SOURCE
-    ds = QT_DATA_SOURCE
+    if data_source is None:
+        from qteasy import QT_DATA_SOURCE
+        ds = QT_DATA_SOURCE
+    else:
+        if not isinstance(data_source, qteasy.DataSource):
+            raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
+        ds = data_source
     now = (pd.to_datetime('now') + pd.Timedelta(8, 'h')).strftime('%Y-%m-%d %H:%M:%S')
     print(f'[{now}]: loading data via datasource: {ds.source_type}-{ds.connection_type}\n'
           f'for shares: {shares}@{htypes} from {start} til {end}')
-    result_hp = ds.get_history_dataframes(shares=shares,
-                                          htypes=htypes,
-                                          start=start,
-                                          end=end,
-                                          freq=freq,
-                                          asset_type=asset_type,
-                                          adj=adj)
+    result_hp = ds.get_history_data(shares=shares,
+                                    htypes=htypes,
+                                    start=start,
+                                    end=end,
+                                    freq=freq,
+                                    asset_type=asset_type,
+                                    adj=adj)
     return result_hp

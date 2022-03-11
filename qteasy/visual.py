@@ -130,12 +130,12 @@ class InterCandle:
         # 初始化figure对象，在figure上建立三个Axes对象并分别设置好它们的位置和基本属性
         self.fig = mpf.figure(style=style, figsize=(12, 8), facecolor=(0.82, 0.83, 0.85))
         fig = self.fig
-        self.ax1 = fig.add_axes([0.08, 0.25, 0.88, 0.60])
+        self.ax1 = fig.add_axes([0.08, 0.25, 0.86, 0.60])
         self.ax1.set_xbound(0, 100)
         # self.ax1.set_xticklabels(data.index)
-        self.ax2 = fig.add_axes([0.08, 0.15, 0.88, 0.10], sharex=self.ax1)
+        self.ax2 = fig.add_axes([0.08, 0.15, 0.86, 0.10], sharex=self.ax1)
         self.ax2.set_ylabel('This is not Volume')
-        self.ax3 = fig.add_axes([0.08, 0.05, 0.88, 0.10], sharex=self.ax1)
+        self.ax3 = fig.add_axes([0.08, 0.05, 0.86, 0.10], sharex=self.ax1)
         # 初始化figure对象，在figure上预先放置文本并设置格式，文本内容根据需要显示的数据实时更新
         self.t1 = fig.text(0.50, 0.94, f'{self.plot_title}', **title_font)
         self.t2 = fig.text(0.12, 0.90, '开/收: ', **normal_label_font)
@@ -373,7 +373,7 @@ class InterCandle:
 
 # TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, market=None, plot_type='candle',
-           interactive=True, **kwargs):
+           interactive=True, data_source=None, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
 
     :param stock: str,
@@ -415,6 +415,10 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
         是否输出可交互式图表
         （受matplotlib的backend限制，某些环境下交互式图表不可用，详情请参见
         https://matplotlib.org/stable/users/explain/backends.html）
+
+    :param data_source: DataSource Object
+        获取历史数据的数据源，默认使用qt内置的数据源QT_DATA_SOURCE
+        否则使用给定的DataSource
 
     :param kwargs:
         用于传递至K线图的更多参数，包括：
@@ -460,7 +464,6 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
             elif match_count >= 1:
                 if asset_type is None:
                     matched_asset_types = []
-                    import pdb; pdb.set_trace()
                     for atype in code_matched:
                         if atype == 'count':
                             continue
@@ -474,7 +477,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
                 raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
             if len(matched_codes) > 1:
                 warnings.warn(f'More than one matching code is found with input ({stock}):\n'
-                              f'{matched_codes}'
+                              f'{code_matched}\n'
                               f'\nonly the first will be used to plot.')
         elif stock_part == 2:
             matched_codes.append(stock)
@@ -486,14 +489,13 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
         stock = None
     else:
         stock = matched_codes[0]
-    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end,
-                     asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, interactive=interactive, **kwargs)
+    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end,asset_type=asset_type,
+                     plot_type=plot_type, no_visual=no_visual, data_source=data_source, **kwargs)
 
 
-# TODO: 这里indicator_par应该删除，直接使用bb_par, macd_par, rsi_par, dema_par等参数
 def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
               asset_type='E', plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
-              indicator_par=None, **kwargs):
+              data_source=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     if plot_type is None:
@@ -517,7 +519,8 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
             adj = kwargs['adj']
         else:
             adj = 'none'
-        daily, share_name = _get_mpf_data(stock=stock,
+        daily, share_name = _get_mpf_data(data_source=data_source,
+                                          stock=stock,
                                           asset_type=asset_type,
                                           adj=adj)
         if daily.empty:
@@ -539,7 +542,6 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         indicator = 'macd'
     if indicator not in ValidCandlePlotIndicators + ValidCandlePlotMATypes:
         raise KeyError(f'Invalid indicator: ({indicator})')
-    kwargs[indicator] = indicator_par
     daily, parameters = _add_indicators(daily,
                                         mav=mav,
                                         **kwargs)
@@ -572,7 +574,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     return daily
 
 
-def _get_mpf_data(stock, asset_type='E', adj='none', freq='d'):
+def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', data_source=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
 
@@ -580,6 +582,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d'):
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
     :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
     :param freq: 价格周期，d——日K线，5min——五分钟k线
+    :param data_source: 获取数据的数据源
     :return:
         tuple：(pd.DataFrame, share_name)
     """
@@ -626,7 +629,7 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d'):
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
-                             adj=adj).to_dataframe(share=stock)
+                             adj=adj, data_source=data_source).to_dataframe(share=stock)
     # 返回股票的名称和全称
     share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
     data.rename({'vol': 'volume'}, axis='columns', inplace=True)

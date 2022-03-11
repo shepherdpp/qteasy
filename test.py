@@ -12442,37 +12442,37 @@ class TestDataSource(unittest.TestCase):
         asset_type = 'E, IDX, FD'
         freq = 'd'
         adj = 'back'
-        hp = ds.get_history_dataframes(shares=shares,
-                                       htypes=htypes,
-                                       start=start,
-                                       end=end,
-                                       asset_type=asset_type,
-                                       freq=freq,
-                                       adj=adj)
+        hp = ds.get_history_data(shares=shares,
+                                 htypes=htypes,
+                                 start=start,
+                                 end=end,
+                                 asset_type=asset_type,
+                                 freq=freq,
+                                 adj=adj)
         print(f'got history panel with backward price recover:\n{hp}')
-        hp = ds.get_history_dataframes(shares=shares,
-                                       htypes=htypes,
-                                       start=start,
-                                       end=end,
-                                       asset_type=asset_type,
-                                       freq=freq,
-                                       adj='forward')
+        hp = ds.get_history_data(shares=shares,
+                                 htypes=htypes,
+                                 start=start,
+                                 end=end,
+                                 asset_type=asset_type,
+                                 freq=freq,
+                                 adj='forward')
         print(f'got history panel with forward price recover:\n{hp}')
-        hp = ds.get_history_dataframes(shares=shares,
-                                       htypes=htypes,
-                                       start=start,
-                                       end=end,
-                                       asset_type=asset_type,
-                                       freq=freq,
-                                       adj='forward')
+        hp = ds.get_history_data(shares=shares,
+                                 htypes=htypes,
+                                 start=start,
+                                 end=end,
+                                 asset_type=asset_type,
+                                 freq=freq,
+                                 adj='forward')
         print(f'got history panel with price:\n{hp}')
-        hp = ds.get_history_dataframes(shares=shares,
-                                       htypes=['open', 'high', 'low', 'close', 'vol'],
-                                       start=start,
-                                       end=end,
-                                       asset_type=asset_type,
-                                       freq='w',
-                                       adj='forward')
+        hp = ds.get_history_data(shares=shares,
+                                 htypes=['open', 'high', 'low', 'close', 'vol'],
+                                 start=start,
+                                 end=end,
+                                 asset_type=asset_type,
+                                 freq='w',
+                                 adj='forward')
         print(f'got history panel with price:\n{hp}')
 
 

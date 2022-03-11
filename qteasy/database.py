@@ -1519,7 +1519,7 @@ class DataSource:
             raise TypeError(f'Invalid source type: {self.source_type}')
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
-    def get_history_dataframes(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
+    def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
             HistoryPanel对象，用于策略的运行、回测或优化测试。
 
@@ -1975,6 +1975,22 @@ class DataSource:
         df_o = self.read_table_data('opt_basic')
         return df_s, df_i, df_f, df_ft, df_o
 
+    def reconnect_db(self):
+        """ 当数据库超时或其他原因丢失连接时，Ping数据库检查状态，
+            如果可行的话，重新连接数据库
+
+        :return: bool
+            True: 连接成功
+            False: 连接失败
+        """
+        if self.source_type != 'db':
+            return
+        try:
+            self.con.ping(reconnect=True)
+        except Exception as e:
+            print(f'{e} can not reconnect to database {self.connection_type}, '
+                  f'please check your connection')
+
 
 # 以下函数是通用df操作函数
 def set_primary_key_index(df, primary_key, pk_dtypes):
@@ -2124,3 +2140,13 @@ def get_built_in_table_schema(table):
     pk_dtypes = [dtypes[i] for i in pk_loc]
 
     return columns, dtypes, primary_keys, pk_dtypes
+
+
+def get_table_map():
+    """ 打印所有内置数据表的清单
+
+    :return:
+    """
+    table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+    table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+    return table_map
