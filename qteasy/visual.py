@@ -460,7 +460,10 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
             elif match_count >= 1:
                 if asset_type is None:
                     matched_asset_types = []
-                    for atype in AVAILABLE_ASSET_TYPES:
+                    import pdb; pdb.set_trace()
+                    for atype in code_matched:
+                        if atype == 'count':
+                            continue
                         if len(code_matched[atype]) >= 1:
                             matched_codes.extend(code_matched[atype])
                             matched_asset_types.append(atype)

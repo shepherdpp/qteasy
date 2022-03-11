@@ -11669,6 +11669,8 @@ class FastExperiments(unittest.TestCase):
         print(match_ts_code('?集集团'))
         print(match_ts_code('格力'))
 
+        qt.candle('格力电气')
+
 
 # noinspection SqlDialectInspection,PyTypeChecker
 class TestDataSource(unittest.TestCase):

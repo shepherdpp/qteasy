@@ -674,25 +674,20 @@ def match_ts_code(code: str, asset_types='all'):
     code_matched = {}
     count = 0
     if all(char.isdigit() for char in code):
-        df_i['symbol'] = [item.split('.')[0] for item in df_i.index]
-        df_f['symbol'] = [item.split('.')[0] for item in df_f.index]
-        df_o['symbol'] = [item.split('.')[0] for item in df_o.index]
 
-        for b, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], AVAILABLE_ASSET_TYPES):
-            ts_code = b.loc[b.symbol == code].index.to_list()
+        for basic, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], AVAILABLE_ASSET_TYPES):
+            basic['symbol'] = [item.split('.')[0] for item in basic.index]
+            ts_code = basic.loc[basic.symbol == code].name.to_dict()
             count += len(ts_code)
             code_matched.update({asset_type: ts_code})
     else:
-        s_names = df_s.name.to_list()
-        i_names = df_i.name.to_list()
-        f_names = df_f.name.to_list()
-
-        for names, asset_type in zip([s_names, i_names, f_names], AVAILABLE_ASSET_TYPES):
+        for basic, asset_type in zip([df_s, df_i, df_f], AVAILABLE_ASSET_TYPES):
+            names = basic.name.to_list()
             if ('?' in code) or ('*' in code):
                 matched = _wildcard_match(code, names)
             else:
                 matched = [item for item in names if _partial_lev_ratio(code, item) >= 0.75]
-            code_matched[asset_type] = matched
+            code_matched[asset_type] = basic.loc[basic.name.isin(matched)].name.to_dict()
             count += len(matched)
 
     code_matched.update({'count': count})
