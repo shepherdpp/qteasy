@@ -9,10 +9,7 @@
 
 
 ```python
-import sys
-sys.path.append('../')
 import qteasy as qt
-%matplotlib inline
 ```
 
 
@@ -102,8 +99,6 @@ res = qt.run(op, visual=True)
     
 
 
-
-    
 ![png](05_back_testing/output_3_1.png)
     
 

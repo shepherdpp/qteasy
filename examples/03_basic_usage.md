@@ -11,10 +11,7 @@
 同时，为了在线打印图表，使用`matplotlib inline`设置图表打印模式为在线打印
 
 ```python
-import sys
-sys.path.append('../')
 import qteasy as qt
-%matplotlib inline
 ```
 ### 配置qteasy的基本参数
 使用`qt.Context()`创建一个context上下文对象，并进行以下设置：
