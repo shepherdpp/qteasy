@@ -1046,7 +1046,7 @@ def get_history_panel(start,
                       htypes,
                       asset_type: str,
                       adj: str,
-                      data_source):
+                      data_source=None):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 

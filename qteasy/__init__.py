@@ -37,7 +37,7 @@ try:
     with open(QT_ROOT_PATH+'qteasy/qteasy.cnf') as f:
         config_lines = f.readlines()
 except Exception as e:
-    # 新建文件：
+    print(f'{e}, a new configuration file is created.')
     f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
     f.close()
     config_lines = []  # 本地配置文件行
@@ -45,6 +45,8 @@ except Exception as e:
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
 # config = value
 for line in config_lines:
+    if line[0] == '#':  # 忽略注释行
+        continue
     line = line.split('=')
     if len(line) == 2:
         arg_name = line[0].strip()
@@ -56,7 +58,7 @@ try:
     TUSHARE_TOKEN = qt_local_configs['tushare_token']
     ts.set_token(TUSHARE_TOKEN)
 except Exception as e:
-    warn('tushare token was not loaded, features might not work properly!',
+    warn(f'{e}, tushare token was not loaded, features might not work properly!',
          RuntimeWarning)
 
 # 读取其他本地配置属性，更新QT_CONFIG
@@ -79,6 +81,9 @@ if not QT_TRADE_CALENDAR.empty:
     QT_TRADE_CALENDAR = QT_TRADE_CALENDAR
 else:
     QT_TRADE_CALENDAR = None
+    print(f'trade calendar can not be loaded, some of the trade day related functions may not work properly.'
+          f'\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
+          f'download trade calendar data')
 
 np.seterr(divide='ignore', invalid='ignore')
 

@@ -417,7 +417,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
         https://matplotlib.org/stable/users/explain/backends.html）
 
     :param data_source: DataSource Object
-        获取历史数据的数据源，默认使用qt内置的数据源QT_DATA_SOURCE
+        历史数据源，默认使用qt内置的数据源QT_DATA_SOURCE
         否则使用给定的DataSource
 
     :param kwargs:
@@ -606,9 +606,13 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', data_source=None)
         basic_info = ds.read_table_data('fund_basic')
     else:
         raise KeyError(f'Wrong asset type: [{asset_type}]')
+    if basic_info.empty:
+        raise ValueError(f'Can not load basic information for asset type: {asset_type} from data source '
+                         f'{ds.connection_type}.')
     this_stock = basic_info.loc[stock]
     if this_stock.empty:
-        raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type}!')
+        raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type} '
+                       f'from data source {ds.connection_type}')
     # 设置历史数据获取区间的开始日期为股票上市第一天
 
     l_date = this_stock.list_date

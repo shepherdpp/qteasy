@@ -779,7 +779,7 @@ class DataSource:
                                            port=port,
                                            user=user,
                                            password=password)
-                # 标准的db名称为"qteasy_db"，当db不存在时创建新的db
+                # 检查db是否存在，当db不存在时创建新的db
                 self.cursor = self.con.cursor()
                 sql = f"CREATE DATABASE IF NOT EXISTS {db}"
                 self.cursor.execute(sql)
@@ -792,6 +792,7 @@ class DataSource:
                 self.connection_type = f'db:mysql://{host}@{port}/{db}'
                 self.host = host
                 self.port = port
+                self.db_name = db
                 self.file_type = None
                 self.file_path = None
             except Exception as e:
@@ -1975,7 +1976,7 @@ class DataSource:
         df_o = self.read_table_data('opt_basic')
         return df_s, df_i, df_f, df_ft, df_o
 
-    def reconnect_db(self):
+    def reconnect(self):
         """ 当数据库超时或其他原因丢失连接时，Ping数据库检查状态，
             如果可行的话，重新连接数据库
 
@@ -1984,12 +1985,16 @@ class DataSource:
             False: 连接失败
         """
         if self.source_type != 'db':
-            return
+            return True
         try:
             self.con.ping(reconnect=True)
+            sql = f"USE {self.db_name}"
+            self.cursor.execute(sql)
+            self.con.commit()
+            return True
         except Exception as e:
-            print(f'{e} can not reconnect to database {self.connection_type}, '
-                  f'please check your connection')
+            print(f'{e} on {self.connection_type}, please check your connection')
+            return False
 
 
 # 以下函数是通用df操作函数
