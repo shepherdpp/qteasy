@@ -11620,7 +11620,7 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        pass
+        print()
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')
@@ -11666,10 +11666,12 @@ class FastExperiments(unittest.TestCase):
         print(match_ts_code('000001'))
         print(match_ts_code('中国电信'))
         print(match_ts_code('嘉实服务'))
-        print(match_ts_code('?集集团'))
-        print(match_ts_code('格力'))
+        print(match_ts_code('中?集团'))
+        print(match_ts_code('中*金'))
+        print(match_ts_code('工商银行'))
 
-        qt.candle('格力电气')
+        print(match_ts_code('招商银行', asset_types='E, FD'))
+        print(match_ts_code('贵阳银行', asset_types='E, FT'))
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

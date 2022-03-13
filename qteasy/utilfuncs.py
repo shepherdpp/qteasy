@@ -655,40 +655,89 @@ def is_number_like(key: [str, int, float]) -> bool:
 
 
 def match_ts_code(code: str, asset_types='all'):
-    """ 根据输入匹配证券代码或证券名称
-        如果输入字符串全部为数字，则匹配证券代码ts_code，否则匹配证券名称
-        该函数需要使用所有的basic数据表
-        输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
+    """ 根据输入匹配证券代码或证券名称，输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
+        如果给出asset_types参数，则限定只返回符合asset_types的结果
+        如果输入字符串全部为数字，则匹配证券代码ts_code，如：
+            输入：
+                000001
+            匹配：
+                '000001.SZ': '平安银行'，
+                '000001.CZC': '农期指数', 
+                '000001.SH': '上证指数' ...
 
-    :param code: 字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
+        输入的证券名称可以包含通配符，则进行模式匹配，如：
+        - '?' 匹配一个字符，如
+            输入：
+                "中?集团"
+            匹配
+                '000039.SZ': '中集集团',
+                '000759.SZ': '中百集团',
+                '002309.SZ': '中利集团',
+                '600252.SH': '中恒集团',
+                '601512.SH': '中新集团'
+        - '*' 匹配多个字符，如
+            输入：
+                "中*金"
+            匹配：
+                '600489.SH': '中金黄金',
+                '600916.SH': '中国黄金'
+
+        输入的证券名称如果不含通配符，将进行模糊匹配：并按匹配程度从高到低输出相似的名称，如：
+            输入：
+                '工商银行'
+            匹配：
+                '601398.SH': '工商银行',
+                '600036.SH': '招商银行',
+                '601916.SH': '浙商银行'
+
+
+    :param code:
+        字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
     :param asset_types: str
+        返回结果类型，以逗号分隔的资产类型代码，如"E,FD"代表只返回股票和基金代码
     :return:
-        Dict {'E': [equity codes],
-              'IDX': [],
-              'FD': [],
-              'FT': []}
+        Dict {'E':      [equity codes 股票代码],
+              'IDX':    [index codes 指数代码],
+              'FD':     [fund codes 基金代码],
+              'FT':     [futures codes 期货代码],
+              'OPT':    [options codes 期权代码]}
     """
     ds = qteasy.QT_DATA_SOURCE
     df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_tables()
+    asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
+    if asset_types is None:
+        asset_types = 'all'
+    if isinstance(asset_types, str):
+        asset_types = str_to_list(asset_types)
+    if 'all' in asset_types:
+        asset_types = AVAILABLE_ASSET_TYPES
+    else:
+        asset_types = [item for item in asset_types if item in AVAILABLE_ASSET_TYPES]
+    asset_types_with_name = [item for item in asset_types if item in ['E', 'IDX', 'FD']]
     code_matched = {}
     count = 0
     if all(char.isdigit() for char in code):
-
-        for basic, asset_type in zip([df_s, df_i, df_f, df_ft, df_o], AVAILABLE_ASSET_TYPES):
+        for at in asset_types:
+            basic = asset_type_basics[at]
             basic['symbol'] = [item.split('.')[0] for item in basic.index]
             ts_code = basic.loc[basic.symbol == code].name.to_dict()
             count += len(ts_code)
-            code_matched.update({asset_type: ts_code})
+            code_matched.update({at: ts_code})
     else:
-        for basic, asset_type in zip([df_s, df_i, df_f], AVAILABLE_ASSET_TYPES):
+        for at in asset_types_with_name:
+            basic = asset_type_basics[at]
             names = basic.name.to_list()
             if ('?' in code) or ('*' in code):
                 matched = _wildcard_match(code, names)
+                code_matched[at] = basic.loc[basic.name.isin(matched)].name.to_dict()
             else:
-                matched = [item for item in names if _partial_lev_ratio(code, item) >= 0.75]
-            code_matched[asset_type] = basic.loc[basic.name.isin(matched)].name.to_dict()
-            count += len(matched)
+                match_values = list(map(_partial_lev_ratio, [code]*len(names), names))
+                basic['match_value'] = match_values
+                sort_matched = basic.loc[basic.match_value >= 0.75].sort_values(by='match_value',
+                                                                                ascending=False)
+                code_matched[at] = sort_matched.name.to_dict()
+            count += len(code_matched)
 
     code_matched.update({'count': count})
 
@@ -776,6 +825,7 @@ def _wildcard_match(mode, wordlist):
 
     mode = mode.replace('.', '').replace('.+', '')
     mode = mode.replace('?', '.').replace('*', '.+')
+    mode = mode + '$'
     res = []
 
     for word in wordlist:

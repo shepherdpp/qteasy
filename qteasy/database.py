@@ -1961,7 +1961,7 @@ class DataSource:
                 print(f'{total_written} rows of data written to {self}:\n')
             except Exception as e:
                 self.update_table_data(table, dnld_data)
-                print(f'\n{e}, process interrupted, tried to write {total_written} rows, will proceed with next table!')
+                print(f'\n{e} process interrupted, tried to write {total_written} rows, will proceed with next table!')
 
     @lru_cache()
     def get_all_basic_tables(self):
