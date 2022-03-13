@@ -153,7 +153,7 @@ op.set_parameter('dma', pars=(23, 166, 196))
 上面的带把把参数`pars=(23, 166, 196)`传递给DMA策略，`op.set_parameter()`的详细使用方法见手册。
 
 
-#### Back-test strategy  回测并评价交易策略的性能表现
+### Back-test strategy  回测并评价交易策略的性能表现
 
 使用默认参数回测策略在历史数据上的表现，请使用`qteasy.run()`，`mode=1`表示进入回测模式，传入参数`visual=False`以文本形式打印结果
 `qteasy.run()`的其他可选参数参见手册
@@ -165,44 +165,42 @@ res = qt.run(op, mode=1, visual=True)
 
  输出结果如下：
  ```
-    ====================================
-    |                                  |
-    |       BACK TESTING RESULT        |
-    |                                  |
-    ====================================
-    qteasy running mode: 1 - History back testing
-    time consumption for operate signal creation: 1.6ms
-    time consumption for operation back looping:  144.0ms
-    
-    investment starts on      2016-04-05 00:00:00
-    ends on                   2021-02-01 00:00:00
-    Total looped periods:     4.8 years.
-
-    -------------operation summary:------------
-
-                Sell     Buy   Total Long pct Short pct Empty pct
-    000300.SH    5        6      11   55.6%      0.0%     44.4%   
-    
-    Total operation fee:     ¥      270.04
-    total investment amount: ¥  100,000.00
-    final value:              ¥  169,406.97
-    Total return:                    69.41% 
-    Avg Yearly return:               11.53%
-    Skewness:                         -0.47
-    Kurtosis:                         14.06
-    Benchmark return:                69.03% 
-    Benchmark Yearly return:         11.48%
-    
-    ------strategy loop_results indicators------ 
-    alpha:                           -0.003
-    Beta:                             1.000
-    Sharp ratio:                      0.045
-    Info ratio:                      -0.004
-    250 day volatility:               0.132
-    Max drawdown:                    18.97% 
-        peak / valley:        2019-04-19 / 2020-02-03
-        recovered on:         2020-07-09
-    ===========END OF REPORT=============
+ ====================================
+ |                                  |
+ |       BACK TESTING RESULT        |
+ |                                  |
+ ====================================
+ qteasy running mode: 1 - History back testing
+ time consumption for operate signal creation: 1.6ms
+ time consumption for operation back looping:  144.0ms
+ 
+ investment starts on      2016-04-05 00:00:00
+ ends on                   2021-02-01 00:00:00
+ Total looped periods:     4.8 year
+ -------------operation summary:----------
+             Sell     Buy   Total Long pct Short pct Empty pct
+ 000300.SH    5        6      11   55.6%      0.0%     44.4%   
+ 
+ Total operation fee:     ¥      270.04
+ total investment amount: ¥  100,000.00
+ final value:              ¥  169,406.97
+ Total return:                    69.41% 
+ Avg Yearly return:               11.53%
+ Skewness:                         -0.47
+ Kurtosis:                         14.06
+ Benchmark return:                69.03% 
+ Benchmark Yearly return:         11.48%
+ 
+ ------strategy loop_results indicators------ 
+ alpha:                           -0.003
+ Beta:                             1.000
+ Sharp ratio:                      0.045
+ Info ratio:                      -0.004
+ 250 day volatility:               0.132
+ Max drawdown:                    18.97% 
+     peak / valley:        2019-04-19 / 2020-02-03
+     recovered on:         2020-07-09
+ ===========END OF REPORT=============
  ```
 
 整个回测过程耗时150ms左右，其中交易信号生成共耗费1.6ms，交易回测耗时144ms

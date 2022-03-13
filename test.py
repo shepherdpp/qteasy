@@ -1521,13 +1521,13 @@ class TestEvaluations(unittest.TestCase):
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
     def test_sharp(self):
-        self.assertAlmostEqual(eval_sharp(self.test_data1, 5, 0), 0.06135557)
-        self.assertAlmostEqual(eval_sharp(self.test_data2, 5, 0), 0.167858667)
-        self.assertAlmostEqual(eval_sharp(self.test_data3, 5, 0), 0.09950547)
-        self.assertAlmostEqual(eval_sharp(self.test_data4, 5, 0), 0.154928241)
-        self.assertAlmostEqual(eval_sharp(self.test_data5, 5, 0.002), 0.007868673)
-        self.assertAlmostEqual(eval_sharp(self.test_data6, 5, 0.002), 0.018306537)
-        self.assertAlmostEqual(eval_sharp(self.test_data7, 5, 0.002), 0.006259971)
+        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.06135557)
+        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 0.167858667)
+        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 0.09950547)
+        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 0.154928241)
+        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.007868673)
+        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.018306537)
+        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.006259971)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1630,7 +1630,7 @@ class TestEvaluations(unittest.TestCase):
                                    0.08245323, 0.08961866, 0.09905298, 0.0961908, 0.08562706,
                                    0.0839014, 0.0849072, 0.08338395, 0.08783487, 0.09463609,
                                    0.10332336, 0.11806497, 0.11220297, 0.11589097, 0.11678405])
-        test_sharp = eval_sharp(self.long_data, 5, 0.00035)
+        test_sharp = eval_sharp(self.long_data, 0.00035)
         self.assertAlmostEqual(np.nanmean(expected_sharp), test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
