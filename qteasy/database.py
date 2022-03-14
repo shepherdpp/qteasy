@@ -1920,24 +1920,26 @@ class DataSource:
             dnld_data = pd.DataFrame()
             try:
                 if parallel:
-                    proc_pool = ProcessPoolExecutor(max_workers=process_count)
-                    futures = {proc_pool.submit(acquire_data, table, **kw): kw
-                               for kw in all_kwargs}
-                    for f in as_completed(futures):
-                        df = f.result()
-                        if completed % trunk_size:
-                            dnld_data = pd.concat([dnld_data, df])
-                        else:
-                            self.update_table_data(table, dnld_data)
-                            dnld_data = pd.DataFrame()
-                        completed += 1
-                        total_written += len(df)
-                        time_elapsed = time.time() - st
-                        time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                      estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<dnld: {total_written}> time left: {time_remain}')
+                    with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
+                        futures = {proc_pool.submit(acquire_data, table, **kw): kw
+                                   for kw in all_kwargs}
+                        for f in as_completed(futures):
+                            df = f.result()
+                            cur_kwargs = futures[f]
+                            if completed % trunk_size:
+                                dnld_data = pd.concat([dnld_data, df])
+                            else:
+                                self.update_table_data(table, dnld_data)
+                                dnld_data = pd.DataFrame()
+                            completed += 1
+                            total_written += len(df)
+                            time_elapsed = time.time() - st
+                            time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                          estimation=True, short_form=False)
+                            progress_bar(completed, total, f'<{list(cur_kwargs.values())[0]}>: '
+                                                           f'{total_written} downloaded/{time_remain} remaining')
 
-                    self.update_table_data(table, dnld_data)
+                        self.update_table_data(table, dnld_data)
                 else:
                     for kwargs in all_kwargs:
                         df = self.acquire_table_data(table, 'tushare', **kwargs)
@@ -1951,7 +1953,8 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<dnld: {total_written}> time left: {time_remain}')
+                        progress_bar(completed, total, f'<{list(kwargs.values())[0]}>: '
+                                                       f'{total_written} downloaded/{time_remain} remaining')
 
                     self.update_table_data(table, dnld_data)
                 print(f'\ntasks completed! {completed} data acquired with {total} {arg_name} params '
