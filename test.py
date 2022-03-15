@@ -10,6 +10,8 @@
 # ======================================
 
 import unittest
+
+import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -11306,14 +11308,15 @@ class TestVisual(unittest.TestCase):
                   indicator_par=(12, 26, 9))
 
 
-class TestBuiltIns(unittest.TestCase):
-    """Test all built-in strategies
+class TestBuiltInsSingle(unittest.TestCase):
+    """ 测试所有单一投资标的的投资策略，统一使用这些策略在沪深300指数上进行投资测试
+    投资开始日期20200113，投资结束日期20211231
 
     """
 
     def setUp(self):
         qt.configure(invest_start='20200113',
-                     invest_end='20210413',
+                     invest_end='20211231',
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      reference_asset='000300.SH',
@@ -11323,7 +11326,7 @@ class TestBuiltIns(unittest.TestCase):
         op = qt.Operator(strategies=['crossline'])
         op.set_parameter(0, pars=(35, 120, 10, 'buy'))
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1, invest_start='20080103', allow_sell_short=True)
+        qt.run(op, mode=1, allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
@@ -11613,6 +11616,32 @@ class TestBuiltIns(unittest.TestCase):
         qt.run(op, mode=2)
 
 
+class TestBuiltInsMultiple(unittest.TestCase):
+    """ 测试标的为多种证券的投资策略
+        投资标的为20200102的沪深300指数的300种成分股票，投资回测区间为
+        开始日期：20200101
+        结束日期：20211231
+    """
+    def setUp(self):
+        qt.configure(invest_start='20200113',
+                     invest_end='20211231',
+                     asset_pool='000300.SH',
+                     asset_type='IDX',
+                     reference_asset='000300.SH',
+                     opti_sample_count=100)
+        self.stock_pool = qt.get_stock_pool('')
+
+    def test_select_all(self):
+        """ 测试策略selall选择所有股票"""
+        op = qt.Operator(strategies=['all'])
+        op.set_parameter(0, pars=(35, 120, 10, 'buy'))
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1, allow_sell_short=True)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -11620,7 +11649,11 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        print()
+        ds = qteasy.QT_DATA_SOURCE
+        tables = 'stock_1min'
+        ds.refill_local_source(tables=tables, start_date='20220310', parallel=True,
+                               code_range='000001, 000002, 000003',
+                               process_count=2)
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')
@@ -12490,7 +12523,8 @@ def test_suite(*args):
             suite.addTests(tests=[TestOperator(),
                                   TestLoop(),
                                   TestEvaluations(),
-                                  TestBuiltIns()])
+                                  TestBuiltInsSingle(),
+                                  TestBuiltInsMultiple()])
         elif arg_item == 'external':
             suite.addTests(tests=[TestQT(),
                                   TestVisual(),

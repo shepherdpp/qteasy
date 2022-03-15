@@ -34,7 +34,7 @@ DATA_MAPPING_TABLE = []
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 # 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
 # comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_source()函数的docstring
-TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report']
+TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end']
 TABLE_SOURCE_MAPPING = {
@@ -47,8 +47,8 @@ TABLE_SOURCE_MAPPING = {
         ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', ''],
 
     'stock_names':
-        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic', '',
-         ''],
+        ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic',
+         '', ''],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none',  'index_basic', 'market', 'list',
@@ -66,19 +66,19 @@ TABLE_SOURCE_MAPPING = {
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', ''],
 
     'stock_1min':
-        ['bars', '股票分钟K线行情', 'data', 'E', '1min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_5min':
-        ['bars', '股票5分钟K线行情', 'data', 'E', '5min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_15min':
-        ['bars', '股票15分钟K线行情', 'data', 'E', '15min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票15分钟K线行情', 'mins', 'E', '15min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_30min':
-        ['bars', '股票30分钟K线行情', 'data', 'E', '30min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['bars', '股票30分钟K线行情', 'mins', 'E', '30min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
-    'stock_hour':
-        ['bars', '股票60分钟K线行情', 'data', 'E', '60min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+    'stock_hourly':
+        ['bars', '股票60分钟K线行情', 'mins', 'E', '60min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_daily':
         ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', ''],
@@ -1920,24 +1920,26 @@ class DataSource:
             dnld_data = pd.DataFrame()
             try:
                 if parallel:
-                    proc_pool = ProcessPoolExecutor(max_workers=process_count)
-                    futures = {proc_pool.submit(acquire_data, table, **kw): kw
-                               for kw in all_kwargs}
-                    for f in as_completed(futures):
-                        df = f.result()
-                        if completed % trunk_size:
-                            dnld_data = pd.concat([dnld_data, df])
-                        else:
-                            self.update_table_data(table, dnld_data)
-                            dnld_data = pd.DataFrame()
-                        completed += 1
-                        total_written += len(df)
-                        time_elapsed = time.time() - st
-                        time_remain = time_str_format((total - completed) * time_elapsed / completed,
-                                                      estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<dnld: {total_written}> time left: {time_remain}')
+                    with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
+                        futures = {proc_pool.submit(acquire_data, table, **kw): kw
+                                   for kw in all_kwargs}
+                        for f in as_completed(futures):
+                            df = f.result()
+                            cur_kwargs = futures[f]
+                            if completed % trunk_size:
+                                dnld_data = pd.concat([dnld_data, df])
+                            else:
+                                self.update_table_data(table, dnld_data)
+                                dnld_data = pd.DataFrame()
+                            completed += 1
+                            total_written += len(df)
+                            time_elapsed = time.time() - st
+                            time_remain = time_str_format((total - completed) * time_elapsed / completed,
+                                                          estimation=True, short_form=False)
+                            progress_bar(completed, total, f'<{list(cur_kwargs.values())[0]}>:'
+                                                           f'{total_written} downloaded/{time_remain} left')
 
-                    self.update_table_data(table, dnld_data)
+                        self.update_table_data(table, dnld_data)
                 else:
                     for kwargs in all_kwargs:
                         df = self.acquire_table_data(table, 'tushare', **kwargs)
@@ -1951,7 +1953,8 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<dnld: {total_written}> time left: {time_remain}')
+                        progress_bar(completed, total, f'<{list(kwargs.values())[0]}>:'
+                                                       f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
                 print(f'\ntasks completed! {completed} data acquired with {total} {arg_name} params '
