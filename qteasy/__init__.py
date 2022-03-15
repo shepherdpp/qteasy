@@ -36,11 +36,19 @@ QT_ROOT_PATH = str(Path('.').resolve()) + '/'
 try:
     with open(QT_ROOT_PATH+'qteasy/qteasy.cnf') as f:
         config_lines = f.readlines()
-except Exception as e:
-    print(f'{e}, a new configuration file is created.')
+except FileNotFoundError as e:
+    print(f'{e}\na new configuration file is created.')
     f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
+    intro = '# qteasy configuration file\n' \
+            '# following configurations will be loaded when initialize qteasy\n\n' \
+            '# example:\n' \
+            '# local_data_source = database\n\n'
+    f.write(intro)
     f.close()
     config_lines = []  # 本地配置文件行
+except Exception as e:
+    print(f'{e}\nreading configuration file error, default configurations will be used')
+    config_lines = []
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
 # config = value

@@ -715,8 +715,13 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
 
     for column, targets in zip(kwargs.keys(), kwargs.values()):
         if column == 'index':
-            # 暂时不支持通过指数筛选股票
-            raise NotImplementedError
+            index_comp = ds.read_table_data('index_weight', start=date, end=date)
+            if index_comp.empty:
+                continue
+            idx = targets
+            if not idx in index_comp.index:
+                continue
+            return index_comp.con_code.values
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if not all(isinstance(target, str) for target in targets):

@@ -11629,7 +11629,7 @@ class TestBuiltInsMultiple(unittest.TestCase):
                      asset_type='IDX',
                      reference_asset='000300.SH',
                      opti_sample_count=100)
-        self.stock_pool = qt.get_stock_pool('')
+        self.stock_pool = qt.get_stock_pool(index='')
 
     def test_select_all(self):
         """ 测试策略selall选择所有股票"""
