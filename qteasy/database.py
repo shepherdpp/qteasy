@@ -1918,6 +1918,7 @@ class DataSource:
             total_written = 0
             st = time.time()
             dnld_data = pd.DataFrame()
+            time_elapsed = 0
             try:
                 if parallel:
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
@@ -1957,11 +1958,11 @@ class DataSource:
                                                        f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
-                print(f'\ntasks completed! {completed} data acquired with {total} {arg_name} params '
+                print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with {total} {arg_name} params '
                       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
                 if len(additional_args) > 0:
                     print(f'with additional arguments: {additional_args}\n')
-                print(f'{total_written} rows of data written to {self}:\n')
+                print(f'{total_written} rows of data written to: {self}\n')
             except Exception as e:
                 self.update_table_data(table, dnld_data)
                 print(f'\n{e} process interrupted, tried to write {total_written} rows, will proceed with next table!')

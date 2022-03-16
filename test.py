@@ -11623,23 +11623,32 @@ class TestBuiltInsMultiple(unittest.TestCase):
         结束日期：20211231
     """
     def setUp(self):
-        qt.configure(invest_start='20200113',
-                     invest_end='20211231',
-                     asset_pool='000300.SH',
-                     asset_type='IDX',
+        # self.stock_pool = qt.get_stock_pool(index='')
+        ds = qt.QT_DATA_SOURCE
+        df = ds.read_table_data('index_weight', start='20210606', end='20210707', shares='000300.SH')
+        self.stock_pool = df.index.get_level_values('con_code').tolist()
+
+        qt.configure(asset_pool=self.stock_pool[-100: ],
+                     asset_type='E',
                      reference_asset='000300.SH',
-                     opti_sample_count=100)
-        self.stock_pool = qt.get_stock_pool(index='')
+                     ref_asset_type='IDX',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=0.,
+                     mode=1,
+                     log=True,
+                     print_backtest_log=True,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=-0.03,
+                     backtest_price_adj='none')
 
     def test_select_all(self):
         """ 测试策略selall选择所有股票"""
-        op = qt.Operator(strategies=['all'])
-        op.set_parameter(0, pars=(35, 120, 10, 'buy'))
-        op.set_parameter(0, opt_tag=1)
+        op = qt.Operator(strategies=['all'], signal_type='PS')
+        op.set_parameter(0, opt_tag=1, sample_freq='q')
         qt.run(op, mode=1, allow_sell_short=True)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
 
 
 class FastExperiments(unittest.TestCase):

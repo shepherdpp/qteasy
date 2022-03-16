@@ -102,7 +102,7 @@ def trade_calendar(exchange: str = 'SSE',
         return list(pd.to_datetime(trade_cal.cal_date))
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def name_change(ts_code: str = None,
                 start: str = None,
                 end: str = None):
@@ -199,7 +199,7 @@ def new_share(start: str = None,
     return pro.new_share(start_date=start, end_date=end)
 
 
-@retry(Exception)
+@retry(Exception, mute=True)
 def stock_company(ts_code: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:

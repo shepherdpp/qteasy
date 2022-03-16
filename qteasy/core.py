@@ -715,7 +715,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
 
     for column, targets in zip(kwargs.keys(), kwargs.values()):
         if column == 'index':
-            index_comp = ds.read_table_data('index_weight', start=date, end=date)
+            index_comp = ds.read_table_data('index_weight', index_code=targets, start=date, end=date)
             if index_comp.empty:
                 continue
             idx = targets
@@ -729,6 +729,20 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
 
     return list(share_basics.index.values)
+
+
+def get_basic_info(code_or_name: str, **kwargs) -> pd.DataFrame
+    """ 根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
+    
+    :param code_or_name: 
+        证券代码或名称，
+        如果是证券代码，可以含后缀也可以不含后缀，不含后缀时模糊查找
+        如果时证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        
+    :param kwargs: 
+    :return: 
+    """
+    raise NotImplementedError
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
@@ -901,7 +915,7 @@ def check_and_prepare_hist_data(operator, config):
             htypes=operator.op_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
-            adj='back') if run_mode <= 1 else HistoryPanel()
+            adj=config.backtest_price_adj) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     # TODO: 此处应该根据回测价格顺序模式调整bt_price_types的价格
     bt_price_types = operator.bt_price_types
@@ -917,7 +931,7 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  adj='back') if run_mode == 2 else HistoryPanel()
+                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
     hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) -
                                                              pd.Timedelta(int(window_length * 1.6), 'd')),
@@ -926,7 +940,7 @@ def check_and_prepare_hist_data(operator, config):
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
-                                  adj='back') if run_mode == 2 else HistoryPanel()
+                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
 
     hist_test_loop = hist_test.slice(htypes=bt_price_types)
     hist_test_loop.fillinf(0)
@@ -943,7 +957,7 @@ def check_and_prepare_hist_data(operator, config):
                                         htypes=config.ref_asset_dtype,
                                         freq=operator.op_data_freq,
                                         asset_type=config.ref_asset_type,
-                                        adj='back')
+                                        adj=config.backtest_price_adj)
                       ).to_dataframe(htype='close')
 
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \
@@ -1006,7 +1020,7 @@ def run(operator, **kwargs):
             因为交易结果清单是根据有交易信号的历史交易日上计算的，因此并不完整。根据完整的历史数据，系统可以将数据补充完整并得到整个历史区间的
             每日甚至更高频率的投资持仓及总资产变化表。完成这张表后，系统将在这张总资产变化表上执行完整的回测结果分析，分析的内容包括：
                 1，total_investment                      总投资
-                2，total_final_value                      投资期末总资产
+                2，total_final_value                     投资期末总资产
                 3，loop_length                           投资模拟区间长度
                 4，total_earning                         总盈亏
                 5，total_transaction_cost                总交易成本
