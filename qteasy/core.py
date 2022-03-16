@@ -712,16 +712,27 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
         return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
     share_basics = share_basics.loc[share_basics.list_date <= date]
-
     for column, targets in zip(kwargs.keys(), kwargs.values()):
         if column == 'index':
-            index_comp = ds.read_table_data('index_weight', index_code=targets, start=date, end=date)
+            index_comp = pd.DataFrame()
+            end_date = date
+            # 逐月向前查找指数的成分
+            while index_comp.empty:
+                start_date = (end_date - pd.Timedelta(30, 'd')).strftime('%Y%m%d')
+                index_comp = ds.read_table_data('index_weight',
+                                                shares=targets,
+                                                start=start_date,
+                                                end=end_date.strftime('%Y%m%d'))
+                end_date = pd.to_datetime(start_date)
+                if end_date < pd.to_datetime('20040101'):
+                    print(f'no index composition found before date {date}')
+                    return []
             if index_comp.empty:
-                continue
-            idx = targets
-            if not idx in index_comp.index:
-                continue
-            return index_comp.con_code.values
+                return []
+            # find out composite in only one day
+            comp_date = index_comp.index.get_level_values('trade_date').unique().to_list()[-1]
+            index_comp = index_comp[index_comp.index.get_level_values('trade_date') == comp_date]
+            return index_comp.index.get_level_values('con_code').tolist()
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if not all(isinstance(target, str) for target in targets):
@@ -731,7 +742,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     return list(share_basics.index.values)
 
 
-def get_basic_info(code_or_name: str, **kwargs) -> pd.DataFrame
+def get_basic_info(code_or_name: str, **kwargs) -> pd.DataFrame:
     """ 根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
     
     :param code_or_name: 

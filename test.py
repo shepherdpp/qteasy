@@ -11659,10 +11659,11 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         ds = qteasy.QT_DATA_SOURCE
-        tables = 'stock_1min'
-        ds.refill_local_source(tables=tables, start_date='20220310', parallel=True,
-                               code_range='000001, 000002, 000003',
-                               process_count=2)
+        print(qt.get_stock_pool('20200201', index='000300.SH'))
+        stocks = qt.get_stock_pool('20210301', index='000005.SH')
+        stocks2 = qt.get_stock_pool('20210501', index='000005.SH')
+        print(stocks, '\n', len(stocks))
+        print(stocks2, '\n', len(stocks2))
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')
