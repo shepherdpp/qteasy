@@ -742,7 +742,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     return list(share_basics.index.values)
 
 
-def get_basic_info(code_or_name: str, asset_types=None, verbose=False) -> pd.DataFrame:
+def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, verbose=False):
     """ 根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
     
     :param code_or_name: 
@@ -757,13 +757,16 @@ def get_basic_info(code_or_name: str, asset_types=None, verbose=False) -> pd.Dat
         - FD    基金
         - FT    期货
 
+    :param match_full_name: bool
+        是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
+
     :param verbose: bool
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
     :return: 
     """
-    matched_codes = match_ts_code(code_or_name, asset_types=asset_types)
+    matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
     ds = qteasy.QT_DATA_SOURCE
     df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_tables()

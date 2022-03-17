@@ -654,7 +654,7 @@ def is_number_like(key: [str, int, float]) -> bool:
     return False
 
 
-def match_ts_code(code: str, asset_types='all'):
+def match_ts_code(code: str, asset_types='all', match_full_name=False):
     """ 根据输入匹配证券代码或证券名称，输出一个字典，包含在不同资产类别下找到的匹配项以及匹配总数
         如果给出asset_types参数，则限定只返回符合asset_types的结果
         如果输入字符串全部为数字，则匹配证券代码ts_code，如：
@@ -695,6 +695,8 @@ def match_ts_code(code: str, asset_types='all'):
         字母或数字代码，可以用于匹配股票、基金、指数、期货或期权的ts_code代码
     :param asset_types: str
         返回结果类型，以逗号分隔的资产类型代码，如"E,FD"代表只返回股票和基金代码
+    :param match_full_name: bool
+        是否匹配股票或基金全名，默认不匹配
     :return:
         Dict {'E':      [equity codes 股票代码],
               'IDX':    [index codes 指数代码],
@@ -714,6 +716,7 @@ def match_ts_code(code: str, asset_types='all'):
         asset_types = AVAILABLE_ASSET_TYPES
     else:
         asset_types = [item for item in asset_types if item in AVAILABLE_ASSET_TYPES]
+
     asset_types_with_name = [item for item in asset_types if item in ['E', 'IDX', 'FD']]
     code_matched = {}
     count = 0
@@ -728,15 +731,32 @@ def match_ts_code(code: str, asset_types='all'):
         for at in asset_types_with_name:
             basic = asset_type_basics[at]
             names = basic.name.to_list()
+            full_names = []
+            match_full_name = (at in ['E', 'IDX']) and match_full_name
+            if match_full_name:
+                # 当查找股票或指数的信息时，还需要匹配全名
+                full_names = basic.fullname.to_list()
             if ('?' in code) or ('*' in code):
                 matched = _wildcard_match(code, names)
                 code_matched[at] = basic.loc[basic.name.isin(matched)].name.to_dict()
+                if match_full_name:
+                    full_name_matched = _wildcard_match(code, full_names)
+                    code_matched[at].update(basic.loc[basic.name.isin(full_name_matched)].name.to_dict())
             else:
                 match_values = list(map(_partial_lev_ratio, [code]*len(names), names))
                 basic['match_value'] = match_values
                 sort_matched = basic.loc[basic.match_value >= 0.75].sort_values(by='match_value',
                                                                                 ascending=False)
                 code_matched[at] = sort_matched.name.to_dict()
+                if match_full_name:
+                    full_name_match_values = list(map(_partial_lev_ratio, [code] * len(full_names), full_names))
+                    basic['full_name_match_value'] = full_name_match_values
+                    full_name_sort_matched = \
+                        basic.loc[basic.full_name_match_value >= 0.75].sort_values(
+                            by='full_name_match_value',
+                            ascending=False
+                    )
+                    code_matched[at].update(full_name_sort_matched.name.to_dict())
             count += len(code_matched[at])
 
     code_matched.update({'count': count})
