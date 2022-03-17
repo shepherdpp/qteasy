@@ -110,8 +110,8 @@ TABLE_SOURCE_MAPPING = {
         ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', ''],
 
     'fund_manager':
-        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic', '',
-         'y'],
+        ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
+         'OF, SZ, SH', ''],
 
     'future_daily':
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',

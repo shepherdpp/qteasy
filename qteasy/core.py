@@ -15,7 +15,6 @@ import numpy as np
 import time
 import math
 import logging
-from numba import njit
 from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -23,8 +22,9 @@ from datetime import datetime
 
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
-from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format
+from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
+from .utilfuncs import AVAILABLE_ASSET_TYPES
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -742,7 +742,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     return list(share_basics.index.values)
 
 
-def get_basic_info(code_or_name: str, **kwargs) -> pd.DataFrame:
+def get_basic_info(code_or_name: str, asset_types=None, verbose=False) -> pd.DataFrame:
     """ 根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
     
     :param code_or_name: 
@@ -750,10 +750,65 @@ def get_basic_info(code_or_name: str, **kwargs) -> pd.DataFrame:
         如果是证券代码，可以含后缀也可以不含后缀，不含后缀时模糊查找
         如果时证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         
-    :param kwargs: 
+    :param asset_types:
+        证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
+        - E     股票
+        - IDX   指数
+        - FD    基金
+        - FT    期货
+
+    :param verbose: bool
+        当匹配到的证券太多时（多于五个），是否显示完整的信息
+        - False 默认值，只显示匹配度最高的内容
+        - True  显示所有匹配到的内容
     :return: 
     """
-    raise NotImplementedError
+    matched_codes = match_ts_code(code_or_name, asset_types=asset_types)
+
+    ds = qteasy.QT_DATA_SOURCE
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_tables()
+    asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
+
+    matched_count = matched_codes['count']
+    asset_best_matched = matched_codes
+    if matched_count <= 5:
+        print(f'found {matched_count} matches, matched codes are {matched_codes}')
+    else:
+        if verbose:
+            print(f'found {matched_count} matches, matched codes are:\n{matched_codes}')
+        else:
+            asset_matched = {at: list(matched_codes[at].keys()) for at in matched_codes if at != 'count'}
+            asset_best_matched = {}
+            for a_type in matched_codes:
+                if a_type == 'count':
+                    continue
+                if asset_matched[a_type]:
+                    key = asset_matched[a_type][0]
+                    asset_best_matched[a_type] = {key: matched_codes[a_type][key]}
+            print(f'Too many matched codes {matched_count}, best matched are\n'
+                  f'{asset_best_matched}\n'
+                  f'pass "verbose=Ture" to view all matched assets')
+    info_columns = {'E':
+                        ['name', 'area', 'industry', 'fullname', 'list_status', 'list_date'],
+                    'IDX':
+                        ['name', 'fullname', 'publisher', 'category', 'list_date'],
+                    'FD':
+                        ['name', 'management', 'custodian', 'fund_type', 'issue_date', 'issue_amount', 'invest_type',
+                         'type'],
+                    'FT':
+                        ['name'],
+                    'OPT':
+                        ['name']}
+    for a_type in asset_best_matched:
+        if a_type == 'count':
+            continue
+        if asset_best_matched[a_type]:
+            print(f'More information for asset type {a_type}:\n'
+                  f'------------------------------------------')
+            basics = asset_type_basics[a_type][info_columns[a_type]]
+            asset_codes = list(asset_best_matched[a_type].keys())
+            print(basics.loc[asset_codes].T)
+            print('-------------------------------------------')
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整

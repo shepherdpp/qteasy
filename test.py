@@ -11,7 +11,6 @@
 
 import unittest
 
-import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -11658,12 +11657,10 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        ds = qteasy.QT_DATA_SOURCE
-        print(qt.get_stock_pool('20200201', index='000300.SH'))
-        stocks = qt.get_stock_pool('20210301', index='000005.SH')
-        stocks2 = qt.get_stock_pool('20210501', index='000005.SH')
-        print(stocks, '\n', len(stocks))
-        print(stocks2, '\n', len(stocks2))
+        qt.get_basic_info('000001')
+        qt.get_basic_info('000300')
+        qt.get_basic_info('沪深300')
+        qt.get_basic_info('沪深300', verbose=True)
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')

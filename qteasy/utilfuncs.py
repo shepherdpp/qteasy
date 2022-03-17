@@ -737,7 +737,7 @@ def match_ts_code(code: str, asset_types='all'):
                 sort_matched = basic.loc[basic.match_value >= 0.75].sort_values(by='match_value',
                                                                                 ascending=False)
                 code_matched[at] = sort_matched.name.to_dict()
-            count += len(code_matched)
+            count += len(code_matched[at])
 
     code_matched.update({'count': count})
 
