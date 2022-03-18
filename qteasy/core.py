@@ -432,7 +432,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: 并将过程和信息输出到log文件或log信息中，返回log信息
+# TODO: 将回测过程和信息输出到log文件或log信息中，返回log信息
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
 def apply_loop(op_type: int,
                op_list: HistoryPanel,

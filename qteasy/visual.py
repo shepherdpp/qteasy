@@ -92,6 +92,7 @@ class InterCandle:
             7, 按键盘a键切换不同的指标类型
 
     """
+
     def __init__(self, data, title_info, plot_type, style, avg_type, indicator):
         """ 初始化动态图表对象，初始化属性
 
@@ -172,7 +173,7 @@ class InterCandle:
         ap = []
         # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
         plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
-        ylabel='Price'
+        ylabel = 'Price'
         if self.avg_type == 'ma':
             ylabel = 'Price, MA:' + self.mav
             ma_to_plot = [col for col in plot_data.columns if col[:2] == 'MA']
@@ -372,7 +373,7 @@ class InterCandle:
 
 
 # TODO: simplify and merge these three functions
-def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, market=None, plot_type='candle',
+def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle',
            interactive=True, data_source=None, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
 
@@ -390,11 +391,12 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
     :param stock_data: pd.DataFrame
         直接用于K线图的数据，如果给出stock_data，则忽略其他的参数
 
-    :param market: str
-        证券所属的市场分类，包含：
-        - SH
-        - SZ
-        - CZC
+    :param freq: str
+        K线图的时间频率，合法输入包括：
+        - D/d: 日K线
+        - W/w: 周K线
+        - M/m: 月K线
+        - XMin/Xmin: 分钟K线，接受1min/5min/15min/30min/60min等五种输入
 
     :param asset_type: str
         证券类型，包含：
@@ -454,7 +456,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
         if not isinstance(stock, str):
             raise TypeError(f'stock should be a string, got {type(stock)} instead.')
         stock_part = len(stock.split('.'))
-        if stock_part> 2:
+        if stock_part > 2:
             raise KeyError(f'invalid stock code or name {stock}, please check your input.')
         elif stock_part == 1:
             code_matched = match_ts_code(stock)
@@ -489,17 +491,25 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, m
         stock = None
     else:
         stock = matched_codes[0]
-    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end,asset_type=asset_type,
-                     plot_type=plot_type, no_visual=no_visual, data_source=data_source, **kwargs)
+    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end, freq=freq,
+                     asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, data_source=data_source,
+                     **kwargs)
 
 
-def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None,
+def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None, freq=None,
               asset_type='E', plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
               data_source=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
     if plot_type is None:
         plot_type = 'candle'
+    if freq is None:
+        freq = 'd'
+    assert isinstance(freq, str), f'freq should be a string, got {type(freq)} instead.'
+    assert freq.upper() in ["D", "W", "M", "1MIN", "5MIN", "15MIN", "30MIN", "60MIN"], f'freq should be a string in ' \
+                                                                                       f'["D", "W", "M", "1MIN", ' \
+                                                                                       f'"5MIN", "15MIN", "30MIN", ' \
+                                                                                       f'"60MIN"]'
     if end is None:
         now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
         if now.hour >= 23:
@@ -507,7 +517,13 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         else:
             end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
     if start is None:
-        start = end - pd.Timedelta(60, 'd')
+        if freq.upper() in ['D', 'W']:
+            start = end - pd.Timedelta(60, freq)
+        elif freq.upper() in ['M']:
+            start = end - pd.Timedelta(60 * 30, 'd')
+        elif freq.upper()[-3:] == 'MIN':
+            multiplier = int(freq[:-3])
+            start = end - pd.Timedelta(60 * multiplier, 'm')
     if mav is None:
         mav = [5, 10, 20, 60]
     end = pd.to_datetime(end)
@@ -522,6 +538,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         daily, share_name = _get_mpf_data(data_source=data_source,
                                           stock=stock,
                                           asset_type=asset_type,
+                                          freq=freq,
                                           adj=adj)
         if daily.empty:
             print(f'history data for {stock} can not be found!')
@@ -587,11 +604,11 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', data_source=None)
         tuple：(pd.DataFrame, share_name)
     """
     # 首先获取股票的上市日期，并获取从上市日期开始到现在的所有历史数据
-    name_of = {'E':     'Stock 股票',
-               'IDX':   'Index 指数',
-               'FT':    'Futures 期货',
-               'FD':    'Fund 基金',
-               'OPT':   'Options 期权'}
+    name_of = {'E':   'Stock 股票',
+               'IDX': 'Index 指数',
+               'FT':  'Futures 期货',
+               'FD':  'Fund 基金',
+               'OPT': 'Options 期权'}
     ds = qteasy.QT_DATA_SOURCE
     if asset_type == 'E':
         basic_info = ds.read_table_data('stock_basic')
@@ -1355,12 +1372,12 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
                                        "Long pct",
                                        "Short pct",
                                        "Empty pct"],
-                               formatters={'sell':   '{:.0f}'.format,
-                                           'buy':    '{:.0f}'.format,
-                                           'total':         '{:.0f}'.format,
-                                           'long':         '{:.1%}'.format,
-                                           'short':     '{:.1%}'.format,
-                                           'empty':     '{:.1%}'.format},
+                               formatters={'sell':  '{:.0f}'.format,
+                                           'buy':   '{:.0f}'.format,
+                                           'total': '{:.0f}'.format,
+                                           'long':  '{:.1%}'.format,
+                                           'short': '{:.1%}'.format,
+                                           'empty': '{:.1%}'.format},
                                justify='center'), '\n')
     print(f'Total operation fee:     ¥{loop_results["total_fee"]:12,.2f}')
     print(f'total investment amount: ¥{loop_results["total_invest"]:12,.2f}\n'
