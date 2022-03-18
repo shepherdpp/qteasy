@@ -11657,9 +11657,9 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.candle('000001', freq='m')
-        qt.candle('000001', freq='w')
-        qt.candle('000001', freq='m', start='19900101', end='20010101', adj='b')
+        ds = qt.QT_DATA_SOURCE
+        df = ds.acquire_table_data('stock_5min', 'tushare', ts_code='000001.SZ')
+        print(df)
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')

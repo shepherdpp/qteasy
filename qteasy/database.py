@@ -66,19 +66,22 @@ TABLE_SOURCE_MAPPING = {
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', ''],
 
     'stock_1min':
-        ['bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_5min':
-        ['bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
 
     'stock_15min':
-        ['bars', '股票15分钟K线行情', 'mins', 'E', '15min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', 'mins15', 'ts_code', 'table_index', 'stock_basic', '',
+         'y'],
 
     'stock_30min':
-        ['bars', '股票30分钟K线行情', 'mins', 'E', '30min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票30分钟K线行情', 'mins', 'E', '30min', 'mins30', 'ts_code', 'table_index', 'stock_basic', '',
+         'y'],
 
     'stock_hourly':
-        ['bars', '股票60分钟K线行情', 'mins', 'E', '60min', 'mins', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票60分钟K线行情', 'mins', 'E', '60min', 'mins60', 'ts_code', 'table_index', 'stock_basic', '',
+         'y'],
 
     'stock_daily':
         ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', ''],
@@ -88,6 +91,26 @@ TABLE_SOURCE_MAPPING = {
 
     'stock_monthly':
         ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', ''],
+
+    'index_1min':
+        ['min_bars', '股票分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
+         'y'],
+
+    'index_5min':
+        ['min_bars', '股票5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
+         'y'],
+
+    'index_15min':
+        ['min_bars', '股票15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'index_basic',
+         'SH,SZ', 'y'],
+
+    'index_30min':
+        ['min_bars', '股票30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'index_basic',
+         'SH,SZ', 'y'],
+
+    'index_hourly':
+        ['min_bars', '股票60分钟K线行情', 'mins', 'IDX', '60min', 'mins60', 'ts_code', 'table_index', 'index_basic',
+         'SH,SZ', 'y'],
 
     'index_daily':
         ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic', 'SH,CSI,SZ',
@@ -144,24 +167,24 @@ TABLE_SOURCE_MAPPING = {
         ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', ''],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', 'Y',
          ''],
 
     'financial':
-        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', '',
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', 'Y',
          ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -233,10 +256,6 @@ TABLE_STRUCTURES = {
                                         '最后交易日期', '最后行权日期', '最后交割日期', '报价单位', '最小价格波幅'],
                          'prime_keys': [0]},
 
-    # 下面的bars表适用于stock_1min / stock_5min / stock_30min / stock_hourly /
-    # stock_daily / stock_weekly / stock_monthly / index_daily / index_weekly /
-    # index_monthly / fund_daily 等数据表
-    # 用于股票、指数以及部分基金的K线数据结构，包括分钟、小时、天、周和月k线，更新时按时间下载，更新时按前两列的内容更新去重
     'bars':             {'columns':    ['ts_code', 'trade_date', 'open', 'high', 'low', 'close', 'pre_close', 'change',
                                         'pct_chg', 'vol', 'amount'],
                          'dtypes':     ['varchar(20)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
@@ -245,7 +264,13 @@ TABLE_STRUCTURES = {
                                         '涨跌幅', '成交量 （手）', '成交额 （千元）'],
                          'prime_keys': [0, 1]},
 
-    # 以下adj_factors表结构可以同时用于stock_adj_factors / fund_adj_factors两张表
+    'min_bars':         {'columns':    ['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
+                         'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'double',
+                                        'double'],
+                         'remarks':    ['证券代码', '交易日期时间', '开盘价', '最高价', '最低价', '收盘价', '成交量（股）',
+                                        '成交额 （元）'],
+                         'prime_keys': [0, 1]},
+
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
                          'dtypes':     ['varchar(9)', 'date', 'double'],
                          'remarks':    ['证券代码', '交易日期', '复权因子'],

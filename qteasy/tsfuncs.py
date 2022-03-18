@@ -291,13 +291,48 @@ def index_daily_basic(ts_code: object = None,
 
 
 @retry(Exception, mute=True)
-def mins(ts_code: object = None,
-         start=None,
-         end=None,
-         freq=None):
-    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，所以必须先获取权限后下载
+def mins1(ts_code,
+          start=None,
+          end=None):
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq=freq)
+    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
+
+
+@retry(Exception, mute=True)
+def mins5(ts_code,
+          start=None,
+          end=None):
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
+
+
+@retry(Exception, mute=True)
+def mins15(ts_code,
+           start=None,
+           end=None):
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
+
+
+@retry(Exception, mute=True)
+def mins30(ts_code,
+           start=None,
+           end=None):
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
+
+
+@retry(Exception, mute=True)
+def mins60(ts_code,
+           start=None,
+           end=None):
+    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
 
 
 @retry(Exception, mute=True)
