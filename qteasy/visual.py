@@ -20,7 +20,7 @@ import warnings
 
 import qteasy
 from .history import get_history_panel
-from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, AVAILABLE_ASSET_TYPES
+from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, AVAILABLE_ASSET_TYPES, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
@@ -506,10 +506,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     if freq is None:
         freq = 'd'
     assert isinstance(freq, str), f'freq should be a string, got {type(freq)} instead.'
-    assert freq.upper() in ["D", "W", "M", "1MIN", "5MIN", "15MIN", "30MIN", "60MIN"], f'freq should be a string in ' \
-                                                                                       f'["D", "W", "M", "1MIN", ' \
-                                                                                       f'"5MIN", "15MIN", "30MIN", ' \
-                                                                                       f'"60MIN"]'
+    assert freq.upper() in TIME_FREQ_STRINGS, f'freq should be a string in {TIME_FREQ_STRINGS}'
     if end is None:
         now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
         if now.hour >= 23:
@@ -517,13 +514,22 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         else:
             end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
     if start is None:
-        if freq.upper() in ['D', 'W']:
-            start = end - pd.Timedelta(60, freq)
+        multiplier = 1
+        if freq.upper() in ['W']:
+            multiplier = 5
         elif freq.upper() in ['M']:
-            start = end - pd.Timedelta(60 * 30, 'd')
-        elif freq.upper()[-3:] == 'MIN':
-            multiplier = int(freq[:-3])
-            start = end - pd.Timedelta(60 * multiplier, 'm')
+            multiplier = 30
+        elif freq.upper() in ['H']:
+            multiplier = 0.2
+        elif freq.upper() in ['MIN', '1MIN']:
+            multiplier = 1 / 240
+        elif freq.upper() in ['5MIN']:
+            multiplier = 1 / 48
+        elif freq.upper() in ['15MIN']:
+            multiplier = 1 / 16
+        elif freq.upper() in ['30MIN']:
+            multiplier = 1 / 8
+        start = end - pd.Timedelta(60 * multiplier, 'd')
     if mav is None:
         mav = [5, 10, 20, 60]
     end = pd.to_datetime(end)
@@ -533,6 +539,8 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         assert stock is not None
         if ('adj' in kwargs) and (asset_type.upper() in ['E', 'FD']):
             adj = kwargs['adj']
+            if freq in ['h', 'min', '1min', '5min', '15min', '30min']:
+                raise NotImplementedError(f'price adjustment not supported for minute level data at the moment')
         else:
             adj = 'none'
         daily, share_name = _get_mpf_data(data_source=data_source,

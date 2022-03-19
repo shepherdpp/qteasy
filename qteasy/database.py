@@ -80,7 +80,7 @@ TABLE_SOURCE_MAPPING = {
          'y'],
 
     'stock_hourly':
-        ['min_bars', '股票60分钟K线行情', 'mins', 'E', '60min', 'mins60', 'ts_code', 'table_index', 'stock_basic', '',
+        ['min_bars', '股票60分钟K线行情', 'mins', 'E', 'h', 'mins60', 'ts_code', 'table_index', 'stock_basic', '',
          'y'],
 
     'stock_daily':
@@ -109,7 +109,7 @@ TABLE_SOURCE_MAPPING = {
          'SH,SZ', 'y'],
 
     'index_hourly':
-        ['min_bars', '股票60分钟K线行情', 'mins', 'IDX', '60min', 'mins60', 'ts_code', 'table_index', 'index_basic',
+        ['min_bars', '股票60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'index_basic',
          'SH,SZ', 'y'],
 
     'index_daily':
@@ -1601,6 +1601,7 @@ class DataSource:
         if isinstance(htypes, list):
             if not all(isinstance(item, str) for item in htypes):
                 raise TypeError(f'all items in htypes list should be a string, got otherwise')
+        htypes = [item.lower() for item in htypes]
 
         if (not isinstance(start, str)) and (not isinstance(end, str)):
             raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
@@ -1609,6 +1610,7 @@ class DataSource:
             raise TypeError(f'freq should be a string, got {type(freq)} instead')
         if freq.upper() not in TIME_FREQ_STRINGS:
             raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
+        freq = freq.lower()
 
         if not isinstance(asset_type, (str, list)):
             raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
@@ -1620,17 +1622,19 @@ class DataSource:
             raise KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
         if any(item.upper() == 'ANY' for item in asset_type):
             asset_type = AVAILABLE_ASSET_TYPES
+        asset_type = [item.upper() for item in asset_type]
 
         if not isinstance(adj, str):
             raise TypeError(f'adj type should be a string, got {type(adj)} instead')
         if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
             raise KeyError(f"invalid adj type, which should be anyone of "
                            f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
+        adj = adj.lower()
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        tables_to_read = table_map.loc[(table_map.table_usage == 'data') &
+        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins'])) &
                                        (table_map.asset_type.isin(asset_type)) &
                                        (table_map.freq == freq)].index.to_list()
         table_data_read = {}
