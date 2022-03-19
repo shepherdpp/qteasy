@@ -533,6 +533,10 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     if mav is None:
         mav = [5, 10, 20, 60]
     end = pd.to_datetime(end)
+    if freq.upper()[-3:] in ['MIN', 'H']:
+        # 如果频率为分钟级别，则：
+        # 设置end为当天的14:59:59，以确保频率为分钟时也能准确定位到当天15:00的最后一个交易时段
+        end += pd.Timedelta(899.5, 'm')
     start = pd.to_datetime(start)
     # 当stock_data没有给出时，则从本地获取股票数据
     if stock_data is None:
