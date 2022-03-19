@@ -172,7 +172,7 @@ class InterCandle:
         """
         ap = []
         # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
-        plot_data = self.data.iloc[idx_start:idx_start + idx_range - 1]
+        plot_data = self.data.iloc[idx_start:idx_start + idx_range]
         ylabel = 'Price'
         if self.avg_type == 'ma':
             ylabel = 'Price, MA:' + self.mav
@@ -539,8 +539,6 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         assert stock is not None
         if ('adj' in kwargs) and (asset_type.upper() in ['E', 'FD']):
             adj = kwargs['adj']
-            if freq in ['h', 'min', '1min', '5min', '15min', '30min']:
-                raise NotImplementedError(f'price adjustment not supported for minute level data at the moment')
         else:
             adj = 'none'
         daily, share_name = _get_mpf_data(data_source=data_source,
@@ -584,14 +582,17 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     if not no_visual:
         idx_start = np.searchsorted(daily.index, start)
         idx_range = np.searchsorted(daily.index, end) - idx_start
+        # 当end太靠后时，产生的range会越界，因此需要判断是否越界，如果越界则重设range
+        if idx_range + idx_start >= len(daily.index):
+            idx_range = len(daily.index) - idx_start - 1
         my_candle = InterCandle(data=daily,
                                 title_info=plot_title_info,
                                 plot_type=plot_type,
                                 style=my_style,
                                 avg_type=avg_type,
                                 indicator=indicator)
-        my_candle.refresh_texts(daily.iloc[idx_start + idx_range - 1])
-        my_candle.refresh_plot(idx_start, idx_range)
+        my_candle.refresh_texts(daily.iloc[idx_start + idx_range])
+        my_candle.refresh_plot(idx_start, idx_range + 1)
         # 如果需要动态图表，需要传入特别的参数以进入交互模式
         dynamic = False
         if dynamic:

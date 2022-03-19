@@ -1682,8 +1682,6 @@ class DataSource:
         # 如果需要复权数据，计算复权价格
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
-            # 后复权价 = 当日最新价 × 当日复权因子
-            # 前复权价 = 当日复权价 ÷ 最新复权因子
             adj_factors = {}
             adj_tables_to_read = table_map.loc[(table_map.table_usage == 'adj') &
                                                table_map.asset_type.isin(asset_type)].index.to_list()
@@ -1698,12 +1696,21 @@ class DataSource:
             for htyp in prices_to_adjust:
                 price_df = df_by_htypes[htyp]
                 all_ts_codes = price_df.columns
-                comb_factors = 1.0
+                combined_factors = 1.0
+                # 后复权价 = 当日最新价 × 当日复权因子
                 for af in adj_factors:
-                    comb_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
-                price_df *= comb_factors
-                if adj.lower() in ['forward', 'fw', 'f'] and len(comb_factors) > 1:
-                    price_df /= comb_factors.iloc[-1]
+                    combined_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
+                # 得到合并后的复权因子，如果数据的频率为日级（包括周、月），直接相乘即可
+                # 但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
+                if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
+                    expanded_factors = combined_factors.reindex(price_df.index.date)
+                    expanded_factors.index = price_df.index
+                    price_df *= expanded_factors
+                else:
+                    price_df *= combined_factors
+                # 前复权价 = 当日复权价 ÷ 最新复权因子
+                if adj.lower() in ['forward', 'fw', 'f'] and len(combined_factors) > 1:
+                    price_df /= combined_factors.iloc[-1]
 
         result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
         return result_hp

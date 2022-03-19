@@ -11657,7 +11657,7 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.candle('中国平安', start='20220301', end='20220319', asset_type='E', freq='h')
+        qt.candle('000617.SZ', start='20220301', end='20220319', asset_type='E', freq='d', adj='b')
 
     def test_fast_experiments2(self):
         # ds = qt.DataSource('db', user='jackie', password='iama007')
