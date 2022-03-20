@@ -501,12 +501,36 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
               data_source=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
+    freq_info = '日K线'
+    adj_info = ''
+    multiplier = 1
     if plot_type is None:
         plot_type = 'candle'
     if freq is None:
         freq = 'd'
     assert isinstance(freq, str), f'freq should be a string, got {type(freq)} instead.'
     assert freq.upper() in TIME_FREQ_STRINGS, f'freq should be a string in {TIME_FREQ_STRINGS}'
+    if freq.upper() in ['W']:
+        multiplier = 5
+        freq_info = '周K线'
+    elif freq.upper() in ['M']:
+        multiplier = 30
+        freq_info = '月K线'
+    elif freq.upper() in ['H']:
+        multiplier = 0.2
+        freq_info = '小时K线'
+    elif freq.upper() in ['MIN', '1MIN']:
+        multiplier = 1 / 240
+        freq_info = '1分钟K线'
+    elif freq.upper() in ['5MIN']:
+        multiplier = 1 / 48
+        freq_info = '5分钟K线'
+    elif freq.upper() in ['15MIN']:
+        multiplier = 1 / 16
+        freq_info = '15分钟K线'
+    elif freq.upper() in ['30MIN']:
+        multiplier = 1 / 8
+        freq_info = '30分钟K线'
     if end is None:
         now = pd.to_datetime('now') + pd.Timedelta(8, 'h')
         if now.hour >= 23:
@@ -514,21 +538,6 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         else:
             end = pd.to_datetime('today') - pd.Timedelta(1, 'd')
     if start is None:
-        multiplier = 1
-        if freq.upper() in ['W']:
-            multiplier = 5
-        elif freq.upper() in ['M']:
-            multiplier = 30
-        elif freq.upper() in ['H']:
-            multiplier = 0.2
-        elif freq.upper() in ['MIN', '1MIN']:
-            multiplier = 1 / 240
-        elif freq.upper() in ['5MIN']:
-            multiplier = 1 / 48
-        elif freq.upper() in ['15MIN']:
-            multiplier = 1 / 16
-        elif freq.upper() in ['30MIN']:
-            multiplier = 1 / 8
         start = end - pd.Timedelta(60 * multiplier, 'd')
     if mav is None:
         mav = [5, 10, 20, 60]
@@ -543,6 +552,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         assert stock is not None
         if ('adj' in kwargs) and (asset_type.upper() in ['E', 'FD']):
             adj = kwargs['adj']
+            adj_info = '复权价格'
         else:
             adj = 'none'
         daily, share_name = _get_mpf_data(data_source=data_source,
@@ -582,7 +592,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
                                   figcolor='(0.82, 0.83, 0.85)',
                                   gridcolor='(0.82, 0.83, 0.85)')
     # 设置plot title info
-    plot_title_info = f'{share_name}/{parameters}'
+    plot_title_info = f'{share_name}-{freq_info}-{adj_info}/{parameters}'
     if not no_visual:
         idx_start = np.searchsorted(daily.index, start)
         idx_range = np.searchsorted(daily.index, end) - idx_start
