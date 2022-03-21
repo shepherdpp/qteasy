@@ -107,150 +107,150 @@ TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
-         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', ''],
+         'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', '', ''],
 
     'stock_basic':
-        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', ''],
+        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', ''],
 
     'stock_names':
         ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic',
-         '', ''],
+         '', '', ''],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none',  'index_basic', 'market', 'list',
-         'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', ''],
+         'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', '', ''],
 
     'fund_basic':
-        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none',  'fund_basic', 'market', 'list', 'E,O', '', ''],
+        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none',  'fund_basic', 'market', 'list', 'E,O', '', '', ''],
 
     'future_basic':
         ['future_basic', '期货基本信息', 'basics', 'FT', 'none', 'future_basic', 'exchange', 'list',
-         'CFFEX,DCE,CZCE,SHFE,INE', '', ''],
+         'CFFEX,DCE,CZCE,SHFE,INE', '', '', ''],
 
     'opt_basic':
         ['opt_basic', '期权基本信息', 'basics', 'OPT', 'none', 'options_basic', 'exchange', 'list',
-         'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', ''],
+         'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', '', ''],
 
     'stock_1min':
-        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y', '30'],
 
     'stock_5min':
-        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y'],
+        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y', '90'],
 
     'stock_15min':
         ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', 'mins15', 'ts_code', 'table_index', 'stock_basic', '',
-         'y'],
+         'y', '180'],
 
     'stock_30min':
         ['min_bars', '股票30分钟K线行情', 'mins', 'E', '30min', 'mins30', 'ts_code', 'table_index', 'stock_basic', '',
-         'y'],
+         'y', '360'],
 
     'stock_hourly':
         ['min_bars', '股票60分钟K线行情', 'mins', 'E', 'h', 'mins60', 'ts_code', 'table_index', 'stock_basic', '',
-         'y'],
+         'y', '360'],
 
     'stock_daily':
-        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', ''],
+        ['bars', '股票日线行情', 'data', 'E', 'd', 'daily', 'trade_date', 'trade_date', '19901211', '', '', ''],
 
     'stock_weekly':
-        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'trade_date', '19901221', '', ''],
+        ['bars', '股票周线行情', 'data', 'E', 'w', 'weekly', 'trade_date', 'trade_date', '19901221', '', '', ''],
 
     'stock_monthly':
-        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', ''],
+        ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', '', ''],
 
     'index_1min':
         ['min_bars', '股票分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
-         'y'],
+         'y', '30'],
 
     'index_5min':
         ['min_bars', '股票5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
-         'y'],
+         'y', '90'],
 
     'index_15min':
         ['min_bars', '股票15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ', 'y'],
+         'SH,SZ', 'y', '180'],
 
     'index_30min':
         ['min_bars', '股票30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ', 'y'],
+         'SH,SZ', 'y', '360'],
 
     'index_hourly':
         ['min_bars', '股票60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'index_basic',
-         'SH,SZ', 'y'],
+         'SH,SZ', 'y', '360'],
 
     'index_daily':
         ['bars', '指数日线行情', 'data', 'IDX', 'd', 'index_daily', 'ts_code', 'table_index', 'index_basic', 'SH,CSI,SZ',
-         'y'],
+         'y', ''],
 
     'index_weekly':
-        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'trade_date', '19910705', '', ''],
+        ['bars', '指数周线行情', 'data', 'IDX', 'w', 'index_weekly', 'trade_date', 'trade_date', '19910705', '', '', ''],
 
     'index_monthly':
-        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', ''],
+        ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', '', ''],
 
     'fund_daily':
-        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'trade_date', '19980417', '', ''],
+        ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'trade_date', '19980417', '', '', ''],
 
     'fund_nav':
         ['fund_nav', '场外基金每日净值', 'data', 'FD', 'd', 'fund_net_value', 'nav_date', 'datetime', '20000107', '',
-         ''],
+         '', ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', ''],
+        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', '', ''],
 
     'fund_manager':
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
-         'OF, SZ, SH', ''],
+         'OF, SZ, SH', '', ''],
 
     'future_daily':
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
-         ''],
+         '', ''],
 
     'options_daily':
         ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209', '',
-         ''],
+         '', ''],
 
     'stock_adj_factor':
         ['adj_factors', '股票价格复权系数', 'adj', 'E', 'd', 'adj_factors', 'trade_date', 'trade_date', '19901219', '',
-         ''],
+         '', ''],
 
     'fund_adj_factor':
-        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', ''],
+        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', '', ''],
 
     'stock_indicator':
         ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
-         ''],
+         '', ''],
 
     'stock_indicator2':
         ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date', '19990101',
-         '', ''],
+         '', '', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
-         '20040102', '', ''],
+         '20040102', '', '', ''],
 
     'index_weight':
-        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
+        ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', '', ''],
 
     'income':
-        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
+        ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
     'cashflow':
         ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
-         'Y'],
+         'Y', ''],
 
     'financial':
         ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', '',
-         'Y'],
+         'Y', ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -1974,11 +1974,36 @@ class DataSource:
                 end = end_date
             end = pd.to_datetime(end).strftime('%Y%m%d')
             allow_start_end = (cur_table_info.arg_allow_start_end.lower() == 'y')
+            start_end_trunk_size = 0
+            if cur_table_info.start_end_trunk_size is not '':
+                start_end_trunk_size = int(cur_table_info.start_end_trunk_size)
             additional_args = {}
+            trunked_additional_args = []
+            start_end_trunk_multiplier = 1
+            if allow_start_end:
+                additional_args = {'start': start, 'end': end}
+            if start_end_trunk_size > 0:
+                start_end_trunk_lbounds = list(pd.date_range(start=start,
+                                                             end=end,
+                                                             freq=f'{start_end_trunk_size}d'
+                                                             ).strftime('%Y%m%d'))
+                start_end_trunk_rbounds = start_end_trunk_lbounds[1:]
+                # 取到的日线或更低频率数据是包括右边界的，可以考虑去掉右边界，得到更精确的结果
+                # 但是这样做可能没有意义
+                if freq.upper() in ['D', 'W', 'M']:
+                    prev_day = pd.Timedelta(1, 'd')
+                    start_end_trunk_rbounds = pd.to_datetime(start_end_trunk_lbounds[1:]) - prev_day
+                    start_end_trunk_rbounds = list(start_end_trunk_rbounds.strftime('%Y%m%d'))
+
+                start_end_trunk_rbounds.append(end)
+                trunked_additional_args = [{'start': s, 'end':   e} for s, e in
+                                           zip(start_end_trunk_lbounds, start_end_trunk_rbounds)]
+                start_end_trunk_multiplier = len(trunked_additional_args)
+
             if fill_type in ['datetime', 'trade_date']:
                 # 根据start_date和end_date生成数据获取区间
+                additional_args = {}  # 使用日期作为关键参数，不再需要additional_args
                 arg_coverage = pd.date_range(start=start, end=end, freq=freq)
-
                 if fill_type == 'trade_date':
                     if freq.lower() in ['m', 'w', 'w-Fri']:
                         # 当生成的日期不连续时，或要求生成交易日序列时，需要找到最近的交易日
@@ -1988,8 +2013,6 @@ class DataSource:
                 arg_coverage = list(pd.to_datetime(list(arg_coverage)).strftime('%Y%m%d'))
             elif fill_type == 'list':
                 arg_coverage = str_to_list(cur_table_info.arg_rng)
-                if allow_start_end:
-                    additional_args = {'start': start, 'end': end}
             elif fill_type == 'table_index':
                 suffix = str_to_list(cur_table_info.arg_allowed_code_suffix)
                 source_table = self.read_table_data(cur_table_info.arg_rng)
@@ -2000,8 +2023,6 @@ class DataSource:
                     arg_coverage = [code for code in arg_coverage if code.split('.')[0] in code_range]
                 if suffix:
                     arg_coverage = [code for code in arg_coverage if code.split('.')[1] in suffix]
-                if allow_start_end:
-                    additional_args = {'start': start, 'end': end}
             else:
                 arg_coverage = []
 
@@ -2013,12 +2034,16 @@ class DataSource:
 
             # 生成所有的参数, 开始循环下载并更新数据
             if reversed_par_seq:
-                all_kwargs = ({arg_name: val, **additional_args} for val in arg_coverage[::-1])
+                arg_coverage.reverse()
+            if trunked_additional_args:
+                import itertools
+                all_kwargs = ({arg_name: val, **add_arg} for val, add_arg in
+                              itertools.product(arg_coverage, trunked_additional_args))
             else:
                 all_kwargs = ({arg_name: val, **additional_args} for val in arg_coverage)
 
             completed = 0
-            total = len(list(arg_coverage))
+            total = len(list(arg_coverage)) * start_end_trunk_multiplier
             total_written = 0
             st = time.time()
             dnld_data = pd.DataFrame()
