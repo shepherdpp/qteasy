@@ -32,11 +32,77 @@ ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
 DATA_MAPPING_TABLE = []
 
 # 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
-# 以下dict可以用于直接生成数据表，使用TABLE_SOURCE_MAPPINNG_COLUMNS作为列名
-# comp_args、comp_type、val_boe均用于指导数据表内容的自动下载, 参见refill_table_source()函数的docstring
 TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
+'''
+table map中各列的含义如下： 
+key:                        数据表的名称
+-----------------------------------------------
+structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
+                            型和详情描述 
+                            
+desc:                       数据表的中文描述
+  
+table_usage:                数据表的用途，用于筛选不同的数据表
+  
+asset_type:                 表内数据对应的资产类型，none表示不对应特定资产类型
+  
+freq:                       表内数据的频率，如分钟、日、周等
+                            设置为'D'、'W'等，用于筛选不同的数据表
+  
+tushare:                    对应的tushare API函数名
+  
+fill_arg_name:              从tushare下载数据时的关键参数，使用该关键参数来分多次下载完整的数据
+                            例如，所有股票所有日期的日K线数据一共有超过1500万行，这些数据无法一次性下载
+                            必须分步多次下载。要么每次下载一只股票所有日期的数据，要么下载每天所有股票的数据。
+                            -   如果每次下载一只股票的数据，股票的代码就是关键参数，将所有股票的代码依次作为关键参数
+                                输入tushare API，就可以下载所有数据
+                            -   如果每次下载一天的数据，交易日期就是关键参数，将所有的交易日作为关键参数，也可以下载
+                                所有的数据
+                            对很多API来说，上述两种方式都是可行的，但是以日期为关键参数的方式更好，因为两个原因：
+                            1,  作为关键参数，交易日的数量更少，每年200个交易日，20年的数据也只需要下载4000次，如果
+                                使用股票代码，很多证券类型的代码远远超过4000个
+                            2,  补充下载数据时更方便，如果过去20年的数据都已经下载好了，仅需要补充下载最新一天的数据
+                                如果使用日期作为关键参数，仅下载一次就可以了，如果使用证券代码作为关键参数，需要下载
+                                数千次
+                            因此，应该尽可能使用日期作为关键参数
+                            可惜的是，并不是所有API都支持使用日期作为关键参数，所以，只要能用日期的数据表，都用日期
+                            为关键参数，否则采用其他类型的关键参数。
+  
+fill_arg_type:              关键参数的数据类型，可以为list、table_index、datetime、trade_date，含义分别为：
+                            -   list: 
+                                列表类型，这个关键参数的取值只能是列表中的某一个元素
+                            -   table_index: 
+                                表索引，这个关键参数的取值只能是另一张数据表的索引值，这通常表示tushare不支持使用日期
+                                作为关键参数，因此必须使用一系列股票或证券代码作为关键参数的值，这些值保存在另一张数据
+                                表中，且是这个表的索引值。例如，所有股票的代码就保存在stock_basic表的索引中。
+                                
+                            -   datetime:
+                                日期类型，表示使用日期作为下载数据的关键参数。此时的日期不带时间类型，包含交易日与非
+                                交易日
+                            -   trade_date:
+                                交易日，与日期类型功能相同，但作为关键参数的日期必须为交易日
+  
+arg_rng:                    关键参数的取值范围，
+                            -   如果数据类型为datetime或trade_date，是一个起始日期，表示取值范围从该日期到今日之间
+                            -   如果数据类型为table_index，取值范围是一张表，如stock_basic，表示数据从stock_basic的
+                                索引中取值
+                            -   如果数据类型为list，则直接给出取值范围，如"SSE,SZSE"表示可以取值SSE以及SZSE。
+                            
+arg_allowed_code_suffix:    table_index类型取值范围的限制值，限制只有特定后缀的证券代码才会被用作参数下载数据。
+                            例如，取值"SH,SZ"表示只有以SH、SZ结尾的证券代码才会被用作参数从tushare下载数据。
+                            
+arg_allow_start_end:        使用table_index类型参数时，是否同时允许传入开始结束日期作为参数。如果设置为"Y"，则会在使用
+                            table_index中的代码作为参数下载数据时，同时传入开始和结束日期作为附加参数，否则仅传入代码
+                            
+start_end_trunk_size:       传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
+                            一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
+                            过这个天数。
+                            例如，设置该参数为100，则每个分块内的时间跨度不超过100天
+'''
+
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                                'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end']
+                                'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
+                                'start_end_trunk_size']
 TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
@@ -152,16 +218,16 @@ TABLE_SOURCE_MAPPING = {
         ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', ''],
 
     'stock_indicator':
-        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', 'Y',
+        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
          ''],
 
     'stock_indicator2':
         ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date', '19990101',
-         'Y', ''],
+         '', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
-         '20040102', 'Y', ''],
+         '20040102', '', ''],
 
     'index_weight':
         ['index_weight', '指数成分', 'comp', 'IDX', 'd', 'composite', 'trade_date', 'datetime', '20050408', '', ''],
@@ -173,12 +239,12 @@ TABLE_SOURCE_MAPPING = {
         ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
 
     'cashflow':
-        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', 'Y',
-         ''],
+        ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
+         'Y'],
 
     'financial':
-        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', 'Y',
-         ''],
+        ['financial', '上市公司财务指标', 'report', 'E', 'q', 'indicators', 'ts_code', 'table_index', 'stock_basic', '',
+         'Y'],
 
     'forecast':
         ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y'],
@@ -1287,7 +1353,8 @@ class DataSource:
         # 识别Primary key中的，并确认是否需要筛选日期型pk
         if (start is not None) and (end is not None):
             try:
-                date_like_pk = primary_key[pk_dtypes.index('date')]
+                date_like_dtype = [item for item in pk_dtypes if item in ['date', 'datetime']][0]
+                date_like_pk = primary_key[pk_dtypes.index(date_like_dtype)]
             except Exception as e:
                 warnings.warn(f'{e}\ncan not find date-like primary key in the table {table}!\n'
                               f'passed start and end arguments will be ignored!', RuntimeWarning)
@@ -1884,6 +1951,7 @@ class DataSource:
 
         import time
         for table in table_map.index:
+            # 逐个下载数据并写入本地数据表中
             if table not in tables_to_refill:
                 continue
             cur_table_info = table_map.loc[table]
@@ -1945,9 +2013,9 @@ class DataSource:
 
             # 生成所有的参数, 开始循环下载并更新数据
             if reversed_par_seq:
-                all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage[::-1])
+                all_kwargs = ({arg_name: val, **additional_args} for val in arg_coverage[::-1])
             else:
-                all_kwargs = ({**additional_args, arg_name: val} for val in arg_coverage[::-1])
+                all_kwargs = ({arg_name: val, **additional_args} for val in arg_coverage)
 
             completed = 0
             total = len(list(arg_coverage))
