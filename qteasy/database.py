@@ -19,6 +19,7 @@ from functools import lru_cache
 
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
+from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio
 from .history import stack_dataframes
 from .tsfuncs import acquire_data
 
@@ -1901,8 +1902,9 @@ class DataSource:
                     code_range = str_to_list(code_range, ',')
 
         # 2 生成需要处理的数据表清单 tables
-        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+        table_map = get_table_map()
+        # table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+        # table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
         tables_to_refill = set()
         tables = [item.lower() for item in tables]
         if 'all' in tables:
@@ -1988,7 +1990,7 @@ class DataSource:
                                                              freq=f'{start_end_trunk_size}d'
                                                              ).strftime('%Y%m%d'))
                 start_end_trunk_rbounds = start_end_trunk_lbounds[1:]
-                # 取到的日线或更低频率数据是包括右边界的，可以考虑去掉右边界，得到更精确的结果
+                # 取到的日线或更低频率数据是包括右边界的，去掉右边界可以得到更精确的结果
                 # 但是这样做可能没有意义
                 if freq.upper() in ['D', 'W', 'M']:
                     prev_day = pd.Timedelta(1, 'd')
@@ -2288,3 +2290,88 @@ def get_table_map():
     table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
     table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
     return table_map
+
+
+def find_history_data(s):
+    """ 根据输入的字符串，查找或匹配历史数据类型
+        用户可以使用qt.datasource.find_history_data()形式查找可用的历史数据
+        并且显示该历史数据的详细信息。支持模糊查找、支持通配符、支持通过英文字符或中文
+        查找匹配的历史数据类型。
+        例如，输入"pe"或"市盈率"都可以匹配到市盈率数据类型，并且提供该数据类型的相关信息
+        相关信息如：
+        调用名称、中文简介、所属数据表、数据频率、证券类型等等
+
+        例如：
+        >>> qt.datasource.find_history_data('pe')
+        得到：
+        >>> output:
+        >>> matched following history data,
+        >>> use "qt.get_history_data()" to load these data:
+        >>> ------------------------------------------------------------------------
+        >>>   h_data   dtype             table asset freq plottable                remarks
+        >>> 0     pe   float   stock_indicator     E    d        No  市盈率（总市值/净利润， 亏损的PE为空）
+        >>> 1     pe  double  stock_indicator2     E    d        No                  市盈(动)
+        >>> 2     pe   float   index_indicator   IDX    d        No                    市盈率
+        >>> ========================================================================
+
+    :param s: string，输入的字符串，用于查找或匹配历史数据类型
+    :return:
+        None
+    """
+    if not isinstance(s, str):
+        raise TypeError(f'input should be a string, got {type(s)} instead.')
+    # 判断输入是否ascii编码，如果是，匹配数据名称，否则，匹配数据描述
+    try:
+        s.encode('ascii')
+    except UnicodeEncodeError:
+        is_ascii = False
+    else:
+        is_ascii = True
+
+    table_map = get_table_map()
+    items_found = {'h_data':        [],
+                   'dtype':         [],
+                   'table':         [],
+                   'asset':         [],
+                   'freq':          [],
+                   'plottable':     [],
+                   'remarks':       []
+                   }
+    for table in table_map.index:
+        table_structure_name = table_map['structure'].loc[table]
+        table_structure = TABLE_STRUCTURES[table_structure_name]
+        asset_type = table_map['asset_type'].loc[table]
+        data_freq = table_map['freq'].loc[table]
+
+        columns = table_structure['columns']
+        dtypes = table_structure['dtypes']
+        remarks = table_structure['remarks']
+
+        if is_ascii:
+            where_to_look = columns
+            match_how = _lev_ratio
+        else:
+            where_to_look = remarks
+            match_how = _partial_lev_ratio
+        if ('?' in s) or ('*' in s):
+            matched = _wildcard_match(s, where_to_look)
+        else:
+            match_values = list(map(match_how, [s]*len(where_to_look), where_to_look))
+            matched = [where_to_look[i] for i in range(len(where_to_look)) if match_values[i] >= 0.9]
+
+        if len(matched) > 0:
+            matched_index = [where_to_look.index(item) for item in matched]
+            matched_count = len(matched_index)
+            items_found['h_data'].extend([columns[i] for i in matched_index])
+            items_found['remarks'].extend([remarks[i] for i in matched_index])
+            items_found['dtype'].extend([dtypes[i] for i in matched_index])
+            items_found['table'].extend([table] * matched_count)
+            items_found['asset'].extend([asset_type] * matched_count)
+            items_found['freq'].extend([data_freq] * matched_count)
+            items_found['plottable'].extend(['No'] * matched_count)
+
+    df = pd.DataFrame(items_found)
+    print(f'matched following history data, \n'
+          f'use "qt.get_history_data()" to load these data:\n'
+          f'------------------------------------------------------------------------\n{df}\n'
+          f'========================================================================')
