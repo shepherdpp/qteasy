@@ -1042,10 +1042,7 @@ class DataSource:
         file_path_name = self.file_path + file_name + '.' + self.file_type
         try:
             file_size = os.path.getsize(file_path_name)
-            if h:
-                return human_file_size(file_size)
-            else:
-                return f'{file_size}'
+            return file_size
         except FileNotFoundError:
             return -1
         except Exception as e:
@@ -1317,11 +1314,10 @@ class DataSource:
         self.cursor.execute(sql)
         self.con.commit()
 
-    def get_db_table_size(self, db_table, h=True):
+    def get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
 
         :param db_table: str 数据库表名称
-        :param h: bool, human-readable 为True时输出适合人类阅读的格式
         :return:
         """
         if not self.db_table_exists(db_table):
@@ -1333,10 +1329,7 @@ class DataSource:
         self.cursor.execute(sql, (self.db_name, db_table))
         self.con.commit()
         size = self.cursor.fetchall()[0][0]
-        if h:
-            return human_file_size(size)
-        else:
-            return f'{size}'
+        return size
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def table_data_exists(self, table):
@@ -1664,11 +1657,17 @@ class DataSource:
         :return:
         """
         if self.source_type == 'file':
-            return self.get_file_size(table, human)
+            size = self.get_file_size(table)
         elif self.source_type == 'db':
-            return self.get_db_table_size(table, human)
+            size = self.get_db_table_size(table)
         else:
             raise RuntimeError(f'unknown source type: {self.source_type}')
+        if size == -1:
+            return None
+        if human:
+            return human_file_size(size)
+        else:
+            return f'{size}'
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
