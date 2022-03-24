@@ -19,7 +19,7 @@ from functools import lru_cache
 
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
-from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio
+from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size
 from .history import stack_dataframes
 from .tsfuncs import acquire_data
 
@@ -1027,6 +1027,30 @@ class DataSource:
             file_path_name = self.file_path + file_name + '.' + self.file_type
             os.remove(file_path_name)
 
+    def get_file_size(self, file_name, h=True):
+        """ 获取文件大小，输出
+
+        :param file_name:  str 文件名
+        :param h: bool, human-readable 为True时输出适合人类阅读的格式
+        :return:
+            str representing file size
+        """
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+
+        import os
+        file_path_name = self.file_path + file_name + '.' + self.file_type
+        try:
+            file_size = os.path.getsize(file_path_name)
+            if h:
+                return human_file_size(file_size)
+            else:
+                return f'{file_size}'
+        except FileNotFoundError:
+            return -1
+        except Exception as e:
+            raise RuntimeError(f'{e}, unknown error encountered.')
+
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
         """ 从一张数据库表中读取数据，读取时根据share（ts_code）和dates筛选
@@ -1292,6 +1316,27 @@ class DataSource:
         sql = f"DROP TABLE IF EXISTS {db_table}"
         self.cursor.execute(sql)
         self.con.commit()
+
+    def get_db_table_size(self, db_table, h=True):
+        """ 获取数据库表的占用磁盘空间
+
+        :param db_table: str 数据库表名称
+        :param h: bool, human-readable 为True时输出适合人类阅读的格式
+        :return:
+        """
+        if not self.db_table_exists(db_table):
+            return -1
+        sql = "SELECT data_length + index_length " \
+              "FROM information_schema.tables " \
+              "WHERE table_schema = %s " \
+              "AND table_name = %s"
+        self.cursor.execute(sql, (self.db_name, db_table))
+        self.con.commit()
+        size = self.cursor.fetchall()[0][0]
+        if h:
+            return human_file_size(size)
+        else:
+            return f'{size}'
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def table_data_exists(self, table):
@@ -1611,6 +1656,19 @@ class DataSource:
             return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes)
         else:
             raise TypeError(f'Invalid source type: {self.source_type}')
+
+    def get_table_size(self, table, human=True):
+        """ 获取数据表占用磁盘空间的大小
+
+        :param table:
+        :return:
+        """
+        if self.source_type == 'file':
+            return self.get_file_size(table, human)
+        elif self.source_type == 'db':
+            return self.get_db_table_size(table, human)
+        else:
+            raise RuntimeError(f'unknown source type: {self.source_type}')
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
@@ -2302,17 +2360,18 @@ def find_history_data(s):
         调用名称、中文简介、所属数据表、数据频率、证券类型等等
 
         例如：
-        >>> qt.datasource.find_history_data('pe')
+        >>> import qteasy as qt
+        >>> qt.find_history_data('pe')
         得到：
         >>> output:
-        >>> matched following history data,
-        >>> use "qt.get_history_data()" to load these data:
-        >>> ------------------------------------------------------------------------
-        >>>   h_data   dtype             table asset freq plottable                remarks
-        >>> 0     pe   float   stock_indicator     E    d        No  市盈率（总市值/净利润， 亏损的PE为空）
-        >>> 1     pe  double  stock_indicator2     E    d        No                  市盈(动)
-        >>> 2     pe   float   index_indicator   IDX    d        No                    市盈率
-        >>> ========================================================================
+            matched following history data,
+            use "qt.get_history_data()" to load these data:
+            ------------------------------------------------------------------------
+              h_data   dtype             table asset freq plottable                remarks
+            0     pe   float   stock_indicator     E    d        No  市盈率（总市值/净利润， 亏损的PE为空）
+            1     pe  double  stock_indicator2     E    d        No                  市盈(动)
+            2     pe   float   index_indicator   IDX    d        No                    市盈率
+            ========================================================================
 
     :param s: string，输入的字符串，用于查找或匹配历史数据类型
     :return:

@@ -764,6 +764,24 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     return code_matched
 
 
+def human_file_size(file_size: int) -> str:
+    """ 将一个整型数字转化为以GB/MB/KB/Byte为单位的文件大小字符串
+
+    :param file_size: int 表示文件大小的数字，单位为字节
+    :return:
+    """
+    if file_size > 2 ** 40:
+        return f'{file_size / 1048576 / 1048576 :.3f}TB'
+    if file_size > 2 ** 30:
+        return f'{file_size / 1048576 / 1024 :.2f}GB'
+    elif file_size > 2 ** 20:
+        return f'{file_size / 1048576 :.1f}MB'
+    elif file_size > 2 ** 10:
+        return f'{file_size / 1024 :.0f}KB'
+    else:
+        return f'{file_size}Byte'
+
+
 @njit()
 def _lev_ratio(s, t):
     """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio

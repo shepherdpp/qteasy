@@ -22,7 +22,7 @@ from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSele
 from .visual import candle
 from .built_in import *
 from .finance import CashPlan, Cost
-from .database import DataSource
+from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG
 from warnings import warn
 
