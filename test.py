@@ -11661,6 +11661,7 @@ class FastExperiments(unittest.TestCase):
         ds = qt.QT_DATA_SOURCE
         ds.get_table_info('trade_calendar')
         ds.get_table_info('stock_basic')
+        ds.get_table_info('stock_5min')
         ds.get_table_info('stock_1min')
         ds.get_table_info('future_daily')
 

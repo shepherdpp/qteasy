@@ -1165,11 +1165,32 @@ class DataSource:
         if not self.db_table_exists(table):
             return list()
         sql = f'SELECT DISTINCT `{column}`' \
-              f'FROM `{table}`'
+              f'FROM `{table}`' \
+              f'ORDER BY `{column}`'
         self.cursor.execute(sql)
         self.con.commit()
 
         res = [item[0] for item in self.cursor.fetchall()]
+        if isinstance(res[0], datetime.datetime):
+            res = list(pd.to_datetime(res).strftime('%Y%m%d'))
+        return res
+
+    def get_db_table_minmax(self, table, column):
+        """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
+
+        :param table: 数据表名
+        :param column: 数据表的字段名
+        :return:
+        """
+        import datetime
+        if not self.db_table_exists(table):
+            return list()
+        sql = f'SELECT MIN(`{column}`), MAX(`{column}`), COUNT(DISTINCT(`{column}`))' \
+              f'FROM `{table}`'
+        self.cursor.execute(sql)
+        self.con.commit()
+
+        res = list(self.cursor.fetchall()[0])
         if isinstance(res[0], datetime.datetime):
             res = list(pd.to_datetime(res).strftime('%Y%m%d'))
         return res
@@ -1634,16 +1655,23 @@ class DataSource:
         self._table_list.difference_update([table])
         return None
 
-    def get_table_data_coverage(self, table, column):
+    def get_table_data_coverage(self, table, column, min_max_only=False):
         """ 获取本地数据表内容的覆盖范围，取出数据表的"column"列中的去重值并返回
 
         :param table: 数据表的名称
         :param column: 需要去重并返回的数据列
+        :param min_max_only:
+            为True时不需要返回整个数据列，仅返回最大值和最小值
+            如果仅返回最大值和和最小值，返回值为一个包含两个元素的列表，
+            第一个元素是最小值，第二个是最大值，第三个是总数量
         :return:
             List, 代表数据覆盖范围的列表
         """
         if self.source_type == 'db':
-            return self.get_db_table_coverage(table, column)
+            if min_max_only:
+                return self.get_db_table_minmax(table, column)
+            else:
+                return self.get_db_table_coverage(table, column)
         elif self.source_type == 'file':
             columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
             return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes)
@@ -1689,8 +1717,6 @@ class DataSource:
                                                                                       with_remark=True,
                                                                                       with_primary_keys=True)
         critical_key = TABLE_SOURCE_MAPPING[table][6]
-        # import pdb
-        # pdb.set_trace()
         table_schema = pd.DataFrame({'columns': columns,
                                      'dtypes': dtypes,
                                      'remarks': remarks})
@@ -1704,16 +1730,20 @@ class DataSource:
             print(f'table name: \n{table}, data not downloaded\n'
                   f'primary keys: \n'
                   f'-----------------------------------')
+        pk_count = 0
         for pk in primary_keys:
-            pk_cover_list = self.get_table_data_coverage(table, pk)
+            pk_min_max_count = self.get_table_data_coverage(table, pk, min_max_only=True)
+            pk_count += 1
             critical = ''
             if pk == critical_key:
-                critical = "** CRITICAL **"
-            if len(pk_cover_list) == 0:
-                print(f'{pk}: {critical}\nNo data!')
+                critical = "       *<CRITICAL>*"
+            if len(pk_min_max_count) == 0:
+                print(f'{pk_count}:  {pk}{critical}:\n    No data!')
             else:
-                print(f'{pk} <{len(pk_cover_list)}> entries {critical}\nstarts:'
-                      f' {pk_cover_list[0]}, end: {pk_cover_list[-1]}')
+                print(f'{pk_count}:  {pk}{critical}:\n'
+                      f'    <{pk_min_max_count[2]}> entries\n'
+                      f'    starts:'
+                      f' {pk_min_max_count[0]}, end: {pk_min_max_count[1]}')
         if verbose:
             print(f'\ncolumns of table:\n'
                   f'------------------------------------\n'
