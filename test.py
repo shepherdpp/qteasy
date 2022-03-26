@@ -11,6 +11,7 @@
 
 import unittest
 
+import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -11657,10 +11658,11 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.database.find_history_data('pe')
-        qt.database.find_history_data('open')
-        qt.database.find_history_data('市盈率')
-        qt.database.find_history_data('市?率*')
+        ds = qt.QT_DATA_SOURCE
+        ds.get_table_info('trade_calendar')
+        ds.get_table_info('stock_basic')
+        ds.get_table_info('stock_1min')
+        ds.get_table_info('future_daily')
 
     def test_fast_experiments2(self):
         print(_lev_ratio('abc', 'ABC'))
@@ -11686,6 +11688,11 @@ class FastExperiments(unittest.TestCase):
         print(_wildcard_match('col*r', wordlist))
         print(_wildcard_match('wor.?', wordlist))
         print(_wildcard_match('?o?', wordlist))
+
+        qt.database.find_history_data('pe')
+        qt.database.find_history_data('open')
+        qt.database.find_history_data('市盈率')
+        qt.database.find_history_data('市?率*')
 
     def test_time(self):
         print(match_ts_code('000001'))

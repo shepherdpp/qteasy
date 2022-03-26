@@ -769,7 +769,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
     ds = qteasy.QT_DATA_SOURCE
-    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_tables()
+    df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 
     matched_count = matched_codes['count']
@@ -812,6 +812,16 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
             asset_codes = list(asset_best_matched[a_type].keys())
             print(basics.loc[asset_codes].T)
             print('-------------------------------------------')
+
+
+def get_table_info(table_name, verbose):
+    """
+
+    :param table_name:
+    :param verbose:
+    :return:
+    """
+    return qteasy.QT_DATA_SOURCE.get_table_info(table=table_name, verbose=verbose)
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整

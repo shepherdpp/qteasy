@@ -1650,11 +1650,13 @@ class DataSource:
         else:
             raise TypeError(f'Invalid source type: {self.source_type}')
 
-    def get_table_size(self, table, human=True):
+    def get_data_table_size(self, table, human=True):
         """ 获取数据表占用磁盘空间的大小
 
-        :param table:
+        :param table: 数据表名称
+        :param human: True时显示容易阅读的形式，如1.5MB而不是1590868， False时返回字节数
         :return:
+            str
         """
         if self.source_type == 'file':
             size = self.get_file_size(table)
@@ -1668,6 +1670,54 @@ class DataSource:
             return human_file_size(size)
         else:
             return f'{size}'
+
+    def get_table_info(self, table, verbose=True):
+        """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
+            以及数据下载方法
+
+        :param table:
+        :param verbose: 是否显示更多信息，如是，显示表结构等信息
+        :return:
+        """
+        if not isinstance(table, str):
+            raise TypeError(f'table should be name of a table, got {type(table)} instead')
+        if not table.lower() in TABLE_SOURCE_MAPPING:
+            raise ValueError(f'in valid table name: {table}')
+
+        print(f'{table.lower()}')
+        columns, dtypes, remarks, primary_keys, pk_dtypes = get_built_in_table_schema(table,
+                                                                                      with_remark=True,
+                                                                                      with_primary_keys=True)
+        critical_key = TABLE_SOURCE_MAPPING[table][6]
+        # import pdb
+        # pdb.set_trace()
+        table_schema = pd.DataFrame({'columns': columns,
+                                     'dtypes': dtypes,
+                                     'remarks': remarks})
+        table_exists = self.table_data_exists(table)
+        if table_exists:
+            table_size = self.get_data_table_size(table, human=True)
+            print(f'table name: \n{table}, {table_size} on disc\n'
+                  f'primary keys: \n'
+                  f'-----------------------------------')
+        else:
+            print(f'table name: \n{table}, data not downloaded\n'
+                  f'primary keys: \n'
+                  f'-----------------------------------')
+        for pk in primary_keys:
+            pk_cover_list = self.get_table_data_coverage(table, pk)
+            critical = ''
+            if pk == critical_key:
+                critical = "** CRITICAL **"
+            if len(pk_cover_list) == 0:
+                print(f'{pk}: {critical}\nNo data!')
+            else:
+                print(f'{pk} <{len(pk_cover_list)}> entries {critical}\nstarts:'
+                      f' {pk_cover_list[0]}, end: {pk_cover_list[-1]}')
+        if verbose:
+            print(f'\ncolumns of table:\n'
+                  f'------------------------------------\n'
+                  f'{table_schema}\n')
 
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
@@ -2146,7 +2196,8 @@ class DataSource:
                                                        f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
-                print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with {total} {arg_name} params '
+                print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
+                      f'{total} {arg_name} params '
                       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
                 if len(additional_args) > 0:
                     print(f'with additional arguments: {additional_args}\n')
@@ -2156,7 +2207,7 @@ class DataSource:
                 print(f'\n{e} process interrupted, tried to write {total_written} rows, will proceed with next table!')
 
     @lru_cache()
-    def get_all_basic_tables(self):
+    def get_all_basic_table_data(self):
         """ 一个快速获取所有basic数据表的函数，缓存处理以加快速度
 
         :return:
@@ -2312,10 +2363,14 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
 
 # noinspection PyTypeChecker
 @lru_cache(maxsize=16)
-def get_built_in_table_schema(table):
+def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
     :param table:
         str, 表名称（注意不是表的结构名称）
+    :param with_remark: bool
+        为True时返回remarks，否则不返回
+    :param with_primary_keys: bool
+        为True时返回primary_keys以及primary_key的数据类型，否则不返回
     :return
         Tuple: 包含四个List，包括:
             columns: 整张表的列名称
@@ -2332,11 +2387,19 @@ def get_built_in_table_schema(table):
     structure = TABLE_STRUCTURES[table_structure]
     columns = structure['columns']
     dtypes = structure['dtypes']
+    remarks = structure['remarks']
     pk_loc = structure['prime_keys']
     primary_keys = [columns[i] for i in pk_loc]
     pk_dtypes = [dtypes[i] for i in pk_loc]
 
-    return columns, dtypes, primary_keys, pk_dtypes
+    if (not with_remark) and with_primary_keys:
+        return columns, dtypes, primary_keys, pk_dtypes
+    if with_remark and (not with_primary_keys):
+        return columns, dtypes, remarks
+    if (not with_remark) and (not with_primary_keys):
+        return columns, dtypes
+    if with_remark and with_primary_keys:
+        return columns, dtypes, remarks, primary_keys, pk_dtypes
 
 
 def get_table_map():
@@ -2392,7 +2455,7 @@ def find_history_data(s):
                    'table':         [],
                    'asset':         [],
                    'freq':          [],
-                   'plottable':     [],
+                   'plot':          [],
                    'remarks':       []
                    }
     for table in table_map.index:
@@ -2426,7 +2489,7 @@ def find_history_data(s):
             items_found['table'].extend([table] * matched_count)
             items_found['asset'].extend([asset_type] * matched_count)
             items_found['freq'].extend([data_freq] * matched_count)
-            items_found['plottable'].extend(['No'] * matched_count)
+            items_found['plot'].extend(['No'] * matched_count)
 
     df = pd.DataFrame(items_found)
     print(f'matched following history data, \n'
