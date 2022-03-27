@@ -12114,21 +12114,24 @@ class TestDataSource(unittest.TestCase):
         print(f'Test getting file table coverages')
         cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'ts_code',
                                                   primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'])
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
         cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'ts_code',
                                                   primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'])
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ["000001.SZ", "000002.SZ", "000003.SZ", "000004.SZ", "000005.SZ"])
         cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'ts_code',
                                                   primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'])
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
@@ -12136,25 +12139,79 @@ class TestDataSource(unittest.TestCase):
 
         cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'trade_date',
                                                   primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'])
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
         cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'trade_date',
                                                   primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'])
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
         cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'trade_date',
                                                   primary_key=['ts_code', 'trade_date'],
-                                                  pk_dtypes=['str', 'TimeStamp'])
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=False)
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113'])
+
+        print(f'Test getting file table coverages with only min max and count')
+        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'ts_code',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=True)
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000005.SZ", 5])
+        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'ts_code',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=True)
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000005.SZ", 5])
+        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'ts_code',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=True)
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ["000001.SZ", "000005.SZ", 5])
+
+        cov = self.ds_csv.get_file_table_coverage('test_csv_file', 'trade_date',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=True)
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113', 2])
+        cov = self.ds_hdf.get_file_table_coverage('test_hdf_file', 'trade_date',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=True)
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113', 2])
+        cov = self.ds_fth.get_file_table_coverage('test_fth_file', 'trade_date',
+                                                  primary_key=['ts_code', 'trade_date'],
+                                                  pk_dtypes=['str', 'TimeStamp'],
+                                                  min_max_only=True)
+        print(cov)
+        self.assertIsInstance(cov, list)
+        self.assertEqual(cov,
+                         ['20211112', '20211113', 2])
 
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""

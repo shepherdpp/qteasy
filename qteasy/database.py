@@ -95,7 +95,7 @@ arg_allowed_code_suffix:    table_index类型取值范围的限制值，限制�
 arg_allow_start_end:        使用table_index类型参数时，是否同时允许传入开始结束日期作为参数。如果设置为"Y"，则会在使用
                             table_index中的代码作为参数下载数据时，同时传入开始和结束日期作为附加参数，否则仅传入代码
                             
-start_end_trunk_size:       传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
+start_end_chunk_size:       传入开始结束日期作为附加参数时，是否分块下载。可以设置一个正整数或空字符串如"300"。如果设置了
                             一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
                             过这个天数。
                             例如，设置该参数为100，则每个分块内的时间跨度不超过100天
@@ -103,7 +103,7 @@ start_end_trunk_size:       传入开始结束日期作为附加参数时，是�
 
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
-                                'start_end_trunk_size']
+                                'start_end_chunk_size']
 TABLE_SOURCE_MAPPING = {
 
     'trade_calendar':
@@ -328,14 +328,14 @@ TABLE_STRUCTURES = {
                          'dtypes':     ['varchar(20)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'double', 'double'],
                          'remarks':    ['证券代码', '交易日期', '开盘价', '最高价', '最低价', '收盘价', '昨收价', '涨跌额',
-                                        '涨跌幅', '成交量 （手）', '成交额 （千元）'],
+                                        '涨跌幅', '成交量(手)', '成交额(千元)'],
                          'prime_keys': [0, 1]},
 
     'min_bars':         {'columns':    ['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount'],
                          'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'double',
                                         'double'],
-                         'remarks':    ['证券代码', '交易日期时间', '开盘价', '最高价', '最低价', '收盘价', '成交量（股）',
-                                        '成交额 （元）'],
+                         'remarks':    ['证券代码', '交易日期时间', '开盘价', '最高价', '最低价', '收盘价', '成交量(股)',
+                                        '成交额(元)'],
                          'prime_keys': [0, 1]},
 
     'adj_factors':      {'columns':    ['ts_code', 'trade_date', 'adj_factor'],
@@ -353,7 +353,7 @@ TABLE_STRUCTURES = {
 
     'fund_share':       {'columns':    ['ts_code', 'trade_date', 'fd_share'],
                          'dtypes':     ['varchar(20)', 'date', 'float'],
-                         'remarks':    ['证券代码', '变动日期，格式YYYYMMDD', '基金份额（万）'],
+                         'remarks':    ['证券代码', '变动日期，格式YYYYMMDD', '基金份额(万)'],
                          'prime_keys': [0, 1]},
 
     'fund_manager':     {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'birth_year', 'edu', 'nationality',
@@ -388,11 +388,11 @@ TABLE_STRUCTURES = {
                          'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'float', 'float', 'float', 'float',
                                         'float', 'float', 'float', 'float', 'float', 'double', 'double', 'double',
                                         'double', 'double'],
-                         'remarks':    ['证券代码', '交易日期', '当日收盘价', '换手率（%）', '换手率（自由流通股）', '量比',
-                                        '市盈率（总市值/净利润， 亏损的PE为空）', '市盈率（TTM，亏损的PE为空）',
-                                        '市净率（总市值/净资产）', '市销率', '市销率（TTM）', '股息率 （%）',
-                                        '股息率（TTM）（%）', '总股本 （万股）', '流通股本 （万股）', '自由流通股本 （万）',
-                                        '总市值 （万元）', '流通市值（万元）'],
+                         'remarks':    ['证券代码', '交易日期', '当日收盘价', '换手率(%)', '换手率(自由流通股)', '量比',
+                                        '市盈率(总市值/净利润， 亏损的PE为空)', '市盈率(TTM，亏损的PE为空)',
+                                        '市净率(总市值/净资产)', '市销率', '市销率(TTM)', '股息率(%)',
+                                        '股息率(TTM)(%)', '总股本(万股)', '流通股本(万股)', '自由流通股本(万)',
+                                        '总市值(万元)', '流通市值(万元)'],
                          'prime_keys': [0, 1]},
 
     'stock_indicator2': {'columns':    ['ts_code', 'trade_date', 'vol_ratio', 'turn_over', 'swing',
@@ -402,8 +402,8 @@ TABLE_STRUCTURES = {
                          'dtypes':     ['varchar(9)', 'date', 'float', 'float', 'double', 'double',
                                         'double', 'double', 'double', 'double', 'double', 'double',
                                         'double', 'double', 'double', 'double', 'double', 'float', 'float'],
-                         'remarks':    ['证券代码', '交易日期', '量比', '换手率', '振幅', '内盘（主动卖，手）',
-                                        '外盘（主动买， 手）', '总股本(亿)', '流通股本(亿)', '市盈(动)',
+                         'remarks':    ['证券代码', '交易日期', '量比', '换手率', '振幅', '内盘(主动卖，手)',
+                                        '外盘(主动买， 手)', '总股本(亿)', '流通股本(亿)', '市盈(动)',
                                         '流通市值', '总市值', '平均价', '强弱度(%)', '活跃度(%)', '笔换手', '攻击波(%)',
                                         '近3月涨幅', '近6月涨幅'],
                          'prime_keys': [0, 1]},
@@ -412,8 +412,8 @@ TABLE_STRUCTURES = {
                                         'free_share', 'turnover_rate', 'turnover_rate_f', 'pe', 'pe_ttm', 'pb'],
                          'dtypes':     ['varchar(9)', 'date', 'double', 'double', 'double', 'double', 'double', 'float',
                                         'float', 'float', 'float', 'float'],
-                         'remarks':    ['证券代码', '交易日期', '当日总市值（元）', '当日流通市值（元）', '当日总股本（股）',
-                                        '当日流通股本（股）', '当日自由流通股本（股）', '换手率', '换手率(基于自由流通股本)',
+                         'remarks':    ['证券代码', '交易日期', '当日总市值(元)', '当日流通市值(元)', '当日总股本(股)',
+                                        '当日流通股本(股)', '当日自由流通股本(股)', '换手率', '换手率(基于自由流通股本)',
                                         '市盈率', '市盈率TTM', '市净率'],
                          'prime_keys': [0, 1]},
 
@@ -476,8 +476,8 @@ TABLE_STRUCTURES = {
                                         '调整以前年度损益', '提取法定盈余公积', '提取法定公益金', '提取企业发展基金',
                                         '提取储备基金', '提取任意盈余公积金', '职工奖金福利', '可供股东分配的利润',
                                         '应付优先股股利', '应付普通股股利', '转作股本的普通股股利',
-                                        '扣除非经常性损益后的净利润（更正前）', '信用减值损失', '净敞口套期收益',
-                                        '其他资产减值损失', '营业总成本（二）', '以摊余成本计量的金融资产终止确认收益',
+                                        '扣除非经常性损益后的净利润(更正前)', '信用减值损失', '净敞口套期收益',
+                                        '其他资产减值损失', '营业总成本(二)', '以摊余成本计量的金融资产终止确认收益',
                                         '其他收益', '资产处置收益', '持续经营净利润', '终止经营净利润', '更新标识'],
                          'prime_keys': [0, 1]},
 
@@ -573,7 +573,7 @@ TABLE_STRUCTURES = {
                                         '其他应付款(合计)(元)', '长期应付款(合计)(元)', '债权投资(元)', '其他债权投资(元)',
                                         '其他权益工具投资(元)', '其他非流动金融资产(元)', '其他权益工具:永续债(元)',
                                         '应收款项融资', '使用权资产', '租赁负债', '合同资产', '合同负债', '应收票据及应收账款',
-                                        '应付票据及应付账款', '其他应收款(合计)（元）', '固定资产(合计)(元)', '更新标识'],
+                                        '应付票据及应付账款', '其他应收款(合计)(元)', '固定资产(合计)(元)', '更新标识'],
                          'prime_keys': [0, 1]},
 
     'cashflow':         {'columns':    ['ts_code', 'end_date', 'ann_date', 'f_ann_date', 'comp_type', 'report_type',
@@ -650,7 +650,7 @@ TABLE_STRUCTURES = {
                                         '融资租入固定资产', '现金及现金等价物净增加额(间接法)', '拆出资金净增加额',
                                         '代理买卖证券收到的现金净额(元)', '信用减值损失', '使用权资产折旧', '其他资产减值损失',
                                         '现金的期末余额', '减:现金的期初余额', '加:现金等价物的期末余额',
-                                        '减:现金等价物的期初余额', '更新标志(1最新）'],
+                                        '减:现金等价物的期初余额', '更新标志(1最新)'],
                          'prime_keys': [0, 1]},
 
     'financial':        {'columns':    ['ts_code', 'end_date', 'ann_date', 'eps', 'dt_eps', 'total_revenue_ps',
@@ -712,7 +712,7 @@ TABLE_STRUCTURES = {
                                         'double', 'double', 'double', 'double', 'double', 'double', 'varchar(4)'],
                          'remarks':    ['证券代码', '报告期', '公告日期', '基本每股收益', '稀释每股收益', '每股营业总收入',
                                         '每股营业收入', '每股资本公积', '每股盈余公积', '每股未分配利润', '非经常性损益',
-                                        '扣除非经常性损益后的净利润（扣非净利润）', '毛利', '流动比率', '速动比率', '保守速动比率',
+                                        '扣除非经常性损益后的净利润(扣非净利润)', '毛利', '流动比率', '速动比率', '保守速动比率',
                                         '存货周转天数', '应收账款周转天数', '存货周转率', '应收账款周转率', '流动资产周转率',
                                         '固定资产周转率', '总资产周转率', '经营活动净收益', '价值变动净收益', '利息费用',
                                         '折旧与摊销', '息税前利润', '息税折旧摊销前利润', '企业自由现金流量', '股权自由现金流量',
@@ -743,9 +743,9 @@ TABLE_STRUCTURES = {
                                         '利润总额／营业收入', '经营活动单季度净收益', '价值变动单季度净收益',
                                         '扣除非经常损益后的单季度净利润', '每股收益(单季度)', '销售净利率(单季度)',
                                         '销售毛利率(单季度)', '销售期间费用率(单季度)', '净利润／营业总收入(单季度)',
-                                        '销售费用／营业总收入 (单季度)', '管理费用／营业总收入 (单季度)',
-                                        '财务费用／营业总收入 (单季度)', '资产减值损失／营业总收入(单季度)',
-                                        '营业总成本／营业总收入 (单季度)', '营业利润／营业总收入(单季度)', '净资产收益率(单季度)',
+                                        '销售费用／营业总收入(单季度)', '管理费用／营业总收入(单季度)',
+                                        '财务费用／营业总收入(单季度)', '资产减值损失／营业总收入(单季度)',
+                                        '营业总成本／营业总收入(单季度)', '营业利润／营业总收入(单季度)', '净资产收益率(单季度)',
                                         '净资产单季度收益率(扣除非经常损益)', '总资产净利润(单季度)',
                                         '经营活动净收益／利润总额(单季度)', '价值变动净收益／利润总额(单季度)',
                                         '扣除非经常损益后的净利润／净利润(单季度)', '销售商品提供劳务收到的现金／营业收入(单季度)',
@@ -770,8 +770,8 @@ TABLE_STRUCTURES = {
                                         'summary', 'change_reason'],
                          'dtypes':     ['varchar(9)', 'date', 'date', 'varchar(9)', 'float', 'float', 'double',
                                         'double', 'double', 'date', 'text', 'text'],
-                         'remarks':    ['证券代码', '报告期', '公告日期', '业绩预告类型', '预告净利润变动幅度下限（%）',
-                                        '预告净利润变动幅度上限（%）', '预告净利润下限（万元）', '预告净利润上限（万元）',
+                         'remarks':    ['证券代码', '报告期', '公告日期', '业绩预告类型', '预告净利润变动幅度下限(%)',
+                                        '预告净利润变动幅度上限(%)', '预告净利润下限(万元)', '预告净利润上限(万元)',
                                         '上年同期归属母公司净利润', '首次公告日', '业绩预告摘要', '业绩变动原因'],
                          # 业绩预告类型包括：预增/预减/扭亏/首亏/续亏/续盈/略增/略减
                          'prime_keys': [0, 1, 2]},
@@ -919,7 +919,7 @@ class DataSource:
         if self.source_type == 'db':
             return f'DataSource(\'db\', \'{self.host}\', {self.port})'
         elif self.source_type == 'file':
-            return f'DataSource(\'file\', \'{self.file_loc}\', \'{self.file_type}\')'
+            return f'DataSource(\'file\', \'{self.file_type}\', \'{self.file_loc}\')'
         else:
             return
 
@@ -930,7 +930,7 @@ class DataSource:
     def file_exists(self, file_name):
         """ 检查文件是否已存在
 
-        :param file_name: 需要检查的文件名（不含扩展名）
+        :param file_name: 需要检查的文件名(不含扩展名)
         :return:
         Boolean: 文件存在时返回真，否则返回假
         """
@@ -945,7 +945,7 @@ class DataSource:
         """ 将df写入本地文件
 
         :param df: 待写入文件的DataFrame
-        :param file_name: 本地文件名（不含扩展名）
+        :param file_name: 本地文件名(不含扩展名)
         :return:
         str: file_name 如果数据保存成功，返回完整文件路径名称
         """
@@ -963,14 +963,16 @@ class DataSource:
             raise TypeError(f'Invalid file type: {self.file_type}')
         return len(df)
 
-    def read_file(self, file_name, primary_key, pk_dtypes):
-        """ open the file with name file_name and return the df
+    def read_file(self, file_name, primary_key, pk_dtypes, chunk_size=50000):
+        """ read the file with name file_name and return the df
 
         :param file_name: str， 文件名
         :param primary_key:
             List, 用于生成primary_key index 的主键
         :param pk_dtypes:
             List，primary_key的数据类型
+        :param chunk_size:
+            int, 分块读取csv大文件时的分块大小
         :return:
             DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
@@ -993,13 +995,14 @@ class DataSource:
             raise TypeError(f'Invalid file type: {self.file_type}')
         return df
 
-    def get_file_table_coverage(self, table, column, primary_key, pk_dtypes):
+    def get_file_table_coverage(self, table, column, primary_key, pk_dtypes, min_max_only):
         """ 检查数据表文件关键列的内容，去重后返回该列的内容清单
 
         :param table:
         :param column:
         :param primary_key
         :param pk_dtypes
+        :param min_max_only: 仅输出最小、最大以及总数量
         :return:
         """
         if not self.file_exists(table):
@@ -1008,11 +1011,20 @@ class DataSource:
         if df.empty:
             return list()
         if column in list(df.index.names):
-            res = df.index.get_level_values(column).unique()
+            extracted_val = df.index.get_level_values(column).unique()
         else:
-            res = list(df[column].unique())
-        if isinstance(res[0], pd.Timestamp):
-            res = res.strftime('%Y%m%d')
+            extracted_val = df[column].unique()
+        if isinstance(extracted_val[0], pd.Timestamp):
+            extracted_val = extracted_val.strftime('%Y%m%d')
+
+        res = list()
+        if min_max_only:
+            res.append(extracted_val.min())
+            res.append(extracted_val.max())
+            res.append(len(extracted_val))
+        else:
+            res.extend(extracted_val)
+
         return list(res)
 
     def drop_file(self, file_name):
@@ -1027,11 +1039,10 @@ class DataSource:
             file_path_name = self.file_path + file_name + '.' + self.file_type
             os.remove(file_path_name)
 
-    def get_file_size(self, file_name, h=True):
+    def get_file_size(self, file_name):
         """ 获取文件大小，输出
 
         :param file_name:  str 文件名
-        :param h: bool, human-readable 为True时输出适合人类阅读的格式
         :return:
             str representing file size
         """
@@ -1050,7 +1061,7 @@ class DataSource:
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
-        """ 从一张数据库表中读取数据，读取时根据share（ts_code）和dates筛选
+        """ 从一张数据库表中读取数据，读取时根据share(ts_code)和dates筛选
             具体筛选的字段通过share_like_pk和date_like_pk两个字段给出
 
         :param db_table: 需要读取数据的数据表
@@ -1175,17 +1186,22 @@ class DataSource:
             res = list(pd.to_datetime(res).strftime('%Y%m%d'))
         return res
 
-    def get_db_table_minmax(self, table, column):
+    def get_db_table_minmax(self, table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
 
         :param table: 数据表名
         :param column: 数据表的字段名
+        :param with_count: 是否返回关键列值的数量，可能非常耗时
         :return:
         """
         import datetime
         if not self.db_table_exists(table):
             return list()
-        sql = f'SELECT MIN(`{column}`), MAX(`{column}`), COUNT(DISTINCT(`{column}`))' \
+        if with_count:
+            add_sql = f', COUNT(DISTINCT(`{column}`))'
+        else:
+            add_sql = ''
+        sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} ' \
               f'FROM `{table}`'
         self.cursor.execute(sql)
         self.con.commit()
@@ -1367,7 +1383,7 @@ class DataSource:
             raise KeyError(f'invalid source_type: {self.source_type}')
 
     def read_table_data(self, table, shares=None, start=None, end=None):
-        """ 从指定的一张本地数据表（文件或数据库）中读取数据并返回DataFrame，不修改数据格式
+        """ 从指定的一张本地数据表(文件或数据库)中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
 
             TODO: potentially: 如果一张数据表的数据量过大，除非将数据存储在数据库中，
@@ -1460,7 +1476,7 @@ class DataSource:
         return df
 
     def write_table_data(self, df, table, on_duplicate='ignore'):
-        """ 将df中的数据写入本地数据表（本地文件或数据库）
+        """ 将df中的数据写入本地数据表(本地文件或数据库)
             如果本地数据表不存在则新建数据表，如果本地数据表已经存在，则将df数据添加在本地表中
             如果添加的数据主键与已有的数据相同，处理方式由on_duplicate参数确定
 
@@ -1474,7 +1490,7 @@ class DataSource:
 
         :param df: pd.DataFrame 一个数据表，数据表的列名应该与本地数据表定义一致
         :param table: str 本地数据表名，
-        :param on_duplicate: str 重复数据处理方式（仅当mode==db的时候有效）
+        :param on_duplicate: str 重复数据处理方式(仅当mode==db的时候有效)
             -ignore: 默认方式，将全部数据写入数据库表的末尾
             -update: 将数据写入数据库表中，如果遇到重复的pk则修改表中的内容
 
@@ -1597,8 +1613,8 @@ class DataSource:
         table_columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
         dnld_data = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
         dnld_columns = dnld_data.columns.to_list()
-        # 如果table中的相当部分（25%）不能从df中找到，判断df与table完全不匹配，报错
-        # 否则判断df基本与table匹配，根据Constraints，添加缺少的列（通常为NULL列）
+        # 如果table中的相当部分(25%)不能从df中找到，判断df与table完全不匹配，报错
+        # 否则判断df基本与table匹配，根据Constraints，添加缺少的列(通常为NULL列)
         missing_columns = [col for col in table_columns if col not in dnld_columns]
         if len(missing_columns) >= (len(table_columns) * 0.25):
             raise ValueError(f'there are too many missing columns in downloaded df, can not merge to local table')
@@ -1621,7 +1637,7 @@ class DataSource:
             if merge_type == 'ignore':
                 # 丢弃下载数据中的重叠部分
                 dnld_data = dnld_data[~dnld_data.index.isin(local_data.index)]
-            elif merge_type == 'update':  # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地数据中的重叠部分（仅用于本地文件保存的情况）
+            elif merge_type == 'update':  # 用下载数据中的重叠部分覆盖本地数据，下载数据不变，丢弃本地数据中的重叠部分(仅用于本地文件保存的情况)
                 local_data = local_data[~local_data.index.isin(dnld_data.index)]
             else:  # for unexpected cases
                 raise KeyError(f'Invalid merge type, got "{merge_type}"')
@@ -1642,7 +1658,7 @@ class DataSource:
         return
 
     def drop_table_data(self, table):
-        """ 删除本地存储的数据表（操作不可撤销，谨慎使用）
+        """ 删除本地存储的数据表(操作不可撤销，谨慎使用)
 
         :param table: 本地数据表的名称
         :return:
@@ -1674,7 +1690,7 @@ class DataSource:
                 return self.get_db_table_coverage(table, column)
         elif self.source_type == 'file':
             columns, dtypes, primary_keys, pk_dtypes = get_built_in_table_schema(table)
-            return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes)
+            return self.get_file_table_coverage(table, column, primary_keys, pk_dtypes, min_max_only)
         else:
             raise TypeError(f'Invalid source type: {self.source_type}')
 
@@ -1735,13 +1751,16 @@ class DataSource:
             pk_min_max_count = self.get_table_data_coverage(table, pk, min_max_only=True)
             pk_count += 1
             critical = ''
+            record_count = 'unknown'
+            if len(pk_min_max_count) == 3:
+                record_count = pk_min_max_count[2]
             if pk == critical_key:
                 critical = "       *<CRITICAL>*"
             if len(pk_min_max_count) == 0:
-                print(f'{pk_count}:  {pk}{critical}:\n    No data!')
+                print(f'{pk_count}:  {pk}:{critical}\n    No data!')
             else:
-                print(f'{pk_count}:  {pk}{critical}:\n'
-                      f'    <{pk_min_max_count[2]}> entries\n'
+                print(f'{pk_count}:  {pk}:{critical}\n'
+                      f'    <{record_count}> entries\n'
                       f'    starts:'
                       f' {pk_min_max_count[0]}, end: {pk_min_max_count[1]}')
         if verbose:
@@ -1765,24 +1784,24 @@ class DataSource:
              - str:     'open, high, low, close'
              - list:    ['open', 'high', 'low', 'close']
         :param start: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间（如果可用）
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
         :param end: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间（如果可用）
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
         :param freq: str
             获取的历史数据的频率，包括以下选项：
-             - 1/5/15/30min 1/5/15/30分钟频率周期数据（如K线）
-             - H/D/W/M 分别代表小时/天/周/月 周期数据（如K线）
+             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
         :param asset_type: str, list
             限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
             逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-             - any: 可以获取任意资产类型的证券数据（默认值）
+             - any: 可以获取任意资产类型的证券数据(默认值)
              - E:   只获取股票类型证券的数据
              - IDX: 只获取指数类型证券的数据
              - FT:  只获取期货类型证券的数据
              - FD:  只获取基金类型证券的数据
         :param adj: str
             对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-             - none / n: 不复权（默认值）
+             - none / n: 不复权(默认值)
              - back / b: 后复权
              - forward / fw / f: 前复权
 
@@ -1905,7 +1924,7 @@ class DataSource:
                 # 后复权价 = 当日最新价 × 当日复权因子
                 for af in adj_factors:
                     combined_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
-                # 得到合并后的复权因子，如果数据的频率为日级（包括周、月），直接相乘即可
+                # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
                 # 但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
                 if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
                     expanded_factors = combined_factors.reindex(price_df.index.date)
@@ -1933,7 +1952,7 @@ class DataSource:
                             reversed_par_seq=False,
                             parallel=True,
                             process_count=None,
-                            trunk_size=100):
+                            chunk_size=100):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
         :param tables:
@@ -1947,7 +1966,7 @@ class DataSource:
                 - 'basics'  : 所有的基础信息表
                 - 'adj'     : 所有的复权因子表
                 - 'data'    : 所有的历史数据表
-                - 'events'  : 所有的历史事件表（如股票更名、更换基金经理、基金份额变动等）
+                - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
                 - 'report'  : 财务报表
                 - 'comp'    : 指数成分表
 
@@ -1999,9 +2018,9 @@ class DataSource:
         :param process_count: int
             启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
 
-        :param trunk_size: int
+        :param chunk_size: int
             保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
-            再批量保存到本地，trunk_size即批量，默认值100
+            再批量保存到本地，chunk_size即批量，默认值100
 
         :return:
             None
@@ -2113,31 +2132,31 @@ class DataSource:
                 end = end_date
             end = pd.to_datetime(end).strftime('%Y%m%d')
             allow_start_end = (cur_table_info.arg_allow_start_end.lower() == 'y')
-            start_end_trunk_size = 0
-            if cur_table_info.start_end_trunk_size is not '':
-                start_end_trunk_size = int(cur_table_info.start_end_trunk_size)
+            start_end_chunk_size = 0
+            if cur_table_info.start_end_chunk_size is not '':
+                start_end_chunk_size = int(cur_table_info.start_end_chunk_size)
             additional_args = {}
-            trunked_additional_args = []
-            start_end_trunk_multiplier = 1
+            chunked_additional_args = []
+            start_end_chunk_multiplier = 1
             if allow_start_end:
                 additional_args = {'start': start, 'end': end}
-            if start_end_trunk_size > 0:
-                start_end_trunk_lbounds = list(pd.date_range(start=start,
+            if start_end_chunk_size > 0:
+                start_end_chunk_lbounds = list(pd.date_range(start=start,
                                                              end=end,
-                                                             freq=f'{start_end_trunk_size}d'
+                                                             freq=f'{start_end_chunk_size}d'
                                                              ).strftime('%Y%m%d'))
-                start_end_trunk_rbounds = start_end_trunk_lbounds[1:]
+                start_end_chunk_rbounds = start_end_chunk_lbounds[1:]
                 # 取到的日线或更低频率数据是包括右边界的，去掉右边界可以得到更精确的结果
                 # 但是这样做可能没有意义
                 if freq.upper() in ['D', 'W', 'M']:
                     prev_day = pd.Timedelta(1, 'd')
-                    start_end_trunk_rbounds = pd.to_datetime(start_end_trunk_lbounds[1:]) - prev_day
-                    start_end_trunk_rbounds = list(start_end_trunk_rbounds.strftime('%Y%m%d'))
+                    start_end_chunk_rbounds = pd.to_datetime(start_end_chunk_lbounds[1:]) - prev_day
+                    start_end_chunk_rbounds = list(start_end_chunk_rbounds.strftime('%Y%m%d'))
 
-                start_end_trunk_rbounds.append(end)
-                trunked_additional_args = [{'start': s, 'end':   e} for s, e in
-                                           zip(start_end_trunk_lbounds, start_end_trunk_rbounds)]
-                start_end_trunk_multiplier = len(trunked_additional_args)
+                start_end_chunk_rbounds.append(end)
+                chunked_additional_args = [{'start': s, 'end':   e} for s, e in
+                                           zip(start_end_chunk_lbounds, start_end_chunk_rbounds)]
+                start_end_chunk_multiplier = len(chunked_additional_args)
 
             if fill_type in ['datetime', 'trade_date']:
                 # 根据start_date和end_date生成数据获取区间
@@ -2174,15 +2193,15 @@ class DataSource:
             # 生成所有的参数, 开始循环下载并更新数据
             if reversed_par_seq:
                 arg_coverage.reverse()
-            if trunked_additional_args:
+            if chunked_additional_args:
                 import itertools
                 all_kwargs = ({arg_name: val, **add_arg} for val, add_arg in
-                              itertools.product(arg_coverage, trunked_additional_args))
+                              itertools.product(arg_coverage, chunked_additional_args))
             else:
                 all_kwargs = ({arg_name: val, **additional_args} for val in arg_coverage)
 
             completed = 0
-            total = len(list(arg_coverage)) * start_end_trunk_multiplier
+            total = len(list(arg_coverage)) * start_end_chunk_multiplier
             total_written = 0
             st = time.time()
             dnld_data = pd.DataFrame()
@@ -2195,7 +2214,7 @@ class DataSource:
                         for f in as_completed(futures):
                             df = f.result()
                             cur_kwargs = futures[f]
-                            if completed % trunk_size:
+                            if completed % chunk_size:
                                 dnld_data = pd.concat([dnld_data, df])
                             else:
                                 self.update_table_data(table, dnld_data)
@@ -2212,7 +2231,7 @@ class DataSource:
                 else:
                     for kwargs in all_kwargs:
                         df = self.acquire_table_data(table, 'tushare', **kwargs)
-                        if completed % trunk_size:
+                        if completed % chunk_size:
                             dnld_data = pd.concat([dnld_data, df])
                         else:
                             self.update_table_data(table, dnld_data)
@@ -2291,7 +2310,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     if not all(item in all_columns for item in primary_key):
         raise KeyError(f'primary key contains invalid value')
 
-    # 设置正确的时间日期格式（找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     set_datetime_format_frame(df, primary_key, pk_dtypes)
 
     # 设置正确的Index或MultiIndex
@@ -2341,7 +2360,7 @@ def set_primary_key_frame(df, primary_key, pk_dtypes):
     new_col = pk_columns + new_col
     df = df.reindex(columns=new_col, copy=False)
 
-    # 设置正确的时间日期格式（找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     set_datetime_format_frame(df, primary_key, pk_dtypes)
 
     return df
@@ -2356,7 +2375,7 @@ def set_datetime_format_frame(df, primary_key, pk_dtypes):
     :return:
         None
     """
-    # 设置正确的时间日期格式（找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
+    # 设置正确的时间日期格式(找到pk_dtype中是否有"date"或"TimeStamp"类型，将相应的列设置为TimeStamp
     if ("date" in pk_dtypes) or ("TimeStamp" in pk_dtypes):
         # 需要设置正确的时间日期格式：
         # 有时候pk会包含多列，可能有多个时间日期，因此需要逐个设置
@@ -2396,7 +2415,7 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
 def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
     """ 给出数据表的名称，从相关TABLE中找到表的主键名称及其数据类型
     :param table:
-        str, 表名称（注意不是表的结构名称）
+        str, 表名称(注意不是表的结构名称)
     :param with_remark: bool
         为True时返回remarks，否则不返回
     :param with_primary_keys: bool
@@ -2460,7 +2479,7 @@ def find_history_data(s):
             use "qt.get_history_data()" to load these data:
             ------------------------------------------------------------------------
               h_data   dtype             table asset freq plottable                remarks
-            0     pe   float   stock_indicator     E    d        No  市盈率（总市值/净利润， 亏损的PE为空）
+            0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
             1     pe  double  stock_indicator2     E    d        No                  市盈(动)
             2     pe   float   index_indicator   IDX    d        No                    市盈率
             ========================================================================
