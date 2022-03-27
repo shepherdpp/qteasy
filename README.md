@@ -59,14 +59,17 @@ To use `qteasy`, lots of historical financial data should be prepared and saved 
 
 为了使用`qteasy`，需要大量的金融历史数据，所有的历史数据都必须首先保存在本地，通过一个DataSource对象来获取。这些数据可以生成投资策略所需要的历史数据组合，也可以通过简单的命令生成股票的K线图，如果本地没有历史数据，那么qteasy的许多功能就无法执行。
 
-为了使用历史数据，qteasy支持通过tushare金融数据包来获取大量的金融数据，用户需要自行获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
-一旦拥有足够的权限，可以通过下面的命令批量拉取所有金融数据并保存在本地，以确保qteasy的相关功能可以正常使用（请注意，由于数据量较大，下载时间较长，建议分批下载。建议使用数据库保存本地数据，不包括分钟数据时，所有数据将占用大约10G的磁盘空间）。关于DataSource对象的更多详细介绍，请参见详细文档。
+为了使用历史数据，`qteasy`支持通过`tushare`金融数据包来获取大量的金融数据，用户需要自行获取相应的权限和积分（详情参考：https://tushare.pro/document/2）
+一旦拥有足够的权限，可以通过下面的命令批量拉取过去一年的所有金融数据并保存在本地，以确保`qteasy`的相关功能可以正常使用
+（请注意，由于数据量较大，下载时间较长，建议分批下载。建议使用数据库保存本地数据，不包括分钟数据时，所有数据将占用大约10G的磁盘空间，
+分钟级别数据将占用350GB甚至更多的磁盘空间）。
+关于`DataSource`对象的更多详细介绍，请参见详细文档。
 
 ```python
-qt.QT_DATA_SOURCE.refill_data_source('all')
+qt.QT_DATA_SOURCE.refill_data_source('all', start_date='20210101', end_date='20220101')
 ```
 
-股票的数据下载后，使用`candle`命令，如果K线图显示成功，表明价格数据下载成功。
+股票的数据下载后，使用`candle()`函数，如果K线图显示成功，表明价格数据下载成功。
 
 
 ```python
@@ -76,7 +79,7 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 ![png](readme_img/output_5_2.png)
     
 
-qteasy的K线图函数candle支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图：
+`qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图 ：
 
 
 ```python
@@ -94,12 +97,14 @@ data = qt.candle('招商银行')
 
 ![png](readme_img/output_8_3.png)
     
+`qt.candle()`同时也可以传入`adj`参数显示复权价格，或传入`freq`参数改变K显得频率，显示分钟、周或月K线，还可以传入更多的参数修改K线图上的
+指标类型、移动均线类型以及参数，详细的用法请参考文档
 
 
 a dynamic candle chart of stock 000300 will be displayed, you can drag the candle plots over to view wider span of data, zoom
 in and out with scrolling of your mouse, and switching bewteen multiple indicator lines by double-clicking the chart
 
-生成的K线图可以是一个交互式动态K线图（请注意，K线图基于matplotlib绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持动态图表，详情请参阅https://matplotlib.org/stable/users/explain/backends.html），在使用动态K线图时，用户可以用鼠标和键盘控制K线图的显示范围：
+生成的K线图可以是一个交互式动态K线图（请注意，K线图基于`matplotlib`绘制，在使用不同的终端时，显示功能有所区别，某些终端并不支持动态图表，详情请参阅https://matplotlib.org/stable/users/explain/backends.html），在使用动态K线图时，用户可以用鼠标和键盘控制K线图的显示范围：
 
 - 鼠标在图表上左右拖动：可以移动K线图显示更早或更晚的K线
 - 鼠标滚轮在图表上滚动，可以缩小或放大K线图的显示范围
@@ -143,7 +148,7 @@ DMA是一个内置的均线择时策略，它通过计算股票每日收盘价�
 在默认情况下，三个参数为：`(12,26,9)`, 但我们可以给出任意大于2小于250的三个整数作为策略的参数，以适应不同交易活跃度的股票、或者适应
 不同的策略运行周期。除了DMA策略以外，`qteasy`还提供了其他择时策略，详细的列表可以参见`qteasy`的手册。
 
-传递策略参数到op对象中：
+传递策略参数到`op`对象中：
 
 
 ```python
