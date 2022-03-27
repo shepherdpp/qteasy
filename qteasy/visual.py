@@ -212,7 +212,7 @@ class InterCandle:
                  addplot=ap,
                  type=self.plot_type,
                  style=self.style,
-                 datetime_format='%Y-%m',
+                 datetime_format='%y/%m/%d',
                  xrotation=0)
         self.fig.show()
 
@@ -497,7 +497,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
 
 
 def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None, freq=None,
-              asset_type='E', plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
+              asset_type=None, plot_type=None, no_visual=False, mav=None, avg_type='ma', indicator=None,
               data_source=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
@@ -521,7 +521,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         freq_info = '小时K线'
     elif freq.upper() in ['MIN', '1MIN']:
         multiplier = 1 / 240
-        freq_info = '1分钟K线'
+        freq_info = '分钟K线'
     elif freq.upper() in ['5MIN']:
         multiplier = 1 / 48
         freq_info = '5分钟K线'
@@ -555,11 +555,15 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
             adj_info = '复权价格'
         else:
             adj = 'none'
-        daily, share_name = _get_mpf_data(data_source=data_source,
-                                          stock=stock,
-                                          asset_type=asset_type,
-                                          freq=freq,
-                                          adj=adj)
+        try:
+            daily, share_name = _get_mpf_data(data_source=data_source,
+                                              stock=stock,
+                                              asset_type=asset_type,
+                                              freq=freq,
+                                              adj=adj)
+        except Exception as e:
+            print(f'{e}')
+            return
         if daily.empty:
             print(f'history data for {stock} can not be found!')
             return
@@ -614,12 +618,12 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     return daily
 
 
-def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', data_source=None):
+def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
 
     :param stock: 股票代码
-    :param asset_type: 资产类型，E——股票，F——期货，FD——基金，I——指数
+    :param asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数
     :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
     :param freq: 价格周期，d——日K线，5min——五分钟k线
     :param data_source: 获取数据的数据源
@@ -647,12 +651,19 @@ def _get_mpf_data(stock, asset_type='E', adj='none', freq='d', data_source=None)
     else:
         raise KeyError(f'Wrong asset type: [{asset_type}]')
     if basic_info.empty:
-        raise ValueError(f'Can not load basic information for asset type: {asset_type} from data source '
-                         f'{ds.connection_type}.')
-    this_stock = basic_info.loc[stock]
+        raise ValueError(f'Can not load basic information for asset type: "{name_of[asset_type]}" from data source '
+                         f'"{ds.connection_type}". \n'
+                         f'call "DataSource.get_table_info()" to check if data table exists')
+    try:
+        this_stock = basic_info.loc[stock]
+    except Exception as e:
+        raise ValueError(f'{e}, data not found for "{stock}" in asset type "{name_of[asset_type]}" '
+                         f'from data source {ds.connection_type}, please check if asset type is correct.')
+
     if this_stock.empty:
-        raise KeyError(f'Can not find historical data for asset {stock} of type {asset_type} '
-                       f'from data source {ds.connection_type}')
+        raise KeyError(f'Can not find historical data for asset "{stock}" of type "{name_of[asset_type]}" '
+                       f'from data source "{ds.connection_type}"\n'
+                       f'please check stock code')
     # 设置历史数据获取区间的开始日期为股票上市第一天
 
     l_date = this_stock.list_date

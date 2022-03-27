@@ -11659,11 +11659,12 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         ds = qt.QT_DATA_SOURCE
-        ds.get_table_info('trade_calendar')
-        ds.get_table_info('stock_basic')
-        ds.get_table_info('stock_5min')
-        ds.get_table_info('stock_1min')
-        ds.get_table_info('future_daily')
+        # ds.get_table_info('trade_calendar')
+        # ds.get_table_info('stock_basic')
+        # ds.get_table_info('stock_5min')
+        # ds.get_table_info('stock_1min')
+        # ds.get_table_info('future_daily')
+        qt.candle('000003.SH', asset_type='IDX')
 
     def test_fast_experiments2(self):
         print(_lev_ratio('abc', 'ABC'))
@@ -12252,7 +12253,7 @@ class TestDataSource(unittest.TestCase):
             for j in range(cols):
                 self.assertEqual(target_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df_res.columns), list(loaded_df.columns))
-        
+
         # #################################################################
         print(f'Read a dataframe from local csv files with selecting shares and NO start/end')
         df_res = set_primary_key_frame(self.built_in_df,

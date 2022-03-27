@@ -133,10 +133,12 @@ TABLE_SOURCE_MAPPING = {
          'SSE,SZSE,CFFEX,DCE,CZCE,SHFE', '', '', ''],
 
     'stock_1min':
-        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y', '30'],
+        ['min_bars', '股票分钟K线行情', 'mins', 'E', '1min', 'mins1', 'ts_code', 'table_index', 'stock_basic', '', 'y',
+         '30'],
 
     'stock_5min':
-        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y', '90'],
+        ['min_bars', '股票5分钟K线行情', 'mins', 'E', '5min', 'mins5', 'ts_code', 'table_index', 'stock_basic', '', 'y',
+         '90'],
 
     'stock_15min':
         ['min_bars', '股票15分钟K线行情', 'mins', 'E', '15min', 'mins15', 'ts_code', 'table_index', 'stock_basic', '',
@@ -160,23 +162,23 @@ TABLE_SOURCE_MAPPING = {
         ['bars', '股票月线行情', 'data', 'E', 'm', 'monthly', 'trade_date', 'trade_date', '19901211', '', '', ''],
 
     'index_1min':
-        ['min_bars', '股票分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
+        ['min_bars', '指数分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
          'y', '30'],
 
     'index_5min':
-        ['min_bars', '股票5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
+        ['min_bars', '指数5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'index_basic', 'SH,SZ',
          'y', '90'],
 
     'index_15min':
-        ['min_bars', '股票15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'index_basic',
+        ['min_bars', '指数15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'index_basic',
          'SH,SZ', 'y', '180'],
 
     'index_30min':
-        ['min_bars', '股票30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'index_basic',
+        ['min_bars', '指数30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'index_basic',
          'SH,SZ', 'y', '360'],
 
     'index_hourly':
-        ['min_bars', '股票60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'index_basic',
+        ['min_bars', '指数60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'index_basic',
          'SH,SZ', 'y', '360'],
 
     'index_daily':
@@ -188,6 +190,26 @@ TABLE_SOURCE_MAPPING = {
 
     'index_monthly':
         ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', '', ''],
+
+    'fund_1min':
+        ['min_bars', '场内基金分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ',
+         'y', '30'],
+
+    'fund_5min':
+        ['min_bars', '场内基金5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ',
+         'y', '90'],
+
+    'fund_15min':
+        ['min_bars', '场内基金15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'fund_basic',
+         'SH,SZ', 'y', '180'],
+
+    'fund_30min':
+        ['min_bars', '场内基金30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'fund_basic',
+         'SH,SZ', 'y', '360'],
+
+    'fund_hourly':
+        ['min_bars', '场内基金60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'fund_basic',
+         'SH,SZ', 'y', '360'],
 
     'fund_daily':
         ['bars', '场内基金每日行情', 'data', 'FD', 'd', 'fund_daily', 'trade_date', 'trade_date', '19980417', '', '', ''],
