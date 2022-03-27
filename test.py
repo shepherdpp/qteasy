@@ -11813,9 +11813,9 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/qteasy/data/')
         self.assertEqual(self.ds_db.__str__(), 'db:mysql://localhost@3306/test_db')
 
-        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'qteasy/data/', 'csv')")
-        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'qteasy/data/', 'hdf')")
-        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'qteasy/data/', 'fth')")
+        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'qteasy/data/')")
+        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'qteasy/data/')")
+        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'qteasy/data/')")
         self.assertEqual(self.ds_db.__repr__(), "DataSource('db', 'localhost', 3306)")
 
         self.assertEqual(self.ds_csv.tables, [])
@@ -12005,15 +12005,15 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_csv.read_file('test_csv_file',
                                           primary_key=['ts_code', 'trade_date'],
                                           pk_dtypes=['str', 'TimeStamp'])
-        saved_index = df.index.values
+        target_index = df.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df.values)
+        target_values = np.array(df.values)
         loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved csv file is\n'
               f'{loaded_df}\n')
-        for i in range(len(saved_index)):
-            self.assertEqual(saved_index[i], loaded_index[i])
-        self.assertTrue(np.allclose(saved_values, loaded_values))
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(target_values, loaded_values))
         self.assertEqual(list(df.columns), list(loaded_df.columns))
 
         self.ds_hdf.write_file(df, 'test_hdf_file')
@@ -12021,15 +12021,15 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_hdf.read_file('test_hdf_file',
                                           primary_key=['ts_code', 'trade_date'],
                                           pk_dtypes=['str', 'TimeStamp'])
-        saved_index = df.index.values
+        target_index = df.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df.values)
+        target_values = np.array(df.values)
         loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved hdf file is\n'
               f'{loaded_df}\n')
-        for i in range(len(saved_index)):
-            self.assertEqual(saved_index[i], loaded_index[i])
-        self.assertTrue(np.allclose(saved_values, loaded_values))
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(target_values, loaded_values))
         self.assertEqual(list(df.columns), list(loaded_df.columns))
 
         self.ds_fth.write_file(df, 'test_fth_file')
@@ -12037,15 +12037,15 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_fth.read_file('test_fth_file',
                                           primary_key=['ts_code', 'trade_date'],
                                           pk_dtypes=['str', 'TimeStamp'])
-        saved_index = df.index.values
+        target_index = df.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df.values)
+        target_values = np.array(df.values)
         loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved feather file is\n'
               f'{loaded_df}\n')
-        for i in range(len(saved_index)):
-            self.assertEqual(saved_index[i], loaded_index[i])
-        self.assertTrue(np.allclose(saved_values, loaded_values))
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        self.assertTrue(np.allclose(target_values, loaded_values))
         self.assertEqual(list(df.columns), list(loaded_df.columns))
 
         # test writing and reading Single Index dataframe to local files
@@ -12059,18 +12059,18 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_csv.read_file('test_csv_file2',
                                           primary_key=['ts_code'],
                                           pk_dtypes=['str'])
-        saved_index = df2.index.values
+        target_index = df2.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df2.values)
+        target_values = np.array(df2.values)
         loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved csv file is\n'
               f'{loaded_df}\n')
-        for i in range(len(saved_index)):
-            self.assertEqual(saved_index[i], loaded_index[i])
-        rows, cols = saved_values.shape
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        rows, cols = target_values.shape
         for i in range(rows):
             for j in range(cols):
-                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+                self.assertEqual(target_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
         self.ds_hdf.write_file(df2, 'test_hdf_file2')
@@ -12078,18 +12078,18 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_hdf.read_file('test_hdf_file2',
                                           primary_key=['ts_code'],
                                           pk_dtypes=['str'])
-        saved_index = df2.index.values
+        target_index = df2.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df2.values)
+        target_values = np.array(df2.values)
         loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved hdf file is\n'
               f'{loaded_df}\n')
-        for i in range(len(saved_index)):
-            self.assertEqual(saved_index[i], loaded_index[i])
-        rows, cols = saved_values.shape
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        rows, cols = target_values.shape
         for i in range(rows):
             for j in range(cols):
-                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+                self.assertEqual(target_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
         self.ds_fth.write_file(df2, 'test_fth_file2')
@@ -12097,18 +12097,18 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_fth.read_file('test_fth_file2',
                                           primary_key=['ts_code'],
                                           pk_dtypes=['str'])
-        saved_index = df2.index.values
+        target_index = df2.index.values
         loaded_index = loaded_df.index.values
-        saved_values = np.array(df2.values)
+        target_values = np.array(df2.values)
         loaded_values = np.array(loaded_df.values)
         print(f'df retrieved from saved feather file is\n'
               f'{loaded_df}\n')
-        for i in range(len(saved_index)):
-            self.assertEqual(saved_index[i], loaded_index[i])
-        rows, cols = saved_values.shape
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        rows, cols = target_values.shape
         for i in range(rows):
             for j in range(cols):
-                self.assertEqual(saved_values[i, j], loaded_values[i, j])
+                self.assertEqual(target_values[i, j], loaded_values[i, j])
         self.assertEqual(list(df2.columns), list(loaded_df.columns))
 
         print(f'Test getting file table coverages')
@@ -12212,6 +12212,120 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
                          ['20211112', '20211113', 2])
+
+        # test reading dataframe from local csv files with selection
+        print(f'Read a dataframe from local csv files with selecting shares and start/end')
+        df_res = set_primary_key_frame(self.built_in_df,
+                                       primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['varchar', 'date'])
+        set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{df_res}')
+        self.ds_csv.write_file(df_res, 'test_csv_file_chunk')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file_chunk'))
+        shares = ['000001.SZ', '000003.SZ']
+        start = '20211112'
+        end = '20211113'
+        loaded_df = self.ds_csv.read_file('test_csv_file_chunk',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['varchar', 'date'],
+                                          share_like_pk='ts_code',
+                                          shares=shares,
+                                          date_like_pk='trade_date',
+                                          start=start,
+                                          end=end,
+                                          chunk_size=5)
+        target_df = df_res.loc[df_res.index.isin(shares, level='ts_code')]
+        m1 = target_df.index.get_level_values('trade_date') >= start
+        m2 = target_df.index.get_level_values('trade_date') <= end
+        target_df = target_df[m1 & m2]
+        target_index = target_df.index.values
+        loaded_index = loaded_df.index.values
+        target_values = np.array(target_df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved by chunk from saved csv file selecting both shares {shares} and trade_dates {start}/{end}\n'
+              f'{loaded_df}\n')
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        rows, cols = target_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(target_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df_res.columns), list(loaded_df.columns))
+        
+        # #################################################################
+        print(f'Read a dataframe from local csv files with selecting shares and NO start/end')
+        df_res = set_primary_key_frame(self.built_in_df,
+                                       primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['varchar', 'date'])
+        set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{df_res}')
+        self.ds_csv.write_file(df_res, 'test_csv_file_chunk')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file_chunk'))
+        shares = ['000001.SZ', '000003.SZ']
+        start = '20211112'
+        end = '20211113'
+        loaded_df = self.ds_csv.read_file('test_csv_file_chunk',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['varchar', 'date'],
+                                          share_like_pk='ts_code',
+                                          shares=shares,
+                                          chunk_size=5)
+
+        target_df = df_res.loc[df_res.index.isin(shares, level='ts_code')]
+        target_index = target_df.index.values
+        loaded_index = loaded_df.index.values
+        target_values = np.array(target_df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved by chunk from saved csv file selecting only shares {shares}\n'
+              f'{loaded_df}\n')
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        rows, cols = target_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(target_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df_res.columns), list(loaded_df.columns))
+
+        # #################################################################
+        print(f'Read a dataframe from local csv files with selecting NO shares and ONLY start/end')
+        df_res = set_primary_key_frame(self.built_in_df,
+                                       primary_key=['ts_code', 'trade_date'],
+                                       pk_dtypes=['varchar', 'date'])
+        set_primary_key_index(df_res, primary_key=['ts_code', 'trade_date'], pk_dtypes=['varchar', 'date'])
+        print(f'following dataframe with multiple index will be written to disk in all formats:\n'
+              f'{df_res}')
+        self.ds_csv.write_file(df_res, 'test_csv_file_chunk')
+        self.assertTrue(self.ds_csv.file_exists('test_csv_file_chunk'))
+        shares = ['000001.SZ', '000003.SZ']
+        start = '20211112'
+        end = '20211113'
+        loaded_df = self.ds_csv.read_file('test_csv_file_chunk',
+                                          primary_key=['ts_code', 'trade_date'],
+                                          pk_dtypes=['varchar', 'date'],
+                                          date_like_pk='trade_date',
+                                          start=start,
+                                          end=end,
+                                          chunk_size=5)
+
+        target_df = df_res.copy()
+        m1 = target_df.index.get_level_values('trade_date') >= start
+        m2 = target_df.index.get_level_values('trade_date') <= end
+        target_df = target_df[m1 & m2]
+        target_index = target_df.index.values
+        loaded_index = loaded_df.index.values
+        target_values = np.array(target_df.values)
+        loaded_values = np.array(loaded_df.values)
+        print(f'df retrieved by chunk from saved csv file selecting ONLY trade_dates: {start}/{end}\n'
+              f'{loaded_df}\n')
+        for i in range(len(target_index)):
+            self.assertEqual(target_index[i], loaded_index[i])
+        rows, cols = target_values.shape
+        for i in range(rows):
+            for j in range(cols):
+                self.assertEqual(target_values[i, j], loaded_values[i, j])
+        self.assertEqual(list(df_res.columns), list(loaded_df.columns))
 
     def test_write_and_read_database(self):
         """ test DataSource method read_database and write_database"""

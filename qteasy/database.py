@@ -963,7 +963,8 @@ class DataSource:
             raise TypeError(f'Invalid file type: {self.file_type}')
         return len(df)
 
-    def read_file(self, file_name, primary_key, pk_dtypes, chunk_size=50000):
+    def read_file(self, file_name, primary_key, pk_dtypes, share_like_pk=None,
+                  shares=None, date_like_pk=None, start=None, end=None, chunk_size=50000):
         """ read the file with name file_name and return the df
 
         :param file_name: str， 文件名
@@ -971,6 +972,13 @@ class DataSource:
             List, 用于生成primary_key index 的主键
         :param pk_dtypes:
             List，primary_key的数据类型
+        :param share_like_pk:
+            str,
+        :param shares:
+            list
+        :param date_like_pk:
+        :param start:
+        :param end:
         :param chunk_size:
             int, 分块读取csv大文件时的分块大小
         :return:
@@ -981,10 +989,24 @@ class DataSource:
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
+        if date_like_pk is not None:
+            start = pd.to_datetime(start).strftime('%Y-%m-%d')
+            end = pd.to_datetime(end).strftime('%Y-%m-%d')
 
         file_path_name = self.file_path + file_name
         if self.file_type == 'csv':
-            df = pd.read_csv(file_path_name + '.csv')
+            df_reader = pd.read_csv(file_path_name + '.csv', chunksize=chunk_size)
+            df_picker = (chunk for chunk in df_reader)
+            if (share_like_pk is not None) and (date_like_pk is not None):
+                df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
+                                       (chunk[date_like_pk] >= start) &
+                                       (chunk[date_like_pk] <= end)] for chunk in df_reader)
+            elif (share_like_pk is None) and (date_like_pk is not None):
+                df_picker = (chunk.loc[(chunk[date_like_pk] >= start) &
+                                       (chunk[date_like_pk] <= end)] for chunk in df_reader)
+            elif (share_like_pk is not None) and (date_like_pk is None):
+                df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares))] for chunk in df_reader)
+            df = pd.concat(df_picker)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'hdf':
             df = pd.read_hdf(file_path_name + '.hdf', 'df')
@@ -1386,10 +1408,10 @@ class DataSource:
         """ 从指定的一张本地数据表(文件或数据库)中读取数据并返回DataFrame，不修改数据格式
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
 
-            TODO: potentially: 如果一张数据表的数据量过大，除非将数据存储在数据库中，
-            TODO: 如果将所有数据存储在一个文件中将导致读取速度下降，本函数应该进行分表工作，
-            TODO: 即将数据分成不同的DataFrame，分别保存在不同的文件中。 此时需要建立
-            TODO: 索引数据文件、并通过索引表快速获取所需的数据，这些工作都在本函数中执行
+            TODO: 历史数据表的规模较大，如果数据存储在数据库中，读取和存储时
+            TODO: 没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
+            TODO: ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
+            TODO: csv文件的读取效率，其他文件系统的读取还需要进一步优化
 
         :param table: str 数据表名称
         :param shares: list，ts_code筛选条件，为空时给出所有记录
@@ -1438,12 +1460,18 @@ class DataSource:
         if self.source_type == 'file':
             # 读取table数据, 从本地文件中读取的DataFrame已经设置好了primary_key index
             # 但是并未按shares和start/end进行筛选，需要手动筛选
-            df = self.read_file(file_name=table, primary_key=primary_key, pk_dtypes=pk_dtypes)
+            df = self.read_file(file_name=table,
+                                primary_key=primary_key,
+                                pk_dtypes=pk_dtypes,
+                                share_like_pk=share_like_pk,
+                                shares=shares,
+                                date_like_pk=date_like_pk,
+                                start=start,
+                                end=end)
             if df.empty:
                 return df
             if share_like_pk is not None:
                 df = df.loc[df.index.isin(shares, level=share_like_pk)]
-
             if date_like_pk is not None:
                 # 两种方法实现筛选，分别是df.query 以及 df.index.get_level_values()
                 # 第一种方法， df.query
