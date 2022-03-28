@@ -11659,12 +11659,14 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         ds = qt.QT_DATA_SOURCE
-        # ds.get_table_info('trade_calendar')
-        # ds.get_table_info('stock_basic')
-        # ds.get_table_info('stock_5min')
-        # ds.get_table_info('stock_1min')
-        # ds.get_table_info('future_daily')
-        qt.candle('000003.SH', asset_type='IDX')
+        ds.get_table_info('trade_calendar')
+        ds.get_table_info('stock_basic')
+        ds.get_table_info('stock_5min')
+        ds.get_table_info('stock_1min')
+        ds.get_table_info('future_daily')
+        ds.get_table_info('fund_hourly')
+        ds.get_table_info('fund_nav')
+        df = qt.candle('159601', start='20200121', freq='h')
 
     def test_fast_experiments2(self):
         print(_lev_ratio('abc', 'ABC'))

@@ -1067,9 +1067,6 @@ def get_history_panel(start,
         if not isinstance(data_source, qteasy.DataSource):
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
-    now = (pd.to_datetime('now') + pd.Timedelta(8, 'h')).strftime('%Y-%m-%d %H:%M:%S')
-    print(f'[{now}]: loading data via datasource: {ds.source_type}-{ds.connection_type}\n'
-          f'for shares: {shares}@{htypes} from {start} til {end}')
     result_hp = ds.get_history_data(shares=shares,
                                     htypes=htypes,
                                     start=start,

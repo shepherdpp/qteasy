@@ -782,6 +782,24 @@ def human_file_size(file_size: int) -> str:
         return f'{file_size}Byte'
 
 
+def human_units(number: int) -> str:
+    """ 将一个整型数字转化为以GB/MB/KB/Byte为单位的文件大小字符串
+
+    :param number: int 表示文件大小的数字，单位为字节
+    :return:
+    """
+    if number > 2 ** 40:
+        return f'{number / 1000000 / 1000000 :.3f}trillion'
+    if number > 2 ** 30:
+        return f'{number / 1000000 / 1000 :.2f}billion'
+    elif number > 2 ** 20:
+        return f'{number / 1000000 :.1f}million'
+    elif number > 2 ** 10:
+        return f'{number / 1000 :.0f}K'
+    else:
+        return f'{number}'
+
+
 @njit()
 def _lev_ratio(s, t):
     """ 比较两个字符串的相似度，计算两个字符串的 Levenshtein ratio

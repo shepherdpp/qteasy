@@ -19,7 +19,7 @@ from functools import lru_cache
 
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
-from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size
+from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
 from .history import stack_dataframes
 from .tsfuncs import acquire_data
 
@@ -192,23 +192,23 @@ TABLE_SOURCE_MAPPING = {
         ['bars', '指数月度行情', 'data', 'IDX', 'm', 'index_monthly', 'trade_date', 'trade_date', '19910731', '', '', ''],
 
     'fund_1min':
-        ['min_bars', '场内基金分钟K线行情', 'mins', 'IDX', '1min', 'mins1', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ',
+        ['min_bars', '场内基金分钟K线行情', 'mins', 'FD', '1min', 'mins1', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ',
          'y', '30'],
 
     'fund_5min':
-        ['min_bars', '场内基金5分钟K线行情', 'mins', 'IDX', '5min', 'mins5', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ',
+        ['min_bars', '场内基金5分钟K线行情', 'mins', 'FD', '5min', 'mins5', 'ts_code', 'table_index', 'fund_basic', 'SH,SZ',
          'y', '90'],
 
     'fund_15min':
-        ['min_bars', '场内基金15分钟K线行情', 'mins', 'IDX', '15min', 'mins15', 'ts_code', 'table_index', 'fund_basic',
+        ['min_bars', '场内基金15分钟K线行情', 'mins', 'FD', '15min', 'mins15', 'ts_code', 'table_index', 'fund_basic',
          'SH,SZ', 'y', '180'],
 
     'fund_30min':
-        ['min_bars', '场内基金30分钟K线行情', 'mins', 'IDX', '30min', 'mins30', 'ts_code', 'table_index', 'fund_basic',
+        ['min_bars', '场内基金30分钟K线行情', 'mins', 'FD', '30min', 'mins30', 'ts_code', 'table_index', 'fund_basic',
          'SH,SZ', 'y', '360'],
 
     'fund_hourly':
-        ['min_bars', '场内基金60分钟K线行情', 'mins', 'IDX', 'h', 'mins60', 'ts_code', 'table_index', 'fund_basic',
+        ['min_bars', '场内基金60分钟K线行情', 'mins', 'FD', 'h', 'mins60', 'ts_code', 'table_index', 'fund_basic',
          'SH,SZ', 'y', '360'],
 
     'fund_daily':
@@ -1403,14 +1403,14 @@ class DataSource:
         """
         if not self.db_table_exists(db_table):
             return -1
-        sql = "SELECT data_length + index_length " \
+        sql = "SELECT table_rows, data_length + index_length " \
               "FROM information_schema.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s"
         self.cursor.execute(sql, (self.db_name, db_table))
         self.con.commit()
-        size = self.cursor.fetchall()[0][0]
-        return size
+        rows, size = self.cursor.fetchall()[0]
+        return rows, size
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def table_data_exists(self, table):
@@ -1754,16 +1754,17 @@ class DataSource:
         """
         if self.source_type == 'file':
             size = self.get_file_size(table)
+            rows = 'unknown'
         elif self.source_type == 'db':
-            size = self.get_db_table_size(table)
+            rows, size = self.get_db_table_size(table)
         else:
             raise RuntimeError(f'unknown source type: {self.source_type}')
         if size == -1:
             return None
         if human:
-            return human_file_size(size)
+            return f'{human_file_size(size)}/{human_units(rows)} rows'
         else:
-            return f'{size}'
+            return f'{size}/{rows} rows'
 
     def get_table_info(self, table, verbose=True):
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
@@ -1778,7 +1779,6 @@ class DataSource:
         if not table.lower() in TABLE_SOURCE_MAPPING:
             raise ValueError(f'in valid table name: {table}')
 
-        print(f'{table.lower()}')
         columns, dtypes, remarks, primary_keys, pk_dtypes = get_built_in_table_schema(table,
                                                                                       with_remark=True,
                                                                                       with_primary_keys=True)
@@ -1789,11 +1789,11 @@ class DataSource:
         table_exists = self.table_data_exists(table)
         if table_exists:
             table_size = self.get_data_table_size(table, human=True)
-            print(f'table name: \n{table}, {table_size} on disc\n'
+            print(f'<{table}>, {table_size} on disc\n'
                   f'primary keys: \n'
                   f'-----------------------------------')
         else:
-            print(f'table name: \n{table}, data not downloaded\n'
+            print(f'<{table}>, data not downloaded\n'
                   f'primary keys: \n'
                   f'-----------------------------------')
         pk_count = 0
