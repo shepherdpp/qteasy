@@ -11659,16 +11659,17 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         ds = qt.QT_DATA_SOURCE
-        ds.get_table_info('trade_calendar')
-        ds.get_table_info('stock_basic')
-        ds.get_table_info('stock_5min')
-        ds.get_table_info('stock_1min')
-        ds.get_table_info('future_daily')
-        ds.get_table_info('fund_hourly')
-        ds.get_table_info('fund_nav')
-        qt.candle('159601', start='20200121', freq='h')
-        qt.candle('沪镍主力', start='20211021')
-        qt.candle('10000029', start='20211021')
+        # ds.get_table_info('trade_calendar')
+        # ds.get_table_info('stock_basic')
+        # ds.get_table_info('stock_5min')
+        # ds.get_table_info('stock_1min')
+        # ds.get_table_info('future_daily')
+        # ds.get_table_info('fund_hourly')
+        # ds.get_table_info('fund_nav')
+        qt.candle('159601', start='20200121', freq='h', adj='n')
+        # qt.candle('沪镍主力', start='20211021')
+        qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b')
+        qt.candle('000001.OF', start='20200101', asset_type='FD', adj='n', mav=[])
 
     def test_fast_experiments2(self):
         print(_lev_ratio('abc', 'ABC'))

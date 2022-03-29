@@ -36,7 +36,7 @@ ValidCandlePlotMATypes = ['ma',
                           'bb',
                           'bbands']
 
-ValidPlotTypes = ['candle', 'renko', 'ohlc']
+ValidPlotTypes = ['candle', 'renko', 'ohlc', 'line']
 
 title_font = {'fontname': 'pingfang HK',
               'size':     '16',
@@ -501,6 +501,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
     """plot stock data or extracted data in renko form
     """
     freq_info = '日K线'
+    adj = 'none'
     adj_info = ''
     multiplier = 1
     if plot_type is None:
@@ -551,9 +552,6 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         assert stock is not None
         if ('adj' in kwargs) and (asset_type.upper() in ['E', 'FD']):
             adj = kwargs['adj']
-            adj_info = '复权价格'
-        else:
-            adj = 'none'
         try:
             daily, share_name = _get_mpf_data(data_source=data_source,
                                               stock=stock,
@@ -570,6 +568,22 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
         daily = stock_data
         if share_name is None:
             share_name = 'stock'
+
+    if share_name[-1] == 'O':
+        # 如果绘制场外基金的净值图，则设置图表类型为'line'，此时不会
+        # 显示K线图，只显示曲线图, 同时，不显示移动均线
+        share_name = share_name[:-1]
+        plot_type = 'line'
+        freq_info = '净值曲线'
+        # mav = []
+    if adj.lower() in ['n', 'none']:
+        adj_info = '未复权'
+    elif adj.lower() in ['b', 'back']:
+        adj_info = '后复权'
+    elif adj.lower() in ['f', 'fw', 'forward']:
+        adj_info = '前复权'
+    else:
+        raise ValueError(f'Invalid adjust type: {adj}.')
     assert isinstance(daily, pd.DataFrame), f'stock data is not a DataFrame, got {type(daily)}'
     assert all(col in daily.columns for col in ['open', 'high', 'low', 'close']), \
         f"price data missing, can not find " \
@@ -685,11 +699,26 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
         end = pd.to_datetime('today') - pd.Timedelta(now.weekday() - 4, 'd')
     end_date = end.strftime('%Y-%m-%d')
     name = this_stock['name']
+    if (asset_type.upper() == 'FD') and (this_stock['market'] == 'O'):
+        if adj.lower() not in ('n', 'none'):
+            htypes = 'adj_nav'
+        else:
+            htypes = 'accum_nav'
+    else:
+        htypes = 'close,high,low,open,vol'
     # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
-                             htypes='close,high,low,open,vol', asset_type=asset_type,
+                             htypes=htypes, asset_type=asset_type,
                              adj=adj, data_source=data_source).to_dataframe(share=stock)
+    # 如果读取的是nav净值，将nav改为close，并填充open/high/low三列为NaN值
+    is_out_fund = False
+    if 'open' not in data.columns:
+        data.columns = ['close']
+        data['open'] = np.nan
+        data['high'] = np.nan
+        data['low'] = np.nan
+        is_out_fund = True
     # 虽然比较罕见，但是存在这样的情况，当某日的交易量为0时，当天数据中open/high/low价格均为NaN，
     # 此时应该将open/high/low三者的价格设置为与close一致，否则无法显示K线图
     for col in ['open', 'high', 'low']:
@@ -699,8 +728,9 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
 
     # 返回股票的名称和全称
     share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
+    if is_out_fund:
+        share_name += 'O'
     data.rename({'vol': 'volume'}, axis='columns', inplace=True)
-
     return data, share_name
 
 
