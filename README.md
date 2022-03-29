@@ -79,26 +79,35 @@ data = qt.candle('000300.SH', start='2021-06-01', end='2021-8-01', asset_type='I
 ![png](readme_img/output_5_2.png)
     
 
-`qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图 ：
+`qteasy`的K线图函数`candle`支持通过六位数股票/指数代码查询准确的证券代码，也支持通过股票、指数名称显示K线图
+`qt.candle()`支持显示股票、基金、期货的K线，同时也可以传入`adj`参数显示复权价格，或传入`freq`参数改变K显得频率，显示分钟、周或月K线，还可以传入更多的参数修改K线图上的
+指标类型、移动均线类型以及参数，详细的用法请参考文档，示例如下：
 
 
 ```python
-data = qt.candle('600337')
+# 场内基金的小时K线图
+data = qt.candle('159601', start = '20220121', freq='h')
+# 沪深300指数的日K线图
+data = qt.candle('000300', start = '20200121')
+# 股票的30分钟K线，复权价格
+data = qt.candle('中国电信', start = '20211021', freq='30min', adj='b')
+# 期货K线，三条移动均线分别为9天、12天、26天
+data = qt.candle('沪铜主力', start = '20211021', mav=[9, 12, 26])
+# 场外基金净值曲线图，复权净值，不显示移动均线
+data = qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b', mav=[])
 ```
 
+![png](readme_img/output_3_1.png)
 
 ![png](readme_img/output_7_2.png)
-    
-
-```python
-data = qt.candle('招商银行')
-```
-
 
 ![png](readme_img/output_8_3.png)
+
+![png](readme_img/output_3_4.png)
+
+![png](readme_img/output_3_5.png)
     
-`qt.candle()`同时也可以传入`adj`参数显示复权价格，或传入`freq`参数改变K显得频率，显示分钟、周或月K线，还可以传入更多的参数修改K线图上的
-指标类型、移动均线类型以及参数，详细的用法请参考文档
+
 
 
 a dynamic candle chart of stock 000300 will be displayed, you can drag the candle plots over to view wider span of data, zoom
