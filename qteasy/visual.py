@@ -372,7 +372,6 @@ class InterCandle:
         self.refresh_plot(self.idx_start, self.idx_range)
 
 
-# TODO: simplify and merge these three functions
 def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, freq=None, plot_type='candle',
            interactive=True, data_source=None, **kwargs):
     """ 获取股票或证券的K线数据，并显示股票的K线图
@@ -621,9 +620,11 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
 def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
+        TODO: 清洗数据：如果ohlc数据中包含少量异常数据时，填充异常数据，
+        TODO: 生成close或nav数据以便生成折线图
 
     :param stock: 股票代码
-    :param asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数
+    :param asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数, OPT——期权
     :param adj: 是否复权，none——不复权，hfq——后复权，qfq——前复权
     :param freq: 价格周期，d——日K线，5min——五分钟k线
     :param data_source: 获取数据的数据源
@@ -637,19 +638,23 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
                'FD':  'Fund 基金',
                'OPT': 'Options 期权'}
     ds = qteasy.QT_DATA_SOURCE
-    if asset_type == 'E':
+    if asset_type.upper() == 'E':
         basic_info = ds.read_table_data('stock_basic')
-    elif asset_type == 'IDX':
+    elif asset_type.upper() == 'IDX':
         # 获取指数的基本信息
         basic_info = ds.read_table_data('index_basic')
-    elif asset_type == 'FT':
+    elif asset_type.upper() == 'FT':
         # 获取期货的基本信息
         basic_info = ds.read_table_data('future_basic')
-    elif asset_type == 'FD':
+    elif asset_type.upper() == 'FD':
         # 获取基金的基本信息
         basic_info = ds.read_table_data('fund_basic')
+    elif asset_type.upper() == 'OPT':
+        # 获取基金的基本信息
+        # basic_info = ds.read_table_data('opt_basic')
+        raise NotImplementedError(f'Candle plot for asset type: "{asset_type}" is not supported at the moment')
     else:
-        raise KeyError(f'Wrong asset type: [{asset_type}]')
+        raise KeyError(f'Wrong asset type: "{asset_type}"')
     if basic_info.empty:
         raise ValueError(f'Can not load basic information for asset type: "{name_of[asset_type]}" from data source '
                          f'"{ds.connection_type}". \n'
@@ -685,6 +690,13 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes='close,high,low,open,vol', asset_type=asset_type,
                              adj=adj, data_source=data_source).to_dataframe(share=stock)
+    # 虽然比较罕见，但是存在这样的情况，当某日的交易量为0时，当天数据中open/high/low价格均为NaN，
+    # 此时应该将open/high/low三者的价格设置为与close一致，否则无法显示K线图
+    for col in ['open', 'high', 'low']:
+        col_data = data[col]
+        if np.isnan(col_data.values).any():
+            col_data.loc[pd.isna(col_data)] = data.close
+
     # 返回股票的名称和全称
     share_name = stock + ' - ' + name + ' [' + name_of[asset_type] + '] '
     data.rename({'vol': 'volume'}, axis='columns', inplace=True)

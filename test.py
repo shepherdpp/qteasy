@@ -11666,7 +11666,9 @@ class FastExperiments(unittest.TestCase):
         ds.get_table_info('future_daily')
         ds.get_table_info('fund_hourly')
         ds.get_table_info('fund_nav')
-        df = qt.candle('159601', start='20200121', freq='h')
+        qt.candle('159601', start='20200121', freq='h')
+        qt.candle('沪镍主力', start='20211021')
+        qt.candle('10000029', start='20211021')
 
     def test_fast_experiments2(self):
         print(_lev_ratio('abc', 'ABC'))

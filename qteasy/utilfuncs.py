@@ -717,7 +717,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     else:
         asset_types = [item for item in asset_types if item in AVAILABLE_ASSET_TYPES]
 
-    asset_types_with_name = [item for item in asset_types if item in ['E', 'IDX', 'FD']]
+    asset_types_with_name = [item for item in asset_types if item in ['E', 'IDX', 'FD', 'FT', 'OPT']]
     code_matched = {}
     count = 0
     if all(char.isdigit() for char in code):
