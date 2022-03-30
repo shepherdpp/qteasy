@@ -756,6 +756,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
         - IDX   指数
         - FD    基金
         - FT    期货
+        - OPT   期权
 
     :param match_full_name: bool
         是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长

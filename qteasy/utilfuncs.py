@@ -720,7 +720,16 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
     asset_types_with_name = [item for item in asset_types if item in ['E', 'IDX', 'FD', 'FT', 'OPT']]
     code_matched = {}
     count = 0
-    if all(char.isdigit() for char in code):
+    import re
+    if re.match('[0-9A-Z]+\.[a-zA-Z]+$', code):
+        # if code like "000100.SH"
+        for at in asset_types:
+            basic = asset_type_basics[at]
+            ts_code = basic.loc[basic.index == code].name.to_dict()
+            count += len(ts_code)
+            code_matched.update({at: ts_code})
+    elif re.match('[0-9A-Z]+$', code):
+        # if code like all number inputs
         for at in asset_types:
             basic = asset_type_basics[at]
             basic['symbol'] = [item.split('.')[0] for item in basic.index]
@@ -734,7 +743,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
             full_names = []
             match_full_name = (at in ['E', 'IDX']) and match_full_name
             if match_full_name:
-                # 当查找股票或指数的信息时，还需要匹配全名
+                # 当需要匹配全名时
                 full_names = basic.fullname.to_list()
             if ('?' in code) or ('*' in code):
                 matched = _wildcard_match(code, names)
@@ -760,7 +769,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
             count += len(code_matched[at])
 
     code_matched.update({'count': count})
-
+    code_matched = {k:v for k, v in code_matched.items() if v != {}}
     return code_matched
 
 

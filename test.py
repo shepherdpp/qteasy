@@ -1033,6 +1033,21 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
         self.assertRaises(KeyError, qt.get_stock_pool, markets='SSE')
 
+    def test_get_basic_info(self):
+        """ 测试获取证券基本信息"""
+        qt.get_basic_info('000300')
+        qt.get_basic_info('000300.OF')
+        qt.get_basic_info('004040')
+        qt.get_basic_info('沪镍')
+        qt.get_basic_info('中国移动', verbose=True)
+
+    def test_find_history_data(self):
+        """ 测试查找打印历史数据信息"""
+        qt.find_history_data('pe')
+        qt.find_history_data('open')
+        qt.find_history_data('市盈率')
+        qt.find_history_data('市?率*')
+
 
 class TestEvaluations(unittest.TestCase):
     """Test all evaluation functions in core.py"""
@@ -9241,6 +9256,34 @@ class TestUtilityFuncs(unittest.TestCase):
 
         fails_once()
 
+    def test_lev_match(self):
+        """ 测试字符串模糊匹配"""
+        print(_lev_ratio('abc', 'ABC'))
+        print(_lev_ratio('abcdefg', 'abDdefh'))
+        print(_lev_ratio('中国移动', '中国移动总公司'))
+        print(_lev_ratio('平安', '平安银行股份有限公司'))
+        print(_lev_ratio('中国平安', '平安银行股份有限公司'))
+        print(_lev_ratio('平安', '万科企业股份有限公司'))
+
+        print(_partial_lev_ratio('abc', 'ABC'))
+        print(_partial_lev_ratio('abcdefg', 'abDdefh'))
+        print(_partial_lev_ratio('中国移动', '中国移动总公司'))
+        print(_partial_lev_ratio('平安', '平安银行股份有限公司'))
+        print(_partial_lev_ratio('中国平安', '平安银行股份有限公司'))
+        print(_partial_lev_ratio('平安', '万科企业股份有限公司'))
+        print(_partial_lev_ratio('常辅股份', '常州电站辅机股份有限公司'))
+
+        print(_partial_lev_ratio('平?', '万科企业股份有限公司'))
+        print(_partial_lev_ratio('常?股份', '常州电站辅机股份有限公司'))
+
+    def test_wildcard_match(self):
+        """ 测试字符串通配符匹配"""
+        wordlist = ["color", "colour", "work", "working", "fox", "worker", "working"]
+        print(_wildcard_match('col?r', wordlist))
+        print(_wildcard_match('col*r', wordlist))
+        print(_wildcard_match('wor.?', wordlist))
+        print(_wildcard_match('?o?', wordlist))
+
 
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
@@ -11293,6 +11336,11 @@ class TestVisual(unittest.TestCase):
         qt.candle('000300')
         qt.candle('000300', asset_type='IDX')
 
+        qt.candle('159601', start='20200121', freq='h', adj='n')
+        qt.candle('沪镍主力', start='20211021')
+        qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b')
+        qt.candle('000001.OF', start='20200101', asset_type='FD', adj='n', mav=[])
+
     def test_indicators(self):
         print(f'test mpf plot in candle form with indicator dema')
         qt.candle('513100.SH', start='2020-04-01', end='20200601', asset_type='FD', indicator='dema',
@@ -11658,48 +11706,10 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        ds = qt.QT_DATA_SOURCE
-        # ds.get_table_info('trade_calendar')
-        # ds.get_table_info('stock_basic')
-        # ds.get_table_info('stock_5min')
-        # ds.get_table_info('stock_1min')
-        # ds.get_table_info('future_daily')
-        # ds.get_table_info('fund_hourly')
-        # ds.get_table_info('fund_nav')
-        qt.candle('159601', start='20200121', freq='h', adj='n')
-        # qt.candle('沪镍主力', start='20211021')
-        qt.candle('000001.OF', start='20200101', asset_type='FD', adj='b')
-        qt.candle('000001.OF', start='20200101', asset_type='FD', adj='n', mav=[])
+        qt.get_basic_info('000000.XX')
 
     def test_fast_experiments2(self):
-        print(_lev_ratio('abc', 'ABC'))
-        print(_lev_ratio('abcdefg', 'abDdefh'))
-        print(_lev_ratio('中国移动', '中国移动总公司'))
-        print(_lev_ratio('平安', '平安银行股份有限公司'))
-        print(_lev_ratio('中国平安', '平安银行股份有限公司'))
-        print(_lev_ratio('平安', '万科企业股份有限公司'))
-
-        print(_partial_lev_ratio('abc', 'ABC'))
-        print(_partial_lev_ratio('abcdefg', 'abDdefh'))
-        print(_partial_lev_ratio('中国移动', '中国移动总公司'))
-        print(_partial_lev_ratio('平安', '平安银行股份有限公司'))
-        print(_partial_lev_ratio('中国平安', '平安银行股份有限公司'))
-        print(_partial_lev_ratio('平安', '万科企业股份有限公司'))
-        print(_partial_lev_ratio('常辅股份', '常州电站辅机股份有限公司'))
-
-        print(_partial_lev_ratio('平?', '万科企业股份有限公司'))
-        print(_partial_lev_ratio('常?股份', '常州电站辅机股份有限公司'))
-
-        wordlist = ["color", "colour", "work", "working", "fox", "worker", "working"]
-        print(_wildcard_match('col?r', wordlist))
-        print(_wildcard_match('col*r', wordlist))
-        print(_wildcard_match('wor.?', wordlist))
-        print(_wildcard_match('?o?', wordlist))
-
-        qt.database.find_history_data('pe')
-        qt.database.find_history_data('open')
-        qt.database.find_history_data('市盈率')
-        qt.database.find_history_data('市?率*')
+        pass
 
     def test_time(self):
         print(match_ts_code('000001'))
@@ -12686,6 +12696,18 @@ class TestDataSource(unittest.TestCase):
                                  freq='w',
                                  adj='forward')
         print(f'got history panel with price:\n{hp}')
+
+    def test_get_table_info(self):
+        """ 获取打印数据表的基本信息"""
+        ds = qt.QT_DATA_SOURCE
+        ds.get_table_info('trade_calendar')
+        ds.get_table_info('stock_basic')
+        ds.get_table_info('stock_5min')
+        ds.get_table_info('stock_1min')
+        ds.get_table_info('future_daily')
+        ds.get_table_info('fund_hourly')
+        ds.get_table_info('fund_nav')
+
 
 
 def test_suite(*args):
