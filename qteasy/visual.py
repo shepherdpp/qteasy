@@ -205,12 +205,16 @@ class InterCandle:
                                        ylabel=f'dema: \n{self.dema_par}',
                                        ax=self.ax3))
         # 绘制图表
+        # 如果一次显示的内容过多（self.idx_range >= 350)则显示线图
+        plot_type = self.plot_type
+        if idx_range >= 350:
+            plot_type = 'line'
         mpf.plot(plot_data,
                  ax=self.ax1,
                  volume=self.ax2,
                  ylabel=ylabel,
                  addplot=ap,
-                 type=self.plot_type,
+                 type=plot_type,
                  style=self.style,
                  datetime_format='%y/%m/%d',
                  xrotation=0)

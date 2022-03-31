@@ -11707,6 +11707,7 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         qt.get_basic_info('000000.XX')
+        qt.candle('000651', start='20201101', adj='b', mav=[60, 250])
 
     def test_fast_experiments2(self):
         pass
@@ -12707,7 +12708,6 @@ class TestDataSource(unittest.TestCase):
         ds.get_table_info('future_daily')
         ds.get_table_info('fund_hourly')
         ds.get_table_info('fund_nav')
-
 
 
 def test_suite(*args):
