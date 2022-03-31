@@ -692,7 +692,6 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
                        f'from data source "{ds.connection_type}"\n'
                        f'please check stock code')
     # 设置历史数据获取区间的开始日期为股票上市第一天
-
     l_date = this_stock.list_date
     if l_date is None:
         start_date = '2000-01-01'

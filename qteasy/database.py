@@ -1920,7 +1920,6 @@ class DataSource:
                 df.drop(columns=cols_to_remove, inplace=True)
             table_data_read[tbl] = df
             table_data_columns[tbl] = df.columns
-
         # 提取数据，生成单个数据类型的dataframe
         df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
@@ -1952,7 +1951,13 @@ class DataSource:
             warnings.warn(f'\nConflict data encountered, some types of data are loaded from multiple tables, '
                           f'conflicting data might be discarded:\n'
                           f'{conflict_cols}', DataConflictWarning)
-
+        # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
+        if all(df.empty for df in df_by_htypes.values()):
+            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please: \n'
+                               f'find datatable for data type:  qteasy.find_history_data(\'data_type\')\n'
+                               f'check table data coverage:     DataSource.get_table_info(\'table_name\')\n'
+                               f'fill datasource:               DataSource.refill_local_source(\'table_name\', '
+                               f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
