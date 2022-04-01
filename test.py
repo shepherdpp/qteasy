@@ -11706,8 +11706,9 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.get_basic_info('000000.XX')
-        qt.candle('SPUK', start='20190101', adj='b', mav=[60, 250])
+        tables = 'options_hourly'
+        ds = qt.QT_DATA_SOURCE
+        ds.refill_local_source(tables=tables, start_date='20220318', parallel=True, merge_type='update')
 
     def test_fast_experiments2(self):
         pass

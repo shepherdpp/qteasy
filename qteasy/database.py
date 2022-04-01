@@ -225,9 +225,49 @@ TABLE_SOURCE_MAPPING = {
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
          'OF, SZ, SH', '', ''],
 
+    'future_1min':
+        ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', 'ft_mins1', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '30'],
+
+    'future_5min':
+        ['future_mins', '期货5分钟K线行情', 'mins', 'FT', '5min', 'ft_mins5', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '90'],
+
+    'future_15min':
+        ['future_mins', '期货15分钟K线行情', 'mins', 'FT', '15min', 'ft_mins15', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '180'],
+
+    'future_30min':
+        ['future_mins', '期货30分钟K线行情', 'mins', 'FT', '30min', 'ft_mins30', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '360'],
+
+    'future_hourly':
+        ['future_mins', '期货60分钟K线行情', 'mins', 'FT', 'h', 'ft_mins60', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '360'],
+
     'future_daily':
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
          '', ''],
+
+    'options_1min':
+        ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', 'mins1', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '30'],
+
+    'options_5min':
+        ['min_bars', '期权5分钟K线行情', 'mins', 'OPT', '5min', 'mins5', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '90'],
+
+    'options_15min':
+        ['min_bars', '期权15分钟K线行情', 'mins', 'OPT', '15min', 'mins15', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '180'],
+
+    'options_30min':
+        ['min_bars', '期权30分钟K线行情', 'mins', 'OPT', '30min', 'mins30', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '360'],
+
+    'options_hourly':
+        ['min_bars', '期权60分钟K线行情', 'mins', 'OPT', 'h', 'mins60', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '360'],
 
     'options_daily':
         ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209', '',
@@ -238,7 +278,8 @@ TABLE_SOURCE_MAPPING = {
          '', ''],
 
     'fund_adj_factor':
-        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', '', ''],
+        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', '',
+         ''],
 
     'stock_indicator':
         ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
@@ -394,6 +435,13 @@ TABLE_STRUCTURES = {
                          'remarks':    ['证券代码', '交易日期', '昨收盘价', '昨结算价', '开盘价', '最高价', '最低价',
                                         '收盘价', '结算价', '涨跌1 收盘价-昨结算价', '涨跌2 结算价-昨结算价', '成交量(手)',
                                         '成交金额(万元)', '持仓量(手)', '持仓量变化', '交割结算价'],
+                         'prime_keys': [0, 1]},
+
+    'future_mins':      {'columns':    ['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount', 'oi'],
+                         'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'double',
+                                        'double', 'double'],
+                         'remarks':    ['证券代码', '交易日期时间', '开盘价', '最高价', '最低价', '收盘价', '成交量(手)',
+                                        '成交金额(元)', '持仓量(手)'],
                          'prime_keys': [0, 1]},
 
     'options_daily':    {'columns':    ['ts_code', 'trade_date', 'exchange', 'pre_settle', 'pre_close', 'open', 'high',
@@ -2161,7 +2209,7 @@ class DataSource:
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
-
+        import pdb; pdb.set_trace()
         import time
         for table in table_map.index:
             # 逐个下载数据并写入本地数据表中
