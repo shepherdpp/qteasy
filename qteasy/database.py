@@ -1318,7 +1318,8 @@ class DataSource:
         return len(res) > 0
 
     def new_db_table(self, db_table, columns, dtypes, primary_key):
-        """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同
+        """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
+            并创建正确的index
 
         :param db_table:
             Str: 数据表名
@@ -1334,78 +1335,26 @@ class DataSource:
         if self.source_type != 'db':
             raise TypeError(f'Datasource is not connected to a database')
 
-        sql = f"CREATE TABLE IF NOT EXISTS {db_table} (\n"
+        sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
         for col_name, dtype in zip(columns, dtypes):
             sql += f"`{col_name}` {dtype}"
             if col_name in primary_key:
                 sql += " NOT NULL,\n"
             else:
-                sql += ",\n"
+                sql += " DEFAULT NULL,\n"
+        # 如果有primary key则添加primary key
         if primary_key is not None:
-            sql += f"PRIMARY KEY ("
-            for pk in primary_key[:-1]:
-                sql += f"{pk}, "
-            sql += f"{primary_key[-1]})\n)"
+            sql += f"PRIMARY KEY (`{'`, `'.join(primary_key)}`)"
+            # 如果primary key多于一个，则创建KEY INDEX
+            if len(primary_key) > 1:
+                sql += ",\nKEY (`" + '`),\nKEY (`'.join(primary_key[1:]) + "`)"
+        sql += '\n)'
         try:
             self.cursor.execute(sql)
             self.con.commit()
         except Exception as e:
             self.con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
-
-    def alter_db_table(self, db_table, columns, dtypes, primary_key):
-        """ 修改db_table的schema，按照输入参数设置表的字段属性
-
-        :param db_table:
-            Str: 数据表名
-        :param columns:
-            List: 一个包含若干str的list，表示数据表的所有字段名
-        :param dtypes:
-            List: 一个包含若干str的list，表示数据表所有字段的数据类型
-        :param primary_key:
-            List: 一个包含若干str的list，表示数据表的所有primary_key
-        :return:
-            None
-        """
-        if self.source_type != 'db':
-            raise TypeError(f'Datasource is not connected to a database')
-
-        # 获取数据表的columns和data types：
-        cur_columns = self.get_db_table_schema(db_table)
-        # 将新的columns和dtypes写成Dict形式
-        new_columns = {}
-        for col, typ in zip(columns, dtypes):
-            new_columns[col] = typ
-        # to drop some columns
-        col_to_drop = [col for col in cur_columns if col not in columns]
-        for col in col_to_drop:
-            sql = f"ALTER TABLE {db_table} \n" \
-                  f"DROP COLUMN `{col}`"
-            # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
-            del cur_columns[col]
-            self.cursor.execute(sql)
-            self.con.commit()
-
-        # to add some columns
-        col_to_add = [col for col in columns if col not in cur_columns]
-        print(f'following cols will be added to the table:\n{col_to_add}')
-        for col in col_to_add:
-            sql = f"ALTER TABLE {db_table} \n" \
-                  f"ADD {col} {new_columns[col]}"
-            self.cursor.execute(sql)
-            self.con.commit()
-
-        # to modify some columns
-        col_to_modify = [col for col in cur_columns if cur_columns[col] != new_columns[col]]
-        print(f'following cols will be modified:\n{col_to_modify}')
-        for col in col_to_modify:
-            sql = f"ALTER TABLE {db_table} \n" \
-                  f"MODIFY COLUMN {col} {new_columns[col]}"
-            self.cursor.execute(sql)
-            self.con.commit()
-
-        # TODO: should also modify the primary keys, to be updated
-        pass
 
     def get_db_table_schema(self, db_table):
         """ 获取数据库表的列名称和数据类型

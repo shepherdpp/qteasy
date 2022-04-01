@@ -11991,24 +11991,6 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(test_columns.keys()), ['ts_code', 'trade_date', 'col1', 'col2'])
         self.assertEqual(list(test_columns.values()), ['varchar', 'varchar', 'int', 'int'])
 
-        self.ds_db.alter_db_table('new_test_table',
-                                  ['ts_code', 'col1', 'col2', 'col3', 'col4'],
-                                  ['varchar(9)', 'float', 'float', 'int', 'float'],
-                                  ['ts_code'])
-        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
-              f"FROM INFORMATION_SCHEMA.COLUMNS " \
-              f"WHERE TABLE_SCHEMA = Database() " \
-              f"AND table_name = 'new_test_table'" \
-              f"ORDER BY ordinal_position"
-        self.ds_db.cursor.execute(sql)
-        results = self.ds_db.cursor.fetchall()
-        # 为了方便，将cur_columns和new_columns分别包装成一个字典
-        test_columns = {}
-        for col, typ in results:
-            test_columns[col] = typ
-        self.assertEqual(list(test_columns.keys()), ['ts_code', 'col1', 'col2', 'col3', 'col4'])
-        self.assertEqual(list(test_columns.values()), ['varchar', 'float', 'float', 'int', 'float'])
-
         self.ds_db.drop_db_table('new_test_table')
 
     def test_write_and_read_file(self):
