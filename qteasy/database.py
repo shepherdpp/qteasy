@@ -2158,7 +2158,6 @@ class DataSource:
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
-        import pdb; pdb.set_trace()
         import time
         for table in table_map.index:
             # 逐个下载数据并写入本地数据表中
