@@ -12,6 +12,8 @@
 import warnings
 
 import numpy as np
+import pandas as pd
+
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list
@@ -1044,7 +1046,8 @@ class Operator:
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
-        invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
+        hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
+        invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
             np_dates_in_hist = np.array(invest_dates_in_hist)
             where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist is False)[0])]

@@ -5199,7 +5199,7 @@ class TestLoop(unittest.TestCase):
         """
         print('Test looping of PT proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
+              'cash delivery delay = 0 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
         res = apply_loop(
@@ -5317,7 +5317,7 @@ class TestLoop(unittest.TestCase):
             use_sell_cash = False
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of PS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
@@ -5384,7 +5384,7 @@ class TestLoop(unittest.TestCase):
                                     (not possible when cash delivery period != 0))
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of PS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
@@ -5504,7 +5504,7 @@ class TestLoop(unittest.TestCase):
             use_sell_cash = False
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of VS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
@@ -5571,7 +5571,7 @@ class TestLoop(unittest.TestCase):
                                     (not possible when cash delivery period != 0))
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of VS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
@@ -5649,7 +5649,7 @@ class TestLoop(unittest.TestCase):
                          stock_delivery_period=2,
                          max_cash_usage=True,
                          inflation_rate=0,
-                         print_log=False)
+                         print_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -11706,8 +11706,18 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.get_basic_info('000000.XX')
-        qt.candle('000651', start='20201101', adj='b', mav=[60, 250])
+        op_min = qt.Operator(strategies='DMA', signal_type='pt')
+        op_min.set_parameter('dma', data_freq='15min', sample_freq='15min')
+        op_min.info()
+        op_min['dma'].info()
+
+        qt.configure(asset_pool=['000300.SH'], asset_type='IDX')
+        qt.run(op_min,
+               invest_start='20200101',
+               invest_end='20201221',
+               visual=False,
+               print_backtest_log=False
+        )
 
     def test_fast_experiments2(self):
         pass

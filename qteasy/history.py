@@ -225,6 +225,13 @@ class HistoryPanel():
     @property
     def hdates(self):
         """获取HistoryPanel的历史日期时间戳list"""
+        # TODO: Maybe: 可以将返回值包装成一个pandas.Index对象，
+        # TODO: 这样有更多方便好用的方法和属性可用
+        # TODO: 例如
+        # TODO: return pd.Index(self._rows.keys())
+        # TODO: 这样就可以用 HP.hdates.date / HP.hdates.where()
+        # TODO: 等等方法和属性了
+        # TODO: shares 和 htypes 属性也可以如法炮制
         if self.is_empty:
             return 0
         else:

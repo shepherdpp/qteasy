@@ -479,6 +479,7 @@ def apply_loop(op_type: int,
         - fee:              当期交易费用（交易成本）
         - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
+    global total_stock_value, total_value
     assert not op_list.is_empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
@@ -555,12 +556,26 @@ def apply_loop(op_type: int,
         for j in range(price_type_count):
             if print_log:
                 print(f' - 本期第{j + 1}/{price_type_count}轮交易，使用历史价格: {price_types[j]}')
+            # 交易前将交割队列中达到交割期的现金/资产完成交割
+            if ((prev_date != current_date) and (len(cash_delivery_queue) == cash_delivery_period)) or \
+                    (cash_delivery_period == 0):
+                if len(cash_delivery_queue) > 0:
+                    cash_delivered = cash_delivery_queue.pop(0)
+                    available_cash += cash_delivered
+                    if print_log:
+                        print(f'现金交割期满({cash_delivery_period})，交割以下现金：{cash_delivered:.2f}'
+                              f' / 交割队列: {cash_delivery_queue}，交割后可用现金：{available_cash:.2f}')
+
+            if ((prev_date != current_date) and (len(stock_delivery_queue) == stock_delivery_period)) or \
+                    (stock_delivery_period == 0):
+                if len(stock_delivery_queue) > 0:
+                    stock_delivered = stock_delivery_queue.pop(0)
+                    available_amounts += stock_delivered
+                    if print_log:
+                        print(f'股票交割期满({stock_delivery_period})，以下资产交割完成：{np.around(stock_delivered, 2)}\n'
+                              f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
-            cash_gained, \
-            cash_spent, \
-            amount_purchased, \
-            amount_sold, \
-            fee = _loop_step(
+            cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
                     own_cash=own_cash,
                     own_amounts=own_amounts,
@@ -576,77 +591,43 @@ def apply_loop(op_type: int,
                     moq_buy=moq_buy,
                     moq_sell=moq_sell,
                     print_log=print_log,
-                    share_names=shares)
-            # 计算本批次交易后的可用现金、可用股票以及持有现金、持有股票
-            # 可用现金、可用股票数量首交割延迟期影响，从定长队列中取增加值
-            # TODO: 此处暂时使用列表和列表长度判断代替定长队列，无法实现隔天判断的效果。
-            # TODO: 其实应该使用专门的定长队列类来实现交割隔天判断的效果
+                    share_names=shares
+            )
 
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
-            if prev_date != current_date or cash_delivery_period == 0:
+            if (prev_date != current_date) or (cash_delivery_period == 0):
                 cash_delivery_queue.append(cash_gained)
-                # if print_log:
-                #     print(f'新增交割现金 - 本轮交易获得的现金: '
-                #           f'{cash_gained:.2f}')
+                if print_log:
+                    print(f'新增交割现金 - 本轮交易获得的现金: '
+                          f'{cash_gained:.2f}')
             else:
                 cash_delivery_queue[-1] += cash_gained
-                # if print_log:
-                #     print(f'同批累计交割 - 本轮交易累计获得的现金: '
-                #           f'{cash_delivery_queue[-1]:.2f}')
+                if print_log:
+                    print(f'同批累计交割 - 本轮交易累计获得的现金: '
+                          f'{cash_delivery_queue[-1]:.2f}')
 
             # 获得的资产进入交割队列，根据日期的变化确定是新增资产交割还是累加资产交割
-            if prev_date != current_date or stock_delivery_period == 0:
+            if (prev_date != current_date) or (stock_delivery_period == 0):
                 stock_delivery_queue.append(amount_purchased)
-                # if print_log:
-                #     print(f'新增交割资产 - 本轮交易买入的资产: '
-                #           f'{np.around(amount_purchased, 2)}')
+                if print_log:
+                    print(f'新增交割资产 - 本轮交易买入的资产: '
+                          f'{np.around(amount_purchased, 2)}')
             else:  # if prev_date == current_date
                 stock_delivery_queue[-1] += amount_purchased
-                # if print_log:
-                #     print(f'同批累计交割 - 本轮累计买入的资产: '
-                #           f'{np.around(stock_delivery_queue[-1], 2)}')
+                if print_log:
+                    print(f'同批累计交割 - 本轮累计买入的资产: '
+                          f'{np.around(stock_delivery_queue[-1], 2)}')
 
             prev_date = current_date
 
-            # 周期内不交割股票或现金，除非交割期限为0
-            if cash_delivery_period == 0:
-                cash_delivered = cash_delivery_queue.pop(0)
-                # if print_log:
-                #     print(f'现金交割期为0，本期内直接交割现金：'
-                #           f'{cash_delivered:.2f}')
-                available_cash = available_cash + cash_spent + cash_delivered
-            else:
-                available_cash = available_cash + cash_spent
-
-            if stock_delivery_period == 0:
-                stock_delivered = stock_delivery_queue.pop(0)
-                # if print_log:
-                #     print(f'股票交割期为0，本期内直接交割资产：'
-                #           f'{np.around(stock_delivered, 2)}')
-                available_amounts = available_amounts + amount_sold + stock_delivered
-            else:
-                available_amounts = available_amounts + amount_sold
-
             # 持有现金、持有股票用于计算本期的总价值
+            available_cash += cash_spent
+            available_amounts += amount_sold
             own_cash = own_cash + cash_gained + cash_spent
             own_amounts = own_amounts + amount_sold + amount_purchased
             total_stock_value = (own_amounts * price[:, i, j]).sum()
             total_value = total_stock_value + own_cash
             sub_total_fee += fee
-        # 本期交易全部结束后，开始现金和资产的交割：
-        if (len(cash_delivery_queue) >= cash_delivery_period) and (cash_delivery_period != 0):
-            cash_delivered = cash_delivery_queue.pop(0)
-            # if print_log:
-            #     print(f'现金交割期满，交割以下现金：{cash_delivered:.2f}'
-            #           f' / 交割队列: {cash_delivery_queue}')
-            available_cash = available_cash + cash_delivered
-
-        if (len(stock_delivery_queue) >= stock_delivery_period) and (stock_delivery_period != 0):
-            stock_delivered = stock_delivery_queue.pop(0)
-            # if print_log:
-            #     print(f'股票交割期满，以下资产交割完成：{np.around(stock_delivered, 2)}\n'
-            #           f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
-            available_amounts = available_amounts + stock_delivered
 
         # 打印本日结果
         if print_log:
@@ -1044,7 +1025,6 @@ def check_and_prepare_hist_data(operator, config):
                invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
-# TODO: 根据最新的qteasy基础模块设计更新docstring并更新函数
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
