@@ -144,16 +144,14 @@ class Cost:
                            moq=0.):
         """计算出售投资产品的要素
 
-
         :param prices: 投资产品的价格
         :param a_to_sell: 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
         :param moq: 卖出股票的最小交易单位
 
-        :return:
-        a_sold:
-        fee:
-        cash_gained: float
-        fee: float
+        :return: tuple
+         - a_sold: ndarray          实际出售的资产份额
+         - cash_gained: ndarray     扣除手续费后获得的现金
+         - fee: ndarray             扣除的手续费
         """
         if moq == 0:
             a_sold = a_to_sell
@@ -181,16 +179,17 @@ class Cost:
         :param cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
         :param moq: float, 最小交易单位
         :return:
-        a_to_purchase: 一个ndarray, 代表所有股票分别买入的份额或数量
-        cash_spent: float，花费的总金额，包括费用在内
-        fee: 花费的费用，购买成本，包括佣金和滑点等投资成本
+         - a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
+         - cash_spent: ndarray,     花费的总金额，包括手续费在内
+         - fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
         """
         # 给三个函数返回值预先赋值
         a_purchased = np.zeros_like(prices)
         cash_spent = np.zeros_like(prices)
         fee = 0.
         if self.buy_fix == 0.:
-            # 固定费用为0，估算购买一定金额股票的交易费率
+            # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将小于buy_min的金额置0
+            cash_to_spend = np.where(cash_to_spend < self.buy_min, 0, cash_to_spend)
             rates = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
             # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
             if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
@@ -207,7 +206,8 @@ class Cost:
             cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
             fee = fees.sum()
         elif self.buy_fix:
-            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，只计算买入金额大于固定费用的份额
+            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将小于buy_fix的金额置0
+            cash_to_spend = np.where(cash_to_spend < self.buy_fix, 0, cash_to_spend)
             fixed_fees = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
             if moq == 0.:
                 a_purchased = np.fmax(np.where(prices,

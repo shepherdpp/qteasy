@@ -18,7 +18,7 @@ import logging
 from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from datetime import datetime
+import datetime
 
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
@@ -205,9 +205,11 @@ def _loop_step(signal_type: int,
                                      0)
         # 打印log：
         if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+            print(f'期初资产总价:   {total_value:.2f}, 其中:\n'
+                  f' - 持有现金总价:   {own_cash:.2f}\n'
+                  f' - 持有资产总价:   {total_value - own_cash:.2f}')
+            print(f'期初可用现金:   {available_cash:.2f}\n'
+                  f'期初可用资产:   {np.around(available_amounts, 2)}\n'
                   f'本期资产价格:   {np.around(prices, 2)}\n'
                   f'本期持仓目标:   {op}\n'
                   f'本期实际持仓:   {np.around(pre_position, 3)}\n'
@@ -232,9 +234,11 @@ def _loop_step(signal_type: int,
 
         # 打印log：
         if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+            print(f'期初资产总价:   {total_value:.2f}, 其中:\n'
+                  f' - 持有现金总价:   {own_cash:.2f}\n'
+                  f' - 持有资产总价:   {total_value - own_cash:.2f}')
+            print(f'期初可用现金:   {available_cash:.2f}\n'
+                  f'期初可用资产:   {np.around(available_amounts, 2)}\n'
                   f'本期资产价格:   {np.around(prices, 2)}\n'
                   f'本期交易信号:   {op}\n'
                   f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
@@ -257,9 +261,11 @@ def _loop_step(signal_type: int,
 
         # 打印log：
         if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
+            print(f'期初资产总价:   {total_value:.2f}, 其中:\n'
+                  f' - 持有现金总价:   {own_cash:.2f}\n'
+                  f' - 持有资产总价:   {total_value - own_cash:.2f}')
+            print(f'期初可用现金:   {available_cash:.2f}\n'
+                  f'期初可用资产:   {np.around(available_amounts, 2)}\n'
                   f'本期资产价格:   {np.around(prices, 2)}\n'
                   f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
                   f'计划买入金额:   {np.around(cash_to_spend, 3)}')
@@ -310,8 +316,9 @@ def _loop_step(signal_type: int,
         return cash_gained, 0, np.zeros_like(op), amount_sold, fee_selling
 
     if total_cash_to_spend > available_cash:
-        # 按比例降低分配给每个拟买入资产的现金额度
+        # 按比例降低分配给每个拟买入资产的现金额，如果金额特别小，将数额置0
         cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
+        cash_to_spend = np.where(cash_to_spend < 0.0001, 0, cash_to_spend)
         if print_log:
             print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
             print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
@@ -490,7 +497,6 @@ def apply_loop(op_type: int,
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
 
     # op_list = _merge_invest_dates(op_list, cash_plan)
-    # import pdb; pdb.set_trace()
     op = op_list.values
     shares = op_list.shares
     price_types = op_list.htypes
@@ -531,7 +537,10 @@ def apply_loop(op_type: int,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    date_print_format = '%Y/%m/%d'
+    if looped_dates[0].time() == datetime.time(0, 0):
+        date_print_format = '%Y/%m/%d, %A'
+    else:
+        date_print_format = '%Y/%m/%d %H:%M, %a'
     prev_date = 0
     # TODO: use Numba to optimize the efficiency of the looping process
     for i in range(op_count):
@@ -539,9 +548,8 @@ def apply_loop(op_type: int,
         current_date = looped_dates[i].date()
         sub_total_fee = 0
         if print_log:
-            print(f'交易日期:{current_date.strftime(date_print_format)}, '
-                  f'{weekday_name(current_date.weekday())}, op_type: {op_type}')
-        if inflation_rate > 0:  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
+            print(f'交易日期:{looped_dates[i].strftime(date_print_format)}, op_type: {op_type}')
+        if (prev_date != current_date) and (inflation_rate > 0):  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             own_cash *= inflation_factors[i]
             available_cash *= inflation_factors[i]
             if print_log:
@@ -593,7 +601,6 @@ def apply_loop(op_type: int,
                     print_log=print_log,
                     share_names=shares
             )
-
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
             if (prev_date != current_date) or (cash_delivery_period == 0):
                 cash_delivery_queue.append(cash_gained)
@@ -619,7 +626,6 @@ def apply_loop(op_type: int,
                           f'{np.around(stock_delivery_queue[-1], 2)}')
 
             prev_date = current_date
-
             # 持有现金、持有股票用于计算本期的总价值
             available_cash += cash_spent
             available_amounts += amount_sold
@@ -893,7 +899,7 @@ def check_and_prepare_hist_data(operator, config):
     """
     run_mode = config.mode
     # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
-    current_datetime = datetime.now()
+    current_datetime = datetime.datetime.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期

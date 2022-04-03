@@ -77,7 +77,7 @@ class Strategy:
                                             6, 'M'/'m':
                                             7, 'Q'/'q':
                                             8, 'Y'/'y':
-            :param sample_freq:             静态属性，策略生成时测采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
+            :param sample_freq:             静态属性，策略生成时的采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
                                             一样，但是不能高于数据频率。
             :param window_length:           静态属性，历史数据视窗长度。即生成策略输出所需要的历史数据的数量
             :param data_types:              静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成，可选的参数

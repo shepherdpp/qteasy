@@ -11706,17 +11706,17 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        op_min = qt.Operator(strategies='DMA', signal_type='pt')
-        op_min.set_parameter('dma', data_freq='15min', sample_freq='15min')
+        op_min = qt.Operator(strategies='DMA', signal_type='ps')
+        op_min.set_parameter('dma', data_freq='h', sample_freq='h')
         op_min.info()
         op_min['dma'].info()
 
         qt.configure(asset_pool=['000300.SH'], asset_type='IDX')
         qt.run(op_min,
                invest_start='20200101',
-               invest_end='20201221',
-               visual=False,
-               print_backtest_log=False
+               invest_end='20200401',
+               visual=True,
+               print_backtest_log=True
         )
 
     def test_fast_experiments2(self):
@@ -11729,7 +11729,6 @@ class FastExperiments(unittest.TestCase):
         print(match_ts_code('中?集团'))
         print(match_ts_code('中*金'))
         print(match_ts_code('工商银行'))
-
         print(match_ts_code('招商银行', asset_types='E, FD'))
         print(match_ts_code('贵阳银行', asset_types='E, FT'))
 
