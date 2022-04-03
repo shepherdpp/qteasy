@@ -160,13 +160,13 @@ class Cost:
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=False)
-            cash_gained = (-1 * sold_values * (1 - rates)).sum()
-            fee = -(sold_values * rates).sum()
+            cash_gained = (-1 * sold_values * (1 - rates))
+            fees = -(sold_values * rates)
         else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
             fixed_fees = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=True)
-            fee = np.where(a_sold, fixed_fees, 0).sum()
-            cash_gained = - sold_values.sum() - fee
-        return a_sold, cash_gained, fee
+            fees = np.where(a_sold, fixed_fees, 0)
+            cash_gained = - sold_values - fees
+        return a_sold, cash_gained, fees
 
     # @njit
     def get_purchase_result(self,
@@ -186,7 +186,7 @@ class Cost:
         # 给三个函数返回值预先赋值
         a_purchased = np.zeros_like(prices)
         cash_spent = np.zeros_like(prices)
-        fee = 0.
+        fees = np.zeros_like(prices)
         if self.buy_fix == 0.:
             # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将小于buy_min的金额置0
             cash_to_spend = np.where(cash_to_spend < self.buy_min, 0, cash_to_spend)
@@ -204,8 +204,7 @@ class Cost:
             fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0.)
             purchased_values = a_purchased * prices + fees
             cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
-            fee = fees.sum()
-        elif self.buy_fix:
+        else:  # self.buy_fix
             # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将小于buy_fix的金额置0
             cash_to_spend = np.where(cash_to_spend < self.buy_fix, 0, cash_to_spend)
             fixed_fees = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
@@ -220,8 +219,8 @@ class Cost:
                                                0.),
                                       0.)
             cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0.)
-            fee = np.where(a_purchased, fixed_fees, 0.).sum()
-        return a_purchased, cash_spent.sum(), fee
+            fees = np.where(a_purchased, fixed_fees, 0.)
+        return a_purchased, cash_spent, fees
 
 
 # TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式

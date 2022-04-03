@@ -4065,10 +4065,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4089,10 +4089,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[2][7] + c_g + c_s
+        cash = self.pt_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
@@ -4113,10 +4113,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[30][7] + c_g + c_s
+        cash = self.pt_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
@@ -4137,10 +4137,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[59][7] + c_g + c_s + 10000
+        cash = self.pt_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
@@ -4161,10 +4161,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
@@ -4185,10 +4185,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[96][7] + c_g + c_s
+        cash = self.pt_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
@@ -4209,10 +4209,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
@@ -4235,10 +4235,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4259,10 +4259,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[2][7] + c_g + c_s
+        cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
@@ -4283,10 +4283,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[30][7] + c_g + c_s
+        cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
@@ -4307,10 +4307,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[59][7] + c_g + c_s + 10000
+        cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
@@ -4331,10 +4331,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
@@ -4355,10 +4355,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[96][7] + c_g + c_s
+        cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
@@ -4379,10 +4379,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
@@ -4405,10 +4405,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4429,10 +4429,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[2][7] + c_g + c_s
+        cash = self.ps_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
@@ -4453,10 +4453,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[30][7] + c_g + c_s
+        cash = self.ps_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
@@ -4477,10 +4477,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[59][7] + c_g + c_s + 10000
+        cash = self.ps_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
@@ -4501,10 +4501,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
@@ -4525,10 +4525,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[96][7] + c_g + c_s
+        cash = self.ps_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
@@ -4549,10 +4549,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
@@ -4575,10 +4575,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4599,10 +4599,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[2][7] + c_g + c_s
+        cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
@@ -4623,10 +4623,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[30][7] + c_g + c_s
+        cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
@@ -4647,10 +4647,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[59][7] + c_g + c_s + 10000
+        cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
@@ -4671,10 +4671,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
@@ -4695,10 +4695,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[96][7] + c_g + c_s
+        cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
@@ -4719,10 +4719,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
@@ -4745,10 +4745,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
@@ -4769,10 +4769,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[2][7] + c_g + c_s
+        cash = self.vs_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
@@ -4793,10 +4793,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[30][7] + c_g + c_s
+        cash = self.vs_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
@@ -4817,10 +4817,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[59][7] + c_g + c_s + 10000
+        cash = self.vs_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
@@ -4841,10 +4841,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
@@ -4865,10 +4865,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[96][7] + c_g + c_s
+        cash = self.vs_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
@@ -4889,10 +4889,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
@@ -4915,10 +4915,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
@@ -4939,10 +4939,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[2][7] + c_g + c_s
+        cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
@@ -4963,10 +4963,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[30][7] + c_g + c_s
+        cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
@@ -4987,10 +4987,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[59][7] + c_g + c_s + 10000
+        cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
@@ -5011,10 +5011,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
@@ -5035,10 +5035,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[96][7] + c_g + c_s
+        cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
@@ -5059,10 +5059,10 @@ class TestLoop(unittest.TestCase):
                                                      moq_sell=0,
                                                      print_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
@@ -5643,8 +5643,8 @@ class TestLoop(unittest.TestCase):
                          history_list=self.multi_history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
-                         moq_buy=0,
-                         moq_sell=0,
+                         moq_buy=1,
+                         moq_sell=1,
                          cash_delivery_period=0,
                          stock_delivery_period=2,
                          max_cash_usage=True,

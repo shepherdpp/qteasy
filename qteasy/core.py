@@ -170,7 +170,7 @@ def _loop_step(signal_type: int,
     if np.all(op == 0) and signal_type > 0:
         # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
         # 因为正好op全为0，因此返回op即可
-        return 0, 0, op, op, 0
+        return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
 
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
@@ -296,15 +296,15 @@ def _loop_step(signal_type: int,
                 else:
                     print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
                           f'暂停交易，出售 {0.0} 份')
-            print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-                  f'交易后现金余额: {(available_cash + cash_gained):.3f}')
+            print(f'获得现金 {cash_gained.sum():.2f} 并产生交易费用 {fee_selling.sum():.2f}, '
+                  f'交易后现金余额: {(available_cash + cash_gained.sum()):.3f}')
         else:
             print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
         # 现金余额 = 期初现金余额 + 本次出售资产获得现金总额
-        available_cash += cash_gained
+        available_cash += cash_gained.sum()
 
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     total_cash_to_spend = cash_to_spend.sum()
@@ -313,7 +313,7 @@ def _loop_step(signal_type: int,
         # 如果买入计划为0，则直接跳过后续的计算
         if print_log:
             print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
-        return cash_gained, 0, np.zeros_like(op), amount_sold, fee_selling
+        return cash_gained, np.zeros_like(op), np.zeros_like(op), amount_sold, fee_selling
 
     if total_cash_to_spend > available_cash:
         # 按比例降低分配给每个拟买入资产的现金额，如果金额特别小，将数额置0
@@ -337,7 +337,7 @@ def _loop_step(signal_type: int,
             for i in item_purchased:
                 print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
                       f' 买入 {np.round(amount_purchased[i], 2)} 份')
-            print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+            print(f'实际花费现金 {-cash_spent.sum():.2f} 并产生交易费用: {fee_buying.sum():.2f}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
@@ -537,6 +537,10 @@ def apply_loop(op_type: int,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
+    op_matrix_cash_changes = []
+    op_matrix_amount_changes = []
+    op_matrix_prices = []
+    op_matrix_fees = []
     if looped_dates[0].time() == datetime.time(0, 0):
         date_print_format = '%Y/%m/%d, %A'
     else:
@@ -583,6 +587,7 @@ def apply_loop(op_type: int,
                         print(f'股票交割期满({stock_delivery_period})，以下资产交割完成：{np.around(stock_delivered, 2)}\n'
                               f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
+            current_prices = price[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
                     own_cash=own_cash,
@@ -590,7 +595,7 @@ def apply_loop(op_type: int,
                     available_cash=available_cash,
                     available_amounts=available_amounts,
                     op=op[:, i, j],
-                    prices=price[:, i, j],
+                    prices=current_prices,
                     rate=cost_rate,
                     pt_buy_threshold=pt_buy_threshold,
                     pt_sell_threshold=pt_sell_threshold,
@@ -603,12 +608,12 @@ def apply_loop(op_type: int,
             )
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
             if (prev_date != current_date) or (cash_delivery_period == 0):
-                cash_delivery_queue.append(cash_gained)
+                cash_delivery_queue.append(cash_gained.sum())
                 if print_log:
                     print(f'新增交割现金 - 本轮交易获得的现金: '
-                          f'{cash_gained:.2f}')
+                          f'{cash_gained.sum():.2f}')
             else:
-                cash_delivery_queue[-1] += cash_gained
+                cash_delivery_queue[-1] += cash_gained.sum()
                 if print_log:
                     print(f'同批累计交割 - 本轮交易累计获得的现金: '
                           f'{cash_delivery_queue[-1]:.2f}')
@@ -627,13 +632,21 @@ def apply_loop(op_type: int,
 
             prev_date = current_date
             # 持有现金、持有股票用于计算本期的总价值
-            available_cash += cash_spent
+            available_cash += cash_spent.sum()
             available_amounts += amount_sold
-            own_cash = own_cash + cash_gained + cash_spent
-            own_amounts = own_amounts + amount_sold + amount_purchased
-            total_stock_value = (own_amounts * price[:, i, j]).sum()
+            cash_changed = cash_gained + cash_spent
+            own_cash = own_cash + cash_changed.sum()
+            amount_changed = amount_sold + amount_purchased
+            own_amounts = own_amounts + amount_changed
+            total_stock_value = (own_amounts * current_prices).sum()
             total_value = total_stock_value + own_cash
-            sub_total_fee += fee
+            sub_total_fee += fee.sum()
+            # 生成op_log所需的数据
+            if print_log:
+                op_matrix_cash_changes.append(cash_changed)
+                op_matrix_amount_changes.append(amount_changed)
+                op_matrix_fees.append(fee)
+                op_matrix_prices.append(current_prices)
 
         # 打印本日结果
         if print_log:
@@ -648,6 +661,21 @@ def apply_loop(op_type: int,
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=op_list.hdates,
                                  columns=shares)
+    # 生成op_log，index为MultiIndex，因为每天的交易有多种价格
+    if print_log:
+        op_log_index = pd.MultiIndex.from_product([looped_dates, price_types], names=('date', 'price'))
+        op_log_columns = pd.MultiIndex.from_product([['price_type', 'cash', 'amount', 'fee'], shares],
+                                                    names=('types', 'shares'))
+        op_log_df = pd.concat(
+                [pd.DataFrame(op_matrix_prices),
+                 pd.DataFrame(op_matrix_cash_changes),
+                 pd.DataFrame(op_matrix_amount_changes),
+                 pd.DataFrame(op_matrix_fees)],
+                axis=1
+        )
+        op_log_df.index = op_log_index
+        op_log_df.columns = op_log_columns
+        op_log_df.to_csv('op_log_df.csv')
 
     # 填充标量计算结果
     value_history['cash'] = cashes
