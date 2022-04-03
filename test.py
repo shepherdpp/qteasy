@@ -9284,6 +9284,21 @@ class TestUtilityFuncs(unittest.TestCase):
         print(_wildcard_match('wor.?', wordlist))
         print(_wildcard_match('?o?', wordlist))
 
+    def test_match_ts_code(self):
+        """ 测试匹配ts_code"""
+        print(f"matching {'000001'}: \n{match_ts_code('000001')}")
+        print(f"matching {'000001.CZC'}: \n{match_ts_code('000001.CZC')}")
+        print(f"matching {'ABC.CZC'}: \n{match_ts_code('ABC.CZC')}")
+        print(f"matching {'中国电信'}: \n{match_ts_code('中国电信')}")
+        print(f"matching {'嘉实服务'}: \n{match_ts_code('嘉实服务')}")
+        print(f"matching {'中?集团'}: \n{match_ts_code('中?集团')}")
+        print(f"matching {'中*金'}: \n{match_ts_code('中*金')}")
+        print(f"matching {'工商银行'}: \n{match_ts_code('工商银行')}")
+        print(f"matching {'贵州钢绳'}: \n{match_ts_code('贵州钢绳')}")
+        print(f"matching {'贵州钢绳'} with match_full_name: \n{match_ts_code('贵州钢绳', match_full_name=True)}")
+        print(f"matching {'招商银行'} with asset_type = 'E, FD': \n{match_ts_code('招商银行', asset_types='E, FD')}")
+        print(f"matching {'贵阳银行'} with asset_type = 'E, FT': \n{match_ts_code('贵阳银行', asset_types='E, FT')}")
+
 
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
@@ -11714,15 +11729,7 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_time(self):
-        print(match_ts_code('000001'))
-        print(match_ts_code('中国电信'))
-        print(match_ts_code('嘉实服务'))
-        print(match_ts_code('中?集团'))
-        print(match_ts_code('中*金'))
-        print(match_ts_code('工商银行'))
-
-        print(match_ts_code('招商银行', asset_types='E, FD'))
-        print(match_ts_code('贵阳银行', asset_types='E, FT'))
+        pass
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
