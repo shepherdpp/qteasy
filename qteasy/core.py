@@ -75,7 +75,7 @@ def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
                available_cash: float,
-               available_amounts: np.ndarray,
+               available_amounts: (np.ndarray, float),
                op: np.ndarray,
                prices: np.ndarray,
                rate: Cost,
@@ -537,16 +537,11 @@ def apply_loop(op_type: int,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    # 测试两种不同的op_log_table方法：
+    # 保存trade_log_table数据：
+    op_log_add_invest = []
     op_log_cash = []
+    op_log_available_cash = []
     op_log_value = []
-    # 第一种，操作要素并列排列，需要五个不同的matrix存储数据
-    # op_matrix_cash_changes = []
-    # op_matrix_amount_changes = []
-    # op_matrix_prices = []
-    # op_matrix_fees = []
-    # op_matrix_amount_owns = []
-    # 第二种，操作要素串列排列，只需要一个matrix存储数据：
     op_log_matrix = []
     if looped_dates[0].time() == datetime.time(0, 0):
         date_print_format = '%Y/%m/%d, %A'
@@ -568,8 +563,9 @@ def apply_loop(op_type: int,
             #           f'现金增值到{own_cash:.2f}')
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
-            own_cash += invest_dict[i]
-            available_cash += invest_dict[i]
+            additional_invest = invest_dict[i]
+            own_cash += additional_invest
+            available_cash += additional_invest
             # if print_log:
             #     print(f'本期新增投入现金, 本期现金: {(own_cash - invest_dict[i]):.2f}, 追加投资后现金增加到{own_cash:.2f}')
         for j in range(price_type_count):
@@ -595,13 +591,14 @@ def apply_loop(op_type: int,
                     #           f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i, j]
+            current_op = op[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
                     own_cash=own_cash,
                     own_amounts=own_amounts,
                     available_cash=available_cash,
                     available_amounts=available_amounts,
-                    op=op[:, i, j],
+                    op=current_op,
                     prices=current_prices,
                     rate=cost_rate,
                     pt_buy_threshold=pt_buy_threshold,
@@ -645,25 +642,24 @@ def apply_loop(op_type: int,
             own_cash = own_cash + cash_changed.sum()
             amount_changed = amount_sold + amount_purchased
             own_amounts = own_amounts + amount_changed
-            total_stock_value = (own_amounts * current_prices).sum()
+            total_stock_values = (own_amounts * current_prices)
+            total_stock_value = total_stock_values.sum()
             total_value = total_stock_value + own_cash
             sub_total_fee += fee.sum()
-            # 生成op_log所需的数，测试两种不同的表格排列方法：
-            # 第一种方法：不同的要素并列排列，数据保存到不同的matrix中：
-            # if print_log:
-            #     op_matrix_cash_changes.append(np.round(cash_changed, 3))
-            #     op_matrix_amount_changes.append(np.round(amount_changed, 3))
-            #     op_matrix_fees.append(np.round(fee, 3))
-            #     op_matrix_prices.append(np.round(current_prices, 3))
-            #     op_matrix_amount_owns.append(np.round(own_amounts, 3))
-            # 第二种方法：不同的要素串列排列，数据保存到同一个matrix中
+            # 生成trade_log所需的数据，采用串列式表格排列：
             if print_log:
+                op_log_matrix.append(np.round(current_op, 3))
                 op_log_matrix.append(np.round(current_prices, 3))
                 op_log_matrix.append(np.round(amount_changed, 3))
                 op_log_matrix.append(np.round(cash_changed, 3))
                 op_log_matrix.append(np.round(fee, 3))
                 op_log_matrix.append(np.round(own_amounts, 3))
+                op_log_matrix.append(np.round(available_amounts, 3))
+                op_log_matrix.append(np.round(total_stock_values, 3))
+                op_log_add_invest.append(np.round(additional_invest, 3))
+                additional_invest = 0
                 op_log_cash.append(np.round(own_cash, 3))
+                op_log_available_cash.append(np.round(available_cash, 3))
                 op_log_value.append(np.round(total_value, 3))
 
         # 打印本日结果
@@ -679,41 +675,64 @@ def apply_loop(op_type: int,
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=op_list.hdates,
                                  columns=shares)
-    # 生成op_log，index为MultiIndex，因为每天的交易可能有多种价格
-    # 测试两种不同的op_log存储方法，
-    # 第一种方法：op_log中的要素并排排列
-    # if print_log:
-    #     op_log_index = pd.MultiIndex.from_product([looped_dates, price_types], names=('date', 'price_type'))
-    #     op_log_columns = pd.MultiIndex.from_product([['price', 'amt', 'cash', 'fee', 'own'], (str(s) for s in shares)],
-    #                                                 names=('types', 'shares'))
-    #     op_log_df = pd.concat(
-    #             [pd.DataFrame(op_matrix_prices),
-    #              pd.DataFrame(op_matrix_amount_changes),
-    #              pd.DataFrame(op_matrix_cash_changes),
-    #              pd.DataFrame(op_matrix_fees),
-    #              pd.DataFrame(op_matrix_amount_owns)],
-    #             axis=1
-    #     )
-    #     op_sum_df = pd.DataFrame([op_log_cash, op_log_value], columns=['own_cash', 'value'], index=op_log_index)
-    #     op_log_df.index = op_log_index
-    #     op_log_df.columns = op_log_columns
-    #     op_log_df.join(op_sum_df).to_csv('op_log_parallel.csv')
-    # 第二种方法：op_log中的要素串列排列：
+    # 生成trade_log，index为MultiIndex，因为每天的交易可能有多种价格
     if print_log:
+        # create complete trading log
+        print(f'generating complete trading log ...')
         op_log_index = pd.MultiIndex.from_product(
-                [looped_dates, price_types, ['1,price', '2,traded', '3,cash', '4,fee', '5,own']],
+                [looped_dates,
+                 price_types,
+                 ['0, trade signal',
+                  '1, price',
+                  '2, traded amounts',
+                  '3, cash changed',
+                  '4, trade cost',
+                  '5, own amounts',
+                  '6, available amounts',
+                  '7, summary']],
                 names=('date', 'trade_on', 'item')
         )
         op_sum_index = pd.MultiIndex.from_product(
-                [looped_dates, price_types, ['summary']],
+                [looped_dates,
+                 price_types,
+                 ['7, summary']],
                 names=('date', 'trade_on', 'item')
         )
         op_log_columns = [str(s) for s in shares]
         op_log_df = pd.DataFrame(op_log_matrix, index=op_log_index, columns=op_log_columns)
-        op_summary_df = pd.DataFrame([op_log_cash, op_log_value],
-                                     index=['own_cash', 'value'],
+        op_summary_df = pd.DataFrame([op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value],
+                                     index=['add. invest', 'own cash', 'available cash', 'value'],
                                      columns=op_sum_index).T
-        op_log_df.join(op_summary_df, how='outer', sort=False).to_csv('op_log_serial.csv')
+        op_summary_df.join(op_log_df, how='right', sort=False).to_csv('op_log_complete.csv')
+        # 生成 trade log 摘要表 (a more concise and human-readable format of trading log
+        # create share trading logs:
+        print(f'generating abstract trading log ...')
+        share_logs = []
+        for share in op_log_columns:
+            share_df = op_log_df[share].unstack()
+            share_df = share_df[share_df['2, traded amounts'] != 0]
+            share_df['code'] = share
+            try:
+                share_name = get_stock_name()
+            except Exception:
+                share_name = 'unknown'
+            share_df['name'] = share_name
+            share_logs.append(share_df)
+
+        re_columns = ['code',
+                      'name',
+                      '0, trade signal',
+                      '1, price',
+                      '2, traded amounts',
+                      '3, cash changed',
+                      '4, trade cost',
+                      '5, own amounts',
+                      '6, available amounts',
+                      '7, summary']
+        op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
+        # 如果how == 'left' 保留无交易日期的记录
+        # 如果how == 'right', 不显示无交易日期的记录
+        op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv('op_log_abstract.csv')
 
     # 填充标量计算结果
     value_history['cash'] = cashes

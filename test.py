@@ -11248,8 +11248,7 @@ class TestQT(unittest.TestCase):
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
-        qt.run(op, visual=True, trade_batch_size=100)
-        qt.run(op, visual=False, print_backtest_log=True, trade_batch_size=100)
+        qt.run(op, visual=True, print_backtest_log=True, trade_batch_size=100)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance
@@ -11298,7 +11297,7 @@ class TestQT(unittest.TestCase):
                          _poq=30)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
-        qt.run(op, visual=True, print_backtest_log=True)
+        qt.run(op, visual=False, print_backtest_log=True)
 
 
 class TestVisual(unittest.TestCase):
