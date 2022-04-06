@@ -1074,7 +1074,7 @@ class FactoralSelecting(Strategy):
         condition = self.condition
         lbound = self.lbound
         ubound = self.ubound
-        sort_ascending = self.sort_ascending
+        sort_ascending = self.sort_ascending  # True: 选择最小的，Fals: 选择最大的
         weighting = self.weighting
 
         share_count = hist_data.shape[0]
@@ -1088,8 +1088,7 @@ class FactoralSelecting(Strategy):
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(hist_data, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
-
-        factors = self._realize(hist_data=hist_data, params=self.pars)
+        factors = self._realize(hist_data=hist_data, params=self.pars).squeeze()
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -1103,7 +1102,8 @@ class FactoralSelecting(Strategy):
         elif condition == 'not_between':
             factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
         else:
-            raise ValueError(f'indication selection condition \'{condition}\' not supported!')
+            raise ValueError(f'invalid selection condition \'{condition}\''
+                             f'should be one of ["any", "greater", "less", "between", "not_between"]')
         nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
         if nan_count == share_count:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
             return chosen
@@ -1151,9 +1151,11 @@ class FactoralSelecting(Strategy):
             else:
                 chosen[args] = dist / dist.sum()
         # even：均匀分配，所有中选股票在组合中权重相同
-        else:  # self.__distribution == 'even'
-
+        elif weighting == 'even':
             chosen[args] = 1. / arg_count
+        else:
+            raise KeyError(f'invalid weighting type: "{weighting}". '
+                           f'should be one of ["linear", "proportion", "even"]')
         return chosen
 
     # TODO：需要重新定义FactoralSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
@@ -1179,24 +1181,27 @@ class FactoralSelecting(Strategy):
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
         # 一个空的ndarray对象用于存储生成的选股蒙版
         sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
-        # 原来的函数实际上使用未来的数据生成今天的结果，这样是错误的
-        # 例如，对于seg_start = 0，seg_lengt = 6的时候，使用seg_start:seg_start + seg_length的数据生成seg_start的数据，
-        # 也就是说，用第0:6天的数据，生成了第0天的信号
-        # 因此，seg_start不应该是seg_pos[0]，而是seg_pos[1]的数，因为这才是真正应该开始计算的第一条信号
-        # 正确的方法是用seg_start:seg_length的数据生成seg_start+seg_length那天的信号，即
-        # 使用0:6天的数据（不含第6天）生成第6天的信号
-        # 不过这样会带来一个变化，即生成全部操作信号需要更多的历史数据，包括第一个信号所在日期之前window_length日的数据
+        # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
+        # 例如，假设seg_start = 0，seg_length = 6时，
+        # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
+        # 由于第1天的操作信号需要第一个信号所在日期之前window_length日的数据
         # 因此在输出数据的时候需要将前window_length个数据截取掉
         seg_start = seg_pos[1]
+        wl = self.window_length
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
-        # TODO: 可以使用map函数生成分段
+        # TODO: 应该使用asstrided生成分段
+        # TODO: 在sel策略中依赖np.roll()来生成信号的做法有很大的问题
+        # TODO: 因为np.roll()会产生循环，例如：
+        # TODO: 设 data = array([1, 6, 1, 4, 9])
+        # TODO: 则np.roll(data, 2)和np.roll(data, 7)会产生同样的结果：
+        # TODO:     np.roll(data, 2) = array([4, 9, 1, 6, 1])
+        # TODO:     np.roll(data, 7) = array([4, 9, 1, 6, 1])
+        # TODO:
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
-            # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._process_factors(hist_data[:, sp - sl:sp, :])
-            # assert isinstance(share_sel, np.ndarray)
-            # assert len(share_sel) == len(shares)
+            # 提取当前分段起点以前的数据，计算当前分段起点的选股比例
+            share_sel = self._process_factors(hist_data[:, sp - wl:sp, :])
             seg_end = seg_start + fill_len
-            # 填充相同的投资组合到当前区间内的所有交易时间点
+            # 将同样的选股比例填充到当前分段起点开始以后的所有时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray

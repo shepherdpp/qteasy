@@ -456,7 +456,6 @@ class HistoryPanel():
             htypes = str_to_list(htypes)
         if not isinstance(htypes, list):
             raise KeyError(f'wrong htypes are given!')
-
         new_values = self[htypes, shares]
         return HistoryPanel(new_values, levels=shares, columns=htypes, rows=self.hdates)
 

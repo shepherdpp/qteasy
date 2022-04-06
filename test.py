@@ -11705,18 +11705,40 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        op_min = qt.Operator(strategies='DMA', signal_type='ps')
-        op_min.set_parameter('dma', data_freq='h', sample_freq='h')
-        op_min.info()
-        op_min['dma'].info()
-
-        qt.configure(asset_pool=['000300.SH'], asset_type='IDX')
-        qt.run(op_min,
-               invest_start='20200101',
-               invest_end='20200401',
-               visual=True,
-               print_backtest_log=True
-        )
+        op = qt.Operator(strategies='ndaychg', signal_type='pt')
+        op.set_parameter(0,
+                         data_freq='d',
+                         sample_freq='w',
+                         condition='any',
+                         sort_ascending=True,
+                         ubound=0,
+                         weighting='linear',
+                         _poq=3,
+                         pars=(30, ),
+                         data_types='open')
+        op.set_blender(blender='0')
+        print('--------------------------')
+        op.info()
+        print('--------------------------')
+        op['ndaychg'].info()
+        print('--------------------------')
+        print(op.op_data_type_list)
+        qt.configure(asset_pool=['000001.SZ',
+                                 '000002.SZ',
+                                 '000005.SZ',
+                                 '000006.SZ',
+                                 '000007.SZ',
+                                 '000009.SZ',
+                                 '000100.SZ'],
+                     asset_type='E',
+                     visual=True,
+                     print_backtest_log=False)
+        res = qt.run(op,
+                     visual=True,
+                     print_backtest_log=True,
+                     invest_start='20160725',
+                     trade_batch_size=100,
+                     sell_batch_size=100)
 
     def test_fast_experiments2(self):
         pass

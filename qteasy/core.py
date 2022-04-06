@@ -1064,7 +1064,7 @@ def check_and_prepare_hist_data(operator, config):
                     pd.Timedelta(int(window_length * 1.6), 'd')),
             end=invest_end,
             shares=config.asset_pool,
-            htypes=operator.op_data_types,
+            htypes=operator.all_price_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj) if run_mode <= 1 else HistoryPanel()

@@ -397,6 +397,12 @@ class Operator:
         return p_types
 
     @property
+    def all_price_data_types(self):
+        """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
+        all_types = set(self.op_data_types).union(self.bt_price_types)
+        return list(all_types)
+
+    @property
     def op_data_type_list(self):
         """ 返回一个列表，列表中的每个元素代表每一个策略所需的历史数据类型"""
         return [stg.data_types for stg in self.strategies]
@@ -513,6 +519,7 @@ class Operator:
             return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
+            # 当输入的item明显不符合要求是，仍然返回结果，是否不合理？
             item = strategy_count - 1
         return self._strategies[all_ids[item]]
 
