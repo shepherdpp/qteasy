@@ -2161,112 +2161,41 @@ class SelectingFinanceIndicator(stg.FactoralSelecting):
         return factors
 
 
-class SelectingLastOpen(stg.FactoralSelecting):
-    """ 根据股票昨天的开盘价确定选股权重
+class SelectingNDayLast(stg.FactoralSelecting):
+    """ 以股票过去N天前的量价作为选股指标
+        N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
+        默认的data_types为'close'
 
     """
 
-    def __init__(self, pars=()):
+    def __init__(self, pars=(2,)):
         super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_bounds_or_enums=[],
+                         par_count=1,
+                         par_types=['discr'],
+                         par_bounds_or_enums=[(2, 100)],
                          stg_name=' LAST OPEN',
-                         stg_text='Select stocks according their last open price',
+                         stg_text='Select stocks according their previous prices',
                          data_freq='d',
-                         sample_freq='y',
-                         window_length=2,
-                         data_types='open')
-
-    def _realize(self, hist_data, params):
-        """ 获取的数据为昨天的开盘价
-
-        """
-        factors = hist_data[:, 0]
-
-        return factors
-
-
-class SelectingLastClose(stg.FactoralSelecting):
-    """ 根据股票昨天的收盘价确定选股权重
-
-    """
-
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_bounds_or_enums=[],
-                         stg_name='LAST CLOSE',
-                         stg_text='Select stocks according their last close price',
-                         data_freq='d',
-                         sample_freq='y',
-                         window_length=2,
+                         sample_freq='m',
+                         window_length=100,
                          data_types='close')
 
     def _realize(self, hist_data, params):
-        """ 获取的数据为昨天的开盘价
+        """ 以股票过去N天前的量价作为选股指标
+            N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
+            默认的data_types为'close'
 
         """
-        factors = hist_data[:, 0]
+        n, = self.pars
+        factors = hist_data[:, -n-1, 0]
 
         return factors
 
 
-class SelectingLastHigh(stg.FactoralSelecting):
-    """ 根据股票昨天的最高价确定选股权重
-
-    """
-
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_bounds_or_enums=[],
-                         stg_name='LAST HIGH',
-                         stg_text='Select stocks according their last high price',
-                         data_freq='d',
-                         sample_freq='y',
-                         window_length=2,
-                         data_types='high')
-
-    def _realize(self, hist_data, params):
-        """ 获取的数据为昨天的开盘价
-
-        """
-        factors = hist_data[:, 0]
-
-        return factors
-
-
-class SelectingLastLow(stg.FactoralSelecting):
-    """ 根据股票昨天的最低价确定选股权重
-
-    """
-
-    def __init__(self, pars=()):
-        super().__init__(pars=pars,
-                         par_count=0,
-                         par_types=[],
-                         par_bounds_or_enums=[],
-                         stg_name='LAST LOW',
-                         stg_text='Select stocks according their last low price',
-                         data_freq='d',
-                         sample_freq='y',
-                         window_length=2,
-                         data_types='low')
-
-    def _realize(self, hist_data, params):
-        """ 获取的数据为昨天的开盘价
-
-        """
-        factors = hist_data[:, 0]
-
-        return factors
-
-
-class SelectingAvgOpen(stg.FactoralSelecting):
-    """ 根据股票以前n天的平均开盘价选股
+class SelectingNDayAvg(stg.FactoralSelecting):
+    """ 根据股票以前n天的平均价格选股
+        价格类型可以选open/high/low/close/vol等
+        具体的价格类型在data_types属性中设置，默认价格为'close'
 
         策略参数为n，一个大于2小于150的正整数
 
@@ -2275,27 +2204,29 @@ class SelectingAvgOpen(stg.FactoralSelecting):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['int'],
+                         par_types=['discr'],
                          par_bounds_or_enums=[(2, 150)],
                          stg_name='AVG OPEN',
                          stg_text='Select stocks by its N day average open price',
                          data_freq='d',
                          sample_freq='M',
                          window_length=150,
-                         data_types='open')
+                         data_types='close')
 
     def _realize(self, hist_data, params):
         """ 获取的数据为昨天的开盘价
 
         """
         n, = self.pars
-        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
+        n_average = hist_data[:, -n-1:, 0].mean(axis=1)
+        factors = n_average
 
         return factors
 
 
-class SelectingAvgClose(stg.FactoralSelecting):
-    """ 根据股票以前n天的平均最低价选股
+class SelectingNDayChange(stg.FactoralSelecting):
+    """ 根据股票以前n天的股价变动幅度作为选股因子
+        具体的价格类型在data_types属性中设置，默认价格为'close'
 
         策略参数为n，一个大于2小于150的正整数
 
@@ -2304,10 +2235,10 @@ class SelectingAvgClose(stg.FactoralSelecting):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['int'],
+                         par_types=['discr'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='AVG CLOSE',
-                         stg_text='Select stocks by its N day average close price',
+                         stg_name='N-DAY CHANGE',
+                         stg_text='Select stocks by its N day price change',
                          data_freq='d',
                          sample_freq='M',
                          window_length=150,
@@ -2318,71 +2249,16 @@ class SelectingAvgClose(stg.FactoralSelecting):
 
         """
         n, = self.pars
-        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
+        current_price = hist_data[:, -1, 0]
+        n_previous = hist_data[:, -n-1, 0]
+        factors = current_price - n_previous
 
         return factors
 
 
-class SelectingAvgLow(stg.FactoralSelecting):
-    """ 根据股票以前n天的平均最低价选股
-
-        策略参数为n，一个大于2小于150的正整数
-
-    """
-
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_bounds_or_enums=[(2, 150)],
-                         stg_name='AVG LOW',
-                         stg_text='Select stocks by its N day average low price',
-                         data_freq='d',
-                         sample_freq='M',
-                         window_length=150,
-                         data_types='low')
-
-    def _realize(self, hist_data, params):
-        """ 获取的数据为昨天的开盘价
-
-        """
-        n, = self.pars
-        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
-
-        return factors
-
-
-class SelectingAvghigh(stg.FactoralSelecting):
-    """ 根据股票以前n天的平均最高价选股
-
-        策略参数为n，一个大于2小于150的正整数
-
-    """
-
-    def __init__(self, pars=(14,)):
-        super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_bounds_or_enums=[(2, 150)],
-                         stg_name='AVG HIGH',
-                         stg_text='Select stocks by its N day average high price',
-                         data_freq='d',
-                         sample_freq='M',
-                         window_length=150,
-                         data_types='high')
-
-    def _realize(self, hist_data, params):
-        """ 获取的数据为昨天的开盘价
-
-        """
-        n, = self.pars
-        factors = np.nanmean(hist_data[:, -n:-1], axis=1).squeeze()
-
-        return factors
-
-
-class SelectingNDayChange(stg.FactoralSelecting):
-    """ 根据股票以前n天的股价变动幅度作为选股因子
+class SelectingNDayRateChange(stg.FactoralSelecting):
+    """ 根据股票以前n天的股价变动比例作为选股因子
+        具体的价格类型在data_types属性中设置，默认价格为'close'
 
         策略参数为n，一个大于2小于150的正整数
 
@@ -2405,7 +2281,9 @@ class SelectingNDayChange(stg.FactoralSelecting):
 
         """
         n, = self.pars
-        factors = (hist_data - np.roll(hist_data, n, axis=1))[:, -1]
+        current_price = hist_data[:, -1, 0]
+        n_previous = hist_data[:, -n-1, 0]
+        factors = (current_price - n_previous) / n_previous
 
         return factors
 
@@ -2506,14 +2384,9 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'none':          SelectingNone,
                        'random':        SelectingRandom,
                        'finance':       SelectingFinanceIndicator,
-                       'last_open':     SelectingLastOpen,
-                       'last_close':    SelectingLastClose,
-                       'last_high':     SelectingLastHigh,
-                       'last_low':      SelectingLastLow,
-                       'avg_open':      SelectingAvgOpen,
-                       'avg_close':     SelectingAvgClose,
-                       'avg_high':      SelectingAvghigh,
-                       'avg_low':       SelectingAvgLow,
+                       'ndaylast':      SelectingNDayLast,
+                       'ndayavg':       SelectingNDayAvg,
+                       'ndayrate':      SelectingNDayRateChange,
                        'ndaychg':       SelectingNDayChange,
                        'ndayvol':       SelectingNDayVolatility
                        }

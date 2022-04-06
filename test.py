@@ -11705,12 +11705,12 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        op = qt.Operator(strategies='ndaychg', signal_type='pt')
+        op = qt.Operator(strategies='ndayavg', signal_type='pt')
         op.set_parameter(0,
                          data_freq='d',
-                         sample_freq='w',
+                         sample_freq='m',
                          condition='any',
-                         sort_ascending=True,
+                         sort_ascending=False,
                          ubound=0,
                          weighting='linear',
                          _poq=3,
@@ -11720,7 +11720,7 @@ class FastExperiments(unittest.TestCase):
         print('--------------------------')
         op.info()
         print('--------------------------')
-        op['ndaychg'].info()
+        op[0].info()
         print('--------------------------')
         print(op.op_data_type_list)
         qt.configure(asset_pool=['000001.SZ',
