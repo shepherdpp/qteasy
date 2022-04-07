@@ -1257,51 +1257,63 @@ class DataSource:
                                f'Exception:\n{e}\n'
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
 
-    def get_db_table_coverage(self, table, column):
+    def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
 
-        :param table: 数据表名
+        :param db_table: 数据表名
         :param column: 数据表的字段名
         :return:
         """
         import datetime
-        if not self.db_table_exists(table):
+        if not self.db_table_exists(db_table):
             return list()
         sql = f'SELECT DISTINCT `{column}`' \
-              f'FROM `{table}`' \
+              f'FROM `{db_table}`' \
               f'ORDER BY `{column}`'
-        self.cursor.execute(sql)
-        self.con.commit()
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
 
-        res = [item[0] for item in self.cursor.fetchall()]
-        if isinstance(res[0], datetime.datetime):
-            res = list(pd.to_datetime(res).strftime('%Y%m%d'))
-        return res
+            res = [item[0] for item in self.cursor.fetchall()]
+            if isinstance(res[0], datetime.datetime):
+                res = list(pd.to_datetime(res).strftime('%Y%m%d'))
+            return res
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Exception:\n{e}\n'
+                               f'Error during querying data from db_table {db_table} with following sql:\n'
+                               f'SQL:\n{sql} \n')
 
-    def get_db_table_minmax(self, table, column, with_count=False):
+    def get_db_table_minmax(self, db_table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
 
-        :param table: 数据表名
+        :param db_table: 数据表名
         :param column: 数据表的字段名
         :param with_count: 是否返回关键列值的数量，可能非常耗时
         :return:
         """
         import datetime
-        if not self.db_table_exists(table):
+        if not self.db_table_exists(db_table):
             return list()
         if with_count:
             add_sql = f', COUNT(DISTINCT(`{column}`))'
         else:
             add_sql = ''
         sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} ' \
-              f'FROM `{table}`'
-        self.cursor.execute(sql)
-        self.con.commit()
+              f'FROM `{db_table}`'
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
 
-        res = list(self.cursor.fetchall()[0])
-        if isinstance(res[0], datetime.datetime):
-            res = list(pd.to_datetime(res).strftime('%Y%m%d'))
-        return res
+            res = list(self.cursor.fetchall()[0])
+            if isinstance(res[0], datetime.datetime):
+                res = list(pd.to_datetime(res).strftime('%Y%m%d'))
+            return res
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Exception:\n{e}\n'
+                               f'Error during querying data from db_table {db_table} with following sql:\n'
+                               f'SQL:\n{sql} \n')
 
     def db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
@@ -1312,10 +1324,16 @@ class DataSource:
         if self.source_type == 'file':
             raise RuntimeError('can not connect to database while source type is "file"')
         sql = f"SHOW TABLES LIKE '{db_table}'"
-        self.cursor.execute(sql)
-        self.con.commit()
-        res = self.cursor.fetchall()
-        return len(res) > 0
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
+            res = self.cursor.fetchall()
+            return len(res) > 0
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Exception:\n{e}\n'
+                               f'Error during querying data from db_table {db_table} with following sql:\n'
+                               f'SQL:\n{sql} \n')
 
     def new_db_table(self, db_table, columns, dtypes, primary_key):
         """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
@@ -1368,15 +1386,18 @@ class DataSource:
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'" \
               f"ORDER BY ordinal_position"
-
-        self.cursor.execute(sql)
-        self.con.commit()
-        results = self.cursor.fetchall()
-        # 为了方便，将cur_columns和new_columns分别包装成一个字典
-        columns = {}
-        for col, typ in results:
-            columns[col] = typ
-        return columns
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
+            results = self.cursor.fetchall()
+            # 为了方便，将cur_columns和new_columns分别包装成一个字典
+            columns = {}
+            for col, typ in results:
+                columns[col] = typ
+            return columns
+        except Exception as e:
+            self.con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
     def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
@@ -1389,8 +1410,12 @@ class DataSource:
         if not isinstance(db_table, str):
             raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
         sql = f"DROP TABLE IF EXISTS {db_table}"
-        self.cursor.execute(sql)
-        self.con.commit()
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
+        except Exception as e:
+            self.con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
     def get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
@@ -1404,10 +1429,14 @@ class DataSource:
               "FROM information_schema.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s"
-        self.cursor.execute(sql, (self.db_name, db_table))
-        self.con.commit()
-        rows, size = self.cursor.fetchall()[0]
-        return rows, size
+        try:
+            self.cursor.execute(sql, (self.db_name, db_table))
+            self.con.commit()
+            rows, size = self.cursor.fetchall()[0]
+            return rows, size
+        except Exception as e:
+            self.con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def table_data_exists(self, table):
