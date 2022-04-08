@@ -713,8 +713,8 @@ def apply_loop(op_type: int,
             share_df = share_df[share_df['2, traded amounts'] != 0]
             share_df['code'] = share
             try:
-                share_name = get_stock_name()
-            except Exception:
+                share_name = get_basic_info(share)['name']
+            except Exception as e:
                 share_name = 'unknown'
             share_df['name'] = share_name
             share_logs.append(share_df)
@@ -819,8 +819,9 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
     
     :param code_or_name: 
         证券代码或名称，
-        如果是证券代码，可以含后缀也可以不含后缀，不含后缀时模糊查找
-        如果时证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全剧匹配
+        如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
         
     :param asset_types:
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
@@ -837,7 +838,9 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
-    :return: 
+    :return: dict
+        一个dict，包含找到的基本信息如下：
+        -
     """
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
@@ -847,6 +850,8 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
 
     matched_count = matched_codes['count']
     asset_best_matched = matched_codes
+    basics = None
+    asset_codes = []
     if matched_count <= 5:
         print(f'found {matched_count} matches, matched codes are {matched_codes}')
     else:
@@ -885,6 +890,11 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
             asset_codes = list(asset_best_matched[a_type].keys())
             print(basics.loc[asset_codes].T)
             print('-------------------------------------------')
+    if matched_count == 1:
+        # 返回唯一信息字典
+        return basics.loc[asset_codes[0]].to_dict()
+    else:
+        return None
 
 
 def get_table_info(table_name, verbose):

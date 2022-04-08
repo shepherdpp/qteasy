@@ -235,6 +235,7 @@ class HistoryPanel():
         if self.is_empty:
             return 0
         else:
+            # return pd.Index(self._rows.keys(), dtype='datetime64')
             return list(self._rows.keys())
 
     @hdates.setter

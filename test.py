@@ -11705,6 +11705,7 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
+        qt.get_basic_info('000899.SZ')
         op = qt.Operator(strategies='ndayavg', signal_type='pt')
         op.set_parameter(0,
                          data_freq='d',
