@@ -11705,10 +11705,10 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.get_basic_info('000899.SZ')
+        # qt.get_basic_info('000899.SZ')
         op = qt.Operator(strategies='ndayavg, ndayrate', signal_type='pt')
         op.set_parameter(0,
-                         data_freq='h',
+                         data_freq='d',
                          sample_freq='m',
                          condition='any',
                          sort_ascending=True,
@@ -11719,7 +11719,7 @@ class FastExperiments(unittest.TestCase):
                          pars=(3, ),
                          data_types='pe')
         op.set_parameter(1,
-                         data_freq='h',
+                         data_freq='d',
                          sample_freq='m',
                          condition='any',
                          sort_ascending=True,
@@ -11747,7 +11747,8 @@ class FastExperiments(unittest.TestCase):
                      asset_type='E',)
         res = qt.run(op,
                      visual=True,
-                     print_backtest_log=True,
+                     print_backtest_log=False,
+                     log_backtest_detail=False,
                      invest_start='20160725',
                      trade_batch_size=100,
                      sell_batch_size=100)

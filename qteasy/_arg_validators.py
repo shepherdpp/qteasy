@@ -496,7 +496,6 @@ def _valid_qt_kwargs():
 
     :return:
     """
-    today = datetime.datetime.today().date()
     vkwargs = {
         'mode':                 {'Default':   1,  # 运行模式
                                  'Validator': lambda value: value in (0, 1, 2, 3),
@@ -593,21 +592,21 @@ def _valid_qt_kwargs():
                                               '           选择此选项时，需要在配置文件中配置数据库的连接信息\n'
                                               'db       - 等同于"database"'},
 
-        'local_data_file_type':  {'Default':   'csv',
-                                 'Validator': lambda value: isinstance(value, str) and value in ['csv',
-                                                                                                 'hdf',
-                                                                                                 'feather',
-                                                                                                 'fth'],
-                                 'level':     4,
-                                 'text':      '确定本地历史数据文件的存储格式：\n'
-                                              'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
-                                              'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
-                                              'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
+        'local_data_file_type': {'Default':   'csv',
+                                  'Validator': lambda value: isinstance(value, str) and value in ['csv',
+                                                                                                  'hdf',
+                                                                                                  'feather',
+                                                                                                  'fth'],
+                                  'level':     4,
+                                  'text':      '确定本地历史数据文件的存储格式：\n'
+                                               'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
+                                               'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
+                                               'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
 
-        'local_data_file_path':  {'Default':   'qteasy/data/',
-                                 'Validator': lambda value: isinstance(value, str),
-                                 'level':     4,
-                                 'text':      '确定本地历史数据文件存储路径\n'},
+        'local_data_file_path': {'Default':   'qteasy/data/',
+                                  'Validator': lambda value: isinstance(value, str),
+                                  'level':     4,
+                                  'text':      '确定本地历史数据文件存储路径\n'},
 
         'local_db_host':        {'Default':   'localhost',
                                  'Validator': lambda value: isinstance(value, str),
@@ -639,13 +638,29 @@ def _valid_qt_kwargs():
                                  'text':      '数据库的访问密码\n\n'
                                               '建议通过配置文件配置数据库用户名和密码'},
 
+        'error_log_file_path':  {'Default':   'qteasy/log',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '系统运行日志及错误日志的存储路径\n'},
+
+        'trade_log_file_path':  {'Default':   'qteasy/log',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '明细交易日志的存储路径\n'},
+
         'print_backtest_log':   {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     4,
-                                 'text':      '如果True，在回测过程中会打印回测的详细交易记录\n'
-                                              'FutureWarning:\n'
-                                              '在未来的更新中将会取消log打印，取而代之的是将回测详细过程信息写入\n'
-                                              '一个DataFrame中，这个文件可以保存下来供仔细研究'},
+                                 'text':      '如果True，将回测详细过程信息写入\n'
+                                              '一个DataFrame中，这个文件可以保存下来供仔细研究\n'
+                                              '这个参数只有在回测模式下有用'},
+
+        'log_backtest_detail':  {'Default':   False,
+                                 'Validator': lambda value: isinstance(value, bool),
+                                 'level':     4,
+                                 'text':      '如果True，将回测详细过程信息写入日志\n'
+                                              '日志级别为DEBUG，用于分析回测的细节，这个参数只有在\n'
+                                              '回测模式下有用'},
 
         'reference_asset':      {'Default':   '000300.SH',
                                  'Validator': lambda value: isinstance(value, str)

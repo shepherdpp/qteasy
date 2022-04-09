@@ -95,4 +95,5 @@ else:
 
 np.seterr(divide='ignore', invalid='ignore')
 
-
+QT_ERR_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['error_log_file_path']
+QT_TRADE_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['trade_log_file_path']
