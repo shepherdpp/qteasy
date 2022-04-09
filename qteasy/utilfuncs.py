@@ -16,9 +16,7 @@ import time
 from numba import njit
 from functools import wraps
 
-TIME_FREQ_STRINGS = ['TICK',
-                     'T',
-                     'MIN', '1MIN', '5MIN', '15MIN', '30MIN',
+TIME_FREQ_STRINGS = ['MIN', '1MIN', '5MIN', '15MIN', '30MIN',
                      'H',
                      'D', '5D', '10D',
                      'W',

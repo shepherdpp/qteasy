@@ -371,19 +371,19 @@ class Strategy:
         if data_freq is not None:
             assert isinstance(data_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
-            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {data_freq} is not a valid frequency ' \
+            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
                                                            f'string'
             self._data_freq = data_freq
         if sample_freq is not None:
             assert isinstance(sample_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
-            assert sample_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {sample_freq} is not a valid frequency ' \
+            assert sample_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{sample_freq}" is not a valid frequency ' \
                                                              f'string'
             self._sample_freq = sample_freq
         if window_length is not None:
             assert isinstance(window_length, int), \
                 f'TypeError, window length should an integer, got {type(window_length)} instead'
-            assert window_length > 0, f'ValueError, {window_length} is not a valid window length'
+            assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
             self._window_length = window_length
         if data_types is not None:
             if isinstance(data_types, str):

@@ -223,7 +223,6 @@ class Cost:
         return a_purchased, cash_spent, fees
 
 
-# TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
 class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
@@ -252,8 +251,8 @@ class CashPlan:
             dates = dates.split(',')
         try:
             dates = list(map(pd.to_datetime, dates))
-        except:
-            raise KeyError(f'some of the input strings can not be converted to date time format!')
+        except Exception as e:
+            raise KeyError(f'{e}, some of the input strings can not be converted to date time format!')
 
         assert len(amounts) == len(dates), \
             f'InputError: number of amounts should be equal to that of dates, can\'t match {len(amounts)} amounts in' \
@@ -376,6 +375,19 @@ class CashPlan:
         :return: pandas.DataFrame
         """
         return self._cash_plan
+
+    def reset_dates(self, dates):
+        """ 重设投资日期，dates必须为一个可迭代的日期时间序列，数量与CashPlan的投资
+            期数相同，且可转换为datetime对象
+
+        :param dates: 一个可迭代的时间日期序列
+        :return:
+        """
+        try:
+            idx = pd.Index(dates, dtype='datetime64[ns]')
+            self.plan.index = idx
+        except Exception as e:
+            print(f'{e}, ')
 
     def to_dict(self, keys: [list, np.ndarray] = None):
         """ 返回整个投资区间的投资计划，形式为字典。默认key为日期，如果明确给出keys，则使用参数keys
@@ -511,7 +523,8 @@ class CashPlan:
 
         :return:
         """
-        return self.__str__()
+        dates = self.plan.index.strftime('%Y%m%d').to_list()
+        return f'CashPlan({dates}, {self.amounts}, {self.ir})'
 
     def __str__(self):
         """ 打印cash plan

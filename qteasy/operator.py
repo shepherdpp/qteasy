@@ -1027,7 +1027,6 @@ class Operator:
         # 确保输入的历史数据是HistoryPanel类型
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Historical data should be HistoryPanel, got {type(hist_data)}')
-        # TODO: 临时性处理方式
         # 确保cash_plan的数据类型正确
         if not isinstance(cash_plan, CashPlan):
             raise TypeError(f'cash plan should be CashPlan object, got {type(cash_plan)}')
@@ -1056,10 +1055,9 @@ class Operator:
         hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
         invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
-            np_dates_in_hist = np.array(invest_dates_in_hist)
-            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist is False)[0])]
-            raise ValueError(f'Cash investment should be on trading days, '
-                             f'following dates are not valid!\n{where_not_in}')
+            # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
+            nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
+            cash_plan.reset_dates(nearest_next)
         # 确保op的策略都设置了参数
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
