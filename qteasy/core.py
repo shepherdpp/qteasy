@@ -15,7 +15,7 @@ import numpy as np
 import time
 import math
 import logging
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -68,16 +68,14 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 logger_core = logging.getLogger('core')
-level_debug = logging.getLevelName('DEBUG')
-level_info = logging.getLevelName('INFO')
-handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', when='midnight', backupCount=3)
-str_handler = logging.StreamHandler()
-handler.setLevel(level_debug)
-str_handler.setLevel(level_info)
+debug_handler = RotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, mode='w', maxBytes=10000000)
+error_handler = logging.StreamHandler()
+debug_handler.setLevel(logging.DEBUG)
+error_handler.setLevel(logging.WARN)
 formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s:\n%(message)s')
-handler.setFormatter(formatter)
-logger_core.addHandler(handler)
-logger_core.addHandler(str_handler)
+debug_handler.setFormatter(formatter)
+logger_core.addHandler(debug_handler)
+logger_core.addHandler(error_handler)
 
 
 # TODO: Usability improvements:
@@ -508,7 +506,6 @@ def apply_loop(op_type: int,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-
     # op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
     shares = op_list.shares
@@ -622,7 +619,7 @@ def apply_loop(op_type: int,
                     allow_sell_short=allow_sell_short,
                     moq_buy=moq_buy,
                     moq_sell=moq_sell,
-                    trade_detail_log=trade_log,
+                    trade_detail_log=trade_detail_log,
                     share_names=shares
             )
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
@@ -678,7 +675,7 @@ def apply_loop(op_type: int,
                 op_log_value.append(np.round(total_value, 3))
 
         # 打印本日结果
-        if trade_log:
+        if trade_detail_log:
             logger_core.debug(f'本期交易完成, 交易后资产总额: {total_value:.2f}, 其中\n'
                               f'持有现金: {own_cash:.2f} \n'
                               f'资产价值: {total_stock_value:.2f}\n')

@@ -4063,7 +4063,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4087,7 +4087,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4111,7 +4111,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4135,7 +4135,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4159,7 +4159,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4183,7 +4183,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4207,7 +4207,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4233,7 +4233,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4257,7 +4257,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4281,7 +4281,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4305,7 +4305,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4329,7 +4329,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4353,7 +4353,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4377,7 +4377,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4403,7 +4403,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4427,7 +4427,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4451,7 +4451,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4475,7 +4475,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4499,7 +4499,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4523,7 +4523,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4547,7 +4547,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4573,7 +4573,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4597,7 +4597,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4621,7 +4621,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4645,7 +4645,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4669,7 +4669,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4693,7 +4693,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4717,7 +4717,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4743,7 +4743,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4767,7 +4767,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4791,7 +4791,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4815,7 +4815,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4839,7 +4839,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4863,7 +4863,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4887,7 +4887,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4913,7 +4913,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
               f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4937,7 +4937,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4961,7 +4961,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -4985,7 +4985,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -5009,7 +5009,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -5033,7 +5033,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -5057,7 +5057,7 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     trade_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
               f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
@@ -5214,7 +5214,7 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                trade_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5256,7 +5256,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                trade_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5401,7 +5401,7 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                trade_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5443,7 +5443,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                trade_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5519,7 +5519,7 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                trade_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5649,7 +5649,7 @@ class TestLoop(unittest.TestCase):
                          stock_delivery_period=2,
                          max_cash_usage=True,
                          inflation_rate=0,
-                         trade_log=True)
+                         trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5692,7 +5692,7 @@ class TestLoop(unittest.TestCase):
                          stock_delivery_period=2,
                          max_cash_usage=False,
                          inflation_rate=0,
-                         trade_log=True)
+                         trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -6092,13 +6092,13 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertEqual(op.__repr__(), 'Operator()')
 
-        op = qt.Operator('macd, dma, trix, random, avg_low')
-        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, avg_low)')
+        op = qt.Operator('macd, dma, trix, random, ndayavg')
+        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, ndayavg)')
         self.assertEqual(op['dma'].__repr__(), 'Q-TIMING(DMA)')
         self.assertEqual(op['macd'].__repr__(), 'R-TIMING(MACD)')
         self.assertEqual(op['trix'].__repr__(), 'R-TIMING(TRIX)')
         self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
-        self.assertEqual(op['avg_low'].__repr__(), 'FACTOR(AVG LOW)')
+        self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
 
     def test_info(self):
         """Test information output of Operator"""
@@ -6929,11 +6929,6 @@ class TestOperator(unittest.TestCase):
                           self.op.prepare_data,
                           correct_hp,
                           late_cash)
-        # raises Error when some of the investment dates are on no-trade-days
-        self.assertRaises(ValueError,
-                          self.op.prepare_data,
-                          correct_hp,
-                          no_trade_cash)
         # raises Error when number of shares in history data does not fit
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
@@ -7736,6 +7731,10 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.5, 0.0]])
 
         self.assertEqual(output.shape, selmask.shape)
+        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask))
 
         # test single factor, get mininum factor
@@ -7762,13 +7761,13 @@ class TestOperator(unittest.TestCase):
                             [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
+                            [0.0, 0.5, 0.5],
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0],
                             [0.5, 0.5, 0.0],
@@ -7784,17 +7783,21 @@ class TestOperator(unittest.TestCase):
                             [0.0, 0.0, 1.0],
                             [0.0, 0.0, 1.0],
                             [0.0, 0.0, 1.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
+                            [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5],
                             [0.5, 0.0, 0.5]])
 
         self.assertEqual(output.shape, selmask.shape)
+        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask))
 
         # test single factor, get max factor in linear weight
@@ -11706,52 +11709,35 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         # qt.get_basic_info('000899.SZ')
-        op = qt.Operator(strategies='ndayavg, ndayrate', signal_type='pt')
+        op = qt.Operator(strategies='ndayrate', signal_type='pt')
         op.set_parameter(0,
                          data_freq='d',
                          sample_freq='m',
-                         condition='any',
-                         sort_ascending=True,
+                         condition='greater',
+                         sort_ascending=False,
+                         lbound=0.0,
                          ubound=0,
                          weighting='linear',
-                         window_length=5,
-                         _poq=3,
-                         pars=(3, ),
-                         data_types='pe')
-        op.set_parameter(1,
-                         data_freq='d',
-                         sample_freq='m',
-                         condition='any',
-                         sort_ascending=True,
-                         ubound=0,
-                         window_length=5,
-                         weighting='linear',
-                         _poq=3,
-                         pars=(3, ),
+                         _poq=1,
+                         pars=(10,),
                          data_types='close')
-        op.set_blender(blender='0 or 1')
+        op.set_blender(blender='0')
         print('--------------------------')
         op.info()
         print('--------------------------')
         op[0].info()
         print('--------------------------')
-        print(op.op_data_type_list)
-        qt.configure(asset_pool=['000001.SZ',
-                                 '000002.SZ',
-                                 '000005.SZ',
-                                 '000006.SZ',
-                                 '000007.SZ',
-                                 '000009.SZ',
-                                 '000100.SZ',
-                                 '000899.SZ'],
-                     asset_type='E',)
+        qt.configure(asset_pool=['000300.SH',
+                                 '399006.SZ'],
+                     asset_type='IDX')
         res = qt.run(op,
                      visual=True,
-                     print_backtest_log=False,
-                     log_backtest_detail=False,
-                     invest_start='20160725',
-                     trade_batch_size=100,
-                     sell_batch_size=100)
+                     print_backtest_log=True,
+                     log_backtest_detail=True,
+                     invest_start='20110725',
+                     invest_end='20220401',
+                     trade_batch_size=0,
+                     sell_batch_size=0)
 
     def test_fast_experiments2(self):
         pass

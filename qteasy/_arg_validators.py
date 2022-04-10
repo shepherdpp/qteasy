@@ -593,20 +593,20 @@ def _valid_qt_kwargs():
                                               'db       - 等同于"database"'},
 
         'local_data_file_type': {'Default':   'csv',
-                                  'Validator': lambda value: isinstance(value, str) and value in ['csv',
-                                                                                                  'hdf',
-                                                                                                  'feather',
-                                                                                                  'fth'],
-                                  'level':     4,
-                                  'text':      '确定本地历史数据文件的存储格式：\n'
-                                               'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
-                                               'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
-                                               'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
+                                 'Validator': lambda value: isinstance(value, str) and value in ['csv',
+                                                                                                 'hdf',
+                                                                                                 'feather',
+                                                                                                 'fth'],
+                                 'level':     4,
+                                 'text':      '确定本地历史数据文件的存储格式：\n'
+                                              'csv - 历史数据文件以csv形式存储，速度较慢但可以用Excel打开\n'
+                                              'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
+                                              'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
 
         'local_data_file_path': {'Default':   'qteasy/data/',
-                                  'Validator': lambda value: isinstance(value, str),
-                                  'level':     4,
-                                  'text':      '确定本地历史数据文件存储路径\n'},
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '确定本地历史数据文件存储路径\n'},
 
         'local_db_host':        {'Default':   'localhost',
                                  'Validator': lambda value: isinstance(value, str),
