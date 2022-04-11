@@ -68,7 +68,8 @@ AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR'
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 logger_core = logging.getLogger('core')
-debug_handler = RotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, mode='w', maxBytes=10000000)
+logger_core.setLevel(logging.DEBUG)
+debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
 error_handler.setLevel(logging.WARN)
@@ -465,7 +466,8 @@ def apply_loop(op_type: int,
                allow_sell_short: bool = False,
                max_cash_usage: bool = False,
                trade_log: bool = False,
-               trade_detail_log: bool = False) -> pd.DataFrame:
+               trade_detail_log: bool = False,
+               bt_price_priority_ohlc: str = 'OHLC') -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
@@ -489,6 +491,12 @@ def apply_loop(op_type: int,
         :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
         :param trade_log: bool: 为True时，输出回测详细日志为csv格式的表格
         :param trade_detail_log: bool: 为True时，输出更加详细的回测记录到logger_core，用于debug之用
+        :param bt_price_priority_ohlc: str: 策略组合中包括多种交易价格时，价格信号执行先后顺序。OHLC四个字母分别代表
+            O - 开盘价
+            H - 最高价
+            L - 最低价
+            C - 收盘价
+            价格的执行顺序等于四个字母的排列顺序
 
     output：=====
         Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单包含以下列：
@@ -510,10 +518,29 @@ def apply_loop(op_type: int,
     op = op_list.values
     shares = op_list.shares
     price_types = op_list.htypes
+    assert price_types == history_list.htypes, f'the trade price types from operation list and historical data does' \
+                                               f' not fit each other:\n' \
+                                               f'op_list:    {price_types}\n' \
+                                               f'price_list: {history_list.htypes}'
     # 获取交易信号的总行数、股票数量以及价格种类数量
+    # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
     price_type_count = op_list.htype_count
     op_count = op_list.hdate_count
     share_count = op_list.share_count
+    # 根据价格交易优先级设置价格执行顺序
+    # 例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
+    # 价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
+    price_priority_list = []
+    price_type_table = {'O': 'open',
+                        'H': 'high',
+                        'L': 'low',
+                        'C': 'close'}
+    for p_type in bt_price_priority_ohlc:
+        price_type_name = price_type_table[p_type]
+        if price_type_name not in price_types:
+            continue
+        price_priority_list.append(price_types.index(price_type_table[p_type]))
+    price_types_in_priority = [price_types[i] for i in price_priority_list]
     # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
     # TODO: FutureWarning:
     # TODO: Passing list-likes to .loc or [] with any missing label will raise
@@ -569,7 +596,8 @@ def apply_loop(op_type: int,
             own_cash *= inflation_factors[i]
             available_cash *= inflation_factors[i]
             if trade_detail_log:
-                logger_core.debug(f'考虑现金增值, 上期现金: {(own_cash / inflation_factors[i]):.2f}, 经过{days_difference[i]}天后'
+                logger_core.debug(f'考虑现金增值, 上期现金: {(own_cash / inflation_factors[i]):.2f}, '
+                                  f'经过{days_difference[i]}天后'
                                   f'现金增值到{own_cash:.2f}')
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
@@ -577,8 +605,9 @@ def apply_loop(op_type: int,
             own_cash += additional_invest
             available_cash += additional_invest
             if trade_detail_log:
-                logger_core.debug(f'本期新增投入现金, 本期现金: {(own_cash - invest_dict[i]):.2f}, 追加投资后现金增加到{own_cash:.2f}')
-        for j in range(price_type_count):
+                logger_core.debug(f'本期新增投入现金, 本期现金: {(own_cash - invest_dict[i]):.2f}, '
+                                  f'追加投资后现金增加到{own_cash:.2f}')
+        for j in price_priority_list:
             if trade_detail_log:
                 logger_core.debug(f' - 本期第{j + 1}/{price_type_count}轮交易，使用历史价格: {price_types[j]}')
             # 交易前将交割队列中达到交割期的现金/资产完成交割
@@ -693,7 +722,7 @@ def apply_loop(op_type: int,
         logger_core.info(f'generating complete trading log ...')
         op_log_index = pd.MultiIndex.from_product(
                 [looped_dates,
-                 price_types,
+                 price_types_in_priority,
                  ['0, trade signal',
                   '1, price',
                   '2, traded amounts',
@@ -706,7 +735,7 @@ def apply_loop(op_type: int,
         )
         op_sum_index = pd.MultiIndex.from_product(
                 [looped_dates,
-                 price_types,
+                 price_types_in_priority,
                  ['7, summary']],
                 names=('date', 'trade_on', 'item')
         )

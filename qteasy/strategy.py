@@ -419,8 +419,7 @@ class Strategy:
             生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
         """
         temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
-        # 在这里发现一个错误，并已经修正：
-        # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
+        # 生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
         # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
         # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
         # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
@@ -729,7 +728,10 @@ class SimpleSelecting(Strategy):
                  sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
                  window_length: int = 270,
-                 data_types: [list, str] = 'close'):
+                 data_types: [list, str] = 'close',
+                 bt_price_type: str = 'close',
+                 reference_data: str = 'none',
+                 reference_data_types: [str, list] = ''):
         if par_types is None:
             par_types = ['conti']
         if par_bounds_or_enums is None:
@@ -745,7 +747,10 @@ class SimpleSelecting(Strategy):
                          data_freq=data_freq,
                          sample_freq=sample_freq,
                          window_length=window_length,
-                         data_types=data_types)
+                         data_types=data_types,
+                         bt_price_type=bt_price_type,
+                         reference_data=reference_data,
+                         reference_data_types=reference_data_types)
         self._poq = proportion_or_quantity
 
     @abstractmethod
@@ -781,26 +786,21 @@ class SimpleSelecting(Strategy):
         super().generate(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
-        # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
+        # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
         # 一个空的ndarray对象用于存储生成的选股蒙版
         sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
-        # 原来的函数实际上使用未来的数据生成今天的结果，这样是错误的
-        # 例如，对于seg_start = 0，seg_lengt = 6的时候，使用seg_start:seg_start + seg_length的数据生成seg_start的数据，
-        # 也就是说，用第0:6天的数据，生成了第0天的信号
-        # 因此，seg_start不应该是seg_pos[0]，而是seg_pos[1]的数，因为这才是真正应该开始计算的第一条信号
-        # 正确的方法是用seg_start:seg_length的数据生成seg_start+seg_length那天的信号，即
-        # 使用0:6天的数据（不含第6天）生成第6天的信号
-        # 不过这样会带来一个变化，即生成全部操作信号需要更多的历史数据，包括第一个信号所在日期之前window_length日的数据
+        # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
+        # 例如，假设seg_start = 0，seg_length = 6时，
+        # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
+        # 由于第1天的操作信号需要第一个信号所在日期之前window_length日的数据
         # 因此在输出数据的时候需要将前window_length个数据截取掉
         seg_start = seg_pos[1]
+        wl = self.window_length
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
-        # TODO: 可以使用map函数生成分段
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
-            # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(hist_data=hist_data[:, sp - sl:sp, :], params=self.pars)
-            # assert isinstance(share_sel, np.ndarray)
-            # assert len(share_sel) == len(shares)
+            # 提取当前分段起点以前的数据，计算当前分段起点的交易信号
+            share_sel = self._realize(hist_data=hist_data[:, sp - wl:sp, :], params=self.pars)
             seg_end = seg_start + fill_len
             # 填充相同的投资组合到当前区间内的所有交易时间点
             sel_mask[seg_start:seg_end + 1, :] = share_sel
@@ -963,6 +963,8 @@ class SimpleTiming(Strategy):
         return res[self.window_length:, :]
 
 
+#TODO: 应该使用SimpleSelecting作为父类创建FactoralSelecting类
+#TODO: 因为它们的核心代码都是一样的
 class FactoralSelecting(Strategy):
     """ 因子选股，根据用户定义获选择的因子
 
@@ -1189,14 +1191,6 @@ class FactoralSelecting(Strategy):
         seg_start = seg_pos[1]
         wl = self.window_length
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
-        # TODO: 应该使用asstrided生成分段
-        # TODO: 在sel策略中依赖np.roll()来生成信号的做法有很大的问题
-        # TODO: 因为np.roll()会产生循环，例如：
-        # TODO: 设 data = array([1, 6, 1, 4, 9])
-        # TODO: 则np.roll(data, 2)和np.roll(data, 7)会产生同样的结果：
-        # TODO:     np.roll(data, 2) = array([4, 9, 1, 6, 1])
-        # TODO:     np.roll(data, 7) = array([4, 9, 1, 6, 1])
-        # TODO:
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
             # 提取当前分段起点以前的数据，计算当前分段起点的选股比例
             share_sel = self._process_factors(hist_data[:, sp - wl:sp, :])

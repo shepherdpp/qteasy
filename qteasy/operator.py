@@ -1103,6 +1103,10 @@ class Operator:
                 self._op_history_data
                 self._ricon_history_data
 
+        :param config:
+            :dict configuration
+            qteasy配置参数，用于控制信号生成过程中的行为细节
+
         :return=====
             HistoryPanel
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
@@ -1113,14 +1117,16 @@ class Operator:
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}')
         from .blender import signal_blend
-        op_signals = []
         shares = hist_data.shares
         date_list = hist_data.hdates
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
         # 一个字典保存所有交易价格类型各自的交易信号ndarray
         signal_out = {}
-        for bt_price_type in self.bt_price_types:
+        bt_price_types = self.bt_price_types
+        bt_price_type_count = self.bt_price_type_count
+        for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别遍历所有的策略
+            op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
             for stg, dt in zip(relevant_strategies, relevant_hist_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
@@ -1138,12 +1144,12 @@ class Operator:
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             signal_out[bt_price_type] = blended_signal
         # 将字典中的ndarray对象组装成HistoryPanel对象
-        signal_hp_value = np.zeros((*blended_signal.T.shape, self.bt_price_type_count))
-        for i, bt_price_type in zip(range(self.bt_price_type_count), self.bt_price_types):
+        signal_hp_value = np.zeros((*blended_signal.T.shape, bt_price_type_count))
+        for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_hp_value[:, :, i] = signal_out[bt_price_type].T
         history_length = signal_hp_value.shape[1]  # find hdate series
         signal_hp = HistoryPanel(signal_hp_value,
                                  levels=shares,
-                                 columns=self.bt_price_types,
+                                 columns=bt_price_types,
                                  rows=date_list[-history_length:])
         return signal_hp

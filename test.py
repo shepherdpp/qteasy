@@ -11701,6 +11701,68 @@ class TestBuiltInsMultiple(unittest.TestCase):
         qt.run(op, mode=1, allow_sell_short=True)
 
 
+class StgBuyOpen(SimpleSelecting):
+    def __init__(self, pars=(20,)):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         stg_name='OPEN_BUY',
+                         par_bounds_or_enums=[(0, 100)],
+                         bt_price_type='open')
+        pass
+
+    def _realize(self, hist_data, params):
+        n, = params
+        current_price = hist_data[:, -1, 0]
+        n_day_price = hist_data[:, -n, 0]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全0
+        sig = np.zeros_like(factors)
+        # buy_pos = np.nanargmax(factors)
+        # sig[buy_pos] = 1
+        # return sig
+        if np.all(factors <= 0.0):
+            # 如果所有的选股指标都小于0，则全部卖出
+            # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
+            return sig
+        else:
+            # 如果选股指标有大于0的，则找出最大者
+            # 并生成买入信号
+            sig[np.nanargmax(factors)] = 1
+            return sig
+
+
+class StgSelClose(SimpleSelecting):
+    def __init__(self, pars=(20,)):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         stg_name='SELL_CLOSE',
+                         par_bounds_or_enums=[(0, 100)],
+                         bt_price_type='close')
+        pass
+
+    def _realize(self, hist_data, params):
+        n, = params
+        current_price = hist_data[:, -1, 0]
+        n_day_price = hist_data[:, -n, 0]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全-1
+        sig = -np.ones_like(factors)
+        # sig[np.nanargmax(factors)] = 0
+        # return sig
+        if np.all(factors <= 0.0):
+            # 如果所有的选股指标都小于0，则全部卖出
+            return sig
+        else:
+            # 如果选股指标有大于0的，则除最大者不卖出以外，其余全部
+            # 产生卖出信号
+            sig[np.nanargmax(factors)] = 0
+            return sig
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -11709,35 +11771,36 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         # qt.get_basic_info('000899.SZ')
-        op = qt.Operator(strategies='ndayrate', signal_type='pt')
+        stg_buy = StgBuyOpen()
+        stg_sel = StgSelClose()
+        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
         op.set_parameter(0,
                          data_freq='d',
-                         sample_freq='m',
-                         condition='greater',
-                         sort_ascending=False,
-                         lbound=0.0,
-                         ubound=0,
-                         weighting='linear',
-                         _poq=1,
-                         pars=(10,),
-                         data_types='close')
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         price_type='open')
+        op.set_parameter(1,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         price_type='close')
         op.set_blender(blender='0')
-        print('--------------------------')
-        op.info()
-        print('--------------------------')
-        op[0].info()
-        print('--------------------------')
+        op.get_blender()
         qt.configure(asset_pool=['000300.SH',
                                  '399006.SZ'],
                      asset_type='IDX')
         res = qt.run(op,
                      visual=True,
                      print_backtest_log=True,
-                     log_backtest_detail=True,
+                     log_backtest_detail=False,
                      invest_start='20110725',
                      invest_end='20220401',
-                     trade_batch_size=0,
-                     sell_batch_size=0)
+                     trade_batch_size=1,
+                     sell_batch_size=1)
 
     def test_fast_experiments2(self):
         pass
