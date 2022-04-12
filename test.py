@@ -7670,7 +7670,7 @@ class TestOperator(unittest.TestCase):
         stg.condition = 'greater'
         stg.lbound = 0
         stg.ubound = 0
-        stg._poq = 0.67
+        stg.proportion_or_quantity = 0.67
         history_data = self.hp2.values
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -11780,14 +11780,14 @@ class FastExperiments(unittest.TestCase):
                          window_length=50,
                          pars=(20,),
                          data_types='close',
-                         price_type='open')
+                         bt_price_type='open')
         op.set_parameter(1,
                          data_freq='d',
                          sample_freq='d',
                          window_length=50,
                          pars=(20,),
                          data_types='close',
-                         price_type='close')
+                         bt_price_type='close')
         op.set_blender(blender='0')
         op.get_blender()
         qt.configure(asset_pool=['000300.SH',
@@ -11800,7 +11800,7 @@ class FastExperiments(unittest.TestCase):
                      invest_start='20110725',
                      invest_end='20220401',
                      trade_batch_size=1,
-                     sell_batch_size=1)
+                     sell_batch_size=0)
 
     def test_fast_experiments2(self):
         pass

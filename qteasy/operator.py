@@ -391,7 +391,7 @@ class Operator:
     @property
     def bt_price_types(self):
         """返回operator对象所有策略子对象的回测价格类型"""
-        p_types = [item.price_type for item in self.strategies]
+        p_types = [item.bt_price_type for item in self.strategies]
         p_types = list(set(p_types))
         p_types.sort()
         return p_types
@@ -642,7 +642,7 @@ class Operator:
         if price_type is None:
             return self.strategies
         else:
-            return [stg for stg in self.strategies if stg.price_type == price_type]
+            return [stg for stg in self.strategies if stg.bt_price_type == price_type]
 
     def get_op_history_data_by_price_type(self, price_type=None):
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
@@ -679,7 +679,7 @@ class Operator:
         else:
             res = []
             for stg, stg_id in zip(self.strategies, all_ids):
-                if stg.price_type == price_type:
+                if stg.bt_price_type == price_type:
                     res.append(stg_id)
             return res
 
@@ -877,7 +877,7 @@ class Operator:
                       sample_freq: str = None,
                       window_length: int = None,
                       data_types: [str, list] = None,
-                      price_type: str = None,
+                      bt_price_type: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
             将函数参数中给定的策略参数赋值给相应的策略
@@ -912,8 +912,8 @@ class Operator:
             :param data_types:
                 :type data_types: str or list, 策略计算所需历史数据的数据类型
 
-            :param price_type:
-                :type price_type: str, 策略回测交易时使用的交易价格类型
+            :param bt_price_type:
+                :type bt_price_type: str, 策略回测交易时使用的交易价格类型
 
             :return:
         """
@@ -939,13 +939,13 @@ class Operator:
         has_sf = sample_freq is not None
         has_wl = window_length is not None
         has_dt = data_types is not None
-        has_pt = price_type is not None
+        has_pt = bt_price_type is not None
         if has_df or has_sf or has_wl or has_dt or has_pt:
             strategy.set_hist_pars(data_freq=data_freq,
                                    sample_freq=sample_freq,
                                    window_length=window_length,
                                    data_types=data_types,
-                                   price_type=price_type)
+                                   bt_price_type=bt_price_type)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 

@@ -518,10 +518,10 @@ def apply_loop(op_type: int,
     op = op_list.values
     shares = op_list.shares
     price_types = op_list.htypes
-    assert price_types == history_list.htypes, f'the trade price types from operation list and historical data does' \
-                                               f' not fit each other:\n' \
-                                               f'op_list:    {price_types}\n' \
-                                               f'price_list: {history_list.htypes}'
+    # assert price_types == history_list.htypes, f'the trade price types from operation list and historical data does' \
+    #                                            f' not fit each other:\n' \
+    #                                            f'op_list:    {price_types}\n' \
+    #                                            f'price_list: {history_list.htypes}'
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
     price_type_count = op_list.htype_count
@@ -552,6 +552,7 @@ def apply_loop(op_type: int,
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
     days_difference = []
+    additional_invest = 0.
     if inflation_rate > 0:
         # print(f'looped dates are like: {looped_dates}')
         days_timedelta = looped_dates - np.roll(looped_dates, 1)
@@ -689,19 +690,20 @@ def apply_loop(op_type: int,
             sub_total_fee += fee.sum()
             # 生成trade_log所需的数据，采用串列式表格排列：
             if trade_log:
-                op_log_matrix.append(np.round(current_op, 3))
-                op_log_matrix.append(np.round(current_prices, 3))
-                op_log_matrix.append(np.round(amount_changed, 3))
-                op_log_matrix.append(np.round(cash_changed, 3))
-                op_log_matrix.append(np.round(fee, 3))
-                op_log_matrix.append(np.round(own_amounts, 3))
-                op_log_matrix.append(np.round(available_amounts, 3))
-                op_log_matrix.append(np.round(total_stock_values, 3))
-                op_log_add_invest.append(np.round(additional_invest, 3))
-                additional_invest = 0
-                op_log_cash.append(np.round(own_cash, 3))
-                op_log_available_cash.append(np.round(available_cash, 3))
-                op_log_value.append(np.round(total_value, 3))
+                rnd = np.round
+                op_log_matrix.append(rnd(current_op, 3))
+                op_log_matrix.append(rnd(current_prices, 3))
+                op_log_matrix.append(rnd(amount_changed, 3))
+                op_log_matrix.append(rnd(cash_changed, 3))
+                op_log_matrix.append(rnd(fee, 3))
+                op_log_matrix.append(rnd(own_amounts, 3))
+                op_log_matrix.append(rnd(available_amounts, 3))
+                op_log_matrix.append(rnd(total_stock_values, 3))
+                op_log_add_invest.append(rnd(additional_invest, 3))
+                additional_invest = 0.
+                op_log_cash.append(rnd(own_cash, 3))
+                op_log_available_cash.append(rnd(available_cash, 3))
+                op_log_value.append(rnd(total_value, 3))
 
         # 打印本日结果
         if trade_detail_log:
@@ -1747,6 +1749,8 @@ def _evaluate_one_parameter(par,
     riskfree_ir = config.riskfree_ir
     log_backtest = False
     log_backtest_detail = False
+    period_length = 0
+    period_count = 0
     if op_list.is_empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         res_dict['complete_values'] = pd.DataFrame()

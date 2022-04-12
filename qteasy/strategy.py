@@ -50,7 +50,7 @@ class Strategy:
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: [str, list] = '',
+                 data_types: [str, list] = 'close',
                  bt_price_type: str = 'close',
                  reference_data: str = 'none',
                  reference_data_types: [str, list] = ''):
@@ -140,7 +140,7 @@ class Strategy:
         assert isinstance(data_types, list), f'TypeError, data type should be a list, got {type(data_types)} instead'
         self._data_types = data_types
         self._bt_price_type = None
-        self.set_hist_pars(price_type=bt_price_type)
+        self.set_hist_pars(bt_price_type=bt_price_type)
         self._reference_data = reference_data
         if isinstance(reference_data_types, str):
             reference_data_types = str_to_list(reference_data_types, ',')
@@ -271,14 +271,14 @@ class Strategy:
         self.set_hist_pars(data_types=data_types)
 
     @property
-    def price_type(self):
+    def bt_price_type(self):
         """策略回测时所使用的价格类型"""
         return self._bt_price_type
 
-    @price_type.setter
-    def price_type(self, price_type):
+    @bt_price_type.setter
+    def bt_price_type(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
-        self.set_hist_pars(price_type=price_type)
+        self.set_hist_pars(bt_price_type=price_type)
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -358,14 +358,14 @@ class Strategy:
             self._par_bounds_or_enums = par_boes
         return par_boes
 
-    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None, price_type=None):
+    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None, bt_price_type=None):
         """ 设置策略的历史数据回测相关属性
 
         :param data_freq: str,
         :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
         :param window_length: int，表示回测时需要用到的历史数据深度
         :param data_types: str，表示需要用到的历史数据类型
-        :param price_type: str, 需要用到的历史数据回测价格类型
+        :param bt_price_type: str, 需要用到的历史数据回测价格类型
         :return: None
         """
         if data_freq is not None:
@@ -377,8 +377,13 @@ class Strategy:
         if sample_freq is not None:
             assert isinstance(sample_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
-            assert sample_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{sample_freq}" is not a valid frequency ' \
-                                                             f'string'
+            #TODO: 这里临时使用regex来判断信号频率的合法输入
+            #TODO: 可以接受标准的"D"/"M"等输入，也可以接收整数倍
+            #TODO: 标准输入如"4D"/"2W"等，使用re尽可能排除非法输入
+            import re
+            if not re.match('[0-9]*[h|d|w|m|q|y|min]', sample_freq.lower()):
+                raise ValueError(f"{sample_freq} is not a valid frequency string,"
+                                 f"sample freq can only be like '10d' or '2w'")
             self._sample_freq = sample_freq
         if window_length is not None:
             assert isinstance(window_length, int), \
@@ -391,10 +396,10 @@ class Strategy:
             assert isinstance(data_types, list), \
                 f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
-        if price_type is not None:
-            assert isinstance(price_type, str), f'Wrong input type, price_type should be a string, got {type(price_type)}'
-            assert price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {price_type} is not a valid price type'
-            self._bt_price_type = price_type
+        if bt_price_type is not None:
+            assert isinstance(bt_price_type, str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
+            assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a valid price type'
+            self._bt_price_type = bt_price_type
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""
@@ -541,26 +546,14 @@ class RollingTiming(Strategy):
 
     def __init__(self,
                  pars: tuple = None,
-                 stg_name: str = 'NONE',
-                 stg_text: str = 'intro text of timing strategy',
-                 par_count: int = 0,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'd',
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close'):
+                 stg_name: str = 'NEW-RTMG',
+                 stg_text: str = 'intro text of rolling timing strategy',
+                 **kwargs):
         super().__init__(pars=pars,
-                         stg_type='R-TIMING',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
+                         stg_type='R-TIMING',
+                         **kwargs)
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
@@ -718,40 +711,16 @@ class SimpleSelecting(Strategy):
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
                  pars: tuple = None,
-                 opt_tag: int = 0,
-                 stg_name: str = 'NONE',
+                 stg_name: str = 'NEW-SEL',
                  stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 1,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close',
-                 bt_price_type: str = 'close',
-                 reference_data: str = 'none',
-                 reference_data_types: [str, list] = ''):
-        if par_types is None:
-            par_types = ['conti']
-        if par_bounds_or_enums is None:
-            par_bounds_or_enums = [(0, 1)]
+                 **kwargs):
         super().__init__(pars=pars,
-                         opt_tag=opt_tag,
                          stg_type='SELECT',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types,
-                         bt_price_type=bt_price_type,
-                         reference_data=reference_data,
-                         reference_data_types=reference_data_types)
-        self._poq = proportion_or_quantity
+                         **kwargs)
+        self.proportion_or_quantity = proportion_or_quantity
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple):
@@ -869,28 +838,14 @@ class SimpleTiming(Strategy):
 
     def __init__(self,
                  pars: tuple = None,
-                 opt_tag: int = 0,
-                 stg_name: str = 'NONE',
-                 stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 0,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'd',
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close'):
+                 stg_name: str = 'NEW-QTMG',
+                 stg_text: str = 'intro text of quick timing strategy',
+                 **kwargs):
         super().__init__(pars=pars,
-                         opt_tag=opt_tag,
                          stg_type='Q-TIMING',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
+                         **kwargs)
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple):
@@ -1008,39 +963,21 @@ class FactoralSelecting(Strategy):
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
                  pars: tuple = None,
-                 opt_tag: int = 0,
-                 stg_name: str = 'NONE',
+                 stg_name: str = 'NEW-FAC',
                  stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 1,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close',
                  condition: str = 'any',
                  lbound: float = -np.inf,
                  ubound: float = np.inf,
                  sort_ascending: bool = True,
-                 weighting: str = 'even'):
-        if par_types is None:
-            par_types = ['conti']
-        if par_bounds_or_enums is None:
-            par_bounds_or_enums = [(0, 1)]
+                 weighting: str = 'even',
+                 **kwargs):
         super().__init__(pars=pars,
-                         opt_tag=opt_tag,
                          stg_type='FACTOR',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
-        self._poq = proportion_or_quantity
+                         **kwargs)
+        self.proportion_or_quantity = proportion_or_quantity
         self.condition = condition
         self.lbound = lbound
         self.ubound = ubound
@@ -1072,7 +1009,7 @@ class FactoralSelecting(Strategy):
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
         """
-        pct = self._poq
+        pct = self.proportion_or_quantity
         condition = self.condition
         lbound = self.lbound
         ubound = self.ubound
