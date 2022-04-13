@@ -199,7 +199,8 @@ def evaluate(looped_values: pd.DataFrame,
         performance_dict['beta'] = eval_beta(looped_values, hist_benchmark, benchmark_data)
     # 评价回测结果——计算投资期间的夏普率
     if 'sharp' in indicator_list:
-        performance_dict['sharp'] = eval_sharp(looped_values, total_invest)
+        interest_rate = cash_plan.ir
+        performance_dict['sharp'] = eval_sharp(looped_values, interest_rate)
     # 评价回测结果——计算投资期间的alpha阿尔法系数
     if 'alpha' in indicator_list:
         performance_dict['alpha'] = eval_alpha(looped_values, total_invest, hist_benchmark, benchmark_data)
@@ -334,17 +335,17 @@ def eval_sharp(looped_value, riskfree_interest_rate: float = 0.0035):
     loop_len = len(looped_value)
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
     ret = looped_value['value'] / looped_value['value'].shift(1) - 1
+    volatility = eval_volatility(looped_value, logarithm=False)
+    year_span = loop_len / 250
     if loop_len <= 250:
-        ret_mean = ret.mean()
-        ret_std = ret.std()
-        sharp = (ret_mean - riskfree_interest_rate / loop_len) / ret_std
+        yearly_return = ret.mean() * 250
+        sharp = (yearly_return - riskfree_interest_rate) / volatility
         looped_value['sharp'] = np.nan
         looped_value['sharp'].iloc[-1] = sharp
         return sharp
     else:  # loop_len > 250
-        ret_mean = ret.rolling(250).mean()
-        ret_std = ret.rolling(250).std()
-        looped_value['sharp'] = (ret_mean - riskfree_interest_rate / 250) / ret_std
+        roll_yearly_return = ret.rolling(250).mean() * 250
+        looped_value['sharp'] = (roll_yearly_return - riskfree_interest_rate) / looped_value['volatility']
         return looped_value['sharp'].mean()
 
 

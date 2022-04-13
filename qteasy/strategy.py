@@ -46,7 +46,7 @@ class Strategy:
                  stg_text: str = 'intro text of strategy',
                  par_count: int = 0,
                  par_types: [list, str] = '',
-                 par_bounds_or_enums: [list, tuple] = '',
+                 par_bounds_or_enums: [list, tuple] = (),
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,

@@ -2082,7 +2082,7 @@ class RiconUrgent(stg.SimpleTiming):
 class SelectingAll(stg.SimpleSelecting):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
-    def __init__(self, pars=(0.5,)):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
                          stg_name='SIMPLE ',
                          stg_text='SimpleSelecting all share and distribute weights evenly')

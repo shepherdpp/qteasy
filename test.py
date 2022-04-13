@@ -1538,13 +1538,13 @@ class TestEvaluations(unittest.TestCase):
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
     def test_sharp(self):
-        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.06135557)
-        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 0.167858667)
-        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 0.09950547)
-        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 0.154928241)
-        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.007868673)
-        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.018306537)
-        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.006259971)
+        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
+        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
+        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 1.573319618)
+        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 2.449630585)
+        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.578781892)
+        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.570048419)
+        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.347565045)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1597,57 +1597,57 @@ class TestEvaluations(unittest.TestCase):
                                    np.nan, np.nan, np.nan, np.nan, np.nan,
                                    np.nan, np.nan, np.nan, np.nan, np.nan,
                                    np.nan, np.nan, np.nan, np.nan, np.nan,
-                                   -0.02346815, -0.02618783, -0.03763912, -0.03296276, -0.03085698,
-                                   -0.02851101, -0.02375842, -0.02016746, -0.01107885, -0.01426613,
-                                   -0.00787204, -0.01135784, -0.01164232, -0.01003481, -0.00022512,
-                                   -0.00046792, -0.01209378, -0.01278892, -0.01298135, -0.01938214,
-                                   -0.01671044, -0.02120509, -0.0244281, -0.02416067, -0.02763238,
-                                   -0.027579, -0.02372774, -0.02215294, -0.02467094, -0.02091266,
-                                   -0.02590194, -0.03049876, -0.02077131, -0.01483653, -0.02488144,
-                                   -0.02671638, -0.02561547, -0.01957986, -0.02479803, -0.02703162,
-                                   -0.02658087, -0.01641755, -0.01946472, -0.01647757, -0.01280889,
-                                   -0.00893643, -0.00643275, -0.00698457, -0.00549962, -0.00654677,
-                                   -0.00494757, -0.0035633, -0.00109037, 0.00750654, 0.00451208,
-                                   0.00625502, 0.01221367, 0.01326454, 0.01535037, 0.02269538,
-                                   0.02028715, 0.02127712, 0.02333264, 0.02273159, 0.01670643,
-                                   0.01376513, 0.01265342, 0.02211647, 0.01612449, 0.00856706,
-                                   -0.00077147, -0.00268848, 0.00210993, -0.00443934, -0.00411912,
-                                   -0.0018756, -0.00867461, -0.00581601, -0.00660835, -0.00861137,
-                                   -0.00678614, -0.01188408, -0.00589617, -0.00244323, -0.00201891,
-                                   -0.01042846, -0.01471016, -0.02167034, -0.02258554, -0.01306809,
-                                   -0.00909086, -0.01233746, -0.00595166, -0.00184208, 0.00750497,
-                                   0.01481886, 0.01761972, 0.01562886, 0.01446414, 0.01285826,
-                                   0.01357719, 0.00967613, 0.01636272, 0.01458437, 0.02280183,
-                                   0.02151903, 0.01700276, 0.01597368, 0.02114336, 0.02233297,
-                                   0.02585631, 0.02768459, 0.03519235, 0.04204535, 0.04328161,
-                                   0.04672855, 0.05046191, 0.04619848, 0.04525853, 0.05381529,
-                                   0.04598861, 0.03947394, 0.04665006, 0.05586077, 0.05617728,
-                                   0.06495018, 0.06205172, 0.05665466, 0.06500615, 0.0632062,
-                                   0.06084328, 0.05851466, 0.05659229, 0.05159347, 0.0432977,
-                                   0.0474047, 0.04231723, 0.03613176, 0.03618391, 0.03591012,
-                                   0.03885674, 0.0402686, 0.03846423, 0.04534014, 0.04721458,
-                                   0.05130912, 0.05026281, 0.05394312, 0.05529349, 0.05949243,
-                                   0.05463304, 0.06195165, 0.06767606, 0.06880985, 0.07048996,
-                                   0.07078815, 0.07420767, 0.06773439, 0.0658441, 0.06470875,
-                                   0.06302349, 0.06456876, 0.06411282, 0.06216669, 0.067094,
-                                   0.07055075, 0.07254976, 0.07119253, 0.06173308, 0.05393352,
-                                   0.05681246, 0.05250643, 0.06099845, 0.0655544, 0.06977334,
-                                   0.06636514, 0.06177949, 0.06869908, 0.06719767, 0.06178738,
-                                   0.05915714, 0.06882277, 0.06756821, 0.06507994, 0.06489791,
-                                   0.06553941, 0.073123, 0.07576757, 0.06805446, 0.06063571,
-                                   0.05033801, 0.05206971, 0.05540306, 0.05249118, 0.05755587,
-                                   0.0586174, 0.05051288, 0.0564852, 0.05757284, 0.06358355,
-                                   0.06130082, 0.04925482, 0.03834472, 0.04163981, 0.04648316,
-                                   0.04457858, 0.04324626, 0.04328791, 0.04156207, 0.04818652,
-                                   0.04972634, 0.06024123, 0.06489556, 0.06255485, 0.06069815,
-                                   0.06466389, 0.07081163, 0.07895358, 0.0881782, 0.09374151,
-                                   0.08336506, 0.08764795, 0.09080174, 0.08808926, 0.08641158,
-                                   0.07811943, 0.06885318, 0.06479503, 0.06851185, 0.07382819,
-                                   0.07047903, 0.06658251, 0.07638379, 0.08667974, 0.08867918,
-                                   0.08245323, 0.08961866, 0.09905298, 0.0961908, 0.08562706,
-                                   0.0839014, 0.0849072, 0.08338395, 0.08783487, 0.09463609,
-                                   0.10332336, 0.11806497, 0.11220297, 0.11589097, 0.11678405])
-        test_sharp = eval_sharp(self.long_data, 0.00035)
+                                   -0.18950439, -0.23259702, -0.41509768, -0.34196712, -0.30898022,
+                                   -0.27261473, -0.19745172, -0.14024279, 0.00288945, -0.04793207,
+                                   0.05172158, -0.00366449, -0.00811567, 0.01688611, 0.17194485,
+                                   0.16817806, -0.01524985, -0.02636865, -0.02937101, -0.13030031,
+                                   -0.08873878, -0.15994946, -0.21137991, -0.20720521, -0.26281744,
+                                   -0.26195973, -0.20128055, -0.17623172, -0.21612580, -0.15592511,
+                                   -0.23457913, -0.30773631, -0.15522904, -0.06201306, -0.22066334,
+                                   -0.24946104, -0.23208820, -0.13751779, -0.21974845, -0.25530392,
+                                   -0.24823211, -0.08850979, -0.13609506, -0.08931705, -0.03194321,
+                                   0.02869142, 0.06856389, 0.05990231, 0.08336173, 0.06678007,
+                                   0.09186937, 0.11351727, 0.15256927, 0.28835942, 0.24062825,
+                                   0.26824379, 0.36200869, 0.37873880, 0.41170183, 0.52816943,
+                                   0.49013443, 0.50579283, 0.53864639, 0.52924168, 0.43436575,
+                                   0.38763786, 0.37010600, 0.52012123, 0.42479623, 0.30569598,
+                                   0.15826813, 0.12771609, 0.20406185, 0.10069257, 0.10579959,
+                                   0.14153344, 0.03371507, 0.07854204, 0.06617579, 0.03427064,
+                                   0.06312959, -0.01726723, 0.07709579, 0.13109071, 0.13777385,
+                                   0.00445136, -0.06295816, -0.17335114, -0.18769825, -0.03774939,
+                                   0.02480958, -0.02630054, 0.07502533, 0.14019807, 0.28780404,
+                                   0.40331636, 0.44760993, 0.41634062, 0.39808925, 0.37277711,
+                                   0.38401653, 0.32260324, 0.42880681, 0.40056919, 0.53084963,
+                                   0.51071726, 0.43979661, 0.42370520, 0.50569430, 0.52451085,
+                                   0.58066379, 0.60965996, 0.72892039, 0.83760065, 0.85716005,
+                                   0.91181985, 0.97140360, 0.90466106, 0.88967470, 1.02561163,
+                                   0.90179900, 0.79948780, 0.91316604, 1.05900004, 1.06400808,
+                                   1.20357827, 1.15844283, 1.07306721, 1.20560917, 1.17735454,
+                                   1.14023069, 1.10364582, 1.07303471, 0.99407802, 0.86275438,
+                                   0.92738518, 0.84663503, 0.74878700, 0.74960380, 0.74527083,
+                                   0.79228011, 0.81455010, 0.78606745, 0.89452664, 0.92420097,
+                                   0.98940387, 0.97285085, 1.03171820, 1.05290710, 1.11975838,
+                                   1.04310747, 1.15949439, 1.24976844, 1.26765194, 1.29411974,
+                                   1.29888363, 1.35288816, 1.25115877, 1.22102476, 1.20311050,
+                                   1.17664024, 1.20108320, 1.19392486, 1.16309306, 1.24184337,
+                                   1.29679486, 1.32879912, 1.30735953, 1.15850183, 1.03516892,
+                                   1.08084983, 1.01270232, 1.14759296, 1.22055657, 1.28729822,
+                                   1.23404983, 1.16170851, 1.27175350, 1.24782004, 1.16297745,
+                                   1.12110696, 1.27445830, 1.25458118, 1.21525262, 1.21237266,
+                                   1.22263836, 1.34342989, 1.38527506, 1.26355887, 1.14721881,
+                                   0.98483625, 1.01251995, 1.06548737, 1.01977026, 1.10053487,
+                                   1.11748630, 0.99038426, 1.08500268, 1.10215164, 1.19781664,
+                                   1.16132067, 0.97136575, 0.79944211, 0.85136924, 0.92886974,
+                                   0.89862484, 0.87750353, 0.87816903, 0.85111696, 0.95651186,
+                                   0.98053294, 1.14788929, 1.22157931, 1.18444097, 1.15561992,
+                                   1.21908058, 1.31759397, 1.44647541, 1.59291883, 1.68048169,
+                                   1.51660187, 1.58388524, 1.63449268, 1.59194395, 1.56595444,
+                                   1.43533620, 1.28896458, 1.22588302, 1.28524777, 1.36908723,
+                                   1.31654526, 1.25593829, 1.41240036, 1.57695971, 1.60847895,
+                                   1.51052846, 1.62557901, 1.77557972, 1.72982094, 1.56287433,
+                                   1.53541187, 1.55148893, 1.52791909, 1.59902474, 1.70742124,
+                                   1.84548298, 2.08064663, 1.98788139, 2.04559367, 2.05991876])
+        test_sharp = eval_sharp(self.long_data, 0.015)
         self.assertAlmostEqual(np.nanmean(expected_sharp), test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
@@ -6140,9 +6140,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategies_by_price_type('close')
         stg_open = op.get_strategies_by_price_type('open')
         stg_high = op.get_strategies_by_price_type('high')
@@ -6167,9 +6167,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategy_count_by_price_type('close')
         stg_open = op.get_strategy_count_by_price_type('open')
         stg_high = op.get_strategy_count_by_price_type('high')
@@ -6194,9 +6194,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategy_names_by_price_type('close')
         stg_open = op.get_strategy_names_by_price_type('open')
         stg_high = op.get_strategy_names_by_price_type('high')
@@ -6222,9 +6222,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategy_id_by_price_type('close')
         stg_open = op.get_strategy_id_by_price_type('open')
         stg_high = op.get_strategy_id_by_price_type('high')
@@ -6238,10 +6238,10 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(stg_high, [])
 
         op.add_strategies('dma, macd')
-        op.set_parameter('dma_1', price_type='open')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('macd_1', price_type='high')
-        op.set_parameter('trix', price_type='close')
+        op.set_parameter('dma_1', bt_price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('macd_1', bt_price_type='high')
+        op.set_parameter('trix', bt_price_type='close')
         print(f'Operator strategy id:\n'
               f'{op.strategies} on memory pos:\n'
               f'{[id(stg) for stg in op.strategies]}')
@@ -6252,7 +6252,7 @@ class TestOperator(unittest.TestCase):
         print(f'All IDs of strategies:\n'
               f'{stg_all}\n'
               f'All price types of strategies:\n'
-              f'{[stg.price_type for stg in op.strategies]}')
+              f'{[stg.bt_price_type for stg in op.strategies]}')
         self.assertEqual(stg_close, ['dma', 'trix'])
         self.assertEqual(stg_open, ['macd', 'dma_1'])
         self.assertEqual(stg_high, ['macd_1'])
@@ -6335,8 +6335,8 @@ class TestOperator(unittest.TestCase):
         op.clear_strategies()
         self.assertEqual(op.strategy_blenders, {})
         op.add_strategies('dma, trix, macd, dma')
-        op.set_parameter('dma', price_type='open')
-        op.set_parameter('trix', price_type='high')
+        op.set_parameter('dma', bt_price_type='open')
+        op.set_parameter('trix', bt_price_type='high')
 
         op.set_blender('open', '1+2')
         blender_open = op.get_blender('open')
@@ -6534,7 +6534,7 @@ class TestOperator(unittest.TestCase):
         btp = op.bt_price_types
         self.assertIsInstance(btp, list)
         self.assertEqual(btp[0], 'close')
-        op.set_parameter('macd', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
         btp = op.bt_price_types
         btpc = op.bt_price_type_count
         print(f'price_types are \n{btp}')
@@ -6545,7 +6545,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(btpc, 2)
 
         op.add_strategies(['dma', 'macd'])
-        op.set_parameter('dma_1', price_type='high')
+        op.set_parameter('dma_1', bt_price_type='high')
         btp = op.bt_price_types
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
@@ -6691,8 +6691,8 @@ class TestOperator(unittest.TestCase):
               f'otp is {otp}\n')
         self.assertIsInstance(otp, int)
         self.assertEqual(otp, 1)
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='open')
         otp = op.bt_price_type_count
         print(f'after setting price_type the price type count is 2:\n'
               f'otp is {otp}\n')
@@ -6719,8 +6719,8 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator('macd, dma, trix, cdl')
         # TODO: 修改set_parameter()，使下面的用法成立
         # a_to_sell.set_parameter('dma, cdl', price_type='open')
-        op.set_parameter('dma', price_type='open')
-        op.set_parameter('cdl', price_type='open')
+        op.set_parameter('dma', bt_price_type='open')
+        op.set_parameter('cdl', bt_price_type='open')
         sb = op.strategy_blenders
         st = op.signal_type
         self.assertIsInstance(sb, dict)
@@ -7047,11 +7047,11 @@ class TestOperator(unittest.TestCase):
         test_sel = TestSelStrategy()
         self.op.add_strategies([test_ls, test_sel])
         self.op.set_parameter(stg_id='custom_2',
-                              price_type='open')
+                              bt_price_type='open')
         self.op.set_parameter(stg_id='custom_3',
-                              price_type='open')
-        self.assertEqual(self.op['custom'].price_type, 'close')
-        self.assertEqual(self.op['custom_2'].price_type, 'open')
+                              bt_price_type='open')
+        self.assertEqual(self.op['custom'].bt_price_type, 'close')
+        self.assertEqual(self.op['custom_2'].bt_price_type, 'open')
         self.op.set_parameter(stg_id='custom_2',
                               pars={'000010': (5, 10.),
                                     '000030': (5, 10.),
@@ -7202,9 +7202,9 @@ class TestOperator(unittest.TestCase):
                          data_types=['close', 'open', 'high'])
         op.set_parameter('all',
                          window_length=20)
-        op.set_parameter('all', price_type='high')
+        op.set_parameter('all', bt_price_type='high')
         print(f'Can also set up strategy parameters by strategy index')
-        op.set_parameter(2, price_type='open')
+        op.set_parameter(2, bt_price_type='open')
         op.set_parameter(2,
                          opt_tag=1,
                          pars=(9, -0.09),
@@ -11245,7 +11245,7 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         _poq=0.4)
+                         proportion_or_quantity=0.4)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
         op.info()
@@ -11297,7 +11297,7 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         _poq=30)
+                         proportion_or_quantity=30)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
         qt.run(op, visual=False, print_backtest_log=True)
