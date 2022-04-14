@@ -43,3 +43,5 @@ ani_plot.py
 .idea/qteasy.iml
 .idea/vcs.xml
 qteasy/qteasy.cnf
+*.log
+**qteasy/log/

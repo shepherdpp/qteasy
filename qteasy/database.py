@@ -2194,7 +2194,7 @@ class DataSource:
                 continue
             cur_table_info = table_map.loc[table]
             # 3 生成数据下载参数序列
-            print(f'refilling data for table: {table}')
+            # print(f'refilling data for table: {table}')
             arg_name = cur_table_info.fill_arg_name
             fill_type = cur_table_info.fill_arg_type
             freq = cur_table_info.freq
@@ -2304,7 +2304,7 @@ class DataSource:
                             time_elapsed = time.time() - st
                             time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
-                            progress_bar(completed, total, f'<{list(cur_kwargs.values())[0]}>:'
+                            progress_bar(completed, total, f'[{table}] <{list(cur_kwargs.values())[0]}>: '
                                                            f'{total_written} downloaded/{time_remain} left')
 
                         self.update_table_data(table, dnld_data)
@@ -2321,19 +2321,24 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<{list(kwargs.values())[0]}>:'
+                        progress_bar(completed, total, f'[{table}] <{list(kwargs.values())[0]}>: '
                                                        f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
-                print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
-                      f'{total} {arg_name} params '
-                      f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
-                if len(additional_args) > 0:
-                    print(f'with additional arguments: {additional_args}\n')
-                print(f'{total_written} rows of data written to: {self}\n')
+                progress_bar(total, total, f'[{table}] <{arg_coverage[0]} to {arg_coverage[-1]}>: '
+                                           f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
+                #       f'{total} {arg_name} params '
+                #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
+                # if len(additional_args) > 0:
+                #     print(f'with additional arguments: {additional_args}\n')
+                # print(f'{total_written} rows of data written to: {self}\n')
             except Exception as e:
                 self.update_table_data(table, dnld_data)
-                print(f'\n{e} process interrupted, tried to write {total_written} rows, will proceed with next table!')
+                warnings.warn(f'\n{e} process interrupted, tried to write {total_written} rows, '
+                              f'will proceed with next table!')
+                progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
+                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
 
     @lru_cache()
     def get_all_basic_table_data(self):

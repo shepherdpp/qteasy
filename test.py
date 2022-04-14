@@ -11721,9 +11721,13 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        tables = 'options_hourly'
+        tables = 'stock_daily, stock_weekly'
         ds = qt.QT_DATA_SOURCE
-        ds.refill_local_source(tables=tables, start_date='20220318', parallel=True, merge_type='update')
+        ds.refill_local_source(tables=tables,
+                               start_date='20220406',
+                               end_date='20220415',
+                               parallel=True,
+                               merge_type='update')
 
     def test_fast_experiments2(self):
         pass
