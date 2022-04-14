@@ -11697,8 +11697,8 @@ class TestBuiltInsMultiple(unittest.TestCase):
     def test_select_all(self):
         """ 测试策略selall选择所有股票"""
         op = qt.Operator(strategies=['all'], signal_type='PS')
-        op.set_parameter(0, opt_tag=1, sample_freq='q')
-        qt.run(op, mode=1, allow_sell_short=True)
+        op.set_parameter(0, opt_tag=1, sample_freq='w')
+        qt.run(op, mode=1, allow_sell_short=True, visual=True)
 
 
 class StgBuyOpen(SimpleSelecting):

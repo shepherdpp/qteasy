@@ -377,11 +377,8 @@ class Strategy:
         if sample_freq is not None:
             assert isinstance(sample_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
-            #TODO: 这里临时使用regex来判断信号频率的合法输入
-            #TODO: 可以接受标准的"D"/"M"等输入，也可以接收整数倍
-            #TODO: 标准输入如"4D"/"2W"等，使用re尽可能排除非法输入
             import re
-            if not re.match('[0-9]*[h|d|w|m|q|y|min]', sample_freq.lower()):
+            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', sample_freq.lower()):
                 raise ValueError(f"{sample_freq} is not a valid frequency string,"
                                  f"sample freq can only be like '10d' or '2w'")
             self._sample_freq = sample_freq
