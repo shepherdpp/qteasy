@@ -8861,6 +8861,22 @@ class TestHistoryPanel(unittest.TestCase):
     def test_fill_inf(self):
         """测试填充无限值"""
 
+    def test_ffill(self):
+        """ 测试前向填充函数"""
+        print(f'original values of history panel: \n{self.hp.values}')
+        new_values = self.hp.values.astype(float)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
+        print(f'values with nan from origin: \n{new_values}')
+        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
+        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
+        before_ffill = new_values.copy()
+        temp_hp.ffill()
+        print(f'ffilled values result and target side by side:')
+        for i in range(5):
+            print(f'values before ffill: \n{before_ffill[i]}')
+            print(f'values after ffill: \n{temp_hp.values[i]}')
+        self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
+
     def test_get_history_panel(self):
         # TODO: implement this test case
         # test get only one line of data

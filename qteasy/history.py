@@ -11,6 +11,7 @@
 
 import pandas as pd
 import numpy as np
+from numba import njit
 
 import qteasy
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
@@ -511,7 +512,6 @@ class HistoryPanel():
         :param with_val:
         :return:
         """
-        assert isinstance(with_val, (int, float, np.int, np.float))
         if not self.is_empty:
             self._values = np.where(np.isnan(self._values), with_val, self._values)
         return self
@@ -522,9 +522,19 @@ class HistoryPanel():
         :param with_val: flaot
         :return:
         """
-        assert isinstance(with_val, (int, float, np.int, np.float))
         if not self.is_empty:
             self._values = np.where(np.isinf(self._values), with_val, self._values)
+        return self
+
+    def ffill(self):
+        """ 前向填充缺失值，当历史数据中存在缺失值时，使用缺失值以前
+        的最近有效数据填充缺失值
+
+        :return:
+        """
+        if not self.is_empty:
+            val = self.values
+            self._values = ffill_data(val)
         return self
 
     def join(self,
@@ -1082,3 +1092,21 @@ def get_history_panel(start,
                                     asset_type=asset_type,
                                     adj=adj)
     return result_hp
+
+@njit
+def ffill_data(val):
+    """ 给定一个三维np数组，如果数组中有nan值时，使用axis=1的前一个非Nan值填充Nan
+
+    :param val: 3D ndarray
+    :return:
+    """
+    lv, row, col = val.shape
+    r0 = val[:, 0, :]
+    for i in range(row):
+        if i == 0:
+            continue
+        r_c = val[:, i, :]
+        r_c = np.where(np.isnan(r_c), r0, r_c)
+        r0 = r_c
+        val[:, i, :] = r_c
+    return val
