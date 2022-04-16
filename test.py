@@ -8863,10 +8863,10 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_ffill(self):
         """ 测试前向填充函数"""
-        print(f'original values of history panel: \n{self.hp.values}')
+        # print(f'original values of history panel: \n{self.hp.values}')
         new_values = self.hp.values.astype(float)
         new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
-        print(f'values with nan from origin: \n{new_values}')
+        # print(f'values with nan from origin: \n{new_values}')
         temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
         self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
         before_ffill = new_values.copy()
@@ -8876,6 +8876,24 @@ class TestHistoryPanel(unittest.TestCase):
             print(f'values before ffill: \n{before_ffill[i]}')
             print(f'values after ffill: \n{temp_hp.values[i]}')
         self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
+        where_nan = list(np.where(np.isnan(temp_hp.values)))
+        self.assertEqual(where_nan, [np.array(3), np.array(0), np.array(2)])
+
+        # test ffill with init value
+        # print(f'original values of history panel: \n{self.hp.values}')
+        new_values = self.hp.values.astype(float)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
+        # print(f'values with nan from origin: \n{new_values}')
+        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
+        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
+        before_ffill = new_values.copy()
+        temp_hp.ffill(0)
+        print(f'ffilled values result and target side by side:')
+        for i in range(5):
+            print(f'values before ffill: \n{before_ffill[i]}')
+            print(f'values after ffill: \n{temp_hp.values[i]}')
+        self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
+        self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
     def test_get_history_panel(self):
         # TODO: implement this test case
@@ -11787,36 +11805,51 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         # qt.get_basic_info('000899.SZ')
-        stg_buy = StgBuyOpen()
-        stg_sel = StgSelClose()
-        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        op.set_parameter(0,
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         data_types='close',
-                         bt_price_type='open')
-        op.set_parameter(1,
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         data_types='close',
-                         bt_price_type='close')
-        op.set_blender(blender='0')
-        op.get_blender()
-        qt.configure(asset_pool=['000300.SH',
-                                 '399006.SZ'],
-                     asset_type='IDX')
-        res = qt.run(op,
+        # stg_buy = StgBuyOpen()
+        # stg_sel = StgSelClose()
+        # op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        # op.set_parameter(0,
+        #                  data_freq='d',
+        #                  sample_freq='d',
+        #                  window_length=50,
+        #                  pars=(20,),
+        #                  data_types='close',
+        #                  bt_price_type='open')
+        # op.set_parameter(1,
+        #                  data_freq='d',
+        #                  sample_freq='d',
+        #                  window_length=50,
+        #                  pars=(20,),
+        #                  data_types='close',
+        #                  bt_price_type='close')
+        # op.set_blender(blender='0')
+        # op.get_blender()
+        # qt.configure(asset_pool=['000300.SH',
+        #                          '399006.SZ'],
+        #              asset_type='IDX')
+        # res = qt.run(op,
+        #              visual=True,
+        #              print_backtest_log=True,
+        #              log_backtest_detail=False,
+        #              invest_start='20110725',
+        #              invest_end='20220401',
+        #              trade_batch_size=1,
+        #              sell_batch_size=0)
+        op_min = qt.Operator(strategies='DMA, ALL', signal_type='pt')
+        op_min.set_parameter(0, data_freq='h', sample_freq='h')
+        op_min.set_parameter(0, data_freq='d', sample_freq='y')
+        op_min.set_blender(blender='0*1')
+        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ',
+                                 '000007.SZ', '000918.SZ', '000819.SZ', '000899.SZ'],
+                     asset_type='E',
+                     visual=True,
+                     print_backtest_log=False)
+        res = qt.run(op_min,
                      visual=True,
                      print_backtest_log=True,
-                     log_backtest_detail=False,
-                     invest_start='20110725',
-                     invest_end='20220401',
-                     trade_batch_size=1,
-                     sell_batch_size=0)
+                     invest_start='20160725',
+                     trade_batch_size=100,
+                     sell_batch_size=100)
 
     def test_fast_experiments2(self):
         pass

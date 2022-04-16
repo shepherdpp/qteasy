@@ -514,6 +514,8 @@ def apply_loop(op_type: int,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
+    # 在PT模式下，每天都需要进行回测，而在PS和VS模式下，并不需要每天回测
+    # 应该沿用以前的做法，仅回测有信号的交易日
     # op_list = _merge_invest_dates(op_list, cash_plan)
     op = op_list.values
     shares = op_list.shares
@@ -541,13 +543,13 @@ def apply_loop(op_type: int,
             continue
         price_priority_list.append(price_types.index(price_type_table[p_type]))
     price_types_in_priority = [price_types[i] for i in price_priority_list]
-    # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
-    # TODO: FutureWarning:
-    # TODO: Passing list-likes to .loc or [] with any missing label will raise
-    # TODO: KeyError in the future, you can use .reindex() as an alternative.
+    # 从价格清单中提取出与交易清单的日期相对应日期的所有数据(这是为了
+    # 减少回测的次数，只将有信号的交易日期传入loop函数，忽略没有信号
+    # 的日期。但在PT模式下，不能这么做，因为每天都有信号)。在PS和VS
+    # 信号模式下，可以且应该这么做，但是目前HistoryPanel不支持
+    # hp.loc[]，后续应该支持
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
-    # price = history_list.fillna(0).loc[op_list.index].values
-    price = history_list.fillna(0).values
+    price = history_list.ffill(0).values
     looped_dates = list(op_list.hdates)
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []

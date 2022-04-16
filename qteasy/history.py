@@ -526,15 +526,18 @@ class HistoryPanel():
             self._values = np.where(np.isinf(self._values), with_val, self._values)
         return self
 
-    def ffill(self):
+    def ffill(self, init_val=np.nan):
         """ 前向填充缺失值，当历史数据中存在缺失值时，使用缺失值以前
         的最近有效数据填充缺失值
 
+        :param init_val: float, 如果Nan值出现在第一行时，没有前序有效数据，则使用这个值来填充，默认为np.nan
         :return:
         """
         if not self.is_empty:
             val = self.values
-            self._values = ffill_data(val)
+            if np.all(~np.isnan(val)):
+                return self
+            self._values = ffill_data(val, init_val)
         return self
 
     def join(self,
@@ -1094,17 +1097,19 @@ def get_history_panel(start,
     return result_hp
 
 @njit
-def ffill_data(val):
+def ffill_data(val, init_val):
     """ 给定一个三维np数组，如果数组中有nan值时，使用axis=1的前一个非Nan值填充Nan
 
-    :param val: 3D ndarray
+    :param val: 3D ndarray, 一个含有Nan值的三维数组
+    :param init_val:
     :return:
     """
     lv, row, col = val.shape
     r0 = val[:, 0, :]
+    r0 = np.where(np.isnan(r0), init_val, r0)
     for i in range(row):
         if i == 0:
-            continue
+            val[:, i, :] = r0
         r_c = val[:, i, :]
         r_c = np.where(np.isnan(r_c), r0, r_c)
         r0 = r_c
