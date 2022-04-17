@@ -213,7 +213,7 @@ class Operator:
 
             :param signal_type: str, 需要生成的交易信号的类型，包含以下三种类型:
                                         'pt', 'ps', 'vs'
-                                默认交易信号类型为'ps'
+                                默认交易信号类型为'pt'
 
         Operator对象的基本属性包括：
             signal_type:
@@ -1152,4 +1152,10 @@ class Operator:
                                  levels=shares,
                                  columns=bt_price_types,
                                  rows=date_list[-history_length:])
+        if self.signal_type in ['ps', 'vs']:
+            signal_hp = signal_hp.fillna(0)
+        elif self.signal_type == 'pt':
+            signal_hp = signal_hp.ffill()
+        else:
+            raise KeyError(f'Invalid signal type: {self.signal_type}')
         return signal_hp

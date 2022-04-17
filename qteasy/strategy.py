@@ -754,8 +754,8 @@ class SimpleSelecting(Strategy):
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
-        # 一个空的ndarray对象用于存储生成的选股蒙版
-        sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
+        # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
+        sel_mask = np.full(shape=(len(dates), len(shares)), fill_value=np.nan, order='C')
         # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
         # 例如，假设seg_start = 0，seg_length = 6时，
         # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
@@ -768,8 +768,11 @@ class SimpleSelecting(Strategy):
             # 提取当前分段起点以前的数据，计算当前分段起点的交易信号
             share_sel = self._realize(hist_data=hist_data[:, sp - wl:sp, :], params=self.pars)
             seg_end = seg_start + fill_len
-            # 填充相同的投资组合到当前区间内的所有交易时间点
-            sel_mask[seg_start:seg_end + 1, :] = share_sel
+            # 填充相同的投资组合到当前区间内的第一个交易时间点，
+            # 在信号类型为PT时需要把同样的信号填充到下一个交易
+            # 时间点以前的整个时间段。这个操作在operator层面
+            # 进行
+            sel_mask[seg_start, :] = share_sel
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         return sel_mask[self.window_length:]
@@ -1116,7 +1119,7 @@ class FactoralSelecting(Strategy):
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
         # 一个空的ndarray对象用于存储生成的选股蒙版
-        sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
+        sel_mask = np.full(shape=(len(dates), len(shares)), fill_value=np.nan, order='C')
         # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
         # 例如，假设seg_start = 0，seg_length = 6时，
         # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
@@ -1129,8 +1132,11 @@ class FactoralSelecting(Strategy):
             # 提取当前分段起点以前的数据，计算当前分段起点的选股比例
             share_sel = self._process_factors(hist_data[:, sp - wl:sp, :])
             seg_end = seg_start + fill_len
-            # 将同样的选股比例填充到当前分段起点开始以后的所有时间点
-            sel_mask[seg_start:seg_end + 1, :] = share_sel
+            # 填充相同的投资组合到当前区间内的第一个交易时间点，
+            # 在信号类型为PT时需要把同样的信号填充到下一个交易
+            # 时间点以前的整个时间段。这个操作在operator层面
+            # 进行
+            sel_mask[seg_start, :] = share_sel
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         return sel_mask[self.window_length:]

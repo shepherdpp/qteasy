@@ -2112,6 +2112,9 @@ class SelectingRandom(stg.SimpleSelecting):
 
     def __init__(self, pars=(0.5,)):
         super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['conti'],
+                         par_bounds_or_enums=[(0, np.inf)],
                          stg_name='RANDOM',
                          stg_text='SimpleSelecting share Randomly and distribute weights evenly')
 

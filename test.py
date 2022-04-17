@@ -11835,21 +11835,38 @@ class FastExperiments(unittest.TestCase):
         #              invest_end='20220401',
         #              trade_batch_size=1,
         #              sell_batch_size=0)
-        op_min = qt.Operator(strategies='DMA, ALL', signal_type='pt')
-        op_min.set_parameter(0, data_freq='h', sample_freq='h')
-        op_min.set_parameter(0, data_freq='d', sample_freq='y')
-        op_min.set_blender(blender='0*1')
-        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ',
-                                 '000007.SZ', '000918.SZ', '000819.SZ', '000899.SZ'],
+        op = qt.Operator(strategies='random, all', signal_type='ps')
+        op.set_parameter(0, data_freq='d', sample_freq='m', pars=(3,))
+        op.set_parameter(1, data_freq='d', sample_freq='m')
+        op.set_blender(blender='0-1')
+        print('--------------------------')
+        op.info()
+        print('--------------------------')
+        op['random'].info()
+        print('--------------------------')
+        op['all'].info()
+        qt.configure(asset_pool=['000001.SZ',
+                                 '000002.SZ',
+                                 '000005.SZ',
+                                 '000006.SZ',
+                                 '000007.SZ',
+                                 '000009.SZ',
+                                 '000100.SZ'],
                      asset_type='E',
                      visual=True,
                      print_backtest_log=False)
-        res = qt.run(op_min,
+        res = qt.run(op,
                      visual=True,
-                     print_backtest_log=True,
+                     print_backtest_log=False,
                      invest_start='20160725',
                      trade_batch_size=100,
-                     sell_batch_size=100)
+                     sell_batch_size=0)
+        res = qt.run(op,
+                     visual=True,
+                     print_backtest_log=False,
+                     invest_start='20160725',
+                     trade_batch_size=100,
+                     sell_batch_size=0)
 
     def test_fast_experiments2(self):
         pass
