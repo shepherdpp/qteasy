@@ -830,8 +830,39 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     if share_basics is None or share_basics.empty:
         return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
-    import pdb; pdb.set_trace()
     none_matched = dict()
+    # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
+    print('looking for none matching arguments')
+    for column, targets in kwargs.items():
+        if column == 'index':
+            continue
+        if isinstance(targets, str):
+            targets = str_to_list(targets)
+            kwargs[column] = targets
+        all_column_values = share_basics[column].unique().tolist()
+        target_not_matched = [item for item in targets if item not in all_column_values]
+        if len(target_not_matched) > 0:
+            kwargs[column] = list(set(targets) - set(target_not_matched))
+            match_dict = {}
+            for t in target_not_matched:
+                similarities = []
+                for s in all_column_values:
+                    if not isinstance(s, str):
+                        # print(f'oops!, {s} is not a string!! skipping...')
+                        continue
+                    try:
+                        similarities.append(_partial_lev_ratio(s, t))
+                    except Exception as e:
+                        print(f'{e}, error during matching "{t}" and "{s}"')
+                        raise e
+                sim_array = np.array(similarities)
+                best_matched = [all_column_values[i] for i in np.where(sim_array >= 0.5)[0]]
+                match_dict[t] = best_matched
+                best_matched_str = '\" or \"'.join(best_matched)
+                print(f'{t} will be excluded because an exact match is not found in "{column}", did you mean\n'
+                      f'"{best_matched_str}"?')
+            none_matched[column] = match_dict
+        # 从清单中将none_matched移除
     for column, targets in kwargs.items():
         if column == 'index':
             # 查找date到今天之间的所有成分股, 如果date为today，则将date前推一个月
@@ -846,23 +877,14 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
             return index_comp.index.get_level_values('con_code').unique().tolist()
         if isinstance(targets, str):
             targets = str_to_list(targets)
+        if len(targets) == 0:
+            continue
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
-        # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
-        # TODO: 实际使用中会如何使用这个功能？这个功能是否真的需要？
-        # all_column_values = share_basics[column].unique().tolist()
-        # target_not_matched = [item for item in targets if item not in all_column_values]
-        # if len(target_not_matched) > 0:
-        #     match_dict = {}
-        #     for t in target_not_matched:
-        #         similarities = np.array([_partial_lev_ratio(s, t) for s in all_column_values])
-        #         best_matched = all_column_values[similarities.argmax()[0]]
-        #         match_dict[t] = best_matched
-        #     none_matched[column] = match_dict
-
-    for k, v in none_matched.items():
-        print(f'can not find a match for {v} in {k}, did you mean ...?')
+    #
+    # for k, v in none_matched.items():
+    #     print(f'can not find a match for {v} in {k}, did you mean ...?')
     share_basics = share_basics.loc[share_basics.list_date <= date]
     return list(share_basics.index.values)
 

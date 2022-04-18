@@ -965,7 +965,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "四川", and industry in ["银行", "金融"]\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['四川']).all())
 
@@ -1042,13 +1042,13 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
 
         print(f'\nprint out targets that can not be matched and return fuzzy results')
-        stock_pool = qt.get_stock_pool(industry='银行业, 金融, 房地产',
+        stock_pool = qt.get_stock_pool(industry='银行业, 多元金融, 房地产',
                                        area='陕西省',
                                        market='主要')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
-              f'check if all stocks industry in ["银行", "金融"]\n'
+              f'check if all stocks industry in ["多元金融"]\n'd
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
-        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(["多元金融"]).all())
 
     def test_get_basic_info(self):
         """ 测试获取证券基本信息"""
