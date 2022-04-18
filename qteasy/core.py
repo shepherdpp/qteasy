@@ -25,7 +25,7 @@ import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
-from .utilfuncs import AVAILABLE_ASSET_TYPES
+from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -818,7 +818,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     except:
         date = pd.to_datetime('today')
     # validate all input args:
-    if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
+    if not all(arg.lower() in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
         raise KeyError()
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
@@ -830,34 +830,40 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     if share_basics is None or share_basics.empty:
         return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
-    share_basics = share_basics.loc[share_basics.list_date <= date]
-    for column, targets in zip(kwargs.keys(), kwargs.values()):
+    import pdb; pdb.set_trace()
+    none_matched = dict()
+    for column, targets in kwargs.items():
         if column == 'index':
-            index_comp = pd.DataFrame()
-            end_date = date
-            # 逐月向前查找指数的成分
-            while index_comp.empty:
-                start_date = (end_date - pd.Timedelta(30, 'd')).strftime('%Y%m%d')
-                index_comp = ds.read_table_data('index_weight',
-                                                shares=targets,
-                                                start=start_date,
-                                                end=end_date.strftime('%Y%m%d'))
-                end_date = pd.to_datetime(start_date)
-                if end_date < pd.to_datetime('20040101'):
-                    print(f'no index composition found before date {date}')
-                    return []
+            # 查找date到今天之间的所有成分股, 如果date为today，则将date前推一个月
+            end_date = pd.to_datetime('today')
+            start_date = date - pd.Timedelta(30, 'd')
+            index_comp = ds.read_table_data('index_weight',
+                                            shares=targets,
+                                            start=start_date.strftime("%Y%m%d"),
+                                            end=end_date.strftime('%Y%m%d'))
             if index_comp.empty:
                 return []
-            # find out composite in only one day
-            comp_date = index_comp.index.get_level_values('trade_date').unique().to_list()[-1]
-            index_comp = index_comp[index_comp.index.get_level_values('trade_date') == comp_date]
-            return index_comp.index.get_level_values('con_code').tolist()
+            return index_comp.index.get_level_values('con_code').unique().tolist()
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
+        # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
+        # TODO: 实际使用中会如何使用这个功能？这个功能是否真的需要？
+        # all_column_values = share_basics[column].unique().tolist()
+        # target_not_matched = [item for item in targets if item not in all_column_values]
+        # if len(target_not_matched) > 0:
+        #     match_dict = {}
+        #     for t in target_not_matched:
+        #         similarities = np.array([_partial_lev_ratio(s, t) for s in all_column_values])
+        #         best_matched = all_column_values[similarities.argmax()[0]]
+        #         match_dict[t] = best_matched
+        #     none_matched[column] = match_dict
 
+    for k, v in none_matched.items():
+        print(f'can not find a match for {v} in {k}, did you mean ...?')
+    share_basics = share_basics.loc[share_basics.list_date <= date]
     return list(share_basics.index.values)
 
 

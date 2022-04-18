@@ -830,24 +830,6 @@ class HistoryPanel():
         raise NotImplementedError
 
 
-# TODO implement this method
-def csv_to_hp():
-    """ read a csv file and convert its data to a HistoryPanel
-
-    :return:
-    """
-    raise NotImplementedError
-
-
-# TODO implement this method
-def hdf_to_hp():
-    """ read a hdf file and convert its data to a HistoryPanel
-
-    :return:
-    """
-    raise NotImplementedError
-
-
 def hp_join(*historypanels):
     """ 当元组*historypanels不是None，且内容全都是HistoryPanel对象时，将所有的HistoryPanel对象连接成一个HistoryPanel
 

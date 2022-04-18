@@ -1901,14 +1901,14 @@ class DataSource:
         if not isinstance(adj, str):
             raise TypeError(f'adj type should be a string, got {type(adj)} instead')
         if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-            raise KeyError(f"invalid adj type, which should be anyone of "
+            raise KeyError(f"invalid adj type ({adj}), which should be anyone of "
                            f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
         adj = adj.lower()
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins'])) &
+        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins', 'report', 'comp'])) &
                                        (table_map.asset_type.isin(asset_type)) &
                                        (table_map.freq == freq)].index.to_list()
         table_data_read = {}

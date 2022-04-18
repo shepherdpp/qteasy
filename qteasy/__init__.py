@@ -16,7 +16,7 @@ from .core import get_current_holdings, get_stock_pool
 from .core import info, is_ready, configure, configuration
 from .core import run, get_basic_info
 from .history import HistoryPanel
-from .history import csv_to_hp, hdf_to_hp, dataframe_to_hp, stack_dataframes
+from .history import dataframe_to_hp, stack_dataframes
 from .operator import Operator
 from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSelecting
 from .visual import candle
