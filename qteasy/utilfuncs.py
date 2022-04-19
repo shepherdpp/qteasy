@@ -896,3 +896,45 @@ def _wildcard_match(mode, wordlist):
             res.append(word)
 
     return res
+
+
+@njit
+def ffill_3d_data(val, init_val):
+    """ 给定一个三维np数组，如果数组中有nan值时，使用axis=1的前一个非Nan值填充Nan
+
+    :param val: 3D ndarray, 一个含有Nan值的三维数组
+    :param init_val:
+    :return:
+    """
+    lv, row, col = val.shape
+    r0 = val[:, 0, :]
+    r0 = np.where(np.isnan(r0), init_val, r0)
+    for i in range(row):
+        if i == 0:
+            val[:, i, :] = r0
+        r_c = val[:, i, :]
+        r_c = np.where(np.isnan(r_c), r0, r_c)
+        r0 = r_c
+        val[:, i, :] = r_c
+    return val
+
+
+@njit()
+def ffill_2d_data(val, init_val):
+    """ 给定一个二维np数组，如果数组中有nan值时，使用axis=0的前一个非Nan值填充Nan
+
+    :param val: 2D ndarray, 一个含有Nan值的二维数组
+    :param init_val:
+    :return:
+    """
+    row, col = val.shape
+    r0 = val[0, :]
+    r0 = np.where(np.isnan(r0), init_val, r0)
+    for i in range(row):
+        if i == 0:
+            val[i, :] = r0
+        r_c = val[i, :]
+        r_c = np.where(np.isnan(r_c), r0, r_c)
+        r0 = r_c
+        val[i, :] = r_c
+    return val

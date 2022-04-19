@@ -16,7 +16,7 @@ import pandas as pd
 
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list
+from .utilfuncs import str_to_list, ffill_2d_data
 from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 from .blender import blender_parser
@@ -1117,6 +1117,7 @@ class Operator:
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}')
         from .blender import signal_blend
+        signal_type = self.signal_type
         shares = hist_data.shares
         date_list = hist_data.hdates
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
@@ -1133,8 +1134,14 @@ class Operator:
                 # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
                 # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
                 history_length = dt.shape[1]
-                op_signals.append(
-                        stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
+                signal = stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:])
+                if signal_type in ['ps', 'vs']:
+                    signal = signal.fillna(0)
+                elif signal_type == 'pt':
+                    signal = ffill_2d_data(signal, 0)
+                else:
+                    raise KeyError(f'Invalid signal type: {self.signal_type}')
+                op_signals.append(signal)
                 # 生成的交易信号添加到交易信号队列中，
 
             # 根据蒙板混合前缀表达式混合所有蒙板
@@ -1152,10 +1159,4 @@ class Operator:
                                  levels=shares,
                                  columns=bt_price_types,
                                  rows=date_list[-history_length:])
-        if self.signal_type in ['ps', 'vs']:
-            signal_hp = signal_hp.fillna(0)
-        elif self.signal_type == 'pt':
-            signal_hp = signal_hp.ffill()
-        else:
-            raise KeyError(f'Invalid signal type: {self.signal_type}')
         return signal_hp

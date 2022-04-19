@@ -11,10 +11,9 @@
 
 import pandas as pd
 import numpy as np
-from numba import njit
 
 import qteasy
-from .utilfuncs import str_to_list, list_or_slice, labels_to_dict
+from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, ffill_3d_data
 
 
 class HistoryPanel():
@@ -537,7 +536,7 @@ class HistoryPanel():
             val = self.values
             if np.all(~np.isnan(val)):
                 return self
-            self._values = ffill_data(val, init_val)
+            self._values = ffill_3d_data(val, init_val)
         return self
 
     def join(self,
@@ -1077,23 +1076,3 @@ def get_history_panel(start,
                                     asset_type=asset_type,
                                     adj=adj)
     return result_hp
-
-@njit
-def ffill_data(val, init_val):
-    """ 给定一个三维np数组，如果数组中有nan值时，使用axis=1的前一个非Nan值填充Nan
-
-    :param val: 3D ndarray, 一个含有Nan值的三维数组
-    :param init_val:
-    :return:
-    """
-    lv, row, col = val.shape
-    r0 = val[:, 0, :]
-    r0 = np.where(np.isnan(r0), init_val, r0)
-    for i in range(row):
-        if i == 0:
-            val[:, i, :] = r0
-        r_c = val[:, i, :]
-        r_c = np.where(np.isnan(r_c), r0, r_c)
-        r0 = r_c
-        val[:, i, :] = r_c
-    return val

@@ -8,10 +8,8 @@
 #   Unittest for all qteasy
 #   functionalities.
 # ======================================
-
 import unittest
 
-import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -74,7 +72,7 @@ from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, s
 from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
-from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
+from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, get_built_in_table_schema
@@ -958,8 +956,8 @@ class TestCoreSubFuncs(unittest.TestCase):
               f'check if all stock areas are in list of ["贵州", "北京", "天津"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['贵州',
-                                                                                              '北京',
-                                                                                              '天津']).all())
+                                                                                            '北京',
+                                                                                            '天津']).all())
 
         print(f'\nselect all stocks by area and industry')
         stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
@@ -1046,7 +1044,7 @@ class TestCoreSubFuncs(unittest.TestCase):
                                        area='陕西省',
                                        market='主要')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
-              f'check if all stocks industry in ["多元金融"]\n'd
+              f'check if all stocks industry in ["多元金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(["多元金融"]).all())
 
@@ -7547,6 +7545,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
     def test_sel_timing(self):
+        """ where is the timing strategy??"""
         stg = TestSelStrategy()
         stg_pars = ()
         stg.set_pars(stg_pars)
@@ -7561,54 +7560,54 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        selmask = np.array([[0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0]])
+        selmask = np.array([[0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0. , 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0. , 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask))
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
     def test_simple_timing(self):
         stg = TestSigStrategy()
@@ -7702,57 +7701,57 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(output.shape, (45, 3))
 
         selmask = np.array([[0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0]])
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
         print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
         for i in range(len(output)):
             print(f'output:    {output[i]}\n'
                   f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask))
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get mininum factor
         stg_pars = (True, 'even', 'less', 1, 1, 0.67)
@@ -7765,57 +7764,57 @@ class TestOperator(unittest.TestCase):
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5]])
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
         print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
         for i in range(len(output)):
             print(f'output:    {output[i]}\n'
                   f'selmask:   {selmask[i]}')
-        self.assertTrue(np.allclose(output, selmask))
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'linear', 'greater', 0, 0, 0.67)
@@ -7828,54 +7827,54 @@ class TestOperator(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
-        selmask = np.array([[0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.66667, 0.00000],
-                            [0.33333, 0.66667, 0.00000],
-                            [0.33333, 0.66667, 0.00000]])
+        selmask = np.array([[0.0, 0.33333333, 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.0, 0.66666667, 0.33333333],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.0, 0.33333333, 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0., 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0., 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0.66666667, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask))
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
@@ -7888,54 +7887,54 @@ class TestOperator(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
-        selmask = np.array([[0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.91667, 0.00000],
-                            [0.08333, 0.91667, 0.00000],
-                            [0.08333, 0.91667, 0.00000]])
+        selmask = np.array([[0., 0.08333333, 0.91666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.91666667, 0.08333333],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.08333333, 0., 0.91666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.08333333, 0., 0.91666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.08333333, 0.91666667, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask, 0.001))
+        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
         # test single factor, get max factor in linear weight, threshold 0.2
         stg_pars = (False, 'even', 'greater', 0.2, 0.2, 0.67)
@@ -7948,54 +7947,54 @@ class TestOperator(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
-        selmask = np.array([[0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0]])
+        selmask = np.array([[0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask, 0.001))
+        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
     def test_tokenizer(self):
         self.assertListEqual(_exp_to_token('1+1'),
@@ -8916,6 +8915,58 @@ class TestHistoryPanel(unittest.TestCase):
         # TODO: implement this test case
         # test get only one line of data
         pass
+
+    def test_ffill_data(self):
+        """ 测试前向填充NaN值"""
+        d = np.array([[[0.03, 0.88, 0.2],
+                       [0.62, np.nan, np.nan],
+                       [0.46, np.nan, 0.37],
+                       [0.52, np.nan, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, 0.05, 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [np.nan, np.nan, np.nan],
+                       [0.81, 0.94, 0.04]]])
+
+        t = np.array([[[0.03, 0.88, 0.2],
+                       [0.62, 0.88, 0.2],
+                       [0.46, 0.88, 0.37],
+                       [0.52, 0.88, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, 0.05, 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [0.25, 0.36, 0.32],
+                       [0.81, 0.94, 0.04]]])
+        self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
+
+        d = np.array([[[np.nan, 0.88, 0.2],
+                       [0.62, np.nan, np.nan],
+                       [0.46, np.nan, 0.37],
+                       [0.52, np.nan, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, np.nan, 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [np.nan, np.nan, np.nan],
+                       [0.81, 0.94, 0.04]]])
+
+        t = np.array([[[0.0, 0.88, 0.2],
+                       [0.62, 0.88, 0.2],
+                       [0.46, 0.88, 0.37],
+                       [0.52, 0.88, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, 0., 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [0.25, 0.36, 0.32],
+                       [0.81, 0.94, 0.04]]])
+        self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
 
 
 class RetryableError(Exception):
@@ -11723,13 +11774,14 @@ class TestBuiltInsMultiple(unittest.TestCase):
         开始日期：20200101
         结束日期：20211231
     """
+
     def setUp(self):
         # self.stock_pool = qt.get_stock_pool(index='')
         ds = qt.QT_DATA_SOURCE
         df = ds.read_table_data('index_weight', start='20210606', end='20210707', shares='000300.SH')
         self.stock_pool = df.index.get_level_values('con_code').tolist()
 
-        qt.configure(asset_pool=self.stock_pool[-100: ],
+        qt.configure(asset_pool=self.stock_pool[-100:],
                      asset_type='E',
                      reference_asset='000300.SH',
                      ref_asset_type='IDX',
@@ -11926,14 +11978,14 @@ class TestDataSource(unittest.TestCase):
             'close':      [10.0, 10.0, 10.0, np.nan, 10.0, 10.0, 7.0, 2.0, 8.0, 3.0, 10.0, 10.0, 10.0, 10.0]
         })
         self.df2 = pd.DataFrame({
-            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
-                           '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
-            'name':       ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10'],
-            'industry':   ['industry1', 'industry2', 'industry3', 'industry4', 'industry5',
-                           'industry6', 'industry7', 'industry8', 'industry9', 'industry10'],
-            'area':       ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
-            'market':     ['market1', 'market2', 'market3', 'market4', 'market5',
-                           'market6', 'market7', 'market8', 'market9', 'market10']
+            'ts_code':  ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                         '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
+            'name':     ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10'],
+            'industry': ['industry1', 'industry2', 'industry3', 'industry4', 'industry5',
+                         'industry6', 'industry7', 'industry8', 'industry9', 'industry10'],
+            'area':     ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
+            'market':   ['market1', 'market2', 'market3', 'market4', 'market5',
+                         'market6', 'market7', 'market8', 'market9', 'market10']
         })
         # 以下df用于测试写入/读出/新增修改系统内置标准数据表
         self.built_in_df = pd.DataFrame({
@@ -12412,8 +12464,10 @@ class TestDataSource(unittest.TestCase):
         loaded_index = loaded_df.index.values
         target_values = np.array(target_df.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'df retrieved by chunk from saved csv file selecting both shares {shares} and trade_dates {start}/{end}\n'
-              f'{loaded_df}\n')
+        print(
+                f'df retrieved by chunk from saved csv file selecting both shares {shares} and trade_dates {start}/'
+                f'{end}\n'
+                f'{loaded_df}\n')
         for i in range(len(target_index)):
             self.assertEqual(target_index[i], loaded_index[i])
         rows, cols = target_values.shape
@@ -12732,25 +12786,25 @@ class TestDataSource(unittest.TestCase):
 
     def test_download_update_table_data(self):
         """ test downloading data from tushare"""
-        tables_to_test = {'stock_daily':        {'ts_code': None,
-                                                 'trade_date': '20211112'},
-                          'stock_weekly':       {'ts_code': None,
-                                                 'trade_date': '20211008'},
-                          'stock_indicator':    {'ts_code': None,
-                                                 'trade_date': '20211112'},
-                          'trade_calendar':     {'exchange': 'SSE',
-                                                 'start': '19910701',
-                                                 'end': '19920701'}
+        tables_to_test = {'stock_daily':     {'ts_code':    None,
+                                              'trade_date': '20211112'},
+                          'stock_weekly':    {'ts_code':    None,
+                                              'trade_date': '20211008'},
+                          'stock_indicator': {'ts_code':    None,
+                                              'trade_date': '20211112'},
+                          'trade_calendar':  {'exchange': 'SSE',
+                                              'start':    '19910701',
+                                              'end':      '19920701'}
                           }
-        tables_to_add = {'stock_daily':        {'ts_code': None,
-                                                'trade_date': '20211115'},
-                         'stock_weekly':       {'ts_code': None,
-                                                'trade_date': '20211015'},
-                         'stock_indicator':    {'ts_code': None,
-                                                'trade_date': '20211115'},
-                         'trade_calendar':     {'exchange': 'SZSE',
-                                                'start': '19910701',
-                                                'end': '19920701'}
+        tables_to_add = {'stock_daily':     {'ts_code':    None,
+                                             'trade_date': '20211115'},
+                         'stock_weekly':    {'ts_code':    None,
+                                             'trade_date': '20211015'},
+                         'stock_indicator': {'ts_code':    None,
+                                             'trade_date': '20211115'},
+                         'trade_calendar':  {'exchange': 'SZSE',
+                                             'start':    '19910701',
+                                             'end':      '19920701'}
                          }
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
 
