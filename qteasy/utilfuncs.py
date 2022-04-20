@@ -938,3 +938,25 @@ def ffill_2d_data(val, init_val):
         r0 = r_c
         val[i, :] = r_c
     return val
+
+
+@njit()
+def fill_nan_data(val, fill_val):
+    """ 给定一个ndarray，用fill_val来填充array中的nan值
+
+    :param val:
+    :param fill_val:
+    :return:
+    """
+    return np.where(np.isnan(val), fill_val, val)
+
+
+@njit()
+def fill_inf_data(val, fill_val):
+    """ 给定一个ndarray，用fill_val来填充array中的inf值
+
+    :param val:
+    :param fill_val:
+    :return:
+    """
+    return np.where(np.isinf(val), fill_val, val)

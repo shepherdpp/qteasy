@@ -16,7 +16,7 @@ import pandas as pd
 
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list, ffill_2d_data
+from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data
 from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 from .blender import blender_parser
@@ -1136,7 +1136,7 @@ class Operator:
                 history_length = dt.shape[1]
                 signal = stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:])
                 if signal_type in ['ps', 'vs']:
-                    signal = signal.fillna(0)
+                    signal = fill_nan_data(signal, 0)
                 elif signal_type == 'pt':
                     signal = ffill_2d_data(signal, 0)
                 else:

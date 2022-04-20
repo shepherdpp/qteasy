@@ -14,6 +14,7 @@ import numpy as np
 
 import qteasy
 from .utilfuncs import str_to_list, list_or_slice, labels_to_dict, ffill_3d_data
+from .utilfuncs import fill_nan_data, fill_inf_data
 
 
 class HistoryPanel():
@@ -512,7 +513,7 @@ class HistoryPanel():
         :return:
         """
         if not self.is_empty:
-            self._values = np.where(np.isnan(self._values), with_val, self._values)
+            self._values = fill_nan_data(self._values, with_val)
         return self
 
     def fillinf(self, with_val: [int, float, np.int, np.float]):
@@ -522,7 +523,7 @@ class HistoryPanel():
         :return:
         """
         if not self.is_empty:
-            self._values = np.where(np.isinf(self._values), with_val, self._values)
+            self._values = fill_inf_data(self._values, with_val)
         return self
 
     def ffill(self, init_val=np.nan):
