@@ -1041,24 +1041,58 @@ def stack_dataframes(dfs: [list, dict], stack_along: str = 'shares', shares=None
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-def get_history_panel(start,
-                      end,
-                      freq,
-                      shares,
+def get_history_panel(shares,
                       htypes,
-                      asset_type: str,
-                      adj: str,
+                      start=None,
+                      end=None,
+                      freq=None,
+                      asset_type: str = None,
+                      adj: str = None,
                       data_source=None):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
+        TODO: 完善本函数的功能： 增加composite数据的获取
+        TODO: 完善函数的参数列表，增加默认参数
+        TODO: 完善函数的docstring
 
-    :param start:
-    :param end:
-    :param freq:
-    :param shares:
-    :param htypes:
-    :param asset_type: str
-    :param adj:
+
+        :param shares: [str, list]
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+
+        :param htypes: [str, list]
+            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     'open, high, low, close'
+             - list:    ['open', 'high', 'low', 'close']
+
+        :param start: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+
+        :param end: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+
+        :param freq: str
+            获取的历史数据的频率，包括以下选项：
+             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+
+        :param asset_type: str, list
+            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+             - any: 可以获取任意资产类型的证券数据(默认值)
+             - E:   只获取股票类型证券的数据
+             - IDX: 只获取指数类型证券的数据
+             - FT:  只获取期货类型证券的数据
+             - FD:  只获取基金类型证券的数据
+
+        :param adj: str
+            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+             - none / n: 不复权(默认值)
+             - back / b: 后复权
+             - forward / fw / f: 前复权
     :param data_source: DataSource Object
     :return:
     """
@@ -1069,6 +1103,7 @@ def get_history_panel(start,
         if not isinstance(data_source, qteasy.DataSource):
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
+    # 获取常规类型的历史数据如量价数据和指标数据
     result_hp = ds.get_history_data(shares=shares,
                                     htypes=htypes,
                                     start=start,
@@ -1076,4 +1111,5 @@ def get_history_panel(start,
                                     freq=freq,
                                     asset_type=asset_type,
                                     adj=adj)
+    # 获取指数成分权重数据
     return result_hp

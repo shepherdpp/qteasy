@@ -11906,12 +11906,16 @@ class FastExperiments(unittest.TestCase):
         #              sell_batch_size=0)
         ds = qt.QT_DATA_SOURCE
         df = ds.get_history_data('000300.SH',
-                                 htypes='weight',
+                                 htypes='close',
                                  start='20210101',
                                  end='20220202',
                                  freq='d',
                                  asset_type='any',
                                  adj='none')
+        print(df)
+        df = ds.get_index_weight_hp('000300.SH, 000001.SH, 000003.SH',
+                                    start='20200101',
+                                    end='20210101')
         print(df)
 
     def test_fast_experiments2(self):
