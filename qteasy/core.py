@@ -832,7 +832,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
     none_matched = dict()
     # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
-    print('looking for none matching arguments')
+    # print('looking for none matching arguments')
     for column, targets in kwargs.items():
         if column == 'index':
             continue

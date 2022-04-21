@@ -2042,7 +2042,8 @@ class DataSource:
         indices_found = weight_data.index.get_level_values(0)
         # 整理读取数据的结构，删除不需要的股票， 添加额外的股票，整理顺序
         if shares is not None:
-            shares = str_to_list(shares)
+            if isinstance(shares, str):
+                shares = str_to_list(shares)
             columns_to_drop = [item for item in all_shares if item not in shares]
         for idx in index:
             if idx in indices_found:
@@ -2053,7 +2054,7 @@ class DataSource:
             if shares is not None:
                 weight_df.drop(columns=columns_to_drop, inplace=True)
                 weight_df = weight_df.reindex(columns=shares)
-            df_by_index[idx] = weight_df
+            df_by_index['wt-' + idx] = weight_df
         # result_hp = stack_dataframes(df_by_index, stack_along='htypes', htypes=index_names)
         return df_by_index
 

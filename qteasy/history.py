@@ -1109,18 +1109,24 @@ def get_history_panel(shares,
     normal_htypes = [itm for itm in htypes if itm.split('-')[0].lower() not in ['wt', 'weight']]
     weight_indices = [itm.split('-')[1] for itm in htypes if itm not in normal_htypes]
     # 获取常规类型的历史数据如量价数据和指标数据
-    normal_hp = ds.get_history_data(shares=shares,
-                                    htypes=normal_htypes,
-                                    start=start,
-                                    end=end,
-                                    freq=freq,
-                                    asset_type=asset_type,
-                                    adj=adj)
+    if normal_htypes:
+        normal_hp = ds.get_history_data(shares=shares,
+                                        htypes=normal_htypes,
+                                        start=start,
+                                        end=end,
+                                        freq=freq,
+                                        asset_type=asset_type,
+                                        adj=adj)
+    else:
+        normal_hp = {}
     # 获取指数成分权重数据
-    weight_hp = ds.get_index_weights(index=weight_indices,
-                                     start=start,
-                                     end=end,
-                                     shares=shares)
+    if weight_indices:
+        weight_hp = ds.get_index_weights(index=weight_indices,
+                                         start=start,
+                                         end=end,
+                                         shares=shares)
+    else:
+        weight_hp = {}
     # 合并两个hp
     if weight_hp != {}:
         normal_hp.update(weight_hp)

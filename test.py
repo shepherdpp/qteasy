@@ -11881,37 +11881,66 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        qt.get_basic_info('000899.SZ')
-        stg_buy = StgBuyOpen()
-        stg_sel = StgSelClose()
-        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        op.set_parameter(0,
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         data_types='close',
-                         bt_price_type='open')
-        op.set_parameter(1,
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=50,
-                         pars=(20,),
-                         data_types='close',
-                         bt_price_type='close')
-        op.set_blender(blender='0')
-        op.get_blender()
-        qt.configure(asset_pool=['000300.SH',
-                                 '399006.SZ'],
-                     asset_type='IDX')
-        res = qt.run(op,
-                     visual=True,
+        # qt.get_basic_info('000899.SZ')
+        # stg_buy = StgBuyOpen()
+        # stg_sel = StgSelClose()
+        # op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        # op.set_parameter(0,
+        #                  data_freq='d',
+        #                  sample_freq='d',
+        #                  window_length=50,
+        #                  pars=(20,),
+        #                  data_types='close',
+        #                  bt_price_type='open')
+        # op.set_parameter(1,
+        #                  data_freq='d',
+        #                  sample_freq='d',
+        #                  window_length=50,
+        #                  pars=(20,),
+        #                  data_types='close',
+        #                  bt_price_type='close')
+        # op.set_blender(blender='0')
+        # op.get_blender()
+        # qt.configure(asset_pool=['000300.SH',
+        #                          '399006.SZ'],
+        #              asset_type='IDX')
+        # res = qt.run(op,
+        #              visual=True,
+        #              print_backtest_log=True,
+        #              log_backtest_detail=False,
+        #              invest_start='20110725',
+        #              invest_end='20220401',
+        #              trade_batch_size=1,
+        #              sell_batch_size=0)
+        stock_pool = qt.get_stock_pool(index='000300.SH', date='20211001')
+        qt.configure(asset_pool=stock_pool,
+                     asset_type='E',
+                     reference_asset='000300.SH',
+                     ref_asset_type='IDX',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
+                     invest_cash_amounts=[10000000],
+                     mode=1,
+                     log=True,
                      print_backtest_log=True,
-                     log_backtest_detail=False,
-                     invest_start='20110725',
-                     invest_end='20220401',
-                     trade_batch_size=1,
-                     sell_batch_size=0)
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=-0.03,
+                     backtest_price_adj='none')
+        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_parameter(0,
+                         opt_tag=1,
+                         sample_freq='m',
+                         data_types='wt-000300.SH',
+                         sort_ascending=False,
+                         weighting='proportion')
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     print_trade_log=True)
 
     def test_fast_experiments2(self):
         pass
