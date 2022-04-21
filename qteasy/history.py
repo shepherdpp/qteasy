@@ -1103,13 +1103,26 @@ def get_history_panel(shares,
         if not isinstance(data_source, qteasy.DataSource):
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
+    # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    normal_htypes = [itm for itm in htypes if itm.split('-')[0].lower() not in ['wt', 'weight']]
+    weight_indices = [itm.split('-')[1] for itm in htypes if itm not in normal_htypes]
     # 获取常规类型的历史数据如量价数据和指标数据
-    result_hp = ds.get_history_data(shares=shares,
-                                    htypes=htypes,
+    normal_hp = ds.get_history_data(shares=shares,
+                                    htypes=normal_htypes,
                                     start=start,
                                     end=end,
                                     freq=freq,
                                     asset_type=asset_type,
                                     adj=adj)
     # 获取指数成分权重数据
+    weight_hp = ds.get_index_weights(index=weight_indices,
+                                     start=start,
+                                     end=end,
+                                     shares=shares)
+    # 合并两个hp
+    if weight_hp != {}:
+        normal_hp.update(weight_hp)
+    result_hp = stack_dataframes(normal_hp, stack_along='htypes')
     return result_hp

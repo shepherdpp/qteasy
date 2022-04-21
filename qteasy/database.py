@@ -20,7 +20,7 @@ from functools import lru_cache
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .history import stack_dataframes
+from .history import stack_dataframes, HistoryPanel
 from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
@@ -1995,44 +1995,67 @@ class DataSource:
                 if adj.lower() in ['forward', 'fw', 'f'] and len(combined_factors) > 1:
                     price_df /= combined_factors.iloc[-1]
 
-        result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
-        return result_hp
+        # result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
+        return df_by_htypes
 
-    def get_index_weight_hp(self, index, start=None, end=None, shares=None):
+    def get_index_weights(self, index, start=None, end=None, shares=None):
         """ 从本地数据仓库中获取一个指数的成分权重
 
-        :param index:
-        :param start:
-        :param end:
-        :param shares:
+        :param index: [str, list]
+            需要获取成分的指数代码，可以包含多个指数，每个指数
+
+        :param start: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+
+        :param end: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+
+        :param shares: [str, list]
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+
         :return:
+        Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
+            HistoryPanel对象
         """
         # 检查数据合法性
         if start is None:
             raise NotImplementedError
         if end is None:
             raise NotImplementedError
-        index = str_to_list(index)
+        if isinstance(index, str):
+            index = str_to_list(index)
         # 读取时间内的权重数据
-        weight_data = self.read_table_data('index_weight', shares=index, start=start, end=end).unstack()
+        weight_data = self.read_table_data('index_weight', shares=index, start=start, end=end)
+        if not weight_data.empty:
+            weight_data = weight_data.unstack()
+        else:
+            # return empty dict
+            return {}
         weight_data.columns = weight_data.columns.get_level_values(1)
         all_shares = weight_data.columns
-        df_by_index = []
+        df_by_index = {}
         index_names = []
         columns_to_drop = []
+        indices_found = weight_data.index.get_level_values(0)
         # 整理读取数据的结构，删除不需要的股票， 添加额外的股票，整理顺序
         if shares is not None:
             shares = str_to_list(shares)
             columns_to_drop = [item for item in all_shares if item not in shares]
         for idx in index:
-            weight_df = weight_data.loc[idx]
+            if idx in indices_found:
+                weight_df = weight_data.loc[idx]
+            else:
+                weight_df = pd.DataFrame(columns=all_shares)
             index_names.append(idx)
             if shares is not None:
                 weight_df.drop(columns=columns_to_drop, inplace=True)
                 weight_df = weight_df.reindex(columns=shares)
-            df_by_index.append(weight_df)
-        result_hp = stack_dataframes(df_by_index, stack_along='htypes', htypes=index_names)
-        return result_hp
+            df_by_index[idx] = weight_df
+        # result_hp = stack_dataframes(df_by_index, stack_along='htypes', htypes=index_names)
+        return df_by_index
 
     def refill_local_source(self,
                             tables=None,

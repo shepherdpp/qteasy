@@ -208,12 +208,12 @@ def _loop_step(signal_type: int,
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
             cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
-                                       position_diff * total_value,
-                                       0)
+                                      position_diff * total_value,
+                                      0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 仓位差 * 当前持有空头份额
             amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
-                                     position_diff / pre_position * own_amounts,
-                                     0)
+                                        position_diff / pre_position * own_amounts,
+                                        0)
         # 打印log：
         if trade_detail_log:
             logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
@@ -1163,7 +1163,6 @@ def check_and_prepare_hist_data(operator, config):
             asset_type=config.asset_type,
             adj=config.backtest_price_adj) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    # TODO: 此处应该根据回测价格顺序模式调整bt_price_types的价格
     bt_price_types = operator.bt_price_types
     hist_loop = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in hist_loop to prevent from result in nan in value
@@ -1204,7 +1203,7 @@ def check_and_prepare_hist_data(operator, config):
                       ).to_dataframe(htype='close')
 
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \
-               invest_cash_plan, opti_cash_plan, test_cash_plan
+           invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
 def run(operator, **kwargs):

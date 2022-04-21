@@ -8912,9 +8912,17 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
     def test_get_history_panel(self):
-        # TODO: implement this test case
         # test get only one line of data
-        pass
+        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH',
+                                          htypes='close, weight-000300.SH, Wt-000003.SH',
+                                          start='20210101',
+                                          end='20210802',
+                                          freq='m',
+                                          asset_type='any',
+                                          adj='none')
+        self.assertEqual(hp.htypes, ['close', '000300.SH', '000003.SH'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '000003.SZ', '601728.SH'])
+        print(hp)
 
     def test_ffill_data(self):
         """ 测试前向填充NaN值"""
@@ -11873,50 +11881,37 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        # qt.get_basic_info('000899.SZ')
-        # stg_buy = StgBuyOpen()
-        # stg_sel = StgSelClose()
-        # op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        # op.set_parameter(0,
-        #                  data_freq='d',
-        #                  sample_freq='d',
-        #                  window_length=50,
-        #                  pars=(20,),
-        #                  data_types='close',
-        #                  bt_price_type='open')
-        # op.set_parameter(1,
-        #                  data_freq='d',
-        #                  sample_freq='d',
-        #                  window_length=50,
-        #                  pars=(20,),
-        #                  data_types='close',
-        #                  bt_price_type='close')
-        # op.set_blender(blender='0')
-        # op.get_blender()
-        # qt.configure(asset_pool=['000300.SH',
-        #                          '399006.SZ'],
-        #              asset_type='IDX')
-        # res = qt.run(op,
-        #              visual=True,
-        #              print_backtest_log=True,
-        #              log_backtest_detail=False,
-        #              invest_start='20110725',
-        #              invest_end='20220401',
-        #              trade_batch_size=1,
-        #              sell_batch_size=0)
-        ds = qt.QT_DATA_SOURCE
-        df = ds.get_history_data('000300.SH',
-                                 htypes='close',
-                                 start='20210101',
-                                 end='20220202',
-                                 freq='d',
-                                 asset_type='any',
-                                 adj='none')
-        print(df)
-        df = ds.get_index_weight_hp('000300.SH, 000001.SH, 000003.SH',
-                                    start='20200101',
-                                    end='20210101')
-        print(df)
+        qt.get_basic_info('000899.SZ')
+        stg_buy = StgBuyOpen()
+        stg_sel = StgSelClose()
+        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        op.set_parameter(0,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         bt_price_type='open')
+        op.set_parameter(1,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         bt_price_type='close')
+        op.set_blender(blender='0')
+        op.get_blender()
+        qt.configure(asset_pool=['000300.SH',
+                                 '399006.SZ'],
+                     asset_type='IDX')
+        res = qt.run(op,
+                     visual=True,
+                     print_backtest_log=True,
+                     log_backtest_detail=False,
+                     invest_start='20110725',
+                     invest_end='20220401',
+                     trade_batch_size=1,
+                     sell_batch_size=0)
 
     def test_fast_experiments2(self):
         pass
@@ -12870,43 +12865,69 @@ class TestDataSource(unittest.TestCase):
                         db='ts_db')
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
+        htypes = str_to_list(htypes)
         start = '20210101'
         end = '20210301'
         asset_type = 'E, IDX, FD'
         freq = 'd'
         adj = 'back'
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=htypes,
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq=freq,
-                                 adj=adj)
-        print(f'got history panel with backward price recover:\n{hp}')
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=htypes,
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq=freq,
-                                 adj='forward')
-        print(f'got history panel with forward price recover:\n{hp}')
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=htypes,
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq=freq,
-                                 adj='forward')
-        print(f'got history panel with price:\n{hp}')
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=['open', 'high', 'low', 'close', 'vol'],
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq='w',
-                                 adj='forward')
-        print(f'got history panel with price:\n{hp}')
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj=adj)
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with backward price recover:\n{dfs}')
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj='forward')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with forward price recover:\n{dfs}')
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj='forward')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with price:\n{dfs}')
+        htypes = ['open', 'high', 'low', 'close', 'vol']
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq='w',
+                                  adj='forward')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with price:\n{dfs}')
+
+    def test_get_index_weights(self):
+        """ test get_index_weights() function"""
+        ds = qt.QT_DATA_SOURCE
+        dfs = ds.get_index_weights('000300.SH,000002.SZ',
+                                   start='20200101',
+                                   end='20200102',
+                                   shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), ['000300.SH', '000002.SZ'])
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(dfs)
 
     def test_get_table_info(self):
         """ 获取打印数据表的基本信息"""
