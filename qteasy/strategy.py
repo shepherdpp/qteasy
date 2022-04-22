@@ -1095,7 +1095,7 @@ class FactoralSelecting(Strategy):
         elif weighting == 'proportion':
             fctr = factors[args]
             proportion = fctr / fctr.sum()
-            chosen[args] = proportion.clip(0)
+            chosen[args] = np.where(proportion < 0, 0, proportion)  # np.where 比 proportion.clip(0) 速度快得多
         # even：均匀分配，所有中选股票在组合中权重相同
         elif weighting == 'even':
             chosen[args] = 1. / arg_count
