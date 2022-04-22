@@ -30,7 +30,7 @@ from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wil
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
-from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
+from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
 
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
@@ -7676,7 +7676,7 @@ class TestOperator(unittest.TestCase):
 
     def test_sel_finance(self):
         """Test selecting_finance strategy, test all built-in strategy parameters"""
-        stg = SelectingFinanceIndicator()
+        stg = SelectingAvgIndicator()
         stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         stg.window_length = 5
@@ -11936,14 +11936,12 @@ class FastExperiments(unittest.TestCase):
                          sample_freq='m',
                          data_types='wt-000300.SH',
                          sort_ascending=False,
-                         weighting='proportion')
+                         weighting='proportion',
+                         proportion_or_quantity=300)
         res = qt.run(op,
                      mode=1,
                      visual=True,
                      print_trade_log=True)
-
-    def test_fast_experiments2(self):
-        pass
 
     def test_time(self):
         print(match_ts_code('000001'))

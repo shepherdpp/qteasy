@@ -2133,7 +2133,7 @@ class SelectingRandom(stg.SimpleSelecting):
 
 # Built-in FactoralSelecting strategies:
 
-class SelectingFinanceIndicator(stg.FactoralSelecting):
+class SelectingAvgIndicator(stg.FactoralSelecting):
     """ 以股票过去一段时间内的财务指标的平均值作为选股因子选股
 
     """
@@ -2376,22 +2376,22 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'stoch':         STOCH,
                        'stochf':        STOCHF,
                        'stochrsi':      STOCHRSI,
-                       'ultosc':        ULTOSC,
-                       'willr':         WILLR,
-                       'ricon_none':    RiconNone,
-                       'urgent':        RiconUrgent,
-                       'long':          TimingLong,
-                       'short':         TimingShort,
-                       'zero':          TimingZero,
-                       'all':           SelectingAll,
-                       'none':          SelectingNone,
-                       'random':        SelectingRandom,
-                       'finance':       SelectingFinanceIndicator,
-                       'ndaylast':      SelectingNDayLast,
-                       'ndayavg':       SelectingNDayAvg,
-                       'ndayrate':      SelectingNDayRateChange,
-                       'ndaychg':       SelectingNDayChange,
-                       'ndayvol':       SelectingNDayVolatility
+                       'ultosc':     ULTOSC,
+                       'willr':      WILLR,
+                       'ricon_none': RiconNone,
+                       'urgent':     RiconUrgent,
+                       'long':       TimingLong,
+                       'short':      TimingShort,
+                       'zero':       TimingZero,
+                       'all':        SelectingAll,
+                       'none':       SelectingNone,
+                       'random':     SelectingRandom,
+                       'finance':    SelectingAvgIndicator,
+                       'ndaylast':   SelectingNDayLast,
+                       'ndayavg':    SelectingNDayAvg,
+                       'ndayrate':   SelectingNDayRateChange,
+                       'ndaychg':    SelectingNDayChange,
+                       'ndayvol':    SelectingNDayVolatility
                        }
 
 AVAILABLE_BUILT_IN_STRATEGIES = BUILT_IN_STRATEGIES.values()

@@ -1106,7 +1106,7 @@ def get_history_panel(shares,
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
-    normal_htypes = [itm for itm in htypes if itm.split('-')[0].lower() not in ['wt', 'weight']]
+    normal_htypes = [itm for itm in htypes if itm.split('-')[0] != 'wt']
     weight_indices = [itm.split('-')[1] for itm in htypes if itm not in normal_htypes]
     # 获取常规类型的历史数据如量价数据和指标数据
     if normal_htypes:

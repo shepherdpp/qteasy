@@ -1074,8 +1074,10 @@ class FactoralSelecting(Strategy):
         if weighting == 'linear':
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
-        # proportion：比例分配，权重与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
-        elif weighting == 'proportion':
+        # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
+        # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
+        # 获取比例分配
+        elif weighting == 'distance':
             dist = factors[args]
             d = dist.max() - dist.min()
             if not sort_ascending:
@@ -1089,6 +1091,11 @@ class FactoralSelecting(Strategy):
                 chosen[args] = dist / len(dist)
             else:
                 chosen[args] = dist / dist.sum()
+        # proportion：比例分配，权重与其分值成正比，分值为0或小于0者比例为0
+        elif weighting == 'proportion':
+            fctr = factors[args]
+            proportion = fctr / fctr.sum()
+            chosen[args] = proportion.clip(0)
         # even：均匀分配，所有中选股票在组合中权重相同
         elif weighting == 'even':
             chosen[args] = 1. / arg_count
