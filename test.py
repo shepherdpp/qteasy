@@ -9397,6 +9397,21 @@ class TestUtilityFuncs(unittest.TestCase):
         print(_wildcard_match('wor.?', wordlist))
         print(_wildcard_match('?o?', wordlist))
 
+    def test_match_ts_code(self):
+        """ 测试匹配ts_code"""
+        print(f"matching {'000001'}: \n{match_ts_code('000001')}")
+        print(f"matching {'000001.CZC'}: \n{match_ts_code('000001.CZC')}")
+        print(f"matching {'ABC.CZC'}: \n{match_ts_code('ABC.CZC')}")
+        print(f"matching {'中国电信'}: \n{match_ts_code('中国电信')}")
+        print(f"matching {'嘉实服务'}: \n{match_ts_code('嘉实服务')}")
+        print(f"matching {'中?集团'}: \n{match_ts_code('中?集团')}")
+        print(f"matching {'中*金'}: \n{match_ts_code('中*金')}")
+        print(f"matching {'工商银行'}: \n{match_ts_code('工商银行')}")
+        print(f"matching {'贵州钢绳'}: \n{match_ts_code('贵州钢绳')}")
+        print(f"matching {'贵州钢绳'} with match_full_name: \n{match_ts_code('贵州钢绳', match_full_name=True)}")
+        print(f"matching {'招商银行'} with asset_type = 'E, FD': \n{match_ts_code('招商银行', asset_types='E, FD')}")
+        print(f"matching {'贵阳银行'} with asset_type = 'E, FT': \n{match_ts_code('贵阳银行', asset_types='E, FT')}")
+
 
 class TestTushare(unittest.TestCase):
     """测试所有Tushare函数的运行正确"""
@@ -12219,24 +12234,6 @@ class TestDataSource(unittest.TestCase):
             test_columns[col] = typ
         self.assertEqual(list(test_columns.keys()), ['ts_code', 'trade_date', 'col1', 'col2'])
         self.assertEqual(list(test_columns.values()), ['varchar', 'varchar', 'int', 'int'])
-
-        self.ds_db.alter_db_table('new_test_table',
-                                  ['ts_code', 'col1', 'col2', 'col3', 'col4'],
-                                  ['varchar(9)', 'float', 'float', 'int', 'float'],
-                                  ['ts_code'])
-        sql = f"SELECT COLUMN_NAME, DATA_TYPE " \
-              f"FROM INFORMATION_SCHEMA.COLUMNS " \
-              f"WHERE TABLE_SCHEMA = Database() " \
-              f"AND table_name = 'new_test_table'" \
-              f"ORDER BY ordinal_position"
-        self.ds_db.cursor.execute(sql)
-        results = self.ds_db.cursor.fetchall()
-        # 为了方便，将cur_columns和new_columns分别包装成一个字典
-        test_columns = {}
-        for col, typ in results:
-            test_columns[col] = typ
-        self.assertEqual(list(test_columns.keys()), ['ts_code', 'col1', 'col2', 'col3', 'col4'])
-        self.assertEqual(list(test_columns.values()), ['varchar', 'float', 'float', 'int', 'float'])
 
         self.ds_db.drop_db_table('new_test_table')
 

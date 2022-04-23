@@ -294,7 +294,7 @@ def index_daily_basic(ts_code: object = None,
 def mins1(ts_code,
           start=None,
           end=None):
-    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
     return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
 
@@ -303,7 +303,7 @@ def mins1(ts_code,
 def mins5(ts_code,
           start=None,
           end=None):
-    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
     return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
 
@@ -312,7 +312,7 @@ def mins5(ts_code,
 def mins15(ts_code,
            start=None,
            end=None):
-    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
     return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
 
@@ -321,7 +321,7 @@ def mins15(ts_code,
 def mins30(ts_code,
            start=None,
            end=None):
-    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
     return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
 
@@ -330,9 +330,54 @@ def mins30(ts_code,
 def mins60(ts_code,
            start=None,
            end=None):
-    # 注意，分钟数据是不分股票、基金、指数的，全部都在一张表中，而且必须先获取权限后下载
+    # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
     return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
+
+
+@retry(Exception, mute=True)
+def ft_mins1(ts_code,
+             start=None,
+             end=None):
+    # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
+
+
+@retry(Exception, mute=True)
+def ft_mins5(ts_code,
+             start=None,
+             end=None):
+    # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
+
+
+@retry(Exception, mute=True)
+def ft_mins15(ts_code,
+              start=None,
+              end=None):
+    # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
+
+
+@retry(Exception, mute=True)
+def ft_mins30(ts_code,
+              start=None,
+              end=None):
+    # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
+
+
+@retry(Exception, mute=True)
+def ft_mins60(ts_code,
+              start=None,
+              end=None):
+    # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
+    pro = ts.pro_api()
+    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
 
 
 @retry(Exception, mute=True)

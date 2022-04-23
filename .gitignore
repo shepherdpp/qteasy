@@ -46,3 +46,5 @@ qteasy/qteasy.cnf
 qteasy/qteasy.log
 qteasy/log/qteasy.log
 qteasy/log/*
+*.log
+**qteasy/log/

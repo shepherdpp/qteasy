@@ -225,9 +225,49 @@ TABLE_SOURCE_MAPPING = {
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
          'OF, SZ, SH', '', ''],
 
+    'future_1min':
+        ['future_mins', '期货分钟K线行情', 'mins', 'FT', '1min', 'ft_mins1', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '30'],
+
+    'future_5min':
+        ['future_mins', '期货5分钟K线行情', 'mins', 'FT', '5min', 'ft_mins5', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '90'],
+
+    'future_15min':
+        ['future_mins', '期货15分钟K线行情', 'mins', 'FT', '15min', 'ft_mins15', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '180'],
+
+    'future_30min':
+        ['future_mins', '期货30分钟K线行情', 'mins', 'FT', '30min', 'ft_mins30', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '360'],
+
+    'future_hourly':
+        ['future_mins', '期货60分钟K线行情', 'mins', 'FT', 'h', 'ft_mins60', 'ts_code', 'table_index', 'future_basic',
+         '', 'y', '360'],
+
     'future_daily':
         ['future_daily', '期货每日行情', 'data', 'FT', 'd', 'future_daily', 'trade_date', 'datetime', '19950417', '',
          '', ''],
+
+    'options_1min':
+        ['min_bars', '期权分钟K线行情', 'mins', 'OPT', '1min', 'mins1', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '30'],
+
+    'options_5min':
+        ['min_bars', '期权5分钟K线行情', 'mins', 'OPT', '5min', 'mins5', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '90'],
+
+    'options_15min':
+        ['min_bars', '期权15分钟K线行情', 'mins', 'OPT', '15min', 'mins15', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '180'],
+
+    'options_30min':
+        ['min_bars', '期权30分钟K线行情', 'mins', 'OPT', '30min', 'mins30', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '360'],
+
+    'options_hourly':
+        ['min_bars', '期权60分钟K线行情', 'mins', 'OPT', 'h', 'mins60', 'ts_code', 'table_index', 'opt_basic',
+         '', 'y', '360'],
 
     'options_daily':
         ['options_daily', '期权每日行情', 'data', 'OPT', 'd', 'options_daily', 'trade_date', 'datetime', '20150209', '',
@@ -238,7 +278,8 @@ TABLE_SOURCE_MAPPING = {
          '', ''],
 
     'fund_adj_factor':
-        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', '', ''],
+        ['adj_factors', '基金价格复权系数', 'adj', 'FD', 'd', 'fund_adj', 'trade_date', 'trade_date', '19980407', '', '',
+         ''],
 
     'stock_indicator':
         ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
@@ -394,6 +435,13 @@ TABLE_STRUCTURES = {
                          'remarks':    ['证券代码', '交易日期', '昨收盘价', '昨结算价', '开盘价', '最高价', '最低价',
                                         '收盘价', '结算价', '涨跌1 收盘价-昨结算价', '涨跌2 结算价-昨结算价', '成交量(手)',
                                         '成交金额(万元)', '持仓量(手)', '持仓量变化', '交割结算价'],
+                         'prime_keys': [0, 1]},
+
+    'future_mins':      {'columns':    ['ts_code', 'trade_time', 'open', 'high', 'low', 'close', 'vol', 'amount', 'oi'],
+                         'dtypes':     ['varchar(20)', 'datetime', 'float', 'float', 'float', 'float', 'double',
+                                        'double', 'double'],
+                         'remarks':    ['证券代码', '交易日期时间', '开盘价', '最高价', '最低价', '收盘价', '成交量(手)',
+                                        '成交金额(元)', '持仓量(手)'],
                          'prime_keys': [0, 1]},
 
     'options_daily':    {'columns':    ['ts_code', 'trade_date', 'exchange', 'pre_settle', 'pre_close', 'open', 'high',
@@ -1209,51 +1257,63 @@ class DataSource:
                                f'Exception:\n{e}\n'
                                f'SQL:\n{sql} \nwith parameters (first 10 shown):\n{df_tuple[:10]}')
 
-    def get_db_table_coverage(self, table, column):
+    def get_db_table_coverage(self, db_table, column):
         """ 检查数据库表关键列的内容，去重后返回该列的内容清单
 
-        :param table: 数据表名
+        :param db_table: 数据表名
         :param column: 数据表的字段名
         :return:
         """
         import datetime
-        if not self.db_table_exists(table):
+        if not self.db_table_exists(db_table):
             return list()
         sql = f'SELECT DISTINCT `{column}`' \
-              f'FROM `{table}`' \
+              f'FROM `{db_table}`' \
               f'ORDER BY `{column}`'
-        self.cursor.execute(sql)
-        self.con.commit()
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
 
-        res = [item[0] for item in self.cursor.fetchall()]
-        if isinstance(res[0], datetime.datetime):
-            res = list(pd.to_datetime(res).strftime('%Y%m%d'))
-        return res
+            res = [item[0] for item in self.cursor.fetchall()]
+            if isinstance(res[0], datetime.datetime):
+                res = list(pd.to_datetime(res).strftime('%Y%m%d'))
+            return res
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Exception:\n{e}\n'
+                               f'Error during querying data from db_table {db_table} with following sql:\n'
+                               f'SQL:\n{sql} \n')
 
-    def get_db_table_minmax(self, table, column, with_count=False):
+    def get_db_table_minmax(self, db_table, column, with_count=False):
         """ 检查数据库表关键列的内容，获取最小值和最大值和总数量
 
-        :param table: 数据表名
+        :param db_table: 数据表名
         :param column: 数据表的字段名
         :param with_count: 是否返回关键列值的数量，可能非常耗时
         :return:
         """
         import datetime
-        if not self.db_table_exists(table):
+        if not self.db_table_exists(db_table):
             return list()
         if with_count:
             add_sql = f', COUNT(DISTINCT(`{column}`))'
         else:
             add_sql = ''
         sql = f'SELECT MIN(`{column}`), MAX(`{column}`){add_sql} ' \
-              f'FROM `{table}`'
-        self.cursor.execute(sql)
-        self.con.commit()
+              f'FROM `{db_table}`'
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
 
-        res = list(self.cursor.fetchall()[0])
-        if isinstance(res[0], datetime.datetime):
-            res = list(pd.to_datetime(res).strftime('%Y%m%d'))
-        return res
+            res = list(self.cursor.fetchall()[0])
+            if isinstance(res[0], datetime.datetime):
+                res = list(pd.to_datetime(res).strftime('%Y%m%d'))
+            return res
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Exception:\n{e}\n'
+                               f'Error during querying data from db_table {db_table} with following sql:\n'
+                               f'SQL:\n{sql} \n')
 
     def db_table_exists(self, db_table):
         """ 检查数据库中是否存在db_table这张表
@@ -1264,13 +1324,20 @@ class DataSource:
         if self.source_type == 'file':
             raise RuntimeError('can not connect to database while source type is "file"')
         sql = f"SHOW TABLES LIKE '{db_table}'"
-        self.cursor.execute(sql)
-        self.con.commit()
-        res = self.cursor.fetchall()
-        return len(res) > 0
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
+            res = self.cursor.fetchall()
+            return len(res) > 0
+        except Exception as e:
+            self.con.rollback()
+            raise RuntimeError(f'Exception:\n{e}\n'
+                               f'Error during querying data from db_table {db_table} with following sql:\n'
+                               f'SQL:\n{sql} \n')
 
     def new_db_table(self, db_table, columns, dtypes, primary_key):
-        """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同
+        """ 在数据库中新建一个数据表(如果该表不存在)，并且确保数据表的schema与设置相同,
+            并创建正确的index
 
         :param db_table:
             Str: 数据表名
@@ -1286,78 +1353,26 @@ class DataSource:
         if self.source_type != 'db':
             raise TypeError(f'Datasource is not connected to a database')
 
-        sql = f"CREATE TABLE IF NOT EXISTS {db_table} (\n"
+        sql = f"CREATE TABLE IF NOT EXISTS `{db_table}` (\n"
         for col_name, dtype in zip(columns, dtypes):
             sql += f"`{col_name}` {dtype}"
             if col_name in primary_key:
                 sql += " NOT NULL,\n"
             else:
-                sql += ",\n"
+                sql += " DEFAULT NULL,\n"
+        # 如果有primary key则添加primary key
         if primary_key is not None:
-            sql += f"PRIMARY KEY ("
-            for pk in primary_key[:-1]:
-                sql += f"{pk}, "
-            sql += f"{primary_key[-1]})\n)"
+            sql += f"PRIMARY KEY (`{'`, `'.join(primary_key)}`)"
+            # 如果primary key多于一个，则创建KEY INDEX
+            if len(primary_key) > 1:
+                sql += ",\nKEY (`" + '`),\nKEY (`'.join(primary_key[1:]) + "`)"
+        sql += '\n)'
         try:
             self.cursor.execute(sql)
             self.con.commit()
         except Exception as e:
             self.con.rollback()
             print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
-
-    def alter_db_table(self, db_table, columns, dtypes, primary_key):
-        """ 修改db_table的schema，按照输入参数设置表的字段属性
-
-        :param db_table:
-            Str: 数据表名
-        :param columns:
-            List: 一个包含若干str的list，表示数据表的所有字段名
-        :param dtypes:
-            List: 一个包含若干str的list，表示数据表所有字段的数据类型
-        :param primary_key:
-            List: 一个包含若干str的list，表示数据表的所有primary_key
-        :return:
-            None
-        """
-        if self.source_type != 'db':
-            raise TypeError(f'Datasource is not connected to a database')
-
-        # 获取数据表的columns和data types：
-        cur_columns = self.get_db_table_schema(db_table)
-        # 将新的columns和dtypes写成Dict形式
-        new_columns = {}
-        for col, typ in zip(columns, dtypes):
-            new_columns[col] = typ
-        # to drop some columns
-        col_to_drop = [col for col in cur_columns if col not in columns]
-        for col in col_to_drop:
-            sql = f"ALTER TABLE {db_table} \n" \
-                  f"DROP COLUMN `{col}`"
-            # 需要同步删除cur_columns字典中的值，否则modify时会产生错误
-            del cur_columns[col]
-            self.cursor.execute(sql)
-            self.con.commit()
-
-        # to add some columns
-        col_to_add = [col for col in columns if col not in cur_columns]
-        print(f'following cols will be added to the table:\n{col_to_add}')
-        for col in col_to_add:
-            sql = f"ALTER TABLE {db_table} \n" \
-                  f"ADD {col} {new_columns[col]}"
-            self.cursor.execute(sql)
-            self.con.commit()
-
-        # to modify some columns
-        col_to_modify = [col for col in cur_columns if cur_columns[col] != new_columns[col]]
-        print(f'following cols will be modified:\n{col_to_modify}')
-        for col in col_to_modify:
-            sql = f"ALTER TABLE {db_table} \n" \
-                  f"MODIFY COLUMN {col} {new_columns[col]}"
-            self.cursor.execute(sql)
-            self.con.commit()
-
-        # TODO: should also modify the primary keys, to be updated
-        pass
 
     def get_db_table_schema(self, db_table):
         """ 获取数据库表的列名称和数据类型
@@ -1371,15 +1386,18 @@ class DataSource:
               f"WHERE TABLE_SCHEMA = Database() " \
               f"AND table_name = '{db_table}'" \
               f"ORDER BY ordinal_position"
-
-        self.cursor.execute(sql)
-        self.con.commit()
-        results = self.cursor.fetchall()
-        # 为了方便，将cur_columns和new_columns分别包装成一个字典
-        columns = {}
-        for col, typ in results:
-            columns[col] = typ
-        return columns
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
+            results = self.cursor.fetchall()
+            # 为了方便，将cur_columns和new_columns分别包装成一个字典
+            columns = {}
+            for col, typ in results:
+                columns[col] = typ
+            return columns
+        except Exception as e:
+            self.con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
     def drop_db_table(self, db_table):
         """ 修改优化db_table的schema，建立index，从而提升数据库的查询速度提升效能
@@ -1392,8 +1410,12 @@ class DataSource:
         if not isinstance(db_table, str):
             raise TypeError(f'db_table name should be a string, got {type(db_table)} instead')
         sql = f"DROP TABLE IF EXISTS {db_table}"
-        self.cursor.execute(sql)
-        self.con.commit()
+        try:
+            self.cursor.execute(sql)
+            self.con.commit()
+        except Exception as e:
+            self.con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
     def get_db_table_size(self, db_table):
         """ 获取数据库表的占用磁盘空间
@@ -1407,10 +1429,14 @@ class DataSource:
               "FROM information_schema.tables " \
               "WHERE table_schema = %s " \
               "AND table_name = %s"
-        self.cursor.execute(sql, (self.db_name, db_table))
-        self.con.commit()
-        rows, size = self.cursor.fetchall()[0]
-        return rows, size
+        try:
+            self.cursor.execute(sql, (self.db_name, db_table))
+            self.con.commit()
+            rows, size = self.cursor.fetchall()[0]
+            return rows, size
+        except Exception as e:
+            self.con.rollback()
+            print(f'error encountered during executing sql: \n{sql}\n error codes: \n{e}')
 
     # (逻辑)数据表操作层函数，只在逻辑表层面读取或写入数据，调用文件操作函数或数据库函数存储数据
     def table_data_exists(self, table):
@@ -1929,7 +1955,6 @@ class DataSource:
                 df.drop(columns=cols_to_remove, inplace=True)
             table_data_read[tbl] = df
             table_data_columns[tbl] = df.columns
-
         # 提取数据，生成单个数据类型的dataframe
         df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
@@ -1961,7 +1986,13 @@ class DataSource:
             warnings.warn(f'\nConflict data encountered, some types of data are loaded from multiple tables, '
                           f'conflicting data might be discarded:\n'
                           f'{conflict_cols}', DataConflictWarning)
-
+        # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
+        if all(df.empty for df in df_by_htypes.values()):
+            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please: \n'
+                               f'find datatable for data type:  qteasy.find_history_data(\'data_type\')\n'
+                               f'check table data coverage:     DataSource.get_table_info(\'table_name\')\n'
+                               f'fill datasource:               DataSource.refill_local_source(\'table_name\', '
+                               f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         if adj.lower() not in ['none', 'n']:
             # 下载复权因子
@@ -2226,7 +2257,6 @@ class DataSource:
                 elif fill_type == 'table_index':
                     dependent_tables.add(cur_table.arg_rng)
             tables_to_refill.update(dependent_tables)
-
         import time
         for table in table_map.index:
             # 逐个下载数据并写入本地数据表中
@@ -2234,7 +2264,7 @@ class DataSource:
                 continue
             cur_table_info = table_map.loc[table]
             # 3 生成数据下载参数序列
-            print(f'refilling data for table: {table}')
+            # print(f'refilling data for table: {table}')
             arg_name = cur_table_info.fill_arg_name
             fill_type = cur_table_info.fill_arg_type
             freq = cur_table_info.freq
@@ -2344,7 +2374,7 @@ class DataSource:
                             time_elapsed = time.time() - st
                             time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
-                            progress_bar(completed, total, f'<{list(cur_kwargs.values())[0]}>:'
+                            progress_bar(completed, total, f'[{table}] <{list(cur_kwargs.values())[0]}>: '
                                                            f'{total_written} downloaded/{time_remain} left')
 
                         self.update_table_data(table, dnld_data)
@@ -2361,19 +2391,28 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        progress_bar(completed, total, f'<{list(kwargs.values())[0]}>:'
+                        progress_bar(completed, total, f'[{table}] <{list(kwargs.values())[0]}>: '
                                                        f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
-                print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
-                      f'{total} {arg_name} params '
-                      f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
-                if len(additional_args) > 0:
-                    print(f'with additional arguments: {additional_args}\n')
-                print(f'{total_written} rows of data written to: {self}\n')
+                if len(arg_coverage) > 1:
+                    progress_bar(total, total, f'[{table}] <{arg_coverage[0]} to {arg_coverage[-1]}>: '
+                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                else:
+                    progress_bar(total, total, f'[{table}] <None>: '
+                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
+                #       f'{total} {arg_name} params '
+                #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
+                # if len(additional_args) > 0:
+                #     print(f'with additional arguments: {additional_args}\n')
+                # print(f'{total_written} rows of data written to: {self}\n')
             except Exception as e:
                 self.update_table_data(table, dnld_data)
-                print(f'\n{e} process interrupted, tried to write {total_written} rows, will proceed with next table!')
+                warnings.warn(f'\n{e} process interrupted, tried to write {total_written} rows, '
+                              f'will proceed with next table!')
+                # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
+                #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
 
     @lru_cache()
     def get_all_basic_table_data(self):

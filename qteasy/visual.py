@@ -465,7 +465,8 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
             code_matched = match_ts_code(stock)
             match_count = code_matched['count']
             if match_count == 0:
-                raise KeyError(f'Sorry, can not find a match ts_code with {stock}')
+                print(f'Sorry, can not find a matched ts_code with "{stock}"')
+                return
             elif match_count >= 1:
                 if asset_type is None:
                     matched_asset_types = []
@@ -477,6 +478,9 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
                             matched_asset_types.append(atype)
                     asset_type = matched_asset_types[0]
                 else:
+                    if asset_type not in code_matched.keys():
+                        print(f'Sorry, can not find a matched ts_code with "{stock}" in asset type "{asset_type}"')
+                        return
                     matched_codes.extend(code_matched[asset_type])
             else:
                 raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
@@ -688,7 +692,6 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
                        f'from data source "{ds.connection_type}"\n'
                        f'please check stock code')
     # 设置历史数据获取区间的开始日期为股票上市第一天
-
     l_date = this_stock.list_date
     if l_date is None:
         start_date = '2000-01-01'
