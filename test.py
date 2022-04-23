@@ -2753,7 +2753,7 @@ class TestLoop(unittest.TestCase):
         )
         self.multi_signal_hp = stack_dataframes(
                 self.multi_signals,
-                stack_along='htypes',
+                stack_as='htypes',
                 htypes='open, high, close'
         )
         self.history_list = dataframe_to_hp(
@@ -2762,7 +2762,7 @@ class TestLoop(unittest.TestCase):
         )
         self.multi_history_list = stack_dataframes(
                 self.multi_histories,
-                stack_along='htypes',
+                stack_as='htypes',
                 htypes='open, high, close'
         )
 
@@ -7879,7 +7879,7 @@ class TestOperator(unittest.TestCase):
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
         stg.sort_ascending = False
-        stg.weighting = 'proportion'
+        stg.weighting = 'distance'
         stg.condition = 'greater'
         stg.lbound = 0
         stg.ubound = 0
@@ -8747,9 +8747,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df2.rename(index=pd.to_datetime))
         print(df3.rename(index=pd.to_datetime))
 
-        hp1 = stack_dataframes([df1, df2, df3], stack_along='shares',
+        hp1 = stack_dataframes([df1, df2, df3], stack_as='shares',
                                shares=['000100', '000200', '000300'])
-        hp2 = stack_dataframes([df1, df2, df3], stack_along='shares',
+        hp2 = stack_dataframes([df1, df2, df3], stack_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8760,9 +8760,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp2.shares, ['000100', '000300', '000200'])
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
-        hp3 = stack_dataframes([df1, df2, df3], stack_along='htypes',
+        hp3 = stack_dataframes([df1, df2, df3], stack_as='htypes',
                                htypes=['close', 'high', 'low'])
-        hp4 = stack_dataframes([df1, df2, df3], stack_along='htypes',
+        hp4 = stack_dataframes([df1, df2, df3], stack_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8827,9 +8827,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df3.rename(index=pd.to_datetime))
 
         hp1 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_along='shares')
+                               stack_as='shares')
         hp2 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_along='shares',
+                               stack_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8841,9 +8841,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = stack_dataframes(dfs={'close': df1, 'high': df2, 'low': df3},
-                               stack_along='htypes')
+                               stack_as='htypes')
         hp4 = stack_dataframes(dfs={'close': df1, 'low': df2, 'high': df3},
-                               stack_along='htypes',
+                               stack_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8913,15 +8913,15 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         # test get only one line of data
-        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH',
-                                          htypes='close, weight-000300.SH, Wt-000003.SH',
+        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
+                                          htypes='wt-000003.SH, close, wt-000300.SH',
                                           start='20210101',
                                           end='20210802',
                                           freq='m',
                                           asset_type='any',
                                           adj='none')
-        self.assertEqual(hp.htypes, ['close', '000300.SH', '000003.SH'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '000003.SZ', '601728.SH'])
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
         print(hp)
 
     def test_ffill_data(self):
@@ -12952,7 +12952,7 @@ class TestDataSource(unittest.TestCase):
                                    end='20200102',
                                    shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH')
         self.assertIsInstance(dfs, dict)
-        self.assertEqual(list(dfs.keys()), ['000300.SH', '000002.SZ'])
+        self.assertEqual(list(dfs.keys()), ['wt-000300.SH', 'wt-000002.SZ'])
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(dfs)
 

@@ -1995,7 +1995,9 @@ class DataSource:
                 if adj.lower() in ['forward', 'fw', 'f'] and len(combined_factors) > 1:
                     price_df /= combined_factors.iloc[-1]
 
-        # result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
+        # 最后整理数据，确保每一个htype的数据框的columns与shares相同
+        for htyp, df in df_by_htypes.items():
+            df_by_htypes[htyp] = df.reindex(columns=shares)
         return df_by_htypes
 
     def get_index_weights(self, index, start=None, end=None, shares=None):
@@ -2055,7 +2057,7 @@ class DataSource:
                 weight_df.drop(columns=columns_to_drop, inplace=True)
                 weight_df = weight_df.reindex(columns=shares)
             df_by_index['wt-' + idx] = weight_df
-        # result_hp = stack_dataframes(df_by_index, stack_along='htypes', htypes=index_names)
+        # result_hp = stack_dataframes(df_by_index, stack_as='htypes', htypes=index_names)
         return df_by_index
 
     def refill_local_source(self,

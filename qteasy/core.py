@@ -1952,7 +1952,7 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
 
     # 生成一个HistoryPanel对象，每一层一个个股
     mock_data = stack_dataframes(dfs_for_share,
-                                 stack_along='shares',
+                                 stack_as='shares',
                                  shares=history_data.shares)
     return mock_data
 
