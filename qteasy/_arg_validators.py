@@ -496,7 +496,6 @@ def _valid_qt_kwargs():
 
     :return:
     """
-    today = datetime.datetime.today().date()
     vkwargs = {
         'mode':                 {'Default':   1,  # 运行模式
                                  'Validator': lambda value: value in (0, 1, 2, 3),
@@ -593,7 +592,7 @@ def _valid_qt_kwargs():
                                               '           选择此选项时，需要在配置文件中配置数据库的连接信息\n'
                                               'db       - 等同于"database"'},
 
-        'local_data_file_type':  {'Default':   'csv',
+        'local_data_file_type': {'Default':   'csv',
                                  'Validator': lambda value: isinstance(value, str) and value in ['csv',
                                                                                                  'hdf',
                                                                                                  'feather',
@@ -604,7 +603,7 @@ def _valid_qt_kwargs():
                                               'hdf - 历史数据文件以hd5形式存储，数据存储和读取速度较快\n'
                                               'feather/fth - 历史数据文件以feather格式存储，数据交换速度快但不适用长期存储'},
 
-        'local_data_file_path':  {'Default':   'qteasy/data/',
+        'local_data_file_path': {'Default':   'qteasy/data/',
                                  'Validator': lambda value: isinstance(value, str),
                                  'level':     4,
                                  'text':      '确定本地历史数据文件存储路径\n'},
@@ -639,13 +638,29 @@ def _valid_qt_kwargs():
                                  'text':      '数据库的访问密码\n\n'
                                               '建议通过配置文件配置数据库用户名和密码'},
 
+        'error_log_file_path':  {'Default':   'qteasy/log',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '系统运行日志及错误日志的存储路径\n'},
+
+        'trade_log_file_path':  {'Default':   'qteasy/log',
+                                 'Validator': lambda value: isinstance(value, str),
+                                 'level':     4,
+                                 'text':      '明细交易日志的存储路径\n'},
+
         'print_backtest_log':   {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     4,
-                                 'text':      '如果True，在回测过程中会打印回测的详细交易记录\n'
-                                              'FutureWarning:\n'
-                                              '在未来的更新中将会取消log打印，取而代之的是将回测详细过程信息写入\n'
-                                              '一个DataFrame中，这个文件可以保存下来供仔细研究'},
+                                 'text':      '如果True，将回测详细过程信息写入\n'
+                                              '一个DataFrame中，这个文件可以保存下来供仔细研究\n'
+                                              '这个参数只有在回测模式下有用'},
+
+        'log_backtest_detail':  {'Default':   False,
+                                 'Validator': lambda value: isinstance(value, bool),
+                                 'level':     4,
+                                 'text':      '如果True，将回测详细过程信息写入日志\n'
+                                              '日志级别为DEBUG，用于分析回测的细节，这个参数只有在\n'
+                                              '回测模式下有用'},
 
         'reference_asset':      {'Default':   '000300.SH',
                                  'Validator': lambda value: isinstance(value, str)
@@ -858,7 +873,7 @@ def _valid_qt_kwargs():
                                                             and value in range(5),
                                  'level':     3,
                                  'text':      '回测时卖出股票获得现金的交割周期，用一个数字N代表交易日后第N天可以完成现金交割。\n'
-                                              '获得现金后立即计入总资产计算，但在途资金（尚未交割的资金）不能用于下一笔交易\n'
+                                              '获得现金后立即计入总资产，但在途资金（尚未交割的资金）不能用于下一笔交易\n'
                                               '当现金交割期为零时，可以选择在同一轮交易中先卖出资产获得尽可能多的现金用于本轮\n'
                                               '买入'},
 
@@ -867,7 +882,7 @@ def _valid_qt_kwargs():
                                                             and value in range(5),
                                  'level':     3,
                                  'text':      '回测时买入股票后的股票交割周期，用一个数字N代表交易日后第N天可以完成资产交割。\n'
-                                              '获得股票后立即计入总资产计算，但尚未交割的股票不能用于下一笔交易'},
+                                              '获得股票后立即计入总资产，但尚未交割的股票不能用于下一笔交易'},
 
         'opti_start':           {'Default':   '20160405',
                                  'Validator': lambda value: isinstance(value, str)

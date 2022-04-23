@@ -15,8 +15,8 @@ import tushare as ts
 from .core import get_current_holdings, get_stock_pool
 from .core import info, is_ready, configure, configuration
 from .core import run, get_basic_info
-from .history import HistoryPanel
-from .history import csv_to_hp, hdf_to_hp, dataframe_to_hp, stack_dataframes
+from .history import HistoryPanel, get_history_panel
+from .history import dataframe_to_hp, stack_dataframes
 from .operator import Operator
 from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSelecting
 from .visual import candle
@@ -95,4 +95,5 @@ else:
 
 np.seterr(divide='ignore', invalid='ignore')
 
-
+QT_ERR_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['error_log_file_path']
+QT_TRADE_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['trade_log_file_path']

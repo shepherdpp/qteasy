@@ -12,9 +12,11 @@
 import warnings
 
 import numpy as np
+import pandas as pd
+
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list
+from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data
 from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 from .blender import blender_parser
@@ -211,7 +213,7 @@ class Operator:
 
             :param signal_type: str, 需要生成的交易信号的类型，包含以下三种类型:
                                         'pt', 'ps', 'vs'
-                                默认交易信号类型为'ps'
+                                默认交易信号类型为'pt'
 
         Operator对象的基本属性包括：
             signal_type:
@@ -389,10 +391,16 @@ class Operator:
     @property
     def bt_price_types(self):
         """返回operator对象所有策略子对象的回测价格类型"""
-        p_types = [item.price_type for item in self.strategies]
+        p_types = [item.bt_price_type for item in self.strategies]
         p_types = list(set(p_types))
         p_types.sort()
         return p_types
+
+    @property
+    def all_price_data_types(self):
+        """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
+        all_types = set(self.op_data_types).union(self.bt_price_types)
+        return list(all_types)
 
     @property
     def op_data_type_list(self):
@@ -511,6 +519,7 @@ class Operator:
             return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
+            # 当输入的item明显不符合要求是，仍然返回结果，是否不合理？
             item = strategy_count - 1
         return self._strategies[all_ids[item]]
 
@@ -633,7 +642,7 @@ class Operator:
         if price_type is None:
             return self.strategies
         else:
-            return [stg for stg in self.strategies if stg.price_type == price_type]
+            return [stg for stg in self.strategies if stg.bt_price_type == price_type]
 
     def get_op_history_data_by_price_type(self, price_type=None):
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
@@ -670,7 +679,7 @@ class Operator:
         else:
             res = []
             for stg, stg_id in zip(self.strategies, all_ids):
-                if stg.price_type == price_type:
+                if stg.bt_price_type == price_type:
                     res.append(stg_id)
             return res
 
@@ -868,7 +877,7 @@ class Operator:
                       sample_freq: str = None,
                       window_length: int = None,
                       data_types: [str, list] = None,
-                      price_type: str = None,
+                      bt_price_type: str = None,
                       **kwargs):
         """ 统一的策略参数设置入口，stg_id标识接受参数的具体成员策略
             将函数参数中给定的策略参数赋值给相应的策略
@@ -903,8 +912,8 @@ class Operator:
             :param data_types:
                 :type data_types: str or list, 策略计算所需历史数据的数据类型
 
-            :param price_type:
-                :type price_type: str, 策略回测交易时使用的交易价格类型
+            :param bt_price_type:
+                :type bt_price_type: str, 策略回测交易时使用的交易价格类型
 
             :return:
         """
@@ -930,13 +939,13 @@ class Operator:
         has_sf = sample_freq is not None
         has_wl = window_length is not None
         has_dt = data_types is not None
-        has_pt = price_type is not None
+        has_pt = bt_price_type is not None
         if has_df or has_sf or has_wl or has_dt or has_pt:
             strategy.set_hist_pars(data_freq=data_freq,
                                    sample_freq=sample_freq,
                                    window_length=window_length,
                                    data_types=data_types,
-                                   price_type=price_type)
+                                   bt_price_type=bt_price_type)
         # 设置可能存在的其他参数
         strategy.set_custom_pars(**kwargs)
 
@@ -1018,7 +1027,6 @@ class Operator:
         # 确保输入的历史数据是HistoryPanel类型
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Historical data should be HistoryPanel, got {type(hist_data)}')
-        # TODO: 临时性处理方式
         # 确保cash_plan的数据类型正确
         if not isinstance(cash_plan, CashPlan):
             raise TypeError(f'cash plan should be CashPlan object, got {type(cash_plan)}')
@@ -1044,12 +1052,12 @@ class Operator:
             f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
             f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
         # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
-        invest_dates_in_hist = [invest_date in hist_data.hdates for invest_date in cash_plan.dates]
+        hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
+        invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
         if not all(invest_dates_in_hist):
-            np_dates_in_hist = np.array(invest_dates_in_hist)
-            where_not_in = [cash_plan.dates[i] for i in list(np.where(np_dates_in_hist is False)[0])]
-            raise ValueError(f'Cash investment should be on trading days, '
-                             f'following dates are not valid!\n{where_not_in}')
+            # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
+            nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
+            cash_plan.reset_dates(nearest_next)
         # 确保op的策略都设置了参数
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
@@ -1095,6 +1103,10 @@ class Operator:
                 self._op_history_data
                 self._ricon_history_data
 
+        :param config:
+            :dict configuration
+            qteasy配置参数，用于控制信号生成过程中的行为细节
+
         :return=====
             HistoryPanel
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
@@ -1105,22 +1117,31 @@ class Operator:
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}')
         from .blender import signal_blend
-        op_signals = []
+        signal_type = self.signal_type
         shares = hist_data.shares
         date_list = hist_data.hdates
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
         # 一个字典保存所有交易价格类型各自的交易信号ndarray
         signal_out = {}
-        for bt_price_type in self.bt_price_types:
+        bt_price_types = self.bt_price_types
+        bt_price_type_count = self.bt_price_type_count
+        for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别遍历所有的策略
+            op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
             for stg, dt in zip(relevant_strategies, relevant_hist_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
                 # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
                 # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
                 history_length = dt.shape[1]
-                op_signals.append(
-                        stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:]))
+                signal = stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:])
+                if signal_type in ['ps', 'vs']:
+                    signal = fill_nan_data(signal, 0)
+                elif signal_type == 'pt':
+                    signal = ffill_2d_data(signal, 0)
+                else:
+                    raise KeyError(f'Invalid signal type: {self.signal_type}')
+                op_signals.append(signal)
                 # 生成的交易信号添加到交易信号队列中，
 
             # 根据蒙板混合前缀表达式混合所有蒙板
@@ -1130,12 +1151,12 @@ class Operator:
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             signal_out[bt_price_type] = blended_signal
         # 将字典中的ndarray对象组装成HistoryPanel对象
-        signal_hp_value = np.zeros((*blended_signal.T.shape, self.bt_price_type_count))
-        for i, bt_price_type in zip(range(self.bt_price_type_count), self.bt_price_types):
+        signal_hp_value = np.zeros((*blended_signal.T.shape, bt_price_type_count))
+        for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_hp_value[:, :, i] = signal_out[bt_price_type].T
         history_length = signal_hp_value.shape[1]  # find hdate series
         signal_hp = HistoryPanel(signal_hp_value,
                                  levels=shares,
-                                 columns=self.bt_price_types,
+                                 columns=bt_price_types,
                                  rows=date_list[-history_length:])
         return signal_hp

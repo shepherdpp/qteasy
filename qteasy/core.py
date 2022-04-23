@@ -15,16 +15,17 @@ import numpy as np
 import time
 import math
 import logging
+from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from datetime import datetime
+import datetime
 
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
 from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
-from .utilfuncs import AVAILABLE_ASSET_TYPES
+from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
@@ -66,8 +67,18 @@ AVAILABLE_SHARE_AREA = ['深圳', '北京', '吉林', '江苏', '辽宁', '广�
 AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR']
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
+logger_core = logging.getLogger('core')
+logger_core.setLevel(logging.DEBUG)
+debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
+error_handler = logging.StreamHandler()
+debug_handler.setLevel(logging.DEBUG)
+error_handler.setLevel(logging.WARN)
+formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s:\n%(message)s')
+debug_handler.setFormatter(formatter)
+logger_core.addHandler(debug_handler)
+logger_core.addHandler(error_handler)
 
-# TODO: 使用一个大的DataFrame存储整个回测过程的所有参数，作为回测记录
+
 # TODO: Usability improvements:
 # TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
 # @njit
@@ -75,7 +86,7 @@ def _loop_step(signal_type: int,
                own_cash: float,
                own_amounts: np.ndarray,
                available_cash: float,
-               available_amounts: np.ndarray,
+               available_amounts: (np.ndarray, float),
                op: np.ndarray,
                prices: np.ndarray,
                rate: Cost,
@@ -85,7 +96,7 @@ def _loop_step(signal_type: int,
                allow_sell_short: bool,
                moq_buy: float,
                moq_sell: float,
-               print_log: bool = False,
+               trade_detail_log: bool = False,
                share_names: list = None) -> tuple:
     """ 对同一批交易进行处理，采用向量化计算以提升效率
         接受交易信号、交易价格以及期初可用现金和可用股票等输入，加上交易费率等信息计算交易后
@@ -148,9 +159,9 @@ def _loop_step(signal_type: int,
             :type moq_sell: float:
             投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
-        :param print_log：
-            :type print_log: bool:
-            是否在回测过程中打印交易记录，临时解决方案，会导致效率降低。以后会被logs代替
+        :param trade_detail_log：
+            :type trade_detail_log: bool:
+            如果True，在回测过程中记录详细交易说明，会导致效率降低。
 
         :param share_names：
             :type share_names: list:
@@ -170,7 +181,7 @@ def _loop_step(signal_type: int,
     if np.all(op == 0) and signal_type > 0:
         # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
         # 因为正好op全为0，因此返回op即可
-        return 0, 0, op, op, 0
+        return np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op), np.zeros_like(op)
 
     # 1,计算期初资产总额：交易前现金及股票余额在当前价格下的资产总额
     pre_values = own_amounts * prices
@@ -197,23 +208,25 @@ def _loop_step(signal_type: int,
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 仓位差 * 当前总资产，此时持有份额为0
             cash_to_spend += np.where((position_diff < ptst) & (own_amounts <= 0),
-                                       position_diff * total_value,
-                                       0)
+                                      position_diff * total_value,
+                                      0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 仓位差 * 当前持有空头份额
             amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
-                                     position_diff / pre_position * own_amounts,
-                                     0)
+                                        position_diff / pre_position * own_amounts,
+                                        0)
         # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期持仓目标:   {op}\n'
-                  f'本期实际持仓:   {np.around(pre_position, 3)}\n'
-                  f'本期持仓差异:   {np.around(position_diff, 3)}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        if trade_detail_log:
+            logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
+                              f' - 持有现金总价:   {own_cash:.2f}\n'
+                              f' - 持有资产总价:   {total_value - own_cash:.2f}')
+            logger_core.debug(f'期初可用现金:   {available_cash:.2f}\n'
+                              f'期初可用资产:   {np.around(available_amounts, 2)}\n'
+                              f'本期资产价格:   {np.around(prices, 2)}\n'
+                              f'本期持仓目标:   {op}\n'
+                              f'本期实际持仓:   {np.around(pre_position, 3)}\n'
+                              f'本期持仓差异:   {np.around(position_diff, 3)}\n'
+                              f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                              f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
@@ -230,15 +243,17 @@ def _loop_step(signal_type: int,
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op * own_amounts, 0)
 
-        # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'本期交易信号:   {op}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        # 生成log：
+        if trade_detail_log:
+            logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
+                              f' - 持有现金总价:   {own_cash:.2f}\n'
+                              f' - 持有资产总价:   {total_value - own_cash:.2f}')
+            logger_core.debug(f'期初可用现金:   {available_cash:.2f}\n'
+                              f'期初可用资产:   {np.around(available_amounts, 2)}\n'
+                              f'本期资产价格:   {np.around(prices, 2)}\n'
+                              f'本期交易信号:   {op}\n'
+                              f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                              f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
@@ -255,14 +270,16 @@ def _loop_step(signal_type: int,
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op, 0)
 
-        # 打印log：
-        if print_log:
-            print(f'本期期初资产总价: {total_value:.2f}: \n'
-                  f'本期可用现金:   {available_cash:.2f}, 可用资产总价: {total_value - available_cash:.2f}')
-            print(f'期初持有资产:   {np.around(available_amounts, 2)}\n'
-                  f'本期资产价格:   {np.around(prices, 2)}\n'
-                  f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                  f'计划买入金额:   {np.around(cash_to_spend, 3)}')
+        # 生成log：
+        if trade_detail_log:
+            logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
+                              f' - 持有现金总价:   {own_cash:.2f}\n'
+                              f' - 持有资产总价:   {total_value - own_cash:.2f}')
+            logger_core.debug(f'期初可用现金:   {available_cash:.2f}\n'
+                              f'期初可用资产:   {np.around(available_amounts, 2)}\n'
+                              f'本期资产价格:   {np.around(prices, 2)}\n'
+                              f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
+                              f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     else:
         raise ValueError(f'signal_type value {signal_type} not supported!')
@@ -277,7 +294,7 @@ def _loop_step(signal_type: int,
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
                                                                     moq=moq_sell)
-    if print_log:
+    if trade_detail_log:
         # 输出本批次卖出交易的详细信息
         if share_names is None:
             share_names = np.arange(len(op))
@@ -285,52 +302,53 @@ def _loop_step(signal_type: int,
         if len(item_sold) > 0:
             for i in item_sold:
                 if prices[i] != 0:
-                    print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
-                          f'出售 {np.round(-amount_sold[i], 2)} 份')
+                    logger_core.debug(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
+                                      f'出售 {np.round(-amount_sold[i], 2)} 份')
                 else:
-                    print(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
-                          f'暂停交易，出售 {0.0} 份')
-            print(f'获得现金 {cash_gained:.2f} 并产生交易费用 {fee_selling:.2f}, '
-                  f'交易后现金余额: {(available_cash + cash_gained):.3f}')
+                    logger_core.debug(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
+                                      f'暂停交易，出售 {0.0} 份')
+            logger_core.debug(f'获得现金 {cash_gained.sum():.2f} 并产生交易费用 {fee_selling.sum():.2f}, '
+                              f'交易后现金余额: {(available_cash + cash_gained.sum()):.3f}')
         else:
-            print(f'本期未出售任何资产,交易后现金余额与资产总量不变')
+            logger_core.debug(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
         # 现金余额 = 期初现金余额 + 本次出售资产获得现金总额
-        available_cash += cash_gained
+        available_cash += cash_gained.sum()
 
     # 初步估算按照交易清单买入资产所需要的现金，如果超过持有现金，则按比例降低买入金额
     total_cash_to_spend = cash_to_spend.sum()
 
     if total_cash_to_spend == 0:
         # 如果买入计划为0，则直接跳过后续的计算
-        if print_log:
-            print(f'本期未购买任何资产,交易后现金余额与资产总量不变')
-        return cash_gained, 0, np.zeros_like(op), amount_sold, fee_selling
+        if trade_detail_log:
+            logger_core.debug(f'本期未购买任何资产,交易后现金余额与资产总量不变')
+        return cash_gained, np.zeros_like(op), np.zeros_like(op), amount_sold, fee_selling
 
     if total_cash_to_spend > available_cash:
-        # 按比例降低分配给每个拟买入资产的现金额度
+        # 按比例降低分配给每个拟买入资产的现金额，如果金额特别小，将数额置0
         cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
-        if print_log:
-            print(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-            print(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
+        cash_to_spend = np.where(cash_to_spend < 0.0001, 0, cash_to_spend)
+        if trade_detail_log:
+            logger_core.debug(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
+            logger_core.debug(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         cash_to_spend=cash_to_spend,
                                                                         moq=moq_buy)
-    if print_log:
+    if trade_detail_log:
         # 输出本批次买入交易的详细信息
         if share_names is None:
             share_names = np.arange(len(op))
         item_purchased = np.where(amount_purchased > 0)[0]
         if len(item_purchased) > 0:
             for i in item_purchased:
-                print(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
-                      f' 买入 {np.round(amount_purchased[i], 2)} 份')
-            print(f'实际花费现金 {-cash_spent:.2f} 并产生交易费用: {fee_buying:.2f}')
+                logger_core.debug(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
+                                  f' 买入 {np.round(amount_purchased[i], 2)} 份')
+            logger_core.debug(f'实际花费现金 {-cash_spent.sum():.2f} 并产生交易费用: {fee_buying.sum():.2f}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
@@ -432,7 +450,6 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
     return op_list
 
 
-# TODO: 将回测过程和信息输出到log文件或log信息中，返回log信息
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
 def apply_loop(op_type: int,
                op_list: HistoryPanel,
@@ -448,7 +465,9 @@ def apply_loop(op_type: int,
                stock_delivery_period: int = 0,
                allow_sell_short: bool = False,
                max_cash_usage: bool = False,
-               print_log: bool = False) -> pd.DataFrame:
+               trade_log: bool = False,
+               trade_detail_log: bool = False,
+               bt_price_priority_ohlc: str = 'OHLC') -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
@@ -470,7 +489,14 @@ def apply_loop(op_type: int,
         :param stock_delivery_period: int, 股票交割周期，默认值为0，单位为天。
         :param allow_sell_short: bool, 是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
         :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
-        :param print_log: bool: 设置为True将打印回测详细日志
+        :param trade_log: bool: 为True时，输出回测详细日志为csv格式的表格
+        :param trade_detail_log: bool: 为True时，输出更加详细的回测记录到logger_core，用于debug之用
+        :param bt_price_priority_ohlc: str: 策略组合中包括多种交易价格时，价格信号执行先后顺序。OHLC四个字母分别代表
+            O - 开盘价
+            H - 最高价
+            L - 最低价
+            C - 收盘价
+            价格的执行顺序等于四个字母的排列顺序
 
     output：=====
         Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单包含以下列：
@@ -479,6 +505,7 @@ def apply_loop(op_type: int,
         - fee:              当期交易费用（交易成本）
         - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
+    global total_stock_value, total_value
     assert not op_list.is_empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
@@ -487,27 +514,47 @@ def apply_loop(op_type: int,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-
+    # 在PT模式下，每天都需要进行回测，而在PS和VS模式下，并不需要每天回测
+    # 应该沿用以前的做法，仅回测有信号的交易日
     # op_list = _merge_invest_dates(op_list, cash_plan)
-    # import pdb; pdb.set_trace()
     op = op_list.values
     shares = op_list.shares
     price_types = op_list.htypes
+    # assert price_types == history_list.htypes, f'the trade price types from operation list and historical data does' \
+    #                                            f' not fit each other:\n' \
+    #                                            f'op_list:    {price_types}\n' \
+    #                                            f'price_list: {history_list.htypes}'
     # 获取交易信号的总行数、股票数量以及价格种类数量
+    # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
     price_type_count = op_list.htype_count
     op_count = op_list.hdate_count
     share_count = op_list.share_count
-    # 从价格清单中提取出与交易清单的日期相对应日期的所有数据
-    # TODO: FutureWarning:
-    # TODO: Passing list-likes to .loc or [] with any missing label will raise
-    # TODO: KeyError in the future, you can use .reindex() as an alternative.
+    # 根据价格交易优先级设置价格执行顺序
+    # 例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
+    # 价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
+    price_priority_list = []
+    price_type_table = {'O': 'open',
+                        'H': 'high',
+                        'L': 'low',
+                        'C': 'close'}
+    for p_type in bt_price_priority_ohlc:
+        price_type_name = price_type_table[p_type]
+        if price_type_name not in price_types:
+            continue
+        price_priority_list.append(price_types.index(price_type_table[p_type]))
+    price_types_in_priority = [price_types[i] for i in price_priority_list]
+    # 从价格清单中提取出与交易清单的日期相对应日期的所有数据(这是为了
+    # 减少回测的次数，只将有信号的交易日期传入loop函数，忽略没有信号
+    # 的日期。但在PT模式下，不能这么做，因为每天都有信号)。在PS和VS
+    # 信号模式下，可以且应该这么做，但是目前HistoryPanel不支持
+    # hp.loc[]，后续应该支持
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
-    # price = history_list.fillna(0).loc[op_list.index].values
-    price = history_list.fillna(0).values
+    price = history_list.ffill(0).values
     looped_dates = list(op_list.hdates)
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
     days_difference = []
+    additional_invest = 0.
     if inflation_rate > 0:
         # print(f'looped dates are like: {looped_dates}')
         days_timedelta = looped_dates - np.roll(looped_dates, 1)
@@ -530,44 +577,73 @@ def apply_loop(op_type: int,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    date_print_format = '%Y/%m/%d'
+    # 保存trade_log_table数据：
+    op_log_add_invest = []
+    op_log_cash = []
+    op_log_available_cash = []
+    op_log_value = []
+    op_log_matrix = []
+    if looped_dates[0].time() == datetime.time(0, 0):
+        date_print_format = '%Y/%m/%d, %A'
+    else:
+        date_print_format = '%Y/%m/%d %H:%M, %a'
     prev_date = 0
     # TODO: use Numba to optimize the efficiency of the looping process
     for i in range(op_count):
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i].date()
         sub_total_fee = 0
-        if print_log:
-            print(f'交易日期:{current_date.strftime(date_print_format)}, '
-                  f'{weekday_name(current_date.weekday())}, op_type: {op_type}')
-        if inflation_rate > 0:  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
+        if trade_detail_log:
+            logger_core.debug(f'交易日期:{looped_dates[i].strftime(date_print_format)}, op_type: {op_type}')
+        if (prev_date != current_date) and (inflation_rate > 0):  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             own_cash *= inflation_factors[i]
             available_cash *= inflation_factors[i]
-            if print_log:
-                print(f'考虑现金增值, 上期现金: {(own_cash / inflation_factors[i]):.2f}, 经过{days_difference[i]}天后'
-                      f'现金增值到{own_cash:.2f}')
+            if trade_detail_log:
+                logger_core.debug(f'考虑现金增值, 上期现金: {(own_cash / inflation_factors[i]):.2f}, '
+                                  f'经过{days_difference[i]}天后'
+                                  f'现金增值到{own_cash:.2f}')
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
-            own_cash += invest_dict[i]
-            available_cash += invest_dict[i]
-            if print_log:
-                print(f'本期新增投入现金, 本期现金: {(own_cash - invest_dict[i]):.2f}, 追加投资后现金增加到{own_cash:.2f}')
-        for j in range(price_type_count):
-            if print_log:
-                print(f' - 本期第{j + 1}/{price_type_count}轮交易，使用历史价格: {price_types[j]}')
+            additional_invest = invest_dict[i]
+            own_cash += additional_invest
+            available_cash += additional_invest
+            if trade_detail_log:
+                logger_core.debug(f'本期新增投入现金, 本期现金: {(own_cash - invest_dict[i]):.2f}, '
+                                  f'追加投资后现金增加到{own_cash:.2f}')
+        for j in price_priority_list:
+            if trade_detail_log:
+                logger_core.debug(f' - 本期第{j + 1}/{price_type_count}轮交易，使用历史价格: {price_types[j]}')
+            # 交易前将交割队列中达到交割期的现金/资产完成交割
+            if ((prev_date != current_date) and (len(cash_delivery_queue) == cash_delivery_period)) or \
+                    (cash_delivery_period == 0):
+                if len(cash_delivery_queue) > 0:
+                    cash_delivered = cash_delivery_queue.pop(0)
+                    available_cash += cash_delivered
+                    if trade_detail_log:
+                        logger_core.debug(f'现金交割期满({cash_delivery_period})，交割以下现金：{cash_delivered:.2f}'
+                                          f' / 交割队列: {cash_delivery_queue}，交割后可用现金：{available_cash:.2f}')
+
+            if ((prev_date != current_date) and (len(stock_delivery_queue) == stock_delivery_period)) or \
+                    (stock_delivery_period == 0):
+                if len(stock_delivery_queue) > 0:
+                    stock_delivered = stock_delivery_queue.pop(0)
+                    available_amounts += stock_delivered
+                    if trade_detail_log:
+                        logger_core.debug(f'股票交割期满({stock_delivery_period})，以下资产交割完成：'
+                                          f'{np.around(stock_delivered, 2)}\n'
+                                          f'交割队列: \n'
+                                          f'{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
-            cash_gained, \
-            cash_spent, \
-            amount_purchased, \
-            amount_sold, \
-            fee = _loop_step(
+            current_prices = price[:, i, j]
+            current_op = op[:, i, j]
+            cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
                     own_cash=own_cash,
                     own_amounts=own_amounts,
                     available_cash=available_cash,
                     available_amounts=available_amounts,
-                    op=op[:, i, j],
-                    prices=price[:, i, j],
+                    op=current_op,
+                    prices=current_prices,
                     rate=cost_rate,
                     pt_buy_threshold=pt_buy_threshold,
                     pt_sell_threshold=pt_sell_threshold,
@@ -575,84 +651,67 @@ def apply_loop(op_type: int,
                     allow_sell_short=allow_sell_short,
                     moq_buy=moq_buy,
                     moq_sell=moq_sell,
-                    print_log=print_log,
-                    share_names=shares)
-            # 计算本批次交易后的可用现金、可用股票以及持有现金、持有股票
-            # 可用现金、可用股票数量首交割延迟期影响，从定长队列中取增加值
-            # TODO: 此处暂时使用列表和列表长度判断代替定长队列，无法实现隔天判断的效果。
-            # TODO: 其实应该使用专门的定长队列类来实现交割隔天判断的效果
-
+                    trade_detail_log=trade_detail_log,
+                    share_names=shares
+            )
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
-            if prev_date != current_date or cash_delivery_period == 0:
-                cash_delivery_queue.append(cash_gained)
-                # if print_log:
-                #     print(f'新增交割现金 - 本轮交易获得的现金: '
-                #           f'{cash_gained:.2f}')
+            if (prev_date != current_date) or (cash_delivery_period == 0):
+                cash_delivery_queue.append(cash_gained.sum())
+                if trade_detail_log:
+                    logger_core.debug(f'新增交割现金 - 本轮交易获得的现金: '
+                                      f'{cash_gained.sum():.2f}')
             else:
-                cash_delivery_queue[-1] += cash_gained
-                # if print_log:
-                #     print(f'同批累计交割 - 本轮交易累计获得的现金: '
-                #           f'{cash_delivery_queue[-1]:.2f}')
+                cash_delivery_queue[-1] += cash_gained.sum()
+                if trade_detail_log:
+                    logger_core.debug(f'同批累计交割 - 本轮交易累计获得的现金: '
+                                      f'{cash_delivery_queue[-1]:.2f}')
 
             # 获得的资产进入交割队列，根据日期的变化确定是新增资产交割还是累加资产交割
-            if prev_date != current_date or stock_delivery_period == 0:
+            if (prev_date != current_date) or (stock_delivery_period == 0):
                 stock_delivery_queue.append(amount_purchased)
-                # if print_log:
-                #     print(f'新增交割资产 - 本轮交易买入的资产: '
-                #           f'{np.around(amount_purchased, 2)}')
+                if trade_detail_log:
+                    logger_core.debug(f'新增交割资产 - 本轮交易买入的资产: '
+                                      f'{np.around(amount_purchased, 2)}')
             else:  # if prev_date == current_date
                 stock_delivery_queue[-1] += amount_purchased
-                # if print_log:
-                #     print(f'同批累计交割 - 本轮累计买入的资产: '
-                #           f'{np.around(stock_delivery_queue[-1], 2)}')
+                if trade_detail_log:
+                    logger_core.debug(f'同批累计交割 - 本轮累计买入的资产: '
+                                      f'{np.around(stock_delivery_queue[-1], 2)}')
 
             prev_date = current_date
-
-            # 周期内不交割股票或现金，除非交割期限为0
-            if cash_delivery_period == 0:
-                cash_delivered = cash_delivery_queue.pop(0)
-                # if print_log:
-                #     print(f'现金交割期为0，本期内直接交割现金：'
-                #           f'{cash_delivered:.2f}')
-                available_cash = available_cash + cash_spent + cash_delivered
-            else:
-                available_cash = available_cash + cash_spent
-
-            if stock_delivery_period == 0:
-                stock_delivered = stock_delivery_queue.pop(0)
-                # if print_log:
-                #     print(f'股票交割期为0，本期内直接交割资产：'
-                #           f'{np.around(stock_delivered, 2)}')
-                available_amounts = available_amounts + amount_sold + stock_delivered
-            else:
-                available_amounts = available_amounts + amount_sold
-
             # 持有现金、持有股票用于计算本期的总价值
-            own_cash = own_cash + cash_gained + cash_spent
-            own_amounts = own_amounts + amount_sold + amount_purchased
-            total_stock_value = (own_amounts * price[:, i, j]).sum()
+            available_cash += cash_spent.sum()
+            available_amounts += amount_sold
+            cash_changed = cash_gained + cash_spent
+            own_cash = own_cash + cash_changed.sum()
+            amount_changed = amount_sold + amount_purchased
+            own_amounts = own_amounts + amount_changed
+            total_stock_values = (own_amounts * current_prices)
+            total_stock_value = total_stock_values.sum()
             total_value = total_stock_value + own_cash
-            sub_total_fee += fee
-        # 本期交易全部结束后，开始现金和资产的交割：
-        if (len(cash_delivery_queue) >= cash_delivery_period) and (cash_delivery_period != 0):
-            cash_delivered = cash_delivery_queue.pop(0)
-            # if print_log:
-            #     print(f'现金交割期满，交割以下现金：{cash_delivered:.2f}'
-            #           f' / 交割队列: {cash_delivery_queue}')
-            available_cash = available_cash + cash_delivered
-
-        if (len(stock_delivery_queue) >= stock_delivery_period) and (stock_delivery_period != 0):
-            stock_delivered = stock_delivery_queue.pop(0)
-            # if print_log:
-            #     print(f'股票交割期满，以下资产交割完成：{np.around(stock_delivered, 2)}\n'
-            #           f'交割队列: \n{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
-            available_amounts = available_amounts + stock_delivered
+            sub_total_fee += fee.sum()
+            # 生成trade_log所需的数据，采用串列式表格排列：
+            if trade_log:
+                rnd = np.round
+                op_log_matrix.append(rnd(current_op, 3))
+                op_log_matrix.append(rnd(current_prices, 3))
+                op_log_matrix.append(rnd(amount_changed, 3))
+                op_log_matrix.append(rnd(cash_changed, 3))
+                op_log_matrix.append(rnd(fee, 3))
+                op_log_matrix.append(rnd(own_amounts, 3))
+                op_log_matrix.append(rnd(available_amounts, 3))
+                op_log_matrix.append(rnd(total_stock_values, 3))
+                op_log_add_invest.append(rnd(additional_invest, 3))
+                additional_invest = 0.
+                op_log_cash.append(rnd(own_cash, 3))
+                op_log_available_cash.append(rnd(available_cash, 3))
+                op_log_value.append(rnd(total_value, 3))
 
         # 打印本日结果
-        if print_log:
-            print(f'本期交易完成, 交易后资产总额: {total_value:.2f}, 其中\n'
-                  f'持有现金: {own_cash:.2f} \n'
-                  f'资产价值: {total_stock_value:.2f}\n')
+        if trade_detail_log:
+            logger_core.debug(f'本期交易完成, 交易后资产总额: {total_value:.2f}, 其中\n'
+                              f'持有现金: {own_cash:.2f} \n'
+                              f'资产价值: {total_stock_value:.2f}\n')
         # 保存计算结果
         cashes.append(own_cash)
         fees.append(sub_total_fee)
@@ -661,6 +720,66 @@ def apply_loop(op_type: int,
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=op_list.hdates,
                                  columns=shares)
+    # 生成trade_log，index为MultiIndex，因为每天的交易可能有多种价格
+    if trade_log:
+        # create complete trading log
+        logger_core.info(f'generating complete trading log ...')
+        op_log_index = pd.MultiIndex.from_product(
+                [looped_dates,
+                 price_types_in_priority,
+                 ['0, trade signal',
+                  '1, price',
+                  '2, traded amounts',
+                  '3, cash changed',
+                  '4, trade cost',
+                  '5, own amounts',
+                  '6, available amounts',
+                  '7, summary']],
+                names=('date', 'trade_on', 'item')
+        )
+        op_sum_index = pd.MultiIndex.from_product(
+                [looped_dates,
+                 price_types_in_priority,
+                 ['7, summary']],
+                names=('date', 'trade_on', 'item')
+        )
+        op_log_columns = [str(s) for s in shares]
+        op_log_df = pd.DataFrame(op_log_matrix, index=op_log_index, columns=op_log_columns)
+        op_summary_df = pd.DataFrame([op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value],
+                                     index=['add. invest', 'own cash', 'available cash', 'value'],
+                                     columns=op_sum_index).T
+        log_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_log.csv'
+        op_summary_df.join(op_log_df, how='right', sort=False).to_csv(log_file_path_name)
+        # 生成 trade log 摘要表 (a more concise and human-readable format of trading log
+        # create share trading logs:
+        logger_core.info(f'generating abstract trading log ...')
+        share_logs = []
+        for share in op_log_columns:
+            share_df = op_log_df[share].unstack()
+            share_df = share_df[share_df['2, traded amounts'] != 0]
+            share_df['code'] = share
+            try:
+                share_name = get_basic_info(share, printout=False)['name']
+            except Exception as e:
+                share_name = 'unknown'
+            share_df['name'] = share_name
+            share_logs.append(share_df)
+
+        re_columns = ['code',
+                      'name',
+                      '0, trade signal',
+                      '1, price',
+                      '2, traded amounts',
+                      '3, cash changed',
+                      '4, trade cost',
+                      '5, own amounts',
+                      '6, available amounts',
+                      '7, summary']
+        op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
+        # 如果how == 'left' 保留无交易日期的记录
+        # 如果how == 'right', 不显示无交易日期的记录
+        record_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_records.csv'
+        op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(record_file_path_name)
 
     # 填充标量计算结果
     value_history['cash'] = cashes
@@ -699,7 +818,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     except:
         date = pd.to_datetime('today')
     # validate all input args:
-    if not all(arg in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
+    if not all(arg.lower() in ['index', 'industry', 'area', 'market', 'exchange'] for arg in kwargs.keys()):
         raise KeyError()
     if not all(isinstance(val, (str, list)) for val in kwargs.values()):
         raise KeyError()
@@ -711,44 +830,73 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
     if share_basics is None or share_basics.empty:
         return []
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
-    share_basics = share_basics.loc[share_basics.list_date <= date]
-    for column, targets in zip(kwargs.keys(), kwargs.values()):
+    none_matched = dict()
+    # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
+    # print('looking for none matching arguments')
+    for column, targets in kwargs.items():
         if column == 'index':
-            index_comp = pd.DataFrame()
-            end_date = date
-            # 逐月向前查找指数的成分
-            while index_comp.empty:
-                start_date = (end_date - pd.Timedelta(30, 'd')).strftime('%Y%m%d')
-                index_comp = ds.read_table_data('index_weight',
-                                                shares=targets,
-                                                start=start_date,
-                                                end=end_date.strftime('%Y%m%d'))
-                end_date = pd.to_datetime(start_date)
-                if end_date < pd.to_datetime('20040101'):
-                    print(f'no index composition found before date {date}')
-                    return []
-            if index_comp.empty:
-                return []
-            # find out composite in only one day
-            comp_date = index_comp.index.get_level_values('trade_date').unique().to_list()[-1]
-            index_comp = index_comp[index_comp.index.get_level_values('trade_date') == comp_date]
-            return index_comp.index.get_level_values('con_code').tolist()
+            continue
         if isinstance(targets, str):
             targets = str_to_list(targets)
+            kwargs[column] = targets
+        all_column_values = share_basics[column].unique().tolist()
+        target_not_matched = [item for item in targets if item not in all_column_values]
+        if len(target_not_matched) > 0:
+            kwargs[column] = list(set(targets) - set(target_not_matched))
+            match_dict = {}
+            for t in target_not_matched:
+                similarities = []
+                for s in all_column_values:
+                    if not isinstance(s, str):
+                        # print(f'oops!, {s} is not a string!! skipping...')
+                        continue
+                    try:
+                        similarities.append(_partial_lev_ratio(s, t))
+                    except Exception as e:
+                        print(f'{e}, error during matching "{t}" and "{s}"')
+                        raise e
+                sim_array = np.array(similarities)
+                best_matched = [all_column_values[i] for i in np.where(sim_array >= 0.5)[0]]
+                match_dict[t] = best_matched
+                best_matched_str = '\" or \"'.join(best_matched)
+                print(f'{t} will be excluded because an exact match is not found in "{column}", did you mean\n'
+                      f'"{best_matched_str}"?')
+            none_matched[column] = match_dict
+        # 从清单中将none_matched移除
+    for column, targets in kwargs.items():
+        if column == 'index':
+            # 查找date到今天之间的所有成分股, 如果date为today，则将date前推一个月
+            end_date = pd.to_datetime('today')
+            start_date = date - pd.Timedelta(30, 'd')
+            index_comp = ds.read_table_data('index_weight',
+                                            shares=targets,
+                                            start=start_date.strftime("%Y%m%d"),
+                                            end=end_date.strftime('%Y%m%d'))
+            if index_comp.empty:
+                return []
+            return index_comp.index.get_level_values('con_code').unique().tolist()
+        if isinstance(targets, str):
+            targets = str_to_list(targets)
+        if len(targets) == 0:
+            continue
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
-
+    #
+    # for k, v in none_matched.items():
+    #     print(f'can not find a match for {v} in {k}, did you mean ...?')
+    share_basics = share_basics.loc[share_basics.list_date <= date]
     return list(share_basics.index.values)
 
 
-def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, verbose=False):
+def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
     """ 根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
     
     :param code_or_name: 
         证券代码或名称，
-        如果是证券代码，可以含后缀也可以不含后缀，不含后缀时模糊查找
-        如果时证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全剧匹配
+        如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
         
     :param asset_types:
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
@@ -761,11 +909,16 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
     :param match_full_name: bool
         是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
 
+    :param printout: bool
+        如果为True，打印匹配到的结果
+
     :param verbose: bool
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
-    :return: 
+    :return: dict
+        一个dict，包含找到的基本信息如下：
+        -
     """
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
@@ -775,6 +928,25 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
 
     matched_count = matched_codes['count']
     asset_best_matched = matched_codes
+    asset_codes = []
+    info_columns = {'E':
+                        ['name', 'area', 'industry', 'fullname', 'list_status', 'list_date'],
+                    'IDX':
+                        ['name', 'fullname', 'publisher', 'category', 'list_date'],
+                    'FD':
+                        ['name', 'management', 'custodian', 'fund_type', 'issue_date', 'issue_amount', 'invest_type',
+                         'type'],
+                    'FT':
+                        ['name'],
+                    'OPT':
+                        ['name']}
+
+    if matched_count == 1 and not printout:
+        # 返回唯一信息字典
+        a_type = list(asset_best_matched.keys())[0]
+        basics = asset_type_basics[a_type][info_columns[a_type]]
+        return basics.loc[asset_codes[0]].to_dict()
+
     if matched_count <= 5:
         print(f'found {matched_count} matches, matched codes are {matched_codes}')
     else:
@@ -792,17 +964,6 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, v
             print(f'Too many matched codes {matched_count}, best matched are\n'
                   f'{asset_best_matched}\n'
                   f'pass "verbose=Ture" to view all matched assets')
-    info_columns = {'E':
-                        ['name', 'area', 'industry', 'fullname', 'list_status', 'list_date'],
-                    'IDX':
-                        ['name', 'fullname', 'publisher', 'category', 'list_date'],
-                    'FD':
-                        ['name', 'management', 'custodian', 'fund_type', 'issue_date', 'issue_amount', 'invest_type',
-                         'type'],
-                    'FT':
-                        ['name'],
-                    'OPT':
-                        ['name']}
     for a_type in asset_best_matched:
         if a_type == 'count':
             continue
@@ -912,7 +1073,7 @@ def check_and_prepare_hist_data(operator, config):
     """
     run_mode = config.mode
     # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
-    current_datetime = datetime.now()
+    current_datetime = datetime.datetime.now()
     current_date = current_datetime.date()
     current_time = current_datetime.time()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
@@ -985,27 +1146,30 @@ def check_and_prepare_hist_data(operator, config):
     # 设置优化区间和测试区间的结束日期
     opti_end = config.opti_end
     test_end = config.test_end
+    # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = operator.max_window_length
+    window_offset_freq = operator.op_data_freq
+    if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
+        window_offset_freq = 'd'
+    window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
+
     hist_op = get_history_panel(
             start=regulate_date_format(
-                    pd.to_datetime(invest_start) -
-                    pd.Timedelta(int(window_length * 1.6), 'd')),
+                    pd.to_datetime(invest_start) - window_offset),
             end=invest_end,
             shares=config.asset_pool,
-            htypes=operator.op_data_types,
+            htypes=operator.all_price_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj) if run_mode <= 1 else HistoryPanel()
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    # TODO: 此处应该根据回测价格顺序模式调整bt_price_types的价格
     bt_price_types = operator.bt_price_types
     hist_loop = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in hist_loop to prevent from result in nan in value
     hist_loop.fillinf(0)
 
     # 生成用于策略优化训练的训练历史数据集合
-    hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(opti_start) -
-                                                             pd.Timedelta(int(window_length * 1.6), 'd')),
+    hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(opti_start) - window_offset),
                                   end=opti_end,
                                   shares=config.asset_pool,
                                   htypes=operator.op_data_types,
@@ -1013,15 +1177,13 @@ def check_and_prepare_hist_data(operator, config):
                                   asset_type=config.asset_type,
                                   adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
-    hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) -
-                                                             pd.Timedelta(int(window_length * 1.6), 'd')),
+    hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) - window_offset),
                                   end=test_end,
                                   shares=config.asset_pool,
                                   htypes=operator.op_data_types,
                                   freq=operator.op_data_freq,
                                   asset_type=config.asset_type,
                                   adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
-
     hist_test_loop = hist_test.slice(htypes=bt_price_types)
     hist_test_loop.fillinf(0)
 
@@ -1041,10 +1203,9 @@ def check_and_prepare_hist_data(operator, config):
                       ).to_dataframe(htype='close')
 
     return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \
-               invest_cash_plan, opti_cash_plan, test_cash_plan
+           invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
-# TODO: 根据最新的qteasy基础模块设计更新docstring并更新函数
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
@@ -1615,6 +1776,10 @@ def _evaluate_one_parameter(par,
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time
     riskfree_ir = config.riskfree_ir
+    log_backtest = False
+    log_backtest_detail = False
+    period_length = 0
+    period_count = 0
     if op_list.is_empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         res_dict['complete_values'] = pd.DataFrame()
@@ -1627,7 +1792,8 @@ def _evaluate_one_parameter(par,
             else pd.to_datetime(config.invest_cash_dates)
         period_util_type = 'single'
         indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
-        print_backtest_log = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
+        log_backtest = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
+        log_backtest_detail = config.log_backtest_detail  # 回测参数log_backtest_detail只有在回测模式下才有用
     elif stage == 'optimize':
         invest_cash_amounts = config.opti_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
@@ -1638,7 +1804,6 @@ def _evaluate_one_parameter(par,
         period_count = config.opti_sub_periods
         period_length = config.opti_sub_prd_length
         indicators = config.optimize_target
-        print_backtest_log = False
     elif stage == 'test-o':
         invest_cash_amounts = config.test_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
@@ -1649,7 +1814,6 @@ def _evaluate_one_parameter(par,
         period_count = config.test_sub_periods
         period_length = config.test_sub_prd_length
         indicators = config.test_indicators
-        print_backtest_log = False
     else:  # stage == 'test-t':
         invest_cash_amounts = config.test_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
@@ -1660,7 +1824,6 @@ def _evaluate_one_parameter(par,
         period_count = config.test_sub_periods
         period_length = config.test_sub_prd_length
         indicators = config.test_indicators
-        print_backtest_log = False
     # create list of start and end dates
     # in this case, user-defined invest_cash_dates will be disabled, each start dates will be
     # used as the investment date for each sub-periods
@@ -1718,7 +1881,9 @@ def _evaluate_one_parameter(par,
                 stock_delivery_period=config.stock_deliver_period,
                 allow_sell_short=config.allow_sell_short,
                 max_cash_usage=config.maximize_cash_usage,
-                print_log=print_backtest_log)
+                trade_log=log_backtest,
+                trade_detail_log=log_backtest_detail
+        )
         complete_values = _get_complete_hist(
                 looped_value=looped_val,
                 h_list=history_list_seg,
@@ -1787,7 +1952,7 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
 
     # 生成一个HistoryPanel对象，每一层一个个股
     mock_data = stack_dataframes(dfs_for_share,
-                                 stack_along='shares',
+                                 stack_as='shares',
                                  shares=history_data.shares)
     return mock_data
 

@@ -46,11 +46,11 @@ class Strategy:
                  stg_text: str = 'intro text of strategy',
                  par_count: int = 0,
                  par_types: [list, str] = '',
-                 par_bounds_or_enums: [list, tuple] = '',
+                 par_bounds_or_enums: [list, tuple] = (),
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
-                 data_types: [str, list] = '',
+                 data_types: [str, list] = 'close',
                  bt_price_type: str = 'close',
                  reference_data: str = 'none',
                  reference_data_types: [str, list] = ''):
@@ -77,7 +77,7 @@ class Strategy:
                                             6, 'M'/'m':
                                             7, 'Q'/'q':
                                             8, 'Y'/'y':
-            :param sample_freq:             静态属性，策略生成时测采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
+            :param sample_freq:             静态属性，策略生成时的采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
                                             一样，但是不能高于数据频率。
             :param window_length:           静态属性，历史数据视窗长度。即生成策略输出所需要的历史数据的数量
             :param data_types:              静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成，可选的参数
@@ -140,7 +140,7 @@ class Strategy:
         assert isinstance(data_types, list), f'TypeError, data type should be a list, got {type(data_types)} instead'
         self._data_types = data_types
         self._bt_price_type = None
-        self.set_hist_pars(price_type=bt_price_type)
+        self.set_hist_pars(bt_price_type=bt_price_type)
         self._reference_data = reference_data
         if isinstance(reference_data_types, str):
             reference_data_types = str_to_list(reference_data_types, ',')
@@ -271,14 +271,14 @@ class Strategy:
         self.set_hist_pars(data_types=data_types)
 
     @property
-    def price_type(self):
+    def bt_price_type(self):
         """策略回测时所使用的价格类型"""
         return self._bt_price_type
 
-    @price_type.setter
-    def price_type(self, price_type):
+    @bt_price_type.setter
+    def bt_price_type(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
-        self.set_hist_pars(price_type=price_type)
+        self.set_hist_pars(bt_price_type=price_type)
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -358,32 +358,34 @@ class Strategy:
             self._par_bounds_or_enums = par_boes
         return par_boes
 
-    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None, price_type=None):
+    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None, bt_price_type=None):
         """ 设置策略的历史数据回测相关属性
 
         :param data_freq: str,
         :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
         :param window_length: int，表示回测时需要用到的历史数据深度
         :param data_types: str，表示需要用到的历史数据类型
-        :param price_type: str, 需要用到的历史数据回测价格类型
+        :param bt_price_type: str, 需要用到的历史数据回测价格类型
         :return: None
         """
         if data_freq is not None:
             assert isinstance(data_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(data_freq)} instead'
-            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {data_freq} is not a valid frequency ' \
+            assert data_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, "{data_freq}" is not a valid frequency ' \
                                                            f'string'
             self._data_freq = data_freq
         if sample_freq is not None:
             assert isinstance(sample_freq, str), \
                 f'TypeError, sample frequency should be a string, got {type(sample_freq)} instead'
-            assert sample_freq.upper() in TIME_FREQ_STRINGS, f'ValueError, {sample_freq} is not a valid frequency ' \
-                                                             f'string'
+            import re
+            if not re.match('[0-9]*(min)$|[0-9]*[dwmqyh]$', sample_freq.lower()):
+                raise ValueError(f"{sample_freq} is not a valid frequency string,"
+                                 f"sample freq can only be like '10d' or '2w'")
             self._sample_freq = sample_freq
         if window_length is not None:
             assert isinstance(window_length, int), \
                 f'TypeError, window length should an integer, got {type(window_length)} instead'
-            assert window_length > 0, f'ValueError, {window_length} is not a valid window length'
+            assert window_length > 0, f'ValueError, "{window_length}" is not a valid window length'
             self._window_length = window_length
         if data_types is not None:
             if isinstance(data_types, str):
@@ -391,10 +393,10 @@ class Strategy:
             assert isinstance(data_types, list), \
                 f'TypeError, data type should be a list, got {type(data_types)} instead'
             self._data_types = data_types
-        if price_type is not None:
-            assert isinstance(price_type, str), f'Wrong input type, price_type should be a string, got {type(price_type)}'
-            assert price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {price_type} is not a valid price type'
-            self._bt_price_type = price_type
+        if bt_price_type is not None:
+            assert isinstance(bt_price_type, str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
+            assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a valid price type'
+            self._bt_price_type = bt_price_type
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""
@@ -419,8 +421,7 @@ class Strategy:
             生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
         """
         temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
-        # 在这里发现一个错误，并已经修正：
-        # 本来这里期望实现的功能是生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
+        # 生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
         # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
         # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
         # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
@@ -542,26 +543,14 @@ class RollingTiming(Strategy):
 
     def __init__(self,
                  pars: tuple = None,
-                 stg_name: str = 'NONE',
-                 stg_text: str = 'intro text of timing strategy',
-                 par_count: int = 0,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'd',
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close'):
+                 stg_name: str = 'NEW-RTMG',
+                 stg_text: str = 'intro text of rolling timing strategy',
+                 **kwargs):
         super().__init__(pars=pars,
-                         stg_type='R-TIMING',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
+                         stg_type='R-TIMING',
+                         **kwargs)
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
@@ -719,34 +708,16 @@ class SimpleSelecting(Strategy):
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
                  pars: tuple = None,
-                 opt_tag: int = 0,
-                 stg_name: str = 'NONE',
+                 stg_name: str = 'NEW-SEL',
                  stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 1,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close'):
-        if par_types is None:
-            par_types = ['conti']
-        if par_bounds_or_enums is None:
-            par_bounds_or_enums = [(0, 1)]
+                 **kwargs):
         super().__init__(pars=pars,
-                         opt_tag=opt_tag,
                          stg_type='SELECT',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
-        self._poq = proportion_or_quantity
+                         **kwargs)
+        self.proportion_or_quantity = proportion_or_quantity
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple):
@@ -781,29 +752,27 @@ class SimpleSelecting(Strategy):
         super().generate(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
-        # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
+        # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
-        # 一个空的ndarray对象用于存储生成的选股蒙版
-        sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
-        # 原来的函数实际上使用未来的数据生成今天的结果，这样是错误的
-        # 例如，对于seg_start = 0，seg_lengt = 6的时候，使用seg_start:seg_start + seg_length的数据生成seg_start的数据，
-        # 也就是说，用第0:6天的数据，生成了第0天的信号
-        # 因此，seg_start不应该是seg_pos[0]，而是seg_pos[1]的数，因为这才是真正应该开始计算的第一条信号
-        # 正确的方法是用seg_start:seg_length的数据生成seg_start+seg_length那天的信号，即
-        # 使用0:6天的数据（不含第6天）生成第6天的信号
-        # 不过这样会带来一个变化，即生成全部操作信号需要更多的历史数据，包括第一个信号所在日期之前window_length日的数据
+        # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
+        sel_mask = np.full(shape=(len(dates), len(shares)), fill_value=np.nan, order='C')
+        # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
+        # 例如，假设seg_start = 0，seg_length = 6时，
+        # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
+        # 由于第1天的操作信号需要第一个信号所在日期之前window_length日的数据
         # 因此在输出数据的时候需要将前window_length个数据截取掉
         seg_start = seg_pos[1]
+        wl = self.window_length
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
-        # TODO: 可以使用map函数生成分段
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
-            # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._realize(hist_data=hist_data[:, sp - sl:sp, :], params=self.pars)
-            # assert isinstance(share_sel, np.ndarray)
-            # assert len(share_sel) == len(shares)
+            # 提取当前分段起点以前的数据，计算当前分段起点的交易信号
+            share_sel = self._realize(hist_data=hist_data[:, sp - wl:sp, :], params=self.pars)
             seg_end = seg_start + fill_len
-            # 填充相同的投资组合到当前区间内的所有交易时间点
-            sel_mask[seg_start:seg_end + 1, :] = share_sel
+            # 填充相同的投资组合到当前区间内的第一个交易时间点，
+            # 在信号类型为PT时需要把同样的信号填充到下一个交易
+            # 时间点以前的整个时间段。这个操作在operator层面
+            # 进行
+            sel_mask[seg_start, :] = share_sel
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         return sel_mask[self.window_length:]
@@ -869,28 +838,14 @@ class SimpleTiming(Strategy):
 
     def __init__(self,
                  pars: tuple = None,
-                 opt_tag: int = 0,
-                 stg_name: str = 'NONE',
-                 stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 0,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'd',
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close'):
+                 stg_name: str = 'NEW-QTMG',
+                 stg_text: str = 'intro text of quick timing strategy',
+                 **kwargs):
         super().__init__(pars=pars,
-                         opt_tag=opt_tag,
                          stg_type='Q-TIMING',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
+                         **kwargs)
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple):
@@ -963,6 +918,8 @@ class SimpleTiming(Strategy):
         return res[self.window_length:, :]
 
 
+#TODO: 应该使用SimpleSelecting作为父类创建FactoralSelecting类
+#TODO: 因为它们的核心代码都是一样的
 class FactoralSelecting(Strategy):
     """ 因子选股，根据用户定义获选择的因子
 
@@ -1006,39 +963,21 @@ class FactoralSelecting(Strategy):
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
                  pars: tuple = None,
-                 opt_tag: int = 0,
-                 stg_name: str = 'NONE',
+                 stg_name: str = 'NEW-FAC',
                  stg_text: str = 'intro text of selecting strategy',
-                 par_count: int = 1,
-                 par_types: [list, str] = None,
-                 par_bounds_or_enums: [list, tuple] = None,
-                 data_freq: str = 'd',
-                 sample_freq: str = 'y',
                  proportion_or_quantity: float = 0.5,
-                 window_length: int = 270,
-                 data_types: [list, str] = 'close',
                  condition: str = 'any',
                  lbound: float = -np.inf,
                  ubound: float = np.inf,
                  sort_ascending: bool = True,
-                 weighting: str = 'even'):
-        if par_types is None:
-            par_types = ['conti']
-        if par_bounds_or_enums is None:
-            par_bounds_or_enums = [(0, 1)]
+                 weighting: str = 'even',
+                 **kwargs):
         super().__init__(pars=pars,
-                         opt_tag=opt_tag,
                          stg_type='FACTOR',
                          stg_name=stg_name,
                          stg_text=stg_text,
-                         par_count=par_count,
-                         par_types=par_types,
-                         par_bounds_or_enums=par_bounds_or_enums,
-                         data_freq=data_freq,
-                         sample_freq=sample_freq,
-                         window_length=window_length,
-                         data_types=data_types)
-        self._poq = proportion_or_quantity
+                         **kwargs)
+        self.proportion_or_quantity = proportion_or_quantity
         self.condition = condition
         self.lbound = lbound
         self.ubound = ubound
@@ -1070,11 +1009,11 @@ class FactoralSelecting(Strategy):
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
         """
-        pct = self._poq
+        pct = self.proportion_or_quantity
         condition = self.condition
         lbound = self.lbound
         ubound = self.ubound
-        sort_ascending = self.sort_ascending
+        sort_ascending = self.sort_ascending  # True: 选择最小的，Fals: 选择最大的
         weighting = self.weighting
 
         share_count = hist_data.shape[0]
@@ -1088,8 +1027,7 @@ class FactoralSelecting(Strategy):
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(hist_data, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(hist_data)} instead'
-
-        factors = self._realize(hist_data=hist_data, params=self.pars)
+        factors = self._realize(hist_data=hist_data, params=self.pars).squeeze()
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -1103,7 +1041,8 @@ class FactoralSelecting(Strategy):
         elif condition == 'not_between':
             factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
         else:
-            raise ValueError(f'indication selection condition \'{condition}\' not supported!')
+            raise ValueError(f'invalid selection condition \'{condition}\''
+                             f'should be one of ["any", "greater", "less", "between", "not_between"]')
         nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
         if nan_count == share_count:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
             return chosen
@@ -1135,8 +1074,10 @@ class FactoralSelecting(Strategy):
         if weighting == 'linear':
             dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
             chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
-        # proportion：比例分配，权重与分值成正比，分值最低者获得一个基础比例，其余股票的比例与其分值成正比
-        elif weighting == 'proportion':
+        # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
+        # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
+        # 获取比例分配
+        elif weighting == 'distance':
             dist = factors[args]
             d = dist.max() - dist.min()
             if not sort_ascending:
@@ -1150,10 +1091,17 @@ class FactoralSelecting(Strategy):
                 chosen[args] = dist / len(dist)
             else:
                 chosen[args] = dist / dist.sum()
+        # proportion：比例分配，权重与其分值成正比，分值为0或小于0者比例为0
+        elif weighting == 'proportion':
+            fctr = factors[args]
+            proportion = fctr / fctr.sum()
+            chosen[args] = np.where(proportion < 0, 0, proportion)  # np.where 比 proportion.clip(0) 速度快得多
         # even：均匀分配，所有中选股票在组合中权重相同
-        else:  # self.__distribution == 'even'
-
+        elif weighting == 'even':
             chosen[args] = 1. / arg_count
+        else:
+            raise KeyError(f'invalid weighting type: "{weighting}". '
+                           f'should be one of ["linear", "proportion", "even"]')
         return chosen
 
     # TODO：需要重新定义FactoralSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
@@ -1178,26 +1126,24 @@ class FactoralSelecting(Strategy):
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性
         seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
         # 一个空的ndarray对象用于存储生成的选股蒙版
-        sel_mask = np.zeros(shape=(len(dates), len(shares)), order='C')
-        # 原来的函数实际上使用未来的数据生成今天的结果，这样是错误的
-        # 例如，对于seg_start = 0，seg_lengt = 6的时候，使用seg_start:seg_start + seg_length的数据生成seg_start的数据，
-        # 也就是说，用第0:6天的数据，生成了第0天的信号
-        # 因此，seg_start不应该是seg_pos[0]，而是seg_pos[1]的数，因为这才是真正应该开始计算的第一条信号
-        # 正确的方法是用seg_start:seg_length的数据生成seg_start+seg_length那天的信号，即
-        # 使用0:6天的数据（不含第6天）生成第6天的信号
-        # 不过这样会带来一个变化，即生成全部操作信号需要更多的历史数据，包括第一个信号所在日期之前window_length日的数据
+        sel_mask = np.full(shape=(len(dates), len(shares)), fill_value=np.nan, order='C')
+        # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
+        # 例如，假设seg_start = 0，seg_length = 6时，
+        # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
+        # 由于第1天的操作信号需要第一个信号所在日期之前window_length日的数据
         # 因此在输出数据的时候需要将前window_length个数据截取掉
         seg_start = seg_pos[1]
+        wl = self.window_length
         # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
-        # TODO: 可以使用map函数生成分段
         for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
-            # share_sel向量代表当前区间内的投资组合比例
-            share_sel = self._process_factors(hist_data[:, sp - sl:sp, :])
-            # assert isinstance(share_sel, np.ndarray)
-            # assert len(share_sel) == len(shares)
+            # 提取当前分段起点以前的数据，计算当前分段起点的选股比例
+            share_sel = self._process_factors(hist_data[:, sp - wl:sp, :])
             seg_end = seg_start + fill_len
-            # 填充相同的投资组合到当前区间内的所有交易时间点
-            sel_mask[seg_start:seg_end + 1, :] = share_sel
+            # 填充相同的投资组合到当前区间内的第一个交易时间点，
+            # 在信号类型为PT时需要把同样的信号填充到下一个交易
+            # 时间点以前的整个时间段。这个操作在operator层面
+            # 进行
+            sel_mask[seg_start, :] = share_sel
             seg_start = seg_end
         # 将所有分段组合成完整的ndarray
         return sel_mask[self.window_length:]

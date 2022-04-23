@@ -8,10 +8,8 @@
 #   Unittest for all qteasy
 #   functionalities.
 # ======================================
-
 import unittest
 
-import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -32,7 +30,7 @@ from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wil
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
-from qteasy.built_in import SelectingFinanceIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
+from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
 
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
@@ -74,7 +72,7 @@ from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, s
 from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
-from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel
+from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, get_built_in_table_schema
@@ -130,43 +128,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], 33299.999667, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], 33.333332999999996, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1.))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], 33296.67, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], 33.33, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], 32967.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], 33, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997.00897308, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], 59.82053838484547, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 1))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], -19999.82, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], 59.82, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1], -18054., msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2], 54.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
+        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
 
     def test_min_fee(self):
         """测试最低交易费用"""
@@ -181,43 +179,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], -19900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], -18300.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2], 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], 33033.333)
-        self.assertAlmostEqual(test_min_fee_result[2], 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33033.333)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], 33030)
-        self.assertAlmostEqual(test_min_fee_result[2], 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33030)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1], 32700)
-        self.assertAlmostEqual(test_min_fee_result[2], 300.0)
+        self.assertAlmostEqual(test_min_fee_result[1].sum(), 32700)
+        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
 
     def test_rate_with_min(self):
         """测试最低交易费用对其他交易费率参数的影响"""
@@ -232,43 +230,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 984.9305624, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1], -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2], 301.3887520929774, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1], -19900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2], 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1], -18300.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2], 300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1], 32999.99967)
-        self.assertAlmostEqual(test_rate_with_min_result[2], 333.33333)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32999.99967)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.33333)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1], 32996.7)
-        self.assertAlmostEqual(test_rate_with_min_result[2], 333.3)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32996.7)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.3)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1], 32667.0)
-        self.assertAlmostEqual(test_rate_with_min_result[2], 333.0)
+        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32667.0)
+        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.0)
 
     def test_fixed_fee(self):
         """测试固定交易费用"""
@@ -283,30 +281,30 @@ class TestCost(unittest.TestCase):
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 0))
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1], 33183.333, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 150.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
 
         print('\nselling result of fixed cost with fixed fee = 150 and moq=100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3300.]), True,
                       f'result incorrect, {test_fixed_fee_result[0]} does not equal to [0,0,-3400]')
-        self.assertAlmostEqual(test_fixed_fee_result[1], 32850., msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 150., msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 990., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1], -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1], -18200.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
     def test_slipage(self):
         """测试交易滑点"""
@@ -327,20 +325,20 @@ class TestCost(unittest.TestCase):
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True,
                       f'{test_fixed_fee_result[0]} does not equal to [0, 0, -10000]')
-        self.assertAlmostEqual(test_fixed_fee_result[1], 33298.88855591,
-                               msg=f'{test_fixed_fee_result[1]} does not equal to 99890.')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 34.44444409,
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33298.88855591,
+                               msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 34.44444409,
                                msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
 
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 996.98909294, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1], -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 60.21814121353513, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
 
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1], -18054.36, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2], 54.36, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
+        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
 
 
 class TestSpace(unittest.TestCase):
@@ -949,17 +947,17 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.get_stock_pool(area='上海')
         print(f'{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "上海"\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].eq('上海').all())
 
         print(f'\nselect all stocks by multiple areas')
         stock_pool = qt.get_stock_pool(area='贵州,北京,天津')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are in list of ["贵州", "北京", "天津"]\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['贵州',
-                                                                                              '北京',
-                                                                                              '天津']).all())
+                                                                                            '北京',
+                                                                                            '天津']).all())
 
         print(f'\nselect all stocks by area and industry')
         stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
@@ -973,21 +971,21 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.get_stock_pool(industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["银行", "金融"]\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
 
         print(f'\nselect all stocks by market')
         stock_pool = qt.get_stock_pool(market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板"\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
 
         print(f'\nselect all stocks by market and list date')
         stock_pool = qt.get_stock_pool(date='2000-01-01', market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板", and list date after "2000-01-01"\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
         date = pd.to_datetime('2000-01-01')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
@@ -996,15 +994,15 @@ class TestCoreSubFuncs(unittest.TestCase):
         stock_pool = qt.get_stock_pool(date='1997-01-01')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all list date after "1997-01-01"\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         date = pd.to_datetime('1997-01-01')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by exchange')
         stock_pool = qt.get_stock_pool(exchange='SSE')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
-              f'check if all exchanges are "SSE"\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'check if all exchanges are in "SSE"\n'
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['exchange'].eq('SSE').all())
 
         print(f'\nselect all stocks by industry, area and list date')
@@ -1022,8 +1020,8 @@ class TestCoreSubFuncs(unittest.TestCase):
                                        industry=industry_list,
                                        area=area_list)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
-              f'check if all exchanges are "SSE"\n'
-              f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
+              f'check if all exchanges are in\n{area_list} \nand \n{industry_list}'
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         date = pd.to_datetime('1998-01-01')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
@@ -1032,6 +1030,23 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
         self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
         self.assertRaises(KeyError, qt.get_stock_pool, markets='SSE')
+
+        print(f'\nselect all stocks by index, with start and end dates:\n'
+              f'all the "000300.SH" composite after 20180101')
+        stock_pool = qt.get_stock_pool(date='20200101',
+                                       index='000300.SH')
+        print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
+              f'more information of some fo the stocks\n'
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
+
+        print(f'\nprint out targets that can not be matched and return fuzzy results')
+        stock_pool = qt.get_stock_pool(industry='银行业, 多元金融, 房地产',
+                                       area='陕西省',
+                                       market='主要')
+        print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
+              f'check if all stocks industry in ["多元金融"]\n'
+              f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
+        self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(["多元金融"]).all())
 
     def test_get_basic_info(self):
         """ 测试获取证券基本信息"""
@@ -1538,13 +1553,13 @@ class TestEvaluations(unittest.TestCase):
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
     def test_sharp(self):
-        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.06135557)
-        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 0.167858667)
-        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 0.09950547)
-        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 0.154928241)
-        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.007868673)
-        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.018306537)
-        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.006259971)
+        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
+        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
+        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 1.573319618)
+        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 2.449630585)
+        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.578781892)
+        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.570048419)
+        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.347565045)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1597,57 +1612,57 @@ class TestEvaluations(unittest.TestCase):
                                    np.nan, np.nan, np.nan, np.nan, np.nan,
                                    np.nan, np.nan, np.nan, np.nan, np.nan,
                                    np.nan, np.nan, np.nan, np.nan, np.nan,
-                                   -0.02346815, -0.02618783, -0.03763912, -0.03296276, -0.03085698,
-                                   -0.02851101, -0.02375842, -0.02016746, -0.01107885, -0.01426613,
-                                   -0.00787204, -0.01135784, -0.01164232, -0.01003481, -0.00022512,
-                                   -0.00046792, -0.01209378, -0.01278892, -0.01298135, -0.01938214,
-                                   -0.01671044, -0.02120509, -0.0244281, -0.02416067, -0.02763238,
-                                   -0.027579, -0.02372774, -0.02215294, -0.02467094, -0.02091266,
-                                   -0.02590194, -0.03049876, -0.02077131, -0.01483653, -0.02488144,
-                                   -0.02671638, -0.02561547, -0.01957986, -0.02479803, -0.02703162,
-                                   -0.02658087, -0.01641755, -0.01946472, -0.01647757, -0.01280889,
-                                   -0.00893643, -0.00643275, -0.00698457, -0.00549962, -0.00654677,
-                                   -0.00494757, -0.0035633, -0.00109037, 0.00750654, 0.00451208,
-                                   0.00625502, 0.01221367, 0.01326454, 0.01535037, 0.02269538,
-                                   0.02028715, 0.02127712, 0.02333264, 0.02273159, 0.01670643,
-                                   0.01376513, 0.01265342, 0.02211647, 0.01612449, 0.00856706,
-                                   -0.00077147, -0.00268848, 0.00210993, -0.00443934, -0.00411912,
-                                   -0.0018756, -0.00867461, -0.00581601, -0.00660835, -0.00861137,
-                                   -0.00678614, -0.01188408, -0.00589617, -0.00244323, -0.00201891,
-                                   -0.01042846, -0.01471016, -0.02167034, -0.02258554, -0.01306809,
-                                   -0.00909086, -0.01233746, -0.00595166, -0.00184208, 0.00750497,
-                                   0.01481886, 0.01761972, 0.01562886, 0.01446414, 0.01285826,
-                                   0.01357719, 0.00967613, 0.01636272, 0.01458437, 0.02280183,
-                                   0.02151903, 0.01700276, 0.01597368, 0.02114336, 0.02233297,
-                                   0.02585631, 0.02768459, 0.03519235, 0.04204535, 0.04328161,
-                                   0.04672855, 0.05046191, 0.04619848, 0.04525853, 0.05381529,
-                                   0.04598861, 0.03947394, 0.04665006, 0.05586077, 0.05617728,
-                                   0.06495018, 0.06205172, 0.05665466, 0.06500615, 0.0632062,
-                                   0.06084328, 0.05851466, 0.05659229, 0.05159347, 0.0432977,
-                                   0.0474047, 0.04231723, 0.03613176, 0.03618391, 0.03591012,
-                                   0.03885674, 0.0402686, 0.03846423, 0.04534014, 0.04721458,
-                                   0.05130912, 0.05026281, 0.05394312, 0.05529349, 0.05949243,
-                                   0.05463304, 0.06195165, 0.06767606, 0.06880985, 0.07048996,
-                                   0.07078815, 0.07420767, 0.06773439, 0.0658441, 0.06470875,
-                                   0.06302349, 0.06456876, 0.06411282, 0.06216669, 0.067094,
-                                   0.07055075, 0.07254976, 0.07119253, 0.06173308, 0.05393352,
-                                   0.05681246, 0.05250643, 0.06099845, 0.0655544, 0.06977334,
-                                   0.06636514, 0.06177949, 0.06869908, 0.06719767, 0.06178738,
-                                   0.05915714, 0.06882277, 0.06756821, 0.06507994, 0.06489791,
-                                   0.06553941, 0.073123, 0.07576757, 0.06805446, 0.06063571,
-                                   0.05033801, 0.05206971, 0.05540306, 0.05249118, 0.05755587,
-                                   0.0586174, 0.05051288, 0.0564852, 0.05757284, 0.06358355,
-                                   0.06130082, 0.04925482, 0.03834472, 0.04163981, 0.04648316,
-                                   0.04457858, 0.04324626, 0.04328791, 0.04156207, 0.04818652,
-                                   0.04972634, 0.06024123, 0.06489556, 0.06255485, 0.06069815,
-                                   0.06466389, 0.07081163, 0.07895358, 0.0881782, 0.09374151,
-                                   0.08336506, 0.08764795, 0.09080174, 0.08808926, 0.08641158,
-                                   0.07811943, 0.06885318, 0.06479503, 0.06851185, 0.07382819,
-                                   0.07047903, 0.06658251, 0.07638379, 0.08667974, 0.08867918,
-                                   0.08245323, 0.08961866, 0.09905298, 0.0961908, 0.08562706,
-                                   0.0839014, 0.0849072, 0.08338395, 0.08783487, 0.09463609,
-                                   0.10332336, 0.11806497, 0.11220297, 0.11589097, 0.11678405])
-        test_sharp = eval_sharp(self.long_data, 0.00035)
+                                   -0.18950439, -0.23259702, -0.41509768, -0.34196712, -0.30898022,
+                                   -0.27261473, -0.19745172, -0.14024279, 0.00288945, -0.04793207,
+                                   0.05172158, -0.00366449, -0.00811567, 0.01688611, 0.17194485,
+                                   0.16817806, -0.01524985, -0.02636865, -0.02937101, -0.13030031,
+                                   -0.08873878, -0.15994946, -0.21137991, -0.20720521, -0.26281744,
+                                   -0.26195973, -0.20128055, -0.17623172, -0.21612580, -0.15592511,
+                                   -0.23457913, -0.30773631, -0.15522904, -0.06201306, -0.22066334,
+                                   -0.24946104, -0.23208820, -0.13751779, -0.21974845, -0.25530392,
+                                   -0.24823211, -0.08850979, -0.13609506, -0.08931705, -0.03194321,
+                                   0.02869142, 0.06856389, 0.05990231, 0.08336173, 0.06678007,
+                                   0.09186937, 0.11351727, 0.15256927, 0.28835942, 0.24062825,
+                                   0.26824379, 0.36200869, 0.37873880, 0.41170183, 0.52816943,
+                                   0.49013443, 0.50579283, 0.53864639, 0.52924168, 0.43436575,
+                                   0.38763786, 0.37010600, 0.52012123, 0.42479623, 0.30569598,
+                                   0.15826813, 0.12771609, 0.20406185, 0.10069257, 0.10579959,
+                                   0.14153344, 0.03371507, 0.07854204, 0.06617579, 0.03427064,
+                                   0.06312959, -0.01726723, 0.07709579, 0.13109071, 0.13777385,
+                                   0.00445136, -0.06295816, -0.17335114, -0.18769825, -0.03774939,
+                                   0.02480958, -0.02630054, 0.07502533, 0.14019807, 0.28780404,
+                                   0.40331636, 0.44760993, 0.41634062, 0.39808925, 0.37277711,
+                                   0.38401653, 0.32260324, 0.42880681, 0.40056919, 0.53084963,
+                                   0.51071726, 0.43979661, 0.42370520, 0.50569430, 0.52451085,
+                                   0.58066379, 0.60965996, 0.72892039, 0.83760065, 0.85716005,
+                                   0.91181985, 0.97140360, 0.90466106, 0.88967470, 1.02561163,
+                                   0.90179900, 0.79948780, 0.91316604, 1.05900004, 1.06400808,
+                                   1.20357827, 1.15844283, 1.07306721, 1.20560917, 1.17735454,
+                                   1.14023069, 1.10364582, 1.07303471, 0.99407802, 0.86275438,
+                                   0.92738518, 0.84663503, 0.74878700, 0.74960380, 0.74527083,
+                                   0.79228011, 0.81455010, 0.78606745, 0.89452664, 0.92420097,
+                                   0.98940387, 0.97285085, 1.03171820, 1.05290710, 1.11975838,
+                                   1.04310747, 1.15949439, 1.24976844, 1.26765194, 1.29411974,
+                                   1.29888363, 1.35288816, 1.25115877, 1.22102476, 1.20311050,
+                                   1.17664024, 1.20108320, 1.19392486, 1.16309306, 1.24184337,
+                                   1.29679486, 1.32879912, 1.30735953, 1.15850183, 1.03516892,
+                                   1.08084983, 1.01270232, 1.14759296, 1.22055657, 1.28729822,
+                                   1.23404983, 1.16170851, 1.27175350, 1.24782004, 1.16297745,
+                                   1.12110696, 1.27445830, 1.25458118, 1.21525262, 1.21237266,
+                                   1.22263836, 1.34342989, 1.38527506, 1.26355887, 1.14721881,
+                                   0.98483625, 1.01251995, 1.06548737, 1.01977026, 1.10053487,
+                                   1.11748630, 0.99038426, 1.08500268, 1.10215164, 1.19781664,
+                                   1.16132067, 0.97136575, 0.79944211, 0.85136924, 0.92886974,
+                                   0.89862484, 0.87750353, 0.87816903, 0.85111696, 0.95651186,
+                                   0.98053294, 1.14788929, 1.22157931, 1.18444097, 1.15561992,
+                                   1.21908058, 1.31759397, 1.44647541, 1.59291883, 1.68048169,
+                                   1.51660187, 1.58388524, 1.63449268, 1.59194395, 1.56595444,
+                                   1.43533620, 1.28896458, 1.22588302, 1.28524777, 1.36908723,
+                                   1.31654526, 1.25593829, 1.41240036, 1.57695971, 1.60847895,
+                                   1.51052846, 1.62557901, 1.77557972, 1.72982094, 1.56287433,
+                                   1.53541187, 1.55148893, 1.52791909, 1.59902474, 1.70742124,
+                                   1.84548298, 2.08064663, 1.98788139, 2.04559367, 2.05991876])
+        test_sharp = eval_sharp(self.long_data, 0.015)
         self.assertAlmostEqual(np.nanmean(expected_sharp), test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
@@ -2738,7 +2753,7 @@ class TestLoop(unittest.TestCase):
         )
         self.multi_signal_hp = stack_dataframes(
                 self.multi_signals,
-                stack_along='htypes',
+                stack_as='htypes',
                 htypes='open, high, close'
         )
         self.history_list = dataframe_to_hp(
@@ -2747,7 +2762,7 @@ class TestLoop(unittest.TestCase):
         )
         self.multi_history_list = stack_dataframes(
                 self.multi_histories,
-                stack_along='htypes',
+                stack_as='htypes',
                 htypes='open, high, close'
         )
 
@@ -4063,12 +4078,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4087,12 +4102,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[2][7] + c_g + c_s
+        cash = self.pt_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
@@ -4111,12 +4126,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[30][7] + c_g + c_s
+        cash = self.pt_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
@@ -4135,12 +4150,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[59][7] + c_g + c_s + 10000
+        cash = self.pt_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
@@ -4159,12 +4174,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
@@ -4183,12 +4198,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_sb00[96][7] + c_g + c_s
+        cash = self.pt_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
@@ -4207,12 +4222,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
@@ -4233,12 +4248,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4257,12 +4272,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[2][7] + c_g + c_s
+        cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
@@ -4281,12 +4296,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[30][7] + c_g + c_s
+        cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
@@ -4305,12 +4320,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[59][7] + c_g + c_s + 10000
+        cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
@@ -4329,12 +4344,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
@@ -4353,12 +4368,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.pt_res_bs00[96][7] + c_g + c_s
+        cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
@@ -4377,12 +4392,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
@@ -4403,12 +4418,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4427,12 +4442,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[2][7] + c_g + c_s
+        cash = self.ps_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
@@ -4451,12 +4466,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[30][7] + c_g + c_s
+        cash = self.ps_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
@@ -4475,12 +4490,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[59][7] + c_g + c_s + 10000
+        cash = self.ps_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
@@ -4499,12 +4514,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
@@ -4523,12 +4538,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_sb00[96][7] + c_g + c_s
+        cash = self.ps_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
@@ -4547,12 +4562,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
@@ -4573,12 +4588,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
@@ -4597,12 +4612,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[2][7] + c_g + c_s
+        cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
@@ -4621,12 +4636,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[30][7] + c_g + c_s
+        cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
@@ -4645,12 +4660,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[59][7] + c_g + c_s + 10000
+        cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
@@ -4669,12 +4684,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
@@ -4693,12 +4708,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.ps_res_bs00[96][7] + c_g + c_s
+        cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
@@ -4717,12 +4732,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
@@ -4743,12 +4758,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
@@ -4767,12 +4782,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[2][7] + c_g + c_s
+        cash = self.vs_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
@@ -4791,12 +4806,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[30][7] + c_g + c_s
+        cash = self.vs_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
@@ -4815,12 +4830,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[59][7] + c_g + c_s + 10000
+        cash = self.vs_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
@@ -4839,12 +4854,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
@@ -4863,12 +4878,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_sb00[96][7] + c_g + c_s
+        cash = self.vs_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
@@ -4887,12 +4902,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
@@ -4913,12 +4928,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 1 result in complete looping: \n'
-              f'cash_change:     +{c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     +{c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = 10000 + c_g + c_s
+        cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
         self.assertAlmostEqual(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
@@ -4937,12 +4952,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 4 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[2][7] + c_g + c_s
+        cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
@@ -4961,12 +4976,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 32 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[30][7] + c_g + c_s
+        cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
@@ -4985,12 +5000,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 61 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[59][7] + c_g + c_s + 10000
+        cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
@@ -5009,12 +5024,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 62 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
@@ -5033,12 +5048,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 97 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = self.vs_res_bs00[96][7] + c_g + c_s
+        cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
@@ -5057,12 +5072,12 @@ class TestLoop(unittest.TestCase):
                                                      allow_sell_short=False,
                                                      moq_buy=0,
                                                      moq_sell=0,
-                                                     print_log=True)
+                                                     trade_detail_log=True)
         print(f'day 98 result in complete looping: \n'
-              f'cash_change:     + {c_g:.2f} / {c_s:.2f}\n'
+              f'cash_change:     + {c_g.sum():.2f} / {c_s.sum():.2f}\n'
               f'amount_changed:  \npurchased: {np.round(a_p, 2)}\nsold:{np.round(a_s, 2)}\n'
               f'----------------------------------\n')
-        cash = cash + c_g + c_s
+        cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
         self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
@@ -5085,7 +5100,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=0,
                          moq_sell=0,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         # print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.pt_res_bs00, 2))
@@ -5119,7 +5134,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=100,
                          moq_sell=1,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         # print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5145,7 +5160,7 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5185,7 +5200,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5199,7 +5214,7 @@ class TestLoop(unittest.TestCase):
         """
         print('Test looping of PT proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
-              'cash delivery delay = 1 day \n'
+              'cash delivery delay = 0 day \n'
               'maximize cash usage = True \n'
               'but not applicable because cash delivery period == 1')
         res = apply_loop(
@@ -5214,7 +5229,7 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                print_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5256,7 +5271,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                print_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5272,7 +5287,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=0,
                          moq_sell=0,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.ps_res_bs00, 5))
@@ -5306,7 +5321,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=100,
                          moq_sell=1,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5317,7 +5332,7 @@ class TestLoop(unittest.TestCase):
             use_sell_cash = False
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of PS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
@@ -5332,7 +5347,7 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5372,7 +5387,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5384,7 +5399,7 @@ class TestLoop(unittest.TestCase):
                                     (not possible when cash delivery period != 0))
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of PS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
@@ -5401,7 +5416,7 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                print_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5443,7 +5458,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                print_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5459,7 +5474,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=0,
                          moq_sell=0,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
         self.assertTrue(np.allclose(res, self.vs_res_bs00, 5))
@@ -5493,7 +5508,7 @@ class TestLoop(unittest.TestCase):
                          moq_buy=100,
                          moq_sell=1,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5504,7 +5519,7 @@ class TestLoop(unittest.TestCase):
             use_sell_cash = False
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of VS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize_cash = False (buy and sell at the same time)')
@@ -5519,7 +5534,7 @@ class TestLoop(unittest.TestCase):
                 inflation_rate=0,
                 cash_delivery_period=1,
                 stock_delivery_period=2,
-                print_log=True)
+                trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5559,7 +5574,7 @@ class TestLoop(unittest.TestCase):
                 moq_buy=100,
                 moq_sell=1,
                 inflation_rate=0,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5571,7 +5586,7 @@ class TestLoop(unittest.TestCase):
                                     (not possible when cash delivery period != 0))
 
         """
-        print('Test looping of PT proportion target signals, with:\n'
+        print('Test looping of VS proportion target signals, with:\n'
               'stock delivery delay = 2 days \n'
               'cash delivery delay = 1 day \n'
               'maximize cash usage = True \n'
@@ -5588,7 +5603,7 @@ class TestLoop(unittest.TestCase):
                 stock_delivery_period=2,
                 inflation_rate=0,
                 max_cash_usage=True,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5630,7 +5645,7 @@ class TestLoop(unittest.TestCase):
                 cash_delivery_period=1,
                 stock_delivery_period=2,
                 inflation_rate=0,
-                print_log=False)
+                trade_log=False)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5643,13 +5658,13 @@ class TestLoop(unittest.TestCase):
                          history_list=self.multi_history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
-                         moq_buy=0,
-                         moq_sell=0,
+                         moq_buy=1,
+                         moq_sell=1,
                          cash_delivery_period=0,
                          stock_delivery_period=2,
                          max_cash_usage=True,
                          inflation_rate=0,
-                         print_log=False)
+                         trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -5692,7 +5707,7 @@ class TestLoop(unittest.TestCase):
                          stock_delivery_period=2,
                          max_cash_usage=False,
                          inflation_rate=0,
-                         print_log=True)
+                         trade_detail_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -6092,13 +6107,13 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator()
         self.assertEqual(op.__repr__(), 'Operator()')
 
-        op = qt.Operator('macd, dma, trix, random, avg_low')
-        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, avg_low)')
+        op = qt.Operator('macd, dma, trix, random, ndayavg')
+        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, ndayavg)')
         self.assertEqual(op['dma'].__repr__(), 'Q-TIMING(DMA)')
         self.assertEqual(op['macd'].__repr__(), 'R-TIMING(MACD)')
         self.assertEqual(op['trix'].__repr__(), 'R-TIMING(TRIX)')
         self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
-        self.assertEqual(op['avg_low'].__repr__(), 'FACTOR(AVG LOW)')
+        self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
 
     def test_info(self):
         """Test information output of Operator"""
@@ -6140,9 +6155,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategies_by_price_type('close')
         stg_open = op.get_strategies_by_price_type('open')
         stg_high = op.get_strategies_by_price_type('high')
@@ -6167,9 +6182,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategy_count_by_price_type('close')
         stg_open = op.get_strategy_count_by_price_type('open')
         stg_high = op.get_strategy_count_by_price_type('high')
@@ -6194,9 +6209,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategy_names_by_price_type('close')
         stg_open = op.get_strategy_names_by_price_type('open')
         stg_high = op.get_strategy_names_by_price_type('high')
@@ -6222,9 +6237,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
         op = qt.Operator('macd, dma, trix')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='close')
-        op.set_parameter('trix', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='close')
+        op.set_parameter('trix', bt_price_type='open')
         stg_close = op.get_strategy_id_by_price_type('close')
         stg_open = op.get_strategy_id_by_price_type('open')
         stg_high = op.get_strategy_id_by_price_type('high')
@@ -6238,10 +6253,10 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(stg_high, [])
 
         op.add_strategies('dma, macd')
-        op.set_parameter('dma_1', price_type='open')
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('macd_1', price_type='high')
-        op.set_parameter('trix', price_type='close')
+        op.set_parameter('dma_1', bt_price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('macd_1', bt_price_type='high')
+        op.set_parameter('trix', bt_price_type='close')
         print(f'Operator strategy id:\n'
               f'{op.strategies} on memory pos:\n'
               f'{[id(stg) for stg in op.strategies]}')
@@ -6252,7 +6267,7 @@ class TestOperator(unittest.TestCase):
         print(f'All IDs of strategies:\n'
               f'{stg_all}\n'
               f'All price types of strategies:\n'
-              f'{[stg.price_type for stg in op.strategies]}')
+              f'{[stg.bt_price_type for stg in op.strategies]}')
         self.assertEqual(stg_close, ['dma', 'trix'])
         self.assertEqual(stg_open, ['macd', 'dma_1'])
         self.assertEqual(stg_high, ['macd_1'])
@@ -6335,8 +6350,8 @@ class TestOperator(unittest.TestCase):
         op.clear_strategies()
         self.assertEqual(op.strategy_blenders, {})
         op.add_strategies('dma, trix, macd, dma')
-        op.set_parameter('dma', price_type='open')
-        op.set_parameter('trix', price_type='high')
+        op.set_parameter('dma', bt_price_type='open')
+        op.set_parameter('trix', bt_price_type='high')
 
         op.set_blender('open', '1+2')
         blender_open = op.get_blender('open')
@@ -6534,7 +6549,7 @@ class TestOperator(unittest.TestCase):
         btp = op.bt_price_types
         self.assertIsInstance(btp, list)
         self.assertEqual(btp[0], 'close')
-        op.set_parameter('macd', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
         btp = op.bt_price_types
         btpc = op.bt_price_type_count
         print(f'price_types are \n{btp}')
@@ -6545,7 +6560,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(btpc, 2)
 
         op.add_strategies(['dma', 'macd'])
-        op.set_parameter('dma_1', price_type='high')
+        op.set_parameter('dma_1', bt_price_type='high')
         btp = op.bt_price_types
         btpc = op.bt_price_type_count
         self.assertEqual(btp[0], 'close')
@@ -6691,8 +6706,8 @@ class TestOperator(unittest.TestCase):
               f'otp is {otp}\n')
         self.assertIsInstance(otp, int)
         self.assertEqual(otp, 1)
-        op.set_parameter('macd', price_type='open')
-        op.set_parameter('dma', price_type='open')
+        op.set_parameter('macd', bt_price_type='open')
+        op.set_parameter('dma', bt_price_type='open')
         otp = op.bt_price_type_count
         print(f'after setting price_type the price type count is 2:\n'
               f'otp is {otp}\n')
@@ -6719,8 +6734,8 @@ class TestOperator(unittest.TestCase):
         op = qt.Operator('macd, dma, trix, cdl')
         # TODO: 修改set_parameter()，使下面的用法成立
         # a_to_sell.set_parameter('dma, cdl', price_type='open')
-        op.set_parameter('dma', price_type='open')
-        op.set_parameter('cdl', price_type='open')
+        op.set_parameter('dma', bt_price_type='open')
+        op.set_parameter('cdl', bt_price_type='open')
         sb = op.strategy_blenders
         st = op.signal_type
         self.assertIsInstance(sb, dict)
@@ -6929,11 +6944,6 @@ class TestOperator(unittest.TestCase):
                           self.op.prepare_data,
                           correct_hp,
                           late_cash)
-        # raises Error when some of the investment dates are on no-trade-days
-        self.assertRaises(ValueError,
-                          self.op.prepare_data,
-                          correct_hp,
-                          no_trade_cash)
         # raises Error when number of shares in history data does not fit
         self.assertRaises(AssertionError,
                           self.op.prepare_data,
@@ -7052,11 +7062,11 @@ class TestOperator(unittest.TestCase):
         test_sel = TestSelStrategy()
         self.op.add_strategies([test_ls, test_sel])
         self.op.set_parameter(stg_id='custom_2',
-                              price_type='open')
+                              bt_price_type='open')
         self.op.set_parameter(stg_id='custom_3',
-                              price_type='open')
-        self.assertEqual(self.op['custom'].price_type, 'close')
-        self.assertEqual(self.op['custom_2'].price_type, 'open')
+                              bt_price_type='open')
+        self.assertEqual(self.op['custom'].bt_price_type, 'close')
+        self.assertEqual(self.op['custom_2'].bt_price_type, 'open')
         self.op.set_parameter(stg_id='custom_2',
                               pars={'000010': (5, 10.),
                                     '000030': (5, 10.),
@@ -7207,9 +7217,9 @@ class TestOperator(unittest.TestCase):
                          data_types=['close', 'open', 'high'])
         op.set_parameter('all',
                          window_length=20)
-        op.set_parameter('all', price_type='high')
+        op.set_parameter('all', bt_price_type='high')
         print(f'Can also set up strategy parameters by strategy index')
-        op.set_parameter(2, price_type='open')
+        op.set_parameter(2, bt_price_type='open')
         op.set_parameter(2,
                          opt_tag=1,
                          pars=(9, -0.09),
@@ -7535,6 +7545,7 @@ class TestOperator(unittest.TestCase):
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
     def test_sel_timing(self):
+        """ where is the timing strategy??"""
         stg = TestSelStrategy()
         stg_pars = ()
         stg.set_pars(stg_pars)
@@ -7549,54 +7560,54 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        selmask = np.array([[0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0]])
+        selmask = np.array([[0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0. , 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0. , 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask))
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
     def test_simple_timing(self):
         stg = TestSigStrategy()
@@ -7665,7 +7676,7 @@ class TestOperator(unittest.TestCase):
 
     def test_sel_finance(self):
         """Test selecting_finance strategy, test all built-in strategy parameters"""
-        stg = SelectingFinanceIndicator()
+        stg = SelectingAvgIndicator()
         stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         stg.window_length = 5
@@ -7675,7 +7686,7 @@ class TestOperator(unittest.TestCase):
         stg.condition = 'greater'
         stg.lbound = 0
         stg.ubound = 0
-        stg._poq = 0.67
+        stg.proportion_or_quantity = 0.67
         history_data = self.hp2.values
         print(f'Start to test financial selection parameter {stg_pars}')
 
@@ -7690,53 +7701,57 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(output.shape, (45, 3))
 
         selmask = np.array([[0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0]])
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask))
+        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get mininum factor
         stg_pars = (True, 'even', 'less', 1, 1, 0.67)
@@ -7749,53 +7764,57 @@ class TestOperator(unittest.TestCase):
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.0, 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
                             [0.5, 0.0, 0.5],
-                            [0.5, 0.0, 0.5]])
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask))
+        print(pd.DataFrame(output, index=self.hp1.hdates[5:], columns=self.hp1.shares))
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'linear', 'greater', 0, 0, 0.67)
@@ -7808,59 +7827,59 @@ class TestOperator(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
-        selmask = np.array([[0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.66667, 0.33333],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.00000, 0.33333, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.00000, 0.66667],
-                            [0.33333, 0.66667, 0.00000],
-                            [0.33333, 0.66667, 0.00000],
-                            [0.33333, 0.66667, 0.00000]])
+        selmask = np.array([[0.0, 0.33333333, 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.0, 0.66666667, 0.33333333],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.0, 0.33333333, 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0., 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0., 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0.66666667, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask))
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get max factor in linear weight
         stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
         stg.sort_ascending = False
-        stg.weighting = 'proportion'
+        stg.weighting = 'distance'
         stg.condition = 'greater'
         stg.lbound = 0
         stg.ubound = 0
@@ -7868,54 +7887,54 @@ class TestOperator(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
-        selmask = np.array([[0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.08333, 0.91667],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.91667, 0.08333],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.00000, 0.50000, 0.50000],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.00000, 0.00000, 1.00000],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.00000, 0.91667],
-                            [0.08333, 0.91667, 0.00000],
-                            [0.08333, 0.91667, 0.00000],
-                            [0.08333, 0.91667, 0.00000]])
+        selmask = np.array([[0., 0.08333333, 0.91666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.91666667, 0.08333333],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.08333333, 0., 0.91666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.08333333, 0., 0.91666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.08333333, 0.91666667, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask, 0.001))
+        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
         # test single factor, get max factor in linear weight, threshold 0.2
         stg_pars = (False, 'even', 'greater', 0.2, 0.2, 0.67)
@@ -7928,54 +7947,54 @@ class TestOperator(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
-        selmask = np.array([[0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.5, 0.5],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.0, 0.0, 1.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0],
-                            [0.5, 0.5, 0.0]])
+        selmask = np.array([[0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
-        self.assertTrue(np.allclose(output, selmask, 0.001))
+        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
     def test_tokenizer(self):
         self.assertListEqual(_exp_to_token('1+1'),
@@ -8728,9 +8747,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df2.rename(index=pd.to_datetime))
         print(df3.rename(index=pd.to_datetime))
 
-        hp1 = stack_dataframes([df1, df2, df3], stack_along='shares',
+        hp1 = stack_dataframes([df1, df2, df3], stack_as='shares',
                                shares=['000100', '000200', '000300'])
-        hp2 = stack_dataframes([df1, df2, df3], stack_along='shares',
+        hp2 = stack_dataframes([df1, df2, df3], stack_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8741,9 +8760,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp2.shares, ['000100', '000300', '000200'])
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
-        hp3 = stack_dataframes([df1, df2, df3], stack_along='htypes',
+        hp3 = stack_dataframes([df1, df2, df3], stack_as='htypes',
                                htypes=['close', 'high', 'low'])
-        hp4 = stack_dataframes([df1, df2, df3], stack_along='htypes',
+        hp4 = stack_dataframes([df1, df2, df3], stack_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8808,9 +8827,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df3.rename(index=pd.to_datetime))
 
         hp1 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_along='shares')
+                               stack_as='shares')
         hp2 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_along='shares',
+                               stack_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8822,9 +8841,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = stack_dataframes(dfs={'close': df1, 'high': df2, 'low': df3},
-                               stack_along='htypes')
+                               stack_as='htypes')
         hp4 = stack_dataframes(dfs={'close': df1, 'low': df2, 'high': df3},
-                               stack_along='htypes',
+                               stack_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8858,10 +8877,104 @@ class TestHistoryPanel(unittest.TestCase):
     def test_fill_inf(self):
         """测试填充无限值"""
 
+    def test_ffill(self):
+        """ 测试前向填充函数"""
+        # print(f'original values of history panel: \n{self.hp.values}')
+        new_values = self.hp.values.astype(float)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
+        # print(f'values with nan from origin: \n{new_values}')
+        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
+        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
+        before_ffill = new_values.copy()
+        temp_hp.ffill()
+        print(f'ffilled values result and target side by side:')
+        for i in range(5):
+            print(f'values before ffill: \n{before_ffill[i]}')
+            print(f'values after ffill: \n{temp_hp.values[i]}')
+        self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
+        where_nan = list(np.where(np.isnan(temp_hp.values)))
+        self.assertEqual(where_nan, [np.array(3), np.array(0), np.array(2)])
+
+        # test ffill with init value
+        # print(f'original values of history panel: \n{self.hp.values}')
+        new_values = self.hp.values.astype(float)
+        new_values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]] = np.nan
+        # print(f'values with nan from origin: \n{new_values}')
+        temp_hp = qt.HistoryPanel(values=new_values, levels=self.hp.levels, rows=self.hp.rows, columns=self.hp.columns)
+        self.assertTrue(np.allclose(temp_hp.values[[0, 1, 3, 2], [1, 3, 0, 2], [1, 3, 2, 2]], np.nan, equal_nan=True))
+        before_ffill = new_values.copy()
+        temp_hp.ffill(0)
+        print(f'ffilled values result and target side by side:')
+        for i in range(5):
+            print(f'values before ffill: \n{before_ffill[i]}')
+            print(f'values after ffill: \n{temp_hp.values[i]}')
+        self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
+        self.assertTrue(np.all(~np.isnan(temp_hp.values)))
+
     def test_get_history_panel(self):
-        # TODO: implement this test case
         # test get only one line of data
-        pass
+        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
+                                          htypes='wt-000003.SH, close, wt-000300.SH',
+                                          start='20210101',
+                                          end='20210802',
+                                          freq='m',
+                                          asset_type='any',
+                                          adj='none')
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+    def test_ffill_data(self):
+        """ 测试前向填充NaN值"""
+        d = np.array([[[0.03, 0.88, 0.2],
+                       [0.62, np.nan, np.nan],
+                       [0.46, np.nan, 0.37],
+                       [0.52, np.nan, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, 0.05, 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [np.nan, np.nan, np.nan],
+                       [0.81, 0.94, 0.04]]])
+
+        t = np.array([[[0.03, 0.88, 0.2],
+                       [0.62, 0.88, 0.2],
+                       [0.46, 0.88, 0.37],
+                       [0.52, 0.88, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, 0.05, 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [0.25, 0.36, 0.32],
+                       [0.81, 0.94, 0.04]]])
+        self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
+
+        d = np.array([[[np.nan, 0.88, 0.2],
+                       [0.62, np.nan, np.nan],
+                       [0.46, np.nan, 0.37],
+                       [0.52, np.nan, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, np.nan, 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [np.nan, np.nan, np.nan],
+                       [0.81, 0.94, 0.04]]])
+
+        t = np.array([[[0.0, 0.88, 0.2],
+                       [0.62, 0.88, 0.2],
+                       [0.46, 0.88, 0.37],
+                       [0.52, 0.88, 0.84],
+                       [0.1, 0.42, 0.32]],
+
+                      [[0.67, 0., 0.97],
+                       [0.05, 0.47, 0.14],
+                       [0.25, 0.36, 0.32],
+                       [0.25, 0.36, 0.32],
+                       [0.81, 0.94, 0.04]]])
+        self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
 
 
 class RetryableError(Exception):
@@ -11247,24 +11360,23 @@ class TestQT(unittest.TestCase):
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     log=False)
+                     log=True)
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
                          sample_freq='Q',
-                         data_types='basic_eps',
+                         data_types='pe',
                          sort_ascending=True,
                          weighting='proportion',
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         _poq=0.4)
+                         proportion_or_quantity=0.4)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
-        qt.run(op, visual=True, trade_batch_size=100)
-        qt.run(op, visual=False, print_backtest_log=True, trade_batch_size=100)
+        qt.run(op, visual=True, print_backtest_log=True, trade_batch_size=100)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance
@@ -11310,10 +11422,10 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         _poq=30)
+                         proportion_or_quantity=30)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
-        qt.run(op, visual=True, print_backtest_log=True)
+        qt.run(op, visual=False, print_backtest_log=True)
 
 
 class TestVisual(unittest.TestCase):
@@ -11390,7 +11502,7 @@ class TestBuiltInsSingle(unittest.TestCase):
         op.set_parameter(0, pars=(35, 120, 10, 'buy'))
         op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1, allow_sell_short=True)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20080103')
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         # qt.run(op, mode=2, invest_start='20080103')
@@ -11685,13 +11797,14 @@ class TestBuiltInsMultiple(unittest.TestCase):
         开始日期：20200101
         结束日期：20211231
     """
+
     def setUp(self):
         # self.stock_pool = qt.get_stock_pool(index='')
         ds = qt.QT_DATA_SOURCE
         df = ds.read_table_data('index_weight', start='20210606', end='20210707', shares='000300.SH')
         self.stock_pool = df.index.get_level_values('con_code').tolist()
 
-        qt.configure(asset_pool=self.stock_pool[-100: ],
+        qt.configure(asset_pool=self.stock_pool[-100:],
                      asset_type='E',
                      reference_asset='000300.SH',
                      ref_asset_type='IDX',
@@ -11710,8 +11823,70 @@ class TestBuiltInsMultiple(unittest.TestCase):
     def test_select_all(self):
         """ 测试策略selall选择所有股票"""
         op = qt.Operator(strategies=['all'], signal_type='PS')
-        op.set_parameter(0, opt_tag=1, sample_freq='q')
-        qt.run(op, mode=1, allow_sell_short=True)
+        op.set_parameter(0, opt_tag=1, sample_freq='w')
+        qt.run(op, mode=1, allow_sell_short=True, visual=True)
+
+
+class StgBuyOpen(SimpleSelecting):
+    def __init__(self, pars=(20,)):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         stg_name='OPEN_BUY',
+                         par_bounds_or_enums=[(0, 100)],
+                         bt_price_type='open')
+        pass
+
+    def _realize(self, hist_data, params):
+        n, = params
+        current_price = hist_data[:, -1, 0]
+        n_day_price = hist_data[:, -n, 0]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全0
+        sig = np.zeros_like(factors)
+        # buy_pos = np.nanargmax(factors)
+        # sig[buy_pos] = 1
+        # return sig
+        if np.all(factors <= 0.0):
+            # 如果所有的选股指标都小于0，则全部卖出
+            # 但是卖出信号StgSelClose策略中处理，因此此处全部返回0即可
+            return sig
+        else:
+            # 如果选股指标有大于0的，则找出最大者
+            # 并生成买入信号
+            sig[np.nanargmax(factors)] = 1
+            return sig
+
+
+class StgSelClose(SimpleSelecting):
+    def __init__(self, pars=(20,)):
+        super().__init__(pars=pars,
+                         par_count=1,
+                         par_types=['descr'],
+                         stg_name='SELL_CLOSE',
+                         par_bounds_or_enums=[(0, 100)],
+                         bt_price_type='close')
+        pass
+
+    def _realize(self, hist_data, params):
+        n, = params
+        current_price = hist_data[:, -1, 0]
+        n_day_price = hist_data[:, -n, 0]
+        # 选股指标为各个股票的N日涨幅
+        factors = (current_price / n_day_price - 1).squeeze()
+        # 初始化选股买卖信号，初始值为全-1
+        sig = -np.ones_like(factors)
+        # sig[np.nanargmax(factors)] = 0
+        # return sig
+        if np.all(factors <= 0.0):
+            # 如果所有的选股指标都小于0，则全部卖出
+            return sig
+        else:
+            # 如果选股指标有大于0的，则除最大者不卖出以外，其余全部
+            # 产生卖出信号
+            sig[np.nanargmax(factors)] = 0
+            return sig
 
 
 class FastExperiments(unittest.TestCase):
@@ -11721,19 +11896,77 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        tables = 'stock_daily, stock_weekly'
-        ds = qt.QT_DATA_SOURCE
-        ds.refill_local_source(tables=tables,
-                               start_date='20220406',
-                               end_date='20220415',
-                               parallel=True,
-                               merge_type='update')
-
-    def test_fast_experiments2(self):
-        pass
+        # qt.get_basic_info('000899.SZ')
+        # stg_buy = StgBuyOpen()
+        # stg_sel = StgSelClose()
+        # op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        # op.set_parameter(0,
+        #                  data_freq='d',
+        #                  sample_freq='d',
+        #                  window_length=50,
+        #                  pars=(20,),
+        #                  data_types='close',
+        #                  bt_price_type='open')
+        # op.set_parameter(1,
+        #                  data_freq='d',
+        #                  sample_freq='d',
+        #                  window_length=50,
+        #                  pars=(20,),
+        #                  data_types='close',
+        #                  bt_price_type='close')
+        # op.set_blender(blender='0')
+        # op.get_blender()
+        # qt.configure(asset_pool=['000300.SH',
+        #                          '399006.SZ'],
+        #              asset_type='IDX')
+        # res = qt.run(op,
+        #              visual=True,
+        #              print_backtest_log=True,
+        #              log_backtest_detail=False,
+        #              invest_start='20110725',
+        #              invest_end='20220401',
+        #              trade_batch_size=1,
+        #              sell_batch_size=0)
+        stock_pool = qt.get_stock_pool(index='000300.SH', date='20211001')
+        qt.configure(asset_pool=stock_pool,
+                     asset_type='E',
+                     reference_asset='000300.SH',
+                     ref_asset_type='IDX',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
+                     invest_cash_amounts=[10000000],
+                     mode=1,
+                     log=True,
+                     print_backtest_log=True,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=-0.03,
+                     backtest_price_adj='none')
+        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_parameter(0,
+                         opt_tag=1,
+                         sample_freq='m',
+                         data_types='wt-000300.SH',
+                         sort_ascending=False,
+                         weighting='proportion',
+                         proportion_or_quantity=300)
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     print_trade_log=True)
 
     def test_time(self):
-        pass
+        print(match_ts_code('000001'))
+        print(match_ts_code('中国电信'))
+        print(match_ts_code('嘉实服务'))
+        print(match_ts_code('中?集团'))
+        print(match_ts_code('中*金'))
+        print(match_ts_code('工商银行'))
+        print(match_ts_code('招商银行', asset_types='E, FD'))
+        print(match_ts_code('贵阳银行', asset_types='E, FT'))
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
@@ -11786,14 +12019,14 @@ class TestDataSource(unittest.TestCase):
             'close':      [10.0, 10.0, 10.0, np.nan, 10.0, 10.0, 7.0, 2.0, 8.0, 3.0, 10.0, 10.0, 10.0, 10.0]
         })
         self.df2 = pd.DataFrame({
-            'ts_code':    ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
-                           '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
-            'name':       ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10'],
-            'industry':   ['industry1', 'industry2', 'industry3', 'industry4', 'industry5',
-                           'industry6', 'industry7', 'industry8', 'industry9', 'industry10'],
-            'area':       ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
-            'market':     ['market1', 'market2', 'market3', 'market4', 'market5',
-                           'market6', 'market7', 'market8', 'market9', 'market10']
+            'ts_code':  ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
+                         '000006.SZ', '000007.SZ', '000008.SZ', '000009.SZ', '000010.SZ'],
+            'name':     ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10'],
+            'industry': ['industry1', 'industry2', 'industry3', 'industry4', 'industry5',
+                         'industry6', 'industry7', 'industry8', 'industry9', 'industry10'],
+            'area':     ['area1', 'area2', 'area3', 'area4', 'area5', 'area6', 'area7', 'area8', 'area9', 'area10'],
+            'market':   ['market1', 'market2', 'market3', 'market4', 'market5',
+                         'market6', 'market7', 'market8', 'market9', 'market10']
         })
         # 以下df用于测试写入/读出/新增修改系统内置标准数据表
         self.built_in_df = pd.DataFrame({
@@ -12254,8 +12487,10 @@ class TestDataSource(unittest.TestCase):
         loaded_index = loaded_df.index.values
         target_values = np.array(target_df.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'df retrieved by chunk from saved csv file selecting both shares {shares} and trade_dates {start}/{end}\n'
-              f'{loaded_df}\n')
+        print(
+                f'df retrieved by chunk from saved csv file selecting both shares {shares} and trade_dates {start}/'
+                f'{end}\n'
+                f'{loaded_df}\n')
         for i in range(len(target_index)):
             self.assertEqual(target_index[i], loaded_index[i])
         rows, cols = target_values.shape
@@ -12574,25 +12809,25 @@ class TestDataSource(unittest.TestCase):
 
     def test_download_update_table_data(self):
         """ test downloading data from tushare"""
-        tables_to_test = {'stock_daily':        {'ts_code': None,
-                                                 'trade_date': '20211112'},
-                          'stock_weekly':       {'ts_code': None,
-                                                 'trade_date': '20211008'},
-                          'stock_indicator':    {'ts_code': None,
-                                                 'trade_date': '20211112'},
-                          'trade_calendar':     {'exchange': 'SSE',
-                                                 'start': '19910701',
-                                                 'end': '19920701'}
+        tables_to_test = {'stock_daily':     {'ts_code':    None,
+                                              'trade_date': '20211112'},
+                          'stock_weekly':    {'ts_code':    None,
+                                              'trade_date': '20211008'},
+                          'stock_indicator': {'ts_code':    None,
+                                              'trade_date': '20211112'},
+                          'trade_calendar':  {'exchange': 'SSE',
+                                              'start':    '19910701',
+                                              'end':      '19920701'}
                           }
-        tables_to_add = {'stock_daily':        {'ts_code': None,
-                                                'trade_date': '20211115'},
-                         'stock_weekly':       {'ts_code': None,
-                                                'trade_date': '20211015'},
-                         'stock_indicator':    {'ts_code': None,
-                                                'trade_date': '20211115'},
-                         'trade_calendar':     {'exchange': 'SZSE',
-                                                'start': '19910701',
-                                                'end': '19920701'}
+        tables_to_add = {'stock_daily':     {'ts_code':    None,
+                                             'trade_date': '20211115'},
+                         'stock_weekly':    {'ts_code':    None,
+                                             'trade_date': '20211015'},
+                         'stock_indicator': {'ts_code':    None,
+                                             'trade_date': '20211115'},
+                         'trade_calendar':  {'exchange': 'SZSE',
+                                             'start':    '19910701',
+                                             'end':      '19920701'}
                          }
         all_data_sources = [self.ds_csv, self.ds_hdf, self.ds_fth, self.ds_db]
 
@@ -12654,43 +12889,69 @@ class TestDataSource(unittest.TestCase):
                         db='ts_db')
         shares = ['000001.SZ', '000002.SZ', '600067.SH', '000300.SH', '518860.SH']
         htypes = 'pe, close, open, swing, strength'
+        htypes = str_to_list(htypes)
         start = '20210101'
         end = '20210301'
         asset_type = 'E, IDX, FD'
         freq = 'd'
         adj = 'back'
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=htypes,
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq=freq,
-                                 adj=adj)
-        print(f'got history panel with backward price recover:\n{hp}')
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=htypes,
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq=freq,
-                                 adj='forward')
-        print(f'got history panel with forward price recover:\n{hp}')
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=htypes,
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq=freq,
-                                 adj='forward')
-        print(f'got history panel with price:\n{hp}')
-        hp = ds.get_history_data(shares=shares,
-                                 htypes=['open', 'high', 'low', 'close', 'vol'],
-                                 start=start,
-                                 end=end,
-                                 asset_type=asset_type,
-                                 freq='w',
-                                 adj='forward')
-        print(f'got history panel with price:\n{hp}')
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj=adj)
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with backward price recover:\n{dfs}')
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj='forward')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with forward price recover:\n{dfs}')
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq=freq,
+                                  adj='forward')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with price:\n{dfs}')
+        htypes = ['open', 'high', 'low', 'close', 'vol']
+        dfs = ds.get_history_data(shares=shares,
+                                  htypes=htypes,
+                                  start=start,
+                                  end=end,
+                                  asset_type=asset_type,
+                                  freq='w',
+                                  adj='forward')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), htypes)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(f'got history panel with price:\n{dfs}')
+
+    def test_get_index_weights(self):
+        """ test get_index_weights() function"""
+        ds = qt.QT_DATA_SOURCE
+        dfs = ds.get_index_weights('000300.SH,000002.SZ',
+                                   start='20200101',
+                                   end='20200102',
+                                   shares='000001.SZ, 000002.SZ, 000003.SZ,601728.SH')
+        self.assertIsInstance(dfs, dict)
+        self.assertEqual(list(dfs.keys()), ['wt-000300.SH', 'wt-000002.SZ'])
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
+        print(dfs)
 
     def test_get_table_info(self):
         """ 获取打印数据表的基本信息"""

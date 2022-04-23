@@ -144,16 +144,14 @@ class Cost:
                            moq=0.):
         """计算出售投资产品的要素
 
-
         :param prices: 投资产品的价格
         :param a_to_sell: 计划卖出数量，其形式为计划卖出的股票的数量，通常为负，且其绝对值通常小于等于可出售的数量
         :param moq: 卖出股票的最小交易单位
 
-        :return:
-        a_sold:
-        fee:
-        cash_gained: float
-        fee: float
+        :return: tuple
+         - a_sold: ndarray          实际出售的资产份额
+         - cash_gained: ndarray     扣除手续费后获得的现金
+         - fee: ndarray             扣除的手续费
         """
         if moq == 0:
             a_sold = a_to_sell
@@ -162,13 +160,13 @@ class Cost:
         sold_values = a_sold * prices
         if self.sell_fix == 0:  # 固定交易费用为0，按照交易费率模式计算
             rates = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=False)
-            cash_gained = (-1 * sold_values * (1 - rates)).sum()
-            fee = -(sold_values * rates).sum()
+            cash_gained = (-1 * sold_values * (1 - rates))
+            fees = -(sold_values * rates)
         else:  # 固定交易费用不为0时，按照固定费率收取费用——直接从交易获得的现金中扣除
             fixed_fees = self.calculate(trade_values=sold_values, is_buying=False, fixed_fees=True)
-            fee = np.where(a_sold, fixed_fees, 0).sum()
-            cash_gained = - sold_values.sum() - fee
-        return a_sold, cash_gained, fee
+            fees = np.where(a_sold, fixed_fees, 0)
+            cash_gained = - sold_values - fees
+        return a_sold, cash_gained, fees
 
     # @njit
     def get_purchase_result(self,
@@ -181,16 +179,17 @@ class Cost:
         :param cash_to_spend: ndarray, 买入金额，可用于买入股票或资产的计划金额
         :param moq: float, 最小交易单位
         :return:
-        a_to_purchase: 一个ndarray, 代表所有股票分别买入的份额或数量
-        cash_spent: float，花费的总金额，包括费用在内
-        fee: 花费的费用，购买成本，包括佣金和滑点等投资成本
+         - a_to_purchase: ndarray,  代表所有股票分别买入的份额或数量
+         - cash_spent: ndarray,     花费的总金额，包括手续费在内
+         - fee: ndarray,            花费的费用，购买成本，包括佣金和滑点等投资成本
         """
         # 给三个函数返回值预先赋值
         a_purchased = np.zeros_like(prices)
         cash_spent = np.zeros_like(prices)
-        fee = 0.
+        fees = np.zeros_like(prices)
         if self.buy_fix == 0.:
-            # 固定费用为0，估算购买一定金额股票的交易费率
+            # 固定费用为0，估算购买一定金额股票的交易费率，考虑最小费用，将小于buy_min的金额置0
+            cash_to_spend = np.where(cash_to_spend < self.buy_min, 0, cash_to_spend)
             rates = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=False)
             # 根据moq计算实际购买份额，当价格为0的时候买入份额为0
             if moq == 0:  # moq为0，实际买入份额与期望买入份额相同
@@ -205,9 +204,9 @@ class Cost:
             fees = np.where(a_purchased, np.fmax(a_purchased * prices * rates, self.buy_min), 0.)
             purchased_values = a_purchased * prices + fees
             cash_spent = np.where(a_purchased, -1 * purchased_values, 0.)
-            fee = fees.sum()
-        elif self.buy_fix:
-            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，只计算买入金额大于固定费用的份额
+        else:  # self.buy_fix
+            # 固定费用不为0，按照固定费用模式计算费用，忽略费率并且忽略最小费用，将小于buy_fix的金额置0
+            cash_to_spend = np.where(cash_to_spend < self.buy_fix, 0, cash_to_spend)
             fixed_fees = self.calculate(trade_values=cash_to_spend, is_buying=True, fixed_fees=True)
             if moq == 0.:
                 a_purchased = np.fmax(np.where(prices,
@@ -220,11 +219,10 @@ class Cost:
                                                0.),
                                       0.)
             cash_spent = np.where(a_purchased, -1 * a_purchased * prices - fixed_fees, 0.)
-            fee = np.where(a_purchased, fixed_fees, 0.).sum()
-        return a_purchased, cash_spent.sum(), fee
+            fees = np.where(a_purchased, fixed_fees, 0.)
+        return a_purchased, cash_spent, fees
 
 
-# TODO: 在qteasy中所使用的所有时间日期格式统一使用pd.TimeStamp格式
 class CashPlan:
     """ 现金计划类，在策略回测的过程中用来模拟固定日期的现金投资额
 
@@ -253,8 +251,8 @@ class CashPlan:
             dates = dates.split(',')
         try:
             dates = list(map(pd.to_datetime, dates))
-        except:
-            raise KeyError(f'some of the input strings can not be converted to date time format!')
+        except Exception as e:
+            raise KeyError(f'{e}, some of the input strings can not be converted to date time format!')
 
         assert len(amounts) == len(dates), \
             f'InputError: number of amounts should be equal to that of dates, can\'t match {len(amounts)} amounts in' \
@@ -377,6 +375,19 @@ class CashPlan:
         :return: pandas.DataFrame
         """
         return self._cash_plan
+
+    def reset_dates(self, dates):
+        """ 重设投资日期，dates必须为一个可迭代的日期时间序列，数量与CashPlan的投资
+            期数相同，且可转换为datetime对象
+
+        :param dates: 一个可迭代的时间日期序列
+        :return:
+        """
+        try:
+            idx = pd.Index(dates, dtype='datetime64[ns]')
+            self.plan.index = idx
+        except Exception as e:
+            print(f'{e}, ')
 
     def to_dict(self, keys: [list, np.ndarray] = None):
         """ 返回整个投资区间的投资计划，形式为字典。默认key为日期，如果明确给出keys，则使用参数keys
@@ -512,7 +523,8 @@ class CashPlan:
 
         :return:
         """
-        return self.__str__()
+        dates = self.plan.index.strftime('%Y%m%d').to_list()
+        return f'CashPlan({dates}, {self.amounts}, {self.ir})'
 
     def __str__(self):
         """ 打印cash plan

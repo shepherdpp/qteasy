@@ -20,7 +20,7 @@ from functools import lru_cache
 from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .history import stack_dataframes
+from .history import stack_dataframes, HistoryPanel
 from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
@@ -1844,7 +1844,9 @@ class DataSource:
                   f'------------------------------------\n'
                   f'{table_schema}\n')
 
+    # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
+    # ==============
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
             HistoryPanel对象，用于策略的运行、回测或优化测试。
@@ -1854,19 +1856,24 @@ class DataSource:
             如以下两种输入方式皆合法且等效：
              - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
              - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+
         :param htypes: [str, list]
             需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
             如以下两种输入方式皆合法且等效：
              - str:     'open, high, low, close'
              - list:    ['open', 'high', 'low', 'close']
+
         :param start: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+
         :param end: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+
         :param freq: str
             获取的历史数据的频率，包括以下选项：
              - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
              - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+
         :param asset_type: str, list
             限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
             逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
@@ -1875,6 +1882,7 @@ class DataSource:
              - IDX: 只获取指数类型证券的数据
              - FT:  只获取期货类型证券的数据
              - FD:  只获取基金类型证券的数据
+
         :param adj: str
             对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
              - none / n: 不复权(默认值)
@@ -1886,6 +1894,7 @@ class DataSource:
             HistoryPanel对象
         """
         # 检查数据合法性：
+        # TODO: 在History模块中的函数里检查数据合法性，不在这里检查
         if not isinstance(shares, (str, list)):
             raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
         if isinstance(shares, str):
@@ -1927,14 +1936,14 @@ class DataSource:
         if not isinstance(adj, str):
             raise TypeError(f'adj type should be a string, got {type(adj)} instead')
         if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-            raise KeyError(f"invalid adj type, which should be anyone of "
+            raise KeyError(f"invalid adj type ({adj}), which should be anyone of "
                            f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
         adj = adj.lower()
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins'])) &
+        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins', 'report', 'comp'])) &
                                        (table_map.asset_type.isin(asset_type)) &
                                        (table_map.freq == freq)].index.to_list()
         table_data_read = {}
@@ -2017,10 +2026,71 @@ class DataSource:
                 if adj.lower() in ['forward', 'fw', 'f'] and len(combined_factors) > 1:
                     price_df /= combined_factors.iloc[-1]
 
-        result_hp = stack_dataframes(df_by_htypes, stack_along='htypes')
-        return result_hp
+        # 最后整理数据，确保每一个htype的数据框的columns与shares相同
+        for htyp, df in df_by_htypes.items():
+            df_by_htypes[htyp] = df.reindex(columns=shares)
+        return df_by_htypes
 
-    # 顶层函数，用于定期计划性获取数据的操作函数
+    def get_index_weights(self, index, start=None, end=None, shares=None):
+        """ 从本地数据仓库中获取一个指数的成分权重
+
+        :param index: [str, list]
+            需要获取成分的指数代码，可以包含多个指数，每个指数
+
+        :param start: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+
+        :param end: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+
+        :param shares: [str, list]
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+
+        :return:
+        Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
+            HistoryPanel对象
+        """
+        # 检查数据合法性
+        if start is None:
+            raise NotImplementedError
+        if end is None:
+            raise NotImplementedError
+        if isinstance(index, str):
+            index = str_to_list(index)
+        # 读取时间内的权重数据
+        weight_data = self.read_table_data('index_weight', shares=index, start=start, end=end)
+        if not weight_data.empty:
+            weight_data = weight_data.unstack()
+        else:
+            # return empty dict
+            return {}
+        weight_data.columns = weight_data.columns.get_level_values(1)
+        all_shares = weight_data.columns
+        df_by_index = {}
+        index_names = []
+        columns_to_drop = []
+        indices_found = weight_data.index.get_level_values(0)
+        # 整理读取数据的结构，删除不需要的股票， 添加额外的股票，整理顺序
+        if shares is not None:
+            if isinstance(shares, str):
+                shares = str_to_list(shares)
+            columns_to_drop = [item for item in all_shares if item not in shares]
+        for idx in index:
+            if idx in indices_found:
+                weight_df = weight_data.loc[idx]
+            else:
+                weight_df = pd.DataFrame(columns=all_shares)
+            index_names.append(idx)
+            if shares is not None:
+                weight_df.drop(columns=columns_to_drop, inplace=True)
+                weight_df = weight_df.reindex(columns=shares)
+            df_by_index['wt-' + idx] = weight_df
+        # result_hp = stack_dataframes(df_by_index, stack_as='htypes', htypes=index_names)
+        return df_by_index
+
     def refill_local_source(self,
                             tables=None,
                             dtypes=None,
@@ -2565,7 +2635,7 @@ def find_history_data(s):
         得到：
         >>> output:
             matched following history data,
-            use "qt.get_history_data()" to load these data:
+            use "qt.get_history_panel()" to load these data:
             ------------------------------------------------------------------------
               h_data   dtype             table asset freq plottable                remarks
             0     pe   float   stock_indicator     E    d        No  市盈率(总市值/净利润， 亏损的PE为空)
@@ -2631,6 +2701,6 @@ def find_history_data(s):
 
     df = pd.DataFrame(items_found)
     print(f'matched following history data, \n'
-          f'use "qt.get_history_data()" to load these data:\n'
+          f'use "qt.get_history_panel()" to load these data:\n'
           f'------------------------------------------------------------------------\n{df}\n'
           f'========================================================================')
