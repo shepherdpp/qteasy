@@ -17,6 +17,7 @@ import math
 import logging
 from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 from warnings import warn
+from copy import copy
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import datetime
@@ -32,7 +33,7 @@ from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
     _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
-from ._arg_validators import _update_config_kwargs
+from ._arg_validators import _update_config_kwargs, ConfigDict
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
@@ -1021,13 +1022,22 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def configure(**kwargs):
+def configure(config=None, **kwargs):
     """ 配置qteasy的运行参数QT_CONFIG
 
+    :param config: ConfigDict 对象
+        需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数
+
     :param kwargs:
+        需要设置的所有参数
     :return:
     """
-    _update_config_kwargs(QT_CONFIG, kwargs)
+    if config is None:
+        set_config = QT_CONFIG
+    else:
+        assert isinstance(config, ConfigDict), TypeError(f'config should be a ConfigDict, got {type(config)}')
+        set_config = config
+    _update_config_kwargs(set_config, kwargs)
 
 
 def configuration(level=0, up_to=0, default=False, verbose=False):
@@ -1051,6 +1061,15 @@ def configuration(level=0, up_to=0, default=False, verbose=False):
     kwargs = QT_CONFIG.keys()
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
+
+def save_config(config=None, file_name=None):
+    """
+
+    :param config:
+    :param file_name:
+    :return:
+    """
+    raise NotImplementedError
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
@@ -1409,9 +1428,11 @@ def run(operator, **kwargs):
                             4: _search_gradient,
                             5: _search_particles
                             }
-    # 如果函数调用时用户给出了关键字参数(**kwargs），则首先处理关键字参数，将所有的关键字参数赋值给QT_CONFIG变量，用于运行参数配置
-    configure(**kwargs)
-    config = QT_CONFIG
+    # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，
+    # 覆盖QT_CONFIG的设置，但是仅本次运行有效
+    config = copy(QT_CONFIG)
+    configure(config=config, **kwargs)
+    # config = QT_CONFIG
 
     # 赋值给参考数据和运行模式
     reference_data_type = config.reference_asset
