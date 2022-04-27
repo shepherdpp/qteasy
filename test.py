@@ -10899,7 +10899,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('ls', 'pos-2')
+        self.op.set_blender('pos-2')
         self.op.set_parameter(stg_id='dma', pars=timing_pars1)
         self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
@@ -10917,6 +10917,24 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=2)
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
+        self.assertEqual(config.reference_asset, '000300.SH')
+        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+        # test temp config in run() that works only in run()
+        qt.run(self.op,
+               mode=1,
+               asset_pool='000001.SZ',
+               asset_type='E',
+               invest_start='20100101',
+               visual=False)
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(qt.QT_CONFIG.mode, 2)
+        self.assertEqual(config.reference_asset, '000300.SH')
+        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+
 
     def test_configuration(self):
         """ 测试CONFIG的显示"""
@@ -11936,9 +11954,9 @@ class FastExperiments(unittest.TestCase):
                      invest_start='20211013',
                      invest_end='20211231',
                      opti_sample_count=100,
-                     trade_batch_size=0.,
-                     sell_batch_size=0.,
-                     invest_cash_amounts=[10000000],
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,
+                     invest_cash_amounts=[1000000],
                      mode=1,
                      log=True,
                      print_backtest_log=True,

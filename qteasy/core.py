@@ -1071,13 +1071,14 @@ def save_config(config=None, file_name=None):
     """
     raise NotImplementedError
 
+
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     :param: operator: Operator对象，
-    :param: config, dict 参数字典
+    :param: config, ConfigDict 参数字典
     :return:
         hist_op:            type: HistoryPanel, 用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
         hist_loop:          type: pd.DataFrame, 用于回测模式投资策略回测的历史价格数据，包含所有回测股票的所有交易价格数据
@@ -1225,6 +1226,7 @@ def check_and_prepare_hist_data(operator, config):
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+# noinspection PyTypeChecker
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
@@ -1430,7 +1432,7 @@ def run(operator, **kwargs):
                             }
     # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，
     # 覆盖QT_CONFIG的设置，但是仅本次运行有效
-    config = copy(QT_CONFIG)
+    config = ConfigDict(**QT_CONFIG)
     configure(config=config, **kwargs)
     # config = QT_CONFIG
 

@@ -473,9 +473,20 @@ class ConfigDict(dict):
         config.attr = config['attr']
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: object, **kwargs: object) -> ConfigDict:
+        """
+
+        :rtype: object
+        """
         super(ConfigDict, self).__init__(*args, **kwargs)
         self.__dict__ = self
+
+    def copy(self):
+        """
+
+        :return:
+        """
+        return ConfigDict(**self)
 
 
 def _valid_qt_kwargs():
