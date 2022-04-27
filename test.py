@@ -10935,6 +10935,22 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
 
+        config_copy = config.copy()
+        qt.configure(config_copy,
+                     mode=1,
+                     reference_asset='000002.SZ',
+                     ref_asset_type='E')
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(config.reference_asset, '000300.SH')
+        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+        self.assertEqual(config_copy.mode, 1)
+        self.assertEqual(config_copy.reference_asset, '000002.SZ')
+        self.assertEqual(config_copy.ref_asset_type, 'E')
+        self.assertEqual(config_copy.asset_pool, '000300.SH')
+        self.assertEqual(config_copy.invest_start, '20070110')
+
 
     def test_configuration(self):
         """ 测试CONFIG的显示"""

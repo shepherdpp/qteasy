@@ -473,7 +473,7 @@ class ConfigDict(dict):
         config.attr = config['attr']
     """
 
-    def __init__(self, *args: object, **kwargs: object) -> ConfigDict:
+    def __init__(self, *args, **kwargs):
         """
 
         :rtype: object
