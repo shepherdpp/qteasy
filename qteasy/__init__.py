@@ -11,9 +11,11 @@
 # ======================================
 
 import tushare as ts
+import logging
+from logging.handlers import TimedRotatingFileHandler
 
 from .core import get_current_holdings, get_stock_pool
-from .core import info, is_ready, configure, configuration
+from .core import info, is_ready, configure, configuration, save_config, load_config
 from .core import run, get_basic_info
 from .history import HistoryPanel, get_history_panel
 from .history import dataframe_to_hp, stack_dataframes
@@ -28,26 +30,39 @@ from warnings import warn
 
 from pathlib import Path
 
+logger_core = logging.getLogger('core')
+logger_core.setLevel(logging.DEBUG)
+debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
+error_handler = logging.StreamHandler()
+debug_handler.setLevel(logging.DEBUG)
+error_handler.setLevel(logging.WARN)
+formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s:\n%(message)s')
+debug_handler.setFormatter(formatter)
+logger_core.addHandler(debug_handler)
+logger_core.addHandler(error_handler)
+
 qt_local_configs = {}  # 存储本地配置文件的配置
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = str(Path('.').resolve()) + '/'
+QT_CONFIG_FILE_INTRO = '# qteasy configuration file\n' \
+                       '# following configurations will be loaded when initialize qteasy\n\n' \
+                       '# example:\n' \
+                       '# local_data_source = database\n\n'
 # 读取configurations文件内容到config_lines列表中，如果文件不存在，则创建一个空文本文件
 try:
     with open(QT_ROOT_PATH+'qteasy/qteasy.cnf') as f:
         config_lines = f.readlines()
+        logger_core.info(f'read configuration file: {f.name}')
 except FileNotFoundError as e:
-    print(f'{e}\na new configuration file is created.')
+    logger_core.warn(f'{e}\na new configuration file is created.')
     f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
-    intro = '# qteasy configuration file\n' \
-            '# following configurations will be loaded when initialize qteasy\n\n' \
-            '# example:\n' \
-            '# local_data_source = database\n\n'
+    intro = QT_CONFIG_FILE_INTRO
     f.write(intro)
     f.close()
     config_lines = []  # 本地配置文件行
 except Exception as e:
-    print(f'{e}\nreading configuration file error, default configurations will be used')
+    logger_core.warn(f'{e}\nreading configuration file error, default configurations will be used')
     config_lines = []
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
@@ -60,14 +75,15 @@ for line in config_lines:
         arg_name = line[0].strip()
         arg_value = line[1].strip()
         qt_local_configs[arg_name] = arg_value
+        logger_core.info(f'qt configuration set: "{arg_name}" = {arg_value}')
 
 # 读取tushare token，如果读取失败，抛出warning
 try:
     TUSHARE_TOKEN = qt_local_configs['tushare_token']
     ts.set_token(TUSHARE_TOKEN)
+    logger_core.info(f'tushare token set')
 except Exception as e:
-    warn(f'{e}, tushare token was not loaded, features might not work properly!',
-         RuntimeWarning)
+    logger_core.warn(f'{e}, tushare token was not loaded, features might not work properly!')
 
 # 读取其他本地配置属性，更新QT_CONFIG
 configure(**qt_local_configs)
@@ -83,17 +99,20 @@ QT_DATA_SOURCE = DataSource(
         password=QT_CONFIG['local_db_password'],
         db=QT_CONFIG['local_db_name']
 )
+logger_core.info(f'local data source created: {QT_DATA_SOURCE}')
 
 QT_TRADE_CALENDAR = QT_DATA_SOURCE.read_table_data('trade_calendar')
 if not QT_TRADE_CALENDAR.empty:
     QT_TRADE_CALENDAR = QT_TRADE_CALENDAR
+    logger_core.info(f'qteasy trade calendar created')
 else:
     QT_TRADE_CALENDAR = None
-    print(f'trade calendar can not be loaded, some of the trade day related functions may not work properly.'
-          f'\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
-          f'download trade calendar data')
+    logger_core.warn(f'trade calendar can not be loaded, some of the trade day related functions may not work properly.'
+                     f'\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
+                     f'download trade calendar data')
 
 np.seterr(divide='ignore', invalid='ignore')
+logger_core.info('qteasy loaded!')
 
 QT_ERR_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['error_log_file_path']
 QT_TRADE_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['trade_log_file_path']

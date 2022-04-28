@@ -14,10 +14,7 @@ import pandas as pd
 import numpy as np
 import time
 import math
-import logging
-from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 from warnings import warn
-from copy import copy
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import datetime
@@ -67,17 +64,6 @@ AVAILABLE_SHARE_AREA = ['深圳', '北京', '吉林', '江苏', '辽宁', '广�
                         '上海', '西藏']
 AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR']
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
-
-logger_core = logging.getLogger('core')
-logger_core.setLevel(logging.DEBUG)
-debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
-error_handler = logging.StreamHandler()
-debug_handler.setLevel(logging.DEBUG)
-error_handler.setLevel(logging.WARN)
-formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s:\n%(message)s')
-debug_handler.setFormatter(formatter)
-logger_core.addHandler(debug_handler)
-logger_core.addHandler(error_handler)
 
 
 # TODO: Usability improvements:
@@ -179,6 +165,7 @@ def _loop_step(signal_type: int,
     # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
     # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
     # 出计算
+    from qteasy import logger_core
     if np.all(op == 0) and signal_type > 0:
         # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
         # 因为正好op全为0，因此返回op即可
@@ -506,12 +493,14 @@ def apply_loop(op_type: int,
         - fee:              当期交易费用（交易成本）
         - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
+    from qteasy import logger_core
     global total_stock_value, total_value
     assert not op_list.is_empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
     if moq_buy == 0:
-        assert moq_sell == 0, f'ValueError, if moq buy is 0, then moq_sell should also be 0, got {moq_sell}'
+        assert moq_sell == 0, f'ValueError, if "trade_batch_size" is 0, then ' \
+                              f'"sell_batch_size" should also be 0, got {moq_sell}'
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
@@ -1063,13 +1052,53 @@ def configuration(level=0, up_to=0, default=False, verbose=False):
 
 
 def save_config(config=None, file_name=None):
+    """ 将config保存为一个文件，如果不明确给出文件名及config对象，则
+        将QT_CONFIG保存到qteasy.cnf中
+
+    :param config: ConfigDict 对象
+        一个config对象，默认None，如果为None，则保存QT_CONFIG
+
+    :param file_name: str
+        文件名，默认None，如果为None，文件名为qteasy.cnf
+    :return:
+    """
+    if config is None:
+        config = QT_CONFIG
+    if not isinstance(config, ConfigDict):
+        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+
+    if file_name is None:
+        file_name = 'qteasy.cnf'
+    if not isinstance(file_name, str):
+        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
+    # TODO: match file_name with re
+    # import re
+    # if not re.match('*[(.cnf)]$', file_name):
+    #     raise ValueError(f'invalid file name given: {file_name}')
+
+    from qteasy import QT_ROOT_PATH
+    import os
+    now = pd.to_datetime('today').strftime('%Y/%m/%d, %A %H:%M')
+    root_path = QT_ROOT_PATH + 'qteasy/'
+    if os.path.exists(root_path + file_name):
+        os.remove(root_path + file_name)
+    with open(QT_ROOT_PATH + file_name, 'w') as f:
+        f.write(f'User saved qteasy configuration\n'
+                f'[{now}]\n')
+        print(f'file content written: {f.name}')
+        for arg, val in config.items():
+            f_string = f'{arg} = {val}\n'
+            f.write(f_string)
+
+
+def load_config(config=None, file_name=None):
     """
 
     :param config:
     :param file_name:
     :return:
     """
-    raise NotImplementedError
+    pass
 
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等

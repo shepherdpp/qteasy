@@ -10,6 +10,7 @@
 # ======================================
 import unittest
 
+import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -10891,7 +10892,8 @@ class TestQT(unittest.TestCase):
                      asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
-                     trade_batch_size=0,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
                      parallel=True)
 
         timing_pars1 = (165, 191, 23)
@@ -10950,7 +10952,6 @@ class TestQT(unittest.TestCase):
         self.assertEqual(config_copy.ref_asset_type, 'E')
         self.assertEqual(config_copy.asset_pool, '000300.SH')
         self.assertEqual(config_copy.invest_start, '20070110')
-
 
     def test_configuration(self):
         """ 测试CONFIG的显示"""
@@ -11529,7 +11530,9 @@ class TestBuiltInsSingle(unittest.TestCase):
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      reference_asset='000300.SH',
-                     opti_sample_count=100)
+                     opti_sample_count=100,
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,)
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
@@ -11961,36 +11964,37 @@ class FastExperiments(unittest.TestCase):
         #              invest_end='20220401',
         #              trade_batch_size=1,
         #              sell_batch_size=0)
-        stock_pool = qt.get_stock_pool(index='000300.SH', date='20211001')
-        qt.configure(asset_pool=stock_pool,
-                     asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
-                     opti_output_count=50,
-                     invest_start='20211013',
-                     invest_end='20211231',
-                     opti_sample_count=100,
-                     trade_batch_size=100.,
-                     sell_batch_size=100.,
-                     invest_cash_amounts=[1000000],
-                     mode=1,
-                     log=True,
-                     print_backtest_log=True,
-                     PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
-                     backtest_price_adj='none')
-        op = qt.Operator(strategies=['finance'], signal_type='PS')
-        op.set_parameter(0,
-                         opt_tag=1,
-                         sample_freq='m',
-                         data_types='wt-000300.SH',
-                         sort_ascending=False,
-                         weighting='proportion',
-                         proportion_or_quantity=300)
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     print_trade_log=True)
+        # stock_pool = qt.get_stock_pool(index='000300.SH', date='20211001')
+        # qt.configure(asset_pool=stock_pool,
+        #              asset_type='E',
+        #              reference_asset='000300.SH',
+        #              ref_asset_type='IDX',
+        #              opti_output_count=50,
+        #              invest_start='20211013',
+        #              invest_end='20211231',
+        #              opti_sample_count=100,
+        #              trade_batch_size=100.,
+        #              sell_batch_size=100.,
+        #              invest_cash_amounts=[1000000],
+        #              mode=1,
+        #              log=True,
+        #              print_backtest_log=True,
+        #              PT_buy_threshold=0.03,
+        #              PT_sell_threshold=-0.03,
+        #              backtest_price_adj='none')
+        # op = qt.Operator(strategies=['finance'], signal_type='PS')
+        # op.set_parameter(0,
+        #                  opt_tag=1,
+        #                  sample_freq='m',
+        #                  data_types='wt-000300.SH',
+        #                  sort_ascending=False,
+        #                  weighting='proportion',
+        #                  proportion_or_quantity=300)
+        # res = qt.run(op,
+        #              mode=1,
+        #              visual=True,
+        #              print_trade_log=True)
+        qt.save_config(QT_CONFIG, 'qt_config.cnf')
 
     def test_time(self):
         print(match_ts_code('000001'))
