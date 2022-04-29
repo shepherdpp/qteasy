@@ -26,7 +26,6 @@ from .built_in import *
 from .finance import CashPlan, Cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG
-from warnings import warn
 
 from pathlib import Path
 
@@ -35,8 +34,8 @@ logger_core.setLevel(logging.DEBUG)
 debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
 error_handler = logging.StreamHandler()
 debug_handler.setLevel(logging.DEBUG)
-error_handler.setLevel(logging.WARN)
-formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s:\n%(message)s')
+error_handler.setLevel(logging.WARNING)
+formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s -: %(message)s')
 debug_handler.setFormatter(formatter)
 logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
@@ -55,14 +54,14 @@ try:
         config_lines = f.readlines()
         logger_core.info(f'read configuration file: {f.name}')
 except FileNotFoundError as e:
-    logger_core.warn(f'{e}\na new configuration file is created.')
+    logger_core.warning(f'{e}\na new configuration file is created.')
     f = open(QT_ROOT_PATH + 'qteasy/qteasy.cnf', 'w')
     intro = QT_CONFIG_FILE_INTRO
     f.write(intro)
     f.close()
     config_lines = []  # 本地配置文件行
 except Exception as e:
-    logger_core.warn(f'{e}\nreading configuration file error, default configurations will be used')
+    logger_core.warning(f'{e}\nreading configuration file error, default configurations will be used')
     config_lines = []
 
 # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
@@ -74,8 +73,11 @@ for line in config_lines:
     if len(line) == 2:
         arg_name = line[0].strip()
         arg_value = line[1].strip()
-        qt_local_configs[arg_name] = arg_value
-        logger_core.info(f'qt configuration set: "{arg_name}" = {arg_value}')
+        try:
+            qt_local_configs[arg_name] = arg_value
+            logger_core.info(f'qt configuration set: "{arg_name}" = {arg_value}')
+        except Exception as e:
+            logger_core.warning(f'{e}, invalid parameter: {arg_name} = {arg_value}')
 
 # 读取tushare token，如果读取失败，抛出warning
 try:
@@ -83,7 +85,7 @@ try:
     ts.set_token(TUSHARE_TOKEN)
     logger_core.info(f'tushare token set')
 except Exception as e:
-    logger_core.warn(f'{e}, tushare token was not loaded, features might not work properly!')
+    logger_core.warning(f'{e}, tushare token was not loaded, features might not work properly!')
 
 # 读取其他本地配置属性，更新QT_CONFIG
 configure(**qt_local_configs)
@@ -107,9 +109,9 @@ if not QT_TRADE_CALENDAR.empty:
     logger_core.info(f'qteasy trade calendar created')
 else:
     QT_TRADE_CALENDAR = None
-    logger_core.warn(f'trade calendar can not be loaded, some of the trade day related functions may not work properly.'
-                     f'\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
-                     f'download trade calendar data')
+    logger_core.warning(f'trade calendar can not be loaded, some of the trade day related functions may not work properly.'
+                        f'\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
+                        f'download trade calendar data')
 
 np.seterr(divide='ignore', invalid='ignore')
 logger_core.info('qteasy loaded!')

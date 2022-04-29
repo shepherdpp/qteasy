@@ -11994,7 +11994,9 @@ class FastExperiments(unittest.TestCase):
         #              mode=1,
         #              visual=True,
         #              print_trade_log=True)
-        qt.save_config(QT_CONFIG, 'qt_config.cnf')
+        qt.load_config(QT_CONFIG, 'qt_config.cnf')
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 2)
 
     def test_time(self):
         print(match_ts_code('000001'))

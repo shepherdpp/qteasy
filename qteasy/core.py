@@ -1051,7 +1051,7 @@ def configuration(level=0, up_to=0, default=False, verbose=False):
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
 
-def save_config(config=None, file_name=None):
+def save_config(config=None, file_name=None, overwrite=True):
     """ 将config保存为一个文件，如果不明确给出文件名及config对象，则
         将QT_CONFIG保存到qteasy.cnf中
 
@@ -1060,8 +1060,15 @@ def save_config(config=None, file_name=None):
 
     :param file_name: str
         文件名，默认None，如果为None，文件名为qteasy.cnf
+
+    :param overwrite: bool
+        默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
     :return:
     """
+    from qteasy import logger_core
+    from qteasy import QT_ROOT_PATH
+    import os
+
     if config is None:
         config = QT_CONFIG
     if not isinstance(config, ConfigDict):
@@ -1071,34 +1078,80 @@ def save_config(config=None, file_name=None):
         file_name = 'qteasy.cnf'
     if not isinstance(file_name, str):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
-    # TODO: match file_name with re
-    # import re
-    # if not re.match('*[(.cnf)]$', file_name):
-    #     raise ValueError(f'invalid file name given: {file_name}')
+    import re
+    if not re.match('[a-z|A-Z]+_?[a-z|A-Z]*[0-9]*\.cnf$', file_name):
+        raise ValueError(f'invalid file name given: {file_name}')
 
-    from qteasy import QT_ROOT_PATH
-    import os
     now = pd.to_datetime('today').strftime('%Y/%m/%d, %A %H:%M')
-    root_path = QT_ROOT_PATH + 'qteasy/'
-    if os.path.exists(root_path + file_name):
-        os.remove(root_path + file_name)
-    with open(QT_ROOT_PATH + file_name, 'w') as f:
-        f.write(f'User saved qteasy configuration\n'
-                f'[{now}]\n')
-        print(f'file content written: {f.name}')
+    root_path = QT_ROOT_PATH + 'qteasy/config/'
+    if not os.path.exists(root_path):
+        logger_core.warning(f'target directory does not exist, will create one')
+        os.makedirs(root_path)
+    if overwrite:
+        open_method = 'w'  # overwrite the file
+    else:
+        open_method = 'x'  # raise if file already existed
+    with open(root_path + file_name, open_method) as f:
+        f.write(f'# [{now}] #\n'
+                f'# User saved qteasy configuration #\n\n')
+        logger_core.info(f'file content written: {f.name}')
         for arg, val in config.items():
             f_string = f'{arg} = {val}\n'
             f.write(f_string)
 
 
 def load_config(config=None, file_name=None):
-    """
+    """ 从文件file_name中读取相应的config参数，写入到config中，如果config为
+        None，则保存参数到QT_CONFIG中
 
-    :param config:
-    :param file_name:
+    :param config: ConfigDict 对象
+        一个config对象，默认None，如果为None，则保存QT_CONFIG
+
+    :param file_name: str
+        文件名，默认None，如果为None，文件名为qteasy.cnf
     :return:
     """
-    pass
+    from qteasy import logger_core
+    from qteasy import QT_ROOT_PATH
+
+    if config is None:
+        config = QT_CONFIG
+    if not isinstance(config, ConfigDict):
+        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+
+    if file_name is None:
+        file_name = 'qteasy.cnf'
+    if not isinstance(file_name, str):
+        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
+    import re
+    if not re.match('[a-z|A-Z]+_?[a-z|A-Z]*[0-9]*\.cnf$', file_name):
+        raise ValueError(f'invalid file name given: {file_name}')
+
+    try:
+        with open(QT_ROOT_PATH + 'qteasy/config/' + file_name) as f:
+            config_lines = f.readlines()
+            logger_core.info(f'read configuration file: {f.name}')
+    except FileNotFoundError as e:
+        logger_core.warning(f'{e}\nFile not found {file_name}! nothing will be read.')
+        config_lines = []
+
+    # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
+    # config = value
+    saved_config = {}
+    for line in config_lines:
+        if line[0] == '#':  # 忽略注释行
+            continue
+        line = line.split('=')
+        if len(line) == 2:
+            arg_name = line[0].strip()
+            arg_value = line[1].strip()
+            try:
+                saved_config[arg_name] = arg_value
+                logger_core.info(f'qt configuration set: "{arg_name}" = {arg_value}')
+            except Exception as e:
+                logger_core.warning(f'{e}, invalid parameter in saved config: {arg_name} = {arg_value}')
+
+    configure(config, **saved_config)
 
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
