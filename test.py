@@ -80,7 +80,7 @@ from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
 from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
 
-from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
+from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs, ConfigDict
 
 from qteasy.blender import _exp_to_token, blender_parser, signal_blend
 
@@ -11994,9 +11994,13 @@ class FastExperiments(unittest.TestCase):
         #              mode=1,
         #              visual=True,
         #              print_trade_log=True)
-        qt.load_config(QT_CONFIG, 'qt_config.cnf')
+        conf = {'mode': 2,
+                'invest_amounts': [200000]}
+        conf = ConfigDict(**conf)
+        qt.save_config(QT_CONFIG, 'saved3.cnf')
+        qt.load_config(QT_CONFIG, 'saved3.cnf')
         print(QT_CONFIG)
-        self.assertEqual(QT_CONFIG.mode, 2)
+        self.assertEqual(QT_CONFIG.mode, 1)
 
     def test_time(self):
         print(match_ts_code('000001'))

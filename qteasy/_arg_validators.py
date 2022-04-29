@@ -118,18 +118,18 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '下载历史数据时启用的线程数量，为0或1时采用单线程下载，大于1时启用多线程'},
 
-        'hist_dnld_delay':      {'Default':   None,
+        'hist_dnld_delay':      {'Default':   0.,
                                  'Validator': lambda value: isinstance(value, float) and value >= 0,
                                  'level':     4,
                                  'text':      '为防止服务器数据压力过大，下载历史数据时下载一定数量的数据后延迟的时间长度，单位为秒'},
 
-        'hist_dnld_delay_evy':  {'Default':   None,
+        'hist_dnld_delay_evy':  {'Default':   0,
                                  'Validator': lambda value: isinstance(value, int) and value >= 0,
                                  'level':     4,
                                  'text':      '为防止服务器数据压力过大，下载历史数据时，每下载一定数量的数据，就延迟一段时间。\n'
                                               '此参数为两次延迟之间的数据下载量'},
 
-        'hist_dnld_prog_bar':   {'Default':   None,
+        'hist_dnld_prog_bar':   {'Default':   False,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     4,
                                  'text':      '下载历史数据时是否显示进度条'},
@@ -411,12 +411,10 @@ def _valid_qt_kwargs():
 
         'price_priority_OHLC':  {'Default':   'OHLC',
                                  'Validator': lambda value: isinstance(value, str)
-                                                            and all(item in ['O', 'H', 'L', 'C'
-                                                                                            'o', 'h', 'l', 'c']
+                                                            and all(item.upper() in 'OHLC'
                                                                     for item in value)
-                                                            and not any(item not in ['O', 'H', 'L', 'C'
-                                                                                                    'o', 'h', 'l', 'c']
-                                                                        for item in value),
+                                                            and all(item.upper() in value
+                                                                    for item in 'OHLC'),
                                  'level':     3,
                                  'text':      '回测时如果存在多种价格类型的交易信号，而且交易价格的类型为OHLC时，处理各种\n'
                                               '不同的价格信号的优先级。\n'

@@ -1067,6 +1067,7 @@ def save_config(config=None, file_name=None, overwrite=True):
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
+    import pickle
     import os
 
     if config is None:
@@ -1082,22 +1083,20 @@ def save_config(config=None, file_name=None, overwrite=True):
     if not re.match('[a-z|A-Z]+_?[a-z|A-Z]*[0-9]*\.cnf$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
-    now = pd.to_datetime('today').strftime('%Y/%m/%d, %A %H:%M')
     root_path = QT_ROOT_PATH + 'qteasy/config/'
     if not os.path.exists(root_path):
         logger_core.warning(f'target directory does not exist, will create one')
         os.makedirs(root_path)
     if overwrite:
-        open_method = 'w'  # overwrite the file
+        open_method = 'wb'  # overwrite the file
     else:
-        open_method = 'x'  # raise if file already existed
+        open_method = 'xb'  # raise if file already existed
     with open(root_path + file_name, open_method) as f:
-        f.write(f'# [{now}] #\n'
-                f'# User saved qteasy configuration #\n\n')
-        logger_core.info(f'file content written: {f.name}')
-        for arg, val in config.items():
-            f_string = f'{arg} = {val}\n'
-            f.write(f_string)
+        try:
+            pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
+            logger_core.info(f'file content written: {f.name}')
+        except Exception as e:
+            logger_core.warning(f'{e}, error during writing config to local file.')
 
 
 def load_config(config=None, file_name=None):
@@ -1113,6 +1112,7 @@ def load_config(config=None, file_name=None):
     """
     from qteasy import logger_core
     from qteasy import QT_ROOT_PATH
+    import pickle
 
     if config is None:
         config = QT_CONFIG
@@ -1128,28 +1128,12 @@ def load_config(config=None, file_name=None):
         raise ValueError(f'invalid file name given: {file_name}')
 
     try:
-        with open(QT_ROOT_PATH + 'qteasy/config/' + file_name) as f:
-            config_lines = f.readlines()
+        with open(QT_ROOT_PATH + 'qteasy/config/' + file_name, 'rb') as f:
+            saved_config = pickle.load(f)
             logger_core.info(f'read configuration file: {f.name}')
     except FileNotFoundError as e:
-        logger_core.warning(f'{e}\nFile not found {file_name}! nothing will be read.')
-        config_lines = []
-
-    # 解析config_lines列表，依次读取所有存储的属性，所有属性存储的方式为：
-    # config = value
-    saved_config = {}
-    for line in config_lines:
-        if line[0] == '#':  # 忽略注释行
-            continue
-        line = line.split('=')
-        if len(line) == 2:
-            arg_name = line[0].strip()
-            arg_value = line[1].strip()
-            try:
-                saved_config[arg_name] = arg_value
-                logger_core.info(f'qt configuration set: "{arg_name}" = {arg_value}')
-            except Exception as e:
-                logger_core.warning(f'{e}, invalid parameter in saved config: {arg_name} = {arg_value}')
+        logger_core.warning(f'{e}\nError during loading {file_name}! nothing will be read.')
+        saved_config = {}
 
     configure(config, **saved_config)
 
