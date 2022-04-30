@@ -838,7 +838,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
                 similarities = []
                 for s in all_column_values:
                     if not isinstance(s, str):
-                        # print(f'oops!, {s} is not a string!! skipping...')
+                        similarities.append(0.0)
                         continue
                     try:
                         similarities.append(_partial_lev_ratio(s, t))
@@ -846,8 +846,12 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
                         print(f'{e}, error during matching "{t}" and "{s}"')
                         raise e
                 sim_array = np.array(similarities)
-                best_matched = [all_column_values[i] for i in np.where(sim_array >= 0.5)[0]]
+                best_matched = [all_column_values[i] for i in
+                                np.where(sim_array >= 0.5)[0]
+                                if
+                                isinstance(all_column_values[i], str)]
                 match_dict[t] = best_matched
+                import pdb; pdb.set_trace()
                 best_matched_str = '\" or \"'.join(best_matched)
                 print(f'{t} will be excluded because an exact match is not found in "{column}", did you mean\n'
                       f'"{best_matched_str}"?')

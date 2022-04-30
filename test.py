@@ -12926,7 +12926,7 @@ class TestDataSource(unittest.TestCase):
     def test_get_history_panel_data(self):
         """ test getting data, from real database """
         ds = DataSource(source_type='db',
-                        host='192.168.2.9',
+                        host='localhost',
                         port=3306,
                         user='jackie',
                         password='iama007',
