@@ -864,8 +864,8 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
                                             start=start_date.strftime("%Y%m%d"),
                                             end=end_date.strftime('%Y%m%d'))
             if index_comp.empty:
-                return []
-            return index_comp.index.get_level_values('con_code').unique().tolist()
+                return index_comp
+            return share_basics.loc[index_comp.index.get_level_values('con_code').unique().tolist()]
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if len(targets) == 0:
