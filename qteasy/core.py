@@ -786,8 +786,8 @@ def get_current_holdings() -> tuple:
     raise NotImplementedError
 
 
-def get_stock_pool(date: str = 'today', **kwargs) -> list:
-    """根据输入的参数筛选出合适的初始股票清单
+def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
+    """根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame
 
         可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
             date:       根据上市日期选择，在该日期以后上市的股票将会被剔除：
@@ -797,11 +797,9 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
             market:     市场，分为主板、创业板等
             exchange:   交易所，包括上海证券交易所和深圳股票交易所
 
-    input:
     :param date:
-    return:
-    a list that contains ts_codes of all selected shares
-
+    :param kwargs:
+    :return:
     """
     try:
         date = pd.to_datetime(date)
@@ -875,11 +873,32 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
-    #
-    # for k, v in none_matched.items():
-    #     print(f'can not find a match for {v} in {k}, did you mean ...?')
     share_basics = share_basics.loc[share_basics.list_date <= date]
-    return list(share_basics.index.values)
+    if not share_basics.empty:
+        return share_basics[['name', 'area', 'industry', 'market', 'list_date', 'exchange']]
+    else:
+        return share_basics
+
+
+def filter_stock_codes(date: str = 'today', **kwargs) -> list:
+    """根据输入的参数调用filter_stocks筛选股票，并返回股票代码的清单
+
+        可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
+            date:       根据上市日期选择，在该日期以后上市的股票将会被剔除：
+            index:      根据指数筛选，不含在指定的指数内的股票将会被剔除
+            industry:   公司所处行业，只有列举出来的行业会被选中
+            area:       公司所处省份，只有列举出来的省份的股票才会被选中
+            market:     市场，分为主板、创业板等
+            exchange:   交易所，包括上海证券交易所和深圳股票交易所
+
+    input:
+    :param date:
+    return:
+    股票代码清单 List
+
+    """
+    share_basics = filter_stocks(date=date, **kwargs)
+    return share_basics.index.to_list()
 
 
 def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
