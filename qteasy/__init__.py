@@ -10,12 +10,13 @@
 #   strategy research tool kit.
 # ======================================
 
+import os
 import tushare as ts
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
 from .core import get_current_holdings, get_stock_pool
-from .core import info, is_ready, configure, configuration, save_config, load_config
+from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import run, get_basic_info
 from .history import HistoryPanel, get_history_panel
 from .history import dataframe_to_hp, stack_dataframes

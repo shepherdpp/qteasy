@@ -851,7 +851,6 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
                                 if
                                 isinstance(all_column_values[i], str)]
                 match_dict[t] = best_matched
-                import pdb; pdb.set_trace()
                 best_matched_str = '\" or \"'.join(best_matched)
                 print(f'{t} will be excluded because an exact match is not found in "{column}", did you mean\n'
                       f'"{best_matched_str}"?')
@@ -1015,11 +1014,14 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def configure(config=None, **kwargs):
+def configure(config=None, reset=False, **kwargs):
     """ 配置qteasy的运行参数QT_CONFIG
 
     :param config: ConfigDict 对象
         需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数
+
+    :param reset: bool
+        默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值
 
     :param kwargs:
         需要设置的所有参数
@@ -1030,7 +1032,13 @@ def configure(config=None, **kwargs):
     else:
         assert isinstance(config, ConfigDict), TypeError(f'config should be a ConfigDict, got {type(config)}')
         set_config = config
-    _update_config_kwargs(set_config, kwargs)
+    if not reset:
+        _update_config_kwargs(set_config, kwargs)
+    else:
+        from qteasy._arg_validators import _valid_qt_kwargs
+        default_kwargs = {k: v['Default'] for k, v in zip(_valid_qt_kwargs().keys(),
+                                                          _valid_qt_kwargs().values())}
+        _update_config_kwargs(set_config, default_kwargs)
 
 
 def configuration(level=0, up_to=0, default=False, verbose=False):
@@ -1080,22 +1088,22 @@ def save_config(config=None, file_name=None, overwrite=True):
         raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
 
     if file_name is None:
-        file_name = 'qteasy.cnf'
+        file_name = 'saved_config.cnf'
     if not isinstance(file_name, str):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
     import re
-    if not re.match('[a-z|A-Z]+_?[a-z|A-Z]*[0-9]*\.cnf$', file_name):
+    if not re.match('[a-zA-Z_]\w+\.cnf$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
-    root_path = QT_ROOT_PATH + 'qteasy/config/'
-    if not os.path.exists(root_path):
+    config_path = QT_ROOT_PATH + 'qteasy/config/'
+    if not os.path.exists(config_path):
         logger_core.warning(f'target directory does not exist, will create one')
-        os.makedirs(root_path)
+        os.makedirs(config_path)
     if overwrite:
         open_method = 'wb'  # overwrite the file
     else:
         open_method = 'xb'  # raise if file already existed
-    with open(root_path + file_name, open_method) as f:
+    with open(config_path + file_name, open_method) as f:
         try:
             pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
             logger_core.info(f'file content written: {f.name}')
@@ -1124,11 +1132,11 @@ def load_config(config=None, file_name=None):
         raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
 
     if file_name is None:
-        file_name = 'qteasy.cnf'
+        file_name = 'saved_config.cnf'
     if not isinstance(file_name, str):
         raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
     import re
-    if not re.match('[a-z|A-Z]+_?[a-z|A-Z]*[0-9]*\.cnf$', file_name):
+    if not re.match('[a-zA-Z_]\w+\.cnf$', file_name):
         raise ValueError(f'invalid file name given: {file_name}')
 
     try:
@@ -1140,6 +1148,22 @@ def load_config(config=None, file_name=None):
         saved_config = {}
 
     configure(config, **saved_config)
+
+
+def reset_config(config=None):
+    """ 重设config对象，将所有的参数都设置为默认值
+        如果config为None，则重设QT_CONFIG
+
+    :param config:
+    :return:
+    """
+    from qteasy import logger_core
+    if config is None:
+        config = QT_CONFIG
+    if not isinstance(config, ConfigDict):
+        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+    logger_core.info(f'{config} is now reset to default values.')
+    configure(config, reset=True)
 
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等

@@ -8048,6 +8048,19 @@ class TestConfig(unittest.TestCase):
     def test_init(self):
         pass
 
+    def test_save_load_reset_config(self):
+        """保存读取重置configuration"""
+        conf = {'mode': 2,
+                'invest_amounts': [200000]}
+        qt.configure(**conf)
+        qt.save_config(QT_CONFIG, 'saved3.cnf')
+        qt.load_config(QT_CONFIG, 'saved3.cnf')
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 2)
+        qt.reset_config()
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 1)
+
     def test_invest(self):
         pass
 
@@ -11994,13 +12007,7 @@ class FastExperiments(unittest.TestCase):
         #              mode=1,
         #              visual=True,
         #              print_trade_log=True)
-        conf = {'mode': 2,
-                'invest_amounts': [200000]}
-        conf = ConfigDict(**conf)
-        qt.save_config(QT_CONFIG, 'saved3.cnf')
-        qt.load_config(QT_CONFIG, 'saved3.cnf')
-        print(QT_CONFIG)
-        self.assertEqual(QT_CONFIG.mode, 1)
+        pass
 
     def test_time(self):
         print(match_ts_code('000001'))
