@@ -10,6 +10,7 @@
 # ======================================
 import unittest
 
+import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -79,7 +80,7 @@ from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
 from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
 
-from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
+from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs, ConfigDict
 
 from qteasy.blender import _exp_to_token, blender_parser, signal_blend
 
@@ -937,21 +938,21 @@ class TestCoreSubFuncs(unittest.TestCase):
                                     (40, 38, 36, 34, 32, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4)])
         print(sp.boes)
 
-    def test_get_stock_pool(self):
+    def test_filter_stocks(self):
         print(f'start test building stock pool function\n')
         ds = QT_DATA_SOURCE
         share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
                                                           'market', 'list_date', 'exchange']]
 
         print(f'\nselect all stocks by area')
-        stock_pool = qt.get_stock_pool(area='上海')
+        stock_pool = qt.filter_stock_codes(area='上海')
         print(f'{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "上海"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].eq('上海').all())
 
         print(f'\nselect all stocks by multiple areas')
-        stock_pool = qt.get_stock_pool(area='贵州,北京,天津')
+        stock_pool = qt.filter_stock_codes(area='贵州,北京,天津')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are in list of ["贵州", "北京", "天津"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -960,7 +961,7 @@ class TestCoreSubFuncs(unittest.TestCase):
                                                                                             '天津']).all())
 
         print(f'\nselect all stocks by area and industry')
-        stock_pool = qt.get_stock_pool(area='四川', industry='银行, 金融')
+        stock_pool = qt.filter_stock_codes(area='四川', industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock areas are "四川", and industry in ["银行", "金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].head()}')
@@ -968,21 +969,21 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(['四川']).all())
 
         print(f'\nselect all stocks by industry')
-        stock_pool = qt.get_stock_pool(industry='银行, 金融')
+        stock_pool = qt.filter_stock_codes(industry='银行, 金融')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["银行", "金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(['银行', '金融']).all())
 
         print(f'\nselect all stocks by market')
-        stock_pool = qt.get_stock_pool(market='主板')
+        stock_pool = qt.filter_stock_codes(market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['market'].isin(['主板']).all())
 
         print(f'\nselect all stocks by market and list date')
-        stock_pool = qt.get_stock_pool(date='2000-01-01', market='主板')
+        stock_pool = qt.filter_stock_codes(date='2000-01-01', market='主板')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stock market is "主板", and list date after "2000-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -991,7 +992,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by list date')
-        stock_pool = qt.get_stock_pool(date='1997-01-01')
+        stock_pool = qt.filter_stock_codes(date='1997-01-01')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all list date after "1997-01-01"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -999,7 +1000,7 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['list_date'].le(date).all())
 
         print(f'\nselect all stocks by exchange')
-        stock_pool = qt.get_stock_pool(exchange='SSE')
+        stock_pool = qt.filter_stock_codes(exchange='SSE')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are in "SSE"\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1016,9 +1017,9 @@ class TestCoreSubFuncs(unittest.TestCase):
                      '山东', '河南', '山西', '江西', '青海', '湖北',
                      '内蒙', '海南', '重庆', '陕西', '福建', '广西',
                      '上海']
-        stock_pool = qt.get_stock_pool(date='19980101',
-                                       industry=industry_list,
-                                       area=area_list)
+        stock_pool = qt.filter_stock_codes(date='19980101',
+                                           industry=industry_list,
+                                           area=area_list)
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all exchanges are in\n{area_list} \nand \n{industry_list}'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -1027,22 +1028,22 @@ class TestCoreSubFuncs(unittest.TestCase):
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['industry'].isin(industry_list).all())
         self.assertTrue(share_basics[np.isin(share_basics.index, stock_pool)]['area'].isin(area_list).all())
 
-        self.assertRaises(KeyError, qt.get_stock_pool, industry=25)
-        self.assertRaises(KeyError, qt.get_stock_pool, share_name='000300.SH')
-        self.assertRaises(KeyError, qt.get_stock_pool, markets='SSE')
+        self.assertRaises(KeyError, qt.filter_stock_codes, industry=25)
+        self.assertRaises(KeyError, qt.filter_stock_codes, share_name='000300.SH')
+        self.assertRaises(KeyError, qt.filter_stock_codes, markets='SSE')
 
         print(f'\nselect all stocks by index, with start and end dates:\n'
               f'all the "000300.SH" composite after 20180101')
-        stock_pool = qt.get_stock_pool(date='20200101',
-                                       index='000300.SH')
+        stock_pool = qt.filter_stock_codes(date='20200101',
+                                           index='000300.SH')
         print(f'\n{len(stock_pool)} shares selected, first 10 are: {stock_pool[0:10]}\n'
               f'more information of some fo the stocks\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
 
         print(f'\nprint out targets that can not be matched and return fuzzy results')
-        stock_pool = qt.get_stock_pool(industry='银行业, 多元金融, 房地产',
-                                       area='陕西省',
-                                       market='主要')
+        stock_pool = qt.filter_stock_codes(industry='银行业, 多元金融, 房地产',
+                                           area='陕西省',
+                                           market='主要')
         print(f'\n{len(stock_pool)} shares selected, first 5 are: {stock_pool[0:5]}\n'
               f'check if all stocks industry in ["多元金融"]\n'
               f'{share_basics[np.isin(share_basics.index, stock_pool)].sample(10)}')
@@ -8047,6 +8048,19 @@ class TestConfig(unittest.TestCase):
     def test_init(self):
         pass
 
+    def test_save_load_reset_config(self):
+        """保存读取重置configuration"""
+        conf = {'mode': 2,
+                'invest_amounts': [200000]}
+        qt.configure(**conf)
+        qt.save_config(QT_CONFIG, 'saved3.cnf')
+        qt.load_config(QT_CONFIG, 'saved3.cnf')
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 2)
+        qt.reset_config()
+        print(QT_CONFIG)
+        self.assertEqual(QT_CONFIG.mode, 1)
+
     def test_invest(self):
         pass
 
@@ -10891,7 +10905,8 @@ class TestQT(unittest.TestCase):
                      asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070110',
-                     trade_batch_size=0,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
                      parallel=True)
 
         timing_pars1 = (165, 191, 23)
@@ -10899,7 +10914,7 @@ class TestQT(unittest.TestCase):
                         '000200': (75, 128, 138),
                         '000300': (73, 120, 143)}
         timing_pars3 = (115, 197, 54)
-        self.op.set_blender('ls', 'pos-2')
+        self.op.set_blender('pos-2')
         self.op.set_parameter(stg_id='dma', pars=timing_pars1)
         self.op.set_parameter(stg_id='macd', pars=timing_pars3)
 
@@ -10917,6 +10932,39 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=2)
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
+        self.assertEqual(config.reference_asset, '000300.SH')
+        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+        # test temp config in run() that works only in run()
+        qt.run(self.op,
+               mode=1,
+               asset_pool='000001.SZ',
+               asset_type='E',
+               invest_start='20100101',
+               visual=False)
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(qt.QT_CONFIG.mode, 2)
+        self.assertEqual(config.reference_asset, '000300.SH')
+        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+
+        config_copy = config.copy()
+        qt.configure(config_copy,
+                     mode=1,
+                     reference_asset='000002.SZ',
+                     ref_asset_type='E')
+        self.assertEqual(config.mode, 2)
+        self.assertEqual(config.reference_asset, '000300.SH')
+        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.asset_pool, '000300.SH')
+        self.assertEqual(config.invest_start, '20070110')
+        self.assertEqual(config_copy.mode, 1)
+        self.assertEqual(config_copy.reference_asset, '000002.SZ')
+        self.assertEqual(config_copy.ref_asset_type, 'E')
+        self.assertEqual(config_copy.asset_pool, '000300.SH')
+        self.assertEqual(config_copy.invest_start, '20070110')
 
     def test_configuration(self):
         """ 测试CONFIG的显示"""
@@ -11346,7 +11394,7 @@ class TestQT(unittest.TestCase):
         """
         op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
         all_shares = stock_basic()
-        shares_banking = qt.get_stock_pool(date='20070101', industry='银行')
+        shares_banking = qt.filter_stock_codes(date='20070101', industry='银行')
         print('extracted banking share pool:')
         print(all_shares.loc[all_shares['ts_code'].isin(shares_banking)])
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
@@ -11383,8 +11431,8 @@ class TestQT(unittest.TestCase):
         """
         print(f'test portfolio selection from large quantities of shares')
         op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
-        qt.configure(asset_pool=qt.get_stock_pool(date='20070101',
-                                                  industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
+        qt.configure(asset_pool=qt.filter_stock_codes(date='20070101',
+                                                      industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                             '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
                                                             '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
                                                             '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
@@ -11396,7 +11444,7 @@ class TestQT(unittest.TestCase):
                                                             '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
                                                             '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
                                                             '陶瓷', '船舶'],
-                                                  area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
+                                                      area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
                                                         '安徽', '四川', '浙江', '湖南', '河北', '新疆',
                                                         '山东', '河南', '山西', '江西', '青海', '湖北',
                                                         '内蒙', '海南', '重庆', '陕西', '福建', '广西',
@@ -11495,7 +11543,9 @@ class TestBuiltInsSingle(unittest.TestCase):
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      reference_asset='000300.SH',
-                     opti_sample_count=100)
+                     opti_sample_count=100,
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,)
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
@@ -11799,7 +11849,7 @@ class TestBuiltInsMultiple(unittest.TestCase):
     """
 
     def setUp(self):
-        # self.stock_pool = qt.get_stock_pool(index='')
+        # self.stock_pool = qt.filter_stock_codes(index='')
         ds = qt.QT_DATA_SOURCE
         df = ds.read_table_data('index_weight', start='20210606', end='20210707', shares='000300.SH')
         self.stock_pool = df.index.get_level_values('con_code').tolist()
@@ -11927,36 +11977,37 @@ class FastExperiments(unittest.TestCase):
         #              invest_end='20220401',
         #              trade_batch_size=1,
         #              sell_batch_size=0)
-        stock_pool = qt.get_stock_pool(index='000300.SH', date='20211001')
-        qt.configure(asset_pool=stock_pool,
-                     asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
-                     opti_output_count=50,
-                     invest_start='20211013',
-                     invest_end='20211231',
-                     opti_sample_count=100,
-                     trade_batch_size=0.,
-                     sell_batch_size=0.,
-                     invest_cash_amounts=[10000000],
-                     mode=1,
-                     log=True,
-                     print_backtest_log=True,
-                     PT_buy_threshold=0.03,
-                     PT_sell_threshold=-0.03,
-                     backtest_price_adj='none')
-        op = qt.Operator(strategies=['finance'], signal_type='PS')
-        op.set_parameter(0,
-                         opt_tag=1,
-                         sample_freq='m',
-                         data_types='wt-000300.SH',
-                         sort_ascending=False,
-                         weighting='proportion',
-                         proportion_or_quantity=300)
-        res = qt.run(op,
-                     mode=1,
-                     visual=True,
-                     print_trade_log=True)
+        # stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
+        # qt.configure(asset_pool=stock_pool,
+        #              asset_type='E',
+        #              reference_asset='000300.SH',
+        #              ref_asset_type='IDX',
+        #              opti_output_count=50,
+        #              invest_start='20211013',
+        #              invest_end='20211231',
+        #              opti_sample_count=100,
+        #              trade_batch_size=100.,
+        #              sell_batch_size=100.,
+        #              invest_cash_amounts=[1000000],
+        #              mode=1,
+        #              log=True,
+        #              print_backtest_log=True,
+        #              PT_buy_threshold=0.03,
+        #              PT_sell_threshold=-0.03,
+        #              backtest_price_adj='none')
+        # op = qt.Operator(strategies=['finance'], signal_type='PS')
+        # op.set_parameter(0,
+        #                  opt_tag=1,
+        #                  sample_freq='m',
+        #                  data_types='wt-000300.SH',
+        #                  sort_ascending=False,
+        #                  weighting='proportion',
+        #                  proportion_or_quantity=300)
+        # res = qt.run(op,
+        #              mode=1,
+        #              visual=True,
+        #              print_trade_log=True)
+        pass
 
     def test_time(self):
         print(match_ts_code('000001'))
@@ -12882,7 +12933,7 @@ class TestDataSource(unittest.TestCase):
     def test_get_history_panel_data(self):
         """ test getting data, from real database """
         ds = DataSource(source_type='db',
-                        host='192.168.2.9',
+                        host='localhost',
                         port=3306,
                         user='jackie',
                         password='iama007',

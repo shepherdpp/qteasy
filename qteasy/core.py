@@ -14,8 +14,6 @@ import pandas as pd
 import numpy as np
 import time
 import math
-import logging
-from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
 from warnings import warn
 
 from concurrent.futures import ProcessPoolExecutor, as_completed
@@ -32,7 +30,7 @@ from .operator import Operator
 from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
     _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
-from ._arg_validators import _update_config_kwargs
+from ._arg_validators import _update_config_kwargs, ConfigDict
 
 from ._arg_validators import QT_CONFIG, _vkwargs_to_text
 
@@ -66,17 +64,6 @@ AVAILABLE_SHARE_AREA = ['深圳', '北京', '吉林', '江苏', '辽宁', '广�
                         '上海', '西藏']
 AVAILABLE_SHARE_MARKET = ['主板', '中小板', '创业板', '科创板', 'CDR']
 AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
-
-logger_core = logging.getLogger('core')
-logger_core.setLevel(logging.DEBUG)
-debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
-error_handler = logging.StreamHandler()
-debug_handler.setLevel(logging.DEBUG)
-error_handler.setLevel(logging.WARN)
-formatter = logging.Formatter('[%(asctime)s]:%(levelname)s - %(module)s:\n%(message)s')
-debug_handler.setFormatter(formatter)
-logger_core.addHandler(debug_handler)
-logger_core.addHandler(error_handler)
 
 
 # TODO: Usability improvements:
@@ -178,6 +165,7 @@ def _loop_step(signal_type: int,
     # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
     # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
     # 出计算
+    from qteasy import logger_core
     if np.all(op == 0) and signal_type > 0:
         # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
         # 因为正好op全为0，因此返回op即可
@@ -505,12 +493,14 @@ def apply_loop(op_type: int,
         - fee:              当期交易费用（交易成本）
         - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
+    from qteasy import logger_core
     global total_stock_value, total_value
     assert not op_list.is_empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
     if moq_buy == 0:
-        assert moq_sell == 0, f'ValueError, if moq buy is 0, then moq_sell should also be 0, got {moq_sell}'
+        assert moq_sell == 0, f'ValueError, if "trade_batch_size" is 0, then ' \
+                              f'"sell_batch_size" should also be 0, got {moq_sell}'
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
@@ -796,8 +786,8 @@ def get_current_holdings() -> tuple:
     raise NotImplementedError
 
 
-def get_stock_pool(date: str = 'today', **kwargs) -> list:
-    """根据输入的参数筛选出合适的初始股票清单
+def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
+    """根据输入的参数筛选股票，并返回一个包含股票代码和相关信息的DataFrame
 
         可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
             date:       根据上市日期选择，在该日期以后上市的股票将会被剔除：
@@ -807,11 +797,9 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
             market:     市场，分为主板、创业板等
             exchange:   交易所，包括上海证券交易所和深圳股票交易所
 
-    input:
     :param date:
-    return:
-    a list that contains ts_codes of all selected shares
-
+    :param kwargs:
+    :return:
     """
     try:
         date = pd.to_datetime(date)
@@ -848,7 +836,7 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
                 similarities = []
                 for s in all_column_values:
                     if not isinstance(s, str):
-                        # print(f'oops!, {s} is not a string!! skipping...')
+                        similarities.append(0.0)
                         continue
                     try:
                         similarities.append(_partial_lev_ratio(s, t))
@@ -856,7 +844,10 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
                         print(f'{e}, error during matching "{t}" and "{s}"')
                         raise e
                 sim_array = np.array(similarities)
-                best_matched = [all_column_values[i] for i in np.where(sim_array >= 0.5)[0]]
+                best_matched = [all_column_values[i] for i in
+                                np.where(sim_array >= 0.5)[0]
+                                if
+                                isinstance(all_column_values[i], str)]
                 match_dict[t] = best_matched
                 best_matched_str = '\" or \"'.join(best_matched)
                 print(f'{t} will be excluded because an exact match is not found in "{column}", did you mean\n'
@@ -873,8 +864,8 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
                                             start=start_date.strftime("%Y%m%d"),
                                             end=end_date.strftime('%Y%m%d'))
             if index_comp.empty:
-                return []
-            return index_comp.index.get_level_values('con_code').unique().tolist()
+                return index_comp
+            return share_basics.loc[index_comp.index.get_level_values('con_code').unique().tolist()]
         if isinstance(targets, str):
             targets = str_to_list(targets)
         if len(targets) == 0:
@@ -882,11 +873,32 @@ def get_stock_pool(date: str = 'today', **kwargs) -> list:
         if not all(isinstance(target, str) for target in targets):
             raise KeyError(f'the list should contain only strings')
         share_basics = share_basics.loc[share_basics[column].isin(targets)]
-    #
-    # for k, v in none_matched.items():
-    #     print(f'can not find a match for {v} in {k}, did you mean ...?')
     share_basics = share_basics.loc[share_basics.list_date <= date]
-    return list(share_basics.index.values)
+    if not share_basics.empty:
+        return share_basics[['name', 'area', 'industry', 'market', 'list_date', 'exchange']]
+    else:
+        return share_basics
+
+
+def filter_stock_codes(date: str = 'today', **kwargs) -> list:
+    """根据输入的参数调用filter_stocks筛选股票，并返回股票代码的清单
+
+        可以通过以下参数筛选股票, 每一个筛选条件都可以是str或者包含str的list，也可以为逗号分隔的str，只有符合要求的股票才会被筛选出来
+            date:       根据上市日期选择，在该日期以后上市的股票将会被剔除：
+            index:      根据指数筛选，不含在指定的指数内的股票将会被剔除
+            industry:   公司所处行业，只有列举出来的行业会被选中
+            area:       公司所处省份，只有列举出来的省份的股票才会被选中
+            market:     市场，分为主板、创业板等
+            exchange:   交易所，包括上海证券交易所和深圳股票交易所
+
+    input:
+    :param date:
+    return:
+    股票代码清单 List
+
+    """
+    share_basics = filter_stocks(date=date, **kwargs)
+    return share_basics.index.to_list()
 
 
 def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
@@ -1021,13 +1033,31 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def configure(**kwargs):
+def configure(config=None, reset=False, **kwargs):
     """ 配置qteasy的运行参数QT_CONFIG
 
+    :param config: ConfigDict 对象
+        需要设置或调整参数的config对象，默认为None，此时直接对QT_CONFIG对象设置参数
+
+    :param reset: bool
+        默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值
+
     :param kwargs:
+        需要设置的所有参数
     :return:
     """
-    _update_config_kwargs(QT_CONFIG, kwargs)
+    if config is None:
+        set_config = QT_CONFIG
+    else:
+        assert isinstance(config, ConfigDict), TypeError(f'config should be a ConfigDict, got {type(config)}')
+        set_config = config
+    if not reset:
+        _update_config_kwargs(set_config, kwargs)
+    else:
+        from qteasy._arg_validators import _valid_qt_kwargs
+        default_kwargs = {k: v['Default'] for k, v in zip(_valid_qt_kwargs().keys(),
+                                                          _valid_qt_kwargs().values())}
+        _update_config_kwargs(set_config, default_kwargs)
 
 
 def configuration(level=0, up_to=0, default=False, verbose=False):
@@ -1052,13 +1082,116 @@ def configuration(level=0, up_to=0, default=False, verbose=False):
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
 
+def save_config(config=None, file_name=None, overwrite=True):
+    """ 将config保存为一个文件，如果不明确给出文件名及config对象，则
+        将QT_CONFIG保存到qteasy.cnf中
+
+    :param config: ConfigDict 对象
+        一个config对象，默认None，如果为None，则保存QT_CONFIG
+
+    :param file_name: str
+        文件名，默认None，如果为None，文件名为qteasy.cnf
+
+    :param overwrite: bool
+        默认True，覆盖重名文件，如果为False，当保存的文件已存在时，将报错
+    :return:
+    """
+    from qteasy import logger_core
+    from qteasy import QT_ROOT_PATH
+    import pickle
+    import os
+
+    if config is None:
+        config = QT_CONFIG
+    if not isinstance(config, ConfigDict):
+        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+
+    if file_name is None:
+        file_name = 'saved_config.cnf'
+    if not isinstance(file_name, str):
+        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
+    import re
+    if not re.match('[a-zA-Z_]\w+\.cnf$', file_name):
+        raise ValueError(f'invalid file name given: {file_name}')
+
+    config_path = QT_ROOT_PATH + 'qteasy/config/'
+    if not os.path.exists(config_path):
+        logger_core.warning(f'target directory does not exist, will create one')
+        os.makedirs(config_path)
+    if overwrite:
+        open_method = 'wb'  # overwrite the file
+    else:
+        open_method = 'xb'  # raise if file already existed
+    with open(config_path + file_name, open_method) as f:
+        try:
+            pickle.dump(config, f, pickle.HIGHEST_PROTOCOL)
+            logger_core.info(f'file content written: {f.name}')
+        except Exception as e:
+            logger_core.warning(f'{e}, error during writing config to local file.')
+
+
+def load_config(config=None, file_name=None):
+    """ 从文件file_name中读取相应的config参数，写入到config中，如果config为
+        None，则保存参数到QT_CONFIG中
+
+    :param config: ConfigDict 对象
+        一个config对象，默认None，如果为None，则保存QT_CONFIG
+
+    :param file_name: str
+        文件名，默认None，如果为None，文件名为qteasy.cnf
+    :return:
+    """
+    from qteasy import logger_core
+    from qteasy import QT_ROOT_PATH
+    import pickle
+
+    if config is None:
+        config = QT_CONFIG
+    if not isinstance(config, ConfigDict):
+        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+
+    if file_name is None:
+        file_name = 'saved_config.cnf'
+    if not isinstance(file_name, str):
+        raise TypeError(f'file_name should be a string, got {type(file_name)} instead.')
+    import re
+    if not re.match('[a-zA-Z_]\w+\.cnf$', file_name):
+        raise ValueError(f'invalid file name given: {file_name}')
+
+    try:
+        with open(QT_ROOT_PATH + 'qteasy/config/' + file_name, 'rb') as f:
+            saved_config = pickle.load(f)
+            logger_core.info(f'read configuration file: {f.name}')
+    except FileNotFoundError as e:
+        logger_core.warning(f'{e}\nError during loading {file_name}! nothing will be read.')
+        saved_config = {}
+
+    configure(config, **saved_config)
+
+
+def reset_config(config=None):
+    """ 重设config对象，将所有的参数都设置为默认值
+        如果config为None，则重设QT_CONFIG
+
+    :param config:
+    :return:
+    """
+    from qteasy import logger_core
+    if config is None:
+        config = QT_CONFIG
+    if not isinstance(config, ConfigDict):
+        raise TypeError(f'config should be a ConfigDict, got {type(config)} instead.')
+    logger_core.info(f'{config} is now reset to default values.')
+    configure(config, reset=True)
+
+
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
 # TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
     :param: operator: Operator对象，
-    :param: config, dict 参数字典
+    :param: config, ConfigDict 参数字典
     :return:
         hist_op:            type: HistoryPanel, 用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
         hist_loop:          type: pd.DataFrame, 用于回测模式投资策略回测的历史价格数据，包含所有回测股票的所有交易价格数据
@@ -1206,6 +1339,7 @@ def check_and_prepare_hist_data(operator, config):
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+# noinspection PyTypeChecker
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
 
@@ -1409,9 +1543,11 @@ def run(operator, **kwargs):
                             4: _search_gradient,
                             5: _search_particles
                             }
-    # 如果函数调用时用户给出了关键字参数(**kwargs），则首先处理关键字参数，将所有的关键字参数赋值给QT_CONFIG变量，用于运行参数配置
-    configure(**kwargs)
-    config = QT_CONFIG
+    # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，
+    # 覆盖QT_CONFIG的设置，但是仅本次运行有效
+    config = ConfigDict(**QT_CONFIG)
+    configure(config=config, **kwargs)
+    # config = QT_CONFIG
 
     # 赋值给参考数据和运行模式
     reference_data_type = config.reference_asset
