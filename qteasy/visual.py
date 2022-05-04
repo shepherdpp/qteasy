@@ -642,8 +642,6 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
 def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None):
     """ 返回一只股票在全部历史区间上的价格数据，生成一个pd.DataFrame. 包含open, high, low, close, volume 五组数据
         并返回股票的名称。
-        TODO: 清洗数据：如果ohlc数据中包含少量异常数据时，填充异常数据，
-        TODO: 生成close或nav数据以便生成折线图
 
     :param stock: 股票代码
     :param asset_type: 资产类型，E——股票，F——期货，FD——基金，IDX——指数, OPT——期权
@@ -1140,7 +1138,7 @@ def _plot_loop_result(loop_results: dict, config):
 
 
 # TODO: like _print_test_result, take the evaluate results on both opti and test hist data
-# TODO: and commit comparison base on these two data sets
+#  and commit comparison base on these two data sets
 def _plot_test_result(opti_eval_res: list,
                       test_eval_res: list = None,
                       config=None):
@@ -1487,7 +1485,7 @@ def _print_loop_result(loop_results=None, columns=None, headers=None, formatter=
 
 
 # TODO: like _plot_test_result, take the evaluate results on both opti and test hist data
-# TODO: and commit comparison base on these two data sets
+#  and commit comparison base on these two data sets
 def _print_test_result(result, config=None, columns=None, headers=None, formatter=None):
     """ 以表格形式格式化输出批量数据结果，输出结果的格式和内容由columns，headers，formatter等参数控制，
         输入的数据包括多组同样结构的数据，输出时可以选择以统计结果的形式输出或者以表格形式输出，也可以同时

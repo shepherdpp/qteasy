@@ -52,7 +52,6 @@ class Strategy:
                  window_length: int = 270,
                  data_types: [str, list] = 'close',
                  bt_price_type: str = 'close',
-                 reference_data: str = 'none',
                  reference_data_types: [str, list] = ''):
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
 
@@ -141,7 +140,6 @@ class Strategy:
         self._data_types = data_types
         self._bt_price_type = None
         self.set_hist_pars(bt_price_type=bt_price_type)
-        self._reference_data = reference_data
         if isinstance(reference_data_types, str):
             reference_data_types = str_to_list(reference_data_types, ',')
         self._reference_data_types = reference_data_types
@@ -271,6 +269,15 @@ class Strategy:
         self.set_hist_pars(data_types=data_types)
 
     @property
+    def history_data_types(self):
+        """data_types的别名"""
+        return self._data_types
+
+    @history_data_types.setter
+    def history_data_types(self, data_types):
+        self.set_hist_pars(data_types=data_types)
+
+    @property
     def bt_price_type(self):
         """策略回测时所使用的价格类型"""
         return self._bt_price_type
@@ -279,6 +286,29 @@ class Strategy:
     def bt_price_type(self, price_type):
         """ 设置策略回测室所使用的价格类型"""
         self.set_hist_pars(bt_price_type=price_type)
+
+    @property
+    def bt_price_types(self):
+        """策略回测时所使用的价格类型，bt_price_type的别名"""
+        return self._bt_price_type
+
+    @bt_price_types.setter
+    def bt_price_types(self, price_type):
+        """ 设置策略回测室所使用的价格类型"""
+        self.set_hist_pars(bt_price_type=price_type)
+
+    @property
+    def reference_data_types(self):
+        """ 返回策略的参考数据类型，如果不需要参考数据，返回空列表
+
+        :return:
+        """
+        return self._reference_data_types
+
+    @reference_data_types.setter
+    def reference_data_types(self, ref_types):
+        """ 设置策略的参考数据类型"""
+        self.set_hist_pars(reference_data_types=ref_types)
 
     def __str__(self):
         """打印所有相关信息和主要属性"""
@@ -358,7 +388,13 @@ class Strategy:
             self._par_bounds_or_enums = par_boes
         return par_boes
 
-    def set_hist_pars(self, data_freq=None, sample_freq=None, window_length=None, data_types=None, bt_price_type=None):
+    def set_hist_pars(self,
+                      data_freq=None,
+                      sample_freq=None,
+                      window_length=None,
+                      data_types=None,
+                      bt_price_type=None,
+                      reference_data_types=None):
         """ 设置策略的历史数据回测相关属性
 
         :param data_freq: str,
@@ -397,6 +433,12 @@ class Strategy:
             assert isinstance(bt_price_type, str), f'Wrong input type, price_type should be a string, got {type(bt_price_type)}'
             assert bt_price_type in self.AVAILABLE_BT_PRICE_TYPES, f'Wrong input type, {bt_price_type} is not a valid price type'
             self._bt_price_type = bt_price_type
+        if reference_data_types is not None:
+            if isinstance(data_types, str):
+                reference_data_types = str_to_list(reference_data_types, ',')
+            assert isinstance(reference_data_types, list), \
+                f'TypeError, data type should be a list, got {type(reference_data_types)} instead'
+            self._reference_data_types = reference_data_types
 
     def set_custom_pars(self, **kwargs):
         """如果还有其他策略参数或用户自定义参数，在这里设置"""
@@ -456,7 +498,7 @@ class Strategy:
             return seg_pos, seg_lens, len(seg_pos) - 1
 
     @abstractmethod
-    def generate(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
+    def generate_batch(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
         """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
         # check input data types
         assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
@@ -481,6 +523,14 @@ class Strategy:
             assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
             # assert all([isinstance(date, pd.Timestamp) for date in dates]), \
             #     f'TYpeError, all elements in dates should be Timestamp, got otherwise'
+
+    def generate_step(self, hist_data):
+        """
+
+        :param hist_data:
+        :return:
+        """
+        pass
 
 
 class RollingTiming(Strategy):
@@ -635,7 +685,7 @@ class RollingTiming(Strategy):
         cat[np.isnan(cat)] = 0
         return cat[self.window_length:]
 
-    def generate(self, hist_data: np.ndarray, shares=None, dates=None):
+    def generate_batch(self, hist_data: np.ndarray, shares=None, dates=None):
         """ 生成整个股票价格序列集合的多空状态历史矩阵，采用滚动计算的方法，确保每一个时间点上的信号都只与它之前的一段历史数据有关
 
             本方法基于np的ndarray计算，是择时策略的打包方法。
@@ -649,7 +699,7 @@ class RollingTiming(Strategy):
             L/S mask: ndarray, 所有股票在整个历史区间内的所有多空信号矩阵，包含M行N列，每行是一个时间点上的多空信号，每列一只股票
         """
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
-        super().generate(hist_data, shares, dates)
+        super().generate_batch(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -734,8 +784,8 @@ class SimpleSelecting(Strategy):
         raise NotImplementedError
 
     # TODO：需要重新定义SimpleSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
-    # TODO: 使函数的定义符合继承类的抽象方法定义规则
-    def generate(self, hist_data: np.ndarray, shares, dates):
+    #  使函数的定义符合继承类的抽象方法定义规则
+    def generate_batch(self, hist_data: np.ndarray, shares, dates):
         """
         生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
         建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
@@ -749,7 +799,7 @@ class SimpleSelecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        super().generate(hist_data, shares, dates)
+        super().generate_batch(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合
@@ -857,7 +907,7 @@ class SimpleTiming(Strategy):
 
         input:
             :param hist_slice: 历史数据切片，一只个股的所有类型历史数据，shape为(rows, columns)
-                rows： 历史数据行数，每行包含个股在每一个时间点上的历史数据
+                rows： 历史数据行数，每行包含个股在该时间点上的历史数据
                 columns： 历史数据列数，每列一类数据如close收盘价、open开盘价等
             :param pars: 策略生成参数，将被原样传递到_realize()函数中
         :return:
@@ -883,7 +933,7 @@ class SimpleTiming(Strategy):
         cat[np.isnan(cat)] = 0
         return cat
 
-    def generate(self, hist_data, shares=None, dates=None):
+    def generate_batch(self, hist_data, shares=None, dates=None):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
 
@@ -899,7 +949,7 @@ class SimpleTiming(Strategy):
             shares = []
         if dates is None:
             dates = []
-        super().generate(hist_data, shares, dates)
+        super().generate_batch(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -918,8 +968,8 @@ class SimpleTiming(Strategy):
         return res[self.window_length:, :]
 
 
-#TODO: 应该使用SimpleSelecting作为父类创建FactoralSelecting类
-#TODO: 因为它们的核心代码都是一样的
+# TODO: 应该使用SimpleSelecting作为父类创建FactoralSelecting类
+#  因为它们的核心代码都是一样的
 class FactoralSelecting(Strategy):
     """ 因子选股，根据用户定义获选择的因子
 
@@ -1105,8 +1155,8 @@ class FactoralSelecting(Strategy):
         return chosen
 
     # TODO：需要重新定义FactoralSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
-    # TODO: 使函数的定义符合继承类的抽象方法定义规则
-    def generate(self, hist_data: np.ndarray, shares, dates):
+    #  使函数的定义符合继承类的抽象方法定义规则
+    def generate_batch(self, hist_data: np.ndarray, shares, dates):
         """
         生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
         建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
@@ -1120,7 +1170,7 @@ class FactoralSelecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        super().generate(hist_data, shares, dates)
+        super().generate_batch(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性

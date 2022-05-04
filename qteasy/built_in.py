@@ -2062,18 +2062,10 @@ class RiconUrgent(stg.SimpleTiming):
                                        'pct)\nN as days, pct as percent drop '
         assert isinstance(hist_data, np.ndarray), \
             f'Type Error: input historical data should be ndarray, got {type(hist_data)}'
-        # debug
-        # print(f'hist data: \n{hist_data}')
         day, drop = self._pars
         h = hist_data
         diff = (h - np.roll(h, day)) / h
         diff[:day] = h[:day]
-        # debug
-        # print(f'input array got in Ricon.generate() is shaped {hist_data.shape}')
-        # print(f'and the hist_data is converted to shape {h.shape}')
-        # print(f'diff result:\n{diff}')
-        # print(f'created array in ricon generate() is shaped {diff.shape}')
-        # print(f'created array in ricon generate() is {np.where(diff < drop)}')
         return np.where(diff < drop, -1, 0).squeeze()
 
 

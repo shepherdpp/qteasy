@@ -90,8 +90,8 @@ class HistoryPanel():
         """
 
         # TODO: 在生成HistoryPanel时如果只给出data或者只给出data+columns，生成HistoryPanel打印时会报错，问题出在to_dataFrame()上
-        # TODO: 在生成HistoryPanel时传入的ndarray会被直接用于HistoryPanel，如果事后修改这个ndarray，HistoryPanel也会改变
-        # TODO: 应该考虑是否在创建HistoryPanel时生成ndarray的一个copy而不是使用其自身 。
+        #  在生成HistoryPanel时传入的ndarray会被直接用于HistoryPanel，如果事后修改这个ndarray，HistoryPanel也会改变
+        #  应该考虑是否在创建HistoryPanel时生成ndarray的一个copy而不是使用其自身 。
         if (not isinstance(values, np.ndarray)) and (values is not None):
             raise TypeError(f'input value type should be numpy ndarray, got {type(values)}')
 
@@ -227,12 +227,12 @@ class HistoryPanel():
     def hdates(self):
         """获取HistoryPanel的历史日期时间戳list"""
         # TODO: Maybe: 可以将返回值包装成一个pandas.Index对象，
-        # TODO: 这样有更多方便好用的方法和属性可用
-        # TODO: 例如
-        # TODO: return pd.Index(self._rows.keys())
-        # TODO: 这样就可以用 HP.hdates.date / HP.hdates.where()
-        # TODO: 等等方法和属性了
-        # TODO: shares 和 htypes 属性也可以如法炮制
+        #  这样有更多方便好用的方法和属性可用
+        #  例如
+        #  return pd.Index(self._rows.keys())
+        #  这样就可以用 HP.hdates.date / HP.hdates.where()
+        #  等等方法和属性了
+        #  shares 和 htypes 属性也可以如法炮制
         if self.is_empty:
             return 0
         else:
@@ -876,7 +876,7 @@ def dataframe_to_hp(df: pd.DataFrame,
     assert column_type in available_column_types, f'column_type should be a string in ["shares", "htypes"], ' \
                                                   f'got {type(column_type)} instead!'
     # TODO: Temp codes, implement this method when column_type is not given -- the column type should be infered
-    # TODO: by the input combination of shares and htypes
+    #  by the input combination of shares and htypes
     if column_type is None:
         if shares is None:
             htype_list = []

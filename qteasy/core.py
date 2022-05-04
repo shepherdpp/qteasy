@@ -67,7 +67,7 @@ AVAILABLE_SHARE_EXCHANGES = ['SZSE', 'SSE']
 
 
 # TODO: Usability improvements:
-# TODO: 使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
+#  使用C实现回测的关键功能，并用python接口调用，以实现速度的提升，或者使用numba实现加速
 # @njit
 def _loop_step(signal_type: int,
                own_cash: float,
@@ -999,7 +999,7 @@ def get_table_info(table_name, verbose):
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
-# TODO: config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
+#  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
 def is_ready(**kwargs):
     """ 检查QT_CONFIG以及Operator对象，确认qt.run()是否具备基本运行条件
 
@@ -1186,7 +1186,7 @@ def reset_config(config=None):
 
 
 # TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
-# TODO: 不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
+#  不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
@@ -1583,7 +1583,8 @@ def run(operator, **kwargs):
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
         operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
-        op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
+        # TODO: 下面的交易信号生成方式应该采用更加general的operator.create_signal_step()
+        op_list = operator.create_batch_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
         _print_operation_signal(op_list=op_list,
@@ -1907,7 +1908,7 @@ def _evaluate_one_parameter(par,
         res_dict['par'] = par
     # 生成交易清单并进行模拟交易生成交易记录
     st = time.time()
-    op_list = op.create_signal(op_history_data)
+    op_list = op.create_batch_signal(op_history_data)
     et = time.time()
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time

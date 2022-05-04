@@ -110,7 +110,7 @@ def blender_parser(blender_string):
         :rtype: list: 前缀表达式
     """
     # TODO: 将所有与表达式解析相关的函数移到新的parser模块中
-    # TODO: 建立新的相关类，如表达式类、token类、function类、stack类等方便运算
+    #  建立新的相关类，如表达式类、token类、function类、stack类等方便运算
     prio = {'|':   0,
             'or':  0,
             '&':   1,

@@ -12,6 +12,7 @@
 import warnings
 
 import numpy as np
+from numpy.lib.stride_tricks import as_strided
 import pandas as pd
 
 from .finance import CashPlan
@@ -284,7 +285,10 @@ class Operator:
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
         self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
         self._strategies = {}  # Dict——保存实际的交易策略对象
-        self._op_history_data = {}  # Dict——保存供各个策略进行交易信号生成的历史数据（ndarray）
+        self._op_history_data = {}  # Dict——保存供各个策略进行交易信号生成的历史数据（ndarray，与个股有关）
+        self._op_hist_data_rolling_windows = {}  # Dict——保存各个策略的历史数据滚动窗口（ndarray view, 与个股有关）
+        self._op_reference_data = {}  # Dic——保存供各个策略进行交易信号生成的参考数据（ndarray，与个股无关）
+        self._op_ref_data_rolling_windows = {}  # Dict——保存各个策略的参考数据滚动窗口（ndarray view，与个股无关）
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
@@ -409,10 +413,19 @@ class Operator:
 
     @property
     def op_history_data(self):
-        """ 返回一个列表，这个列表中的每个元素都是ndarray，每个ndarray中包含了
-        可以用于signal generation 的历史数据，且这些历史数据的类型与op_data_type_list
-        中规定的数据类型相同，历史数据跨度满足信号生成的需求"""
+        """ 返回一个Dict，包含每个策略所需要的history_data，每个ndarray中包含了
+        可以用于生成交易信号的历史数据，且这些历史数据的类型与op_data_type_list
+        中规定的数据类型相同，历史数据跨度满足信号生成的需求
+        """
         return self._op_history_data
+
+    @property
+    def op_reference_data(self):
+        """ 返回一个Dict，包含每个策略所需要的reference_data，用于生成相应的历史数据
+
+        :return:
+        """
+        return self._op_reference_data
 
     @property
     def opt_space_par(self):
@@ -535,6 +548,15 @@ class Operator:
         """
         return self[stg_id]
 
+    def get_strategy_id_pairs(self):
+        """ 返回一个generator，包含op中所有strategy和id对：
+
+        zip(['stg_id1', 'stg_id2', 'stg_id3'], [Stg(1), Stg(2), Stg(3)]
+
+        :return:
+        """
+        return zip(self._strategy_id, self.strategies)
+
     def add_strategies(self, strategies):
         """ 添加多个Strategy交易策略到Operator对象中
         使用这个方法，不能在添加交易策策略的同时修改交易策略的基本属性
@@ -649,7 +671,7 @@ class Operator:
         如果给出price_type时，返回使用该price_type的所有策略的历史数据
 
         :param price_type: str 一个可用的price_type
-
+        :return List
         """
         all_hist_data = self._op_history_data
         if price_type is None:
@@ -657,6 +679,20 @@ class Operator:
         else:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
+
+    def get_op_ref_data_by_price_type(self, price_type=None):
+        """ 返回Operator对象中每个strategy对应的交易信号参考数据，price_type是一个可选参数
+        如果给出price_type时，返回使用该price_type的所有策略的参考数据
+
+        :param price_type: str 一个可用的price_type
+        :return: List
+        """
+        all_ref_data = self._op_reference_data
+        if price_type is None:
+            return list(all_ref_data.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
@@ -843,7 +879,7 @@ class Operator:
         """返回operator对象中的多空蒙板混合器, 如果不指定price_type的话，输出完整的blender字典
 
         :param price_type: str 一个可用的price_type
-
+        :return Dict
         """
         if price_type is None:
             return self._stg_blender
@@ -986,9 +1022,16 @@ class Operator:
                 stg.info()
             print('=' * 25)
 
-    # TODO 临时性使用cashplan作为参数之一，理想中应该只用一个"start_date"即可，这个Start_date可以在core.run()中具体指定，因为
-    # TODO 在不同的运行模式下，start_date可能来源是不同的：
-    def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan):
+    def is_ready(self):
+        """ 全面检查op是否可以开始运行，
+
+        :return: bool
+        """
+        return False
+
+    # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_chec）在另一个函数里检查
+    #  op.is_ready（）
+    def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
             检查hist_data历史数据的类型正确；
@@ -1008,7 +1051,9 @@ class Operator:
         :param hist_data:
             :type hist_data: HistoryPanel
             历史数据,一个HistoryPanel对象，应该包含operator对象中的所有策略运行所需的历史数据，包含所有
-            个股所有类型的数据，例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
+            个股所有类型的数据，
+
+            例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
                 策略        所需数据类型
                 ------------------------------
                 策略A:   close, open, high
@@ -1021,36 +1066,63 @@ class Operator:
             :type cash_plan: CashPlan
             一个投资计划，临时性加入，在这里仅检查CashPlan与历史数据区间是否吻合，是否会产生数据量不够的问题
 
+        :param reference_data:
+            :type reference_data: HistoryPanel
+            参考数据，默认None。一个HistoryPanel对象，这些数据被operator对象中的策略用于生成交易信号，但是与history_data
+            不同，参考数据与个股无关，可以被所有个股同时使用，例如大盘指数、宏观经济数据等都可以作为参考数据，某一个个股
+            的历史数据也可以被用作参考数据，参考数据可以被所有个股共享。reference_data包含所有策略所需的参考数据。
+
+            例如，operator对象中存在两个交易策略，分别需要的数据类型如下：
+                策略        所需数据类型
+                ------------------------------
+                策略A:   000300.SH (IDX)
+                策略B:   601993.SH (IDX)
+
+            reference_data中就应该包含000300.SH(IDX), 601993.SH(IDX)四种类型的数据
+            数据覆盖的时间段和时间频率也必须符合上述要求
+
         :return:
             None
         """
+        from qteasy import logger_core
+        logger_core.debug(f'starting prepare operator history data')
         # 确保输入的历史数据是HistoryPanel类型
         if not isinstance(hist_data, HistoryPanel):
-            raise TypeError(f'Historical data should be HistoryPanel, got {type(hist_data)}')
+            raise TypeError(f'Historical data should be a HistoryPanel, got {type(hist_data)} instead.')
         # 确保cash_plan的数据类型正确
         if not isinstance(cash_plan, CashPlan):
             raise TypeError(f'cash plan should be CashPlan object, got {type(cash_plan)}')
         # 确保输入的历史数据不为空
         if hist_data.is_empty:
             raise ValueError(f'history data can not be empty!')
+        # 如果reference_data不为空
+        if reference_data is not None:
+            # 确保输入的参考数据类型正确
+            if not isinstance(reference_data, HistoryPanel):
+                raise TypeError(f'Reference data should be a HistoryPanel, got {type(reference_data)} instead.')
+            # 确保输入的参考数据不为空
+            if reference_data.is_empty:
+                raise ValueError(f'reference data can not be empty!')
+            # 确保reference_data与hist_data的数据量相同
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
-        # TODO: 这里应该提高容错度，设置更好的回测历史区间设置方法，尽量使用户通过较少的参数设置就能完成基
-        # TODO: 本的运行，不用过分强求参数之间的关系完美无缺，如果用户输入的参数之间有冲突，根据优先级调整
-        # TODO: 相关参数即可，毋须责备求全。
-        # TODO: 当运行模式为0时，不需要判断cash_pos与max_window_length的关系
-        assert first_cash_pos >= self.max_window_length, \
-            f'InputError, History data starts on {hist_data.hdates[0]} does not have enough data to cover' \
-            f' first cash date {cash_plan.first_day}, ' \
-            f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
+        if not first_cash_pos >= self.max_window_length:
+            message = f'History data starts on {hist_data.hdates[0]} does not have' \
+                      f' enough data to cover first cash date {cash_plan.first_day}, ' \
+                      f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
+            logger_core.error(message)
+            raise ValueError(message)
         # 确保最后一个投资日也在输入的历史数据范围内
         # TODO: 这里应该提高容错度，如果某个投资日超出了历史数据范围，可以丢弃该笔投资，仅输出警告信息即可
-        # TODO: 没必要过度要求用户的输入完美无缺。
-        assert last_cash_pos < len(hist_data.hdates), \
-            f'InputError, Not enough history data record to cover complete investment plan, history data ends ' \
-            f'on {hist_data.hdates[-1]}, last investment on {cash_plan.last_day}'
+        #  没必要过度要求用户的输入完美无缺。
+        if not last_cash_pos < len(hist_data.hdates):
+            message = f'Not enough history data record to cover complete investment plan,' \
+                      f' history data ends on {hist_data.hdates[-1]}, last investment ' \
+                      f'on {cash_plan.last_day}'
+            logger_core.error(message)
+            raise ValueError(message)
         # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
         hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
         invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
@@ -1058,38 +1130,80 @@ class Operator:
             # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
             nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
             cash_plan.reset_dates(nearest_next)
+            logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
+                                f'trade dates')
         # 确保op的策略都设置了参数
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
         # 确保op的策略都设置了混合方式，在未设置混合器时，混合器是一个空dict
         if self.strategy_blenders == {}:
-            warnings.warn(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
+            logger_core.warning(f'User-defined Signal blenders do not exist, default ones will be created!', UserWarning)
             # 如果op对象尚未设置混合方式，则根据op对象的回测历史数据类型生成一组默认的混合器blender：
             # 每一种回测价格类型都需要一组blender，每个blender包含的元素数量与相应的策略数量相同
             for price_type in self.bt_price_types:
                 stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
                 self.set_blender(price_type=price_type,
                                  blender='+'.join(map(str, range(stg_count_for_price_type))))
-        # 使用循环方式，将相应的数据切片与不同的交易策略关联起来
-        self._op_history_data = {stg_id: hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
-                                 for stg_id, stg in zip(self._strategy_id, self.strategies)}
+        # TODO: remove these duplicates
+        # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
+        self._op_history_data = {
+            stg_id: hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+            for stg_id, stg in self.get_strategy_id_pairs()
+        }
+        # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的有限窗口数据）
+        self._op_hist_data_rolling_windows = {}
+        for stg_id, stg in self.get_strategy_id_pairs():
+            # 逐个生成滚动窗口，赋值给各个策略
+            window_length = stg.window_length
+            hist_data = self._op_history_data[stg_id]
+            loop_count = len(hist_data) - window_length + 1
+            self._op_ref_data_rolling_windows[stg_id] = as_strided(
+                    hist_data,
+                    shape=(loop_count, *hist_data[:window_length].shape),
+                    strides=(hist_data.strides[0], *hist_data.strides),
+                    subok=False,
+                    writeable=False)
+
+        # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（3D数据）
+        self._op_reference_data = {
+            stg_id: reference_data[stg.refence_data_types, :, (first_cash_pos - stg.window_length):]
+            for stg_id, stg in self.get_strategy_id_pairs()
+        }
+        # 为每一个交易策略分配所需的参考数据滚动窗口（4D数据）
+        self._op_ref_data_rolling_windows = {}
+        for stg_id, stg in self.get_strategy_id_pairs():
+            # 逐个生成滚动窗口
+            window_length = stg.window_length
+            ref_data = self._op_reference_data[stg_id]
+            loop_count = len(ref_data) - window_length + 1
+            self._op_ref_data_rolling_windows[stg_id] = as_strided(
+                    ref_data,
+                    shape=(loop_count, *ref_data[:window_length].shape),
+                    strides=(ref_data.strides[0], *ref_data.strides),
+                    subok=False,
+                    writeable=False)
 
     # TODO: 需要调查：
-    # TODO: 为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
-    # TODO: hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
-    # TODO: 需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
-    # TODO: ————上述问题的原因是生成的交易信号仍然被转化为DataFrame，shares和dates被作为列标签和行标签传入DataFrame，进而
-    # TODO: 被用于消除不需要的行，同时还保证原始行号信息不丢失。在新的架构下，似乎可以不用创建一个DataFrame对象，直接返回ndarray
-    # TODO: 这样不仅可以消除参数hist_data的使用，还能进一步提升速度
-    def create_signal(self, hist_data: HistoryPanel):
-        """生成交易信号：
+    #  为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
+    #  hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
+    #  需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
+    #  ————上述问题的原因是生成的交易信号仍然被转化为HistoryPanel，shares和dates被作为列标签和行标签传入DataFrame，进而
+    #  被用于消除不需要的行，同时还保证原始行号信息不丢失。在新的架构下，似乎可以不用创建一个DataFrame对象，直接返回ndarray
+    #  这样不仅可以消除参数hist_data的使用，还能进一步提升速度
+    def create_batch_signal(self, hist_data: HistoryPanel):
+        """ 生成批量交易信号，调用operator中的全部历史数据，遍历整个历史数据，生成每一个历史时间点上的交易信号，
+            将所有的历史交易信号汇总成一张交易清单：
+
             遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
             如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
             如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
 
+            在生成交易信号之前需要调用prepare_data准备好相应的历史数据
 
-
-            在生成交易信号之前需要调用prepare_data准备好相应的
+            输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
+            levels = shares
+            columns = price_types
+            rows = hdates
 
         input:
         :param hist_data:
@@ -1132,9 +1246,9 @@ class Operator:
             relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
             for stg, dt in zip(relevant_strategies, relevant_hist_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
                 # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
-                # TODO: sel.generate()函数的signature与tmg.generate()和ricon.generate()一致
+                #  sel.generate_batch()函数的signature与tmg.generate_batch()和ricon.generate_batch()一致
                 history_length = dt.shape[1]
-                signal = stg.generate(hist_data=dt, shares=shares, dates=date_list[-history_length:])
+                signal = stg.generate_batch(hist_data=dt, shares=shares, dates=date_list[-history_length:])
                 if signal_type in ['ps', 'vs']:
                     signal = fill_nan_data(signal, 0)
                 elif signal_type == 'pt':
@@ -1154,9 +1268,34 @@ class Operator:
         signal_hp_value = np.zeros((*blended_signal.T.shape, bt_price_type_count))
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_hp_value[:, :, i] = signal_out[bt_price_type].T
+
+        # 实验性质，create_batch_signal仅返回一个ndarray，以提升效率，并消除hist_data参数
         history_length = signal_hp_value.shape[1]  # find hdate series
         signal_hp = HistoryPanel(signal_hp_value,
                                  levels=shares,
                                  columns=bt_price_types,
                                  rows=date_list[-history_length:])
         return signal_hp
+
+    def create_step_signal(self, trade_time_index, trade_data):
+        """ 生成单步交易信号。
+            给定一个step_number，回溯到历史数据中的一个时间点，提取该时间点的数据窗口切片
+            生成这个时间点的交易信号，在生成交易信号时同时考虑成交情况。成交情况数据包括当前
+            的成交量、成交额等信息，以参数形式给出。
+
+            遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
+            如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
+            如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
+
+            在生成交易信号之前需要调用prepare_data准备好相应的历史数据
+
+            输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
+            levels = shares
+            columns = price_types
+            rows = hdates 只有一行
+
+        :param trade_time_index:
+        :param trade_data:
+        :return:
+        """
+        raise NotImplementedError

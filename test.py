@@ -6996,7 +6996,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal(hist_data=self.hp1)
+        op_list = self.op.create_batch_signal(hist_data=self.hp1)
 
         self.assertTrue(isinstance(op_list, HistoryPanel))
         backtest_price_types = op_list.htypes
@@ -7083,7 +7083,7 @@ class TestOperator(unittest.TestCase):
                          {'close': ['*', '1', '0'],
                           'open':  ['or', '1', '0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal(hist_data=self.hp1)
+        op_list = self.op.create_batch_signal(hist_data=self.hp1)
 
         self.assertTrue(isinstance(op_list, HistoryPanel))
         signal_close = op_list['close'].squeeze().T
@@ -7490,7 +7490,7 @@ class TestOperator(unittest.TestCase):
                     '000300': (5, 6)}
         stg.set_pars(stg_pars)
         history_data = self.hp1.values
-        output = stg.generate(hist_data=history_data)
+        output = stg.generate_batch(hist_data=history_data)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7541,7 +7541,7 @@ class TestOperator(unittest.TestCase):
                            [0., 1., 1.],
                            [0., 1., 1.]])
         # TODO: Issue to be solved: the np.nan value are converted to 0 in the lsmask，这样做可能会有意想不到的后果
-        # TODO: 需要解决nan值的问题
+        #  需要解决nan值的问题
         self.assertEqual(output.shape, lsmask.shape)
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
@@ -7556,7 +7556,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
         self.assertEqual(seg_count, 8)
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7615,7 +7615,7 @@ class TestOperator(unittest.TestCase):
         stg_pars = (0.2, 0.02, -0.02)
         stg.set_pars(stg_pars)
         history_data = self.hp1['close, open, high, low', :, 3:50]
-        output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
+        output = stg.generate_batch(hist_data=history_data, shares=self.shares, dates=self.date_indices)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7696,7 +7696,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
         self.assertEqual(seg_count, 8)
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7763,7 +7763,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0.5, 0.5, 0.0],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7827,7 +7827,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0.0, 0.33333333, 0.66666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7887,7 +7887,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0., 0.08333333, 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7947,7 +7947,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -8563,8 +8563,8 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_hp_join(self):
         # TODO: 这里需要加强，需要用具体的例子确认hp_join的结果正确
-        # TODO: 尤其是不同的shares、htypes、hdates，以及它们在顺
-        # TODO: 序不同的情况下是否能正确地组合
+        #  尤其是不同的shares、htypes、hdates，以及它们在顺
+        #  序不同的情况下是否能正确地组合
         print(f'join two simple HistoryPanels with same shares')
         temp_hp = self.hp.join(self.hp2, same_shares=True)
         self.assertIsInstance(temp_hp, qt.HistoryPanel)
