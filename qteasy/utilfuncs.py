@@ -992,10 +992,9 @@ def rolling_window(arr, window, axis=0):
     if window > axis_length:
         raise ValueError(f'window too long, should be less than or equal to axis_length ({axis_length})')
     window_count = axis_length - window + 1
-    shape[axis] -= window - 1
+    shape[axis] = window
     target_shape = (window_count, *shape)
     target_strides = (strides[axis], *strides)
-    import pdb; pdb.set_trace()
     return as_strided(arr,
                       shape=target_shape,
                       strides=target_strides,

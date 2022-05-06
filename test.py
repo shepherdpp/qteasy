@@ -9459,8 +9459,105 @@ class TestUtilityFuncs(unittest.TestCase):
                             [0, 1, 2]]])
         self.assertTrue(np.allclose(window, target))
         # test 3d array
+        arr = np.array([[[1, 2, 3, 4],
+                         [5, 6, 7, 8],
+                         [9, 0, 1, 2]],
+
+                        [[3, 4, 5, 6],
+                         [7, 8, 9, 0],
+                         [1, 2, 3, 4]],
+
+                        [[5, 6, 7, 8],
+                         [9, 0, 1, 2],
+                         [3, 4, 5, 6]]])
+        window = rolling_window(arr, window=2, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[[1, 2, 3, 4],
+                             [5, 6, 7, 8],
+                             [9, 0, 1, 2]],
+
+                            [[3, 4, 5, 6],
+                             [7, 8, 9, 0],
+                             [1, 2, 3, 4]]],
+
+                           [[[3, 4, 5, 6],
+                             [7, 8, 9, 0],
+                             [1, 2, 3, 4]],
+
+                            [[5, 6, 7, 8],
+                             [9, 0, 1, 2],
+                             [3, 4, 5, 6]]]])
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=2, axis=1)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[[1, 2, 3, 4],
+                             [5, 6, 7, 8]],
+
+                            [[3, 4, 5, 6],
+                             [7, 8, 9, 0]],
+
+                            [[5, 6, 7, 8],
+                             [9, 0, 1, 2]]],
+
+                           [[[5, 6, 7, 8],
+                             [9, 0, 1, 2]],
+
+                            [[7, 8, 9, 0],
+                             [1, 2, 3, 4]],
+
+                            [[9, 0, 1, 2],
+                             [3, 4, 5, 6]]]])
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=3, axis=2)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[[1, 2, 3],
+                             [5, 6, 7],
+                             [9, 0, 1]],
+
+                            [[3, 4, 5],
+                             [7, 8, 9],
+                             [1, 2, 3]],
+
+                            [[5, 6, 7],
+                             [9, 0, 1],
+                             [3, 4, 5]]],
+
+                           [[[2, 3, 4],
+                             [6, 7, 8],
+                             [0, 1, 2]],
+
+                            [[4, 5, 6],
+                             [8, 9, 0],
+                             [2, 3, 4]],
+
+                            [[6, 7, 8],
+                             [0, 1, 2],
+                             [4, 5, 6]]]
+                           ])
+        self.assertTrue(np.allclose(window, target))
 
         # test false input
+        arr = np.array([[[1, 2, 3, 4],
+                         [5, 6, 7, 8],
+                         [9, 0, 1, 2]],
+
+                        [[3, 4, 5, 6],
+                         [7, 8, 9, 0],
+                         [1, 2, 3, 4]],
+
+                        [[5, 6, 7, 8],
+                         [9, 0, 1, 2],
+                         [3, 4, 5, 6]]])
+        self.assertRaises(TypeError, rolling_window, 1, 1, 1)
+        self.assertRaises(TypeError, rolling_window, 1, 's', 1)
+        self.assertRaises(TypeError, rolling_window, 1, 1, 's')
+        self.assertRaises(ValueError, rolling_window, arr, 1, -1)
+        self.assertRaises(ValueError, rolling_window, arr, -1, -1)
+        self.assertRaises(ValueError, rolling_window, arr, 5, 1)
+        self.assertRaises(ValueError, rolling_window, arr, 2, 3)
 
 
 class TestTushare(unittest.TestCase):
