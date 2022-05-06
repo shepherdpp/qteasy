@@ -1584,7 +1584,7 @@ def run(operator, **kwargs):
         operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         # TODO: 下面的交易信号生成方式应该采用更加general的operator.create_signal_step()
-        op_list = operator.create_batch_signal(hist_data=hist_op)  # 生成交易清单
+        op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
         _print_operation_signal(op_list=op_list,
@@ -1908,7 +1908,7 @@ def _evaluate_one_parameter(par,
         res_dict['par'] = par
     # 生成交易清单并进行模拟交易生成交易记录
     st = time.time()
-    op_list = op.create_batch_signal(op_history_data)
+    op_list = op.create_signal(op_history_data)
     et = time.time()
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time

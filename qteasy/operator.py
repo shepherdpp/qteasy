@@ -1046,7 +1046,14 @@ class Operator:
                 基础混合器（blender）
 
             然后，根据operator对象中的不同策略所需的数据类型，将hist_data数据仓库中的相应历史数据
-            切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。
+            切片后保存到operator的各个策略历史数据属性中，供operator调用生成交易清单。包括：
+
+                self._op_hist_data:
+                    交易历史数据的滑窗视图，滑动方向沿hdates，滑动间隔为1，长度为window_length
+                self._op_ref_data:
+                    交易参考数据的滑窗视图，滑动方向沿着hdates，滑动间隔为1，长度为window_length
+                self._op_sample_idx:
+                    交易信号采样点序号，默认情况下，Operator按照该序号从滑窗中取出部分，用于计算交易信号
 
         :param hist_data:
             :type hist_data: HistoryPanel
@@ -1159,8 +1166,8 @@ class Operator:
             loop_count = len(hist_data) - window_length + 1
             self._op_ref_data_rolling_windows[stg_id] = as_strided(
                     hist_data,
-                    shape=(loop_count, *hist_data[:window_length].shape),
-                    strides=(hist_data.strides[0], *hist_data.strides),
+                    shape=(loop_count, *hist_data[:, window_length].shape),
+                    strides=(hist_data.strides[1], *hist_data.strides),
                     subok=False,
                     writeable=False)
 
@@ -1178,8 +1185,8 @@ class Operator:
             loop_count = len(ref_data) - window_length + 1
             self._op_ref_data_rolling_windows[stg_id] = as_strided(
                     ref_data,
-                    shape=(loop_count, *ref_data[:window_length].shape),
-                    strides=(ref_data.strides[0], *ref_data.strides),
+                    shape=(loop_count, *ref_data[:, window_length].shape),
+                    strides=(ref_data.strides[1], *ref_data.strides),
                     subok=False,
                     writeable=False)
 
@@ -1190,13 +1197,38 @@ class Operator:
     #  ————上述问题的原因是生成的交易信号仍然被转化为HistoryPanel，shares和dates被作为列标签和行标签传入DataFrame，进而
     #  被用于消除不需要的行，同时还保证原始行号信息不丢失。在新的架构下，似乎可以不用创建一个DataFrame对象，直接返回ndarray
     #  这样不仅可以消除参数hist_data的使用，还能进一步提升速度
-    def create_batch_signal(self, hist_data: HistoryPanel):
-        """ 生成批量交易信号，调用operator中的全部历史数据，遍历整个历史数据，生成每一个历史时间点上的交易信号，
-            将所有的历史交易信号汇总成一张交易清单：
+    def create_signal(self, sample_idx=None):
+        """ 生成交易信号，
 
             遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
             如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
             如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
+
+            用于生成交易信号的历史数据存储在operator对象的下面三个属性中，在生成交易信号时直接调用。
+
+            根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
+
+            - 如果sample_idx为一个int或np.int时，进入single模式，生成单组信号
+                从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组交易信号
+                例如，假设 sample_idx = 7
+                则提取出第7组数据滑窗，生成并返回第7组交易信号
+                        array[1, 0, 0, 0, 1]
+
+            - 如果sample_idx为None（默认）或一个ndarray，进入清单模式，生成完整清单
+                生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
+                一个元素代表的滑窗会被提取出来生成相应的信号，其余的滑窗忽略，相应的信号设置为np.nan
+                例如，假设 sample_idx = np.array([0, 3, 7])
+                生成一张完整的交易信号清单，清单中第0，3，7等三组信号为使用相应的数据滑窗生成，其余的信号
+                全部为np.nan：
+                        array[[  0,   0,   0,   0,   0],
+                              [nan, nan, nan, nan, nan],
+                              [nan, nan, nan, nan, nan],
+                              [  0,   0,   1,   0,   0],
+                              [nan, nan, nan, nan, nan],
+                              [nan, nan, nan, nan, nan],
+                              [nan, nan, nan, nan, nan],
+                              [  1,   0,   0,   0,   1]]
+                当sample_idx为None时，使用self._op_sample_idx的值为采样清单
 
             在生成交易信号之前需要调用prepare_data准备好相应的历史数据
 
@@ -1205,28 +1237,16 @@ class Operator:
             columns = price_types
             rows = hdates
 
-        input:
-        :param hist_data:
-            :type hist_data: HistoryPanel
-            从数据仓库中导出的历史数据，包含多只股票在一定时期内特定频率的一组或多组数据
-            ！！但是！！
-            作为参数传入的这组历史数据并不会被直接用于交易信号的生成，用于生成交易信号的历史数据
-            存储在operator对象的下面三个属性中，在生成交易信号时直接调用，避免了每次生成交易信号
-            时再动态分配历史数据。
-                self._selecting_history_data
-                self._op_history_data
-                self._ricon_history_data
-
-        :param config:
-            :dict configuration
-            qteasy配置参数，用于控制信号生成过程中的行为细节
+        :param: sample_idx: None, int, np.int, ndarray
+            交易信号序号。
+            如果参数为int型，则只计算该序号滑窗数据的交易信号
+            如果参数为array，则计算完整的交易信号清单
 
         :return=====
             HistoryPanel
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """
-
         # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联相应的历史数据
         if not isinstance(hist_data, HistoryPanel):
             raise TypeError(f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}')
@@ -1244,6 +1264,7 @@ class Operator:
             op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
+            relevant_ref_data = self.get_op_ref_data_by_price_type(price_type=bt_price_type)
             for stg, dt in zip(relevant_strategies, relevant_hist_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
                 # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
                 #  sel.generate_batch()函数的signature与tmg.generate_batch()和ricon.generate_batch()一致
@@ -1277,25 +1298,3 @@ class Operator:
                                  rows=date_list[-history_length:])
         return signal_hp
 
-    def create_step_signal(self, trade_time_index, trade_data):
-        """ 生成单步交易信号。
-            给定一个step_number，回溯到历史数据中的一个时间点，提取该时间点的数据窗口切片
-            生成这个时间点的交易信号，在生成交易信号时同时考虑成交情况。成交情况数据包括当前
-            的成交量、成交额等信息，以参数形式给出。
-
-            遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
-            如果Operator对象拥有不止一个Strategy对象，则遍历所有策略，分别生成交易信号后，再混合成最终的信号
-            如果Operator拥有的Strategy对象交易执行价格类型不同，则需要分别混合，混合的方式可以相同，也可以不同
-
-            在生成交易信号之前需要调用prepare_data准备好相应的历史数据
-
-            输出一个ndarray，包含所有交易价格类型的各个个股的交易信号清单，一个3D矩阵
-            levels = shares
-            columns = price_types
-            rows = hdates 只有一行
-
-        :param trade_time_index:
-        :param trade_data:
-        :return:
-        """
-        raise NotImplementedError

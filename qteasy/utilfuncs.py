@@ -750,7 +750,7 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
                     full_name_matched = _wildcard_match(code, full_names)
                     code_matched[at].update(basic.loc[basic.name.isin(full_name_matched)].name.to_dict())
             else:
-                match_values = list(map(_partial_lev_ratio, [code]*len(names), names))
+                match_values = list(map(_partial_lev_ratio, [code] * len(names), names))
                 basic['match_value'] = match_values
                 sort_matched = basic.loc[basic.match_value >= 0.75].sort_values(by='match_value',
                                                                                 ascending=False)
@@ -760,14 +760,14 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
                     basic['full_name_match_value'] = full_name_match_values
                     full_name_sort_matched = \
                         basic.loc[basic.full_name_match_value >= 0.75].sort_values(
-                            by='full_name_match_value',
-                            ascending=False
-                    )
+                                by='full_name_match_value',
+                                ascending=False
+                        )
                     code_matched[at].update(full_name_sort_matched.name.to_dict())
             count += len(code_matched[at])
 
     code_matched.update({'count': count})
-    code_matched = {k:v for k, v in code_matched.items() if v != {}}
+    code_matched = {k: v for k, v in code_matched.items() if v != {}}
     return code_matched
 
 
@@ -868,10 +868,10 @@ def _partial_lev_ratio(s, t):
     l_short = len(shorter)
     l_long = len(longer)
     length = l_long - l_short + 1
-    ratios = np.zeros((length, ))
+    ratios = np.zeros((length,))
 
     for i in range(length):
-        ratios[i] = _lev_ratio(shorter, longer[i:i+l_short])
+        ratios[i] = _lev_ratio(shorter, longer[i:i + l_short])
 
     return ratios.max()
 
@@ -960,3 +960,43 @@ def fill_inf_data(val, fill_val):
     :return:
     """
     return np.where(np.isinf(val), fill_val, val)
+
+
+def rolling_window(arr, window, axis=0):
+    """ 给定一个ndarray，生成一个滑动窗口视图
+
+    :param arr:
+    :param window:
+    :param axis:
+    :return:
+        ndarray_view 输入数据的一个移动滑窗视图
+    """
+    from numpy.lib.stride_tricks import as_strided
+    if not isinstance(arr, np.ndarray):
+        raise TypeError(f'arr should be an ndarray, got {type(arr)} instead.')
+    if not isinstance(window, (int, np.int)):
+        raise TypeError(f'window should be an integer, got {type(window)} instead.')
+    if not isinstance(axis, int):
+        raise TypeError(f'axis should be an integer, got {type(axis)} instead.')
+    if window <= 0:
+        raise ValueError(f'window should be larger than 0')
+    if axis < 0:
+        raise ValueError(f'axis can not be smaller than 0')
+
+    ndim = arr.ndim
+    shape = list(arr.shape)
+    strides = arr.strides
+    if axis >= ndim:
+        raise ValueError(f'axis should be smaller than array dimension({ndim})')
+    axis_length = shape[axis]
+    if window > axis_length:
+        raise ValueError(f'window too long, should be less than or equal to axis_length ({axis_length})')
+    window_count = axis_length - window + 1
+    shape[axis] -= window - 1
+    target_shape = (window_count, *shape)
+    target_strides = (strides[axis], *strides)
+    import pdb; pdb.set_trace()
+    return as_strided(arr,
+                      shape=target_shape,
+                      strides=target_strides,
+                      writeable=False)

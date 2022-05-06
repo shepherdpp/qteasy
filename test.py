@@ -10,7 +10,6 @@
 # ======================================
 import unittest
 
-import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -27,7 +26,7 @@ from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
 from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
-from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match
+from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop
@@ -1362,7 +1361,7 @@ class TestEvaluations(unittest.TestCase):
         pass
 
     def test_fv(self):
-        print(f'test with test data and empty DataFrame')
+        print(f'test with test arr and empty DataFrame')
         self.assertAlmostEqual(eval_fv(self.test_data1), 6.39245474)
         self.assertAlmostEqual(eval_fv(self.test_data2), 10.05126375)
         self.assertAlmostEqual(eval_fv(self.test_data3), 6.95068113)
@@ -1378,7 +1377,7 @@ class TestEvaluations(unittest.TestCase):
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
 
     def test_max_drawdown(self):
-        print(f'test with test data and empty DataFrame')
+        print(f'test with test arr and empty DataFrame')
         self.assertAlmostEqual(eval_max_drawdown(self.test_data1)[0], 0.264274308)
         self.assertEqual(eval_max_drawdown(self.test_data1)[1], 53)
         self.assertEqual(eval_max_drawdown(self.test_data1)[2], 86)
@@ -5909,7 +5908,7 @@ class TestOperator(unittest.TestCase):
     """
 
     def setUp(self):
-        """prepare data for Operator test"""
+        """prepare arr for Operator test"""
         print('start testing HistoryPanel object\n')
 
         # build up test data: a 4-type, 3-share, 50-day matrix of prices that contains nan values in some days
@@ -6606,12 +6605,12 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(ohd[3], ['open', 'high', 'low', 'close'])
 
     def test_property_op_history_data(self):
-        """ Test this important function to get operation history data that shall be used in
+        """ Test this important function to get operation history arr that shall be used in
             signal generation
-            these data are stored in list of nd-arrays, each ndarray represents the data
+            these arr are stored in list of nd-arrays, each ndarray represents the arr
             that is needed for each and every strategy
         """
-        print(f'------- Test getting operation history data ---------')
+        print(f'------- Test getting operation history arr ---------')
         op = qt.Operator()
         self.assertIsInstance(op.strategy_blenders, dict)
         self.assertIsInstance(op.signal_type, str)
@@ -6824,7 +6823,7 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(op.strategies[10], qt.TimingMACD)
         self.assertIsNot(op.strategies[0], op.strategies[9])
         self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
-        print('test adding fault data')
+        print('test adding fault arr')
         self.assertRaises(AssertionError, op.add_strategies, 123)
         self.assertRaises(AssertionError, op.add_strategies, None)
 
@@ -6873,7 +6872,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_ids, [])
 
     def test_operator_prepare_data(self):
-        """test processes that related to prepare data"""
+        """test processes that related to prepare arr"""
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
@@ -6915,8 +6914,8 @@ class TestOperator(unittest.TestCase):
         ric_hist_data = self.op._op_history_data['custom_2']
 
         print(f'in test_prepare_data in TestOperator:')
-        print('selecting history data:\n', sel_hist_data)
-        print('originally passed data in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
+        print('selecting history arr:\n', sel_hist_data)
+        print('originally passed arr in correct sequence:\n', self.test_data_3D[:, 3:, [2, 3, 0]])
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
         self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
@@ -6996,7 +6995,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_batch_signal(hist_data=self.hp1)
+        op_list = self.op.create_signal(hist_data=self.hp1)
 
         self.assertTrue(isinstance(op_list, HistoryPanel))
         backtest_price_types = op_list.htypes
@@ -7083,7 +7082,7 @@ class TestOperator(unittest.TestCase):
                          {'close': ['*', '1', '0'],
                           'open':  ['or', '1', '0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_batch_signal(hist_data=self.hp1)
+        op_list = self.op.create_signal(hist_data=self.hp1)
 
         self.assertTrue(isinstance(op_list, HistoryPanel))
         signal_close = op_list['close'].squeeze().T
@@ -7561,35 +7560,13 @@ class TestOperator(unittest.TestCase):
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        selmask = np.array([[0.5, 0.5, 0. ],
+        selmask = np.array([[0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0. , 0.5, 0.5],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7597,13 +7574,35 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0. , 0.5, 0.5],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.5, 0.5, 0. ],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan]])
 
@@ -8050,7 +8049,7 @@ class TestConfig(unittest.TestCase):
 
     def test_save_load_reset_config(self):
         """保存读取重置configuration"""
-        conf = {'mode': 2,
+        conf = {'mode':           2,
                 'invest_amounts': [200000]}
         qt.configure(**conf)
         qt.save_config(QT_CONFIG, 'saved3.cnf')
@@ -8163,7 +8162,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(empty_hp.column_count, 0)
 
     def test_create_history_panel(self):
-        """ test the creation of a HistoryPanel object by passing all data explicitly
+        """ test the creation of a HistoryPanel object by passing all arr explicitly
 
         """
         self.assertIsInstance(self.hp, qt.HistoryPanel)
@@ -8236,8 +8235,8 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp6.columns.keys()), [0, 1, 2, 3])
         self.assertEqual(list(self.hp6.rows.keys())[0], pd.Timestamp('2016-07-01'))
 
-        print('test creating HistoryPanel with very limited data')
-        print('test creating HistoryPanel with 2D data')
+        print('test creating HistoryPanel with very limited arr')
+        print('test creating HistoryPanel with 2D arr')
         temp_data = np.random.randint(10, size=(7, 3)).astype('float')
         temp_hp = qt.HistoryPanel(temp_data)
 
@@ -8336,7 +8335,7 @@ class TestHistoryPanel(unittest.TestCase):
         print('==========================\n输出000100、000120两只股票的close到open三组历史数据\n',
               hp['close,open', '000100, 000102'])
         print(f'historyPanel: hp:\n{hp}')
-        print(f'data is:\n{data}')
+        print(f'arr is:\n{data}')
         hp.htypes = 'open,high,low,close'
         hp.info()
         hp.shares = ['000300', '600227', '600222', '000123', '000129']
@@ -9425,6 +9424,43 @@ class TestUtilityFuncs(unittest.TestCase):
         print(f"matching {'贵州钢绳'} with match_full_name: \n{match_ts_code('贵州钢绳', match_full_name=True)}")
         print(f"matching {'招商银行'} with asset_type = 'E, FD': \n{match_ts_code('招商银行', asset_types='E, FD')}")
         print(f"matching {'贵阳银行'} with asset_type = 'E, FT': \n{match_ts_code('贵阳银行', asset_types='E, FT')}")
+
+    def test_rolling_window(self):
+        """ 测试含税rolling_window()"""
+        # test 1d array
+        arr = np.array([1, 2, 3, 4, 5])
+        window = rolling_window(arr, window=3, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[1, 2, 3],
+                           [2, 3, 4],
+                           [3, 4, 5]])
+        self.assertTrue(np.allclose(window, target))
+        # test 2d array
+        arr = np.array([[1, 2, 3, 4],
+                        [5, 6, 7, 8],
+                        [9, 0, 1, 2]])
+        window = rolling_window(arr, window=2, axis=0)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3, 4],
+                            [5, 6, 7, 8]],
+                           [[5, 6, 7, 8],
+                            [9, 0, 1, 2]]])
+        self.assertTrue(np.allclose(window, target))
+        window = rolling_window(arr, window=3, axis=1)
+        print(f'origin array: \n{arr}\n'
+              f'rolling window: \n{window}')
+        target = np.array([[[1, 2, 3],
+                            [5, 6, 7],
+                            [9, 0, 1]],
+                           [[2, 3, 4],
+                            [6, 7, 8],
+                            [0, 1, 2]]])
+        self.assertTrue(np.allclose(window, target))
+        # test 3d array
+
+        # test false input
 
 
 class TestTushare(unittest.TestCase):
@@ -11433,22 +11469,22 @@ class TestQT(unittest.TestCase):
         op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
         qt.configure(asset_pool=qt.filter_stock_codes(date='20070101',
                                                       industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
-                                                            '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
-                                                            '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
-                                                            '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
-                                                            '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
-                                                            '铜', '普钢', '航空', '特种钢',
-                                                            '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
-                                                            '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
-                                                            '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
-                                                            '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
-                                                            '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
-                                                            '陶瓷', '船舶'],
+                                                                '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
+                                                                '家用电器', '文教休闲', '其他商业', '元器件', 'IT设备',
+                                                                '其他建材', '汽车服务', '火力发电', '医药商业', '汽车配件',
+                                                                '广告包装', '轻工机械', '新型电力', '多元金融', '饲料',
+                                                                '铜', '普钢', '航空', '特种钢',
+                                                                '种植业', '出版业', '焦炭加工', '啤酒', '公路', '超市连锁',
+                                                                '钢加工', '渔业', '农用机械', '软饮料', '化工机械', '塑料',
+                                                                '红黄酒', '橡胶', '家居用品', '摩托车', '电器仪表', '服饰',
+                                                                '仓储物流', '纺织机械', '电器连锁', '装修装饰', '半导体',
+                                                                '电信运营', '石油开采', '乳制品', '商品城', '公共交通',
+                                                                '陶瓷', '船舶'],
                                                       area=['深圳', '北京', '吉林', '江苏', '辽宁', '广东',
-                                                        '安徽', '四川', '浙江', '湖南', '河北', '新疆',
-                                                        '山东', '河南', '山西', '江西', '青海', '湖北',
-                                                        '内蒙', '海南', '重庆', '陕西', '福建', '广西',
-                                                        '上海']),
+                                                            '安徽', '四川', '浙江', '湖南', '河北', '新疆',
+                                                            '山东', '河南', '山西', '江西', '青海', '湖北',
+                                                            '内蒙', '海南', '重庆', '陕西', '福建', '广西',
+                                                            '上海']),
                      asset_type='E',
                      reference_asset='000300.SH',
                      ref_asset_type='IDX',
@@ -11484,11 +11520,11 @@ class TestVisual(unittest.TestCase):
     def test_candle(self):
         print(f'test mpf plot in candle form')
         self.data = qt.candle('513100.SH', start='2020-12-01', end='20210131', asset_type='FD')
-        print(f'get data from mpf plot function for adj = "none"')
+        print(f'get arr from mpf plot function for adj = "none"')
         qt.candle('000002.SZ', start='2018-12-01', end='2019-01-31', asset_type='E', adj='none')
-        print(f'get data from mpf plot function for adj = "back"')
+        print(f'get arr from mpf plot function for adj = "back"')
         qt.candle('600000.SH', start='2018-12-01', end='2019-01-31', asset_type='E', adj='back')
-        print(f'get data from mpf plot function for other parameters')
+        print(f'get arr from mpf plot function for other parameters')
         qt.candle('600000.SH', start='2018-12-01', end='2019-01-31',
                   asset_type='E',
                   adj='back',
@@ -11496,7 +11532,7 @@ class TestVisual(unittest.TestCase):
                   avg_type='bb',
                   indicator='rsi',
                   indicator_par=(12,))
-        print(f'test plot mpf data with indicator macd')
+        print(f'test plot mpf arr with indicator macd')
         qt.candle(stock_data=self.data,
                   start='20201101',
                   end='20201231',
@@ -11545,7 +11581,7 @@ class TestBuiltInsSingle(unittest.TestCase):
                      reference_asset='000300.SH',
                      opti_sample_count=100,
                      trade_batch_size=100.,
-                     sell_batch_size=100.,)
+                     sell_batch_size=100., )
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
@@ -12121,14 +12157,14 @@ class TestDataSource(unittest.TestCase):
 
     def test_properties(self):
         """test properties"""
-        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/qteasy/data/')
-        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/qteasy/data/')
-        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/qteasy/arr/')
+        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/qteasy/arr/')
+        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/qteasy/arr/')
         self.assertEqual(self.ds_db.__str__(), 'db:mysql://localhost@3306/test_db')
 
-        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'qteasy/data/')")
-        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'qteasy/data/')")
-        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'qteasy/data/')")
+        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'qteasy/arr/')")
+        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'qteasy/arr/')")
+        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'qteasy/arr/')")
         self.assertEqual(self.ds_db.__repr__(), "DataSource('db', 'localhost', 3306)")
 
         self.assertEqual(self.ds_csv.tables, [])
@@ -12188,27 +12224,27 @@ class TestDataSource(unittest.TestCase):
         self.assertTrue(all(item in target_list for item in res['shares']))
 
     def test_datasource_creation(self):
-        """ test creation of all kinds of data sources"""
+        """ test creation of all kinds of arr sources"""
         self.assertIsInstance(self.ds_db, DataSource)
         self.assertEqual(self.ds_db.connection_type, 'db:mysql://localhost@3306/test_db')
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)
-        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/qteasy/arr/')
         self.assertEqual(self.ds_csv.file_type, 'csv')
-        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/arr/')
         self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
-        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/qteasy/arr/')
         self.assertEqual(self.ds_hdf.file_type, 'hdf')
-        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/arr/')
         self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
-        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/qteasy/arr/')
         self.assertEqual(self.ds_fth.file_type, 'fth')
-        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
+        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/arr/')
         self.assertIs(self.ds_fth.engine, None)
 
     def test_file_manipulates(self):
@@ -12645,7 +12681,7 @@ class TestDataSource(unittest.TestCase):
         loaded_index = loaded_df.index.values
         saved_values = np.array(df.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'retrieve whole data table from database\n'
+        print(f'retrieve whole arr table from database\n'
               f'df retrieved from database is\n'
               f'{loaded_df}\n')
         for i in range(len(saved_index)):
@@ -12662,7 +12698,7 @@ class TestDataSource(unittest.TestCase):
                                              date_like_pk='trade_date',
                                              start='20211112',
                                              end='20211112')
-        print(f'retrieve partial data table from database with:\n'
+        print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ"]\n'
               f'start/end = 20211112/20211112\n'
               f'df retrieved from saved csv file is\n'
@@ -12705,7 +12741,7 @@ class TestDataSource(unittest.TestCase):
         loaded_df = self.ds_db.read_database(TABLE_NAME,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
-        print(f'retrieve partial data table from database with:\n'
+        print(f'retrieve partial arr table from database with:\n'
               f'shares = ["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"]\n'
               f'df retrieved from saved csv file is\n'
               f'{loaded_df}\n')
@@ -12737,7 +12773,7 @@ class TestDataSource(unittest.TestCase):
 
     def test_update_database(self):
         """ test the function update_database()"""
-        print(f'update a database table with new data on same primary key')
+        print(f'update a database table with new arr on same primary key')
         df = set_primary_key_frame(self.df, primary_key=['ts_code', 'trade_date'], pk_dtypes=['str', 'TimeStamp'])
         df_add = set_primary_key_frame(self.df_add, primary_key=['ts_code', 'trade_date'],
                                        pk_dtypes=['str', 'TimeStamp'])
@@ -12762,7 +12798,7 @@ class TestDataSource(unittest.TestCase):
         loaded_index = loaded_df.index.values
         saved_values = np.array(df_res.values)
         loaded_values = np.array(loaded_df.values)
-        print(f'retrieve whole data table from database\n'
+        print(f'retrieve whole arr table from database\n'
               f'df retrieved from database is\n'
               f'{loaded_df}\n')
         for i in range(len(saved_index)):
@@ -12793,7 +12829,7 @@ class TestDataSource(unittest.TestCase):
         # 测试完整读出标准表数据
         for data_source in all_data_sources:
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            print(f'df read from arr source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
             ts_codes = ['000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                         '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ',
                         '000001.SZ', '000002.SZ', '000003.SZ', '000004.SZ', '000005.SZ']
@@ -12808,8 +12844,8 @@ class TestDataSource(unittest.TestCase):
                 tdf = self.built_in_df
                 t_val = tdf.loc[(tdf.ts_code == tc) & (tdf.trade_date == td)][cols].values
                 print(f'on row: {tc}, {td}\n'
-                      f'data read from local source: {df_val}\n'
-                      f'data from origin dataframe : {t_val}')
+                      f'arr read from local source: {df_val}\n'
+                      f'arr from origin dataframe : {t_val}')
                 self.assertTrue(np.allclose(df_val, t_val))
 
         # 测试读出并筛选部分标准表数据
@@ -12818,14 +12854,14 @@ class TestDataSource(unittest.TestCase):
                                              shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
                                              start='20211113',
                                              end='20211116')
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            print(f'df read from arr source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"ignore"
         for data_source in all_data_sources:
             df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
             data_source.update_table_data(test_table, df, 'ignore')
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source after updating with merge type IGNORE:\n'
+            print(f'df read from arr source after updating with merge type IGNORE:\n'
                   f'{data_source.source_type}-{data_source.connection_type}\n{df}')
 
         # 测试update table数据到本地文件或数据，合并类型为"update"
@@ -12842,7 +12878,7 @@ class TestDataSource(unittest.TestCase):
             df = data_source.acquire_table_data(test_table, 'df', df=self.built_in_add_df)
             data_source.update_table_data(test_table, df, 'update')
             df = data_source.read_table_data(test_table)
-            print(f'df read from data source after updating with merge type UPDATE:\n'
+            print(f'df read from arr source after updating with merge type UPDATE:\n'
                   f'{data_source.source_type}-{data_source.connection_type}\n{df}')
 
         # 测试读出并筛选部分标准表数据
@@ -12851,7 +12887,7 @@ class TestDataSource(unittest.TestCase):
                                              shares=['000001.SZ', '000002.SZ', '000005.SZ', '000007.SZ'],
                                              start='20211113',
                                              end='20211116')
-            print(f'df read from data source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
+            print(f'df read from arr source: \n{data_source.source_type}-{data_source.connection_type} \nis:\n{df}')
 
         self.assertEqual(self.ds_csv.tables, ['stock_daily'])
         self.assertEqual(self.ds_hdf.tables, ['stock_daily'])
@@ -12859,7 +12895,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(self.ds_db.tables, ['stock_daily'])
 
     def test_download_update_table_data(self):
-        """ test downloading data from tushare"""
+        """ test downloading arr from tushare"""
         tables_to_test = {'stock_daily':     {'ts_code':    None,
                                               'trade_date': '20211112'},
                           'stock_weekly':    {'ts_code':    None,
@@ -12887,51 +12923,51 @@ class TestDataSource(unittest.TestCase):
             for ds in all_data_sources:
                 ds.drop_table_data(table)
             # 下载并写入数据到表中
-            print(f'downloading table data ({table}) with parameter: \n'
+            print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_test[table]}')
             df = self.ds_csv.acquire_table_data(table, 'tushare', **tables_to_test[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
-                print(f'updating IGNORE table data ({table}) from tushare for '
+                print(f'updating IGNORE table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'ignore')
                 print(f'-- Done! --')
 
             for ds in all_data_sources:
-                print(f'reading table data ({table}) from tushare for '
+                print(f'reading table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000001.SZ', '000002.SZ', '000007.SZ', '600067.SH'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200301')
-                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
+                print(f'got arr from arr source {ds.source_type}-{ds.connection_type}:\n{df}')
 
             # 下载数据并添加到表中
-            print(f'downloading table data ({table}) with parameter: \n'
+            print(f'downloading table arr ({table}) with parameter: \n'
                   f'{tables_to_add[table]}')
             df = self.ds_hdf.acquire_table_data(table, 'tushare', **tables_to_add[table])
             print(f'---------- Done! got:---------------\n{df}\n--------------------------------')
             for ds in all_data_sources:
-                print(f'updating UPDATE table data ({table}) from tushare for '
+                print(f'updating UPDATE table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'update')
                 print(f'-- Done! --')
 
             for ds in all_data_sources:
-                print(f'reading table data ({table}) from tushare for '
+                print(f'reading table arr ({table}) from tushare for '
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 if table != 'trade_calendar':
                     df = ds.read_table_data(table, shares=['000004.SZ', '000005.SZ', '000006.SZ'])
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200201')
-                print(f'got data from data source {ds.source_type}-{ds.connection_type}:\n{df}')
+                print(f'got arr from arr source {ds.source_type}-{ds.connection_type}:\n{df}')
 
             # 删除所有的表
             for ds in all_data_sources:
                 ds.drop_table_data(table)
 
     def test_get_history_panel_data(self):
-        """ test getting data, from real database """
+        """ test getting arr, from real database """
         ds = DataSource(source_type='db',
                         host='localhost',
                         port=3306,
