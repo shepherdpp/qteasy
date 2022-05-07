@@ -2069,15 +2069,15 @@ class RiconUrgent(stg.SimpleTiming):
         return np.where(diff < drop, -1, 0).squeeze()
 
 
-# Built-in SimpleSelecting strategies:
+# Built-in GeneralStg strategies:
 
-class SelectingAll(stg.SimpleSelecting):
+class SelectingAll(stg.GeneralStg):
     """基础选股策略：保持历史股票池中的所有股票都被选中，投资比例平均分配"""
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
                          stg_name='SIMPLE ',
-                         stg_text='SimpleSelecting all share and distribute weights evenly')
+                         stg_text='GeneralStg all share and distribute weights evenly')
 
     def _realize(self, hist_data, params):
         # 所有股票全部被选中，投资比例平均分配
@@ -2085,7 +2085,7 @@ class SelectingAll(stg.SimpleSelecting):
         return [1. / share_count] * share_count
 
 
-class SelectingNone(stg.SimpleSelecting):
+class SelectingNone(stg.GeneralStg):
     """基础选股策略：保持历史股票池中的所有股票都不被选中，投资比例平均分配"""
 
     def __init__(self, pars=()):
@@ -2099,7 +2099,7 @@ class SelectingNone(stg.SimpleSelecting):
         return [0.] * share_count
 
 
-class SelectingRandom(stg.SimpleSelecting):
+class SelectingRandom(stg.GeneralStg):
     """基础选股策略：在每个历史分段中，按照指定的概率（p<1时）随机抽取若干股票，或随机抽取指定数量（p>1）的股票进入投资组合，投资比例平均分配"""
 
     def __init__(self, pars=(0.5,)):
@@ -2108,7 +2108,7 @@ class SelectingRandom(stg.SimpleSelecting):
                          par_types=['conti'],
                          par_bounds_or_enums=[(0, np.inf)],
                          stg_name='RANDOM',
-                         stg_text='SimpleSelecting share Randomly and distribute weights evenly')
+                         stg_text='GeneralStg share Randomly and distribute weights evenly')
 
     def _realize(self, hist_data, params):
         pct = self.pars[0]
@@ -2141,7 +2141,7 @@ class SelectingAvgIndicator(stg.FactoralSelecting):
                                               (-np.inf, np.inf),
                                               (0, 1.)],
                          stg_name='FINANCE',
-                         stg_text='SimpleSelecting share_pool according to financial report EPS indicator',
+                         stg_text='GeneralStg share_pool according to financial report EPS indicator',
                          data_freq='d',
                          sample_freq='y',
                          window_length=90,

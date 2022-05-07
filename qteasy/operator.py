@@ -17,7 +17,7 @@ import pandas as pd
 
 from .finance import CashPlan
 from .history import HistoryPanel
-from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data
+from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
 from .strategy import Strategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 from .blender import blender_parser
@@ -43,7 +43,7 @@ class Operator:
 
         在同一个Operator对象中，每种信号生成器都可以使用不同种类的策略：
 
-         Gen  \  strategy  | RollingTiming | SimpleSelecting | Simple_Timing | FactoralSelecting |
+         Gen  \  strategy  | RollingTiming | GeneralStg | Simple_Timing | FactoralSelecting |
          ==================|===============|=================|===============|===================|
          Positional target |       Yes     |        Yes      |       Yes     |        Yes        |
          proportion signal |       Yes     |        Yes      |       Yes     |        Yes        |
@@ -72,7 +72,7 @@ class Operator:
                 的乘积M*N成正比，效率显著低于简单时序信号生成策略，因此，在可能的情况下（例如，简单移动平均值相关策略不受未来价格影响）
                 应该尽量使用简单时序信号生成策略，以提升执行速度。
 
-            2,  SimpleSelecting 简单投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
+            2,  GeneralStg 简单投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
 
                 这类策略的共同特征是周期性运行，且运行的周期与其历史数据的粒度不同。在每次运行时，根据其历史数据，为潜在投资组合中的每
                 一个投资产品分配一个权重，并最终确保所有的权重值归一化。权重为0时表示该投资产品被从组合中剔除，而权重的大小则代表投资
@@ -289,6 +289,7 @@ class Operator:
         self._op_hist_data_rolling_windows = {}  # Dict——保存各个策略的历史数据滚动窗口（ndarray view, 与个股有关）
         self._op_reference_data = {}  # Dic——保存供各个策略进行交易信号生成的参考数据（ndarray，与个股无关）
         self._op_ref_data_rolling_windows = {}  # Dict——保存各个策略的参考数据滚动窗口（ndarray view，与个股无关）
+        self._op_sample_indexes = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
@@ -694,6 +695,20 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
+    def get_op_sample_indexes_by_price_type(self, price_type=None):
+        """ 返回Operator对象中每个strategy对应的交易信号采样点序列，price_type是一个可选参数
+        如果给出price_type时，返回使用该price_type的所有策略的信号采样点序列
+
+        :param price_type: str 一个可用的price_type
+        :return: List
+        """
+        all_sample_indexes = self._op_sample_indexes
+        if price_type is None:
+            return list(all_sample_indexes.values())
+        else:
+            relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
+            return [all_sample_indexes[stg_id] for stg_id in relevant_strategy_ids]
+
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
         如果给出price_type时，返回使用该price_type的交易策略数量"""
@@ -1017,7 +1032,7 @@ class Operator:
                 print(f'no blender')
         # 打印每个strategy的详细信息
         if verbose:
-            print('Parameters of SimpleSelecting Strategies:')
+            print('Parameters of GeneralStg Strategies:')
             for stg in self.strategies:
                 stg.info()
             print('=' * 25)
@@ -1029,7 +1044,7 @@ class Operator:
         """
         return False
 
-    # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_chec）在另一个函数里检查
+    # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
     def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
@@ -1114,6 +1129,7 @@ class Operator:
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
+        op_dates = hist_data[first_cash_pos:]
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         if not first_cash_pos >= self.max_window_length:
             message = f'History data starts on {hist_data.hdates[0]} does not have' \
@@ -1129,12 +1145,12 @@ class Operator:
                       f' history data ends on {hist_data.hdates[-1]}, last investment ' \
                       f'on {cash_plan.last_day}'
             logger_core.error(message)
-            raise ValueError(message)
+            # raise ValueError(message)
         # 确认cash_plan的所有投资时间点都在价格清单中能找到（代表每个投资时间点都是交易日）
         hist_data_dates = pd.to_datetime(pd.to_datetime(hist_data.hdates).date)
         invest_dates_in_hist = [invest_date in hist_data_dates for invest_date in cash_plan.dates]
+        # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
         if not all(invest_dates_in_hist):
-            # 如果部分cash_dates没有在投资策略运行日，则将他们抖动到最近的策略运行日
             nearest_next = hist_data_dates[np.searchsorted(hist_data_dates, pd.to_datetime(cash_plan.dates))]
             cash_plan.reset_dates(nearest_next)
             logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
@@ -1151,7 +1167,6 @@ class Operator:
                 stg_count_for_price_type = self.get_strategy_count_by_price_type(price_type)
                 self.set_blender(price_type=price_type,
                                  blender='+'.join(map(str, range(stg_count_for_price_type))))
-        # TODO: remove these duplicates
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
             stg_id: hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
@@ -1163,32 +1178,41 @@ class Operator:
             # 逐个生成滚动窗口，赋值给各个策略
             window_length = stg.window_length
             hist_data = self._op_history_data[stg_id]
-            loop_count = len(hist_data) - window_length + 1
-            self._op_ref_data_rolling_windows[stg_id] = as_strided(
-                    hist_data,
-                    shape=(loop_count, *hist_data[:, window_length].shape),
-                    strides=(hist_data.strides[1], *hist_data.strides),
-                    subok=False,
-                    writeable=False)
+            self._op_ref_data_rolling_windows[stg_id] = rolling_window(hist_data, window=window_length, axis=1)
 
-        # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（3D数据）
+        # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
         self._op_reference_data = {
             stg_id: reference_data[stg.refence_data_types, :, (first_cash_pos - stg.window_length):]
             for stg_id, stg in self.get_strategy_id_pairs()
         }
-        # 为每一个交易策略分配所需的参考数据滚动窗口（4D数据）
+        # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
         self._op_ref_data_rolling_windows = {}
         for stg_id, stg in self.get_strategy_id_pairs():
             # 逐个生成滚动窗口
             window_length = stg.window_length
             ref_data = self._op_reference_data[stg_id]
-            loop_count = len(ref_data) - window_length + 1
-            self._op_ref_data_rolling_windows[stg_id] = as_strided(
-                    ref_data,
-                    shape=(loop_count, *ref_data[:, window_length].shape),
-                    strides=(ref_data.strides[1], *ref_data.strides),
-                    subok=False,
-                    writeable=False)
+            self._op_ref_data_rolling_windows[stg_id] = rolling_window(ref_data, window=window_length, axis=0)
+        # 根据策略运行频率sample_freq生成信号生成采样点序列
+        for stg_id, stg in self.get_strategy_id_pairs():
+            window_length = stg.window_length
+            freq = stg.sample_freq
+            # 根据sample_freq生成一个日期序列
+            temp_date_series = pd.date_range(start=op_dates[window_length], end=op_dates[-1], freq=freq)
+            # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
+            # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
+            bnds = temp_date_series - (temp_date_series[0] - op_dates[window_length])
+            # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
+            seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
+            # 用searchsorted函数把输入的日期与历史数据日期匹配起来
+            seg_pos[1:-1] = np.searchsorted(op_dates, bnds)
+            # 最后一个分隔位等于历史区间的总长度
+            seg_pos[-1] = len(op_dates) - 1
+            # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始
+            # 如果分段界限的首位本身就是0时，需要删除一个0
+            if seg_pos[1] == 0:
+                self._op_sample_indexes[stg_id] = seg_pos[1:]
+            else:
+                self._op_sample_indexes[stg_id] = seg_pos
 
     # TODO: 需要调查：
     #  为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
@@ -1197,7 +1221,7 @@ class Operator:
     #  ————上述问题的原因是生成的交易信号仍然被转化为HistoryPanel，shares和dates被作为列标签和行标签传入DataFrame，进而
     #  被用于消除不需要的行，同时还保证原始行号信息不丢失。在新的架构下，似乎可以不用创建一个DataFrame对象，直接返回ndarray
     #  这样不仅可以消除参数hist_data的使用，还能进一步提升速度
-    def create_signal(self, sample_idx=None):
+    def create_signal(self, trade_data=None, sample_idx=None):
         """ 生成交易信号，
 
             遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
@@ -1237,6 +1261,12 @@ class Operator:
             columns = price_types
             rows = hdates
 
+        :param trade_data: np.ndarray
+            可选参数，交易过程数据，包括最近一次成交的数据以及最近一次交易信号，如果在回测过程中实时
+            产生交易信号，则可以将上述数据传入Operator，从而新一轮交易信号可以与上一次交易结果相关。
+            如果给出trade_date信号，trade_date中需要包含所有股票的交易信息，每列表示不同的交易价
+            格种类，其结构与生成的交易信号一致
+
         :param: sample_idx: None, int, np.int, ndarray
             交易信号序号。
             如果参数为int型，则只计算该序号滑窗数据的交易信号
@@ -1247,13 +1277,10 @@ class Operator:
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
         """
-        # 确保输入历史数据的数据格式正确；并确保择时策略和风控策略都已经关联相应的历史数据
-        if not isinstance(hist_data, HistoryPanel):
-            raise TypeError(f'Type Error: historical data should be HistoryPanel, got {type(hist_data)}')
         from .blender import signal_blend
         signal_type = self.signal_type
-        shares = hist_data.shares
-        date_list = hist_data.hdates
+        blended_signal = None
+        relevant_sample_indexes = sample_idx
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
         # 一个字典保存所有交易价格类型各自的交易信号ndarray
         signal_out = {}
@@ -1265,11 +1292,19 @@ class Operator:
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
             relevant_ref_data = self.get_op_ref_data_by_price_type(price_type=bt_price_type)
-            for stg, dt in zip(relevant_strategies, relevant_hist_data):  # 依次使用选股策略队列中的所有策略逐个生成交易信号
-                # TODO: 目前选股蒙板的输入参数还比较复杂，包括shares和dates两个参数，应该消除掉这两个参数，使
-                #  sel.generate_batch()函数的signature与tmg.generate_batch()和ricon.generate_batch()一致
-                history_length = dt.shape[1]
-                signal = stg.generate_batch(hist_data=dt, shares=shares, dates=date_list[-history_length:])
+            td = trade_data[bt_price_type]
+            if sample_idx is None:
+                relevant_sample_indexes = self.get_op_sample_indexes_by_price_type(price_type=bt_price_type)
+            # 依次使用选股策略队列中的所有策略逐个生成交易信号
+            # TODO: 这里应该可以很方便地使用map()实现相同的效果，速度更快
+            for stg, hd, rd, si in zip(relevant_strategies,
+                                       relevant_hist_data,
+                                       relevant_ref_data,
+                                       relevant_sample_indexes):
+                signal = stg.generate(hist_data=hd,
+                                      ref_data=rd,
+                                      trade_data=td,
+                                      data_idx=si)
                 if signal_type in ['ps', 'vs']:
                     signal = fill_nan_data(signal, 0)
                 elif signal_type == 'pt':
@@ -1285,16 +1320,11 @@ class Operator:
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
             signal_out[bt_price_type] = blended_signal
-        # 将字典中的ndarray对象组装成HistoryPanel对象
-        signal_hp_value = np.zeros((*blended_signal.T.shape, bt_price_type_count))
+        # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股
+        signal_shape = blended_signal.T.shape
+        signal_value = np.zeros((*signal_shape, bt_price_type_count))
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
-            signal_hp_value[:, :, i] = signal_out[bt_price_type].T
+            signal_value[:, :, i] = signal_out[bt_price_type].T
 
-        # 实验性质，create_batch_signal仅返回一个ndarray，以提升效率，并消除hist_data参数
-        history_length = signal_hp_value.shape[1]  # find hdate series
-        signal_hp = HistoryPanel(signal_hp_value,
-                                 levels=shares,
-                                 columns=bt_price_types,
-                                 rows=date_list[-history_length:])
-        return signal_hp
+        return signal_value
 

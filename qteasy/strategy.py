@@ -11,13 +11,12 @@
 
 import numpy as np
 from numpy.lib.stride_tricks import as_strided
-import pandas as pd
 from abc import abstractmethod, ABCMeta
 from .utilfuncs import str_to_list
 from .utilfuncs import TIME_FREQ_STRINGS
 
 
-class Strategy:
+class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
         类属性定义了策略类型、策略名称、策略关键属性的数量、类型和取值范围等
@@ -35,8 +34,6 @@ class Strategy:
     AVAILABLE_BT_PRICE_TYPES = ['open', 'high', 'low', 'close',
                                 'buy1', 'buy2', 'buy3', 'buy4', 'buy5',
                                 'sell1', 'sell2', 'sell3', 'sell4', 'sell5']
-
-    AVAILABLE_DATA_FREQS = []
 
     def __init__(self,
                  pars: tuple = (),
@@ -398,10 +395,11 @@ class Strategy:
         """ 设置策略的历史数据回测相关属性
 
         :param data_freq: str,
-        :param sample_freq: str, 可以设置为'min'， 'd'等代表回测时的运行或采样频率
+        :param sample_freq: str, 可以设置为'min', 'd', '2d'等代表回测时的运行或采样频率
         :param window_length: int，表示回测时需要用到的历史数据深度
         :param data_types: str，表示需要用到的历史数据类型
         :param bt_price_type: str, 需要用到的历史数据回测价格类型
+        :param reference_data_types: str, 策略运行参考数据类型
         :return: None
         """
         if data_freq is not None:
@@ -448,88 +446,21 @@ class Strategy:
             else:
                 raise KeyError(f'The strategy does not have property \'{k}\'')
 
-    # TODO：Selecting的分段与Timing的Rolling Expansion滚动展开其实是同一个过程，未来可以尝试合并并一同优化
-    def _seg_periods(self, dates, freq):
-        """ 对输入的价格序列数据进行分段，用于所有与选股相关的派生类中
-
-        对输入的价格序列日期进行分析，生成每个历史分段的起止日期所在行号，并返回行号和分段长度（数据行数）
-        input:
-            dates ndarray，日期序列，
-            freq：str 分段频率，取值为‘Q'：季度， ’Y'，年度； ‘M'，月度
-        return: =====
-            seg_pos: 每一个历史分段的开始日期;
-            seg_lens：每一个历史分段中含有的历史数据数量，
-            len(seg_lens): 分段的数量
-            生成历史区间内的时间序列，序列间隔为选股间隔，每个时间点代表一个选股区间的开始时间
-        """
-        temp_date_series = pd.date_range(start=dates[self.window_length], end=dates[-1], freq=freq)
-        # 生成一个日期序列，该序列从dates[self.window_length]为第一天，后续的每个日期都在第一天基础上
-        # 后移freq天。但是实际上pd.date_range生成的时间序列并不是从dates[self.window_length]这天开始的，而是它未来某一天。
-        # 这就导致后面生成选股信号的时候，第一个选股信号并未产生在dates[self.window_length]当天，而是它的未来某一天，
-        # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
-        # 空白。
-        # 解决办法是生成daterange之后，使用pd.Timedelta将它平移到dates[self.window_length]当天即可。
-        bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
-        # 在这里发现另外一个问题，通过date_range生成的日期序列有可能生成非交易日的日期
-        # 这也许会成为一个问题
-        # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
-        seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
-        # 用searchsorted函数把输入的日期与历史数据日期匹配起来
-        seg_pos[1:-1] = np.searchsorted(dates, bnds)
-        # 最后一个分隔位等于历史区间的总长度
-        seg_pos[-1] = len(dates) - 1
-        # 计算每个分段的长度
-        seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
-        # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始，但如果界限日期与第一个日期重合，则需要除去第一
-        # 个分割位，因为这样会有两个[0]了，例子如下（为简单起见，例子中的日期都用整数代替）：
-        # 例子：要在[1，2，3，4，5，6，7，8，9，10]这样一个时间序列中，按照某频率分段，假设分段的界限分别是[3,6,9]
-        # 那么，分段界限在时间序列中的seg_pos分别为[2,5,8], 这三个pos分别是分段界限3、6、9在时间序列中所处的位置：
-        # 第3天的位置为2，第6天的位置为5，第9天的位置为8
-        # 然而，为了确保在生成选股数据时，第一天也不会被落下，需要认为在seg_pos列表中前面插入一个0，得到[0,2,5,8]，
-        # 这样才不会漏掉第一天和第二天。
-        # 以上是正常情况的处理方式
-        # 如果分段的界限是[1,5,10]的时候，情况就不同了
-        # 分段界限在时间序列中的seg_pos分别为[0,4,9]，这个列表中的首位本身就是0了，如果再在前面添加0，就会变成
-        # [0,0,4,9],会出现问题。因为系统会判断第一个分段起点为0，终点也为0，因此会传递一个空的ndarray到
-        # _realize()函数中，引发难以预料的错误，因此，出现这种情况时，返回时忽略第一位即可
-        if seg_pos[1] == 0:
-            return seg_pos[1:], seg_lens[1:], len(seg_pos) - 2
-        else:
-            return seg_pos, seg_lens, len(seg_pos) - 1
-
     @abstractmethod
-    def generate_batch(self, hist_data: np.ndarray, shares: [str, list], dates: [str, list]):
-        """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出"""
-        # check input data types
-        assert self.pars is not None, 'TypeError, strategy parameter should be a tuple, got None!'
-        assert isinstance(self.pars, (tuple, dict)), \
-            f'TypeError, strategy parameter should be a tuple or a dict, got {type(self.pars)}'
-        if isinstance(self.pars, tuple):
-            assert len(self.pars) == self.par_count, \
-                f'InputError, expected count of parameter is {self.par_count}, got {len(self.pars)} instead'
-        assert isinstance(hist_data, np.ndarray), f'Type Error: input should be ndarray, got {type(hist_data)}'
-        assert hist_data.ndim == 3, \
-            f'DataError: historical data should be 3 dimensional, got {hist_data.ndim} dimensional data'
-        assert hist_data.shape[1] >= self._window_length, \
-            f'DataError: Not enough history data! expected hist data length {self._window_length},' \
-            f' got {hist_data.shape[1]}'
-        assert isinstance(hist_data, np.ndarray), \
-            f'InputError: Expect numpy ndarray object as hist_data, got {type(hist_data)}'
-        if shares is not None:
-            assert isinstance(shares, list), f'InputError, shares should be a list, got {type(shares)} instead'
-            assert all([isinstance(share, str) for share in shares]), \
-                f'TypeError, all elements in shares should be str, got otherwise'
-        if dates is not None:
-            assert isinstance(dates, list), f'TypeError, dates should be a list, got{type(dates)} instead'
-            # assert all([isinstance(date, pd.Timestamp) for date in dates]), \
-            #     f'TYpeError, all elements in dates should be Timestamp, got otherwise'
-
-    def generate_step(self, hist_data):
-        """
+    def generate(self,
+                 hist_data: np.ndarray,
+                 ref_data: np.ndarray = None,
+                 trade_data: np.ndarray = None,
+                 data_idx=None):
+        """策略类的抽象方法，接受输入历史数据并根据参数生成策略输出
 
         :param hist_data:
-        :return:
+        :param ref_data:
+        :param trade_data:
+        :param data_idx:
         """
+        # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
+        # 在这里使用map或apply_along_axis快速组装realize()的结果，形成一张交易信号清单
         pass
 
 
@@ -685,7 +616,11 @@ class RollingTiming(Strategy):
         cat[np.isnan(cat)] = 0
         return cat[self.window_length:]
 
-    def generate_batch(self, hist_data: np.ndarray, shares=None, dates=None):
+    def generate(self,
+                 hist_data: np.ndarray,
+                 ref_data: np.ndarray = None,
+                 trade_data: np.ndarray = None,
+                 data_idx=None):
         """ 生成整个股票价格序列集合的多空状态历史矩阵，采用滚动计算的方法，确保每一个时间点上的信号都只与它之前的一段历史数据有关
 
             本方法基于np的ndarray计算，是择时策略的打包方法。
@@ -699,7 +634,7 @@ class RollingTiming(Strategy):
             L/S mask: ndarray, 所有股票在整个历史区间内的所有多空信号矩阵，包含M行N列，每行是一个时间点上的多空信号，每列一只股票
         """
         # 检查输入数据的正确性：检查数据类型和历史数据的总行数应大于策略的数据视窗长度，否则无法计算策略输出
-        super().generate_batch(hist_data, shares, dates)
+        super().generate(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -718,7 +653,7 @@ class RollingTiming(Strategy):
         return res
 
 
-class SimpleSelecting(Strategy):
+class GeneralStg(BaseStrategy):
     """选股策略类的抽象基类，所有选股策略类都继承该类。该类定义的策略生成方法是历史数据分段处理，根据历史数据的分段生成横向投资组合分配比例。
 
         Selecting选股策略的生成方式与投资产品的组合方式有关。与择时类策略相比，选股策略与之的区别在于对历史数据的运用方式不同。择时类策略逐一
@@ -770,62 +705,63 @@ class SimpleSelecting(Strategy):
         self.proportion_or_quantity = proportion_or_quantity
 
     @abstractmethod
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        """" SimpleSelecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
+    def realize(self,
+                     h_seg,
+                     ref_seg,
+                     trade_data):
+        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
+            生成一条交易信号
 
-        input:
-            :param hist_data:
-                numpy.ndarray, 一个历史数据片段，包含N个股票的data_types种数据在window_length日内的历史数据片段
-            :param params:
-                tuple, 策略参数，具体的策略输出结果依靠参数给出
-        :return
-            numpy.ndarray, 一个一维向量，代表一个周期内股票选择权重，整个向量经过归一化，即所有元素之和为1
+        :param h_seg:
+        :param ref_seg:
+        :param trade_data:
+        :return: 1d array
         """
-        raise NotImplementedError
+        pass
 
     # TODO：需要重新定义SimpleSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
     #  使函数的定义符合继承类的抽象方法定义规则
-    def generate_batch(self, hist_data: np.ndarray, shares, dates):
-        """
-        生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
-        建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
+    def generate(self,
+                 hist_data: np.ndarray,
+                 ref_data: np.ndarray = None,
+                 trade_data: np.ndarray = None,
+                 data_idx=None):
+        """ 最基本的交易策略生成策略类型：将历史数据、参考数据的滑窗数据逐一传入realize函数（用户自定义）
+            realize函数使用这些滑窗数据，按照用户定义的规则生成一组交易信号向量，并返回给generate
+            generate获得返回的交易信号后组装成一个交易信号清单，并返回
+
+            如果data_idx是一个整数时，不生成整个交易信号清单，而是找到该序号的滑窗数据传入realize，
+            返回生成的一组交易信号
 
         input:
-            :param hist_data: type: HistoryPanel, 历史数据
-            :param shares: type:
-            :param dates
-        :return:=====
-            sel_mask：选股蒙版，是一个与输入历史数据尺寸相同的ndarray，dtype为浮点数，取值范围在0～1之间
-            矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
+            :param hist_data: type: ndarray, 历史数据
+            :param ref_data: type: ndarray，参考数据
+            :param trade_data: type: ndarray 最近交易相关数据
+            :param data_idx: 交易信号的序号，或序列
+        :return:===== ndarray
+            signal_list：选股蒙版，是一个与输入历史数据尺寸相同的ndarray
         """
-        # 提取策略参数
-        super().generate_batch(hist_data, shares, dates)
-        freq = self.sample_freq
-        # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
-        # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合
-        seg_pos, seg_lens, seg_count = self._seg_periods(dates, freq)
-        # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
-        sel_mask = np.full(shape=(len(dates), len(shares)), fill_value=np.nan, order='C')
-        # 使用交易日当天以前的数据计算交易日的交易信号，并将交易信号填充到交易日以后直到下一个交易日
-        # 例如，假设seg_start = 0，seg_length = 6时，
-        # 应该用第0:5天的数据，生成第6天的信号，并顺序填充到第6:12天的交易策略中
-        # 由于第1天的操作信号需要第一个信号所在日期之前window_length日的数据
-        # 因此在输出数据的时候需要将前window_length个数据截取掉
-        seg_start = seg_pos[1]
-        wl = self.window_length
-        # 针对每一个选股分段区间内生成股票在投资组合中所占的比例
-        for sp, sl, fill_len in zip(seg_pos[1:-1], seg_lens, seg_lens[1:]):
-            # 提取当前分段起点以前的数据，计算当前分段起点的交易信号
-            share_sel = self._realize(hist_data=hist_data[:, sp - wl:sp, :], params=self.pars)
-            seg_end = seg_start + fill_len
-            # 填充相同的投资组合到当前区间内的第一个交易时间点，
-            # 在信号类型为PT时需要把同样的信号填充到下一个交易
-            # 时间点以前的整个时间段。这个操作在operator层面
-            # 进行
-            sel_mask[seg_start, :] = share_sel
-            seg_start = seg_end
-        # 将所有分段组合成完整的ndarray
-        return sel_mask[self.window_length:]
+        if isinstance(data_idx, (int, np.int)):
+            # 生成单组信号
+            idx = data_idx
+            h_seg = hist_data[idx]
+            ref_seg = ref_data[idx]
+            return self.realize(h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
+        elif isinstance(data_idx, np.ndarray):
+            # 生成信号清单
+            # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
+            share_count, date_count, htype_count = hist_data[0].shape
+            signal_count = len(data_idx)
+            sig_list = np.full(shape=(date_count, share_count), fill_value=np.nan, order='C')
+            # 遍历data_idx中的序号，生成N组交易信号，将这些信号填充到清单中对应的位置上
+            hist_data_list = hist_data[data_idx]
+            ref_data_list = ref_data[data_idx]
+            trade_data_list = [trade_data] * signal_count
+            # 使用map完成快速遍历填充
+            signals = list(map(self.realize, hist_data_list, ref_data_list, trade_data_list))
+            sig_list[data_idx] = np.array(signals)
+            # 将所有分段组合成完整的ndarray
+            return sig_list[self.window_length:]
 
 
 class SimpleTiming(Strategy):
@@ -933,7 +869,11 @@ class SimpleTiming(Strategy):
         cat[np.isnan(cat)] = 0
         return cat
 
-    def generate_batch(self, hist_data, shares=None, dates=None):
+    def generate(self,
+                 hist_data: np.ndarray,
+                 ref_data: np.ndarray = None,
+                 trade_data: np.ndarray = None,
+                 data_idx=None):
         """基于_realze()方法生成整个股票价格序列集合时序状态值，生成的信号结构与Timing类似，但是所有时序信号是一次性生成的，而不像
         Timing一样，是滚动生成的。这样做能够极大地降低计算复杂度，提升效率。不过这种方法只有在确认时序信号的生成与起点无关时才能采用
 
@@ -945,11 +885,7 @@ class SimpleTiming(Strategy):
         :param dates:
         :return:
         """
-        if shares is None:
-            shares = []
-        if dates is None:
-            dates = []
-        super().generate_batch(hist_data, shares, dates)
+        super().generate(hist_data, shares, dates)
         pars = self._pars
         # 当需要对不同的股票应用不同的参数时，参数以字典形式给出，判断参数的类型
         if isinstance(pars, dict):
@@ -1036,7 +972,7 @@ class FactoralSelecting(Strategy):
 
     @abstractmethod
     def _realize(self, hist_data: np.ndarray, params: tuple):
-        """" SimpleSelecting 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
+        """" GeneralStg 类的选股抽象方法，在不同的具体选股类中应用不同的选股方法，实现不同的选股策略
 
         input:
             :param hist_data:
@@ -1134,7 +1070,7 @@ class FactoralSelecting(Strategy):
                 dist = dist - dist.min() + d / 10.
             else:
                 dist = dist.max() - dist + d / 10.
-            # print(f'in SimpleSelecting realize method proportion type got distance of each item like:\n{dist}')
+            # print(f'in GeneralStg realize method proportion type got distance of each item like:\n{dist}')
             if ~np.any(dist):  # if all distances are zero
                 chosen[args] = 1 / len(dist)
             elif dist.sum() == 0:  # if not all distances are zero but sum is zero
@@ -1156,7 +1092,11 @@ class FactoralSelecting(Strategy):
 
     # TODO：需要重新定义FactoralSelecting的generate函数，仅使用hist_data一个参数，其余参数都可以根据策略的基本属性推断出来
     #  使函数的定义符合继承类的抽象方法定义规则
-    def generate_batch(self, hist_data: np.ndarray, shares, dates):
+    def generate(self,
+                 hist_data: np.ndarray,
+                 ref_data: np.ndarray = None,
+                 trade_data: np.ndarray = None,
+                 data_idx=None):
         """
         生成历史价格序列的选股组合信号：将历史数据分成若干连续片段，在每一个片段中应用某种规则建立投资组合
         建立的投资组合形成选股组合蒙版，每行向量对应所有股票在当前时间点在整个投资组合中所占的比例
@@ -1170,7 +1110,7 @@ class FactoralSelecting(Strategy):
             矩阵中的取值代表股票在投资组合中所占的比例，0表示投资组合中没有该股票，1表示该股票占比100%
         """
         # 提取策略参数
-        super().generate_batch(hist_data, shares, dates)
+        super().generate(hist_data, shares, dates)
         freq = self.sample_freq
         # 获取完整的历史日期序列，并按照选股频率生成分段标记位，完整历史日期序列从参数获得，股票列表也从参数获得
         # TODO: 这里的选股分段可以与Timing的Rolling Expansion整合，同时避免使用dates和freq，使用self.sample_freq属性

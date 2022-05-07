@@ -77,7 +77,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffil
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
-from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, SimpleSelecting, FactoralSelecting
+from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, GeneralStg, FactoralSelecting
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs, ConfigDict
 
@@ -5749,7 +5749,7 @@ class TestLSStrategy(RollingTiming):
             return 1
 
 
-class TestSelStrategy(SimpleSelecting):
+class TestSelStrategy(GeneralStg):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -5780,7 +5780,7 @@ class TestSelStrategy(SimpleSelecting):
         return chosen
 
 
-class TestSelStrategyDiffTime(SimpleSelecting):
+class TestSelStrategyDiffTime(GeneralStg):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
@@ -7489,7 +7489,7 @@ class TestOperator(unittest.TestCase):
                     '000300': (5, 6)}
         stg.set_pars(stg_pars)
         history_data = self.hp1.values
-        output = stg.generate_batch(hist_data=history_data)
+        output = stg.generate(hist_data=history_data)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7555,7 +7555,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
         self.assertEqual(seg_count, 8)
 
-        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7614,7 +7614,7 @@ class TestOperator(unittest.TestCase):
         stg_pars = (0.2, 0.02, -0.02)
         stg.set_pars(stg_pars)
         history_data = self.hp1['close, open, high, low', :, 3:50]
-        output = stg.generate_batch(hist_data=history_data, shares=self.shares, dates=self.date_indices)
+        output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7695,7 +7695,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
         self.assertEqual(seg_count, 8)
 
-        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7762,7 +7762,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0.5, 0.5, 0.0],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7826,7 +7826,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0.0, 0.33333333, 0.66666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7886,7 +7886,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0., 0.08333333, 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7946,7 +7946,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate_batch(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
         selmask = np.array([[0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -12010,7 +12010,7 @@ class TestBuiltInsMultiple(unittest.TestCase):
         qt.run(op, mode=1, allow_sell_short=True, visual=True)
 
 
-class StgBuyOpen(SimpleSelecting):
+class StgBuyOpen(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
@@ -12042,7 +12042,7 @@ class StgBuyOpen(SimpleSelecting):
             return sig
 
 
-class StgSelClose(SimpleSelecting):
+class StgSelClose(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
