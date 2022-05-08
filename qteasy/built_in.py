@@ -36,7 +36,7 @@ def built_in_strategies(*args, **kwargs):
 
 
 # Basic technical analysis based Timing strategies
-class TimingCrossline(stg.RollingTiming):
+class TimingCrossline(stg.RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
     数据类型：close 收盘价，单数据输入
@@ -87,7 +87,7 @@ class TimingCrossline(stg.RollingTiming):
             return 0
 
 
-class TimingMACD(stg.RollingTiming):
+class TimingMACD(stg.RuleIterator):
     """MACD择时策略类，运用MACD均线策略，在hist_price Series对象上生成交易信号
 
     数据类型：close 收盘价，单数据输入
@@ -140,7 +140,7 @@ class TimingMACD(stg.RollingTiming):
             return -1
 
 
-class TimingTRIX(stg.RollingTiming):
+class TimingTRIX(stg.RuleIterator):
     """TRIX择时策略，运用TRIX均线策略，利用历史序列上生成交易信号
 
     数据类型：close 收盘价，单数据输入
@@ -189,7 +189,7 @@ class TimingTRIX(stg.RollingTiming):
             return -1
 
 
-class TimingCDL(stg.RollingTiming):
+class TimingCDL(stg.RuleIterator):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
     数据类型：open, high, low, close 开盘，最高，最低，收盘价，多数据输入
@@ -221,7 +221,7 @@ class TimingCDL(stg.RollingTiming):
         return float(cat[-1])
 
 
-class SoftBBand(stg.RollingTiming):
+class SoftBBand(stg.RuleIterator):
     """布林带线择时策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空, 均线的种类可选"""
 
     def __init__(self, pars=(20, 2, 2, 0)):
@@ -257,7 +257,7 @@ class SoftBBand(stg.RollingTiming):
         return sig
 
 
-class TimingBBand(stg.RollingTiming):
+class TimingBBand(stg.RuleIterator):
     """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
 
         数据类型：close 收盘价，单数据输入
@@ -302,7 +302,7 @@ class TimingBBand(stg.RollingTiming):
             return 0.
 
 
-class TimingSAREXT(stg.RollingTiming):
+class TimingSAREXT(stg.RuleIterator):
     """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
     """
 
@@ -346,7 +346,7 @@ class TimingSAREXT(stg.RollingTiming):
 # differences between these strategies are the types of
 # moving averages.
 
-class SCRSSMA(stg.RollingTiming):
+class SCRSSMA(stg.RuleIterator):
     """ Single cross line strategy with simple moving average
 
         two parameters:
@@ -372,7 +372,7 @@ class SCRSSMA(stg.RollingTiming):
             return -1
 
 
-class SCRSDEMA(stg.RollingTiming):
+class SCRSDEMA(stg.RuleIterator):
     """ Single cross line strategy with DEMA
 
         two parameters:
@@ -399,7 +399,7 @@ class SCRSDEMA(stg.RollingTiming):
             return 0
 
 
-class SCRSEMA(stg.RollingTiming):
+class SCRSEMA(stg.RuleIterator):
     """ Single cross line strategy with EMA
 
         two parameters:
@@ -426,7 +426,7 @@ class SCRSEMA(stg.RollingTiming):
             return 0
 
 
-class SCRSHT(stg.RollingTiming):
+class SCRSHT(stg.RuleIterator):
     """ Single cross line strategy with ht line
 
         zero parameters:
@@ -452,7 +452,7 @@ class SCRSHT(stg.RollingTiming):
             return 0
 
 
-class SCRSKAMA(stg.RollingTiming):
+class SCRSKAMA(stg.RuleIterator):
     """ Single cross line strategy with KAMA line
 
         one parameters:
@@ -479,7 +479,7 @@ class SCRSKAMA(stg.RollingTiming):
             return 0
 
 
-class SCRSMAMA(stg.RollingTiming):
+class SCRSMAMA(stg.RuleIterator):
     """ Single cross line strategy with MAMA line
 
         two parameters:
@@ -507,7 +507,7 @@ class SCRSMAMA(stg.RollingTiming):
             return 0
 
 
-class SCRSFAMA(stg.RollingTiming):
+class SCRSFAMA(stg.RuleIterator):
     """ Single cross line strategy with FAMA line
 
         two parameters:
@@ -535,7 +535,7 @@ class SCRSFAMA(stg.RollingTiming):
             return 0
 
 
-class SCRST3(stg.RollingTiming):
+class SCRST3(stg.RuleIterator):
     """ Single cross line strategy with T3 line
 
         two parameters:
@@ -563,7 +563,7 @@ class SCRST3(stg.RollingTiming):
             return 0
 
 
-class SCRSTEMA(stg.RollingTiming):
+class SCRSTEMA(stg.RuleIterator):
     """ Single cross line strategy with TEMA line
 
         two parameters:
@@ -590,7 +590,7 @@ class SCRSTEMA(stg.RollingTiming):
             return 0
 
 
-class SCRSTRIMA(stg.RollingTiming):
+class SCRSTRIMA(stg.RuleIterator):
     """ Single cross line strategy with TRIMA line
 
         two parameters:
@@ -617,7 +617,7 @@ class SCRSTRIMA(stg.RollingTiming):
             return 0
 
 
-class SCRSWMA(stg.RollingTiming):
+class SCRSWMA(stg.RuleIterator):
     """ Single cross line strategy with WMA line
 
         two parameters:
@@ -652,7 +652,7 @@ class SCRSWMA(stg.RollingTiming):
 # moving averages.
 
 
-class DCRSSMA(stg.RollingTiming):
+class DCRSSMA(stg.RuleIterator):
     """ Double cross line strategy with simple moving average
 
     two parameters:
@@ -679,7 +679,7 @@ class DCRSSMA(stg.RollingTiming):
             return 0
 
 
-class DCRSDEMA(stg.RollingTiming):
+class DCRSDEMA(stg.RuleIterator):
     """ Double cross line strategy with DEMA
 
         two parameters:
@@ -706,7 +706,7 @@ class DCRSDEMA(stg.RollingTiming):
             return 0
 
 
-class DCRSEMA(stg.RollingTiming):
+class DCRSEMA(stg.RuleIterator):
     """ Double cross line strategy with EMA
 
         two parameters:
@@ -733,7 +733,7 @@ class DCRSEMA(stg.RollingTiming):
             return 0
 
 
-class DCRSKAMA(stg.RollingTiming):
+class DCRSKAMA(stg.RuleIterator):
     """ Double cross line strategy with KAMA line
 
         one parameters:
@@ -760,7 +760,7 @@ class DCRSKAMA(stg.RollingTiming):
             return 0
 
 
-class DCRSMAMA(stg.RollingTiming):
+class DCRSMAMA(stg.RuleIterator):
     """ Double cross line strategy with MAMA line
 
         two parameters:
@@ -788,7 +788,7 @@ class DCRSMAMA(stg.RollingTiming):
             return 0
 
 
-class DCRSFAMA(stg.RollingTiming):
+class DCRSFAMA(stg.RuleIterator):
     """ Double cross line strategy with FAMA line
 
         two parameters:
@@ -816,7 +816,7 @@ class DCRSFAMA(stg.RollingTiming):
             return 0
 
 
-class DCRST3(stg.RollingTiming):
+class DCRST3(stg.RuleIterator):
     """ Double cross line strategy with T3 line
 
         two parameters:
@@ -844,7 +844,7 @@ class DCRST3(stg.RollingTiming):
             return 0
 
 
-class DCRSTEMA(stg.RollingTiming):
+class DCRSTEMA(stg.RuleIterator):
     """ Double cross line strategy with TEMA line
 
         two parameters:
@@ -871,7 +871,7 @@ class DCRSTEMA(stg.RollingTiming):
             return 0
 
 
-class DCRSTRIMA(stg.RollingTiming):
+class DCRSTRIMA(stg.RuleIterator):
     """ Double cross line strategy with TRIMA line
 
         two parameters:
@@ -898,7 +898,7 @@ class DCRSTRIMA(stg.RollingTiming):
             return 0
 
 
-class DCRSWMA(stg.RollingTiming):
+class DCRSWMA(stg.RuleIterator):
     """ Double cross line strategy with WMA line
 
         two parameters:
@@ -933,7 +933,7 @@ class DCRSWMA(stg.RollingTiming):
 # average, or low-pass filtration
 
 
-class SLPSMA(stg.RollingTiming):
+class SLPSMA(stg.RuleIterator):
     """ Double cross line strategy with simple moving average
 
     """
@@ -958,7 +958,7 @@ class SLPSMA(stg.RollingTiming):
             return 0
 
 
-class SLPDEMA(stg.RollingTiming):
+class SLPDEMA(stg.RuleIterator):
     """ Curve Slope  strategy with DEMA line
 
         two parameters:
@@ -986,7 +986,7 @@ class SLPDEMA(stg.RollingTiming):
             return 0
 
 
-class SLPEMA(stg.RollingTiming):
+class SLPEMA(stg.RuleIterator):
     """ Curve Slope  strategy with EMA
 
         two parameters:
@@ -1014,7 +1014,7 @@ class SLPEMA(stg.RollingTiming):
             return 0
 
 
-class SLPHT(stg.RollingTiming):
+class SLPHT(stg.RuleIterator):
     """ Curve Slope  strategy with ht line
 
         zero parameters:
@@ -1041,7 +1041,7 @@ class SLPHT(stg.RollingTiming):
             return 0
 
 
-class SLPKAMA(stg.RollingTiming):
+class SLPKAMA(stg.RuleIterator):
     """ Curve Slope  strategy with KAMA line
 
         one parameters:
@@ -1069,7 +1069,7 @@ class SLPKAMA(stg.RollingTiming):
             return 0
 
 
-class SLPMAMA(stg.RollingTiming):
+class SLPMAMA(stg.RuleIterator):
     """ Curve Slope  strategy with MAMA line
 
         two parameters:
@@ -1098,7 +1098,7 @@ class SLPMAMA(stg.RollingTiming):
             return 0
 
 
-class SLPFAMA(stg.RollingTiming):
+class SLPFAMA(stg.RuleIterator):
     """ Curve Slope  strategy with FAMA line
 
         two parameters:
@@ -1127,7 +1127,7 @@ class SLPFAMA(stg.RollingTiming):
             return 0
 
 
-class SLPT3(stg.RollingTiming):
+class SLPT3(stg.RuleIterator):
     """ Curve Slope  strategy with T3 line
 
         two parameters:
@@ -1156,7 +1156,7 @@ class SLPT3(stg.RollingTiming):
             return 0
 
 
-class SLPTEMA(stg.RollingTiming):
+class SLPTEMA(stg.RuleIterator):
     """ Curve Slope strategy with TEMA line
 
         two parameters:
@@ -1184,7 +1184,7 @@ class SLPTEMA(stg.RollingTiming):
             return 0
 
 
-class SLPTRIMA(stg.RollingTiming):
+class SLPTRIMA(stg.RuleIterator):
     """ Curve Slope  strategy with TRIMA line
 
         two parameters:
@@ -1212,7 +1212,7 @@ class SLPTRIMA(stg.RollingTiming):
             return 0
 
 
-class SLPWMA(stg.RollingTiming):
+class SLPWMA(stg.RuleIterator):
     """ Curve Slope  strategy with WMA line
 
         two parameters:
@@ -1246,7 +1246,7 @@ class SLPWMA(stg.RollingTiming):
 # according to the momentum of prices calculated in different
 # methods
 
-class ADX(stg.RollingTiming):
+class ADX(stg.RuleIterator):
     """ADX 策略
     """
 
@@ -1283,7 +1283,7 @@ class ADX(stg.RollingTiming):
         return cat
 
 
-class APO(stg.RollingTiming):
+class APO(stg.RuleIterator):
     """APO 策略
     """
 
@@ -1320,7 +1320,7 @@ class APO(stg.RollingTiming):
         return cat
 
 
-class AROON(stg.RollingTiming):
+class AROON(stg.RuleIterator):
     """APOON 策略
     """
 
@@ -1363,7 +1363,7 @@ class AROON(stg.RollingTiming):
         return cat
 
 
-class AROONOSC(stg.RollingTiming):
+class AROONOSC(stg.RuleIterator):
     """AROON Oscillator 策略
     """
 
@@ -1403,7 +1403,7 @@ class AROONOSC(stg.RollingTiming):
         return cat
 
 
-class CCI(stg.RollingTiming):
+class CCI(stg.RuleIterator):
     """CCI the Commodity Channel Index 策略
     """
 
@@ -1441,7 +1441,7 @@ class CCI(stg.RollingTiming):
         return cat
 
 
-class CMO(stg.RollingTiming):
+class CMO(stg.RuleIterator):
     """CMO Chande Momentum Oscillator 钱德动量振荡器 策略
     """
 
@@ -1481,7 +1481,7 @@ class CMO(stg.RollingTiming):
         return cat
 
 
-class MACDEXT(stg.RollingTiming):
+class MACDEXT(stg.RuleIterator):
     """MACD Extention 策略
     """
 
@@ -1518,7 +1518,7 @@ class MACDEXT(stg.RollingTiming):
         return cat
 
 
-class MFI(stg.RollingTiming):
+class MFI(stg.RuleIterator):
     """MFI money flow index 策略
     """
 
@@ -1552,7 +1552,7 @@ class MFI(stg.RollingTiming):
         return sig
 
 
-class DI(stg.RollingTiming):
+class DI(stg.RuleIterator):
     """DI index that uses both negtive and positive DI 策略
     """
 
@@ -1588,7 +1588,7 @@ class DI(stg.RollingTiming):
         return cat
 
 
-class DM(stg.RollingTiming):
+class DM(stg.RuleIterator):
     """ DM index that uses both negtive and positive DM 策略
     """
 
@@ -1624,7 +1624,7 @@ class DM(stg.RollingTiming):
         return cat
 
 
-class MOM(stg.RollingTiming):
+class MOM(stg.RuleIterator):
     """ Momentum 策略
     """
 
@@ -1658,7 +1658,7 @@ class MOM(stg.RollingTiming):
         return cat
 
 
-class PPO(stg.RollingTiming):
+class PPO(stg.RuleIterator):
     """ PPO 策略
     """
 
@@ -1694,7 +1694,7 @@ class PPO(stg.RollingTiming):
         return cat
 
 
-class RSI(stg.RollingTiming):
+class RSI(stg.RuleIterator):
     """ RSI Relative Strength Index 策略
     """
 
@@ -1728,7 +1728,7 @@ class RSI(stg.RollingTiming):
         return cat
 
 
-class STOCH(stg.RollingTiming):
+class STOCH(stg.RuleIterator):
     """ Stochastic 策略
     """
 
@@ -1767,7 +1767,7 @@ class STOCH(stg.RollingTiming):
         return sig
 
 
-class STOCHF(stg.RollingTiming):
+class STOCHF(stg.RuleIterator):
     """ Stochastic Fast 策略
     """
 
@@ -1804,7 +1804,7 @@ class STOCHF(stg.RollingTiming):
         return sig
 
 
-class STOCHRSI(stg.RollingTiming):
+class STOCHRSI(stg.RuleIterator):
     """ Stochastic RSI 策略
     """
 
@@ -1844,7 +1844,7 @@ class STOCHRSI(stg.RollingTiming):
         return sig
 
 
-class ULTOSC(stg.RollingTiming):
+class ULTOSC(stg.RuleIterator):
     """ Ultimate Oscillator 策略
     """
 
@@ -1880,7 +1880,7 @@ class ULTOSC(stg.RollingTiming):
         return sig
 
 
-class WILLR(stg.RollingTiming):
+class WILLR(stg.RuleIterator):
     """ Williams' %R 策略
     """
 
@@ -1916,7 +1916,7 @@ class WILLR(stg.RollingTiming):
 
 # Built-in Simple timing strategies:
 
-class RiconNone(stg.SimpleTiming):
+class RiconNone(stg.RuleIterator):
     """无风险控制策略，不对任何风险进行控制"""
 
     def __init__(self, pars=()):
@@ -1928,7 +1928,7 @@ class RiconNone(stg.SimpleTiming):
         return np.zeros_like(hist_data.squeeze())
 
 
-class TimingLong(stg.SimpleTiming):
+class TimingLong(stg.RuleIterator):
     """简单择时策略，返回整个历史周期上的恒定多头状态
 
     数据类型：N/A
@@ -1949,7 +1949,7 @@ class TimingLong(stg.SimpleTiming):
         return np.ones_like(hist_data.squeeze())
 
 
-class TimingShort(stg.SimpleTiming):
+class TimingShort(stg.RuleIterator):
     """简单择时策略，返回整个历史周期上的恒定空头状态
 
     数据类型：N/A
@@ -1970,7 +1970,7 @@ class TimingShort(stg.SimpleTiming):
         return -np.ones_like(hist_data.squeeze())
 
 
-class TimingZero(stg.SimpleTiming):
+class TimingZero(stg.RuleIterator):
     """简单择时策略，返回整个历史周期上的空仓状态
 
     数据类型：N/A
@@ -1991,7 +1991,7 @@ class TimingZero(stg.SimpleTiming):
         return np.zeros_like(hist_data.squeeze())
 
 
-class TimingDMA(stg.SimpleTiming):
+class TimingDMA(stg.RuleIterator):
     """DMA择时策略
     生成DMA多空判断：
         1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
@@ -2035,7 +2035,7 @@ class TimingDMA(stg.SimpleTiming):
         return cat
 
 
-class RiconUrgent(stg.SimpleTiming):
+class RiconUrgent(stg.RuleIterator):
     """urgent风控类，继承自Ricon类，重写_realize方法"""
 
     # 跌幅控制策略，当N日跌幅超过p%的时候，强制生成卖出信号
@@ -2123,9 +2123,9 @@ class SelectingRandom(stg.GeneralStg):
         return chosen.astype('float') / chosen.sum()  # 投资比例平均分配
 
 
-# Built-in FactoralSelecting strategies:
+# Built-in FactorSorter strategies:
 
-class SelectingAvgIndicator(stg.FactoralSelecting):
+class SelectingAvgIndicator(stg.FactorSorter):
     """ 以股票过去一段时间内的财务指标的平均值作为选股因子选股
 
     """
@@ -2156,7 +2156,7 @@ class SelectingAvgIndicator(stg.FactoralSelecting):
         return factors
 
 
-class SelectingNDayLast(stg.FactoralSelecting):
+class SelectingNDayLast(stg.FactorSorter):
     """ 以股票过去N天前的量价作为选股指标
         N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
         默认的data_types为'close'
@@ -2187,7 +2187,7 @@ class SelectingNDayLast(stg.FactoralSelecting):
         return factors
 
 
-class SelectingNDayAvg(stg.FactoralSelecting):
+class SelectingNDayAvg(stg.FactorSorter):
     """ 根据股票以前n天的平均价格选股
         价格类型可以选open/high/low/close/vol等
         具体的价格类型在data_types属性中设置，默认价格为'close'
@@ -2219,7 +2219,7 @@ class SelectingNDayAvg(stg.FactoralSelecting):
         return factors
 
 
-class SelectingNDayChange(stg.FactoralSelecting):
+class SelectingNDayChange(stg.FactorSorter):
     """ 根据股票以前n天的股价变动幅度作为选股因子
         具体的价格类型在data_types属性中设置，默认价格为'close'
 
@@ -2251,7 +2251,7 @@ class SelectingNDayChange(stg.FactoralSelecting):
         return factors
 
 
-class SelectingNDayRateChange(stg.FactoralSelecting):
+class SelectingNDayRateChange(stg.FactorSorter):
     """ 根据股票以前n天的股价变动比例作为选股因子
         具体的价格类型在data_types属性中设置，默认价格为'close'
 
@@ -2283,7 +2283,7 @@ class SelectingNDayRateChange(stg.FactoralSelecting):
         return factors
 
 
-class SelectingNDayVolatility(stg.FactoralSelecting):
+class SelectingNDayVolatility(stg.FactorSorter):
     """ 根据股票以前n天的股价变动幅度作为选股因子
 
         策略参数为n，一个大于2小于150的正整数

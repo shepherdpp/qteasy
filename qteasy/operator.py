@@ -12,13 +12,12 @@
 import warnings
 
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 import pandas as pd
 
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .strategy import Strategy
+from .strategy import BaseStrategy
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 from .blender import blender_parser
 
@@ -43,7 +42,7 @@ class Operator:
 
         在同一个Operator对象中，每种信号生成器都可以使用不同种类的策略：
 
-         Gen  \  strategy  | RollingTiming | GeneralStg | Simple_Timing | FactoralSelecting |
+         Gen  \  strategy  | RuleIterator | GeneralStg | Simple_Timing | FactorSorter |
          ==================|===============|=================|===============|===================|
          Positional target |       Yes     |        Yes      |       Yes     |        Yes        |
          proportion signal |       Yes     |        Yes      |       Yes     |        Yes        |
@@ -54,7 +53,7 @@ class Operator:
         目前Operator支持四种不同类型的策略，它们并不仅局限于生成一种信号，不同策略类型之间的区别在于利用历史数据并生成最终结果的
         方法不一样。几种生成类型的策略分别如下：
 
-            1,  RollingTiming 逐品种滚动时序信号生成器，用于生成择时信号的策略
+            1,  RuleIterator 逐品种滚动时序信号生成器，用于生成择时信号的策略
 
                 这类策略的共同特征是对投资组合中的所有投资产品逐个考察其历史数据，根据其历史数据，在历史数据的粒度上生成整个时间段上的
                 时间序列信号。时间序列信号可以为多空信号，即用>0的数字表示多头头寸，<0的数字代表空头头寸，0代表中性头寸。也可以表示交
@@ -99,7 +98,7 @@ class Operator:
                 基于指数平滑均线或加权平均线的策略，或基于波形降噪分析的策略，其输出信号受未来信息的影响，如果使用简单滚动生成器将会
                 导致未来价格信息对回测信号产生影响，因此不应该使用简单时序信号生成器。
 
-            4,  FactoralSelecting 因子选股投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
+            4,  FactorSorter 因子选股投资组合分配器，用于周期性地调整投资组合中每个个股的权重比例
 
                 这类策略的共同特征是周期性运行，且运行的周期与其历史数据的粒度不同。在每次运行时，根据其历史数据，为每一个股票计算一个
                 选股因子，这个选股因子可以根据任意选定的数据根据任意可能的逻辑生成。生成选股因子后，可以通过对选股因子的条件筛选和
@@ -224,7 +223,7 @@ class Operator:
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
             stg = str_to_list(strategies)
-        elif isinstance(strategies, Strategy):
+        elif isinstance(strategies, BaseStrategy):
             stg = [strategies]
         elif isinstance(strategies, list):
             stg = strategies
@@ -573,7 +572,7 @@ class Operator:
         assert isinstance(strategies, list), f'TypeError, the strategies ' \
                                              f'should be a list of string, got {type(strategies)} instead'
         for stg in strategies:
-            if not isinstance(stg, (str, Strategy)):
+            if not isinstance(stg, (str, BaseStrategy)):
                 warnings.warn(f'WrongType! some of the items in strategies '
                               f'can not be added - got {stg}', RuntimeWarning)
             self.add_strategy(stg)
@@ -595,7 +594,7 @@ class Operator:
             stg_id = stg
             strategy = BUILT_IN_STRATEGIES[stg]()
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
-        elif isinstance(stg, Strategy):
+        elif isinstance(stg, BaseStrategy):
             if stg in AVAILABLE_BUILT_IN_STRATEGIES:
                 stg_id_index = list(AVAILABLE_BUILT_IN_STRATEGIES).index(stg)
                 stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
@@ -1214,13 +1213,6 @@ class Operator:
             else:
                 self._op_sample_indexes[stg_id] = seg_pos
 
-    # TODO: 需要调查：
-    #  为什么在已经通过prepare_data()方法设置好了每个不同策略所需的历史数据之后，在create_signal()方法中还需要传入
-    #  hist_data作为参数？这个参数现在已经没什么用了，完全可以拿掉。在sel策略的generate方法中也不应该
-    #  需要传入shares和dates作为参数。只需要selecting_history_data中的一部分就可以了
-    #  ————上述问题的原因是生成的交易信号仍然被转化为HistoryPanel，shares和dates被作为列标签和行标签传入DataFrame，进而
-    #  被用于消除不需要的行，同时还保证原始行号信息不丢失。在新的架构下，似乎可以不用创建一个DataFrame对象，直接返回ndarray
-    #  这样不仅可以消除参数hist_data的使用，还能进一步提升速度
     def create_signal(self, trade_data=None, sample_idx=None):
         """ 生成交易信号，
 
@@ -1296,7 +1288,6 @@ class Operator:
             if sample_idx is None:
                 relevant_sample_indexes = self.get_op_sample_indexes_by_price_type(price_type=bt_price_type)
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            # TODO: 这里应该可以很方便地使用map()实现相同的效果，速度更快
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
                                        relevant_ref_data,

@@ -77,7 +77,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffil
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
-from qteasy.strategy import Strategy, SimpleTiming, RollingTiming, GeneralStg, FactoralSelecting
+from qteasy.strategy import Strategy, SimpleTiming, RuleIterator, GeneralStg, FactorSorter
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs, ConfigDict
 
@@ -5719,7 +5719,7 @@ class TestStrategy(unittest.TestCase):
         pass
 
 
-class TestLSStrategy(RollingTiming):
+class TestLSStrategy(RuleIterator):
     """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成
 
     该策略有两个参数，N与Price
@@ -5845,7 +5845,7 @@ class TestSigStrategy(SimpleTiming):
         return sig
 
 
-class MyStg(qt.RollingTiming):
+class MyStg(qt.RuleIterator):
     """自定义双均线择时策略策略"""
 
     def __init__(self):
