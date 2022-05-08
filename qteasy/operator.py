@@ -452,11 +452,11 @@ class Operator:
                 pass  # 策略参数不参与优化
             elif stg.opt_tag == 1:
                 # 所有的策略参数全部参与优化，且策略的每一个参数作为一个个体参与优化
-                ranges.extend(stg.par_boes)
+                ranges.extend(stg.par_range)
                 types.extend(stg.par_types)
             elif stg.opt_tag == 2:
                 # 所有的策略参数全部参与优化，但策略的所有参数组合作为枚举同时参与优化
-                ranges.append(stg.par_boes)
+                ranges.append(stg.par_range)
                 types.extend(['enum'])
         return ranges, types
 

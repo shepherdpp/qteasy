@@ -20,8 +20,91 @@ class BaseStrategy:
     """ 量化投资策略的抽象基类，所有策略都继承自该抽象类，本类定义了generate抽象方法模版，供具体的策略类调用
 
         类属性定义了策略类型、策略名称、策略关键属性的数量、类型和取值范围等
-        所有的策略类都有一个generate()方法，这个方法是策略类的主入口方法，这个方法接受一组历史数据(np.ndarray对象)从历史数据中提取出
-        有用的信息，并生成用于投资的操作或交易信号。
+        所有的策略类都有一个generate()方法，供Operator对象调用，传入相关的历史数据，并生成一组交易信号。
+
+        策略的实现
+        基于一个策略类实现一个具体的策略，需要创建一个策略类，设定策略的基本参数，并重写realize()函数，在
+        realize()中编写交易信号的生成规则：
+
+        - 策略的初始化
+        初始化策略的目的是为了设定策略的基本参数；
+        除了策略名称、介绍以外，还包括有哪些参数，参数的取值范围和类型、需要使用哪些历史数据、
+        数据的频率、信号生成的频率（称为采样频率）、数据滑窗的大小、参考数据的类型等等信息，这些信息都需要在
+        策略初始化时通过策略属性设置：
+
+        推荐使用下面的方法设置策略
+        >>> Class StrategyName(GeneralStg):
+        >>>
+        >>>     def __init__():
+        >>>         super().__init__(pars=pars,
+        >>>                          par_count=1,
+        >>>                          par_types=['discr'],
+        >>>                          par_bounds_or_enums=[(2, 100)],
+        >>>                          stg_name='N-DAY LAST',
+        >>>                          stg_text='Select stocks according their previous prices',
+        >>>                          data_freq='d',
+        >>>                          sample_freq='m',
+        >>>                          window_length=100,
+        >>>                          data_types='close')
+
+        除了某些策略需要更多特殊属性以外，基本属性的含义及取值范围如下：
+
+            pars: tuple,            策略参数, 用于生成交易信号时所需的可变参数，在opt模式下，qteasy可以
+                                    通过修改这个参数寻找参数空间中的最优参数组合
+            opt_tag: int,           0: 参加优化，1: 不参加优化
+            stg_type: str,          策略类型，通常与策略所继承的父类相同
+            stg_name: str,          策略名称，用户自定义字符串
+            stg_text: str,          策略简介，类似于docstring，简单介绍该类的策略内容
+            par_count: int,         策略参数个数
+            par_types: int,         策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
+                                    1, 'discr': 离散型参数，通常数据类型为int
+                                    2, 'conti': 连续型参数，通常数据类型为float
+                                    3, 'enum': 枚举型参数，数据类型不限，可以为其他类型如str或tuple等
+            par_range:              策略参数取值范围，该参数供优化器使用，用于产生正确的参数空间并用于优化
+            data_freq: str:         静态属性，依赖的数据频率，用于生成策略输出所需的历史数据的频率，取值范围包括：
+                                    1, 'TICK'/'tick'/'t':
+                                    2, 'MIN'/'min':
+                                    3, 'H'/'h':
+                                    4, 'D'/'d':
+                                    5, 'W'/'w':
+                                    6, 'M'/'m':
+                                    7, 'Q'/'q':
+                                    8, 'Y'/'y':
+            sample_freq:            静态属性，策略生成时的采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
+                                    一样，支持data_freq的倍数频率，如'3d', '2w'等，但是不能高于数据频率。
+            window_length:          静态属性，历史数据视窗长度。即生成策略输出所需要的历史数据的数量
+            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成，可选的参数
+                                    字符串包括所有qteasy中内置的标准数据类型或自定义数据类型：
+                                    1, 'open'
+                                    2, 'high'
+                                    3, 'low'
+                                    4, 'close'
+                                    5, 'volume'
+                                    6, 'eps'
+                                    7, ...
+            bt_price_type:          静态属性，策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价，也可以设置
+                                    为五档交易价格中的某一个价格，根据交易当时的时间戳动态确定具体的交易价格
+            reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
+                                    生成，如指数、宏观经济数据等
+
+        - 策略规则的编写
+        策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
+        策略规则必须在realize()函数中定义，realize()函数具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
+        需要考虑股票的数量、历史周期、数据选择等等问题；
+        realize()函数的定义如下：
+        >>> def realize(self,
+        >>>             params: tuple,
+        >>>             h_seg: np.ndarray,
+        >>>             ref_seg: np.ndarray,
+        >>>             trade_data: np.ndarray)
+        不管Strategy继承了哪一个策略类，realize()函数的输入都是一样的包括：
+            - params:       策略的参数，具体的参数类型和数量在策略
+            - h_seg:        历史数据片段，这是一个3D的ndarray，包含了所有的历史数据，这个array的shape为(M, N, L)，即：
+                            - M层：每一层代表一个股票的相关数据
+                            - N行：
+                            - L列：
+            - ref_seg:
+            - trade_data:
     """
     __mataclass__ = ABCMeta
 
@@ -37,7 +120,7 @@ class BaseStrategy:
                  stg_text: str = 'intro text of strategy',
                  par_count: int = 0,
                  par_types: [list, str] = '',
-                 par_bounds_or_enums: [list, tuple] = (),
+                 par_range: [list, tuple] = (),
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
@@ -46,41 +129,6 @@ class BaseStrategy:
                  reference_data_types: [str, list] = ''):
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
 
-        input:
-            :param pars: tuple,             策略参数, 动态参数
-            :param opt_tag: int,            0: 参加优化，1: 不参加优化
-            :param stg_type: str,           策略类型，可取值'ROLLING TIMING', 'SELECTING', 'SIMPLE TIMNG'等
-            :param stg_name: str,           策略名称，在创建继承具体类时赋予该类
-            :param stg_text: str,           策略简介，类似于docstring，简单介绍该类的策略内容
-            :param par_count: int,          策略参数个数
-            :param par_types: int,          策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
-                                            1, 'discr': 离散型参数，通常数据类型为int
-                                            2, 'conti': 连续型参数，通常数据类型为float
-                                            3, 'enum': 枚举型参数，数据类型不限，可以为其他类型如str或tuple等
-            :param par_bounds_or_enums:     策略参数取值范围，该参数供优化器使用，用于产生正确的参数空间并用于优化
-            :param data_freq: str:          静态属性，依赖的数据频率，用于生成策略输出所需的历史数据的频率，取值范围包括：
-                                            1, 'TICK'/'tick'/'t':
-                                            2, 'MIN'/'min':
-                                            3, 'H'/'h':
-                                            4, 'D'/'d':
-                                            5, 'W'/'w':
-                                            6, 'M'/'m':
-                                            7, 'Q'/'q':
-                                            8, 'Y'/'y':
-            :param sample_freq:             静态属性，策略生成时的采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
-                                            一样，但是不能高于数据频率。
-            :param window_length:           静态属性，历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            :param data_types:              静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成，可选的参数
-                                            字符串包括：
-                                            1, 'open'
-                                            2, 'high'
-                                            3, 'low'
-                                            4, 'close'
-                                            5, 'volume'
-                                            6, 'eps'
-                                            7, ...
-            :param bt_price_type:           静态属性，策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价，也可以设置
-                                            为五档交易价格中的某一个价格，根据交易当时的时间戳动态确定具体的交易价格
         """
         self._pars = pars  # 策略的参数，动态属性，可以直接赋值（通过set_pars函数赋值）
         self._opt_tag = opt_tag  # 策略的优化标记，
@@ -109,12 +157,12 @@ class BaseStrategy:
             raise KeyError(f'parameter count ({par_count}) does not fit parameter types, '
                            f'which imply {len(par_types)} parameters')
 
-        if par_bounds_or_enums is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
+        if par_range is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
             assert par_count == 0, f'parameter count (par_count) should be 0 when parameter bounds are None'
             self._par_bounds_or_enums = []
         else:
-            assert isinstance(par_bounds_or_enums, (list, tuple))
-            self._par_bounds_or_enums = par_bounds_or_enums
+            assert isinstance(par_range, (list, tuple))
+            self._par_bounds_or_enums = par_range
         if not par_count == len(self._par_bounds_or_enums):
             raise KeyError(f'parameter count ({par_count}) does not fit parameter bounds or enums, '
                            f'which imply {len(par_types)} parameters')
@@ -193,12 +241,12 @@ class BaseStrategy:
             self._par_types = par_types
 
     @property
-    def par_boes(self):
+    def par_range(self):
         """策略的参数取值范围，用来定义参数空间用于参数优化"""
         return self._par_bounds_or_enums
 
-    @par_boes.setter
-    def par_boes(self, boes: list):
+    @par_range.setter
+    def par_range(self, boes: list):
         self.set_par_boes(par_boes=boes)
 
     @property
@@ -306,7 +354,7 @@ class BaseStrategy:
         str1 = f'{type(self)}'
         str2 = f'\nStrategy type: {self.stg_type} at {hex(id(self))}\n'
         str3 = f'\nInformation of the strategy: {self.stg_name}, {self.stg_text}'
-        str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_boes}'
+        str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_range}'
         if self._pars is not None:
             str5 = f'\nParameter: {self._pars}\n'
         else:
@@ -326,7 +374,7 @@ class BaseStrategy:
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""
         print(f'{type(self)} at {hex(id(self))}\nStrategy type: {self.stg_name}')
-        print('Optimization Tag and opti ranges:', self.opt_tag, self.par_boes)
+        print('Optimization Tag and opti ranges:', self.opt_tag, self.par_range)
         if self._pars is not None:
             print('Parameter Loaded:', type(self._pars), self._pars)
         else:
@@ -510,7 +558,7 @@ class RuleIterator(BaseStrategy):
             stg_text:
             par_count:
             par_types:
-            par_boes:
+            par_range:
             data_freq:
             sample_freq:
             window_length:
@@ -642,14 +690,12 @@ class GeneralStg(BaseStrategy):
                  pars: tuple = None,
                  stg_name: str = 'NEW-SEL',
                  stg_text: str = 'intro text of selecting strategy',
-                 proportion_or_quantity: float = 0.5,
                  **kwargs):
         super().__init__(pars=pars,
                          stg_type='SELECT',
                          stg_name=stg_name,
                          stg_text=stg_text,
                          **kwargs)
-        self.proportion_or_quantity = proportion_or_quantity
 
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """ 通用交易策略的所有策略代码全部都在realize中实现
@@ -669,18 +715,25 @@ class GeneralStg(BaseStrategy):
 
 
 class FactorSorter(BaseStrategy):
-    """ 因子选股，根据用户定义获选择的因子
+    """ 因子排序选股策略，根据用户定义获选择的因子
 
-        股票的选择取决于一批股票的某一个选股因子，这个指标可以是财务指标、量价指标，或者是其他的指标，这些指标形成一个一维向量，即指标向量
-        指标向量首先被用来执行条件选股：当某个股票的指标符合某条件时，股票被选中，
-            这些条件包括：大于某数、小于某数、介于某两数之间，或不在两数之间
-        对于被选中的股票，还可以根据其指标在所有股票中的大小排序执行选股：例如，从大到小排列的前30%或前10个
-        条件选股和排序选股可以兼而有之
+        这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
+        用户需要在realize()函数中计算选股因子，并将所有股票的选股因子值返回
+        根据返回的选股因子，策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定
+        数量的股票，最后根据它们的因子值分配权重或信号值
 
-        数据类型：由data_types指定的财报指标财报数据，单数据输入，默认数据为EPS
-        数据分析频率：季度
-        数据窗口长度：90
-        策略使用6个参数:
+        策略使用6个额外的选股参数实现因子排序选股:
+            sel_limit:          float,  选股限额，表示最多选出的股票的数量，如果sel_limit小于1，表示选股的比例：
+                                        例如：
+                                        0.25: 最多选出25%的股票, 10:  最多选出10个股票
+            condition:          str ,   确定如何根据条件选择股票，可用值包括：
+                                        'any'        :选择所有可用股票
+                                        'greater'    :选择指标大于ubound的股票
+                                        'less'       :选择指标小于lbound的股票
+                                        'between'    :选择指标介于lbound与ubound之间的股票
+                                        'not_between':选择指标不在lbound与ubound之间的股票
+            lbound:             float,  执行条件选股时的指标下界
+            ubound:             float,  执行条件选股时的指标上界
             sort_ascending:     bool,   排序方法，对选中的股票进行排序以选择或分配权重：
                                         True         :对选股指标从小到大排列，优先选择指标最小的股票
                                         False        :对选股指标从大到小排泄，优先选择指标最大的股票
@@ -690,30 +743,18 @@ class FactorSorter(BaseStrategy):
                                                       其余居中者的比例按序呈等差数列
                                         'proportion' :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
                                                       指标之间的差值成比例
-            condition:          str ,   确定如何根据条件选择股票，可用值包括：
-                                        'any'        :选择所有可用股票
-                                        'greater'    :选择指标大于ubound的股票
-                                        'less'       :选择指标小于lbound的股票
-                                        'between'    :选择指标介于lbound与ubound之间的股票
-                                        'not_between':选择指标不在lbound与ubound之间的股票
-            lbound:             float,  执行条件选股时的指标下界
-            ubound:             float,  执行条件选股时的指标上界
-            pct:                float,  最多从股票池中选出的投资组合的数量或比例，当0<pct<1时，选出pct%的股票，当pct>=1时，选出pct只股票
-        参数输入数据范围：[(True, False),
-                       ('even', 'linear', 'proportion'),
-                       ('any', 'greater', 'less', 'between', 'not_between'),
-                       (-inf, inf),
-                       (-inf, inf),
-                       (0, 1.)]
+
+        realize()的输出：
+        必须实现realize(self, params, h_seg, ref_seg, trade_data)
     """
     __metaclass__ = ABCMeta
 
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
                  pars: tuple = None,
-                 stg_name: str = 'NEW-FAC',
+                 stg_name: str = 'Factor',
                  stg_text: str = 'intro text of selecting strategy',
-                 proportion_or_quantity: float = 0.5,
+                 sel_limit: float = 0.5,
                  condition: str = 'any',
                  lbound: float = -np.inf,
                  ubound: float = np.inf,
@@ -725,7 +766,7 @@ class FactorSorter(BaseStrategy):
                          stg_name=stg_name,
                          stg_text=stg_text,
                          **kwargs)
-        self.proportion_or_quantity = proportion_or_quantity
+        self.proportion_or_quantity = sel_limit
         self.condition = condition
         self.lbound = lbound
         self.ubound = ubound
@@ -840,10 +881,10 @@ class FactorSorter(BaseStrategy):
 
     @abstractmethod
     def realize(self,
-                params,
-                h_seg,
-                ref_seg,
-                trade_data):
+                params: tuple,
+                h_seg: np.ndarray,
+                ref_seg: np.ndarray,
+                trade_data: np.ndarray) -> np.ndarray:
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
         """

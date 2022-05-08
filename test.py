@@ -7225,7 +7225,7 @@ class TestOperator(unittest.TestCase):
                          pars=(9, -0.09),
                          window_length=10)
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
-        self.assertEqual(op.strategies[0].par_boes, ((5, 10), (5, 15), (10, 15)))
+        self.assertEqual(op.strategies[0].par_range, ((5, 10), (5, 15), (10, 15)))
         self.assertEqual(op.strategies[2].pars, (9, -0.09))
         self.assertEqual(op.op_data_freq, 'd')
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
@@ -7452,7 +7452,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.stg.stg_text, self.stg_text)
         self.assertEqual(self.stg.pars, self.pars)
         self.assertEqual(self.stg.par_types, self.par_types)
-        self.assertEqual(self.stg.par_boes, self.par_boes)
+        self.assertEqual(self.stg.par_range, self.par_boes)
         self.assertEqual(self.stg.par_count, self.par_count)
         self.assertEqual(self.stg.opt_tag, self.opt_tag)
         self.assertEqual(self.stg.data_freq, self.data_freq)
@@ -7467,8 +7467,8 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.stg.pars, (1, 2, 3, 4))
         self.stg.par_count = 3
         self.assertEqual(self.stg.par_count, 3)
-        self.stg.par_boes = [(1, 10), (1, 10), (1, 10), (1, 10)]
-        self.assertEqual(self.stg.par_boes, [(1, 10), (1, 10), (1, 10), (1, 10)])
+        self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
+        self.assertEqual(self.stg.par_range, [(1, 10), (1, 10), (1, 10), (1, 10)])
         self.stg.par_types = ['conti', 'conti', 'discr', 'enum']
         self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'enum'])
         self.stg.par_types = 'conti, conti, discr, conti'
@@ -12135,7 +12135,7 @@ class FastExperiments(unittest.TestCase):
         #                  data_types='wt-000300.SH',
         #                  sort_ascending=False,
         #                  weighting='proportion',
-        #                  proportion_or_quantity=300)
+        #                  sel_limit=300)
         # res = qt.run(op,
         #              mode=1,
         #              visual=True,
