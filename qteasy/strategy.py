@@ -33,19 +33,20 @@ class BaseStrategy:
         策略初始化时通过策略属性设置：
 
         推荐使用下面的方法设置策略
-        >>> Class StrategyName(GeneralStg):
-        >>>
-        >>>     def __init__():
-        >>>         super().__init__(pars=pars,
-        >>>                          par_count=1,
-        >>>                          par_types=['discr'],
-        >>>                          par_bounds_or_enums=[(2, 100)],
-        >>>                          stg_name='N-DAY LAST',
-        >>>                          stg_text='Select stocks according their previous prices',
-        >>>                          data_freq='d',
-        >>>                          sample_freq='m',
-        >>>                          window_length=100,
-        >>>                          data_types='close')
+
+            Class Strategy(GeneralStg):
+
+                def __init__():
+                    super().__init__(pars=pars,
+                                     par_count=1,
+                                     par_types=['discr'],
+                                     par_bounds_or_enums=[(2, 100)],
+                                     stg_name='N-DAY LAST',
+                                     stg_text='Select stocks according their previous prices',
+                                     data_freq='d',
+                                     sample_freq='m',
+                                     window_length=100,
+                                     data_types='close')
 
         除了某些策略需要更多特殊属性以外，基本属性的含义及取值范围如下：
 
@@ -92,19 +93,98 @@ class BaseStrategy:
         策略规则必须在realize()函数中定义，realize()函数具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
         需要考虑股票的数量、历史周期、数据选择等等问题；
         realize()函数的定义如下：
-        >>> def realize(self,
-        >>>             params: tuple,
-        >>>             h_seg: np.ndarray,
-        >>>             ref_seg: np.ndarray,
-        >>>             trade_data: np.ndarray)
-        不管Strategy继承了哪一个策略类，realize()函数的输入都是一样的包括：
-            - params:       策略的参数，具体的参数类型和数量在策略
-            - h_seg:        历史数据片段，这是一个3D的ndarray，包含了所有的历史数据，这个array的shape为(M, N, L)，即：
-                            - M层：每一层代表一个股票的相关数据
+
+            def realize(self,
+                        params: tuple,
+                        h_seg: np.ndarray,
+                        ref_seg: np.ndarray,
+                        trade_data: np.ndarray)
+
+        不管Strategy继承了哪一个策略类，realize()函数的输入都包括以下几个参数：
+            - params:       策略的一组合法参数，参数以tuple的形式传入
+                            具体的参数类型和数量在策略属性中定义，例如：
+
+                            par_count = 2
+                                - 策略使用两个参数
+                            par_range = [[0, 100], [0, 1]]
+                                - 策略的两个参数的取值范围：第一个参数为[0, 100], 第二个参数为[0, 1]
+                            按照上述定义，(50， 0.5) 就是一组合法的参数
+
+            - h(history):   历史数据片段，通常这是一个3D的ndarray，包含了所有股票的所有类型的历史数据，且数据的时间起止点是
+                            策略运行当时开始倒推到时间窗口长度前的时刻，具体来说，如果这个array的shape为(M, N, L)，即：
+                            - M层：
+                                每一层的数据表示一只股票的历史数据，具体哪些股票在qteasy运行参数中设定，
+                                例如：设定：
+                                    - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
+                                表示：
+                                    使用"000001.SZ, 000002.SZ, 600000.SH"三支股票参与回测
+
+                                那么输入的数据就会包含3层，且第0、1、2层分别对应了000001.SZ, 000002.SZ, 600000.SH
+                                三支股票的数据，使用下面的方法即可获取相应的数据：
+                                    h_seg[0, :, :] - 获取000001.SZ的所有历史数据
+
                             - N行：
+                                每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
+                                传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
+                                data_freq则定义了时间戳的频率。
+                                例如：设定：
+                                    - data_freq = 'd'
+                                    - window_length = 100
+                                即表示：
+                                    每次信号生成使用的历史数据频率为'天"，且使用100天的数据来生成交易信号
+
+                                这样在每一组strategy运行时，传入的历史数据片段就会包含从100天前到昨天的历史数据，例如
+                                在2020-05-30这一天，获取的数据就会是从2020-01-04开始，一直到2020-05-29这100个交易日
+                                的历史数据
+
                             - L列：
-            - ref_seg:
-            - trade_data:
+                                每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性data_types中设置
+                                例如：设定：
+                                    - data_types = "open, high, low, close, pe"
+                                即表示：
+                                    传入的数据会包含5列，分别代表股票的开、高、收、低、市盈率物种数据类型
+
+                                传入的数据排列顺序与data_types的设置一致，也就是说，如果需要获取市盈率数据，可以这样
+                                获取：
+                                    h_seg[:, :, 4]
+
+                            在策略规则中获取历史数据应该使用上面的切片方法，并做相应计算，下面给出几个例子：
+                                以下例子都基于前面给出的参数设定
+                                例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
+                                    close_last_day = h_seg[:, -1, 3]
+                                    close_10_day = h_seg[:, -10, 3]
+                                    rate_10 = (close_last_day / close_10_day) - 1
+
+                                例2, 判断股票最近的收盘价是否大于10日内的最高价：
+                                    max_10_day = h_seg[:, -10:-1, 1].max(axis=1)
+                                    close_last_day = h_seg[:, -1, 3]
+                                    penetrate = close_last_day > max_10_day
+
+                                例3, 获取股票最近10日市盈率的平均值
+                                    pe_10_days = h_seg[:, -10:-1, 4]
+                                    avg_pe = pe_10_days.mean(axis=1)
+
+                                例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
+                                    close_10_days = h_seg[:, -10:-1, 3]
+                                    close_50_days = h_seg[:, -50:-1, 3]
+                                    ma_10 = close_10_days.mean(axis=1)
+                                    ma_50 = close_10_days.mean(axis=1)
+
+                            **注意**
+                            在RuleIterator策略类中，h_seg的格式稍有不同，是一个2D数据，参见RuleIterator策略类
+                            的docstring
+
+            - r(reference): 参考历史数据，即与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如根据
+                            大盘选股的大盘数据，或者宏观经济数据等。
+
+                            ref_seg的结构是一个N行L列的2D array，包含所有可以使用的参考数据类型，而数据的时间段与
+                            历史数据h相同:
+
+                            - N行,
+                                每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
+                                传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
+                                data_freq则定义了时间戳的频率。
+            - t(trade):
     """
     __mataclass__ = ABCMeta
 
@@ -630,18 +710,18 @@ class RuleIterator(BaseStrategy):
 
         try:
             return self.realize(params=params,
-                                h_seg=hist_nonan,
-                                ref_seg=ref_nonan,
-                                trade_data=trade_data)
+                                h=hist_nonan,
+                                r=ref_nonan,
+                                t=trade_data)
         except Exception:
             return np.nan
 
     @abstractmethod
     def realize(self,
                 params: tuple,
-                h_seg: np.ndarray,
-                ref_seg: np.ndarray,
-                trade_data: np.ndarray) -> float:
+                h: np.ndarray,
+                r: np.ndarray,
+                t: np.ndarray) -> float:
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一个股票的独立交易信号，同样的规则会被复制到其他股票
         """
@@ -700,14 +780,14 @@ class GeneralStg(BaseStrategy):
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """ 通用交易策略的所有策略代码全部都在realize中实现
         """
-        return self.realize(params=self.pars, h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
+        return self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data)
 
     @abstractmethod
     def realize(self,
                 params,
-                h_seg,
-                ref_seg,
-                trade_data):
+                h,
+                r,
+                t):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
         """
@@ -802,7 +882,7 @@ class FactorSorter(BaseStrategy):
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(h_seg, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
-        factors = self.realize(params=self.pars, h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data).squeeze()
+        factors = self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data).squeeze()
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -882,9 +962,9 @@ class FactorSorter(BaseStrategy):
     @abstractmethod
     def realize(self,
                 params: tuple,
-                h_seg: np.ndarray,
-                ref_seg: np.ndarray,
-                trade_data: np.ndarray) -> np.ndarray:
+                h: np.ndarray,
+                r: np.ndarray,
+                t: np.ndarray) -> np.ndarray:
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
         """
