@@ -34,28 +34,33 @@ class BaseStrategy:
 
         推荐使用下面的方法设置策略
 
-            Class Strategy(GeneralStg):
+            Class ExampleStrategy(GeneralStg):
 
-                def __init__():
-                    super().__init__(pars=pars,
-                                     par_count=1,
-                                     par_types=['discr'],
-                                     par_bounds_or_enums=[(2, 100)],
-                                     stg_name='N-DAY LAST',
-                                     stg_text='Select stocks according their previous prices',
-                                     data_freq='d',
-                                     sample_freq='m',
-                                     window_length=100,
-                                     data_types='close')
+                def realize(self, pars, h, r, t):
+
+                    # strategy logic goes here
+                    # 在这里编写信号生成逻辑
+
+                    return res
+
+        用下面的方法创建一个策略对象：
+
+            example_strategy = ExampleStrategy(name='example',
+                                               description='example strategy',
+                                               pars=(2, 3.0, 'int'),
+                                               data_types='close',
+                                               bt_price_types='close'
+                                               data_freq='d',
+                                               sample_freq='2d',
+                                               window_length=100)
 
         除了某些策略需要更多特殊属性以外，基本属性的含义及取值范围如下：
 
             pars: tuple,            策略参数, 用于生成交易信号时所需的可变参数，在opt模式下，qteasy可以
                                     通过修改这个参数寻找参数空间中的最优参数组合
             opt_tag: int,           0: 参加优化，1: 不参加优化
-            stg_type: str,          策略类型，通常与策略所继承的父类相同
-            stg_name: str,          策略名称，用户自定义字符串
-            stg_text: str,          策略简介，类似于docstring，简单介绍该类的策略内容
+            name: str,              策略名称，用户自定义字符串
+            description: str,       策略简介，类似于docstring，简单介绍该类的策略内容
             par_count: int,         策略参数个数
             par_types: tuple/list,  策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
                                     1, 'discr': 离散型参数，通常数据类型为int
@@ -222,11 +227,11 @@ class BaseStrategy:
                  pars: tuple = (),
                  opt_tag: int = 0,
                  stg_type: str = 'strategy type',
-                 stg_name: str = 'strategy name',
-                 stg_text: str = 'intro text of strategy',
+                 name: str = 'strategy name',
+                 description: str = 'intro text of strategy',
                  par_count: int = 0,
-                 par_types: [list, str] = '',
-                 par_range: [list, tuple] = (),
+                 par_types: [list, str] = None,
+                 par_range: [list, tuple] = None,
                  data_freq: str = 'd',
                  sample_freq: str = 'd',
                  window_length: int = 270,
@@ -236,64 +241,127 @@ class BaseStrategy:
         """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
 
         """
-        self._pars = pars  # 策略的参数，动态属性，可以直接赋值（通过set_pars函数赋值）
-        self._opt_tag = opt_tag  # 策略的优化标记，
-        self._stg_type = stg_type  # 策略类型
-        self._stg_name = stg_name  # 策略的名称
-        self._stg_text = stg_text  # 策略的描述文字
-        self._par_count = par_count  # 策略参数的元素个数
-        self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
-
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
-        if pars is not None:
-            assert isinstance(pars, (tuple, list, dict))
+        from qteasy import logger_core
+        logger_core.info(f'initializing new Strategy: type: {stg_type}, name: {name}, text: {description}')
+        implied_par_count = None
+        implied_par_types = None
+        implied_par_range = None
+        if pars is None:
+            pars = ()
+
+        if isinstance(pars, (tuple, list)):
+            implied_par_count = len(pars)
+            implied_par_types = []
+            implied_par_range = []
+            for item in pars:
+                if isinstance(item, int):
+                    implied_par_types.append('int')
+                    implied_par_range.append((item, item + 1))
+                elif isinstance(item, float):
+                    implied_par_types.append('float')
+                    implied_par_range.append((item - 1, item + 1))
+                elif isinstance(item, str):
+                    implied_par_types.append('enum')
+                    implied_par_range.append(tuple([item]))
+                else:
+                    raise TypeError(f'Invalid parameter item type: ({type(item)}), parameter can only contain'
+                                    f'integers, floats or strings')
+        elif isinstance(pars, dict):
+            if not all(isinstance(item, tuple) for item in pars.values()):
+                raise TypeError(f'All items is a dict type parameter should be tuples, invalid type encounted')
+
+        else:
+            raise TypeError(f'Invalid parameter type. pars should be a tuple, '
+                            f'a list or a dict, got {type(pars)} instead.')
 
         # 如果给出了par_count/par_types/par_range等三个参数，则检查其合法性，如果合法，替换
         # 推测参数（若存在），如果不合法，使用推测参数（若存在）并给出警告，如果推测参数不存在，
         # 则报错，并给出有价值的指导意见
-        if not isinstance(par_count, int):
-            raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
+        if par_count is None:
+            par_count = implied_par_count
+        else:
+            if not isinstance(par_count, int):
+                raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
+            if par_count < 0:
+                raise ValueError(f'Invalid parameter count ({par_count}), it should not be less than 0')
+            if implied_par_count is not None:
+                if par_count != implied_par_count:
+                    par_count = implied_par_count
+                    logger_core.warning(f'Invalid parameter count ({par_count}), given parameter implies '
+                                        f'({implied_par_count})'
+                                        f'par_count adjusted, you should '
+                                        f'probably pass "par_count = {implied_par_count}"')
 
         if par_types is None:
-            par_types = []
-            assert par_count == 0, f'parameter count (par_count) should be 0 when parameter type is None'
-
-        if not isinstance(par_types, (str, list)):
-            raise TypeError(f'parameter types (par_types) should be a string or list of strings, '
-                            f'got {type(par_types)} instead')
-        if isinstance(par_types, str):
-            par_types = str_to_list(par_types)
-
-        if not par_count == len(par_types):
-            raise KeyError(f'parameter count ({par_count}) does not fit parameter types ({par_types}), '
-                           f'which imply {len(par_types)} parameters')
-
-        if par_range is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
-            assert par_count == 0, f'parameter count ({par_count}) should be 0 when parameter ranges are None'
-            self._par_bounds_or_enums = []
+            par_types = implied_par_types
         else:
-            assert isinstance(par_range, (list, tuple))
-            self._par_bounds_or_enums = par_range
-        if not par_count == len(self._par_bounds_or_enums):
-            raise KeyError(f'parameter count ({par_count}) does not fit parameter ranges (par_range), '
-                           f'which imply {len(par_range)} parameters')
+            if not isinstance(par_types, (str, list)):
+                raise TypeError(f'parameter types (par_types) should be a string or list of strings, '
+                                f'got {type(par_types)} instead')
+            if isinstance(par_types, str):
+                par_types = str_to_list(par_types)
+            for item in par_types:
+                if not isinstance(item, str):
+                    raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
+                if not item.lower() in ['int', 'float', 'conti', 'discr', 'enum']:
+                    raise KeyError(f'Invalid type ({item}), should be one of "int, float, conti, discr, enum"')
+            if len(par_types) < par_count:
+                logger_core.warning(f'Not enough parameter types({len(par_types)}) to assign'
+                                    f' to all ({par_count}) parameters')
+            elif len(par_types) > par_count:
+                logger_core.info(f'Got more parameter types({len(par_types)}) than count of parameters({par_count})')
+                par_types = par_types[0:par_count]
 
-        # 依赖的历史数据频率
-        self._data_freq = data_freq
-        # 策略生成采样频率，即策略操作信号的生成频率
-        self._sample_freq = sample_freq
-        # 表示历史数据窗口的长度，生成策略的一次操作所依赖的历史数据的数量
-        self._window_length = window_length
-        if isinstance(data_types, str):
-            data_types = str_to_list(data_types, ',')
-        assert isinstance(data_types, list), f'TypeError, data type should be a list, got {type(data_types)} instead'
-        self._data_types = data_types
+        if par_range is None:
+            par_range = implied_par_range
+        else:
+            if not isinstance(par_range, (tuple, list)):
+                raise TypeError(f'parameter range (par_range) should be a tuple or a list, '
+                                f'got {type(par_range)} instead')
+            for item in par_range:
+                if not isinstance(item, tuple):
+                    raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
+            if len(par_range) < par_count:
+                logger_core.warning(f'Not enough parameter ranges({len(par_range)}) to assign'
+                                    f' to all ({par_count}) parameters')
+            elif len(par_range) > par_count:
+                logger_core.info(f'Got more parameter types({len(par_range)}) than count of parameters({par_count})')
+                par_range = par_range[0:par_count]
+
+        self._pars = pars  # 策略的参数，动态属性
+        self._opt_tag = opt_tag  # 策略的优化标记，
+        self._stg_type = stg_type  # 策略类型
+        self._stg_name = name  # 策略的名称
+        self._stg_text = description  # 策略的描述文字
+        self._par_count = par_count  # 策略参数的元素个数
+        self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
+        self._par_bounds_or_enums = par_range
+        logger_core.info(f'Strategy created with basic parameters set, pars={pars}, par_count={par_count},'
+                         f' par_types={par_types}, par_range={par_range}')
+
+        # 其他的几个参数都通过参数赋值方法赋值，在赋值方法内会进行参数合法性检，这里只需确保所有参数不是None即可
+        assert data_freq is not None
+        assert sample_freq is not None
+        assert window_length is not None
+        assert data_types is not None
+        assert bt_price_type is not None
+        assert reference_data_types is not None
+        self._data_freq = None
+        self._sample_freq = None
+        self._window_length = None
+        self._data_types = None
         self._bt_price_type = None
-        self.set_hist_pars(bt_price_type=bt_price_type)
-        if isinstance(reference_data_types, str):
-            reference_data_types = str_to_list(reference_data_types, ',')
-        self._reference_data_types = reference_data_types
+        self._reference_data_types = None
+        self.set_hist_pars(data_freq=data_freq,
+                           sample_freq=sample_freq,
+                           window_length=window_length,
+                           bt_price_type=bt_price_type,
+                           reference_data_types=reference_data_types)
+        logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, sample_freq={sample_freq},'
+                         f' window_length={window_length}, bt_price_type={bt_price_type}, '
+                         f'reference_data_types={reference_data_types}')
 
     @property
     def stg_type(self):
@@ -301,22 +369,22 @@ class BaseStrategy:
         return self._stg_type
 
     @property
-    def stg_name(self):
+    def name(self):
         """策略名称，打印策略信息的时候策略名称会被打印出来"""
         return self._stg_name
 
-    @stg_name.setter
-    def stg_name(self, stg_name: str):
-        self._stg_name = stg_name
+    @name.setter
+    def name(self, name: str):
+        self._stg_name = name
 
     @property
-    def stg_text(self):
+    def description(self):
         """策略说明文本，对策略的实现方法和功能进行简要介绍"""
         return self._stg_text
 
-    @stg_text.setter
-    def stg_text(self, stg_text: str):
-        self._stg_text = stg_text
+    @description.setter
+    def description(self, description: str):
+        self._stg_text = description
 
     @property
     def par_count(self):
@@ -359,7 +427,7 @@ class BaseStrategy:
 
     @par_range.setter
     def par_range(self, boes: list):
-        self.set_par_boes(par_boes=boes)
+        self.set_par_range(par_boes=boes)
 
     @property
     def opt_tag(self):
@@ -465,7 +533,7 @@ class BaseStrategy:
         """打印所有相关信息和主要属性"""
         str1 = f'{type(self)}'
         str2 = f'\nStrategy type: {self.stg_type} at {hex(id(self))}\n'
-        str3 = f'\nInformation of the strategy: {self.stg_name}, {self.stg_text}'
+        str3 = f'\nInformation of the strategy: {self.name}, {self.description}'
         str4 = f'\nOptimization Tag and opti ranges: {self.opt_tag}, {self.par_range}'
         if self._pars is not None:
             str5 = f'\nParameter: {self._pars}\n'
@@ -480,12 +548,12 @@ class BaseStrategy:
         :return:
         """
         str1 = f'{self._stg_type}('
-        str2 = f'{self.stg_name})'
+        str2 = f'{self.name})'
         return ''.join([str1, str2])
 
     def info(self, verbose: bool = False):
         """打印所有相关信息和主要属性"""
-        print(f'{type(self)} at {hex(id(self))}\nStrategy type: {self.stg_name}')
+        print(f'{type(self)} at {hex(id(self))}\nStrategy type: {self.name}')
         print('Optimization Tag and opti ranges:', self.opt_tag, self.par_range)
         if self._pars is not None:
             print('Parameter Loaded:', type(self._pars), self._pars)
@@ -493,7 +561,7 @@ class BaseStrategy:
             print('No Parameter!')
         # 在verbose == True时打印更多的额外信息
         if verbose:
-            print('Information of the strategy:\n', self.stg_name, self.stg_text)
+            print('Information of the strategy:\n', self.name, self.description)
 
     def set_pars(self, pars: (tuple, dict)) -> int:
         """设置策略参数，在设置之前对参数的个数进行检查
@@ -526,7 +594,7 @@ class BaseStrategy:
         self._opt_tag = opt_tag
         return opt_tag
 
-    def set_par_boes(self, par_boes):
+    def set_par_range(self, par_boes):
         """ 设置策略参数的取值范围
 
         input:
@@ -588,10 +656,10 @@ class BaseStrategy:
                                                                    f'price type'
             self._bt_price_type = bt_price_type
         if reference_data_types is not None:
-            if isinstance(data_types, str):
+            if isinstance(reference_data_types, str):
                 reference_data_types = str_to_list(reference_data_types, ',')
             assert isinstance(reference_data_types, list), \
-                f'TypeError, data type should be a list, got {type(reference_data_types)} instead'
+                f'TypeError, reference data types should be a list, got {type(reference_data_types)} instead'
             self._reference_data_types = reference_data_types
 
     def set_custom_pars(self, **kwargs):
@@ -677,14 +745,12 @@ class GeneralStg(BaseStrategy):
 
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
-                 pars: tuple = None,
-                 stg_name: str = 'NEW-SEL',
-                 stg_text: str = 'intro text of selecting strategy',
+                 name: str = 'General',
+                 description: str = 'description of General strategy',
                  **kwargs):
-        super().__init__(pars=pars,
-                         stg_type='SELECT',
-                         stg_name=stg_name,
-                         stg_text=stg_text,
+        super().__init__(stg_type='GENERAL',
+                         name=name,
+                         description=description,
                          **kwargs)
 
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
@@ -778,9 +844,8 @@ class FactorSorter(BaseStrategy):
 
     # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
     def __init__(self,
-                 pars: tuple = None,
-                 stg_name: str = 'Factor',
-                 stg_text: str = 'intro text of selecting strategy',
+                 name: str = 'Factor',
+                 description: str = 'description of factor sorter strategy',
                  sel_limit: float = 0.5,
                  condition: str = 'any',
                  lbound: float = -np.inf,
@@ -788,10 +853,9 @@ class FactorSorter(BaseStrategy):
                  sort_ascending: bool = False,
                  weighting: str = 'even',
                  **kwargs):
-        super().__init__(pars=pars,
-                         stg_type='FACTOR',
-                         stg_name=stg_name,
-                         stg_text=stg_text,
+        super().__init__(stg_type='FACTOR',
+                         name=name,
+                         description=description,
                          **kwargs)
         self.proportion_or_quantity = sel_limit
         self.condition = condition
@@ -938,7 +1002,7 @@ class RuleIterator(BaseStrategy):
         __init__()方法定义了该策略的最基本参数，这些参数与策略的使用息息相关，而且推荐使用"super().__init__()"的形式设置这些参数，这些参数
         包括：
             stg_id:
-            stg_text:
+            description:
             par_count:
             par_types:
             par_range:
@@ -961,14 +1025,12 @@ class RuleIterator(BaseStrategy):
     __mataclass__ = ABCMeta
 
     def __init__(self,
-                 pars: tuple = None,
-                 stg_name: str = 'RULE-ITER',
-                 stg_text: str = 'intro text of rule iterator strategy',
+                 name: str = 'Rule-Iterator',
+                 description: str = 'description of rule iterator strategy',
                  **kwargs):
-        super().__init__(pars=pars,
-                         stg_name=stg_name,
-                         stg_text=stg_text,
-                         stg_type='R-TIMING',
+        super().__init__(name=name,
+                         description=description,
+                         stg_type='RULE-ITER',
                          **kwargs)
 
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):

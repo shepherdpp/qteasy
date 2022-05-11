@@ -57,8 +57,8 @@ class TimingCrossline(stg.RuleIterator):
                          par_count=4,
                          par_types=['discr', 'discr', 'conti', 'enum'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
-                         stg_name='CROSSLINE',
-                         stg_text='Moving average crossline strategy, determine long/short position according to the ' \
+                         name='CROSSLINE',
+                         description='Moving average crossline strategy, determine long/short position according to the ' \
                                   'cross point of long and short term moving average prices ',
                          data_types='close')
 
@@ -105,8 +105,8 @@ class TimingMACD(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
-                         stg_name='MACD',
-                         stg_text='MACD strategy, determine long/short position according to differences of '
+                         name='MACD',
+                         description='MACD strategy, determine long/short position according to differences of '
                                   'exponential weighted moving average prices',
                          data_types='close')
 
@@ -157,8 +157,8 @@ class TimingTRIX(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(2, 50), (3, 150)],
-                         stg_name='TRIX',
-                         stg_text='TRIX strategy, determine long/short position according to triple exponential '
+                         name='TRIX',
+                         description='TRIX strategy, determine long/short position according to triple exponential '
                                   'weighted moving average prices',
                          data_freq='d',
                          sample_freq='d',
@@ -203,8 +203,8 @@ class TimingCDL(stg.RuleIterator):
                          par_count=0,
                          par_types=None,
                          par_bounds_or_enums=None,
-                         stg_name='CDL INDICATOR',
-                         stg_text='CDL Indicators, determine buy/sell signals according to CDL Indicators',
+                         name='CDL INDICATOR',
+                         description='CDL Indicators, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='open,high,low,close')
 
@@ -229,8 +229,8 @@ class SoftBBand(stg.RuleIterator):
                          par_count=4,
                          par_types=['discr', 'conti', 'conti', 'discr'],
                          par_bounds_or_enums=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
-                         stg_name='Soft Bolinger Band',
-                         stg_text='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
+                         name='Soft Bolinger Band',
+                         description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
                          window_length=200,
                          data_types='close')
 
@@ -275,8 +275,8 @@ class TimingBBand(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'conti', 'conti'],
                          par_bounds_or_enums=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
-                         stg_name='BBand',
-                         stg_text='BBand strategy, determine long/short position according to Bollinger bands',
+                         name='BBand',
+                         description='BBand strategy, determine long/short position according to Bollinger bands',
                          data_freq='d',
                          sample_freq='d',
                          window_length=270,
@@ -311,8 +311,8 @@ class TimingSAREXT(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'conti'],
                          par_bounds_or_enums=[(-100, 100), (0, 5)],
-                         stg_name='Parabolic SAREXT',
-                         stg_text='Parabolic SAR Extended Strategy, determine buy/sell signals according to CDL Indicators',
+                         name='Parabolic SAREXT',
+                         description='Parabolic SAR Extended Strategy, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='high, low')
 
@@ -358,8 +358,8 @@ class SCRSSMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SINGLE CROSSLINE - SMA',
-                         stg_text='Single moving average strategy that uses simple moving average as the trade line ',
+                         name='SINGLE CROSSLINE - SMA',
+                         description='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
@@ -384,8 +384,8 @@ class SCRSDEMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SINGLE CROSSLINE - DEMA',
-                         stg_text='Single moving average strategy that uses DEMA as the '
+                         name='SINGLE CROSSLINE - DEMA',
+                         description='Single moving average strategy that uses DEMA as the '
                                   'trade line ',
                          data_types='close')
 
@@ -411,8 +411,8 @@ class SCRSEMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SINGLE CROSSLINE - EMA',
-                         stg_text='Single moving average strategy that uses EMA as the '
+                         name='SINGLE CROSSLINE - EMA',
+                         description='Single moving average strategy that uses EMA as the '
                                   'trade line ',
                          data_types='close')
 
@@ -438,8 +438,8 @@ class SCRSHT(stg.RuleIterator):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SINGLE CROSSLINE - HT',
-                         stg_text='Single moving average strategy that uses HT line as the '
+                         name='SINGLE CROSSLINE - HT',
+                         description='Single moving average strategy that uses HT line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -464,8 +464,8 @@ class SCRSKAMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SINGLE CROSSLINE - KAMA',
-                         stg_text='Single moving average strategy that uses KAMA line as the '
+                         name='SINGLE CROSSLINE - KAMA',
+                         description='Single moving average strategy that uses KAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -492,8 +492,8 @@ class SCRSMAMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['conti', 'conti'],
                          par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99)],
-                         stg_name='SINGLE CROSSLINE - MAMA',
-                         stg_text='Single moving average strategy that uses MAMA line as the '
+                         name='SINGLE CROSSLINE - MAMA',
+                         description='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -520,8 +520,8 @@ class SCRSFAMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['conti', 'conti'],
                          par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99)],
-                         stg_name='SINGLE CROSSLINE - FAMA',
-                         stg_text='Single moving average strategy that uses MAMA line as the '
+                         name='SINGLE CROSSLINE - FAMA',
+                         description='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -548,8 +548,8 @@ class SCRST3(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'conti'],
                          par_bounds_or_enums=[(2, 20), (0, 1)],
-                         stg_name='SINGLE CROSSLINE - T3',
-                         stg_text='Single moving average strategy that uses T3 line as the '
+                         name='SINGLE CROSSLINE - T3',
+                         description='Single moving average strategy that uses T3 line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -575,8 +575,8 @@ class SCRSTEMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 20)],
-                         stg_name='SINGLE CROSSLINE - TEMA',
-                         stg_text='Single moving average strategy that uses TEMA line as the '
+                         name='SINGLE CROSSLINE - TEMA',
+                         description='Single moving average strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -602,8 +602,8 @@ class SCRSTRIMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 200)],
-                         stg_name='SINGLE CROSSLINE - TRIMA',
-                         stg_text='Single moving average strategy that uses TRIMA line as the '
+                         name='SINGLE CROSSLINE - TRIMA',
+                         description='Single moving average strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -629,8 +629,8 @@ class SCRSWMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 200)],
-                         stg_name='SINGLE CROSSLINE - WMA',
-                         stg_text='Single moving average strategy that uses MAMA line as the '
+                         name='SINGLE CROSSLINE - WMA',
+                         description='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -665,8 +665,8 @@ class DCRSSMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 250), (3, 250)],
-                         stg_name='SINGLE CROSSLINE - SMA',
-                         stg_text='Single moving average strategy that uses simple moving average as the trade line ',
+                         name='SINGLE CROSSLINE - SMA',
+                         description='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
@@ -691,8 +691,8 @@ class DCRSDEMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 250), (3, 250)],
-                         stg_name='DOUBLE CROSSLINE - DEMA',
-                         stg_text='Double moving average strategy that uses DEMA as the '
+                         name='DOUBLE CROSSLINE - DEMA',
+                         description='Double moving average strategy that uses DEMA as the '
                                   'trade line ',
                          data_types='close')
 
@@ -718,8 +718,8 @@ class DCRSEMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 250), (3, 250)],
-                         stg_name='DOUBLE CROSSLINE - EMA',
-                         stg_text='Double moving average strategy that uses EMA as the '
+                         name='DOUBLE CROSSLINE - EMA',
+                         description='Double moving average strategy that uses EMA as the '
                                   'trade line ',
                          data_types='close')
 
@@ -745,8 +745,8 @@ class DCRSKAMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 250), (3, 250)],
-                         stg_name='DOUBLE CROSSLINE - KAMA',
-                         stg_text='Double moving average strategy that uses KAMA line as the '
+                         name='DOUBLE CROSSLINE - KAMA',
+                         description='Double moving average strategy that uses KAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -773,8 +773,8 @@ class DCRSMAMA(stg.RuleIterator):
                          par_count=4,
                          par_types=['conti', 'conti', 'conti', 'conti'],
                          par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
-                         stg_name='DOUBLE CROSSLINE - MAMA',
-                         stg_text='Double moving average strategy that uses MAMA line as the '
+                         name='DOUBLE CROSSLINE - MAMA',
+                         description='Double moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -801,8 +801,8 @@ class DCRSFAMA(stg.RuleIterator):
                          par_count=4,
                          par_types=['conti', 'conti', 'conti', 'conti'],
                          par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
-                         stg_name='DOUBLE CROSSLINE - FAMA',
-                         stg_text='Double moving average strategy that uses FAMA line as the '
+                         name='DOUBLE CROSSLINE - FAMA',
+                         description='Double moving average strategy that uses FAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -829,8 +829,8 @@ class DCRST3(stg.RuleIterator):
                          par_count=4,
                          par_types=['discr', 'conti', 'discr', 'conti'],
                          par_bounds_or_enums=[(2, 20), (0, 1), (2, 20), (0, 1)],
-                         stg_name='DOUBLE CROSSLINE - T3',
-                         stg_text='Double moving average strategy that uses T3 line as the '
+                         name='DOUBLE CROSSLINE - T3',
+                         description='Double moving average strategy that uses T3 line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -856,8 +856,8 @@ class DCRSTEMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(2, 20), (2, 20)],
-                         stg_name='DOUBLE CROSSLINE - TEMA',
-                         stg_text='Double moving average strategy that uses TEMA line as the '
+                         name='DOUBLE CROSSLINE - TEMA',
+                         description='Double moving average strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -883,8 +883,8 @@ class DCRSTRIMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 200), (3, 200)],
-                         stg_name='DOUBLE CROSSLINE - TRIMA',
-                         stg_text='Double moving average strategy that uses TRIMA line as the '
+                         name='DOUBLE CROSSLINE - TRIMA',
+                         description='Double moving average strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -910,8 +910,8 @@ class DCRSWMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(3, 200), (3, 200)],
-                         stg_name='DOUBLE CROSSLINE - WMA',
-                         stg_text='Double moving average strategy that uses WMA line as the '
+                         name='DOUBLE CROSSLINE - WMA',
+                         description='Double moving average strategy that uses WMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -943,8 +943,8 @@ class SLPSMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SLOPE - SMA',
-                         stg_text='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
+                         name='SLOPE - SMA',
+                         description='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
     def _realize(self, hist_data, params):
@@ -970,8 +970,8 @@ class SLPDEMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SLOPE - DEMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses DEMA as the '
+                         name='SLOPE - DEMA',
+                         description='Smoothed Curve Slope Strategy that uses DEMA as the '
                                   'trade line ',
                          data_types='close')
 
@@ -998,8 +998,8 @@ class SLPEMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SLOPE - EMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses EMA as the '
+                         name='SLOPE - EMA',
+                         description='Smoothed Curve Slope Strategy that uses EMA as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1026,8 +1026,8 @@ class SLPHT(stg.RuleIterator):
                          par_count=0,
                          par_types=[],
                          par_bounds_or_enums=[],
-                         stg_name='SLOPE - HT',
-                         stg_text='Smoothed Curve Slope Strategy that uses HT line as the '
+                         name='SLOPE - HT',
+                         description='Smoothed Curve Slope Strategy that uses HT line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1053,8 +1053,8 @@ class SLPKAMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 250)],
-                         stg_name='SLOPE - KAMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses KAMA line as the '
+                         name='SLOPE - KAMA',
+                         description='Smoothed Curve Slope Strategy that uses KAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1082,8 +1082,8 @@ class SLPMAMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['conti', 'conti'],
                          par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99)],
-                         stg_name='SLOPE - MAMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses MAMA line as the '
+                         name='SLOPE - MAMA',
+                         description='Smoothed Curve Slope Strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1111,8 +1111,8 @@ class SLPFAMA(stg.RuleIterator):
                          par_count=2,
                          par_types=['conti', 'conti'],
                          par_bounds_or_enums=[(0.01, 0.99), (0.01, 0.99)],
-                         stg_name='SLOPE - FAMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses FAMA line as the '
+                         name='SLOPE - FAMA',
+                         description='Smoothed Curve Slope Strategy that uses FAMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1140,8 +1140,8 @@ class SLPT3(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'conti'],
                          par_bounds_or_enums=[(2, 20), (0, 1)],
-                         stg_name='SLOPE - T3',
-                         stg_text='Smoothed Curve Slope Strategy that uses T3 line as the '
+                         name='SLOPE - T3',
+                         description='Smoothed Curve Slope Strategy that uses T3 line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1168,8 +1168,8 @@ class SLPTEMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 20)],
-                         stg_name='SLOPE - TEMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses TEMA line as the '
+                         name='SLOPE - TEMA',
+                         description='Smoothed Curve Slope Strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1196,8 +1196,8 @@ class SLPTRIMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 200)],
-                         stg_name='SLOPE - TRIMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses TRIMA line as the '
+                         name='SLOPE - TRIMA',
+                         description='Smoothed Curve Slope Strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1224,8 +1224,8 @@ class SLPWMA(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(3, 200)],
-                         stg_name='SLOPE - WMA',
-                         stg_text='Smoothed Curve Slope Strategy that uses WMA line as the '
+                         name='SLOPE - WMA',
+                         description='Smoothed Curve Slope Strategy that uses WMA line as the '
                                   'trade line ',
                          data_types='close')
 
@@ -1255,8 +1255,8 @@ class ADX(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 35)],
-                         stg_name='ADX',
-                         stg_text='Average Directional Movement Index, determine buy/sell signals according to ADX Indicators',
+                         name='ADX',
+                         description='Average Directional Movement Index, determine buy/sell signals according to ADX Indicators',
                          window_length=200,
                          data_types='high, low, close')
 
@@ -1292,8 +1292,8 @@ class APO(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 100), (10, 100), (0, 8)],
-                         stg_name='APO',
-                         stg_text='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
+                         name='APO',
+                         description='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
                          window_length=200,
                          data_types='close')
 
@@ -1329,8 +1329,8 @@ class AROON(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='AROON',
-                         stg_text='Aroon, determine buy/sell signals according to AROON Indicators',
+                         name='AROON',
+                         description='Aroon, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
 
@@ -1372,8 +1372,8 @@ class AROONOSC(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='AROON Oscilator',
-                         stg_text='Aroon Oscilator, determine buy/sell signals according to AROON Indicators',
+                         name='AROON Oscilator',
+                         description='Aroon Oscilator, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
 
@@ -1412,8 +1412,8 @@ class CCI(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='CCI',
-                         stg_text='CCI, determine long/short positions according to CC Indicators',
+                         name='CCI',
+                         description='CCI, determine long/short positions according to CC Indicators',
                          window_length=200,
                          data_types='high, low, close')
 
@@ -1450,8 +1450,8 @@ class CMO(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='CMO',
-                         stg_text='CMO, determine long/short positions according to CMO Indicators',
+                         name='CMO',
+                         description='CMO, determine long/short positions according to CMO Indicators',
                          window_length=200,
                          data_types='close')
 
@@ -1490,8 +1490,8 @@ class MACDEXT(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr', 'discr', 'discr', 'discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
-                         stg_name='MACD Extention',
-                         stg_text='MACD Extention, determine long/short position according to extended MACD Indicators',
+                         name='MACD Extention',
+                         description='MACD Extention, determine long/short position according to extended MACD Indicators',
                          window_length=200,
                          data_types='close')
 
@@ -1527,8 +1527,8 @@ class MFI(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='MFI',
-                         stg_text='MFI, determine buy/sell signals according to MFI Indicators',
+                         name='MFI',
+                         description='MFI, determine buy/sell signals according to MFI Indicators',
                          window_length=200,
                          data_types='high, low, close, volume')
 
@@ -1561,8 +1561,8 @@ class DI(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(1, 100), (1, 100)],
-                         stg_name='DI',
-                         stg_text='DI, determine long/short positions according to +/- DI Indicators',
+                         name='DI',
+                         description='DI, determine long/short positions according to +/- DI Indicators',
                          window_length=200,
                          data_types='high, low, close')
 
@@ -1597,8 +1597,8 @@ class DM(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'discr'],
                          par_bounds_or_enums=[(1, 100), (1, 100)],
-                         stg_name='DM',
-                         stg_text='DM, determine long/short positions according to +/- DM Indicators',
+                         name='DM',
+                         description='DM, determine long/short positions according to +/- DM Indicators',
                          window_length=200,
                          data_types='high, low')
 
@@ -1633,8 +1633,8 @@ class MOM(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(1, 100)],
-                         stg_name='MOM',
-                         stg_text='MOM, determine long/short positions according to MOM Indicators',
+                         name='MOM',
+                         description='MOM, determine long/short positions according to MOM Indicators',
                          window_length=100,
                          data_types='close')
 
@@ -1667,8 +1667,8 @@ class PPO(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (0, 8)],
-                         stg_name='PPO',
-                         stg_text='PPO, determine long/short positions according to PPO Indicators',
+                         name='PPO',
+                         description='PPO, determine long/short positions according to PPO Indicators',
                          window_length=100,
                          data_types='close')
 
@@ -1703,8 +1703,8 @@ class RSI(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='RSI',
-                         stg_text='RSI, determine long/short positions according to RSI Indicators',
+                         name='RSI',
+                         description='RSI, determine long/short positions according to RSI Indicators',
                          window_length=100,
                          data_types='close')
 
@@ -1737,8 +1737,8 @@ class STOCH(stg.RuleIterator):
                          par_count=5,
                          par_types=['discr', 'discr', 'discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)],
-                         stg_name='Stochastic',
-                         stg_text='Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         name='Stochastic',
+                         description='Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
@@ -1776,8 +1776,8 @@ class STOCHF(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (0, 8)],
-                         stg_name='Fast Stochastic',
-                         stg_text='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         name='Fast Stochastic',
+                         description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
@@ -1813,8 +1813,8 @@ class STOCHRSI(stg.RuleIterator):
                          par_count=4,
                          par_types=['discr', 'discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(2, 100), (2, 100), (2, 100), (0, 8)],
-                         stg_name='Stochastic RSI',
-                         stg_text='Stochaxtic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
+                         name='Stochastic RSI',
+                         description='Stochaxtic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
                          window_length=100,
                          data_types='close')
 
@@ -1853,8 +1853,8 @@ class ULTOSC(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(1, 100), (1, 100), (1, 100)],
-                         stg_name='Ultimate Oscillator',
-                         stg_text='Ultimate Oscillator, determine buy/sell signals according to Stochastic Indicator',
+                         name='Ultimate Oscillator',
+                         description='Ultimate Oscillator, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
@@ -1889,8 +1889,8 @@ class WILLR(stg.RuleIterator):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='Williams\' R',
-                         stg_text='Williams R, determine buy/sell signals according to Williams R',
+                         name='Williams\' R',
+                         description='Williams R, determine buy/sell signals according to Williams R',
                          window_length=100,
                          data_types='high, low, close')
 
@@ -1921,8 +1921,8 @@ class RiconNone(stg.RuleIterator):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='NONE',
-                         stg_text='Do not take any risk control activity')
+                         name='NONE',
+                         description='Do not take any risk control activity')
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
         return np.zeros_like(hist_data.squeeze())
@@ -1940,8 +1940,8 @@ class TimingLong(stg.RuleIterator):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='Long',
-                         stg_text='Simple Timing strategy, return constant long position on the whole history')
+                         name='Long',
+                         description='Simple Timing strategy, return constant long position on the whole history')
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -1961,8 +1961,8 @@ class TimingShort(stg.RuleIterator):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='Short',
-                         stg_text='Simple Timing strategy, return constant Short position on the whole history')
+                         name='Short',
+                         description='Simple Timing strategy, return constant Short position on the whole history')
 
     def _realize(self, hist_data, params):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -1982,8 +1982,8 @@ class TimingZero(stg.RuleIterator):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='Zero',
-                         stg_text='Simple Timing strategy, return constant Zero position ratio on the whole history')
+                         name='Zero',
+                         description='Simple Timing strategy, return constant Zero position ratio on the whole history')
 
     def _realize(self, hist_data, params):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -2013,8 +2013,8 @@ class TimingDMA(stg.RuleIterator):
                          par_count=3,
                          par_types=['discr', 'discr', 'discr'],
                          par_bounds_or_enums=[(10, 250), (10, 250), (10, 250)],
-                         stg_name='DMA',
-                         stg_text='Quick DMA strategy, determine long/short position according to differences of '
+                         name='DMA',
+                         description='Quick DMA strategy, determine long/short position according to differences of '
                                   'moving average prices with simple timing strategy',
                          data_types='close')
 
@@ -2045,8 +2045,8 @@ class RiconUrgent(stg.RuleIterator):
                          par_count=2,
                          par_types=['discr', 'conti'],
                          par_bounds_or_enums=[(1, 40), (-0.5, 0.5)],
-                         stg_name='URGENT',
-                         stg_text='Generate selling signal when N-day drop rate reaches target')
+                         name='URGENT',
+                         description='Generate selling signal when N-day drop rate reaches target')
 
     def _realize(self, hist_data, params):
         """
@@ -2140,8 +2140,8 @@ class SelectingAvgIndicator(stg.FactorSorter):
                                               (-np.inf, np.inf),
                                               (-np.inf, np.inf),
                                               (0, 1.)],
-                         stg_name='FINANCE',
-                         stg_text='GeneralStg share_pool according to financial report EPS indicator',
+                         name='FINANCE',
+                         description='GeneralStg share_pool according to financial report EPS indicator',
                          data_freq='d',
                          sample_freq='y',
                          window_length=90,
@@ -2168,8 +2168,8 @@ class SelectingNDayLast(stg.FactorSorter):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 100)],
-                         stg_name='N-DAY LAST',
-                         stg_text='Select stocks according their previous prices',
+                         name='N-DAY LAST',
+                         description='Select stocks according their previous prices',
                          data_freq='d',
                          sample_freq='m',
                          window_length=100,
@@ -2201,8 +2201,8 @@ class SelectingNDayAvg(stg.FactorSorter):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='N-DAY AVG',
-                         stg_text='Select stocks by its N day average open price',
+                         name='N-DAY AVG',
+                         description='Select stocks by its N day average open price',
                          data_freq='d',
                          sample_freq='M',
                          window_length=150,
@@ -2232,8 +2232,8 @@ class SelectingNDayChange(stg.FactorSorter):
                          par_count=1,
                          par_types=['discr'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='N-DAY CHANGE',
-                         stg_text='Select stocks by its N day price change',
+                         name='N-DAY CHANGE',
+                         description='Select stocks by its N day price change',
                          data_freq='d',
                          sample_freq='M',
                          window_length=150,
@@ -2264,8 +2264,8 @@ class SelectingNDayRateChange(stg.FactorSorter):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='N-DAY RATE',
-                         stg_text='Select stocks by its N day price change',
+                         name='N-DAY RATE',
+                         description='Select stocks by its N day price change',
                          data_freq='d',
                          sample_freq='M',
                          window_length=150,
@@ -2295,8 +2295,8 @@ class SelectingNDayVolatility(stg.FactorSorter):
                          par_count=1,
                          par_types=['int'],
                          par_bounds_or_enums=[(2, 150)],
-                         stg_name='N-DAY VOL',
-                         stg_text='Select stocks by its N day price change',
+                         name='N-DAY VOL',
+                         description='Select stocks by its N day price change',
                          data_freq='d',
                          sample_freq='M',
                          window_length=150,

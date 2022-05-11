@@ -5750,8 +5750,8 @@ class TestLSStrategy(RuleIterator):
     """
 
     def __init__(self):
-        super().__init__(stg_name='test_LS',
-                         stg_text='test long/short strategy',
+        super().__init__(name='test_LS',
+                         description='test long/short strategy',
                          par_count=2,
                          par_types='discr, conti',
                          par_bounds_or_enums=([1, 5], [2, 10]),
@@ -5889,8 +5889,8 @@ class MyStg(qt.RuleIterator):
                 par_count=3,
                 par_types=['discr', 'discr', 'conti'],
                 par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 0.5)],
-                stg_name='CUSTOM ROLLING TIMING STRATEGY',
-                stg_text='Customized Rolling Timing Strategy for Testing',
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
                 data_types='close',
                 window_length=200,
         )
