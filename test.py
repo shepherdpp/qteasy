@@ -5718,6 +5718,29 @@ class TestStrategy(unittest.TestCase):
     def setUp(self) -> None:
         pass
 
+    def test_base_strategy(self):
+        """ 测试BaseStrategy"""
+        pass
+
+    def test_general_stg(self):
+        """ 测试GeneralStg 通用策略类"""
+
+    def test_factor_sorter(self):
+        """ 测试FactorSorter 因子排序策略类"""
+        class Stg(qt.FactorSorter):
+            def __init__(self, **kwargs):
+                super().__init__(**kwargs)
+
+            def realize(self, params, h, r, t):
+                return np.random.random(size=(5,))
+
+        stg = Stg()
+        stg.generate()
+
+    def test_rule_iterator(self):
+        """ 测试RuleIterator 规则迭代器策略类"""
+        pass
+
 
 class TestLSStrategy(RuleIterator):
     """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成

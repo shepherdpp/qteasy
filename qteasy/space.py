@@ -43,9 +43,9 @@ class Space:
             :param par_types，
                 :type list
                 默认为空，生成的空间每个轴的类型，如果给出types，应该包含每个轴的类型字符串：
-                'discr': 生成整数型轴
-                'conti': 生成浮点数值轴
-                'enum': 生成枚举轴
+                'int':      生成整数型轴
+                'float':    生成浮点数值轴
+                'enum':     生成枚举轴
         return: =====
             无
         """
@@ -54,16 +54,23 @@ class Space:
         # 处理输入，将输入处理为列表，并补齐与dim不足的部分
         pars = list(pars)
         par_dim = len(pars)
-        # debug
-        # print('par types before processing:', par_types)
         if par_types is None:
             par_types = []
         elif isinstance(par_types, str):
             par_types = str_to_list(par_types, ',')
         par_types = input_to_list(par_types, par_dim, None)
-        # debug：
-        # print('par dim:', par_dim)
-        # print('items and par_types:', items, par_types)
+        # 预处理par_types
+        for i in range(len(par_types)):
+            if par_types[i] is None:
+                continue
+            elif par_types.lower() in ['int', 'discr']:
+                par_types[i] = 'discr'
+            elif par_types.lower() in ['float', 'conti']:
+                par_types[i] = 'conti'
+            elif par_types.lower() in ['enum', 'enumerate']:
+                par_types[i] = 'enum'
+            else:
+                raise KeyError(f'Invalid parameter type: {par_types[i]}')
         # 逐一生成Axis对象并放入axes列表中
         self._axis = [Axis(par, par_type) for par, par_type in zip(pars, par_types)]
 
@@ -260,6 +267,9 @@ class Axis:
 
 
     """
+    CONTI = 10
+    DISCR = 20
+    ENUM = 30
     AVAILABLE_EXTRACT_METHODS = ['int', 'interval', 'random', 'rand']
 
     def __init__(self, bounds_or_enum, typ=None):
@@ -271,8 +281,6 @@ class Axis:
         # 将输入的上下界或枚举转化为列表，当输入类型为一个元素时，生成一个空列表并添加该元素
         boe = list(bounds_or_enum)
         length = len(boe)  # 列表元素个数
-        # debug
-        # print('in Axis: boe recieved, and its length:', boe, length, 'type of boe:', typ)
         if typ is None:
             # 当typ为空时，需要根据输入数据的类型猜测typ
             if length <= 2:
@@ -290,8 +298,6 @@ class Axis:
                 typ = 'enum'
         elif typ != 'enum' and typ != 'discr' and typ != 'conti':
             typ = 'enum'  # 当发现typ为异常字符串时，修改typ为enum类型
-        # debug
-        # print('in Axis, after infering typ, the typ is:', typ)
         # 开始根据typ的值生成具体的Axis
         if typ == 'enum':  # 创建一个枚举数轴
             self._new_enumerate_axis(boe)

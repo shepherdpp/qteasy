@@ -23,7 +23,7 @@ class BaseStrategy:
         所有的策略类都有一个generate()方法，供Operator对象调用，传入相关的历史数据，并生成一组交易信号。
 
         策略的实现
-        基于一个策略类实现一个具体的策略，需要创建一个策略类，设定策略的基本参数，并重写realize()函数，在
+        基于一个策略类实现一个具体的策略，需要创建一个策略类，设定策略的基本参数，并重写realize()方法，在
         realize()中编写交易信号的生成规则：
 
         - 策略的初始化
@@ -57,7 +57,7 @@ class BaseStrategy:
             stg_name: str,          策略名称，用户自定义字符串
             stg_text: str,          策略简介，类似于docstring，简单介绍该类的策略内容
             par_count: int,         策略参数个数
-            par_types: int,         策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
+            par_types: tuple/list,  策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
                                     1, 'discr': 离散型参数，通常数据类型为int
                                     2, 'conti': 连续型参数，通常数据类型为float
                                     3, 'enum': 枚举型参数，数据类型不限，可以为其他类型如str或tuple等
@@ -90,17 +90,20 @@ class BaseStrategy:
 
         - 策略规则的编写
         策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
-        策略规则必须在realize()函数中定义，realize()函数具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
+        策略规则必须在realize()方法中定义，realize()方法具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
         需要考虑股票的数量、历史周期、数据选择等等问题；
-        realize()函数的定义如下：
+        realize()方法是整个量化交易策略的核心，它体现了从输入数据到交易信号的逻辑过程
+        因此realize函数的输入包含历史数据、输出就是交易信号。
+
+        realize()方法的定义如下：
 
             def realize(self,
                         params: tuple,
                         h_seg: np.ndarray,
                         ref_seg: np.ndarray,
                         trade_data: np.ndarray)
-
-        不管Strategy继承了哪一个策略类，realize()函数的输入都包括以下几个参数：
+        realize()方法的输入：
+        不管Strategy继承了哪一个策略类，realize()方法的输入都包括以下几个参数：
             - params:       策略的一组合法参数，参数以tuple的形式传入
                             具体的参数类型和数量在策略属性中定义，例如：
 
@@ -176,6 +179,7 @@ class BaseStrategy:
 
             - r(reference): 参考历史数据，即与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如根据
                             大盘选股的大盘数据，或者宏观经济数据等。
+                            如果不需要参考数据，r 会是None
 
                             ref_seg的结构是一个N行L列的2D array，包含所有可以使用的参考数据类型，而数据的时间段与
                             历史数据h相同:
@@ -184,7 +188,29 @@ class BaseStrategy:
                                 每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
                                 传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
                                 data_freq则定义了时间戳的频率。
-            - t(trade):
+
+                            - L列
+                                每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性
+                                reference_data_types中设置
+                                例如：设定：
+                                    - reference_data_types = "000300.SH.close"
+                                即表示：
+                                    使用的参考历史数据为000300.SH指数的收盘价
+                                如果reference_data_types = ""，则传入的参考数据会是None
+
+            - t(trade):     交易历史数据，最近几次交易的结果数据，2D数据。包含？行L列数据
+                            如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
+                            数据的结构如下
+
+        realize()方法的输出：
+        realize()方法的输出就是交易信号，为了确保交易信号有意义，输出信息必须遵循一定的格式。
+        对于GeneralStg和FactorSorter两类交易策略来说，输出信号为1D ndarray，这个数组包含的元素数量与参与策略的股票数量
+        相同，例如参与策略的股票有20个，则生成的交易策略为shape为(20,)的numpy数组
+        特殊情况是RuleIterator策略类，这一类策略会将相同的规则重复应用到所有的股票上，因此仅需要输出一个数字即可。
+
+        按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
+        中，并产生交易信号了。
+        关于Strategy类的更详细说明，请参见qteasy的文档。
     """
     __mataclass__ = ABCMeta
 
@@ -217,11 +243,17 @@ class BaseStrategy:
         self._stg_text = stg_text  # 策略的描述文字
         self._par_count = par_count  # 策略参数的元素个数
         self._par_types = par_types  # 策略参数的类型，可选类型'discr/conti/enum'
-        # TODO: parameter validation should take place here
-        if not isinstance(par_count, int):
-            raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
+
+        # 检查策略参数是否合法：
+        # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         if pars is not None:
             assert isinstance(pars, (tuple, list, dict))
+
+        # 如果给出了par_count/par_types/par_range等三个参数，则检查其合法性，如果合法，替换
+        # 推测参数（若存在），如果不合法，使用推测参数（若存在）并给出警告，如果推测参数不存在，
+        # 则报错，并给出有价值的指导意见
+        if not isinstance(par_count, int):
+            raise TypeError(f'parameter count (par_count) should be a integer, got {type(par_count)} instead.')
 
         if par_types is None:
             par_types = []
@@ -234,18 +266,18 @@ class BaseStrategy:
             par_types = str_to_list(par_types)
 
         if not par_count == len(par_types):
-            raise KeyError(f'parameter count ({par_count}) does not fit parameter types, '
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter types ({par_types}), '
                            f'which imply {len(par_types)} parameters')
 
         if par_range is None:  # 策略参数的取值范围或取值列表，如果是数值型，可以取上下限，其他类型的数据必须为枚举列表
-            assert par_count == 0, f'parameter count (par_count) should be 0 when parameter bounds are None'
+            assert par_count == 0, f'parameter count ({par_count}) should be 0 when parameter ranges are None'
             self._par_bounds_or_enums = []
         else:
             assert isinstance(par_range, (list, tuple))
             self._par_bounds_or_enums = par_range
         if not par_count == len(self._par_bounds_or_enums):
-            raise KeyError(f'parameter count ({par_count}) does not fit parameter bounds or enums, '
-                           f'which imply {len(par_types)} parameters')
+            raise KeyError(f'parameter count ({par_count}) does not fit parameter ranges (par_range), '
+                           f'which imply {len(par_range)} parameters')
 
         # 依赖的历史数据频率
         self._data_freq = data_freq
@@ -618,13 +650,284 @@ class BaseStrategy:
         pass
 
 
+class GeneralStg(BaseStrategy):
+    """ 通用交易策略类，用户可以使用策略输入的历史数据、参考数据和成交数据，自定信号生成规则，生成交易信号。
+
+        GeneralStg是最基本的通用策略类，没有任何额外的策略属性，其执行也完全依赖用户输入的策略逻辑，不提供任何的预处理或后处理。
+        用户需要在realize()方法中定义完整的策略，直接生成交易信号。
+
+            * 额外的策略属性：
+                None
+
+            * realize()方法的实现：realize()方法需要利用输入的参数，输出交易信号
+                :input:
+                params: tuple 一组策略参数
+                h: 历史数据，一个3D numpy数组，包含所有股票在一个时间窗口内的所有类型的历史数据，
+                    参考BaseStrategy的docstring
+                r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
+                    参考BaseStrategy的docstring
+                t: 交易数据，一个2D numpy数组，包含最近一次交易的实际结果
+                    参考BaseStraegy的docstring
+
+                :output
+                signals: 一个代表交易信号的1D numpy数组，dtype为float
+
+    """
+    __metaclass__ = ABCMeta
+
+    # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
+    def __init__(self,
+                 pars: tuple = None,
+                 stg_name: str = 'NEW-SEL',
+                 stg_text: str = 'intro text of selecting strategy',
+                 **kwargs):
+        super().__init__(pars=pars,
+                         stg_type='SELECT',
+                         stg_name=stg_name,
+                         stg_text=stg_text,
+                         **kwargs)
+
+    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
+        """ 通用交易策略的所有策略代码全部都在realize中实现
+        """
+        return self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data)
+
+    @abstractmethod
+    def realize(self,
+                params,
+                h,
+                r,
+                t):
+        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
+            生成一条交易信号
+            交易信号的格式必须为1D 的numpy数组，数据类型为float
+        """
+        pass
+
+
+class FactorSorter(BaseStrategy):
+    """ 因子排序选股策略，根据用户定义的选股因子筛选排序后确定每个股票的选股权重
+
+        这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
+        用户需要在realize()方法中计算选股因子，计算出选股因子后，接下来的排序和选股逻辑都不需要用户自行定义。
+        策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定
+        数量的股票，最后根据它们的因子值分配权重或信号值。
+
+        这些选股因子的排序和筛选条件，由6个额外的选股参数来控制，因此用户只需要在策略属性中设置好相应的参数，
+        策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
+        因子的筛选排序取舍逻辑了。
+
+            * 额外的策略属性：
+                策略使用6个额外的选股参数实现因子排序选股:
+                sel_limit:          float,  选股限额，表示最多选出的股票的数量，如果sel_limit小于1，表示选股的比例：
+                                            默认值：0.5
+                                            例如：
+                                            0.25: 最多选出25%的股票, 10:  最多选出10个股票
+                condition:          str ,   确定股票的筛选条件，默认值'any'
+                                            可用值包括：
+                                            'any'        :默认值，选择所有可用股票
+                                            'greater'    :筛选出因子大于ubound的股票
+                                            'less'       :筛选出因子小于lbound的股票
+                                            'between'    :筛选出因子介于lbound与ubound之间的股票
+                                            'not_between':筛选出因子不在lbound与ubound之间的股票
+                lbound:             float,  执行条件筛选时的指标下界, 默认值np.-inf
+                ubound:             float,  执行条件筛选时的指标上界, 默认值np.inf
+                sort_ascending:     bool,   排序方法，对选中的股票进行排序以选择或分配权重：
+                                            默认值: False
+                                            True         :对选股因子从小到大排列，优先选择因子最小的股票
+                                            False        :对选股因子从大到小排列，优先选择因子最大的股票
+                weighting:          str ,   确定如何分配选中股票的权重
+                                            默认值: 'even'
+                                            'even'       :所有被选中的股票都获得同样的权重
+                                                          例如:
+                                                          Factors: [-0.1,    0,  0.3,  0.4]
+                                                          signals: [0.25, 0.25, 0.25, 0.25]
+                                            'linear'     :权重根据因子排序线性分配，分值最高者占比约为分值最低者占比的三倍，
+                                                          其余居中者的比例按序呈等差数列
+                                                          例如:
+                                                          Factors: [ -0.1,     0,   0.3,   0.4]
+                                                          signals: [0.143, 0.214, 0.286, 0.357]
+                                            'distance'   :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
+                                                          指标之间的差值（距离）成比例
+                                                          例如:
+                                                          Factors: [ -0.1,     0,   0.3,   0.4]
+                                                          signals: [0.042, 0.125, 0.375, 0.458]
+                                            'proportion' :舍去不合理的因子值后（如负数），其余股票的权重与它们的因子分值
+                                                          成正比
+                                                          例如:
+                                                          Factors: [ -0.1,    0.,   0.3,   0.4]
+                                                          signals: [   0.,    0., 0.429, 0.571]
+
+            * realize()方法的实现：realize()方法需要利用输入的参数，输出一组选股因子，用于筛选排序选股
+
+                :input:
+                params: tuple 一组策略参数
+                h: 历史数据，一个3D numpy数组，包含所有股票在一个时间窗口内的所有类型的历史数据，
+                    参考BaseStrategy的docstring
+                r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
+                    参考BaseStrategy的docstring
+                t: 交易数据，一个2D numpy数组，包含最近一次交易的实际结果
+                    参考BaseStraegy的docstring
+
+                :output
+                signals: 一个代表交易信号的1D numpy数组，dtype为float
+
+
+    """
+    __metaclass__ = ABCMeta
+
+    # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
+    def __init__(self,
+                 pars: tuple = None,
+                 stg_name: str = 'Factor',
+                 stg_text: str = 'intro text of selecting strategy',
+                 sel_limit: float = 0.5,
+                 condition: str = 'any',
+                 lbound: float = -np.inf,
+                 ubound: float = np.inf,
+                 sort_ascending: bool = False,
+                 weighting: str = 'even',
+                 **kwargs):
+        super().__init__(pars=pars,
+                         stg_type='FACTOR',
+                         stg_name=stg_name,
+                         stg_text=stg_text,
+                         **kwargs)
+        self.proportion_or_quantity = sel_limit
+        self.condition = condition
+        self.lbound = lbound
+        self.ubound = ubound
+        self.sort_ascending = sort_ascending
+        self.weighting = weighting
+
+    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
+        """处理从_realize()方法传递过来的选股因子
+
+        选出符合condition的因子，并将这些因子排序，根据次序确定所有因子相应股票的选股权重
+        将选股权重传递到generate()方法中，生成最终的选股交易信号
+
+        input:
+            :type h_seg: np.ndarray
+        :return
+            numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
+        """
+        pct = self.proportion_or_quantity
+        condition = self.condition
+        lbound = self.lbound
+        ubound = self.ubound
+        sort_ascending = self.sort_ascending  # True: 选择最小的，Fals: 选择最大的
+        weighting = self.weighting
+
+        share_count = h_seg.shape[0]
+        if pct < 1:
+            # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
+            pct = int(share_count * pct)
+        else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
+            pct = int(pct)
+        if pct < 1:
+            pct = 1
+        # 历史数据片段必须是ndarray对象，否则无法进行
+        assert isinstance(h_seg, np.ndarray), \
+            f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
+        factors = self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data).squeeze()
+        chosen = np.zeros_like(factors)
+        # 筛选出不符合要求的指标，将他们设置为nan值
+        if condition == 'any':
+            pass
+        elif condition == 'greater':
+            factors[np.where(factors < ubound)] = np.nan
+        elif condition == 'less':
+            factors[np.where(factors > lbound)] = np.nan
+        elif condition == 'between':
+            factors[np.where((factors < lbound) & (factors > ubound))] = np.nan
+        elif condition == 'not_between':
+            factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
+        else:
+            raise ValueError(f'invalid selection condition \'{condition}\''
+                             f'should be one of ["any", "greater", "less", "between", "not_between"]')
+        nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
+        if nan_count == share_count:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
+            return chosen
+        if not sort_ascending:
+            # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，总数需要加上NaN值的数量
+            pos = max(share_count - pct - nan_count, 0)
+        else:  # 选择分数最低的部分个股
+            pos = pct
+        # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
+        if weighting == 'even':
+            # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
+            if not sort_ascending:
+                share_found = factors.argpartition(pos)[pos:]
+            else:
+                share_found = factors.argpartition(pos)[:pos]
+        else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
+            if not sort_ascending:
+                share_found = factors.argsort()[pos:]
+            else:
+                share_found = factors.argsort()[:pos]
+        # nan值数据的序号存储在arg_nan中
+        share_nan = np.where(np.isnan(factors))[0]
+        # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
+        args = np.setdiff1d(share_found, share_nan, assume_unique=True)
+        # 构造输出向量，初始值为全0
+        arg_count = len(args)
+        # 根据投资组合比例分配方式，确定被选中产品的权重
+        if weighting == 'linear':  # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
+            dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
+            chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
+        # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
+        # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
+        # 获取比例分配
+        elif weighting == 'distance':
+            import pdb; pdb.set_trace()
+            dist = factors[args]
+            if sort_ascending:
+                d_max = dist[-1]
+                d_min = dist[0]
+            else:
+                d_max = dist[0]
+                d_min = dist[-1]
+            d_sum = dist.sum()
+            d = d_max - d_min
+            if not sort_ascending:
+                dist = dist - d_min + d / 10.
+            else:
+                dist = d_max - dist + d / 10.
+            if ~np.any(dist):  # if all distances are zero
+                chosen[args] = 1 / len(dist)
+            elif d_sum == 0:  # if not all distances are zero but sum is zero
+                chosen[args] = dist / len(dist)
+            else:
+                chosen[args] = dist / d_sum
+        # proportion：比例分配，权重与其分值成正比，分值为0或小于0者比例为0
+        elif weighting == 'proportion':
+            f = factors[args]
+            f = np.where(f < 0, 0, f)  # np.where 比 np.clip(0) 速度快得多
+            chosen[args] = f / f.sum()
+        # even：均匀分配，所有中选股票在组合中权重相同
+        elif weighting == 'even':
+            chosen[args] = 1. / arg_count
+        else:
+            raise KeyError(f'invalid weighting type: "{weighting}". '
+                           f'should be one of ["linear", "proportion", "even"]')
+        return chosen
+
+    @abstractmethod
+    def realize(self,
+                params: tuple,
+                h: np.ndarray,
+                r: np.ndarray,
+                t: np.ndarray) -> np.ndarray:
+        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
+            生成一条交易信号
+        """
+        pass
+
+
 class RuleIterator(BaseStrategy):
     """ 规则横向分配策略类。这一类策略不考虑每一只股票的区别，将同一套规则同时套用到所有的股票上。
 
-        Rolling Timing择时策略是通过realize()函数来实现的。一个继承了Rolling_Timing类的对象，必须具体实现realize()方法，在
-        Rolling_Timing对象中，这是个抽象方法。这个方法接受两个参数，一个是generate_over()函数传送过来的window_history数据，另一个
-        是策略参数，策略通过传入的参数，利用window_history历史数据进行某种特定计算，最后生成一个-1～1之间的浮点数，这个数字就是在某一
-        时间点的策略输出。
+        RuleIterator 策略类继承了交易策略基类
 
         Rolling_Timing类会自动把上述特定计算算法滚动应用到整个历史数据区间，并且推广到所有的个股中。
 
@@ -659,8 +962,8 @@ class RuleIterator(BaseStrategy):
 
     def __init__(self,
                  pars: tuple = None,
-                 stg_name: str = 'NEW-RTMG',
-                 stg_text: str = 'intro text of rolling timing strategy',
+                 stg_name: str = 'RULE-ITER',
+                 stg_text: str = 'intro text of rule iterator strategy',
                  **kwargs):
         super().__init__(pars=pars,
                          stg_name=stg_name,
@@ -724,248 +1027,5 @@ class RuleIterator(BaseStrategy):
                 t: np.ndarray) -> float:
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一个股票的独立交易信号，同样的规则会被复制到其他股票
-        """
-        pass
-
-
-class GeneralStg(BaseStrategy):
-    """ 通用交易策略类，用户可以使用策略输入的历史数据、参考数据和成交数据，自定信号生成规则，生成交易信号。
-
-        同其他类型的策略一样，Selecting策略同样需要实现抽象方法_realize()，并在该方法中具体描述策略如何根据输入的参数建立投资组合。而
-        generate()函数则负责正确地将该定义好的生成方法循环应用到每一个数据分段中。
-
-        Selecting选股策略的生成方式与投资产品的组合方式有关。与择时类策略相比，选股策略与之的区别在于对历史数据的运用方式不同。择时类策略逐一
-        计算每个投资品种的投资比例，每一种投资组合的投资比例与其他投资产品无关，因此需要循环读取每一个投资品种的全部或部分历史数据并基于该数据
-        确定投资的方向和比例，完成一个投资品种后，用同样的方法独立地确定第二种产品，依此顺序完成所有投资品种的分析决策。而择时策略则不同，该策略
-        同时读取所有备选投资产品的历史数据或历史数据片段，并确定这一时期期末所有备选投资产品的投资组合。
-
-        Selecting策略主要由两个成员函数，seg_periods函数根据策略的self.sample_period属性值，将全部历史数据（历史数据以HistoryPanel的
-        形式给出）分成数段，每一段历史数据都包含所有的备选投资产品的全部数据类型，但是在时间上首尾相接。例如，从2010年1月1日开始到2020年1月1日
-        的全部历史数据可以以"y"为sample_period分为十段，每一段包含一整年的历史数据。
-
-        将数据分段完成后，每一段数据会被整体送入generate()函数中进行处理，该函数会对每一段数据进行运算后确定一个向量，该向量代表从所有备选投资
-        产品中建立投资组合的比例。例如：[0, 0.2, 0.3, 0.5, 0]表示建立一个投资组合：从一个含有5个备选投资产品的库中，分别将
-        0，20%，30%，50%，0的资金投入到相应的投资产品中。
-
-            * _realize()方法的实现：
-
-            _realize()方法确定了策略的具体实现方式，要注意_realize()方法需要有两个参数：
-
-                :input:
-                hist_data: ndarray, 3-dimensional
-                params: tuple
-
-                :output
-                signals: ndarray, 1-dimensional
-
-            在_realize()方法中用户可以以任何可能的方法使用hist_data，hist_data是一个三维数组，包含L层，R行，C列，分别代表L只个股、
-            R个时间序列上的C种数据类型。明确这一点非常重要，因为在_realize()方法中需要正确地利用这些数据生成选股向量。
-
-
-    """
-    __metaclass__ = ABCMeta
-
-    # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
-    def __init__(self,
-                 pars: tuple = None,
-                 stg_name: str = 'NEW-SEL',
-                 stg_text: str = 'intro text of selecting strategy',
-                 **kwargs):
-        super().__init__(pars=pars,
-                         stg_type='SELECT',
-                         stg_name=stg_name,
-                         stg_text=stg_text,
-                         **kwargs)
-
-    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
-        """ 通用交易策略的所有策略代码全部都在realize中实现
-        """
-        return self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data)
-
-    @abstractmethod
-    def realize(self,
-                params,
-                h,
-                r,
-                t):
-        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
-            生成一条交易信号
-        """
-        pass
-
-
-class FactorSorter(BaseStrategy):
-    """ 因子排序选股策略，根据用户定义获选择的因子
-
-        这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
-        用户需要在realize()函数中计算选股因子，并将所有股票的选股因子值返回
-        根据返回的选股因子，策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定
-        数量的股票，最后根据它们的因子值分配权重或信号值
-
-        策略使用6个额外的选股参数实现因子排序选股:
-            sel_limit:          float,  选股限额，表示最多选出的股票的数量，如果sel_limit小于1，表示选股的比例：
-                                        例如：
-                                        0.25: 最多选出25%的股票, 10:  最多选出10个股票
-            condition:          str ,   确定如何根据条件选择股票，可用值包括：
-                                        'any'        :选择所有可用股票
-                                        'greater'    :选择指标大于ubound的股票
-                                        'less'       :选择指标小于lbound的股票
-                                        'between'    :选择指标介于lbound与ubound之间的股票
-                                        'not_between':选择指标不在lbound与ubound之间的股票
-            lbound:             float,  执行条件选股时的指标下界
-            ubound:             float,  执行条件选股时的指标上界
-            sort_ascending:     bool,   排序方法，对选中的股票进行排序以选择或分配权重：
-                                        True         :对选股指标从小到大排列，优先选择指标最小的股票
-                                        False        :对选股指标从大到小排泄，优先选择指标最大的股票
-            weighting:          str ,   确定如何分配选中股票的权重
-                                        'even'       :所有被选中的股票都获得同样的权重
-                                        'linear'     :权重根据分值排序线性分配，分值最高者占比约为分值最低者占比的三倍，
-                                                      其余居中者的比例按序呈等差数列
-                                        'proportion' :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
-                                                      指标之间的差值成比例
-
-        realize()的输出：
-        必须实现realize(self, params, h_seg, ref_seg, trade_data)
-    """
-    __metaclass__ = ABCMeta
-
-    # 设置Selecting策略类的标准默认参数，继承Selecting类的具体类如果沿用同样的静态参数，不需要重复定义
-    def __init__(self,
-                 pars: tuple = None,
-                 stg_name: str = 'Factor',
-                 stg_text: str = 'intro text of selecting strategy',
-                 sel_limit: float = 0.5,
-                 condition: str = 'any',
-                 lbound: float = -np.inf,
-                 ubound: float = np.inf,
-                 sort_ascending: bool = True,
-                 weighting: str = 'even',
-                 **kwargs):
-        super().__init__(pars=pars,
-                         stg_type='FACTOR',
-                         stg_name=stg_name,
-                         stg_text=stg_text,
-                         **kwargs)
-        self.proportion_or_quantity = sel_limit
-        self.condition = condition
-        self.lbound = lbound
-        self.ubound = ubound
-        self.sort_ascending = sort_ascending
-        self.weighting = weighting
-
-    def generate_one(self, h_seg, ref_seg=None, trade_data=None):
-        """处理从_realize()方法传递过来的选股因子
-
-        选出符合condition的因子，并将这些因子排序，根据次序确定所有因子相应股票的选股权重
-        将选股权重传递到generate()方法中，生成最终的选股蒙板
-
-        input:
-            :type h_seg: np.ndarray
-        :return
-            numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
-        """
-        pct = self.proportion_or_quantity
-        condition = self.condition
-        lbound = self.lbound
-        ubound = self.ubound
-        sort_ascending = self.sort_ascending  # True: 选择最小的，Fals: 选择最大的
-        weighting = self.weighting
-
-        share_count = h_seg.shape[0]
-        if pct < 1:
-            # pct 参数小于1时，代表目标投资组合在所有投资产品中所占的比例，如0.5代表需要选中50%的投资产品
-            pct = int(share_count * pct)
-        else:  # pct 参数大于1时，取整后代表目标投资组合中投资产品的数量，如5代表需要选中5只投资产品
-            pct = int(pct)
-        if pct < 1:
-            pct = 1
-        # 历史数据片段必须是ndarray对象，否则无法进行
-        assert isinstance(h_seg, np.ndarray), \
-            f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
-        factors = self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data).squeeze()
-        chosen = np.zeros_like(factors)
-        # 筛选出不符合要求的指标，将他们设置为nan值
-        if condition == 'any':
-            pass
-        elif condition == 'greater':
-            factors[np.where(factors < ubound)] = np.nan
-        elif condition == 'less':
-            factors[np.where(factors > lbound)] = np.nan
-        elif condition == 'between':
-            factors[np.where((factors < lbound) & (factors > ubound))] = np.nan
-        elif condition == 'not_between':
-            factors[np.where(np.logical_and(factors > lbound, factors < ubound))] = np.nan
-        else:
-            raise ValueError(f'invalid selection condition \'{condition}\''
-                             f'should be one of ["any", "greater", "less", "between", "not_between"]')
-        nan_count = np.isnan(factors).astype('int').sum()  # 清点数据，获取nan值的数量
-        if nan_count == share_count:  # 当indices全部为nan，导致没有有意义的参数可选，此时直接返回全0值
-            return chosen
-        if not sort_ascending:
-            # 选择分数最高的部分个股，由于np排序时会把NaN值与最大值排到一起，因此需要去掉所有NaN值
-            pos = max(share_count - pct - nan_count, 0)
-        else:  # 选择分数最低的部分个股
-            pos = pct
-        # 对数据进行排序，并把排位靠前者的序号存储在arg_found中
-        if weighting == 'even':
-            # 仅当投资比例为均匀分配时，才可以使用速度更快的argpartition方法进行粗略排序
-            if not sort_ascending:
-                share_found = factors.argpartition(pos)[pos:]
-            else:
-                share_found = factors.argpartition(pos)[:pos]
-        else:  # 如果采用其他投资比例分配方式时，必须使用较慢的全排序
-            if not sort_ascending:
-                share_found = factors.argsort()[pos:]
-            else:
-                share_found = factors.argsort()[:pos]
-        # nan值数据的序号存储在arg_nan中
-        share_nan = np.where(np.isnan(factors))[0]
-        # 使用集合操作从arg_found中剔除arg_nan，使用assume_unique参数可以提高效率
-        args = np.setdiff1d(share_found, share_nan, assume_unique=True)
-        # 构造输出向量，初始值为全0
-        arg_count = len(args)
-        # 根据投资组合比例分配方式，确定被选中产品的权重
-        # linear 线性比例分配，将所有分值排序后，股票的比例呈线性分布
-        if weighting == 'linear':
-            dist = np.arange(1, 3, 2. / arg_count)  # 生成一个线性序列，最大值为最小值的约三倍
-            chosen[args] = dist / dist.sum()  # 将比率填入输出向量中
-        # distance：距离分配，权重与其分值距离成正比，分值最低者获得一个基础比例，其余股票的比例
-        # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
-        # 获取比例分配
-        elif weighting == 'distance':
-            dist = factors[args]
-            d = dist.max() - dist.min()
-            if not sort_ascending:
-                dist = dist - dist.min() + d / 10.
-            else:
-                dist = dist.max() - dist + d / 10.
-            # print(f'in GeneralStg realize method proportion type got distance of each item like:\n{dist}')
-            if ~np.any(dist):  # if all distances are zero
-                chosen[args] = 1 / len(dist)
-            elif dist.sum() == 0:  # if not all distances are zero but sum is zero
-                chosen[args] = dist / len(dist)
-            else:
-                chosen[args] = dist / dist.sum()
-        # proportion：比例分配，权重与其分值成正比，分值为0或小于0者比例为0
-        elif weighting == 'proportion':
-            fctr = factors[args]
-            proportion = fctr / fctr.sum()
-            chosen[args] = np.where(proportion < 0, 0, proportion)  # np.where 比 proportion.clip(0) 速度快得多
-        # even：均匀分配，所有中选股票在组合中权重相同
-        elif weighting == 'even':
-            chosen[args] = 1. / arg_count
-        else:
-            raise KeyError(f'invalid weighting type: "{weighting}". '
-                           f'should be one of ["linear", "proportion", "even"]')
-        return chosen
-
-    @abstractmethod
-    def realize(self,
-                params: tuple,
-                h: np.ndarray,
-                r: np.ndarray,
-                t: np.ndarray) -> np.ndarray:
-        """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
-            生成一条交易信号
         """
         pass
