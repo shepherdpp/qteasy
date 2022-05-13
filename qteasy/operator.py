@@ -200,11 +200,12 @@ class Operator:
     AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                               'proportion signal': 'ps',
                               'volume signal':     'vs'}
+    AVAILABLE_OP_TYPES = ['batch', 'realtime', 'rt', 'b']
 
-    def __init__(self, strategies=None, signal_type=None):
+    def __init__(self, strategies=None, signal_type=None, op_type=None):
         """ 生成具体的Operator对象
             每个Operator对象主要包含多个strategy对象，每一个strategy对象都会被赋予一个唯一的ID，通过
-            这个ID可以访问所有的Strategy对象，除ID以外，每个strategy也会有一个唯一的序号，通过该序号也可以
+            这个ID可以访问Strategy对象，除ID以外，每个strategy也会有一个唯一的序号，通过该序号也可以
             访问所有的额strategy对象。或者给相应的strategy对象设置、调整参数。
 
         input:
@@ -215,10 +216,9 @@ class Operator:
                                         'pt', 'ps', 'vs'
                                 默认交易信号类型为'pt'
 
-        Operator对象的基本属性包括：
-            signal_type:
-
-
+            :param op_type:     str, Operator对象的的运行模式，包含以下两种：
+                                        'batch', 'realtime'
+                                默认运行模式为'batch'
         """
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
@@ -231,36 +231,40 @@ class Operator:
             stg = []
         if signal_type is None:
             signal_type = 'pt'
-        if (signal_type.lower() not in self.AVAILABLE_SIGNAL_TYPES) and \
-                (signal_type.lower() not in self.AVAILABLE_SIGNAL_TYPES.values()):
-            signal_type = 'pt'
+        if op_type is None:
+            op_type = 'batch'
 
         # 初始化基本数据结构
         '''
-        Operator对象的基本数据结构包含一个列表和多个字典Dict，分别存储对象中Strategy对象的信息：
+        Operator对象的基本数据结构包含一个列表和多个字典Dict，分别存储对象中Strategy对象的信息
+        这些信息将会在op.prepare_data方法中设定，这些信息会被用于交易信号的生成：
         一个列表是Strategy ID list即策略ID列表：
             _stg_id:            交易策略ID列表，保存所有相关策略对象的唯一标识id（名称），如:
                                     ['MACD', 
                                      'DMA', 
                                      'MACD-1']
         
+        其余数据被保存在一系列Dict中
         这些Dict分为两类：
-        第一类保存所有Strategy交易策略的信息：这一类字典的键都是该Strategy的ID：
-                                     
+        第一类保存所有Strategy交易策略的历史数据相关信息：这一类字典的键都是该Strategy的ID：
+
             _strategies:        以字典形式存储所有交易策略对象本身
                                 存储所有的策略对象，如:
                                     {'MACD':    Timing(MACD), 
                                      'DMA':     Timing(timing_DMA), 
                                      'MACD-1':  Timing(MACD)}
-                                     
-            _op_history_data:   以字典形式保存用于所有策略交易信号生成的历史数据切片（HistoryPanel对象切片）
-                                例如：
-                                    {'MACD':    ndarray-MACD, 
-                                     'DMA':     ndarray-DMA, 
-                                     'MACD-1':  ndarray-MACD-1}
-                                     
+
+            _op_history_data:           
+            _op_reference_data:
+            _op_hist_data_rolling_window:
+            _op_ref_data_rolling_window:
+            _op_sample_indexes: 
+                                以字典形式保存用于所有策略交易信号生成的历史数据，历史数据的
+                                滚动窗口、参考历史数据、参考历史数据的滚动窗口、以及策略运行
+                                采样点序号
+
         第二类Dict保存不同回测价格类型的交易策略的混合表达式和混合操作队列
-                                
+
             _stg_blender_strings:
                                 交易信号混合表达式，该表达式决定了一组多个交易信号应该如何共同影响
                                 最终的交易决策，通过该表达式用户可以灵活地控制不同交易信号对最终交易
@@ -270,17 +274,17 @@ class Operator:
                                 例如：
                                     {'close':    '0 + 1', 
                                      'open':     '2*(0+1)'}
-                                
+
             _stg_blenders:      "信号混合"字典，包含不同价格类型交易信号的混合操作队列，dict的键对应不同的
                                 交易价格类型，Value为交易信号混合操作队列，操作队列以逆波兰式
                                 存储(RPN, Reversed Polish Notation)
                                 例如：
                                     {'close':    ['*', '1', '0'], 
                                      'open':     ['*', '2', '+', '1', '0']}
-                                
-        '''
 
-        self._signal_type = ''  # 保存operator对象输出的信号类型
+        '''
+        self._signal_type = ''
+        self._op_type = ''
         self._next_stg_index = 0  # int——递增的策略index，确保不会出现重复的index
         self._strategy_id = []  # List——保存所有交易策略的id，便于识别每个交易策略
         self._strategies = {}  # Dict——保存实际的交易策略对象
@@ -292,10 +296,9 @@ class Operator:
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
-        # 添加strategy对象
-        self.add_strategies(stg)
-        # 添加signal_type属性
-        self.signal_type = signal_type
+        self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
+        self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
+        self.add_strategies(stg)  # 添加strategy对象，添加的过程中会处理strategy_id和strategies属性
 
     def __repr__(self):
         res = list()
@@ -362,6 +365,19 @@ class Operator:
             return 1
         else:
             return 2
+
+    @property
+    def op_type(self):
+        return self._op_type
+
+    @op_type.setter
+    def op_type(self, op_type):
+        """ 设置op_type的值"""
+        if not isinstance(op_type, str):
+            raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
+        if op_type.lower() not in self.AVAILABLE_OP_TYPES:
+            raise KeyError(f'Invalid op_type ({op_type})')
+        self._op_type = op_type
 
     @property
     def op_data_types(self):

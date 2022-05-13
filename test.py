@@ -24,7 +24,7 @@ from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
-from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
+from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry, time_str_format2
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 
@@ -77,7 +77,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffil
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, get_built_in_table_schema
 
-from qteasy.strategy import Strategy, SimpleTiming, RuleIterator, GeneralStg, FactorSorter
+from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
 from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs, ConfigDict
 
@@ -5833,7 +5833,7 @@ class TestSelStrategyDiffTime(GeneralStg):
         return chosen
 
 
-class TestSigStrategy(SimpleTiming):
+class TestSigStrategy(GeneralStg):
     """用于Test测试的简单信号生成策略，基于SimpleTiming策略生成
 
     策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2
@@ -9061,6 +9061,26 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(time_str_format(t, estimation=True), '1days ')
         self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
         self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
+        t = 3.14
+        self.assertEqual(time_str_format2(t), '3s 140.0ms')
+        self.assertEqual(time_str_format2(t, estimation=True), '3s ')
+        self.assertEqual(time_str_format2(t, short_form=True), '3"140')
+        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), '3"')
+        t = 300.14
+        self.assertEqual(time_str_format2(t), '5min 140.0ms')
+        self.assertEqual(time_str_format2(t, estimation=True), '5min ')
+        self.assertEqual(time_str_format2(t, short_form=True), "5'140")
+        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), "5'")
+        t = 7435.0014
+        self.assertEqual(time_str_format2(t), '2hrs 3min 55s 1.4ms')
+        self.assertEqual(time_str_format2(t, estimation=True), '2hrs ')
+        self.assertEqual(time_str_format2(t, short_form=True), "2H3'55\"001")
+        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), "2H")
+        t = 88425.0509
+        self.assertEqual(time_str_format2(t), '1days 33min 45s 50.9ms')
+        self.assertEqual(time_str_format2(t, estimation=True), '1days ')
+        self.assertEqual(time_str_format2(t, short_form=True), "1D33'45\"051")
+        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), "1D")
 
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])
