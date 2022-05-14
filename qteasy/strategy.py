@@ -26,20 +26,32 @@ class BaseStrategy:
         基于一个策略类实现一个具体的策略，需要创建一个策略类，设定策略的基本参数，并重写realize()方法，在
         realize()中编写交易信号的生成规则：
 
-        - 策略的初始化
+        - 策略的初始化(可选)
         初始化策略的目的是为了设定策略的基本参数；
         除了策略名称、介绍以外，还包括有哪些参数，参数的取值范围和类型、需要使用哪些历史数据、
-        数据的频率、信号生成的频率（称为采样频率）、数据滑窗的大小、参考数据的类型等等信息，这些信息都需要在
-        策略初始化时通过策略属性设置：
+        数据的频率、信号生成的频率（称为采样频率）、数据滑窗的大小、参考数据的类型等等信息，这些信息都可以在
+        策略初始化时通过策略属性设置，如果不在初始化是设置，可以在创建strategy对象时设置。：
 
         推荐使用下面的方法设置策略
 
             Class ExampleStrategy(GeneralStg):
 
+                # __init__()是可选，在这里设置的属性值会成为这一类策略的默认值，因此在创建策略对象的
+                # 时候不需要再重复输入。
+                def __init__(self):
+                    # 可选项
+                    # 定义这个策略的缺省/默认属性值
+                    super().__init_(pars=<default pars>,
+                                    par_count=<default par_count>,
+                                    par_types=<default par_types>,
+                                    par_range=<default par_range>,
+                                    **kwargs  # 定义其他的缺省属性值
+                                    )
+
                 def realize(self, pars, h, r, t):
 
-                    # strategy logic goes here
                     # 在这里编写信号生成逻辑
+                    # res代表信号输出值
 
                     return res
 
@@ -53,6 +65,7 @@ class BaseStrategy:
                                                data_freq='d',
                                                sample_freq='2d',
                                                window_length=100)
+            # 如果上面的属性在定义策略类的时候已经输入了，那么可以省略
 
         除了某些策略需要更多特殊属性以外，基本属性的含义及取值范围如下：
 

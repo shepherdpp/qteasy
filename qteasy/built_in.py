@@ -2076,8 +2076,8 @@ class SelectingAll(stg.GeneralStg):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='SIMPLE ',
-                         stg_text='GeneralStg all share and distribute weights evenly')
+                         name='SIMPLE ',
+                         description='GeneralStg all share and distribute weights evenly')
 
     def _realize(self, hist_data, params):
         # 所有股票全部被选中，投资比例平均分配
@@ -2090,8 +2090,8 @@ class SelectingNone(stg.GeneralStg):
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         stg_name='NONE ',
-                         stg_text='None of the shares will be selected')
+                         name='NONE ',
+                         description='None of the shares will be selected')
 
     def _realize(self, hist_data, params):
         # 所有股票全部被选中，投资比例平均分配
@@ -2107,8 +2107,8 @@ class SelectingRandom(stg.GeneralStg):
                          par_count=1,
                          par_types=['conti'],
                          par_range=[(0, np.inf)],
-                         stg_name='RANDOM',
-                         stg_text='GeneralStg share Randomly and distribute weights evenly')
+                         name='RANDOM',
+                         description='GeneralStg share Randomly and distribute weights evenly')
 
     def _realize(self, hist_data, params):
         pct = self.pars[0]

@@ -5754,7 +5754,7 @@ class TestLSStrategy(RuleIterator):
                          description='test long/short strategy',
                          par_count=2,
                          par_types='discr, conti',
-                         par_bounds_or_enums=([1, 5], [2, 10]),
+                         par_range=([1, 5], [2, 10]),
                          data_types='close, open, high, low',
                          data_freq='d',
                          window_length=5)
@@ -5785,7 +5785,7 @@ class TestSelStrategy(GeneralStg):
                          stg_text='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
-                         par_bounds_or_enums=(),
+                         par_range=(),
                          data_types='high, low, close',
                          data_freq='d',
                          sample_freq='10d',
@@ -5817,7 +5817,7 @@ class TestSelStrategyDiffTime(GeneralStg):
                          stg_text='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
-                         par_bounds_or_enums=(),
+                         par_range=(),
                          data_types='close, low, open',
                          data_freq='d',
                          sample_freq='w',
@@ -5849,7 +5849,7 @@ class TestSigStrategy(GeneralStg):
                          stg_text='test signal creation strategy',
                          par_count=3,
                          par_types='conti, conti, conti',
-                         par_bounds_or_enums=([2, 10], [0, 3], [0, 3]),
+                         par_range=([2, 10], [0, 3], [0, 3]),
                          data_types='close, open, high, low',
                          window_length=2)
         pass
@@ -5888,7 +5888,7 @@ class MyStg(qt.RuleIterator):
                 pars=(20, 100, 0.01),
                 par_count=3,
                 par_types=['discr', 'discr', 'conti'],
-                par_bounds_or_enums=[(10, 250), (10, 250), (0.0, 0.5)],
+                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
                 data_types='close',
@@ -6132,7 +6132,7 @@ class TestOperator(unittest.TestCase):
 
         op = qt.Operator('macd, dma, trix, random, ndayavg')
         self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, ndayavg)')
-        self.assertEqual(op['dma'].__repr__(), 'Q-TIMING(DMA)')
+        self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA)')
         self.assertEqual(op['macd'].__repr__(), 'R-TIMING(MACD)')
         self.assertEqual(op['trix'].__repr__(), 'R-TIMING(TRIX)')
         self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
@@ -6850,7 +6850,7 @@ class TestOperator(unittest.TestCase):
         self.assertRaises(AssertionError, op.add_strategies, 123)
         self.assertRaises(AssertionError, op.add_strategies, None)
 
-    def test_opeartor_remove_strategy(self):
+    def test_operator_remove_strategy(self):
         """ test method remove strategy"""
         op = qt.Operator('dma, all, urgent')
         op.add_strategies(['dma', 'macd'])
@@ -6875,7 +6875,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategies[3], op['dma_2'])
         self.assertEqual(op.strategies[4], op['custom'])
 
-    def test_opeartor_clear_strategies(self):
+    def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
         op = qt.Operator('dma, all, urgent')
         op.add_strategies(['dma', 'macd'])
@@ -12059,7 +12059,7 @@ class StgBuyOpen(GeneralStg):
                          par_count=1,
                          par_types=['descr'],
                          stg_name='OPEN_BUY',
-                         par_bounds_or_enums=[(0, 100)],
+                         par_range=[(0, 100)],
                          bt_price_type='open')
         pass
 
@@ -12091,7 +12091,7 @@ class StgSelClose(GeneralStg):
                          par_count=1,
                          par_types=['descr'],
                          stg_name='SELL_CLOSE',
-                         par_bounds_or_enums=[(0, 100)],
+                         par_range=[(0, 100)],
                          bt_price_type='close')
         pass
 
