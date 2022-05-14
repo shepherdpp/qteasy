@@ -1232,7 +1232,7 @@ class Operator:
             else:
                 self._op_sample_indexes[stg_id] = seg_pos
 
-    def create_signal(self, trade_data=None, sample_idx=None):
+    def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，
 
             遍历Operator对象中的strategy对象，调用它们的generate方法生成策略交易信号
@@ -1244,10 +1244,12 @@ class Operator:
             根据不同的sample_idx参数的类型，采取不同的工作模式生成交易信号：
 
             - 如果sample_idx为一个int或np.int时，进入single模式，生成单组信号
-                从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组交易信号
-                例如，假设 sample_idx = 7
-                则提取出第7组数据滑窗，生成并返回第7组交易信号
+                从operator中各个strategy的全部历史数据滑窗中，找出第singal_idx组数据滑窗，仅生成一组用于特定
+                回测price_type价格类型的交易信号
+                例如，假设 sample_idx = 7, price_type_idx = 0
+                则提取出第7组数据滑窗，提取price_type序号为0的交易策略，并使用这些策略生成一组交易信号
                         array[1, 0, 0, 0, 1]
+                此时生成的是一个1D数组
 
             - 如果sample_idx为None（默认）或一个ndarray，进入清单模式，生成完整清单
                 生成一张完整的交易信号清单，此时，sample_idx必须是一个1D的int型向量，这个向量中的每
@@ -1264,6 +1266,7 @@ class Operator:
                               [nan, nan, nan, nan, nan],
                               [  1,   0,   0,   0,   1]]
                 当sample_idx为None时，使用self._op_sample_idx的值为采样清单
+                此时生成的是一个3D数组
 
             在生成交易信号之前需要调用prepare_data准备好相应的历史数据
 
@@ -1278,15 +1281,24 @@ class Operator:
             如果给出trade_date信号，trade_date中需要包含所有股票的交易信息，每列表示不同的交易价
             格种类，其结构与生成的交易信号一致
 
-        :param: sample_idx: None, int, np.int, ndarray
+        :param sample_idx: None, int, np.int, ndarray
             交易信号序号。
             如果参数为int型，则只计算该序号滑窗数据的交易信号
             如果参数为array，则计算完整的交易信号清单
 
+        :param price_type_idx: None, int
+            回测价格类型序号
+            如果给出sample_ix，必须给出这个参数
+            当给出一个price_type_idx时，不会激活所有的策略生成交易信号，而是只调用相关的策略生成
+            一组信号
+
         :return=====
-            HistoryPanel
+            np.ndarray
             使用对象的策略在历史数据期间的一个子集上产生的所有合法交易信号，该信号可以输出到回测
             模块进行回测和评价分析，也可以输出到实盘操作模块触发交易操作
+            当sample_idx不是None时，必须给出一个int，此时price_type_idx也必须给出
+            此时输出为一个1D数组
+            当sample_idx为None时，会生成一张完整的
         """
         from .blender import signal_blend
         signal_type = self.signal_type
@@ -1294,11 +1306,15 @@ class Operator:
         relevant_sample_indexes = sample_idx
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
         # 一个字典保存所有交易价格类型各自的交易信号ndarray
+        # 如果price_type_idx给出时，只计算这个price_type的交易信号
         signal_out = {}
-        bt_price_types = self.bt_price_types
-        bt_price_type_count = self.bt_price_type_count
+        if price_type_idx is None:
+            bt_price_types = self.bt_price_types
+        else:
+            bt_price_types = self.bt_price_types[price_type_idx]
+        bt_price_type_count = len(bt_price_types)
         for bt_price_type in bt_price_types:
-            # 针对每种交易价格类型分别遍历所有的策略
+            # 针对每种交易价格类型分别调用所有的相关策略
             op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
             relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
@@ -1315,6 +1331,8 @@ class Operator:
                                       ref_data=rd,
                                       trade_data=td,
                                       data_idx=si)
+                if sample_idx is not None:
+                    return signal
                 if signal_type in ['ps', 'vs']:
                     signal = fill_nan_data(signal, 0)
                 elif signal_type == 'pt':
@@ -1332,7 +1350,7 @@ class Operator:
             signal_out[bt_price_type] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股
         signal_shape = blended_signal.T.shape
-        signal_value = np.zeros((*signal_shape, bt_price_type_count))
+        signal_value = np.empty((*signal_shape, bt_price_type_count))
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_value[:, :, i] = signal_out[bt_price_type].T
 

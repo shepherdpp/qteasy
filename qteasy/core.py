@@ -439,8 +439,8 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
-def apply_loop(op_type: int,
-               op_list: HistoryPanel,
+def apply_loop(operator: Operator,
+               op_list: np.ndarray,
                history_list: HistoryPanel,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
@@ -460,10 +460,7 @@ def apply_loop(op_type: int,
         现金额及费用，输出的结果可选
 
     input：=====
-        :param op_type: int: 交易信号类型，PT/PS/VS三种信号类型之一，对应值如下：
-                        0 - PT signal，持仓比例目标信号
-                        1 - PS signal，比例买卖交易信号
-                        2 - VS signal，数量买卖交易信号
+        :param operator: Operator, 用于生成交易信号（realtime模式）
         :param op_list: object HistoryPanel: 标准格式交易信号，以HistoryPanel格式存储为三维矩阵
         :param history_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
         :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
@@ -494,8 +491,6 @@ def apply_loop(op_type: int,
         - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
     """
     from qteasy import logger_core
-    global total_stock_value, total_value
-    assert not op_list.is_empty, 'InputError: The Operation list should not be Empty'
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
     if moq_buy == 0:
@@ -504,21 +499,18 @@ def apply_loop(op_type: int,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-    # 在PT模式下，每天都需要进行回测，而在PS和VS模式下，并不需要每天回测
-    # 应该沿用以前的做法，仅回测有信号的交易日
-    # op_list = _merge_invest_dates(op_list, cash_plan)
-    op = op_list.values
-    shares = op_list.shares
+    # TODO: 在PT模式下，每天都需要进行回测，而在PS和VS模式下，并不需要每天回测
+    #  应该沿用以前的做法，仅回测有信号的交易日
+    op_type = operator.signal_type
+    op = op_list
+    # TODO: 如何获取shares，price_types，以及hdates？
+    # shares = op_list.shares
     price_types = op_list.htypes
-    # assert price_types == history_list.htypes, f'the trade price types from operation list and historical data does' \
-    #                                            f' not fit each other:\n' \
-    #                                            f'op_list:    {price_types}\n' \
-    #                                            f'price_list: {history_list.htypes}'
+    looped_dates = list(op_list.hdates)
+
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
-    price_type_count = op_list.htype_count
-    op_count = op_list.hdate_count
-    share_count = op_list.share_count
+    share_count, op_count, price_type_count = op_list.shape
     # 根据价格交易优先级设置价格执行顺序
     # 例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
     # 价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
@@ -533,23 +525,17 @@ def apply_loop(op_type: int,
             continue
         price_priority_list.append(price_types.index(price_type_table[p_type]))
     price_types_in_priority = [price_types[i] for i in price_priority_list]
-    # 从价格清单中提取出与交易清单的日期相对应日期的所有数据(这是为了
-    # 减少回测的次数，只将有信号的交易日期传入loop函数，忽略没有信号
-    # 的日期。但在PT模式下，不能这么做，因为每天都有信号)。在PS和VS
-    # 信号模式下，可以且应该这么做，但是目前HistoryPanel不支持
-    # hp.loc[]，后续应该支持
+    # TODO: 价格清单是一个ndarray, 需要找到方法在PS/VS模式下忽略掉没有信号的行
+    #  只在有信号的行上回测，减少回测的次数
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = history_list.ffill(0).values
-    looped_dates = list(op_list.hdates)
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
     days_difference = []
     additional_invest = 0.
     if inflation_rate > 0:
-        # print(f'looped dates are like: {looped_dates}')
         days_timedelta = looped_dates - np.roll(looped_dates, 1)
-        # print(f'days differences between two operations dates are {days_timedelta}')
-        days_difference = np.zeros_like(looped_dates, dtype='int')
+        days_difference = np.empty_like(looped_dates, dtype='int')
         for i in range(1, len(looped_dates)):
             days_difference[i] = days_timedelta[i].days
         inflation_factors = 1 + days_difference * inflation_rate / 250
@@ -567,6 +553,12 @@ def apply_loop(op_type: int,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
+    total_stock_value = 0
+    total_value = 0
+    trade_data = np.empty(shape=(5, share_count))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
+                                                   # 持有现金等数据的数组，用于realtime信号生成
+    recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
+    recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
     # 保存trade_log_table数据：
     op_log_add_invest = []
     op_log_cash = []
@@ -625,7 +617,16 @@ def apply_loop(op_type: int,
                                           f'{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i, j]
-            current_op = op[:, i, j]
+            if operator.op_type == 'realtime':
+                # 在realtime模式下，准备trade_data
+                trade_data[0] = own_amounts
+                trade_data[1] = available_amounts
+                trade_data[2] = current_prices
+                trade_data[3] = recent_amounts_change
+                trade_data[4] = recent_trade_prices
+                current_op = operator.create_signal(trade_data=trade_data, sample_idx=i, price_type_idx=j)
+            else:
+                current_op = op[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
                     own_cash=own_cash,
@@ -708,7 +709,7 @@ def apply_loop(op_type: int,
         values.append(total_value)
         amounts_matrix.append(own_amounts)
     # 将向量化计算结果转化回DataFrame格式
-    value_history = pd.DataFrame(amounts_matrix, index=op_list.hdates,
+    value_history = pd.DataFrame(amounts_matrix, index=looped_dates,
                                  columns=shares)
     # 生成trade_log，index为MultiIndex，因为每天的交易可能有多种价格
     if trade_log:
@@ -782,6 +783,24 @@ def get_current_holdings() -> tuple:
     """ 获取当前持有的产品在手数量
 
     :return: tuple:
+    """
+    raise NotImplementedError
+
+
+def get_recent_trades() -> tuple:
+    """ 获取最近的交易记录
+
+    :return:
+    """
+    raise NotImplementedError
+
+
+def build_trade_data(holdings, recent_trades) -> np.ndarray:
+    """ 生成符合格式的trade_data用于交易信号生成
+
+    :param holdings: tuple
+    :param recent_trades: tuple
+    :return:
     """
     raise NotImplementedError
 
@@ -1580,11 +1599,21 @@ def run(operator, **kwargs):
 
     if run_mode == 0 or run_mode == 'signal':
         # 进入实时信号生成模式：
+        # 获取最近的实时历史数据：
+        holdings = get_current_holdings()
+        trade_result = get_recent_trades()
+        trade_data = build_trade_data(holdings, trade_result)
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)
+        operator.prepare_data(hist_data=hist_op, reference_data=hist_reference, cash_plan=invest_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
-        # TODO: 下面的交易信号生成方式应该采用更加general的operator.create_signal_step()
-        op_list = operator.create_signal(hist_data=hist_op)  # 生成交易清单
+        if operator.op_type == 'batch':
+            raise KeyError(f'Operator can not work in real time mode when its op_type == "batch", set '
+                           f'"Operator.op_type = \'realtime\'"')
+        else:
+            op_list = operator.create_signal(hist_data=hist_op,
+                                             trade_data=trade_data,
+                                             sample_idx=-1,
+                                             price_type_idx=0)  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
         _print_operation_signal(op_list=op_list,
@@ -1908,7 +1937,8 @@ def _evaluate_one_parameter(par,
         res_dict['par'] = par
     # 生成交易清单并进行模拟交易生成交易记录
     st = time.time()
-    op_list = op.create_signal(op_history_data)
+    if op.op_type == 'batch':
+        op_list = op.create_signal(op_history_data)
     et = time.time()
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time
