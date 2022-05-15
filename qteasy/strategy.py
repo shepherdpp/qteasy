@@ -433,7 +433,6 @@ class Strategy:
             seg_pos[1] = np.searchsorted(dates, dates[self.window_length])  # 起点第一日
             seg_pos[-1] = len(dates) - 1  # 终点最后一日
             seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
-            import pdb; pdb.set_trace()
             return seg_pos, seg_lens, 2
         bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
         # 在这里发现另外一个问题，通过date_range生成的日期序列有可能生成非交易日的日期
