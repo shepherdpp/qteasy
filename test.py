@@ -24,7 +24,7 @@ from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
-from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry, time_str_format2
+from qteasy.utilfuncs import next_market_trade_day, unify, list_or_slice, labels_to_dict, retry
 from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_like, list_truncate, input_to_list
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 
@@ -9061,26 +9061,6 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertEqual(time_str_format(t, estimation=True), '1days ')
         self.assertEqual(time_str_format(t, short_form=True), "1D33'45\"051")
         self.assertEqual(time_str_format(t, estimation=True, short_form=True), "1D")
-        t = 3.14
-        self.assertEqual(time_str_format2(t), '3s 140.0ms')
-        self.assertEqual(time_str_format2(t, estimation=True), '3s ')
-        self.assertEqual(time_str_format2(t, short_form=True), '3"140')
-        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), '3"')
-        t = 300.14
-        self.assertEqual(time_str_format2(t), '5min 140.0ms')
-        self.assertEqual(time_str_format2(t, estimation=True), '5min ')
-        self.assertEqual(time_str_format2(t, short_form=True), "5'140")
-        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), "5'")
-        t = 7435.0014
-        self.assertEqual(time_str_format2(t), '2hrs 3min 55s 1.4ms')
-        self.assertEqual(time_str_format2(t, estimation=True), '2hrs ')
-        self.assertEqual(time_str_format2(t, short_form=True), "2H3'55\"001")
-        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), "2H")
-        t = 88425.0509
-        self.assertEqual(time_str_format2(t), '1days 33min 45s 50.9ms')
-        self.assertEqual(time_str_format2(t, estimation=True), '1days ')
-        self.assertEqual(time_str_format2(t, short_form=True), "1D33'45\"051")
-        self.assertEqual(time_str_format2(t, estimation=True, short_form=True), "1D")
 
     def test_str_to_list(self):
         self.assertEqual(str_to_list('a,b,c,d,e'), ['a', 'b', 'c', 'd', 'e'])

@@ -2205,8 +2205,6 @@ class DataSource:
 
         # 2 生成需要处理的数据表清单 tables
         table_map = get_table_map()
-        # table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        # table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
         tables_to_refill = set()
         tables = [item.lower() for item in tables]
         if 'all' in tables:
@@ -2390,12 +2388,13 @@ class DataSource:
                                                        f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
+                strftime_elapsed = time_str_format(time_elapsed, short_form=True)
                 if len(arg_coverage) > 1:
                     progress_bar(total, total, f'[{table}] <{arg_coverage[0]} to {arg_coverage[-1]}>: '
-                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                                               f'{total_written} written in {strftime_elapsed}\n')
                 else:
                     progress_bar(total, total, f'[{table}] <None>: '
-                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                                               f'{total_written} written in {strftime_elapsed}\n')
                 # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
                 #       f'{total} {arg_name} params '
                 #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')

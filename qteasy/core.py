@@ -82,9 +82,7 @@ def _loop_step(signal_type: int,
                maximize_cash_usage: bool,
                allow_sell_short: bool,
                moq_buy: float,
-               moq_sell: float,
-               trade_detail_log: bool = False,
-               share_names: list = None) -> tuple:
+               moq_sell: float) -> tuple:
     """ 对同一批交易进行处理，采用向量化计算以提升效率
         接受交易信号、交易价格以及期初可用现金和可用股票等输入，加上交易费率等信息计算交易后
         的现金和股票变动值、并计算交易费用
@@ -146,14 +144,6 @@ def _loop_step(signal_type: int,
             :type moq_sell: float:
             投资产品最买入交易单位，moq为0时允许交易任意数额的金融产品，moq不为零时允许交易的产品数量是moq的整数倍
 
-        :param trade_detail_log：
-            :type trade_detail_log: bool:
-            如果True，在回测过程中记录详细交易说明，会导致效率降低。
-
-        :param share_names：
-            :type share_names: list:
-            以list的形式存储的股票名称，share_names列表的元素数量与股票的数量相同
-
     return：===== tuple，包含五个元素
         cash_gained:        float, 本批次交易中获得的现金增加额
         cash_spent:         float, 本批次交易中共花费的现金总额
@@ -165,7 +155,6 @@ def _loop_step(signal_type: int,
     # 的买卖行为仅受交易信号控制，交易信号全为零代表不交易，但是如果交
     # 易信号为0时，代表持仓目标为0，此时有可能会有卖出交易，因此不能退
     # 出计算
-    from qteasy import logger_core
     if np.all(op == 0) and signal_type > 0:
         # 返回0代表获得和花费的现金，返回全0向量代表买入和卖出的股票
         # 因为正好op全为0，因此返回op即可
@@ -202,19 +191,6 @@ def _loop_step(signal_type: int,
             amounts_to_sell += np.where((position_diff > ptbt) & (own_amounts < 0),
                                         position_diff / pre_position * own_amounts,
                                         0)
-        # 打印log：
-        if trade_detail_log:
-            logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
-                              f' - 持有现金总价:   {own_cash:.2f}\n'
-                              f' - 持有资产总价:   {total_value - own_cash:.2f}')
-            logger_core.debug(f'期初可用现金:   {available_cash:.2f}\n'
-                              f'期初可用资产:   {np.around(available_amounts, 2)}\n'
-                              f'本期资产价格:   {np.around(prices, 2)}\n'
-                              f'本期持仓目标:   {op}\n'
-                              f'本期实际持仓:   {np.around(pre_position, 3)}\n'
-                              f'本期持仓差异:   {np.around(position_diff, 3)}\n'
-                              f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                              f'计划买入金额:   {np.around(cash_to_spend, 3)}')
 
     elif signal_type == 1:
         # signal_type 为PS，根据目前的持仓比例和期初资产总额生成买卖数量
@@ -231,18 +207,6 @@ def _loop_step(signal_type: int,
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op * own_amounts, 0)
 
-        # 生成log：
-        if trade_detail_log:
-            logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
-                              f' - 持有现金总价:   {own_cash:.2f}\n'
-                              f' - 持有资产总价:   {total_value - own_cash:.2f}')
-            logger_core.debug(f'期初可用现金:   {available_cash:.2f}\n'
-                              f'期初可用资产:   {np.around(available_amounts, 2)}\n'
-                              f'本期资产价格:   {np.around(prices, 2)}\n'
-                              f'本期交易信号:   {op}\n'
-                              f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                              f'计划买入金额:   {np.around(cash_to_spend, 3)}')
-
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
@@ -258,20 +222,8 @@ def _loop_step(signal_type: int,
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
             amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op, 0)
 
-        # 生成log：
-        if trade_detail_log:
-            logger_core.debug(f'期初资产总价:   {total_value:.2f}, 其中:\n'
-                              f' - 持有现金总价:   {own_cash:.2f}\n'
-                              f' - 持有资产总价:   {total_value - own_cash:.2f}')
-            logger_core.debug(f'期初可用现金:   {available_cash:.2f}\n'
-                              f'期初可用资产:   {np.around(available_amounts, 2)}\n'
-                              f'本期资产价格:   {np.around(prices, 2)}\n'
-                              f'计划出售资产:   {np.around(amounts_to_sell, 3)}\n'
-                              f'计划买入金额:   {np.around(cash_to_spend, 3)}')
-
     else:
-        raise ValueError(f'signal_type value {signal_type} not supported!')
-        # pass
+        raise ValueError(f'Invalid signal_type value ({signal_type})')
 
     # 3, 批量提交股份卖出计划，计算实际卖出份额与交易费用。
 
@@ -282,23 +234,6 @@ def _loop_step(signal_type: int,
     amount_sold, cash_gained, fee_selling = rate.get_selling_result(prices=prices,
                                                                     a_to_sell=amounts_to_sell,
                                                                     moq=moq_sell)
-    if trade_detail_log:
-        # 输出本批次卖出交易的详细信息
-        if share_names is None:
-            share_names = np.arange(len(op))
-        item_sold = np.where(amount_sold < 0)[0]
-        if len(item_sold) > 0:
-            for i in item_sold:
-                if prices[i] != 0:
-                    logger_core.debug(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)} '
-                                      f'出售 {np.round(-amount_sold[i], 2)} 份')
-                else:
-                    logger_core.debug(f' - 资产:\'{share_names[i]}\' - 本期停牌, 价格为 {np.round(prices[i], 2)} '
-                                      f'暂停交易，出售 {0.0} 份')
-            logger_core.debug(f'获得现金 {cash_gained.sum():.2f} 并产生交易费用 {fee_selling.sum():.2f}, '
-                              f'交易后现金余额: {(available_cash + cash_gained.sum()):.3f}')
-        else:
-            logger_core.debug(f'本期未出售任何资产,交易后现金余额与资产总量不变')
 
     if maximize_cash_usage:
         # 仅当现金交割期为0，且希望最大化利用同批交易产生的现金时，才调整现金余额
@@ -310,33 +245,18 @@ def _loop_step(signal_type: int,
 
     if total_cash_to_spend == 0:
         # 如果买入计划为0，则直接跳过后续的计算
-        if trade_detail_log:
-            logger_core.debug(f'本期未购买任何资产,交易后现金余额与资产总量不变')
         return cash_gained, np.zeros_like(op), np.zeros_like(op), amount_sold, fee_selling
 
     if total_cash_to_spend > available_cash:
         # 按比例降低分配给每个拟买入资产的现金额，如果金额特别小，将数额置0
         cash_to_spend = cash_to_spend / total_cash_to_spend * available_cash
         cash_to_spend = np.where(cash_to_spend < 0.0001, 0, cash_to_spend)
-        if trade_detail_log:
-            logger_core.debug(f'本期计划买入资产动用资金: {total_cash_to_spend:.2f}')
-            logger_core.debug(f'持有现金不足，调整动用资金数量为: {cash_to_spend.sum():.2f} / {available_cash:.2f}')
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         cash_to_spend=cash_to_spend,
                                                                         moq=moq_buy)
-    if trade_detail_log:
-        # 输出本批次买入交易的详细信息
-        if share_names is None:
-            share_names = np.arange(len(op))
-        item_purchased = np.where(amount_purchased > 0)[0]
-        if len(item_purchased) > 0:
-            for i in item_purchased:
-                logger_core.debug(f' - 资产:\'{share_names[i]}\' - 以本期价格 {np.round(prices[i], 2)}'
-                                  f' 买入 {np.round(amount_purchased[i], 2)} 份')
-            logger_core.debug(f'实际花费现金 {-cash_spent.sum():.2f} 并产生交易费用: {fee_buying.sum():.2f}')
 
     # 4, 计算购入资产产生的交易成本，买入资产和卖出资产的交易成本率可以不同，且每次交易动态计算
     fee = fee_buying + fee_selling
@@ -401,7 +321,6 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     looped_value.cash = cashes
     looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
     looped_value['reference'] = ref_list.reindex(hdates).fillna(0)
-    # print(f'extended looped value according to looped history: \n{looped_value.info()}')
     # 重新计算整个清单中的资产总价值，生成pandas.Series对象，如果looped_history历史价格中包含多种价格，使用最后一种
     decisive_prices = looped_history[-1].squeeze(axis=2).T
     looped_value['value'] = (decisive_prices * looped_value[shares]).sum(axis=1) + looped_value['cash']
@@ -618,7 +537,7 @@ def apply_loop(operator: Operator,
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i, j]
             if operator.op_type == 'realtime':
-                # 在realtime模式下，准备trade_data
+                # 在realtime模式下，准备trade_data并计算下一步的交易信号
                 trade_data[0] = own_amounts
                 trade_data[1] = available_amounts
                 trade_data[2] = current_prices
@@ -626,6 +545,7 @@ def apply_loop(operator: Operator,
                 trade_data[4] = recent_trade_prices
                 current_op = operator.create_signal(trade_data=trade_data, sample_idx=i, price_type_idx=j)
             else:
+                # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号
                 current_op = op[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
@@ -641,9 +561,7 @@ def apply_loop(operator: Operator,
                     maximize_cash_usage=max_cash_usage and cash_delivery_period == 0,
                     allow_sell_short=allow_sell_short,
                     moq_buy=moq_buy,
-                    moq_sell=moq_sell,
-                    trade_detail_log=trade_detail_log,
-                    share_names=shares
+                    moq_sell=moq_sell
             )
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
             if (prev_date != current_date) or (cash_delivery_period == 0):
@@ -2023,18 +1941,22 @@ def _evaluate_one_parameter(par,
         history_list_seg = loop_history_data.segment(start, end)
         if stage != 'loop':
             invest_cash_dates = history_list_seg.hdates[0]
-        cash_plan = CashPlan(invest_cash_dates.strftime('%Y%m%d'),
-                             invest_cash_amounts,
-                             riskfree_ir)
-        trade_cost = Cost(config.cost_fixed_buy,
-                          config.cost_fixed_sell,
-                          config.cost_rate_buy,
-                          config.cost_rate_sell,
-                          config.cost_min_buy,
-                          config.cost_min_sell,
-                          config.cost_slippage)
+        cash_plan = CashPlan(
+                invest_cash_dates.strftime('%Y%m%d'),
+                invest_cash_amounts,
+                riskfree_ir
+        )
+        trade_cost = Cost(
+                config.cost_fixed_buy,
+                config.cost_fixed_sell,
+                config.cost_rate_buy,
+                config.cost_rate_sell,
+                config.cost_min_buy,
+                config.cost_min_sell,
+                config.cost_slippage
+        )
         looped_val = apply_loop(
-                op_type=op_type_id,
+                operator=op,
                 op_list=op_list_seg,
                 history_list=history_list_seg,
                 cash_plan=cash_plan,
@@ -2055,12 +1977,15 @@ def _evaluate_one_parameter(par,
                 looped_value=looped_val,
                 h_list=history_list_seg,
                 ref_list=reference_history_data,
-                with_price=False)
-        perf = evaluate(looped_values=complete_values,
-                        hist_benchmark=reference_history_data,
-                        benchmark_data=reference_history_data_type,
-                        cash_plan=cash_plan,
-                        indicators=indicators)
+                with_price=False
+        )
+        perf = evaluate(
+                looped_values=complete_values,
+                hist_benchmark=reference_history_data,
+                benchmark_data=reference_history_data_type,
+                cash_plan=cash_plan,
+                indicators=indicators
+        )
         perf_list.append(perf)
     perf = performance_statistics(perf_list)
     et = time.time()
