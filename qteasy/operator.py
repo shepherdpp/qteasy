@@ -308,7 +308,8 @@ class Operator:
         res.append('Operator(')
         if self.strategy_count > 0:
             res.append(', '.join(self._strategy_id))
-        res.append(')')
+        res.append('), ')
+        res.append(f'{self.signal_type}, {self.op_type}')
         return ''.join(res)
 
     @property
@@ -1216,21 +1217,28 @@ class Operator:
             freq = stg.sample_freq
             # 根据sample_freq生成一个日期序列
             temp_date_series = pd.date_range(start=op_dates[window_length], end=op_dates[-1], freq=freq)
-            # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
-            # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
-            bnds = temp_date_series - (temp_date_series[0] - op_dates[window_length])
-            # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
-            seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
-            # 用searchsorted函数把输入的日期与历史数据日期匹配起来
-            seg_pos[1:-1] = np.searchsorted(op_dates, bnds)
-            # 最后一个分隔位等于历史区间的总长度
-            seg_pos[-1] = len(op_dates) - 1
-            # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始
-            # 如果分段界限的首位本身就是0时，需要删除一个0
-            if seg_pos[1] == 0:
-                self._op_sample_indexes[stg_id] = seg_pos[1:]
-            else:
+            if len(temp_date_series) == 0:
+                # 如果sample_freq太大，无法生成有意义的选股日期，则生成基础分段，起点是第一日，终点是最后一日
+                seg_pos = np.zeros(shape=(3,), dtype='int')
+                seg_pos[1] = np.searchsorted(op_dates, op_dates[window_length])  # 起点第一日
+                seg_pos[-1] = len(op_dates) - 1  # 终点最后一日
                 self._op_sample_indexes[stg_id] = seg_pos
+            else:
+                # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
+                # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
+                bnds = temp_date_series - (temp_date_series[0] - op_dates[window_length])
+                # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
+                seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
+                # 用searchsorted函数把输入的日期与历史数据日期匹配起来
+                seg_pos[1:-1] = np.searchsorted(op_dates, bnds)
+                # 最后一个分隔位等于历史区间的总长度
+                seg_pos[-1] = len(op_dates) - 1
+                # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始
+                # 如果分段界限的首位本身就是0时，需要删除一个0
+                if seg_pos[1] == 0:
+                    self._op_sample_indexes[stg_id] = seg_pos[1:]
+                else:
+                    self._op_sample_indexes[stg_id] = seg_pos
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，
