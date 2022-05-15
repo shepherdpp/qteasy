@@ -427,6 +427,14 @@ class Strategy:
         # 更糟糕的是，从dates[self.window_length]当天到信号开始那天之间的所有信号都是nan，这会导致这段时间内的交易信号
         # 空白。
         # 解决办法是生成daterange之后，使用pd.Timedelta将它平移到dates[self.window_length]当天即可。
+        if len(temp_date_series) == 0:
+            # 如果sample_freq太大，无法生成有意义的选股日期，则生成基础分段，起点是第一日，终点是最后一日
+            seg_pos = np.zeros(shape=(3,), dtype='int')
+            seg_pos[1] = np.searchsorted(dates, dates[self.window_length])  # 起点第一日
+            seg_pos[-1] = len(dates) - 1  # 终点最后一日
+            seg_lens = (seg_pos - np.roll(seg_pos, 1))[1:]
+            import pdb; pdb.set_trace()
+            return seg_pos, seg_lens, 2
         bnds = temp_date_series - (temp_date_series[0] - dates[self.window_length])
         # 在这里发现另外一个问题，通过date_range生成的日期序列有可能生成非交易日的日期
         # 这也许会成为一个问题
