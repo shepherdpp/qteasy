@@ -22,7 +22,7 @@ import datetime
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
-from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day, weekday_name
+from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
@@ -379,8 +379,8 @@ def apply_loop(operator: Operator,
         现金额及费用，输出的结果可选
 
     input：=====
-        :param operator: Operator, 用于生成交易信号（realtime模式）
-        :param op_list: object HistoryPanel: 标准格式交易信号，以HistoryPanel格式存储为三维矩阵
+        :param operator: Operator, 用于生成交易信号(realtime模式)
+        :param op_list: object HistoryPanel: 批量生成的交易信号清单(batch模式)
         :param history_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
         :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
@@ -418,14 +418,12 @@ def apply_loop(operator: Operator,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-    # TODO: 在PT模式下，每天都需要进行回测，而在PS和VS模式下，并不需要每天回测
-    #  应该沿用以前的做法，仅回测有信号的交易日
     op_type = operator.signal_type
     op = op_list
     # TODO: 如何获取shares，price_types，以及hdates？
     # shares = op_list.shares
-    price_types = op_list.htypes
-    looped_dates = list(op_list.hdates)
+    price_types = operator.bt_price_types
+    # looped_dates = list(op_list.hdates)
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
@@ -697,30 +695,30 @@ def apply_loop(operator: Operator,
     return value_history
 
 
-def get_current_holdings() -> tuple:
+def get_current_holdings():
     """ 获取当前持有的产品在手数量
 
     :return: tuple:
     """
-    raise NotImplementedError
+    return None
 
 
-def get_recent_trades() -> tuple:
+def get_recent_trades():
     """ 获取最近的交易记录
 
     :return:
     """
-    raise NotImplementedError
+    return None
 
 
-def build_trade_data(holdings, recent_trades) -> np.ndarray:
+def build_trade_data(holdings, recent_trades):
     """ 生成符合格式的trade_data用于交易信号生成
 
     :param holdings: tuple
     :param recent_trades: tuple
     :return:
     """
-    raise NotImplementedError
+    return None
 
 
 def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
@@ -753,7 +751,7 @@ def filter_stocks(date: str = 'today', **kwargs) -> pd.DataFrame:
     share_basics = ds.read_table_data('stock_basic')[['symbol', 'name', 'area', 'industry',
                                                       'market', 'list_date', 'exchange']]
     if share_basics is None or share_basics.empty:
-        return []
+        return pd.DataFrame()
     share_basics['list_date'] = pd.to_datetime(share_basics.list_date)
     none_matched = dict()
     # 找出targets中无法精确匹配的值，加入none_matched字典，随后尝试模糊匹配并打印模糊模糊匹配信息
@@ -1484,7 +1482,6 @@ def run(operator, **kwargs):
     # 覆盖QT_CONFIG的设置，但是仅本次运行有效
     config = ConfigDict(**QT_CONFIG)
     configure(config=config, **kwargs)
-    # config = QT_CONFIG
 
     # 赋值给参考数据和运行模式
     reference_data_type = config.reference_asset
@@ -1542,18 +1539,20 @@ def run(operator, **kwargs):
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式
-
-        operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)  # 在生成交易信号之前准备历史数据
+        # 在生成交易信号之前准备历史数据
+        operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
-        loop_result = _evaluate_one_parameter(par=None,
-                                              op=operator,
-                                              op_history_data=hist_op,
-                                              loop_history_data=hist_loop,
-                                              reference_history_data=hist_reference,
-                                              reference_history_data_type=reference_data_type,
-                                              config=config,
-                                              stage='loop')
+        loop_result = _evaluate_one_parameter(
+                par=None,
+                op=operator,
+                op_history_data=hist_op,
+                loop_history_data=hist_loop,
+                reference_history_data=hist_reference,
+                reference_history_data_type=reference_data_type,
+                config=config,
+                stage='loop'
+        )
         # 格式化输出回测结果
         _print_loop_result(loop_result, config)
         if config.visual:
@@ -1571,22 +1570,26 @@ def run(operator, **kwargs):
             f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
         operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
-        pars, perfs = optimization_methods[how](hist=hist_opti,
-                                                ref_hist=hist_reference,
-                                                ref_type=reference_data_type,
-                                                op=operator,
-                                                config=config)
+        optimal_pars, perfs = optimization_methods[how](
+                hist=hist_opti,
+                ref_hist=hist_reference,
+                ref_type=reference_data_type,
+                op=operator,
+                config=config
+        )
         # 输出策略优化的评价结果，该结果包含在result_pool的extra额外信息属性中
         hist_opti_loop = hist_opti.fillna(0)
-        result_pool = _evaluate_all_parameters(par_generator=pars,
-                                               total=config.opti_output_count,
-                                               op=operator,
-                                               op_history_data=hist_opti,
-                                               loop_history_data=hist_opti_loop,
-                                               reference_history_data=hist_reference,
-                                               reference_history_data_type=reference_data_type,
-                                               config=config,
-                                               stage='test-o')
+        result_pool = _evaluate_all_parameters(
+                par_generator=optimal_pars,
+                total=config.opti_output_count,
+                op=operator,
+                op_history_data=hist_opti,
+                loop_history_data=hist_opti_loop,
+                reference_history_data=hist_reference,
+                reference_history_data_type=reference_data_type,
+                config=config,
+                stage='test-o'
+        )
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
         _print_test_result(opti_eval_res, config=config)
@@ -1597,7 +1600,7 @@ def run(operator, **kwargs):
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
         operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
         if config.test_type in ['single', 'multiple']:
-            result_pool = _evaluate_all_parameters(par_generator=pars,
+            result_pool = _evaluate_all_parameters(par_generator=optimal_pars,
                                                    total=config.opti_output_count,
                                                    op=operator,
                                                    op_history_data=hist_test,
@@ -1623,7 +1626,7 @@ def run(operator, **kwargs):
                                       cash_plan=test_cash_plan
                                       )
                 mock_hist_loop = mock_hist.to_dataframe(htype='close')
-                result_pool = _evaluate_all_parameters(par_generator=pars,
+                result_pool = _evaluate_all_parameters(par_generator=optimal_pars,
                                                        total=config.opti_output_count,
                                                        op=operator,
                                                        op_history_data=mock_hist,
@@ -1639,7 +1642,7 @@ def run(operator, **kwargs):
                 if config.visual:  # 如果config.visual == True
                     pass
 
-        return pars
+        return optimal_pars
 
 
 def _evaluate_all_parameters(par_generator,
@@ -1917,11 +1920,9 @@ def _evaluate_one_parameter(par,
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
         start_dates.append(invest_cash_dates)
-        # start_dates.append(loop_history_data.index[0])
         end_dates.append(loop_history_data.hdates[-1])
     elif period_util_type == 'multiple':
         first_history_date = invest_cash_dates
-        # first_history_date = loop_history_data.index[0]
         last_history_date = loop_history_data.hdates[-1]
         history_range = last_history_date - first_history_date
         sub_hist_range = history_range * period_length
@@ -1931,7 +1932,7 @@ def _evaluate_one_parameter(par,
             start_dates.append(start_date)
             end_dates.append(start_date + sub_hist_range)
     else:
-        raise KeyError(f'Not recognized optimization type: {config.opti_type}')
+        raise KeyError(f'Invalid optimization type: {config.opti_type}')
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
     st = time.time()

@@ -237,36 +237,42 @@ class Operator:
         if op_type is None:
             op_type = 'batch'
 
-        # 初始化基本数据结构
+        # 初始化Operator对象的"工作数据"或"运行数据"：
         '''
-        Operator对象的基本数据结构包含一个列表和多个字典Dict，分别存储对象中Strategy对象的信息
-        这些信息将会在op.prepare_data方法中设定，这些信息会被用于交易信号的生成：
-        一个列表是Strategy ID list即策略ID列表：
+        Operator对象的工作数据包含多个字典Dict或其他类型数据，分别存储用于交易信号生成的历史数据
+        参考数据、混合方式、以及交易信号的最终结果，这些数据包括三部分：
+        
+        第一部分：交易策略数据，包括交易策略的ID识别码以及策略对象本身：
+        Strategy ID List保存所有交易策略的ID清单，通过ID可以访问与策略相关的数据：
+        这部分数据通过add_strategy(), remove_strategy(), remove_strategy()等方法填充或修改
+        
             _stg_id:            交易策略ID列表，保存所有相关策略对象的唯一标识id（名称），如:
                                     ['MACD', 
                                      'DMA', 
                                      'MACD-1']
-        
-        其余数据被保存在一系列Dict中
-        这些Dict分为两类：
-        第一类保存所有Strategy交易策略的历史数据相关信息：这一类字典的键都是该Strategy的ID：
-
+        交易策略对象以字典形式保存：
             _strategies:        以字典形式存储所有交易策略对象本身
                                 存储所有的策略对象，如:
                                     {'MACD':    Timing(MACD), 
                                      'DMA':     Timing(timing_DMA), 
                                      'MACD-1':  Timing(MACD)}
+        
+        第二部分：交易策略运行所需历史数据及其预处理后的数据滑窗、采样清单、混合表达式
+        一类历史数据都保存在一系列字典中：通过各个Strategy的ID从字典中访问：
+        这部分数据通过prepare_data()方法填充或修改
 
-            _op_history_data:           
-            _op_reference_data:
+            _op_history_data:   
+                                历史数据：
+            _op_reference_data: 
+                                参考数据：
             _op_hist_data_rolling_window:
+                                历史数据的滚动滑窗视图，每个时间点一个滑窗，滑窗的长度等于window_length
             _op_ref_data_rolling_window:
+                                参考数据的滚动滑窗视图，每个时间点一个滑窗，滑窗的长度等于window_length
             _op_sample_indexes: 
-                                以字典形式保存用于所有策略交易信号生成的历史数据，历史数据的
-                                滚动窗口、参考历史数据、参考历史数据的滚动窗口、以及策略运行
-                                采样点序号
+                                策略运行采样点序号
 
-        第二类Dict保存不同回测价格类型的交易策略的混合表达式和混合操作队列
+        交易策略的混合表达式和混合操作队列保存在以bt_price_type为键的字典中，通过bt_price_type访问：
 
             _stg_blender_strings:
                                 交易信号混合表达式，该表达式决定了一组多个交易信号应该如何共同影响
@@ -284,6 +290,18 @@ class Operator:
                                 例如：
                                     {'close':    ['*', '1', '0'], 
                                      'open':     ['*', '2', '+', '1', '0']}
+                                     
+        第三部分，除上述运行数据外，operator还会保存生成的结果，保存交易清单、清单对应的股票、日期时间以及价格类型
+        这些数据会在前两部分数据均准备好后，通过create_signal()方法计算并填充
+            
+            _op_signal:         
+                                生成的交易清单，一个纯ndarray
+            _op_signal_shares:  
+                                交易清单对应的股票代码
+            _op_signal_hdates:  
+                                交易清单对应的日期时间
+            _op_signal_price_types:
+                                交易清单对应的价格类型
 
         '''
         self._signal_type = ''
@@ -298,6 +316,10 @@ class Operator:
         self._op_sample_indexes = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
+        self._op_signal = None  # Operator生成的交易信号清单
+        self._op_signal_shares = []
+        self._op_signal_hdates = []
+        self._op_signal_price_types = []
 
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
