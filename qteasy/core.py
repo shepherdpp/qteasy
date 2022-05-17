@@ -421,9 +421,9 @@ def apply_loop(operator: Operator,
     op_type = operator.signal_type
     op = op_list
     # TODO: 如何获取shares，price_types，以及hdates？
-    shares = op_list.shares
+    # shares = op_list.shares
     # price_types = operator.bt_price_types
-    looped_dates = list(op_list.hdates)
+    # looped_dates = list(op_list.hdates)
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
@@ -432,19 +432,15 @@ def apply_loop(operator: Operator,
     # 根据价格交易优先级设置价格执行顺序
     price_priority_list = operator.get_bt_price_type_id_in_priority(priority=bt_price_priority_ohlc)
     price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
-    # TODO: 价格清单是一个ndarray, 需要找到方法在PS/VS模式下忽略掉没有信号的行
-    #  只在有信号的行上回测，减少回测的次数
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = history_list.ffill(0).values
+    # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
     days_difference = []
     additional_invest = 0.
     if inflation_rate > 0:
-        days_timedelta = looped_dates - np.roll(looped_dates, 1)
-        days_difference = np.empty_like(looped_dates, dtype='int')
-        for i in range(1, len(looped_dates)):
-            days_difference[i] = days_timedelta[i].days
+        days_difference = np.ones_like(looped_dates, dtype='float')
         inflation_factors = 1 + days_difference * inflation_rate / 250
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
@@ -472,56 +468,33 @@ def apply_loop(operator: Operator,
     op_log_available_cash = []
     op_log_value = []
     op_log_matrix = []
-    if looped_dates[0].time() == datetime.time(0, 0):
-        date_print_format = '%Y/%m/%d, %A'
-    else:
-        date_print_format = '%Y/%m/%d %H:%M, %a'
     prev_date = 0
     # TODO: use Numba to optimize the efficiency of the looping process
     for i in range(op_count):
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i].date()
         sub_total_fee = 0
-        if trade_detail_log:
-            logger_core.debug(f'交易日期:{looped_dates[i].strftime(date_print_format)}, op_type: {op_type}')
         if (prev_date != current_date) and (inflation_rate > 0):  # 现金的价值随时间增长，需要依次乘以inflation 因子，且只有持有现金增值，新增的现金不增值
             own_cash *= inflation_factors[i]
             available_cash *= inflation_factors[i]
-            if trade_detail_log:
-                logger_core.debug(f'考虑现金增值, 上期现金: {(own_cash / inflation_factors[i]):.2f}, '
-                                  f'经过{days_difference[i]}天后'
-                                  f'现金增值到{own_cash:.2f}')
         if i in investment_date_pos:
             # 如果在交易当天有资金投入，则将投入的资金加入可用资金池中
             additional_invest = invest_dict[i]
             own_cash += additional_invest
             available_cash += additional_invest
-            if trade_detail_log:
-                logger_core.debug(f'本期新增投入现金, 本期现金: {(own_cash - invest_dict[i]):.2f}, '
-                                  f'追加投资后现金增加到{own_cash:.2f}')
         for j in price_priority_list:
-            if trade_detail_log:
-                logger_core.debug(f' - 本期第{j + 1}/{price_type_count}轮交易，使用历史价格: {price_types[j]}')
-            # 交易前将交割队列中达到交割期的现金/资产完成交割
+            # 交易前将交割队列中达到交割期的现金完成交割
             if ((prev_date != current_date) and (len(cash_delivery_queue) == cash_delivery_period)) or \
                     (cash_delivery_period == 0):
                 if len(cash_delivery_queue) > 0:
                     cash_delivered = cash_delivery_queue.pop(0)
                     available_cash += cash_delivered
-                    if trade_detail_log:
-                        logger_core.debug(f'现金交割期满({cash_delivery_period})，交割以下现金：{cash_delivered:.2f}'
-                                          f' / 交割队列: {cash_delivery_queue}，交割后可用现金：{available_cash:.2f}')
-
+            # 交易前将交割队列中达到交割期的资产完成交割
             if ((prev_date != current_date) and (len(stock_delivery_queue) == stock_delivery_period)) or \
                     (stock_delivery_period == 0):
                 if len(stock_delivery_queue) > 0:
                     stock_delivered = stock_delivery_queue.pop(0)
                     available_amounts += stock_delivered
-                    if trade_detail_log:
-                        logger_core.debug(f'股票交割期满({stock_delivery_period})，以下资产交割完成：'
-                                          f'{np.around(stock_delivered, 2)}\n'
-                                          f'交割队列: \n'
-                                          f'{np.array([np.around(arr, 2) for arr in stock_delivery_queue])}')
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
             current_prices = price[:, i, j]
             if operator.op_type == 'realtime':
@@ -554,26 +527,14 @@ def apply_loop(operator: Operator,
             # 获得的现金进入交割队列，根据日期的变化确定是新增现金交割还是累加现金交割
             if (prev_date != current_date) or (cash_delivery_period == 0):
                 cash_delivery_queue.append(cash_gained.sum())
-                if trade_detail_log:
-                    logger_core.debug(f'新增交割现金 - 本轮交易获得的现金: '
-                                      f'{cash_gained.sum():.2f}')
             else:
                 cash_delivery_queue[-1] += cash_gained.sum()
-                if trade_detail_log:
-                    logger_core.debug(f'同批累计交割 - 本轮交易累计获得的现金: '
-                                      f'{cash_delivery_queue[-1]:.2f}')
 
             # 获得的资产进入交割队列，根据日期的变化确定是新增资产交割还是累加资产交割
             if (prev_date != current_date) or (stock_delivery_period == 0):
                 stock_delivery_queue.append(amount_purchased)
-                if trade_detail_log:
-                    logger_core.debug(f'新增交割资产 - 本轮交易买入的资产: '
-                                      f'{np.around(amount_purchased, 2)}')
             else:  # if prev_date == current_date
                 stock_delivery_queue[-1] += amount_purchased
-                if trade_detail_log:
-                    logger_core.debug(f'同批累计交割 - 本轮累计买入的资产: '
-                                      f'{np.around(stock_delivery_queue[-1], 2)}')
 
             prev_date = current_date
             # 持有现金、持有股票用于计算本期的总价值
@@ -604,16 +565,14 @@ def apply_loop(operator: Operator,
                 op_log_available_cash.append(rnd(available_cash, 3))
                 op_log_value.append(rnd(total_value, 3))
 
-        # 打印本日结果
-        if trade_detail_log:
-            logger_core.debug(f'本期交易完成, 交易后资产总额: {total_value:.2f}, 其中\n'
-                              f'持有现金: {own_cash:.2f} \n'
-                              f'资产价值: {total_stock_value:.2f}\n')
         # 保存计算结果
         cashes.append(own_cash)
         fees.append(sub_total_fee)
         values.append(total_value)
         amounts_matrix.append(own_amounts)
+    # TODO: _apply_loop()可以在这里就结束，返回交易结果
+    #  DataFrame可以在_apply_loop()以外组装，
+    #  而且trade_log也可以在_apply_loop()以外生成
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=looped_dates,
                                  columns=shares)
