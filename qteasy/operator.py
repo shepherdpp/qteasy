@@ -316,10 +316,13 @@ class Operator:
         self._op_sample_indexes = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
-        self._op_signal = None  # Operator生成的交易信号清单
-        self._op_signal_shares = []
-        self._op_signal_hdates = []
-        self._op_signal_price_types = []
+        self._op_list = None  # Operator生成的交易信号清单
+        self._op_list_shares = []
+        self._op_list_hdates = []
+        self._op_list_price_types = []
+        self._op_signal = None
+        self._op_signal_hdate_id = None
+        self._op_signal_price_type_id = None
 
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
@@ -774,6 +777,43 @@ class Operator:
                 if stg.bt_price_type == price_type:
                     res.append(stg_id)
             return res
+
+    def get_bt_price_type_id_in_priority(self, priority=None):
+        """ 根据字符串priority输出正确的回测交易价格ID
+            例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
+            价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
+
+        :param priority: str, 优先级字符串
+        :return:
+            list
+        """
+        if priority is None:
+            priority = 'OHLC'
+        price_priority_list = []
+        price_type_table = {'O': 'open',
+                            'H': 'high',
+                            'L': 'low',
+                            'C': 'close'}
+        price_types = self.bt_price_types
+        for p_type in priority.upper():
+            price_type_name = price_type_table[p_type]
+            if price_type_name not in price_types:
+                continue
+            price_priority_list.append(price_types.index(price_type_table[p_type]))
+        return price_priority_list
+
+    def get_bt_price_types_in_priority(self, priority=None):
+        """ 根据字符串priority输出正确的回测交易价格
+            例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
+            价格执行顺序为['open', 'close'], 表示先处理open价格，再处理'close'价格
+
+        :param priority: str, 优先级字符串
+        :return:
+            list
+        """
+        price_types = self.bt_price_types
+        price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
+        return [price_types[i] for i in price_priority_list]
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中

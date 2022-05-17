@@ -421,27 +421,17 @@ def apply_loop(operator: Operator,
     op_type = operator.signal_type
     op = op_list
     # TODO: 如何获取shares，price_types，以及hdates？
-    # shares = op_list.shares
-    price_types = operator.bt_price_types
-    # looped_dates = list(op_list.hdates)
+    shares = op_list.shares
+    # price_types = operator.bt_price_types
+    looped_dates = list(op_list.hdates)
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
     share_count, op_count, price_type_count = op_list.shape
+    # TODO: 将下面的函数调用移出apply_loop()
     # 根据价格交易优先级设置价格执行顺序
-    # 例如，当优先级为"OHLC"时，而price_types为['close', 'open']时
-    # 价格执行顺序为[1, 0], 表示先取第1列，再取第0列进行回测
-    price_priority_list = []
-    price_type_table = {'O': 'open',
-                        'H': 'high',
-                        'L': 'low',
-                        'C': 'close'}
-    for p_type in bt_price_priority_ohlc:
-        price_type_name = price_type_table[p_type]
-        if price_type_name not in price_types:
-            continue
-        price_priority_list.append(price_types.index(price_type_table[p_type]))
-    price_types_in_priority = [price_types[i] for i in price_priority_list]
+    price_priority_list = operator.get_bt_price_type_id_in_priority(priority=bt_price_priority_ohlc)
+    price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
     # TODO: 价格清单是一个ndarray, 需要找到方法在PS/VS模式下忽略掉没有信号的行
     #  只在有信号的行上回测，减少回测的次数
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
