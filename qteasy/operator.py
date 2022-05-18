@@ -531,6 +531,29 @@ class Operator:
         return len(self.bt_price_types)
 
     @property
+    def op_list_shares(self):
+        """ 生成的交易清单的shares序号，股票代码清单
+        :return:
+        """
+        return self._op_list_shares
+
+    @property
+    def op_list_hdates(self):
+        """ 生成的交易清单的hdates序号，交易清单的日期序号
+
+        :return:
+        """
+        return self._op_list_hdates
+
+    @property
+    def op_list_price_types(self):
+        """ 生成的交易清单的price_types，回测交易价格类型
+
+        :return:
+        """
+        return self._op_list_price_types
+
+    @property
     def ready(self):
         """ 检查Operator对象是否已经准备好，可以开始生成交易信号，如果可以，返回True，否则返回False
 
@@ -1253,29 +1276,29 @@ class Operator:
             stg_id: hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
             for stg_id, stg in self.get_strategy_id_pairs()
         }
-        # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的有限窗口数据）
-        self._op_hist_data_rolling_windows = {}
-        for stg_id, stg in self.get_strategy_id_pairs():
-            # 逐个生成滚动窗口，赋值给各个策略
-            window_length = stg.window_length
-            hist_data = self._op_history_data[stg_id]
-            self._op_ref_data_rolling_windows[stg_id] = rolling_window(hist_data, window=window_length, axis=1)
-
         # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
         self._op_reference_data = {
             stg_id: reference_data[stg.refence_data_types, :, (first_cash_pos - stg.window_length):]
             for stg_id, stg in self.get_strategy_id_pairs()
         }
-        # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
+
+        # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的有限窗口数据）
+        # 清空可能已经存在的数据
+        self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
         for stg_id, stg in self.get_strategy_id_pairs():
-            # 逐个生成滚动窗口
+            # 逐个生成历史数据滚动窗口，赋值给各个策略
+            window_length = stg.window_length
+            hist_data = self._op_history_data[stg_id]
+            self._op_ref_data_rolling_windows[stg_id] = rolling_window(hist_data, window=window_length, axis=1)
+
+            # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
+            # 逐个生成参考数据滚动窗口，赋值给各个策略
             window_length = stg.window_length
             ref_data = self._op_reference_data[stg_id]
             self._op_ref_data_rolling_windows[stg_id] = rolling_window(ref_data, window=window_length, axis=0)
-        # 根据策略运行频率sample_freq生成信号生成采样点序列
-        for stg_id, stg in self.get_strategy_id_pairs():
-            window_length = stg.window_length
+
+            # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
             # 根据sample_freq生成一个日期序列
             temp_date_series = pd.date_range(start=op_dates[window_length], end=op_dates[-1], freq=freq)
@@ -1301,6 +1324,12 @@ class Operator:
                     self._op_sample_indexes[stg_id] = seg_pos[1:]
                 else:
                     self._op_sample_indexes[stg_id] = seg_pos
+
+        # 设置策略生成的交易信号清单的各个纬度的序号index，包括shares, hdates, price_types
+        self._op_list_price_types = hist_data.shares
+        operator_window_length = self.max_window_length
+        self._op_list_hdates = hist_data.hdates[operator_window_length:]
+        self._op_list_price_types = self.bt_price_types
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，

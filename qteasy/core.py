@@ -421,9 +421,9 @@ def apply_loop(operator: Operator,
     op_type = operator.signal_type
     op = op_list
     # TODO: 如何获取shares，price_types，以及hdates？
-    # shares = op_list.shares
-    # price_types = operator.bt_price_types
-    # looped_dates = list(op_list.hdates)
+    shares = operator.op_list_shares
+    # price_types = operator.op_list_price_types
+    looped_dates = operator.op_list_hdates
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
@@ -437,7 +437,6 @@ def apply_loop(operator: Operator,
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
-    days_difference = []
     additional_invest = 0.
     if inflation_rate > 0:
         days_difference = np.ones_like(looped_dates, dtype='float')
@@ -456,7 +455,6 @@ def apply_loop(operator: Operator,
     fees = []  # 交易费用，记录每个操作时点产生的交易费用
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
-    total_stock_value = 0
     total_value = 0
     trade_data = np.empty(shape=(5, share_count))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
                                                    # 持有现金等数据的数组，用于realtime信号生成
