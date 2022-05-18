@@ -360,7 +360,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
 def apply_loop(operator: Operator,
                op_list: np.ndarray,
-               history_list: HistoryPanel,
+               trade_price_list: HistoryPanel,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
                moq_buy: float = 100.,
@@ -373,7 +373,6 @@ def apply_loop(operator: Operator,
                allow_sell_short: bool = False,
                max_cash_usage: bool = False,
                trade_log: bool = False,
-               trade_detail_log: bool = False,
                bt_price_priority_ohlc: str = 'OHLC') -> pd.DataFrame:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
@@ -381,7 +380,7 @@ def apply_loop(operator: Operator,
     input：=====
         :param operator: Operator, 用于生成交易信号(realtime模式)
         :param op_list: object HistoryPanel: 批量生成的交易信号清单(batch模式)
-        :param history_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
+        :param trade_price_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
         :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
         :param moq_buy: float：每次交易买进的最小份额单位
@@ -394,7 +393,6 @@ def apply_loop(operator: Operator,
         :param allow_sell_short: bool, 是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
         :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
         :param trade_log: bool: 为True时，输出回测详细日志为csv格式的表格
-        :param trade_detail_log: bool: 为True时，输出更加详细的回测记录到logger_core，用于debug之用
         :param bt_price_priority_ohlc: str: 策略组合中包括多种交易价格时，价格信号执行先后顺序。OHLC四个字母分别代表
             O - 开盘价
             H - 最高价
@@ -422,7 +420,6 @@ def apply_loop(operator: Operator,
     op = op_list
     # TODO: 如何获取shares，price_types，以及hdates？
     shares = operator.op_list_shares
-    # price_types = operator.op_list_price_types
     looped_dates = operator.op_list_hdates
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
@@ -433,7 +430,7 @@ def apply_loop(operator: Operator,
     price_priority_list = operator.get_bt_price_type_id_in_priority(priority=bt_price_priority_ohlc)
     price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
-    price = history_list.ffill(0).values
+    price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
     # 如果inflation_rate > 0 则还需要计算所有有交易信号的日期相对前一个交易信号日的现金增长比率，这个比率与两个交易信号日之间的时间差有关
     inflation_factors = []
@@ -569,6 +566,7 @@ def apply_loop(operator: Operator,
         values.append(total_value)
         amounts_matrix.append(own_amounts)
     # TODO: _apply_loop()可以在这里就结束，返回交易结果
+    #  amounts_mateix应该是一个ndarray
     #  DataFrame可以在_apply_loop()以外组装，
     #  而且trade_log也可以在_apply_loop()以外生成
     # 将向量化计算结果转化回DataFrame格式
@@ -1221,6 +1219,57 @@ def check_and_prepare_hist_data(operator, config):
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+def check_and_prepare_real_time_data(operator, config):
+    """ 在run_mode == 0的情况下准备相应的历史数据
+
+    :return:
+    """
+    (hist_op,
+     hist_loop,
+     hist_opti,
+     hist_test,
+     hist_test_loop,
+     hist_reference,
+     invest_cash_plan,
+     opti_cash_plan,
+     test_cash_plan) = check_and_prepare_hist_data(operator, config)
+    return hist_op, hist_reference
+
+
+def check_and_prepare_backtest_data(operator, config):
+    """ 在run_mode == 1的回测模式情况下准备相应的历史数据
+
+    :return:
+    """
+    (hist_op,
+     hist_loop,
+     hist_opti,
+     hist_test,
+     hist_test_loop,
+     hist_reference,
+     invest_cash_plan,
+     opti_cash_plan,
+     test_cash_plan) = check_and_prepare_hist_data(operator, config)
+    return hist_op, hist_loop, hist_reference, invest_cash_plan
+
+
+def check_and_prepare_optimize_data(operator, config):
+    """ 在run_mode == 2的策略优化模式情况下准备相应的历史数据
+
+    :return:
+    """
+    (hist_op,
+     hist_loop,
+     hist_opti,
+     hist_test,
+     hist_test_loop,
+     hist_reference,
+     invest_cash_plan,
+     opti_cash_plan,
+     test_cash_plan) = check_and_prepare_hist_data(operator, config)
+    return hist_opti, hist_test, hist_test_loop, hist_reference, opti_cash_plan, test_cash_plan
+
+
 # noinspection PyTypeChecker
 def run(operator, **kwargs):
     """开始运行，qteasy模块的主要入口函数
@@ -1448,16 +1497,6 @@ def run(operator, **kwargs):
     opti_cash_plan:
     test_cssh_plan:
     """
-    # 统一生成回测、优化、测试所需要的信号生成数据、回测数据以及投资金额数据（投资金额数据已调整为交易日）
-    (hist_op,
-     hist_loop,
-     hist_opti,
-     hist_test,
-     hist_test_loop,
-     hist_reference,
-     invest_cash_plan,
-     opti_cash_plan,
-     test_cash_plan) = check_and_prepare_hist_data(operator, config)
 
     if run_mode == 0 or run_mode == 'signal':
         # 进入实时信号生成模式：
@@ -1465,8 +1504,10 @@ def run(operator, **kwargs):
         holdings = get_current_holdings()
         trade_result = get_recent_trades()
         trade_data = build_trade_data(holdings, trade_result)
+        hist_op, hist_reference = check_and_prepare_real_time_data(operator, config)
+        empty_cash_plan = CashPlan([], [])
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.prepare_data(hist_data=hist_op, reference_data=hist_reference, cash_plan=invest_cash_plan)
+        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_reference, cash_plan=empty_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in real time mode when its op_type == "batch", set '
@@ -1486,8 +1527,12 @@ def run(operator, **kwargs):
 
     elif run_mode == 1 or run_mode == 'back_test':
         # 进入回测模式
+        hist_op, hist_loop, hist_reference, invest_cash_plan = check_and_prepare_backtest_data(
+                operator=operator,
+                config=config
+        )
         # 在生成交易信号之前准备历史数据
-        operator.prepare_data(hist_data=hist_op, cash_plan=invest_cash_plan)
+        operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan)
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
         loop_result = _evaluate_one_parameter(
@@ -1510,13 +1555,22 @@ def run(operator, **kwargs):
         return loop_result
 
     elif run_mode == 2 or run_mode == 'optimization':
-        how = config.opti_method
         # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
         assert operator.opt_space_par[0] != [], \
             f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
             f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
-        operator.prepare_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
+        (hist_opti,
+         hist_test,
+         hist_test_loop,
+         hist_reference,
+         opti_cash_plan,
+         test_cash_plan) = check_and_prepare_optimize_data(
+                operator=operator,
+                config=config
+        )
+        operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
         # 使用how确定优化方法并生成优化后的参数和性能数据
+        how = config.opti_method
         optimal_pars, perfs = optimization_methods[how](
                 hist=hist_opti,
                 ref_hist=hist_reference,
@@ -1545,7 +1599,7 @@ def run(operator, **kwargs):
             # _plot_test_result(opti_eval_res, config=config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
-        operator.prepare_data(hist_data=hist_test, cash_plan=test_cash_plan)
+        operator.assign_hist_data(hist_data=hist_test, cash_plan=test_cash_plan)
         if config.test_type in ['single', 'multiple']:
             result_pool = _evaluate_all_parameters(par_generator=optimal_pars,
                                                    total=config.opti_output_count,
@@ -1569,9 +1623,9 @@ def run(operator, **kwargs):
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
                 mock_hist = _create_mock_data(hist_test)
                 print(f'config.test_cash_dates is {config.test_cash_dates}')
-                operator.prepare_data(hist_data=mock_hist,
-                                      cash_plan=test_cash_plan
-                                      )
+                operator.assign_hist_data(hist_data=mock_hist,
+                                          cash_plan=test_cash_plan
+                                          )
                 mock_hist_loop = mock_hist.to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(par_generator=optimal_pars,
                                                        total=config.opti_output_count,
@@ -1805,6 +1859,7 @@ def _evaluate_one_parameter(par,
         res_dict['par'] = par
     # 生成交易清单并进行模拟交易生成交易记录
     st = time.time()
+    op_list = None
     if op.op_type == 'batch':
         op_list = op.create_signal(op_history_data)
     et = time.time()
@@ -1812,10 +1867,9 @@ def _evaluate_one_parameter(par,
     res_dict['op_run_time'] = op_run_time
     riskfree_ir = config.riskfree_ir
     log_backtest = False
-    log_backtest_detail = False
     period_length = 0
     period_count = 0
-    if op_list.is_empty:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
+    if op.op_type == 'batch' and op_list is None:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         res_dict['complete_values'] = pd.DataFrame()
         return res_dict
@@ -1828,7 +1882,6 @@ def _evaluate_one_parameter(par,
         period_util_type = 'single'
         indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
         log_backtest = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
-        log_backtest_detail = config.log_backtest_detail  # 回测参数log_backtest_detail只有在回测模式下才有用
     elif stage == 'optimize':
         invest_cash_amounts = config.opti_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work
@@ -1883,7 +1936,15 @@ def _evaluate_one_parameter(par,
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
     st = time.time()
-    op_type_id = op.signal_type_id
+    trade_cost = Cost(
+            config.cost_fixed_buy,
+            config.cost_fixed_sell,
+            config.cost_rate_buy,
+            config.cost_rate_sell,
+            config.cost_min_buy,
+            config.cost_min_sell,
+            config.cost_slippage
+    )
     for start, end in zip(start_dates, end_dates):
         op_list_seg = op_list.segment(start, end)
         history_list_seg = loop_history_data.segment(start, end)
@@ -1894,19 +1955,10 @@ def _evaluate_one_parameter(par,
                 invest_cash_amounts,
                 riskfree_ir
         )
-        trade_cost = Cost(
-                config.cost_fixed_buy,
-                config.cost_fixed_sell,
-                config.cost_rate_buy,
-                config.cost_rate_sell,
-                config.cost_min_buy,
-                config.cost_min_sell,
-                config.cost_slippage
-        )
         looped_val = apply_loop(
                 operator=op,
                 op_list=op_list_seg,
-                history_list=history_list_seg,
+                trade_price_list=history_list_seg,
                 cash_plan=cash_plan,
                 cost_rate=trade_cost,
                 moq_buy=config.trade_batch_size,
@@ -1918,8 +1970,7 @@ def _evaluate_one_parameter(par,
                 stock_delivery_period=config.stock_deliver_period,
                 allow_sell_short=config.allow_sell_short,
                 max_cash_usage=config.maximize_cash_usage,
-                trade_log=log_backtest,
-                trade_detail_log=log_backtest_detail
+                trade_log=log_backtest
         )
         complete_values = _get_complete_hist(
                 looped_value=looped_val,

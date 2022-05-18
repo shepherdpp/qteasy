@@ -53,7 +53,7 @@ class Operator:
                                                     特殊交易策略，也可以用于实时交易
 
         key methods:
-            prepare_data():     准备交易数据，为所有的交易策略分配交易数据，生成数据滑窗，以便生成交易信号
+            assign_hist_data():     准备交易数据，为所有的交易策略分配交易数据，生成数据滑窗，以便生成交易信号
             create_signal():    生成交易信号，在batch模式下，使用所有的数据生成完整交易信号清单，用于交易信号的模拟
                                 回测交易
                                 在realtime模式下，利用数据滑窗和交易相关数据，生成一组交易信号
@@ -1150,7 +1150,7 @@ class Operator:
 
     # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
-    def prepare_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
+    def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
             检查hist_data历史数据的类型正确；

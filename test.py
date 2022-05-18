@@ -5094,7 +5094,7 @@ class TestLoop(unittest.TestCase):
               'buy-sell sequence = sell first')
         res = apply_loop(op_type=0,
                          op_list=self.pt_signal_hp,
-                         history_list=self.history_list,
+                         trade_price_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq_buy=0,
@@ -5128,7 +5128,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=0,
                          op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
+                         trade_price_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
                          moq_buy=100,
@@ -5152,7 +5152,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=0,
                 op_list=self.pt_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5194,7 +5194,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5220,7 +5220,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=0,
                 op_list=self.pt_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5263,7 +5263,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5281,7 +5281,7 @@ class TestLoop(unittest.TestCase):
         """
         res = apply_loop(op_type=1,
                          op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
+                         trade_price_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq_buy=0,
@@ -5315,7 +5315,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=1,
                          op_list=self.ps_signal_hp,
-                         history_list=self.history_list,
+                         trade_price_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
                          moq_buy=100,
@@ -5339,7 +5339,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5381,7 +5381,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5407,7 +5407,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5450,7 +5450,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.ps_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5468,7 +5468,7 @@ class TestLoop(unittest.TestCase):
         """
         res = apply_loop(op_type=2,
                          op_list=self.vs_signal_hp,
-                         history_list=self.history_list,
+                         trade_price_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq_buy=0,
@@ -5502,7 +5502,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=2,
                          op_list=self.vs_signal_hp,
-                         history_list=self.history_list,
+                         trade_price_list=self.history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
                          moq_buy=100,
@@ -5526,7 +5526,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=2,
                 op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5568,7 +5568,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5594,7 +5594,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=2,
                 op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate,
                 moq_buy=0,
@@ -5637,7 +5637,7 @@ class TestLoop(unittest.TestCase):
         res = apply_loop(
                 op_type=1,
                 op_list=self.vs_signal_hp,
-                history_list=self.history_list,
+                trade_price_list=self.history_list,
                 cash_plan=self.cash,
                 cost_rate=self.rate2,
                 moq_buy=100,
@@ -5655,7 +5655,7 @@ class TestLoop(unittest.TestCase):
         """
         res = apply_loop(op_type=1,
                          op_list=self.multi_signal_hp,
-                         history_list=self.multi_history_list,
+                         trade_price_list=self.multi_history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate,
                          moq_buy=1,
@@ -5698,7 +5698,7 @@ class TestLoop(unittest.TestCase):
         print(f'test loop results with moq equal to 100')
         res = apply_loop(op_type=1,
                          op_list=self.multi_signal_hp,
-                         history_list=self.multi_history_list,
+                         trade_price_list=self.multi_history_list,
                          cash_plan=self.cash,
                          cost_rate=self.rate2,
                          moq_buy=100,
@@ -6907,7 +6907,7 @@ class TestOperator(unittest.TestCase):
                                     amounts=[10000, 10000, 10000, 10000])
         # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           hist_data=self.hp1,
                           cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         late_cash = qt.CashPlan(dates='2016-12-31', amounts=10000)
@@ -6925,8 +6925,8 @@ class TestOperator(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_2',
                               pars=(0.2, 0.02, -0.02))
         self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
-        self.op.prepare_data(hist_data=self.hp1,
-                             cash_plan=on_spot_cash)
+        self.op.assign_hist_data(hist_data=self.hp1,
+                                 cash_plan=on_spot_cash)
         self.assertIsInstance(self.op._op_history_data, dict)
         self.assertEqual(len(self.op._op_history_data), 3)
         # test if automatic strategy blenders are set
@@ -6954,32 +6954,32 @@ class TestOperator(unittest.TestCase):
         too_many_types = qt.HistoryPanel(values=np.random.randint(10, size=(3, 50, 5)))
         # raises Error when history panel is empty
         self.assertRaises(ValueError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           empty_hp,
                           on_spot_cash)
         # raises Error when first investment date is too early
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           correct_hp,
                           early_cash)
         # raises Error when last investment date is too late
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           correct_hp,
                           late_cash)
         # raises Error when number of shares in history data does not fit
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           too_many_shares,
                           on_spot_cash)
         # raises Error when too early cash investment date
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           correct_hp,
                           too_early_cash)
         # raises Error when number of d_types in history data does not fit
         self.assertRaises(AssertionError,
-                          self.op.prepare_data,
+                          self.op.assign_hist_data,
                           too_many_types,
                           on_spot_cash)
 
@@ -7008,8 +7008,8 @@ class TestOperator(unittest.TestCase):
         self.op.set_parameter(stg_id=1,
                               pars=())
         # self.a_to_sell.set_blender(blender='0+1+2')
-        self.op.prepare_data(hist_data=self.hp1,
-                             cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(hist_data=self.hp1,
+                                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test operator information in normal mode--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
@@ -7097,8 +7097,8 @@ class TestOperator(unittest.TestCase):
         self.op.set_parameter(stg_id='custom_3',
                               pars=())
         self.op.set_blender(blender='0 or 1', price_type='open')
-        self.op.prepare_data(hist_data=self.hp1,
-                             cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
+        self.op.assign_hist_data(hist_data=self.hp1,
+                                 cash_plan=qt.CashPlan(dates='2016-07-08', amounts=10000))
         print('--test how operator information is printed out--')
         self.op.info()
         self.assertEqual(self.op.strategy_blenders,
