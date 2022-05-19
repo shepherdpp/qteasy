@@ -222,32 +222,32 @@ def _valid_qt_kwargs():
                                               '日志级别为DEBUG，用于分析回测的细节，这个参数只有在\n'
                                               '回测模式下有用'},
 
-        'reference_asset':      {'Default':   '000300.SH',
+        'benchmark_asset':      {'Default':   '000300.SH',
                                  'Validator': lambda value: isinstance(value, str)
                                                             and _validate_asset_id(value),
                                  'level':     1,
-                                 'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数\n'
-                                              '参考价格用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
+                                 'text':      '用来产生回测结果评价结果基准收益的资产类型，默认基准为沪深300指数\n'
+                                              '基准指数用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
                                               '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                                               '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'ref_asset_type':       {'Default':   'IDX',
+        'benchmark_asset_type': {'Default':   'IDX',
                                  'Validator': lambda value: _validate_asset_type(value),
                                  'level':     1,
-                                 'text':      '参考价格的资产类型，包括：\n'
+                                 'text':      '基准收益的资产类型，包括：\n'
                                               'IDX  : 指数\n'
                                               'E    : 股票\n'
                                               'FT   : 期货\n'
                                               'FD   : 基金\n'},
 
-        'ref_asset_dtype':      {'Default':   'close',
+        'benchmark_dtype':      {'Default':   'close',
                                  'Validator': lambda value: value in ['open',
                                                                       'high',
                                                                       'low',
                                                                       'close',
                                                                       'vol'],
                                  'level':     1,
-                                 'text':      '作为参考价格的资产的价格类型。'},
+                                 'text':      '作为基准收益的资产的价格类型。'},
 
         'visual':               {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),

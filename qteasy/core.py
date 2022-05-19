@@ -266,7 +266,7 @@ def _loop_step(signal_type: int,
 
 def _get_complete_hist(looped_value: pd.DataFrame,
                        h_list: pd.DataFrame,
-                       ref_list: pd.DataFrame,
+                       benchmark_list: pd.DataFrame,
                        with_price: bool = False) -> pd.DataFrame:
     """完成历史交易回测后，填充完整的历史资产总价值清单，
         同时在回测清单中填入参考价格数据，参考价格数据用于数据可视化对比，参考数据的来源为Config.reference_asset
@@ -280,8 +280,8 @@ def _get_complete_hist(looped_value: pd.DataFrame,
             :type h_list: pd.DataFrame
             完整的投资产品价格清单，包含所有投资产品在回测区间内每个交易日的价格
 
-        :param ref_list:
-            :type ref_list: pd.DataFrame
+        :param benchmark_list:
+            :type benchmark_list: pd.DataFrame
             参考资产的历史价格清单，参考资产用于收益率的可视化对比，同时用于计算alpha、sharp等指标
 
         :param with_price:
@@ -320,7 +320,7 @@ def _get_complete_hist(looped_value: pd.DataFrame,
     looped_value[shares] = purchased_shares
     looped_value.cash = cashes
     looped_value.fee = looped_value['fee'].reindex(hdates).fillna(0)
-    looped_value['reference'] = ref_list.reindex(hdates).fillna(0)
+    looped_value['reference'] = benchmark_list.reindex(hdates).fillna(0)
     # 重新计算整个清单中的资产总价值，生成pandas.Series对象，如果looped_history历史价格中包含多种价格，使用最后一种
     decisive_prices = looped_history[-1].squeeze(axis=2).T
     looped_value['value'] = (decisive_prices * looped_value[shares]).sum(axis=1) + looped_value['cash']
@@ -1074,12 +1074,15 @@ def check_and_prepare_hist_data(operator, config):
     :param: config, ConfigDict 参数字典
     :return:
         hist_op:            type: HistoryPanel, 用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
-        hist_loop:          type: pd.DataFrame, 用于回测模式投资策略回测的历史价格数据，包含所有回测股票的所有交易价格数据
-        hist_opti:          type: HistoryPanel, 用于优化模式下生成投资策略的历史数据，包含多只股票的多种历史数据
-        hist_test:          type: HistoryPanel, 用于优化模式下用于独立测试投资策略的历史数据，这部分数据可以与hist_opti
-                                不同，用于对策略优化后的结果进行独立检验
-        hist_test_loop:     type: pd.DataFrame, 用于策略优化模式下投资策略优化结果的回测，作为独立检验数据
-        hist_reference:     type: pd.DataFrame, 用于评价回测结果的同期参照数据，一般为股票指数如HS300指数
+        hist_ref:           type: HistoryPanel, 用于回测模式下投资策略生成的历史参考数据
+        back_trade_prices:  type: HistoryPanel, 用于回测模式投资策略回测的交易价格数据
+
+        hist_opti:          type: HistoryPanel, 用于优化模式下生成投资策略的历史数据，包含股票的历史数，时间上涵盖优化与测试区间
+        hist_opti_ref:      type: HistoryPanel, 用于优化模式下生成投资策略的参考数据，包含所有股票、涵盖优化与测试区间
+        opti_trade_prices:  type: pd.DataFrame, 用于策略优化模式下投资策略优化结果的回测，作为独立检验数据
+
+        hist_benchmark:     type: pd.DataFrame, 用于评价回测结果的同期基准收益曲线，一般为股票指数如HS300指数同期收益曲线
+
         invest_cash_plan:   type: CashPlan,     用于回测模式的资金投入计划
         opti_cash_plan:     type: CashPlan,     用于优化模式下，策略优化区间的资金投入计划
         test_cash_plan:     type: CashPlan,     用于优化模式下，策略测试区间的资金投入计划
@@ -1174,31 +1177,38 @@ def check_and_prepare_hist_data(operator, config):
             htypes=operator.all_price_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
-            adj=config.backtest_price_adj) if run_mode <= 1 else HistoryPanel()
+            adj=config.backtest_price_adj
+    ) if run_mode <= 1 else HistoryPanel()
+
+    hist_ref = get_history_panel(shares=None, htypes=None)
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = operator.bt_price_types
-    hist_loop = hist_op.slice(htypes=bt_price_types)
-    # fill np.inf in hist_loop to prevent from result in nan in value
-    hist_loop.fillinf(0)
+    back_trade_prices = hist_op.slice(htypes=bt_price_types)
+    # fill np.inf in back_trade_prices to prevent from result in nan in value
+    back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练历史数据集合
-    hist_opti = get_history_panel(start=regulate_date_format(pd.to_datetime(opti_start) - window_offset),
-                                  end=opti_end,
-                                  shares=config.asset_pool,
-                                  htypes=operator.op_data_types,
-                                  freq=operator.op_data_freq,
-                                  asset_type=config.asset_type,
-                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
+    hist_opti = get_history_panel(
+            start=regulate_date_format(pd.to_datetime(opti_start) - window_offset),
+            end=opti_end,
+            shares=config.asset_pool,
+            htypes=operator.op_data_types,
+            freq=operator.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj
+    ) if run_mode == 2 else HistoryPanel()
     # 生成用于优化策略测试的测试历史数据集合
-    hist_test = get_history_panel(start=regulate_date_format(pd.to_datetime(test_start) - window_offset),
-                                  end=test_end,
-                                  shares=config.asset_pool,
-                                  htypes=operator.op_data_types,
-                                  freq=operator.op_data_freq,
-                                  asset_type=config.asset_type,
-                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
-    hist_test_loop = hist_test.slice(htypes=bt_price_types)
-    hist_test_loop.fillinf(0)
+    hist_opti_ref = get_history_panel(
+            start=regulate_date_format(pd.to_datetime(test_start) - window_offset),
+            end=test_end,
+            shares=config.asset_pool,
+            htypes=operator.op_data_types,
+            freq=operator.op_data_freq,
+            asset_type=config.asset_type,
+            adj=config.backtest_price_adj
+    ) if run_mode == 2 else HistoryPanel()
+    opti_trade_prices = hist_opti_ref.slice(htypes=bt_price_types)
+    opti_trade_prices.fillinf(0)
 
     # 生成参考历史数据，作为参考用于回测结果的评价
     # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
@@ -1206,16 +1216,19 @@ def check_and_prepare_hist_data(operator, config):
     all_ends = [pd.to_datetime(date_str) for date_str in [invest_end, opti_end, test_end]]
     refer_hist_start = regulate_date_format(min(all_starts))
     refer_hist_end = regulate_date_format(max(all_ends))
-    hist_reference = (get_history_panel(start=refer_hist_start,
-                                        end=refer_hist_end,
-                                        shares=config.reference_asset,
-                                        htypes=config.ref_asset_dtype,
-                                        freq=operator.op_data_freq,
-                                        asset_type=config.ref_asset_type,
-                                        adj=config.backtest_price_adj)
-                      ).to_dataframe(htype='close')
+    hist_benchmark = (
+        get_history_panel(
+                start=refer_hist_start,
+                end=refer_hist_end,
+                shares=config.reference_asset,
+                htypes=config.ref_asset_dtype,
+                freq=operator.op_data_freq,
+                asset_type=config.ref_asset_type,
+                adj=config.backtest_price_adj
+        )
+    ).to_dataframe(htype='close')
 
-    return hist_op, hist_loop, hist_opti, hist_test, hist_test_loop, hist_reference, \
+    return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
@@ -1225,15 +1238,18 @@ def check_and_prepare_real_time_data(operator, config):
     :return:
     """
     (hist_op,
-     hist_loop,
+     hist_ref,
+     back_trade_prices,
      hist_opti,
-     hist_test,
-     hist_test_loop,
-     hist_reference,
+     hist_opti_ref,
+     opti_trade_prices,
+     hist_benchmark,
      invest_cash_plan,
      opti_cash_plan,
-     test_cash_plan) = check_and_prepare_hist_data(operator, config)
-    return hist_op, hist_reference
+     test_cash_plan
+     ) = check_and_prepare_hist_data(operator, config)
+
+    return hist_op, hist_ref
 
 
 def check_and_prepare_backtest_data(operator, config):
@@ -1242,15 +1258,18 @@ def check_and_prepare_backtest_data(operator, config):
     :return:
     """
     (hist_op,
-     hist_loop,
+     hist_ref,
+     back_trade_prices,
      hist_opti,
-     hist_test,
-     hist_test_loop,
-     hist_reference,
+     hist_opti_ref,
+     opti_trade_prices,
+     hist_benchmark,
      invest_cash_plan,
      opti_cash_plan,
-     test_cash_plan) = check_and_prepare_hist_data(operator, config)
-    return hist_op, hist_loop, hist_reference, invest_cash_plan
+     test_cash_plan
+     ) = check_and_prepare_hist_data(operator, config)
+
+    return hist_op, hist_ref, back_trade_prices, hist_benchmark, invest_cash_plan
 
 
 def check_and_prepare_optimize_data(operator, config):
@@ -1259,15 +1278,18 @@ def check_and_prepare_optimize_data(operator, config):
     :return:
     """
     (hist_op,
-     hist_loop,
+     hist_ref,
+     back_trade_prices,
      hist_opti,
-     hist_test,
-     hist_test_loop,
-     hist_reference,
+     hist_opti_ref,
+     opti_trade_prices,
+     hist_benchmark,
      invest_cash_plan,
      opti_cash_plan,
-     test_cash_plan) = check_and_prepare_hist_data(operator, config)
-    return hist_opti, hist_test, hist_test_loop, hist_reference, opti_cash_plan, test_cash_plan
+     test_cash_plan
+     ) = check_and_prepare_hist_data(operator, config)
+
+    return hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, opti_cash_plan, test_cash_plan
 
 
 # noinspection PyTypeChecker
@@ -1480,12 +1502,12 @@ def run(operator, **kwargs):
     configure(config=config, **kwargs)
 
     # 赋值给参考数据和运行模式
-    reference_data_type = config.reference_asset
+    benchmark_data_type = config.benchmark_asset
     run_mode = config.mode
     """
     用于交易信号生成、数据回测、策略优化、结果测试以及结果评价参考的历史数据:
     hist_op:            信号生成数据，根据策略的运行方式，信号生成数据可能包含量价数据、基本面数据、指数、财务指标等等
-    hist_loop:          回测价格数据，用于在backtest模式下对生成的信号进行测试，仅包含买卖价格数据（定价回测）
+    back_trade_prices:          回测价格数据，用于在backtest模式下对生成的信号进行测试，仅包含买卖价格数据（定价回测）
     hist_opti:          策略优化数据，数据的类型与信号生成数据一样，但是取自专门的独立区间用于策略的参数优化
     hist_opti_loop:     优化回测价格，用于在optimization模式下在策略优化区间上回测交易结果，目前这组数据并未提前生成，
                         而是在optimize的时候生成，实际上应该提前生成
@@ -1500,34 +1522,45 @@ def run(operator, **kwargs):
 
     if run_mode == 0 or run_mode == 'signal':
         # 进入实时信号生成模式：
-        # 获取最近的实时历史数据：
+        # TODO: mode 0应该是自动定时运行，预留实盘交易接口
+        #  循环定时运行由QT级别的参数设定，设定快捷键，通过快捷键进行常用控制
+        #  定时运行时自动打印交易状态变量和交易信号
+        #  如果实现实盘交易接口，则在获取授权后自动发送/接收交易信号并监控交易结果
         holdings = get_current_holdings()
         trade_result = get_recent_trades()
         trade_data = build_trade_data(holdings, trade_result)
-        hist_op, hist_reference = check_and_prepare_real_time_data(operator, config)
+        hist_op, hist_benchmark = check_and_prepare_real_time_data(operator, config)
         empty_cash_plan = CashPlan([], [])
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_reference, cash_plan=empty_cash_plan)
+        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_benchmark, cash_plan=empty_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in real time mode when its op_type == "batch", set '
                            f'"Operator.op_type = \'realtime\'"')
         else:
-            op_list = operator.create_signal(hist_data=hist_op,
-                                             trade_data=trade_data,
-                                             sample_idx=-1,
-                                             price_type_idx=0)  # 生成交易清单
+            op_list = operator.create_signal(
+                    hist_data=hist_op,
+                    trade_data=trade_data,
+                    sample_idx=-1,
+                    price_type_idx=0
+            )  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
-        _print_operation_signal(op_list=op_list,
-                                run_time_prepare_data=run_time_prepare_data,
-                                operator=operator,
-                                history_data=hist_op)
-        return op_list
+        _print_operation_signal(
+                op_list=op_list,
+                run_time_prepare_data=run_time_prepare_data,
+                operator=operator,
+                history_data=hist_op
+        )
 
     elif run_mode == 1 or run_mode == 'back_test':
-        # 进入回测模式
-        hist_op, hist_loop, hist_reference, invest_cash_plan = check_and_prepare_backtest_data(
+        # 进入回测模式，生成历史交易清单，使用真实历史价格回测策略的性能
+        (hist_op,
+         hist_benchmark,
+         back_trade_prices,
+         hist_benchmark,
+         invest_cash_plan
+         ) = check_and_prepare_backtest_data(
                 operator=operator,
                 config=config
         )
@@ -1539,9 +1572,9 @@ def run(operator, **kwargs):
                 par=None,
                 op=operator,
                 op_history_data=hist_op,
-                loop_history_data=hist_loop,
-                reference_history_data=hist_reference,
-                reference_history_data_type=reference_data_type,
+                loop_history_data=back_trade_prices,
+                benchmark_history_data=hist_benchmark,
+                benchmark_history_data_type=benchmark_data_type,
                 config=config,
                 stage='loop'
         )
@@ -1555,16 +1588,18 @@ def run(operator, **kwargs):
         return loop_result
 
     elif run_mode == 2 or run_mode == 'optimization':
+        # 进入优化模式，使用真实历史数据或模拟历史数据反复测试策略，寻找并测试最佳参数
         # 判断operator对象的策略中是否有可优化的参数，即优化标记opt_tag设置为1，且参数数量不为0
         assert operator.opt_space_par[0] != [], \
             f'ConfigError, none of the strategy parameters is adjustable, set opt_tag to be 1 or 2 to ' \
             f'activate optimization in mode 2, and make sure strategy has adjustable parameters'
         (hist_opti,
-         hist_test,
-         hist_test_loop,
-         hist_reference,
+         hist_opti_ref,
+         opti_trade_prices,
+         hist_benchmark,
          opti_cash_plan,
-         test_cash_plan) = check_and_prepare_optimize_data(
+         test_cash_plan
+         ) = check_and_prepare_optimize_data(
                 operator=operator,
                 config=config
         )
@@ -1573,8 +1608,8 @@ def run(operator, **kwargs):
         how = config.opti_method
         optimal_pars, perfs = optimization_methods[how](
                 hist=hist_opti,
-                ref_hist=hist_reference,
-                ref_type=reference_data_type,
+                benchmark=hist_benchmark,
+                benchmark_type=benchmark_data_type,
                 op=operator,
                 config=config
         )
@@ -1586,8 +1621,8 @@ def run(operator, **kwargs):
                 op=operator,
                 op_history_data=hist_opti,
                 loop_history_data=hist_opti_loop,
-                reference_history_data=hist_reference,
-                reference_history_data_type=reference_data_type,
+                benchmark_history_data=hist_benchmark,
+                benchmark_history_data_type=benchmark_data_type,
                 config=config,
                 stage='test-o'
         )
@@ -1599,17 +1634,19 @@ def run(operator, **kwargs):
             # _plot_test_result(opti_eval_res, config=config)
 
         # 完成策略参数的寻优，在测试数据集上检验寻优的结果
-        operator.assign_hist_data(hist_data=hist_test, cash_plan=test_cash_plan)
+        operator.assign_hist_data(hist_data=hist_opti_ref, cash_plan=test_cash_plan)
         if config.test_type in ['single', 'multiple']:
-            result_pool = _evaluate_all_parameters(par_generator=optimal_pars,
-                                                   total=config.opti_output_count,
-                                                   op=operator,
-                                                   op_history_data=hist_test,
-                                                   loop_history_data=hist_test_loop,
-                                                   reference_history_data=hist_reference,
-                                                   reference_history_data_type=reference_data_type,
-                                                   config=config,
-                                                   stage='test-t')
+            result_pool = _evaluate_all_parameters(
+                    par_generator=optimal_pars,
+                    total=config.opti_output_count,
+                    op=operator,
+                    op_history_data=hist_opti_ref,
+                    loop_history_data=opti_trade_prices,
+                    benchmark_history_data=hist_benchmark,
+                    benchmark_history_data_type=benchmark_data_type,
+                    config=config,
+                    stage='test-t'
+            )
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
             test_eval_res = result_pool.extra
@@ -1621,21 +1658,24 @@ def run(operator, **kwargs):
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
-                mock_hist = _create_mock_data(hist_test)
+                mock_hist = _create_mock_data(hist_opti_ref)
                 print(f'config.test_cash_dates is {config.test_cash_dates}')
-                operator.assign_hist_data(hist_data=mock_hist,
-                                          cash_plan=test_cash_plan
-                                          )
+                operator.assign_hist_data(
+                        hist_data=mock_hist,
+                        cash_plan=test_cash_plan
+                )
                 mock_hist_loop = mock_hist.to_dataframe(htype='close')
-                result_pool = _evaluate_all_parameters(par_generator=optimal_pars,
-                                                       total=config.opti_output_count,
-                                                       op=operator,
-                                                       op_history_data=mock_hist,
-                                                       loop_history_data=mock_hist,
-                                                       reference_history_data=mock_hist_loop,
-                                                       reference_history_data_type=reference_data_type,
-                                                       config=config,
-                                                       stage='test-t')
+                result_pool = _evaluate_all_parameters(
+                        par_generator=optimal_pars,
+                        total=config.opti_output_count,
+                        op=operator,
+                        op_history_data=mock_hist,
+                        loop_history_data=mock_hist,
+                        benchmark_history_data=mock_hist_loop,
+                        benchmark_history_data_type=benchmark_data_type,
+                        config=config,
+                        stage='test-t'
+                )
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
                 test_eval_res = result_pool.extra
@@ -1651,8 +1691,8 @@ def _evaluate_all_parameters(par_generator,
                              op: Operator,
                              op_history_data: HistoryPanel,
                              loop_history_data: HistoryPanel,
-                             reference_history_data,
-                             reference_history_data_type,
+                             benchmark_history_data,
+                             benchmark_history_data_type,
                              config,
                              stage='optimize') -> ResultPool:
     """ 接受一个策略参数生成器对象，批量生成策略参数，反复调用_evaluate_one_parameter()函数，使用所有生成的策略参数
@@ -1677,11 +1717,11 @@ def _evaluate_all_parameters(par_generator,
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
             （假设交易价格为收盘价）
 
-        :param reference_history_data: pd.DataFrame ->
+        :param benchmark_history_data: pd.DataFrame ->
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
             产的价格，例如沪深300指数的价格。
 
-        :param reference_history_data_type: str ->
+        :param benchmark_history_data_type: str ->
             用于回测结果评价的参考历史数据种类，通常为收盘价close
 
         :param config: Config ->
@@ -1711,8 +1751,8 @@ def _evaluate_all_parameters(par_generator,
                                     op,
                                     op_history_data,
                                     loop_history_data,
-                                    reference_history_data,
-                                    reference_history_data_type,
+                                    benchmark_history_data,
+                                    benchmark_history_data_type,
                                     config,
                                     stage): par for par in
                    par_generator}
@@ -1732,8 +1772,8 @@ def _evaluate_all_parameters(par_generator,
                                            op=op,
                                            op_history_data=op_history_data,
                                            loop_history_data=loop_history_data,
-                                           reference_history_data=reference_history_data,
-                                           reference_history_data_type=reference_history_data_type,
+                                           benchmark_history_data=benchmark_history_data,
+                                           benchmark_history_data_type=benchmark_history_data_type,
                                            config=config,
                                            stage=stage)
             target_value = perf[opti_target]
@@ -1753,8 +1793,8 @@ def _evaluate_one_parameter(par,
                             op: Operator,
                             op_history_data: HistoryPanel,
                             loop_history_data: HistoryPanel,
-                            reference_history_data,
-                            reference_history_data_type,
+                            benchmark_history_data,
+                            benchmark_history_data_type,
                             config,
                             stage='optimize') -> dict:
     """ 基于op中的交易策略，在给定策略参数par的条件下，计算交易策略在一段历史数据上的交易信号，并对交易信号的交易
@@ -1781,11 +1821,11 @@ def _evaluate_one_parameter(par,
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，可以为收盘价
             和/或其他回测所需要的历史价格
 
-        :param reference_history_data: pd.DataFrame
+        :param benchmark_history_data: pd.DataFrame
             用于回测结果评价的参考历史数据，历史区间与回测历史数据相同，但是通常是能代表整个市场整体波动的金融资
             产的价格，例如沪深300指数的价格。
 
-        :param reference_history_data_type: str
+        :param benchmark_history_data_type: str
             用于回测结果评价的参考历史数据种类，通常为收盘价close
 
         :param config: Config:
@@ -1975,13 +2015,13 @@ def _evaluate_one_parameter(par,
         complete_values = _get_complete_hist(
                 looped_value=looped_val,
                 h_list=history_list_seg,
-                ref_list=reference_history_data,
+                benchmark_list=benchmark_history_data,
                 with_price=False
         )
         perf = evaluate(
                 looped_values=complete_values,
-                hist_benchmark=reference_history_data,
-                benchmark_data=reference_history_data_type,
+                hist_benchmark=benchmark_history_data,
+                benchmark_data=benchmark_history_data_type,
                 cash_plan=cash_plan,
                 indicators=indicators
         )
@@ -2048,7 +2088,7 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     return mock_data
 
 
-def _search_grid(hist, ref_hist, ref_type, op, config):
+def _search_grid(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法1: 网格搜索法
 
         在整个参数空间中建立一张间距固定的"网格"，搜索网格的所有交点所在的空间点，
@@ -2078,8 +2118,8 @@ def _search_grid(hist, ref_hist, ref_type, op, config):
                                     op=op,
                                     op_history_data=hist,
                                     loop_history_data=history_list,
-                                    reference_history_data=ref_hist,
-                                    reference_history_data_type=ref_type,
+                                    benchmark_history_data=benchmark,
+                                    benchmark_history_data_type=benchmark_type,
                                     config=config,
                                     stage='optimize')
     pool.cut(config.maximize_target)
@@ -2088,7 +2128,7 @@ def _search_grid(hist, ref_hist, ref_type, op, config):
     return pool.items, pool.perfs
 
 
-def _search_montecarlo(hist, ref_hist, ref_type, op, config):
+def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法2: 蒙特卡洛法
 
         从待搜索空间中随机抽取大量的均匀分布的参数点并逐个测试，寻找评价函数值最优的多个参数组合
@@ -2098,8 +2138,8 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
 
     input:
         :param hist: object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param ref_hist:
-        :param ref_type:
+        :param benchmark:
+        :param benchmark_type:
         :param op: object，交易信号生成器对象
         :param config: object 用于存储相关参数的上下文对象
     return: =====tuple对象，包含两个变量
@@ -2117,8 +2157,8 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
                                     op=op,
                                     op_history_data=hist,
                                     loop_history_data=history_list,
-                                    reference_history_data=ref_hist,
-                                    reference_history_data_type=ref_type,
+                                    benchmark_history_data=benchmark,
+                                    benchmark_history_data_type=benchmark_type,
                                     config=config,
                                     stage='optimize')
     pool.cut(config.maximize_target)
@@ -2127,7 +2167,7 @@ def _search_montecarlo(hist, ref_hist, ref_type, op, config):
     return pool.items, pool.perfs
 
 
-def _search_incremental(hist, ref_hist, ref_type, op, config):
+def _search_incremental(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法3: 增量递进搜索法
 
         该算法是蒙特卡洛算法的一种改进。整个算法运行多轮蒙特卡洛算法，但是每一轮搜索的空间大小都更小，
@@ -2210,8 +2250,8 @@ def _search_incremental(hist, ref_hist, ref_type, op, config):
                                                    op=op,
                                                    op_history_data=hist,
                                                    loop_history_data=history_list,
-                                                   reference_history_data=ref_hist,
-                                                   reference_history_data_type=ref_type,
+                                                   benchmark_history_data=benchmark,
+                                                   benchmark_history_data_type=benchmark_type,
                                                    config=config,
                                                    stage='optimize')
         # 本轮所有结果都进入结果池，根据择优方向选择最优结果保留，剪除其余结果
@@ -2248,7 +2288,7 @@ def _search_incremental(hist, ref_hist, ref_type, op, config):
     return pool.items, pool.perfs
 
 
-def _search_ga(hist, ref_hist, ref_type, op, config):
+def _search_ga(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法4: 遗传算法
     遗传算法适用于在超大的参数空间内搜索全局最优或近似全局最优解，而它的计算量又处于可接受的范围内
 
@@ -2263,11 +2303,11 @@ def _search_ga(hist, ref_hist, ref_type, op, config):
         :param hist
             :type hist: object，历史数据，优化器的整个优化过程在历史数据上完成
 
-        :param ref_hist
-            :type ref_hist:
+        :param benchmark
+            :type benchmark:
 
-        :param ref_type
-            :type ref_type:
+        :param benchmark_type
+            :type benchmark_type:
 
         :param op
             :type op: object，交易信号生成器对象
@@ -2283,15 +2323,15 @@ def _search_ga(hist, ref_hist, ref_type, op, config):
     raise NotImplementedError
 
 
-def _search_gradient(hist, ref_hist, ref_type, op, config):
+def _search_gradient(hist, benchmark, benchmark_type, op, config):
     """ 最优参数搜索算法5：梯度下降法
     在参数空间中寻找优化结果变优最快的方向，始终保持向最优方向前进（采用自适应步长）一直到结果不再改变或达到
     最大步数为止，输出结果为最后N步的结果
 
     :input
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param ref_hist:
-        :param ref_type:
+        :param benchmark:
+        :param benchmark_type:
         :param op，object，交易信号生成器对象
         :param config, object, 用于存储交易相关参数配置对象
     :return:
@@ -2299,13 +2339,13 @@ def _search_gradient(hist, ref_hist, ref_type, op, config):
     raise NotImplementedError
 
 
-def _search_particles(hist, ref_hist, ref_type, op, config):
+def _search_particles(hist, benchmark, benchmark_type, op, config):
     """ 粒子群算法，与梯度下降相似，不过同时有N个粒子同时向山坡下滚动，输出结果为所有N个球的最后一步结果
 
     :input
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
-        :param ref_hist:
-        :param ref_type:
+        :param benchmark:
+        :param benchmark_type:
         :param op，object，交易信号生成器对象
         :param config, object, 用于存储交易相关参数配置对象
     :return:
