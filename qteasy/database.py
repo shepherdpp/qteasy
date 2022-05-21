@@ -37,7 +37,7 @@ TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'min
 '''
 table map中各列的含义如下： 
 key:                        数据表的名称
------------------------------------------------
+---------------------------------------------------------------------------------------------------------
 structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
                             型和详情描述 
                             
@@ -49,6 +49,7 @@ asset_type:                 表内数据对应的资产类型，none表示不对
   
 freq:                       表内数据的频率，如分钟、日、周等
                             设置为'D'、'W'等，用于筛选不同的数据表
+                            'none'表示无频率
   
 tushare:                    对应的tushare API函数名
   
@@ -300,7 +301,8 @@ TABLE_SOURCE_MAPPING = {
         ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
+         ''],
 
     'cashflow':
         ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
@@ -311,10 +313,16 @@ TABLE_SOURCE_MAPPING = {
          'Y', ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
+         ''],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
+         ''],
+
+    'shibor':
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'data', 'none', 'd', 'shibor', 'date', 'trade_date', '20000101', '',
+         'Y', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构

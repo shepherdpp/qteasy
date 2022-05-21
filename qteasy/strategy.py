@@ -10,7 +10,6 @@
 # ======================================
 
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 from abc import abstractmethod, ABCMeta
 from .utilfuncs import str_to_list
 from .utilfuncs import TIME_FREQ_STRINGS
@@ -36,8 +35,8 @@ class BaseStrategy:
 
             Class ExampleStrategy(GeneralStg):
 
-                # __init__()是可选，在这里设置的属性值会成为这一类策略的默认值，因此在创建策略对象的
-                # 时候不需要再重复输入。
+                # __init__()是可选，在这里设置的属性值会成为这一策略类的默认值，在创建策略对象的
+                # 时候不需要重复设置。
                 def __init__(self):
                     # 可选项
                     # 定义这个策略的缺省/默认属性值
@@ -104,7 +103,12 @@ class BaseStrategy:
             bt_price_type:          静态属性，策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价，也可以设置
                                     为五档交易价格中的某一个价格，根据交易当时的时间戳动态确定具体的交易价格
             reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                    生成，如指数、宏观经济数据等
+                                    生成，如指数、宏观经济数据等。
+                                    如果参考数据是某指数或个股的数据，必须在数据类型后指明股票或指数代码，如：
+                                    - 'close-000300.SH': 表示沪深300指数的收盘价
+                                    - 'pe-600517.SH':    股票600517.SH的pe值
+                                    如果某种类型的数据本身与股票、指数等具体证券无关，则直接指明即可：
+                                    - 'shibor_on':       SHIBOR隔夜拆借利率数据
 
         - 策略规则的编写
         策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
@@ -208,7 +212,7 @@ class BaseStrategy:
                                 data_freq则定义了时间戳的频率。
 
                             - L列
-                                每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性
+                                每一列数据表示与股票相关的一种参考数据类型。具体的参考数据类型在策略属性
                                 reference_data_types中设置
                                 例如：设定：
                                     - reference_data_types = "000300.SH.close"
