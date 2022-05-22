@@ -1095,10 +1095,6 @@ def get_history_panel(shares,
                       data_source=None):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
-        TODO: 完善本函数的功能： 增加composite数据的获取
-        TODO: 完善函数的参数列表，增加默认参数
-        TODO: 完善函数的docstring
-
 
         :param shares: [str, list]
             需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，

@@ -110,7 +110,7 @@ class BaseStrategy:
                                     如果某种类型的数据本身与股票、指数等具体证券无关，则直接指明即可：
                                     - 'shibor_on':       SHIBOR隔夜拆借利率数据
 
-        - 策略规则的编写
+        - 编写策略规则
         策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
         策略规则必须在realize()方法中定义，realize()方法具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
         需要考虑股票的数量、历史周期、数据选择等等问题；
@@ -120,20 +120,19 @@ class BaseStrategy:
         realize()方法的定义如下：
 
             def realize(self,
-                        params: tuple,
-                        h_seg: np.ndarray,
-                        ref_seg: np.ndarray,
-                        trade_data: np.ndarray)
-        realize()方法的输入：
-        不管Strategy继承了哪一个策略类，realize()方法的输入都包括以下几个参数：
-            - params:       策略的一组合法参数，参数以tuple的形式传入
-                            具体的参数类型和数量在策略属性中定义，例如：
+                        h: np.ndarray,
+                        r: np.ndarray,
+                        t: np.ndarray)
 
-                            par_count = 2
-                                - 策略使用两个参数
-                            par_range = [[0, 100], [0, 1]]
-                                - 策略的两个参数的取值范围：第一个参数为[0, 100], 第二个参数为[0, 1]
-                            按照上述定义，(50， 0.5) 就是一组合法的参数
+        realize()方法的实现：
+
+        策略参数的获取：
+            在realize()方法中，可以使用self.pars获取策略参数：
+
+                par_1, par_2, ..., par_n = self.pars
+
+        历史数据及其他相关数据的获取：
+        不管Strategy继承了哪一个策略类，realize()方法的输入都可以包括以下几个输入数据：
 
             - h(history):   历史数据片段，通常这是一个3D的ndarray，包含了所有股票的所有类型的历史数据，且数据的时间起止点是
                             策略运行当时开始倒推到时间窗口长度前的时刻，具体来说，如果这个array的shape为(M, N, L)，即：
@@ -243,6 +242,13 @@ class BaseStrategy:
         对于GeneralStg和FactorSorter两类交易策略来说，输出信号为1D ndarray，这个数组包含的元素数量与参与策略的股票数量
         相同，例如参与策略的股票有20个，则生成的交易策略为shape为(20,)的numpy数组
         特殊情况是RuleIterator策略类，这一类策略会将相同的规则重复应用到所有的股票上，因此仅需要输出一个数字即可。
+
+            - GeneralStg / FactorSorter:
+                output：
+                        np.array(arr), 如： np.array[0.2, 1.0, 10.0, 100.0]
+            - RuleIterator:
+                output:
+                        float / np.float, 如: 1.0
 
         按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
         中，并产生交易信号了。
@@ -787,14 +793,13 @@ class GeneralStg(BaseStrategy):
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
         """ 通用交易策略的所有策略代码全部都在realize中实现
         """
-        return self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data)
+        return self.realize(h=h_seg, r=ref_seg, t=trade_data)
 
     @abstractmethod
     def realize(self,
-                params,
                 h,
-                r,
-                t):
+                r=None,
+                t=None):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
             交易信号的格式必须为1D 的numpy数组，数据类型为float
@@ -924,7 +929,7 @@ class FactorSorter(BaseStrategy):
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(h_seg, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
-        factors = self.realize(params=self.pars, h=h_seg, r=ref_seg, t=trade_data).squeeze()
+        factors = self.realize(h=h_seg, r=ref_seg, t=trade_data).squeeze()
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
         if condition == 'any':
@@ -1009,10 +1014,9 @@ class FactorSorter(BaseStrategy):
 
     @abstractmethod
     def realize(self,
-                params: tuple,
-                h: np.ndarray,
-                r: np.ndarray,
-                t: np.ndarray) -> np.ndarray:
+                h,
+                r=None,
+                t=None):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一条交易信号
         """
@@ -1105,8 +1109,7 @@ class RuleIterator(BaseStrategy):
         ref_nonan = ref_seg[~np.isnan(ref_seg[:, 0])]
 
         try:
-            return self.realize(params=params,
-                                h=hist_nonan,
+            return self.realize(h=hist_nonan,
                                 r=ref_nonan,
                                 t=trade_data)
         except Exception:
@@ -1114,10 +1117,9 @@ class RuleIterator(BaseStrategy):
 
     @abstractmethod
     def realize(self,
-                params: tuple,
-                h: np.ndarray,
-                r: np.ndarray,
-                t: np.ndarray) -> float:
+                h,
+                r=None,
+                t=None):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一个股票的独立交易信号，同样的规则会被复制到其他股票
         """

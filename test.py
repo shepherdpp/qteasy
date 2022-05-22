@@ -5792,7 +5792,8 @@ class TestSelStrategy(GeneralStg):
                          window_length=5)
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
+    def _realize(self, hist_data: np.ndarray):
+        pars = self.pars
         avg = np.nanmean(hist_data, axis=(1, 2))
         dif = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])

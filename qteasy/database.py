@@ -2091,7 +2091,6 @@ class DataSource:
                 weight_df.drop(columns=columns_to_drop, inplace=True)
                 weight_df = weight_df.reindex(columns=shares)
             df_by_index['wt-' + idx] = weight_df
-        # result_hp = stack_dataframes(df_by_index, stack_as='htypes', htypes=index_names)
         return df_by_index
 
     def refill_local_source(self,

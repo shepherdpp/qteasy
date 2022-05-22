@@ -55,19 +55,19 @@ class TimingCrossline(stg.RuleIterator):
         """Crossline交叉线策略只有一个动态属性，其余属性均不可变"""
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['discr', 'discr', 'conti', 'enum'],
+                         par_types=['int', 'int', 'float', 'enum'],
                          par_range=[(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
                          name='CROSSLINE',
-                         description='Moving average crossline strategy, determine long/short position according to the ' \
-                                  'cross point of long and short term moving average prices ',
+                         description='Moving average crossline strategy, determine long/short position according '
+                                     'to the cross point of long and short term moving average prices ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """crossline策略使用四个参数：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        s, l, m, hesitate = params
+        s, l, m, hesitate = self.pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
+        h = h.T
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         # 根据观望模式在不同的点位产生Long/short标记
@@ -103,14 +103,14 @@ class TimingMACD(stg.RuleIterator):
     def __init__(self, pars: tuple = (12, 26, 9)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int'],
                          par_range=[(10, 250), (10, 250), (10, 250)],
                          name='MACD',
                          description='MACD strategy, determine long/short position according to differences of '
                                   'exponential weighted moving average prices',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """生成单只个股的择时多空信号
         生成MACD多空判断：
         1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
@@ -123,16 +123,16 @@ class TimingMACD(stg.RuleIterator):
 
         """
 
-        s, l, m = params
+        s, l, m = self.pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
+        h = h.T
 
         # 计算指数的指数移动平均价格
         diff = ema(h[0], s) - ema(h[0], l)
         dea = ema(diff, m)
         _macd = 2 * (diff - dea)
         # 以下使用tafuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
-        # diff, dea, _macd = macd(hist_data, s, l, m)
+        # diff, dea, _macd = macd(h, s, l, m)
 
         if _macd[-1] > 0:
             return 1
@@ -155,7 +155,7 @@ class TimingTRIX(stg.RuleIterator):
     def __init__(self, pars=(25, 125)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(2, 50), (3, 150)],
                          name='TRIX',
                          description='TRIX strategy, determine long/short position according to triple exponential '
@@ -165,19 +165,19 @@ class TimingTRIX(stg.RuleIterator):
                          window_length=270,
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """参数:
 
         input:
-        :param hist_data:
+        :param h:
         :param params:
         :return:
 
         """
-        s, m = params
+        s, m = self.pars
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
+        h = h.T
         trx = trix(h[0], s) * 100
         matrix = sma(trx, m)
         # 生成TRIX多空判断：
@@ -208,14 +208,14 @@ class TimingCDL(stg.RuleIterator):
                          window_length=200,
                          data_types='open,high,low,close')
 
-    def _realize(self, hist_data, params=None):
+    def _realize(self, h, r=None, t=None):
         """参数:
 
         input:
             None
         """
         # 计算历史数据上的CDL指标
-        h = hist_data.T
+        h = h.T
         cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
 
         return float(cat[-1])
@@ -227,14 +227,14 @@ class SoftBBand(stg.RuleIterator):
     def __init__(self, pars=(20, 2, 2, 0)):
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['discr', 'conti', 'conti', 'discr'],
+                         par_types=['int', 'float', 'float', 'int'],
                          par_range=[(2, 100), (0.5, 5), (0.5, 5), (0, 8)],
                          name='Soft Bolinger Band',
                          description='Soft-BBand strategy, determine buy/sell signals according to BBand positions',
                          window_length=200,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
@@ -242,8 +242,8 @@ class SoftBBand(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, u, d, m = params
-        h = hist_data.T
+        p, u, d, m = self.pars
+        h = h.T
         hi, mid, low = bbands(h[0], p, u, d, m)
         # 策略:
         # 如果价格低于下轨，则逐步买入，每次买入可分配投资总额的10%
@@ -273,7 +273,7 @@ class TimingBBand(stg.RuleIterator):
     def __init__(self, pars=(20, 2, 2)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'conti', 'conti'],
+                         par_types=['int', 'float', 'float'],
                          par_range=[(10, 250), (0.5, 2.5), (0.5, 2.5)],
                          name='BBand',
                          description='BBand strategy, determine long/short position according to Bollinger bands',
@@ -282,12 +282,12 @@ class TimingBBand(stg.RuleIterator):
                          window_length=270,
                          data_types=['close'])
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
 
-        span, upper, lower = params
+        span, upper, lower = self.pars
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
+        h = h.T
         price = h[0]
         upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
         # 生成BBANDS操作信号判断：
@@ -309,14 +309,14 @@ class TimingSAREXT(stg.RuleIterator):
     def __init__(self, pars=(0, 3)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'conti'],
+                         par_types=['int', 'float'],
                          par_range=[(-100, 100), (0, 5)],
                          name='Parabolic SAREXT',
                          description='Parabolic SAR Extended Strategy, determine buy/sell signals according to CDL Indicators',
                          window_length=200,
                          data_types='high, low')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
@@ -324,8 +324,8 @@ class TimingSAREXT(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        a, m = params
-        h = hist_data.T
+        a, m = self.pars
+        h = h.T
         sar = sarext(h[0], h[1], a, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
@@ -356,15 +356,15 @@ class SCRSSMA(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - SMA',
                          description='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        r, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        r, = self.pars
+        h = h.T
         diff = (sma(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
@@ -382,16 +382,16 @@ class SCRSDEMA(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - DEMA',
                          description='Single moving average strategy that uses DEMA as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        r, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        r, = self.pars
+        h = h.T
         diff = (dema(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
@@ -409,16 +409,16 @@ class SCRSEMA(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - EMA',
                          description='Single moving average strategy that uses EMA as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        r, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        r, = self.pars
+        h = h.T
         diff = (ema(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
@@ -443,8 +443,8 @@ class SCRSHT(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        h = h.T
         diff = (ht(h[0]) - h[0])[-1]
         if diff < 0:
             return 1
@@ -462,16 +462,16 @@ class SCRSKAMA(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - KAMA',
                          description='Single moving average strategy that uses KAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        r, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        r, = self.pars
+        h = h.T
         diff = (kama(h[0], r) - h[0])[-1]
         if diff < 0:
             return 1
@@ -490,16 +490,16 @@ class SCRSMAMA(stg.RuleIterator):
     def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['conti', 'conti'],
+                         par_types=['float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99)],
                          name='SINGLE CROSSLINE - MAMA',
                          description='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, s = self.pars
+        h = h.T
         diff = (mama(h[0], f, s)[0] - h[0])[-1]
         if diff < 0:
             return 1
@@ -518,16 +518,16 @@ class SCRSFAMA(stg.RuleIterator):
     def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['conti', 'conti'],
+                         par_types=['float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99)],
                          name='SINGLE CROSSLINE - FAMA',
                          description='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, s = self.pars
+        h = h.T
         diff = (mama(h[0], f, s)[1] - h[0])[-1]
         if diff < 0:
             return 1
@@ -546,16 +546,16 @@ class SCRST3(stg.RuleIterator):
     def __init__(self, pars=(12, 0.5)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'conti'],
+                         par_types=['int', 'float'],
                          par_range=[(2, 20), (0, 1)],
                          name='SINGLE CROSSLINE - T3',
                          description='Single moving average strategy that uses T3 line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        p, v = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        p, v = self.pars
+        h = h.T
         diff = (t3(h[0], p, v) - h[0])[-1]
         if diff < 0:
             return 1
@@ -573,16 +573,16 @@ class SCRSTEMA(stg.RuleIterator):
     def __init__(self, pars=(6,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 20)],
                          name='SINGLE CROSSLINE - TEMA',
                          description='Single moving average strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        p, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        p, = self.pars
+        h = h.T
         diff = (tema(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -600,16 +600,16 @@ class SCRSTRIMA(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 200)],
                          name='SINGLE CROSSLINE - TRIMA',
                          description='Single moving average strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        p, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        p, = self.pars
+        h = h.T
         diff = (trima(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -627,16 +627,16 @@ class SCRSWMA(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 200)],
                          name='SINGLE CROSSLINE - WMA',
                          description='Single moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        p, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        p, = self.pars
+        h = h.T
         diff = (wma(h[0], p) - h[0])[-1]
         if diff < 0:
             return 1
@@ -663,15 +663,15 @@ class DCRSSMA(stg.RuleIterator):
     def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='SINGLE CROSSLINE - SMA',
                          description='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        l, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        l, s = self.pars
+        h = h.T
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -689,16 +689,16 @@ class DCRSDEMA(stg.RuleIterator):
     def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - DEMA',
                          description='Double moving average strategy that uses DEMA as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        l, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        l, s = self.pars
+        h = h.T
         diff = (dema(h[0], l) - dema(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -716,16 +716,16 @@ class DCRSEMA(stg.RuleIterator):
     def __init__(self, pars=(20, 5)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - EMA',
                          description='Double moving average strategy that uses EMA as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        l, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        l, s = self.pars
+        h = h.T
         diff = (ema(h[0], l) - ema(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -743,16 +743,16 @@ class DCRSKAMA(stg.RuleIterator):
     def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - KAMA',
                          description='Double moving average strategy that uses KAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        l, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        l, s = self.pars
+        h = h.T
         diff = (kama(h[0], l) - kama(h[0], s))[-1]
         if diff < 0:
             return 1
@@ -771,16 +771,16 @@ class DCRSMAMA(stg.RuleIterator):
     def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['conti', 'conti', 'conti', 'conti'],
+                         par_types=['float', 'float', 'float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
                          name='DOUBLE CROSSLINE - MAMA',
                          description='Double moving average strategy that uses MAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        lf, ls, sf, ss = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        lf, ls, sf, ss = self.pars
+        h = h.T
         diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
         if diff < 0:
             return 1
@@ -799,16 +799,16 @@ class DCRSFAMA(stg.RuleIterator):
     def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['conti', 'conti', 'conti', 'conti'],
+                         par_types=['float', 'float', 'float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
                          name='DOUBLE CROSSLINE - FAMA',
                          description='Double moving average strategy that uses FAMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        lf, ls, sf, ss = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        lf, ls, sf, ss = self.pars
+        h = h.T
         diff = (mama(h[0], lf, ls)[1] - mama(h[0], sf, ss)[1])[-1]
         if diff < 0:
             return 1
@@ -827,16 +827,16 @@ class DCRST3(stg.RuleIterator):
     def __init__(self, pars=(20, 0.5, 5, 0.5)):
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['discr', 'conti', 'discr', 'conti'],
+                         par_types=['int', 'float', 'int', 'float'],
                          par_range=[(2, 20), (0, 1), (2, 20), (0, 1)],
                          name='DOUBLE CROSSLINE - T3',
                          description='Double moving average strategy that uses T3 line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        fp, fv, sp, sv = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        fp, fv, sp, sv = self.pars
+        h = h.T
         diff = (t3(h[0], fp, fv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
             return 1
@@ -854,16 +854,16 @@ class DCRSTEMA(stg.RuleIterator):
     def __init__(self, pars=(11, 6)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(2, 20), (2, 20)],
                          name='DOUBLE CROSSLINE - TEMA',
                          description='Double moving average strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        fp, sp = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        fp, sp = self.pars
+        h = h.T
         diff = (tema(h[0], fp) - tema(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -881,16 +881,16 @@ class DCRSTRIMA(stg.RuleIterator):
     def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(3, 200), (3, 200)],
                          name='DOUBLE CROSSLINE - TRIMA',
                          description='Double moving average strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        fp, sp = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        fp, sp = self.pars
+        h = h.T
         diff = (trima(h[0], fp) - trima(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -908,16 +908,16 @@ class DCRSWMA(stg.RuleIterator):
     def __init__(self, pars=(125, 25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(3, 200), (3, 200)],
                          name='DOUBLE CROSSLINE - WMA',
                          description='Double moving average strategy that uses WMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        fp, sp = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        fp, sp = self.pars
+        h = h.T
         diff = (wma(h[0], fp) - wma(h[0], sp))[-1]
         if diff < 0:
             return 1
@@ -941,15 +941,15 @@ class SLPSMA(stg.RuleIterator):
     def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SLOPE - SMA',
                          description='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = sma(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -968,16 +968,16 @@ class SLPDEMA(stg.RuleIterator):
     def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SLOPE - DEMA',
                          description='Smoothed Curve Slope Strategy that uses DEMA as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = dema(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -996,16 +996,16 @@ class SLPEMA(stg.RuleIterator):
     def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SLOPE - EMA',
                          description='Smoothed Curve Slope Strategy that uses EMA as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1028,11 +1028,11 @@ class SLPHT(stg.RuleIterator):
                          par_range=[],
                          name='SLOPE - HT',
                          description='Smoothed Curve Slope Strategy that uses HT line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        h = h.T
         curve = ht(h[0])
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1051,16 +1051,16 @@ class SLPKAMA(stg.RuleIterator):
     def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 250)],
                          name='SLOPE - KAMA',
                          description='Smoothed Curve Slope Strategy that uses KAMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = kama(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1080,16 +1080,16 @@ class SLPMAMA(stg.RuleIterator):
     def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['conti', 'conti'],
+                         par_types=['float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99)],
                          name='SLOPE - MAMA',
                          description='Smoothed Curve Slope Strategy that uses MAMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, s = self.pars
+        h = h.T
         curve = mama(h[0], f, s)[0]
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1109,16 +1109,16 @@ class SLPFAMA(stg.RuleIterator):
     def __init__(self, pars=(0.5, 0.05)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['conti', 'conti'],
+                         par_types=['float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99)],
                          name='SLOPE - FAMA',
                          description='Smoothed Curve Slope Strategy that uses FAMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, s = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, s = self.pars
+        h = h.T
         curve = mama(h[0], f, s)[1]
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1138,16 +1138,16 @@ class SLPT3(stg.RuleIterator):
     def __init__(self, pars=(12, 0.25)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'conti'],
+                         par_types=['int', 'float'],
                          par_range=[(2, 20), (0, 1)],
                          name='SLOPE - T3',
                          description='Smoothed Curve Slope Strategy that uses T3 line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        p, v = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        p, v = self.pars
+        h = h.T
         curve = t3(h[0], p, v)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1166,16 +1166,16 @@ class SLPTEMA(stg.RuleIterator):
     def __init__(self, pars=(6,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 20)],
                          name='SLOPE - TEMA',
                          description='Smoothed Curve Slope Strategy that uses TEMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1194,16 +1194,16 @@ class SLPTRIMA(stg.RuleIterator):
     def __init__(self, pars=(35,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 200)],
                          name='SLOPE - TRIMA',
                          description='Smoothed Curve Slope Strategy that uses TRIMA line as the '
                                   'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = trima(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1222,16 +1222,16 @@ class SLPWMA(stg.RuleIterator):
     def __init__(self, pars=(125,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(3, 200)],
                          name='SLOPE - WMA',
                          description='Smoothed Curve Slope Strategy that uses WMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
-        f, = params
-        h = hist_data.T
+    def _realize(self, h, r=None, t=None):
+        f, = self.pars
+        h = h.T
         curve = wma(h[0], f)
         slope = curve[-1] - curve[-2]
         if slope > 0:
@@ -1253,14 +1253,14 @@ class ADX(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 35)],
                          name='ADX',
                          description='Average Directional Movement Index, determine buy/sell signals according to ADX Indicators',
                          window_length=200,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
@@ -1268,8 +1268,8 @@ class ADX(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = adx(h[0], h[1], h[2], p)[-1]
         # 策略:
         # 指标比较复杂，需要深入研究一下
@@ -1290,14 +1290,14 @@ class APO(stg.RuleIterator):
     def __init__(self, pars=(12, 26, 0)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int'],
                          par_range=[(10, 100), (10, 100), (0, 8)],
                          name='APO',
                          description='Absolute Price Oscillator, determine buy/sell signals according to APO Indicators',
                          window_length=200,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
@@ -1305,8 +1305,8 @@ class APO(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        f, s, m = params
-        h = hist_data.T
+        f, s, m = self.pars
+        h = h.T
         res = apo(h[0], f, s, m)[-1]
         # 策略:
         # 当指标大于0时，输出多头
@@ -1327,14 +1327,14 @@ class AROON(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='AROON',
                          description='Aroon, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
@@ -1342,8 +1342,8 @@ class AROON(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         ups, dns = aroon(h[0], h[1], p)
         # 策略:
         # 当up在dn的上方时，输出弱多头
@@ -1370,20 +1370,20 @@ class AROONOSC(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='AROON Oscilator',
                          description='Aroon Oscilator, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = aroonosc(h[0], p)[-1]
         # 策略:
         # 当res大于0时，输出弱多头
@@ -1410,20 +1410,20 @@ class CCI(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='CCI',
                          description='CCI, determine long/short positions according to CC Indicators',
                          window_length=200,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = cci(h[0], h[1], h[2], p)[-1]
         # 策略:
         # 当res大于0时输出多头，大于50时输出强多头
@@ -1448,20 +1448,20 @@ class CMO(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='CMO',
                          description='CMO, determine long/short positions according to CMO Indicators',
                          window_length=200,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = cmo(h[0], p)[-1]
         # 策略:
         # 当res大于0时，输出弱多头
@@ -1488,14 +1488,14 @@ class MACDEXT(stg.RuleIterator):
     def __init__(self, pars=(12, 0, 26, 0, 9, 0)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr', 'discr', 'discr', 'discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int', 'int', 'int', 'int'],
                          par_range=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
                          name='MACD Extention',
                          description='MACD Extention, determine long/short position according to extended MACD Indicators',
                          window_length=200,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             fp: fast periods
@@ -1505,8 +1505,8 @@ class MACDEXT(stg.RuleIterator):
             s: signal periods
             t: signal ma type
         """
-        fp, ft, sp, st, p, t = params
-        h = hist_data.T
+        fp, ft, sp, st, p, t = self.pars
+        h = h.T
         m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
         # 策略:
         # 当hist>0时输出多头
@@ -1525,20 +1525,20 @@ class MFI(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='MFI',
                          description='MFI, determine buy/sell signals according to MFI Indicators',
                          window_length=200,
                          data_types='high, low, close, volume')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: period
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = mfi(h[0], h[1], h[2], h[3], p)[-1]
         # 策略:
         # 当res小于20时，分批买入
@@ -1559,21 +1559,21 @@ class DI(stg.RuleIterator):
     def __init__(self, pars=(14, 14)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(1, 100), (1, 100)],
                          name='DI',
                          description='DI, determine long/short positions according to +/- DI Indicators',
                          window_length=200,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             m: periods for negtive DI
             p: periods for positive DI
         """
-        m, p, = params
-        h = hist_data.T
+        m, p, = self.pars
+        h = h.T
         ndi = minus_di(h[0], h[1], h[2], m)[-1]
         pdi = plus_di(h[0], h[1], h[2], p)[-1]
         # 策略:
@@ -1595,21 +1595,21 @@ class DM(stg.RuleIterator):
     def __init__(self, pars=(14, 14)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'discr'],
+                         par_types=['int', 'int'],
                          par_range=[(1, 100), (1, 100)],
                          name='DM',
                          description='DM, determine long/short positions according to +/- DM Indicators',
                          window_length=200,
                          data_types='high, low')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             m: periods for negtive DM
             p: periods for positive DM
         """
-        m, p, = params
-        h = hist_data.T
+        m, p, = self.pars
+        h = h.T
         ndm = minus_dm(h[0], h[1], m)[-1]
         pdm = plus_dm(h[0], h[1], p)[-1]
         # 策略:
@@ -1631,20 +1631,20 @@ class MOM(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(1, 100)],
                          name='MOM',
                          description='MOM, determine long/short positions according to MOM Indicators',
                          window_length=100,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: periods
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = mom(h[0], p)[-1]
         # 策略:
         # 当res小于0时，输出空头
@@ -1665,22 +1665,22 @@ class PPO(stg.RuleIterator):
     def __init__(self, pars=(12, 26, 0)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int'],
                          par_range=[(2, 100), (2, 100), (0, 8)],
                          name='PPO',
                          description='PPO, determine long/short positions according to PPO Indicators',
                          window_length=100,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             fp: fast moving periods
             sp: slow moving periods
             m: ma type
         """
-        fp, sp, m = params
-        h = hist_data.T
+        fp, sp, m = self.pars
+        h = h.T
         res = ppo(h[0], fp, sp, m)[-1]
         # 策略:
         # 当res小于0时，输出空头
@@ -1701,20 +1701,20 @@ class RSI(stg.RuleIterator):
     def __init__(self, pars=(12,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='RSI',
                          description='RSI, determine long/short positions according to RSI Indicators',
                          window_length=100,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: periods
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = rsi(h[0], p)[-1]
         # 策略:
         # 当res小于40时，输出空头
@@ -1735,14 +1735,14 @@ class STOCH(stg.RuleIterator):
     def __init__(self, pars=(5, 3, 0, 3, 0)):
         super().__init__(pars=pars,
                          par_count=5,
-                         par_types=['discr', 'discr', 'discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int', 'int', 'int'],
                          par_range=[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)],
                          name='Stochastic',
                          description='Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             fk: periods
@@ -1751,8 +1751,8 @@ class STOCH(stg.RuleIterator):
             sd: slow d
             sdm: slow d ma type
         """
-        fk, sk, skm, sd, sdm = params
-        h = hist_data.T
+        fk, sk, skm, sd, sdm = self.pars
+        h = h.T
         k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
         # 策略:
         # 当k小于20时，逐步买进
@@ -1774,22 +1774,22 @@ class STOCHF(stg.RuleIterator):
     def __init__(self, pars=(5, 3, 0)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int'],
                          par_range=[(2, 100), (2, 100), (0, 8)],
                          name='Fast Stochastic',
                          description='Fast Stoch, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             fk: periods
             fd: fast d
             fdm: fast d ma type
         """
-        fk, fd, fdm = params
-        h = hist_data.T
+        fk, fd, fdm = self.pars
+        h = h.T
         k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
         # 策略:
         # 当k小于20时，逐步买进
@@ -1811,14 +1811,14 @@ class STOCHRSI(stg.RuleIterator):
     def __init__(self, pars=(14, 5, 3, 0)):
         super().__init__(pars=pars,
                          par_count=4,
-                         par_types=['discr', 'discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int', 'int'],
                          par_range=[(2, 100), (2, 100), (2, 100), (0, 8)],
                          name='Stochastic RSI',
                          description='Stochaxtic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
                          window_length=100,
                          data_types='close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: periods
@@ -1828,8 +1828,8 @@ class STOCHRSI(stg.RuleIterator):
             sd: slow d
             sdm: slow d ma type
         """
-        p, fk, fd, fdm = params
-        h = hist_data.T
+        p, fk, fd, fdm = self.pars
+        h = h.T
         k, d = stochrsi(h[0], p, fk, fd, fdm)
         # 策略:
         # 当k小于0.2时，逐步买进
@@ -1851,22 +1851,22 @@ class ULTOSC(stg.RuleIterator):
     def __init__(self, pars=(7, 14, 28)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int'],
                          par_range=[(1, 100), (1, 100), (1, 100)],
                          name='Ultimate Oscillator',
                          description='Ultimate Oscillator, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p1: time period 1
             p2: time period 2
             p3: time period 3
         """
-        p1, p2, p3 = params
-        h = hist_data.T
+        p1, p2, p3 = self.pars
+        h = h.T
         res = stochf(h[0], h[1], h[2], p1, p2, p3)[-1]
         # 策略:
         # 当res小于30时，逐步买进
@@ -1887,20 +1887,20 @@ class WILLR(stg.RuleIterator):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='Williams\' R',
                          description='Williams R, determine buy/sell signals according to Williams R',
                          window_length=100,
                          data_types='high, low, close')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple) -> float:
+    def _realize(self, h, r=None, t=None) -> float:
         """参数:
         input:
             p: periods
         """
-        p, = params
-        h = hist_data.T
+        p, = self.pars
+        h = h.T
         res = stochf(h[0], h[1], h[2], p)
         # 策略:
         # 当res小于-80时，逐步买进
@@ -1924,8 +1924,8 @@ class RiconNone(stg.RuleIterator):
                          name='NONE',
                          description='Do not take any risk control activity')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        return np.zeros_like(hist_data.squeeze())
+    def _realize(self, h, r=None, t=None):
+        return np.zeros_like(h.squeeze())
 
 
 class TimingLong(stg.RuleIterator):
@@ -1943,10 +1943,10 @@ class TimingLong(stg.RuleIterator):
                          name='Long',
                          description='Simple Timing strategy, return constant long position on the whole history')
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
+    def _realize(self, h, r=None, t=None):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
-        return np.ones_like(hist_data.squeeze())
+        return np.ones_like(h.squeeze())
 
 
 class TimingShort(stg.RuleIterator):
@@ -1964,10 +1964,10 @@ class TimingShort(stg.RuleIterator):
                          name='Short',
                          description='Simple Timing strategy, return constant Short position on the whole history')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
-        return -np.ones_like(hist_data.squeeze())
+        return -np.ones_like(h.squeeze())
 
 
 class TimingZero(stg.RuleIterator):
@@ -1985,10 +1985,10 @@ class TimingZero(stg.RuleIterator):
                          name='Zero',
                          description='Simple Timing strategy, return constant Zero position ratio on the whole history')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
 
-        return np.zeros_like(hist_data.squeeze())
+        return np.zeros_like(h.squeeze())
 
 
 class TimingDMA(stg.RuleIterator):
@@ -2011,21 +2011,21 @@ class TimingDMA(stg.RuleIterator):
     def __init__(self, pars=(12, 26, 9)):
         super().__init__(pars=pars,
                          par_count=3,
-                         par_types=['discr', 'discr', 'discr'],
+                         par_types=['int', 'int', 'int'],
                          par_range=[(10, 250), (10, 250), (10, 250)],
                          name='DMA',
                          description='Quick DMA strategy, determine long/short position according to differences of '
                                   'moving average prices with simple timing strategy',
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
-        s, l, d = params
+        s, l, d = self.pars
         # print 'Generating Quick dma Long short Mask with parameters', params
 
         # 计算指数的移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_data.T
+        h = h.T
         dma = sma(h[0], s) - sma(h[0], l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
@@ -2043,27 +2043,23 @@ class RiconUrgent(stg.RuleIterator):
     def __init__(self, pars=(0, 0)):
         super().__init__(pars=pars,
                          par_count=2,
-                         par_types=['discr', 'conti'],
+                         par_types=['int', 'float'],
                          par_range=[(1, 40), (-0.5, 0.5)],
                          name='URGENT',
                          description='Generate selling signal when N-day drop rate reaches target')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """
         # 根据N日内下跌百分比确定的卖出信号，让N日内下跌百分比达到pct时产生卖出信号
 
         input =====
-            :type hist_data: tuple like (N, pct): type N: int, Type pct: float
+            :type h: tuple like (N, pct): type N: int, Type pct: float
                 输入参数对，当股价在N天内下跌百分比达到pct时，产生卖出信号
         return ====
             :rtype: object np.ndarray: 包含紧急卖出信号的ndarray
         """
-        assert self._pars is not None, 'Parameter of Risk Control-Urgent should be a pair of numbers like (N, ' \
-                                       'pct)\nN as days, pct as percent drop '
-        assert isinstance(hist_data, np.ndarray), \
-            f'Type Error: input historical data should be ndarray, got {type(hist_data)}'
-        day, drop = self._pars
-        h = hist_data
+        day, drop = self.pars
+        h = h
         diff = (h - np.roll(h, day)) / h
         diff[:day] = h[:day]
         return np.where(diff < drop, -1, 0).squeeze()
@@ -2079,9 +2075,9 @@ class SelectingAll(stg.GeneralStg):
                          name='SIMPLE ',
                          description='GeneralStg all share and distribute weights evenly')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         # 所有股票全部被选中，投资比例平均分配
-        share_count = hist_data.shape[0]
+        share_count = h.shape[0]
         return [1. / share_count] * share_count
 
 
@@ -2093,9 +2089,9 @@ class SelectingNone(stg.GeneralStg):
                          name='NONE ',
                          description='None of the shares will be selected')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         # 所有股票全部被选中，投资比例平均分配
-        share_count = hist_data.shape[0]
+        share_count = h.shape[0]
         return [0.] * share_count
 
 
@@ -2105,14 +2101,14 @@ class SelectingRandom(stg.GeneralStg):
     def __init__(self, pars=(0.5,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['conti'],
+                         par_types=['float'],
                          par_range=[(0, np.inf)],
                          name='RANDOM',
                          description='GeneralStg share Randomly and distribute weights evenly')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         pct = self.pars[0]
-        share_count = hist_data.shape[0]
+        share_count = h.shape[0]
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
             chosen = np.random.choice([1, 0], size=share_count, p=[pct, 1 - pct])
@@ -2133,7 +2129,7 @@ class SelectingAvgIndicator(stg.FactorSorter):
     def __init__(self, pars=(True, 'even', 'greater', 0, 0, 0.25)):
         super().__init__(pars=pars,
                          par_count=6,
-                         par_types=['enum', 'enum', 'enum', 'conti', 'conti', 'conti'],
+                         par_types=['enum', 'enum', 'enum', 'float', 'float', 'float'],
                          par_range=[(True, False),
                                               ('even', 'linear', 'proportion'),
                                               ('any', 'greater', 'less', 'between', 'not_between'),
@@ -2147,11 +2143,11 @@ class SelectingAvgIndicator(stg.FactorSorter):
                          window_length=90,
                          data_types='eps')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
-        factors = np.nanmean(hist_data, axis=1).squeeze()
+        factors = np.nanmean(h, axis=1).squeeze()
 
         return factors
 
@@ -2166,7 +2162,7 @@ class SelectingNDayLast(stg.FactorSorter):
     def __init__(self, pars=(2,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 100)],
                          name='N-DAY LAST',
                          description='Select stocks according their previous prices',
@@ -2175,14 +2171,14 @@ class SelectingNDayLast(stg.FactorSorter):
                          window_length=100,
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """ 以股票过去N天前的量价作为选股指标
             N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
             默认的data_types为'close'
 
         """
         n, = self.pars
-        factors = hist_data[:, -n-1, 0]
+        factors = h[:, -n-1, 0]
 
         return factors
 
@@ -2199,7 +2195,7 @@ class SelectingNDayAvg(stg.FactorSorter):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 150)],
                          name='N-DAY AVG',
                          description='Select stocks by its N day average open price',
@@ -2208,12 +2204,12 @@ class SelectingNDayAvg(stg.FactorSorter):
                          window_length=150,
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """ 获取的数据为昨天的开盘价
 
         """
         n, = self.pars
-        n_average = hist_data[:, -n-1:, 0].mean(axis=1)
+        n_average = h[:, -n-1:, 0].mean(axis=1)
         factors = n_average
 
         return factors
@@ -2230,7 +2226,7 @@ class SelectingNDayChange(stg.FactorSorter):
     def __init__(self, pars=(14,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['discr'],
+                         par_types=['int'],
                          par_range=[(2, 150)],
                          name='N-DAY CHANGE',
                          description='Select stocks by its N day price change',
@@ -2239,13 +2235,13 @@ class SelectingNDayChange(stg.FactorSorter):
                          window_length=150,
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """ 获取的数据为昨天的开盘价
 
         """
         n, = self.pars
-        current_price = hist_data[:, -1, 0]
-        n_previous = hist_data[:, -n-1, 0]
+        current_price = h[:, -1, 0]
+        n_previous = h[:, -n-1, 0]
         factors = current_price - n_previous
 
         return factors
@@ -2271,13 +2267,13 @@ class SelectingNDayRateChange(stg.FactorSorter):
                          window_length=150,
                          data_types='close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """ 获取的数据为昨天的开盘价
 
         """
         n, = self.pars
-        current_price = hist_data[:, -1, 0]
-        n_previous = hist_data[:, -n-1, 0]
+        current_price = h[:, -1, 0]
+        n_previous = h[:, -n-1, 0]
         factors = (current_price - n_previous) / n_previous
 
         return factors
@@ -2302,12 +2298,12 @@ class SelectingNDayVolatility(stg.FactorSorter):
                          window_length=150,
                          data_types='high,low,close')
 
-    def _realize(self, hist_data, params):
+    def _realize(self, h, r=None, t=None):
         """ 获取的数据为昨天的开盘价
 
         """
         n, = self.pars
-        factors = atr(hist_data, n)
+        factors = atr(h, n)
 
         return factors
 
