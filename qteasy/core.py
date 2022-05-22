@@ -1034,8 +1034,6 @@ def reset_config(config=None):
     configure(config, reset=True)
 
 
-# TODO: 提高prepare_hist_data的容错度，当用户输入的回测开始日期和资金投资日期等
-#  不匹配时，应根据优先级调整合理后继续完成回测或优化，而不是报错后停止运行
 def check_and_prepare_hist_data(operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
@@ -1098,7 +1096,6 @@ def check_and_prepare_hist_data(operator, config):
             warn(f'first cash investment on {opti_start} differ from invest_start {config.opti_start}, first cash'
                  f' date will be used!',
                  RuntimeWarning)
-        # TODO: 此处应该检查opti_start是否在config.opti_start与config.opti_end之间，否则raise
 
     # 测试区间开始日期根据opti_start和opti_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.test_cash_dates is None:
@@ -1119,18 +1116,22 @@ def check_and_prepare_hist_data(operator, config):
             warn(f'first cash investment on {test_start} differ from invest_start {config.test_start}, first cash'
                  f' date will be used!',
                  RuntimeWarning)
-        # TODO: 此处应该检查test_start是否在config.test_start与config.test_end之间，否则raise
+
     # 设定投资结束日期
     if run_mode == 0:
-        if is_market_trade_day(current_date) and current_time.hour > 21:  # 交易日且22:00以后
-            invest_end = regulate_date_format(current_date)
-        else:  # 非交易日，或交易日21:00以前，查询到前一个交易日
-            invest_end = regulate_date_format(nearest_market_trade_day(current_date))
+        # 实时模式下，设置结束日期为现在
+        invest_end = regulate_date_format(current_datetime)
     else:
         invest_end = config.invest_end
     # 设置优化区间和测试区间的结束日期
     opti_end = config.opti_end
     test_end = config.test_end
+
+    # 优化/测试数据是合并读取的，因此设置一个统一的开始/结束日期：
+    # 寻优开始日期为优化开始和测试开始日期中较早者，寻优结束日期为优化结束和测试结束日期中较晚者
+    opti_test_start = opti_start if pd.to_datetime(opti_start) < pd.to_datetime(test_start) else test_start
+    opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
+
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
     window_length = operator.max_window_length
     window_offset_freq = operator.op_data_freq
@@ -1138,6 +1139,7 @@ def check_and_prepare_hist_data(operator, config):
         window_offset_freq = 'd'
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
 
+    # 生成回测所需历史数据
     hist_op = get_history_panel(
             start=regulate_date_format(
                     pd.to_datetime(invest_start) - window_offset),
@@ -1156,26 +1158,28 @@ def check_and_prepare_hist_data(operator, config):
     # fill np.inf in back_trade_prices to prevent from result in nan in value
     back_trade_prices.fillinf(0)
 
-    # 生成用于策略优化训练的训练历史数据集合
+    # 生成用于策略优化训练的训练和测试历史数据集合
     hist_opti = get_history_panel(
-            start=regulate_date_format(pd.to_datetime(opti_start) - window_offset),
-            end=opti_end,
+            start=opti_test_start,
+            end=opti_test_end,
             shares=config.asset_pool,
             htypes=operator.op_data_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
     ) if run_mode == 2 else HistoryPanel()
+
     # 生成用于优化策略测试的测试历史数据集合
     hist_opti_ref = get_history_panel(
-            start=regulate_date_format(pd.to_datetime(test_start) - window_offset),
-            end=test_end,
+            start=opti_test_start,
+            end=opti_test_end,
             shares=config.asset_pool,
-            htypes=operator.op_data_types,
+            htypes=operator.op_ref_types,
             freq=operator.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
     ) if run_mode == 2 else HistoryPanel()
+
     opti_trade_prices = hist_opti_ref.slice(htypes=bt_price_types)
     opti_trade_prices.fillinf(0)
 
@@ -1185,6 +1189,7 @@ def check_and_prepare_hist_data(operator, config):
     all_ends = [pd.to_datetime(date_str) for date_str in [invest_end, opti_end, test_end]]
     refer_hist_start = regulate_date_format(min(all_starts))
     refer_hist_end = regulate_date_format(max(all_ends))
+
     hist_benchmark = (
         get_history_panel(
                 start=refer_hist_start,
@@ -1195,12 +1200,13 @@ def check_and_prepare_hist_data(operator, config):
                 asset_type=config.ref_asset_type,
                 adj=config.backtest_price_adj
         )
-    ).to_dataframe(htype='close')
+    ).slice_to_dataframe(htype='close')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+# TODO: 将check_and_prepare_data()的代码拆分后移植到下面三个方法中
 def check_and_prepare_real_time_data(operator, config):
     """ 在run_mode == 0的情况下准备相应的历史数据
 
@@ -1633,7 +1639,7 @@ def run(operator, **kwargs):
                         hist_data=mock_hist,
                         cash_plan=test_cash_plan
                 )
-                mock_hist_loop = mock_hist.to_dataframe(htype='close')
+                mock_hist_loop = mock_hist.slice_to_dataframe(htype='close')
                 result_pool = _evaluate_all_parameters(
                         par_generator=optimal_pars,
                         total=config.opti_output_count,
@@ -2032,7 +2038,7 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
     # 先考虑生成正确的信息，以后再考虑优化
     dfs_for_share = []
     for share in history_data.shares:
-        share_df = history_data.to_dataframe(share=share)
+        share_df = history_data.slice_to_dataframe(share=share)
         share_df['close_chg'] = share_df.close / share_df.close.shift(1)
         mean = share_df.close_chg.mean()
         std = share_df.close_chg.std()

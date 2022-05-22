@@ -715,7 +715,7 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
     data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
                              htypes=htypes, asset_type=asset_type,
-                             adj=adj, data_source=data_source).to_dataframe(share=stock)
+                             adj=adj, data_source=data_source).slice_to_dataframe(share=stock)
     # 如果读取的是nav净值，将nav改为close，并填充open/high/low三列为NaN值
     is_out_fund = False
     if 'open' not in data.columns:

@@ -554,8 +554,21 @@ class BaseStrategy:
         self.set_hist_pars(bt_price_type=price_type)
 
     @property
-    def reference_data_types(self):
+    def ref_types(self):
         """ 返回策略的参考数据类型，如果不需要参考数据，返回空列表
+
+        :return:
+        """
+        return self._reference_data_types
+
+    @ref_types.setter
+    def ref_types(self, ref_types):
+        """ 设置策略的参考数据类型"""
+        self.set_hist_pars(reference_data_types=ref_types)
+
+    @property
+    def reference_data_types(self):
+        """ ref_types的别名
 
         :return:
         """

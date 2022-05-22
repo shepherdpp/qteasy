@@ -410,7 +410,7 @@ class Operator:
 
     @property
     def op_data_types(self):
-        """返回operator对象所有策略子对象所需数据类型的集合"""
+        """返回operator对象所有策略子对象所需历史数据类型的集合"""
         d_types = [typ for item in self.strategies for typ in item.data_types]
         d_types = list(set(d_types))
         d_types.sort()
@@ -421,6 +421,20 @@ class Operator:
         """ 返回operator对象生成交易清单所需的历史数据类型数量
         """
         return len(self.op_data_types)
+
+    @property
+    def op_ref_types(self):
+        """返回operator对象所有策略子对象所需历史参考数据类型reference_types的集合"""
+        ref_types = [typ for item in self.strategies for typ in item.ref_types]
+        ref_types = list(set(ref_types))
+        ref_types.sort()
+        return ref_types
+
+    @property
+    def op_ref_type_count(self):
+        """ 返回operator对象生成交易清单所需的历史数据类型数量
+        """
+        return len(self.op_ref_types)
 
     @property
     def op_data_freq(self):

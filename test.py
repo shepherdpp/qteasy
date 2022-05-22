@@ -8634,7 +8634,7 @@ class TestHistoryPanel(unittest.TestCase):
         """
         print(f'START TEST == test_to_dataframe')
         print(f'test converting test hp to dataframe with share == "000102":')
-        df_test = self.hp.to_dataframe(share='000102')
+        df_test = self.hp.slice_to_dataframe(share='000102')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
@@ -8642,7 +8642,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp[:, '000102'], values))
 
         print(f'test DataFrame conversion with share == "000100"')
-        df_test = self.hp.to_dataframe(share='000100')
+        df_test = self.hp.slice_to_dataframe(share='000100')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.htypes), list(df_test.columns))
@@ -8650,13 +8650,13 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp[:, '000100'], values))
 
         print(f'test DataFrame conversion error: type incorrect')
-        self.assertRaises(AssertionError, self.hp.to_dataframe, share=3.0)
+        self.assertRaises(AssertionError, self.hp.slice_to_dataframe, share=3.0)
 
         print(f'test DataFrame error raising with share not found error')
-        self.assertRaises(KeyError, self.hp.to_dataframe, share='000300')
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe, share='000300')
 
         print(f'test DataFrame conversion with htype == "close"')
-        df_test = self.hp.to_dataframe(htype='close')
+        df_test = self.hp.slice_to_dataframe(htype='close')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
@@ -8664,7 +8664,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(self.hp['close'].T, values))
 
         print(f'test DataFrame conversion with htype == "high"')
-        df_test = self.hp.to_dataframe(htype='high')
+        df_test = self.hp.slice_to_dataframe(htype='high')
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
@@ -8676,7 +8676,7 @@ class TestHistoryPanel(unittest.TestCase):
         v[:, 3, :] = np.nan
         v[:, 4, :] = np.inf
         test_hp = qt.HistoryPanel(v, levels=self.shares, columns=self.htypes, rows=self.index)
-        df_test = test_hp.to_dataframe(htype='high', dropna=True)
+        df_test = test_hp.slice_to_dataframe(htype='high', dropna=True)
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates[:3]) + list(self.hp.hdates[4:]), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
@@ -8690,7 +8690,7 @@ class TestHistoryPanel(unittest.TestCase):
         v[:, 3, :] = np.nan
         v[:, 4, :] = np.inf
         test_hp = qt.HistoryPanel(v, levels=self.shares, columns=self.htypes, rows=self.index)
-        df_test = test_hp.to_dataframe(htype='high', dropna=True, inf_as_na=True)
+        df_test = test_hp.slice_to_dataframe(htype='high', dropna=True, inf_as_na=True)
         self.assertIsInstance(df_test, pd.DataFrame)
         self.assertEqual(list(self.hp.hdates[:3]) + list(self.hp.hdates[5:]), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
@@ -8700,14 +8700,14 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(target_values, values))
 
         print(f'test DataFrame conversion error: type incorrect')
-        self.assertRaises(AssertionError, self.hp.to_dataframe, htype=pd.DataFrame())
+        self.assertRaises(AssertionError, self.hp.slice_to_dataframe, htype=pd.DataFrame())
 
         print(f'test DataFrame error raising with share not found error')
-        self.assertRaises(KeyError, self.hp.to_dataframe, htype='non_type')
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe, htype='non_type')
 
         print(f'Raises ValueError when both or none parameter is given')
-        self.assertRaises(KeyError, self.hp.to_dataframe)
-        self.assertRaises(KeyError, self.hp.to_dataframe, share='000100', htype='close')
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe)
+        self.assertRaises(KeyError, self.hp.slice_to_dataframe, share='000100', htype='close')
 
     def test_to_df_dict(self):
         """测试HistoryPanel公有方法to_df_dict"""

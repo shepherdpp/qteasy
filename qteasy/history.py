@@ -391,14 +391,14 @@ class HistoryPanel():
                 display_shares = self.shares[0:3]
             for share in display_shares:
                 res.append(f'\nshare {self.levels[share]}, label: {share}\n')
-                df = self.to_dataframe(share=share)
+                df = self.slice_to_dataframe(share=share)
                 res.append(df.__str__())
                 res.append('\n')
             if self.level_count > 7:
                 res.append('\n ...  \n')
                 for share in self.shares[-2:]:
                     res.append(f'\nshare {self.levels[share]}, label: {share}\n')
-                    df = self.to_dataframe(share=share)
+                    df = self.slice_to_dataframe(share=share)
                     res.append(df.__str__())
                     res.append('\n')
                 res.append('Only first 3 and last 3 shares are displayed\n')
@@ -692,11 +692,11 @@ class HistoryPanel():
             self._values = self.values.astype(dtype)
         return self
 
-    def to_dataframe(self,
-                     htype: (str, int) = None,
-                     share: (str, int) = None,
-                     dropna: bool = False,
-                     inf_as_na: bool = False) -> pd.DataFrame:
+    def slice_to_dataframe(self,
+                           htype: (str, int) = None,
+                           share: (str, int) = None,
+                           dropna: bool = False,
+                           inf_as_na: bool = False) -> pd.DataFrame:
         """ 将HistoryPanel对象中的指定片段转化为DataFrame
 
             指定htype或者share，将这个htype或share对应的数据切片转化为一个DataFrame。
@@ -755,6 +755,33 @@ class HistoryPanel():
 
         return res_df
 
+    def flatten_to_dataframe(self, multi_index=True):
+        """ 将一个HistoryPanel"展平"成为一个DataFrame
+            HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
+        例如：
+        HistoryPanel有2层，每层3列：
+        000300:
+        close,  open,   vol
+        12.3,   12.5,   1020010
+        12.6,   13.2,   1020020
+
+        000001：
+        close,  open,   vol
+        2.3,    2.5,    20010
+        2.6,    3.2,    20020
+
+        --> 转化为MultiIndex
+        000300                  000001
+        close,  open,   vol,    close,  open,   vol
+        12.3,   12.5,   1020010 2.3,    2.5,    20010
+        12.6,   13.2,   1020020 2.6,    3.2,    20020
+
+
+        :param multi_index:
+        :return:
+        """
+        raise NotImplementedError
+
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
             这些数据以DataFrame的格式存储
@@ -776,12 +803,12 @@ class HistoryPanel():
 
         if by.lower() in ['share', 'shares']:
             for share in self.shares:
-                df_dict[share] = self.to_dataframe(share=share)
+                df_dict[share] = self.slice_to_dataframe(share=share)
             return df_dict
 
         if by.lower() in ['htype', 'htypes']:
             for htype in self.htypes:
-                df_dict[htype] = self.to_dataframe(htype=htype)
+                df_dict[htype] = self.slice_to_dataframe(htype=htype)
             return df_dict
 
     # TODO: implement this method
@@ -940,6 +967,15 @@ def dataframe_to_hp(df: pd.DataFrame,
             f'TypeError, data type of share should be a string, got {type(shares)} instead.'
         history_panel_value = df.values.reshape(1, len(hdates), len(htypes))
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
+
+
+def from_multi_index_dataframe(df: pd.DataFrame):
+    """ 将一个含有multi-index的DataFrame转化为一个HistoryPanel
+
+    :param df:
+    :return:
+    """
+    raise NotImplementedError
 
 
 def stack_dataframes(dfs: [list, dict], stack_as: str = 'shares', shares=None, htypes=None, fill_value=None):
@@ -1149,24 +1185,22 @@ def get_history_panel(shares,
     normal_htypes = [itm for itm in htypes if itm.split('-')[0] != 'wt']
     weight_indices = [itm.split('-')[1] for itm in htypes if itm not in normal_htypes]
     # 获取常规类型的历史数据如量价数据和指标数据
-    if normal_htypes:
-        normal_dfs = ds.get_history_data(shares=shares,
-                                         htypes=normal_htypes,
-                                         start=start,
-                                         end=end,
-                                         freq=freq,
-                                         asset_type=asset_type,
-                                         adj=adj)
-    else:
-        normal_dfs = {}
+    normal_dfs = ds.get_history_data(
+            shares=shares,
+            htypes=normal_htypes,
+            start=start,
+            end=end,
+            freq=freq,
+            asset_type=asset_type,
+            adj=adj
+    ) if normal_htypes else {}
     # 获取指数成分权重数据
-    if weight_indices:
-        weight_dfs = ds.get_index_weights(index=weight_indices,
-                                          start=start,
-                                          end=end,
-                                          shares=shares)
-    else:
-        weight_dfs = {}
+    weight_dfs = ds.get_index_weights(
+            index=weight_indices,
+            start=start,
+            end=end,
+            shares=shares
+    ) if weight_indices else {}
     # 合并两个hp，合并前整理字典的keys，使之与htypes的顺序一致，否则产生的historyPanel
     # 的htypes顺序与输入不一致
     if weight_dfs != {}:
