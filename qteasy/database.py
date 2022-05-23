@@ -324,6 +324,14 @@ TABLE_SOURCE_MAPPING = {
         ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'data', 'none', 'd', 'shibor', 'date', 'trade_date', '20000101', '',
          'Y', ''],
 
+    'libor':
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'data', 'none', 'd', 'libor', 'date', 'trade_date', '20000101', '',
+         'Y', ''],
+
+    'hibor':
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'data', 'none', 'd', 'hibor', 'date', 'trade_date', '20000101', '',
+         'Y', ''],
+
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
 TABLE_STRUCTURES = {
@@ -874,7 +882,23 @@ TABLE_STRUCTURES = {
                                         '去年同期营业收入', '去年同期营业利润', '去年同期利润总额', '去年同期净利润',
                                         '去年同期每股收益', '期初净资产', '期初每股净资产', '业绩简要说明', '是否审计： 1是 0否',
                                         '备注'],
-                         'prime_keys': [0, 1]}
+                         'prime_keys': [0, 1]},
+
+    'shibor':           {'columns':    ['date', 'on', '1w', '2w', '1m', '3m', '6m', '9m', '1y'],
+                         'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
+                         'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '3个月', '6个月', '9个月', '1年'],
+                         'prime_keys': [0]},
+
+    'libor':            {'columns':    ['date', 'curr_type', 'on', '1w', '1m', '2m', '3m', '6m', '12m'],
+                         'dtypes':     ['date', 'varchar(9)', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float'],
+                         'remarks':    ['日期', '货币', '隔夜', '1周', '1个月', '2个月', '3个月', '6个月', '12个月'],
+                         'prime_keys': [0, 1]},
+
+    'hibor':            {'columns':    ['date', 'on', '1w', '2w', '1m', '2m', '3m', '6m', '12m'],
+                         'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
+                         'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '2个月', '3个月', '6个月', '12个月'],
+                         'prime_keys': [0]}
 
 }
 

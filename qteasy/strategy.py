@@ -876,7 +876,6 @@ class FactorSorter(BaseStrategy):
             * realize()方法的实现：realize()方法需要利用输入的参数，输出一组选股因子，用于筛选排序选股
 
                 :input:
-                params: tuple 一组策略参数
                 h: 历史数据，一个3D numpy数组，包含所有股票在一个时间窗口内的所有类型的历史数据，
                     参考BaseStrategy的docstring
                 r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
@@ -1043,31 +1042,20 @@ class RuleIterator(BaseStrategy):
 
         Rolling_Timing类会自动把上述特定计算算法滚动应用到整个历史数据区间，并且推广到所有的个股中。
 
-        在实现具体的Rolling_Timing类时，必须且仅需要实现两个方法：__init__()方法和_realize()方法，且两个方法的实现都需要遵循一定的规则：
+        * realize()方法的实现：realize()方法需要利用输入的参数，输出一组选股因子，用于筛选排序选股
 
-        * __init__()方法的实现：
+            :input:
+            h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，
+                示例：
 
-        __init__()方法定义了该策略的最基本参数，这些参数与策略的使用息息相关，而且推荐使用"super().__init__()"的形式设置这些参数，这些参数
-        包括：
-            stg_id:
-            description:
-            par_count:
-            par_types:
-            par_range:
-            data_freq:
-            sample_freq:
-            window_length:
-            data_types:
+            r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
+                参考BaseStrategy的docstring
 
-        * _realize()方法的实现：
+            t: 交易数据，一个2D numpy数组，包含最近一次交易的实际结果
+                参考BaseStraegy的docstring
 
-        _realize()方法确定了策略的具体实现方式，要注意_realize()方法需要有两个参数：
-
-            hist_data: ndarray
-            params: tuple
-
-        在_realize()方法中用户可以以任何可能的方法使用hist_data，但必须知道hist_data的结构，同时确保返回值为一个浮点数，且返回值在-1～1
-        之间（包括-1和+1）。
+            :output
+            signals: 一个代表交易信号的1D numpy数组，dtype为float
 
     """
     __mataclass__ = ABCMeta

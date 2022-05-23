@@ -1143,6 +1143,11 @@ def get_history_panel(shares,
             如以下两种输入方式皆合法且等效：
              - str:     'open, high, low, close'
              - list:    ['open', 'high', 'low', 'close']
+            特殊htypes的处理：
+            以下特殊htypes将被特殊处理"
+             - wt-000300.SH:
+                指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
+                获取的数据的htypes同样为wt-000300.SH型
 
         :param start: str
             YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
@@ -1208,3 +1213,54 @@ def get_history_panel(shares,
     all_dfs = {htyp: normal_dfs[htyp] for htyp in htypes}
     result_hp = stack_dataframes(all_dfs, stack_as='htypes', htypes=htypes, shares=shares)
     return result_hp
+
+
+def get_reference_data(htypes,
+                       start=None,
+                       end=None,
+                       freq=None,
+                       asset_type: str = None,
+                       adj: str = None,
+                       data_source=None):
+    """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为所需要的数据
+        表。与get_history_data()相比，区别在与这里获取的数据与股票代码无关，用于策略计算中的参考数据
+
+        :param htypes: [str, list]
+            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     'shibor-1w, libor-1w, hibor-1w'
+             - list:    ['shibor-1w', 'libor-1w', 'hibor-1w']
+            特殊htypes的处理：
+            以下特殊htypes将被特殊处理"
+             - close-000300.SH:
+                指数权重数据，如果htype是一个复合体，则获取该复合体中股票的相应数据返回，如本例表示获取
+                000300.SH的close数据并返回
+
+        :param start: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+
+        :param end: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+
+        :param freq: str
+            获取的历史数据的频率，包括以下选项：
+             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+
+        :param asset_type: str, list
+            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+             - any: 可以获取任意资产类型的证券数据(默认值)
+             - E:   只获取股票类型证券的数据
+             - IDX: 只获取指数类型证券的数据
+             - FT:  只获取期货类型证券的数据
+             - FD:  只获取基金类型证券的数据
+
+        :param adj: str
+            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+             - none / n: 不复权(默认值)
+             - back / b: 后复权
+             - forward / fw / f: 前复权
+    :param data_source: DataSource Object
+    :return:
+    """

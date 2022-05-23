@@ -1034,10 +1034,10 @@ def reset_config(config=None):
     configure(config, reset=True)
 
 
-def check_and_prepare_hist_data(operator, config):
+def check_and_prepare_hist_data(oper: Operator, config):
     """ 根据config参数字典中的参数，下载或读取所需的历史数据以及相关的投资资金计划
 
-    :param: operator: Operator对象，
+    :param: oper: Operator对象，
     :param: config, ConfigDict 参数字典
     :return:
         hist_op:            type: HistoryPanel, 用于回测模式下投资策略生成的历史数据区间，包含多只股票的多种历史数据
@@ -1055,10 +1055,8 @@ def check_and_prepare_hist_data(operator, config):
         test_cash_plan:     type: CashPlan,     用于优化模式下，策略测试区间的资金投入计划
     """
     run_mode = config.mode
-    # 如果run_mode=0，选取足够的历史数据生成迄今为止上一个交易日或本个交易日（如果运行时间在17:00以后）
+    # 如果run_mode=0，实时获取最新的历史数据（如果无法加载，则警告），并加载最新的历史数据
     current_datetime = datetime.datetime.now()
-    current_date = current_datetime.date()
-    current_time = current_datetime.time()
     # 根据不同的运行模式，设定不同的运行历史数据起止日期
     # 投资回测区间的开始日期根据invest_start和invest_cash_dates两个参数确定，后一个参数非None时，覆盖前一个参数
     if config.invest_cash_dates is None:
@@ -1133,8 +1131,8 @@ def check_and_prepare_hist_data(operator, config):
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
-    window_length = operator.max_window_length
-    window_offset_freq = operator.op_data_freq
+    window_length = oper.max_window_length
+    window_offset_freq = oper.op_data_freq
     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
         window_offset_freq = 'd'
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
@@ -1145,15 +1143,16 @@ def check_and_prepare_hist_data(operator, config):
                     pd.to_datetime(invest_start) - window_offset),
             end=invest_end,
             shares=config.asset_pool,
-            htypes=operator.all_price_data_types,
-            freq=operator.op_data_freq,
+            htypes=oper.all_price_data_types,
+            freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
     ) if run_mode <= 1 else HistoryPanel()
 
+    # 解析参考数据类型，获取参考数据
     hist_ref = get_history_panel(shares=None, htypes=None)
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
-    bt_price_types = operator.bt_price_types
+    bt_price_types = oper.bt_price_types
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
     # fill np.inf in back_trade_prices to prevent from result in nan in value
     back_trade_prices.fillinf(0)
@@ -1163,8 +1162,8 @@ def check_and_prepare_hist_data(operator, config):
             start=opti_test_start,
             end=opti_test_end,
             shares=config.asset_pool,
-            htypes=operator.op_data_types,
-            freq=operator.op_data_freq,
+            htypes=oper.op_data_types,
+            freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
     ) if run_mode == 2 else HistoryPanel()
@@ -1174,8 +1173,8 @@ def check_and_prepare_hist_data(operator, config):
             start=opti_test_start,
             end=opti_test_end,
             shares=config.asset_pool,
-            htypes=operator.op_ref_types,
-            freq=operator.op_data_freq,
+            htypes=oper.op_ref_types,
+            freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
     ) if run_mode == 2 else HistoryPanel()
@@ -1196,7 +1195,7 @@ def check_and_prepare_hist_data(operator, config):
                 end=refer_hist_end,
                 shares=config.reference_asset,
                 htypes=config.ref_asset_dtype,
-                freq=operator.op_data_freq,
+                freq=oper.op_data_freq,
                 asset_type=config.ref_asset_type,
                 adj=config.backtest_price_adj
         )
@@ -1461,7 +1460,7 @@ def run(operator, **kwargs):
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
     if operator.empty:
-        raise ValueError(f'operator object does not have any strategy, please add at least one strategy!')
+        raise ValueError(f'oper object does not have any strategy, please add at least one strategy!')
 
     import time
     optimization_methods = {0: _search_grid,
