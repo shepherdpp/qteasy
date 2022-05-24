@@ -1920,53 +1920,6 @@ class DataSource:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
-        # 检查数据合法性：
-        # TODO: 在History模块中的函数里检查数据合法性，不在这里检查
-        if not isinstance(shares, (str, list)):
-            raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
-        if isinstance(shares, str):
-            shares = str_to_list(shares)
-        if isinstance(shares, list):
-            if not all(isinstance(item, str) for item in shares):
-                raise TypeError(f'all items in shares list should be a string, got otherwise')
-
-        if not isinstance(htypes, (str, list)):
-            raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
-        if isinstance(htypes, str):
-            htypes = str_to_list(htypes)
-        if isinstance(htypes, list):
-            if not all(isinstance(item, str) for item in htypes):
-                raise TypeError(f'all items in htypes list should be a string, got otherwise')
-        htypes = [item.lower() for item in htypes]
-
-        if (not isinstance(start, str)) and (not isinstance(end, str)):
-            raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
-
-        if not isinstance(freq, str):
-            raise TypeError(f'freq should be a string, got {type(freq)} instead')
-        if freq.upper() not in TIME_FREQ_STRINGS:
-            raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
-        freq = freq.lower()
-
-        if not isinstance(asset_type, (str, list)):
-            raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
-        if isinstance(asset_type, str):
-            asset_type = str_to_list(asset_type)
-        if not all(isinstance(item, str) for item in asset_type):
-            raise KeyError(f'not all items in asset type are strings')
-        if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
-            raise KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
-        if any(item.upper() == 'ANY' for item in asset_type):
-            asset_type = AVAILABLE_ASSET_TYPES
-        asset_type = [item.upper() for item in asset_type]
-
-        if not isinstance(adj, str):
-            raise TypeError(f'adj type should be a string, got {type(adj)} instead')
-        if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-            raise KeyError(f"invalid adj type ({adj}), which should be anyone of "
-                           f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
-        adj = adj.lower()
-
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
@@ -2080,13 +2033,10 @@ class DataSource:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
-        # 检查数据合法性
-        if start is None:
-            raise NotImplementedError
-        if end is None:
-            raise NotImplementedError
         if isinstance(index, str):
             index = str_to_list(index)
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
         # 读取时间内的权重数据
         weight_data = self.read_table_data('index_weight', shares=index, start=start, end=end)
         if not weight_data.empty:
