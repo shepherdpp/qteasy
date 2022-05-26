@@ -8949,7 +8949,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
     def test_get_history_panel(self):
-        # test get only one line of data
+        # test get history panel data
         hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           htypes='wt-000003.SH, close, wt-000300.SH',
                                           start='20210101',
@@ -8959,6 +8959,18 @@ class TestHistoryPanel(unittest.TestCase):
                                           adj='none')
         self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
         self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        # test get history panel data without shares
+        hp = qt.history.get_history_panel(shares=None,
+                                          htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH',
+                                          start='20210101',
+                                          end='20210202',
+                                          freq='d',
+                                          asset_type='any',
+                                          adj='none')
+        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
+        self.assertEqual(hp.shares, ['no_share'])
         print(hp)
 
     def test_ffill_data(self):

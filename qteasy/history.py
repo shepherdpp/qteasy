@@ -8,6 +8,7 @@
 #   HistoryPanel Class, and more history
 #   data manipulating functions.
 # ======================================
+import pdb
 
 import pandas as pd
 import numpy as np
@@ -1191,16 +1192,21 @@ def get_history_panel(htypes,
     if shares is None:
         shares = ''
 
-    for var in [shares, htypes]:
-        if not isinstance(var, (str, list)):
-            raise TypeError(f'both shares and htypes should be a string or list of strings, got {type(var)}')
-        if isinstance(var, str):
-            var = str_to_list(var)
-        if isinstance(var, list):
-            if not all(isinstance(item, str) for item in var):
-                raise TypeError(f'all items in shares list should be a string, got otherwise')
+    if not isinstance(shares, (str, list)):
+        raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
+    if isinstance(shares, str):
+        shares = str_to_list(shares)
+    if isinstance(shares, list):
+        if not all(isinstance(item, str) for item in shares):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
 
-    htypes = [item.lower() for item in htypes]
+    if not isinstance(htypes, (str, list)):
+        raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    if isinstance(htypes, list):
+        if not all(isinstance(item, str) for item in htypes):
+            raise TypeError(f'all items in shares list should be a string, got otherwise')
 
     if (not isinstance(start, str)) and (not isinstance(end, str)):
         raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
@@ -1238,12 +1244,10 @@ def get_history_panel(htypes,
             raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
         ds = data_source
     # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
-    if isinstance(htypes, str):
-        htypes = str_to_list(htypes)
-    htype_splits = (itm.split('-') for itm in htypes)
+    htype_splits = [itm.split('-') for itm in htypes]
     if shares:
         # shares不为空时，生成各个shares的历史数据HistoryPanel
-        normal_htypes = [itm for itm in htype_splits if len(itm) == 1]
+        normal_htypes = [itm[0] for itm in htype_splits if len(itm) == 1]
         weight_indices = [itm[1] for itm in htype_splits if (len(itm) > 1) and (itm[0] == 'wt')]
         htype_code_pairs = {}
         pure_ref_htypes = []
@@ -1272,8 +1276,8 @@ def get_history_panel(htypes,
     ) if weight_indices else {}
     # 获取无share数据
     reference_dfs = ds.get_history_data(
-            shares=htype_code_pairs.values(),
-            htypes=htype_code_pairs.keys(),
+            shares=list(htype_code_pairs.values()),
+            htypes=list(htype_code_pairs.keys()),
             start=start,
             end=end,
             freq=freq,
@@ -1297,83 +1301,20 @@ def get_history_panel(htypes,
         all_dfs = {htyp: normal_dfs[htyp] for htyp in htypes}
     else:
         # 处理reference_data
+        new_reference_dfs = {}
         if reference_dfs:
             for htyp, df in reference_dfs.items():
                 code = htype_code_pairs[htyp]
-                reference_dfs[htyp] = df.reindex(columns=code)
+                code_type_pair = htyp + '-' + code
+                df = df.reindex(columns=[code])
+                df.columns=['no_share']
+                new_reference_dfs[code_type_pair] = df
         if pure_ref_dfs:
-            reference_dfs.update(pure_ref_dfs)
-        all_dfs = {htyp: reference_dfs[htyp] for htyp in htypes}
+            new_reference_dfs.update(pure_ref_dfs)
+        all_dfs = {htyp: new_reference_dfs[htyp] for htyp in htypes}
 
-    result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
-    return result_hp
-
-
-def get_reference_data(htypes,
-                       start=None,
-                       end=None,
-                       freq=None,
-                       asset_type: str = None,
-                       adj: str = None,
-                       data_source=None):
-    """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为所需要的数据
-        表。与get_history_data()相比，区别在与这里获取的数据与股票代码无关，用于策略计算中的参考数据
-
-        :param htypes: [str, list]
-            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
-            如以下两种输入方式皆合法且等效：
-             - str:     'shibor-1w, libor-1w, hibor-1w'
-             - list:    ['shibor-1w', 'libor-1w', 'hibor-1w']
-            特殊htypes的处理：
-            以下特殊htypes将被特殊处理"
-             - close-000300.SH:
-                指数权重数据，如果htype是一个复合体，则获取该复合体中股票的相应数据返回，如本例表示获取
-                000300.SH的close数据并返回
-
-        :param start: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
-
-        :param end: str
-            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
-
-        :param freq: str
-            获取的历史数据的频率，包括以下选项：
-             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
-             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-
-        :param asset_type: str, list
-            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
-            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
-             - any: 可以获取任意资产类型的证券数据(默认值)
-             - E:   只获取股票类型证券的数据
-             - IDX: 只获取指数类型证券的数据
-             - FT:  只获取期货类型证券的数据
-             - FD:  只获取基金类型证券的数据
-
-        :param adj: str
-            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
-             - none / n: 不复权(默认值)
-             - back / b: 后复权
-             - forward / fw / f: 前复权
-    :param data_source: DataSource Object
-    :return:
-    """
-    if data_source is None:
-        from qteasy import QT_DATA_SOURCE
-        ds = QT_DATA_SOURCE
+    if shares:
+        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
     else:
-        if not isinstance(data_source, qteasy.DataSource):
-            raise TypeError(f'data_source should be a data source object, got {type(data_source)} instead')
-        ds = data_source
-    # 区分常规历史数据类型和权重数据类型，分别处理分别获取数据
-
-    dfs = ds.get_history_data(
-            htypes=htypes,
-            start=start,
-            end=end,
-            freq=freq,
-            asset_type=asset_type,
-            adj=adj
-    ) if htypes else {}
-
-    return dfs
+        result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes)
+    return result_hp
