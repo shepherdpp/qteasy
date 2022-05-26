@@ -460,7 +460,7 @@ class Operator:
         return p_types
 
     @property
-    def all_price_data_types(self):
+    def all_price_and_data_types(self):
         """ 返回operator对象所有策略自对象的回测价格类型和交易清单历史数据类型的集合"""
         all_types = set(self.op_data_types).union(self.bt_price_types)
         return list(all_types)

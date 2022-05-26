@@ -1307,7 +1307,7 @@ def get_history_panel(htypes,
                 code = htype_code_pairs[htyp]
                 code_type_pair = htyp + '-' + code
                 df = df.reindex(columns=[code])
-                df.columns=['no_share']
+                df.columns=['none']
                 new_reference_dfs[code_type_pair] = df
         if pure_ref_dfs:
             new_reference_dfs.update(pure_ref_dfs)

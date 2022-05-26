@@ -8970,7 +8970,7 @@ class TestHistoryPanel(unittest.TestCase):
                                           asset_type='any',
                                           adj='none')
         self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
-        self.assertEqual(hp.shares, ['no_share'])
+        self.assertEqual(hp.shares, ['none'])
         print(hp)
 
     def test_ffill_data(self):
