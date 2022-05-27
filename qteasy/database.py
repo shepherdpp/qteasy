@@ -1920,6 +1920,11 @@ class DataSource:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
+        if isinstance(htypes, str):
+            htypes = str_to_list(htypes)
+
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
         table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS

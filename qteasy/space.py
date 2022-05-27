@@ -63,11 +63,11 @@ class Space:
         for i in range(len(par_types)):
             if par_types[i] is None:
                 continue
-            elif par_types.lower() in ['int', 'discr']:
+            elif par_types[i].lower() in ['int', 'discr']:
                 par_types[i] = 'discr'
-            elif par_types.lower() in ['float', 'conti']:
+            elif par_types[i].lower() in ['float', 'conti']:
                 par_types[i] = 'conti'
-            elif par_types.lower() in ['enum', 'enumerate']:
+            elif par_types[i].lower() in ['enum', 'enumerate']:
                 par_types[i] = 'enum'
             else:
                 raise KeyError(f'Invalid parameter type: {par_types[i]}')

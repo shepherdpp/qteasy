@@ -351,8 +351,8 @@ class TestSpace(unittest.TestCase):
         # pars_list = [[(0, 10), (0, 10)],
         #              [[0, 10], [0, 10]]]
         #
-        # types_list = ['discr',
-        #               ['discr', 'discr']]
+        # types_list = ['int',
+        #               ['int', 'int']]
         #
         # input_pars = itertools.product(pars_list, types_list)
         # for p in input_pars:
@@ -363,7 +363,7 @@ class TestSpace(unittest.TestCase):
         #     # print(s, t)
         #     self.assertIsInstance(s, qt.Space)
         #     self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-        #     self.assertEqual(t, ['discr', 'discr'], 'types incorrect')
+        #     self.assertEqual(t, ['int', 'int'], 'types incorrect')
         #
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
@@ -384,7 +384,7 @@ class TestSpace(unittest.TestCase):
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
 
-        types_list = [['discr', 'foobar']]
+        types_list = [['int', 'foobar']]
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
@@ -394,11 +394,11 @@ class TestSpace(unittest.TestCase):
             t = s.types
             # print(s, t)
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-            self.assertEqual(t, ['discr', 'enum'], 'types incorrect')
+            self.assertEqual(t, ['int', 'enum'], 'types incorrect')
 
         pars_list = [(0., 10), (0, 10)]
         s = Space(pars=pars_list, par_types=None)
-        self.assertEqual(s.types, ['conti', 'discr'])
+        self.assertEqual(s.types, ['float', 'int'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 11))
         self.assertEqual(s.shape, (np.inf, 11))
@@ -407,7 +407,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = [(0., 10), (0, 10)]
         s = Space(pars=pars_list, par_types='conti, enum')
-        self.assertEqual(s.types, ['conti', 'enum'])
+        self.assertEqual(s.types, ['float', 'enum'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10.0, 2))
         self.assertEqual(s.shape, (np.inf, 2))
@@ -416,7 +416,7 @@ class TestSpace(unittest.TestCase):
 
         pars_list = [(1, 2), (2, 3), (3, 4)]
         s = Space(pars=pars_list)
-        self.assertEqual(s.types, ['discr', 'discr', 'discr'])
+        self.assertEqual(s.types, ['int', 'int', 'int'])
         self.assertEqual(s.dim, 3)
         self.assertEqual(s.size, (2, 2, 2))
         self.assertEqual(s.shape, (2, 2, 2))
@@ -455,7 +455,7 @@ class TestSpace(unittest.TestCase):
         :return:
         """
         pars_list = [(0, 10), (0, 10)]
-        types_list = ['discr', 'discr']
+        types_list = ['int', 'int']
         s = Space(pars=pars_list, par_types=types_list)
         extracted_int, count = s.extract(3, 'interval')
         extracted_int_list = list(extracted_int)
@@ -580,7 +580,7 @@ class TestSpace(unittest.TestCase):
             self.assertIsInstance(subspace, Space)
             self.assertTrue(subspace in s)
             self.assertEqual(subspace.dim, 6)
-            self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+            self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
             ext, count = subspace.extract(32)
             points = list(ext)
             self.assertGreaterEqual(count, 512)
@@ -595,7 +595,7 @@ class TestSpace(unittest.TestCase):
         # test axis object with conti type
         axis = Axis((0., 5))
         self.assertIsInstance(axis, Axis)
-        self.assertEqual(axis.axis_type, 'conti')
+        self.assertEqual(axis.axis_type, 'float')
         self.assertEqual(axis.axis_boe, (0., 5.))
         self.assertEqual(axis.count, np.inf)
         self.assertEqual(axis.size, 5.0)
@@ -608,7 +608,7 @@ class TestSpace(unittest.TestCase):
         # test axis object with discrete type
         axis = Axis((1, 5))
         self.assertIsInstance(axis, Axis)
-        self.assertEqual(axis.axis_type, 'discr')
+        self.assertEqual(axis.axis_type, 'int')
         self.assertEqual(axis.axis_boe, (1, 5))
         self.assertEqual(axis.count, 5)
         self.assertEqual(axis.size, 5)
@@ -636,7 +636,7 @@ class TestSpace(unittest.TestCase):
         # 生成一个space，指定space中的一个点以及distance，生成一个sub-space
         pars_list = [(0., 10), (0, 10)]
         s = Space(pars=pars_list, par_types=None)
-        self.assertEqual(s.types, ['conti', 'discr'])
+        self.assertEqual(s.types, ['float', 'int'])
         self.assertEqual(s.dim, 2)
         self.assertEqual(s.size, (10., 11))
         self.assertEqual(s.shape, (np.inf, 11))
@@ -648,7 +648,7 @@ class TestSpace(unittest.TestCase):
         distance = 2
         subspace = s.from_point(p, distance)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['conti', 'discr'])
+        self.assertEqual(subspace.types, ['float', 'int'])
         self.assertEqual(subspace.dim, 2)
         self.assertEqual(subspace.size, (4.0, 5))
         self.assertEqual(subspace.shape, (np.inf, 5))
@@ -661,7 +661,7 @@ class TestSpace(unittest.TestCase):
         d = 10
         subspace = s.from_point(p, d)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
+        self.assertEqual(subspace.types, ['int', 'int', 'int', 'int', 'int', 'int'])
         self.assertEqual(subspace.dim, 6)
         self.assertEqual(subspace.volume, 65345616)
         self.assertEqual(subspace.size, (16, 21, 21, 21, 21, 21))
@@ -675,7 +675,7 @@ class TestSpace(unittest.TestCase):
         d = 10
         subspace = s.from_point(p, d)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+        self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
         self.assertEqual(subspace.dim, 6)
         self.assertEqual(subspace.volume, 48000000)
         self.assertEqual(subspace.size, (15.0, 20.0, 20.0, 20.0, 20.0, 20.0))
@@ -689,7 +689,7 @@ class TestSpace(unittest.TestCase):
         d = [10, 5, 5, 10, 10, 5]
         subspace = s.from_point(p, d)
         self.assertIsInstance(subspace, Space)
-        self.assertEqual(subspace.types, ['conti', 'conti', 'conti', 'conti', 'conti', 'conti'])
+        self.assertEqual(subspace.types, ['float', 'float', 'float', 'float', 'float', 'float'])
         self.assertEqual(subspace.dim, 6)
         self.assertEqual(subspace.volume, 6000000)
         self.assertEqual(subspace.size, (15.0, 10.0, 10.0, 20.0, 20.0, 10.0))
@@ -5781,7 +5781,7 @@ class TestSelStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(stg_name='test_SEL',
+        super().__init__(name='test_SEL',
                          stg_text='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
@@ -5814,7 +5814,7 @@ class TestSelStrategyDiffTime(GeneralStg):
 
     # TODO: This strategy is not working, find out why and improve
     def __init__(self):
-        super().__init__(stg_name='test_SEL',
+        super().__init__(name='test_SEL',
                          stg_text='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
@@ -5846,7 +5846,7 @@ class TestSigStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(stg_name='test_SIG',
+        super().__init__(name='test_SIG',
                          stg_text='test signal creation strategy',
                          par_count=3,
                          par_types='conti, conti, conti',
@@ -5888,7 +5888,7 @@ class MyStg(qt.RuleIterator):
         super().__init__(
                 pars=(20, 100, 0.01),
                 par_count=3,
-                par_types=['discr', 'discr', 'conti'],
+                par_types=['int', 'int', 'float'],
                 par_range=[(10, 250), (10, 250), (0.0, 0.5)],
                 name='CUSTOM ROLLING TIMING STRATEGY',
                 description='Customized Rolling Timing Strategy for Testing',
@@ -6613,6 +6613,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(len(op.op_data_type_list), 0)
         self.assertEqual(op.op_data_type_list, [])
 
+        import pdb; pdb.set_trace()
         op = qt.Operator('macd, dma, trix, cdl')
         ohd = op.op_data_type_list
         print(f'ohd is {ohd}')
@@ -6671,7 +6672,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(len(osp[0]), 6)
         self.assertEqual(len(osp[1]), 6)
         self.assertEqual(osp[0], [(10, 250), (10, 250), (10, 250), (10, 250), (10, 250), (10, 250)])
-        self.assertEqual(osp[1], ['discr', 'discr', 'discr', 'discr', 'discr', 'discr'])
+        self.assertEqual(osp[1], ['int', 'int', 'int', 'int', 'int', 'int'])
 
     def test_property_opt_types(self):
         """ test property opt_tags"""
@@ -7236,7 +7237,7 @@ class TestOperator(unittest.TestCase):
         op.set_parameter('dma',
                          pars=(5, 10, 5),
                          opt_tag=1,
-                         par_boes=((5, 10), (5, 15), (10, 15)),
+                         par_range=((5, 10), (5, 15), (10, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         op.set_parameter('all',
@@ -7255,7 +7256,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
-                          ['discr', 'discr', 'discr', 'discr', 'conti']))
+                          ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.max_window_length, 20)
         print(f'KeyError will be raised if wrong strategy id is given')
         self.assertRaises(KeyError, op.set_parameter, stg_id='t-1', pars=(1, 2))
@@ -7279,7 +7280,7 @@ class TestOperator(unittest.TestCase):
 
         self.assertEqual(op.opt_space_par,
                          ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
-                          ['discr', 'discr', 'discr', 'discr', 'conti']))
+                          ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
     def test_signal_blend(self):
@@ -7402,7 +7403,7 @@ class TestOperator(unittest.TestCase):
         op.set_parameter('dma',
                          pars=(5, 10, 5),
                          opt_tag=1,
-                         par_boes=((5, 10), (5, 15), (10, 15)),
+                         par_range=((5, 10), (5, 15), (10, 15)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
@@ -7417,7 +7418,7 @@ class TestOperator(unittest.TestCase):
         op.set_parameter('crossline',
                          pars=(5, 10, 5, 'sell'),
                          opt_tag=1,
-                         par_boes=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.opt_tags, [1, 0, 1])
@@ -7435,7 +7436,7 @@ class TestOperator(unittest.TestCase):
         op.set_parameter('crossline',
                          pars=(5, 10, 5, 'sell'),
                          opt_tag=2,
-                         par_boes=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.opt_tags, [1, 0, 2])
@@ -7456,7 +7457,7 @@ class TestOperator(unittest.TestCase):
 
     def test_stg_attribute_get_and_set(self):
         self.stg = qt.TimingCrossline()
-        self.stg_type = 'R-TIMING'
+        self.stg_type = 'RULE-ITER'
         self.stg_name = "CROSSLINE"
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
@@ -7464,7 +7465,7 @@ class TestOperator(unittest.TestCase):
         self.pars = (35, 120, 10, 'buy')
         self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
         self.par_count = 4
-        self.par_types = ['discr', 'discr', 'conti', 'enum']
+        self.par_types = ['int', 'int', 'float', 'enum']
         self.opt_tag = 0
         self.data_types = ['close']
         self.data_freq = 'd'
@@ -7493,10 +7494,10 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.stg.par_count, 3)
         self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
         self.assertEqual(self.stg.par_range, [(1, 10), (1, 10), (1, 10), (1, 10)])
-        self.stg.par_types = ['conti', 'conti', 'discr', 'enum']
-        self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'enum'])
+        self.stg.par_types = ['float', 'float', 'int', 'enum']
+        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'enum'])
         self.stg.par_types = 'conti, conti, discr, conti'
-        self.assertEqual(self.stg.par_types, ['conti', 'conti', 'discr', 'conti'])
+        self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'float'])
         self.stg.data_types = 'close, open'
         self.assertEqual(self.stg.data_types, ['close', 'open'])
         self.stg.data_types = ['close', 'high', 'low']
@@ -7719,7 +7720,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
         self.assertEqual(seg_count, 8)
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -8784,9 +8785,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df2.rename(index=pd.to_datetime))
         print(df3.rename(index=pd.to_datetime))
 
-        hp1 = stack_dataframes([df1, df2, df3], stack_as='shares',
+        hp1 = stack_dataframes([df1, df2, df3], dataframe_as='shares',
                                shares=['000100', '000200', '000300'])
-        hp2 = stack_dataframes([df1, df2, df3], stack_as='shares',
+        hp2 = stack_dataframes([df1, df2, df3], dataframe_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -8797,9 +8798,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp2.shares, ['000100', '000300', '000200'])
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
-        hp3 = stack_dataframes([df1, df2, df3], stack_as='htypes',
+        hp3 = stack_dataframes([df1, df2, df3], dataframe_as='htypes',
                                htypes=['close', 'high', 'low'])
-        hp4 = stack_dataframes([df1, df2, df3], stack_as='htypes',
+        hp4 = stack_dataframes([df1, df2, df3], dataframe_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -8864,9 +8865,9 @@ class TestHistoryPanel(unittest.TestCase):
         print(df3.rename(index=pd.to_datetime))
 
         hp1 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_as='shares')
+                               dataframe_as='shares')
         hp2 = stack_dataframes(dfs={'000001.SZ': df1, '000002.SZ': df2, '000003.SZ': df3},
-                               stack_as='shares',
+                               dataframe_as='shares',
                                shares='000100, 000300, 000200')
         print('hp1 is:\n', hp1)
         print('hp2 is:\n', hp2)
@@ -11063,8 +11064,8 @@ class TestQT(unittest.TestCase):
         self.op = qt.Operator(strategies=['dma', 'macd'])
         print('  START TO TEST QT GENERAL OPERATIONS\n'
               '=======================================')
-        self.op.set_parameter('dma', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
-        self.op.set_parameter('macd', opt_tag=1, par_boes=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('dma', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
+        self.op.set_parameter('macd', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
         self.op.signal_type = 'pt'
 
         qt.configure(reference_asset='000300.SH',
@@ -12051,7 +12052,7 @@ class StgBuyOpen(GeneralStg):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['descr'],
-                         stg_name='OPEN_BUY',
+                         name='OPEN_BUY',
                          par_range=[(0, 100)],
                          bt_price_type='open')
         pass
@@ -12083,7 +12084,7 @@ class StgSelClose(GeneralStg):
         super().__init__(pars=pars,
                          par_count=1,
                          par_types=['descr'],
-                         stg_name='SELL_CLOSE',
+                         name='SELL_CLOSE',
                          par_range=[(0, 100)],
                          bt_price_type='close')
         pass
@@ -12290,14 +12291,14 @@ class TestDataSource(unittest.TestCase):
 
     def test_properties(self):
         """test properties"""
-        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/qteasy/arr/')
-        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/qteasy/arr/')
-        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/qteasy/arr/')
+        self.assertEqual(self.ds_csv.__str__(), 'file://csv@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_hdf.__str__(), 'file://hdf@qt_root/qteasy/data/')
+        self.assertEqual(self.ds_fth.__str__(), 'file://fth@qt_root/qteasy/data/')
         self.assertEqual(self.ds_db.__str__(), 'db:mysql://localhost@3306/test_db')
 
-        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'qteasy/arr/')")
-        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'qteasy/arr/')")
-        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'qteasy/arr/')")
+        self.assertEqual(self.ds_csv.__repr__(), "DataSource('file', 'csv', 'qteasy/data/')")
+        self.assertEqual(self.ds_hdf.__repr__(), "DataSource('file', 'hdf', 'qteasy/data/')")
+        self.assertEqual(self.ds_fth.__repr__(), "DataSource('file', 'fth', 'qteasy/data/')")
         self.assertEqual(self.ds_db.__repr__(), "DataSource('db', 'localhost', 3306)")
 
         self.assertEqual(self.ds_csv.tables, [])
@@ -12363,21 +12364,21 @@ class TestDataSource(unittest.TestCase):
         self.assertIs(self.ds_db.file_path, None)
 
         self.assertIsInstance(self.ds_csv, DataSource)
-        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/qteasy/arr/')
+        self.assertEqual(self.ds_csv.connection_type, 'file://csv@qt_root/qteasy/data/')
         self.assertEqual(self.ds_csv.file_type, 'csv')
-        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/arr/')
+        self.assertEqual(self.ds_csv.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_csv.engine, None)
 
         self.assertIsInstance(self.ds_hdf, DataSource)
-        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/qteasy/arr/')
+        self.assertEqual(self.ds_hdf.connection_type, 'file://hdf@qt_root/qteasy/data/')
         self.assertEqual(self.ds_hdf.file_type, 'hdf')
-        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/arr/')
+        self.assertEqual(self.ds_hdf.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_hdf.engine, None)
 
         self.assertIsInstance(self.ds_fth, DataSource)
-        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/qteasy/arr/')
+        self.assertEqual(self.ds_fth.connection_type, 'file://fth@qt_root/qteasy/data/')
         self.assertEqual(self.ds_fth.file_type, 'fth')
-        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/arr/')
+        self.assertEqual(self.ds_fth.file_path, self.qt_root_path + 'qteasy/data/')
         self.assertIs(self.ds_fth.engine, None)
 
     def test_file_manipulates(self):

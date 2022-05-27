@@ -330,11 +330,11 @@ class Operator:
 
     def __repr__(self):
         res = list()
-        res.append('Operator(')
+        res.append('Operator([')
         if self.strategy_count > 0:
             res.append(', '.join(self._strategy_id))
-        res.append('), ')
-        res.append(f'{self.signal_type}, {self.op_type}')
+        res.append('], ')
+        res.append(f'\'{self.signal_type}\', \'{self.op_type}\')')
         return ''.join(res)
 
     @property
@@ -1040,7 +1040,7 @@ class Operator:
                       stg_id: [str, int],
                       pars: [tuple, dict] = None,
                       opt_tag: int = None,
-                      par_boes: [tuple, list] = None,
+                      par_range: [tuple, list] = None,
                       par_types: [list, str] = None,
                       data_freq: str = None,
                       sample_freq: str = None,
@@ -1062,8 +1062,8 @@ class Operator:
             :param opt_tag:
                 :type opt_tag: int, 优化类型，0: 不参加优化，1: 参加优化, 2: 以枚举类型参加优化
 
-            :param par_boes:
-                :type par_boes: tuple or list, 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
+            :param par_range:
+                :type par_range: tuple or list, 策略取值范围列表,一个包含若干tuple的列表,代表参数中一个元素的取值范围，如
                 [(0, 1), (0, 100), (0, 100)]
 
             :param par_types:
@@ -1100,8 +1100,8 @@ class Operator:
                 raise ValueError(f'parameter setting error')
         if opt_tag is not None:  # 设置策略的优化标记
             strategy.set_opt_tag(opt_tag)
-        if par_boes is not None:  # 设置策略的参数优化边界
-            strategy.set_par_boes(par_boes)
+        if par_range is not None:  # 设置策略的参数优化边界
+            strategy.set_par_range(par_range)
         if par_types is not None:  # 设置策略的参数类型
             strategy.par_types = par_types
         has_df = data_freq is not None

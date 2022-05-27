@@ -358,7 +358,7 @@ class BaseStrategy:
                 raise TypeError(f'parameter range (par_range) should be a tuple or a list, '
                                 f'got {type(par_range)} instead')
             for item in par_range:
-                if not isinstance(item, tuple):
+                if not isinstance(item, (tuple, list)):
                     raise KeyError(f'Invalid type ({type(item)}), should only pass strings in par_types')
             if len(par_range) < par_count:
                 logger_core.warning(f'Not enough parameter ranges({len(par_range)}) to assign'
@@ -394,6 +394,7 @@ class BaseStrategy:
         self.set_hist_pars(data_freq=data_freq,
                            sample_freq=sample_freq,
                            window_length=window_length,
+                           data_types=data_types,
                            bt_price_type=bt_price_type,
                            reference_data_types=reference_data_types)
         logger_core.info(f'Strategy creation. with other parameters: data_freq={data_freq}, sample_freq={sample_freq},'
@@ -464,7 +465,7 @@ class BaseStrategy:
 
     @par_range.setter
     def par_range(self, boes: list):
-        self.set_par_range(par_boes=boes)
+        self.set_par_range(par_range=boes)
 
     @property
     def opt_tag(self):
@@ -644,18 +645,18 @@ class BaseStrategy:
         self._opt_tag = opt_tag
         return opt_tag
 
-    def set_par_range(self, par_boes):
+    def set_par_range(self, par_range):
         """ 设置策略参数的取值范围
 
         input:
-            :param par_boes: 策略的参数取值范围
+            :param par_range: 策略的参数取值范围
         :return:
         """
-        if par_boes is None:
+        if par_range is None:
             self._par_bounds_or_enums = []
         else:
-            self._par_bounds_or_enums = par_boes
-        return par_boes
+            self._par_bounds_or_enums = par_range
+        return par_range
 
     def set_hist_pars(self,
                       data_freq=None,
@@ -734,6 +735,8 @@ class BaseStrategy:
         """
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
         # 在这里使用map或apply_along_axis快速组装realize()的结果，形成一张交易信号清单
+        if data_idx is None:
+            data_idx = -1
         if isinstance(data_idx, (int, np.int)):
             # 生成单组信号
             idx = data_idx
