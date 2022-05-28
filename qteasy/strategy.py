@@ -748,11 +748,18 @@ class BaseStrategy:
             # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
             share_count, date_count, htype_count = hist_data[0].shape
             signal_count = len(data_idx)
-            sig_list = np.full(shape=(date_count, share_count), fill_value=np.nan, order='C')
+            sig_list = np.full(shape=(signal_count, share_count), fill_value=np.nan, order='C')
             # 遍历data_idx中的序号，生成N组交易信号，将这些信号填充到清单中对应的位置上
+            all_none_list = [None] * signal_count
             hist_data_list = hist_data[data_idx]
-            ref_data_list = ref_data[data_idx]
-            trade_data_list = [trade_data] * signal_count
+            if ref_data is None:
+                ref_data_list = all_none_list
+            else:
+                ref_data_list = ref_data[data_idx]
+            if trade_data is None:
+                trade_data_list = all_none_list
+            else:
+                trade_data_list = [trade_data] * signal_count
             # 使用map完成快速遍历填充
             signals = list(map(self.generate_one, hist_data_list, ref_data_list, trade_data_list))
             sig_list[data_idx] = np.array(signals)
@@ -1110,7 +1117,10 @@ class RuleIterator(BaseStrategy):
         """
         # 仅针对非nan值计算，忽略股票停牌时期
         hist_nonan = h_seg[~np.isnan(h_seg[:, 0])]
-        ref_nonan = ref_seg[~np.isnan(ref_seg[:, 0])]
+        if ref_seg is None:
+            ref_nonan = None
+        else:
+            ref_nonan = ref_seg[~np.isnan(ref_seg[:, 0])]
 
         try:
             return self.realize(h=hist_nonan,

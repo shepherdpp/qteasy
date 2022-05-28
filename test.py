@@ -5782,7 +5782,7 @@ class TestSelStrategy(GeneralStg):
 
     def __init__(self):
         super().__init__(name='test_SEL',
-                         stg_text='test portfolio selection strategy',
+                         description='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
                          par_range=(),
@@ -5815,7 +5815,7 @@ class TestSelStrategyDiffTime(GeneralStg):
     # TODO: This strategy is not working, find out why and improve
     def __init__(self):
         super().__init__(name='test_SEL',
-                         stg_text='test portfolio selection strategy',
+                         description='test portfolio selection strategy',
                          par_count=0,
                          par_types='',
                          par_range=(),
@@ -5847,7 +5847,7 @@ class TestSigStrategy(GeneralStg):
 
     def __init__(self):
         super().__init__(name='test_SIG',
-                         stg_text='test signal creation strategy',
+                         description='test signal creation strategy',
                          par_count=3,
                          par_types='conti, conti, conti',
                          par_range=([2, 10], [0, 3], [0, 3]),
@@ -6613,7 +6613,6 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(len(op.op_data_type_list), 0)
         self.assertEqual(op.op_data_type_list, [])
 
-        import pdb; pdb.set_trace()
         op = qt.Operator('macd, dma, trix, cdl')
         ohd = op.op_data_type_list
         print(f'ohd is {ohd}')

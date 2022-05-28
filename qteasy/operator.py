@@ -748,28 +748,36 @@ class Operator:
         else:
             return [stg for stg in self.strategies if stg.bt_price_type == price_type]
 
-    def get_op_history_data_by_price_type(self, price_type=None):
+    def get_op_history_data_by_price_type(self, price_type=None, get_rolling_window=True):
         """ 返回Operator对象中每个strategy对应的交易信号历史数据，price_type是一个可选参数
-        如果给出price_type时，返回使用该price_type的所有策略的历史数据
+        如果给出price_type时，返回使用该price_type的所有策略的历史数据的rolling window
 
         :param price_type: str 一个可用的price_type
+        :param get_rolling_window: True时返回rolling_window数据，否则直接返回历史数据
         :return List
         """
-        all_hist_data = self._op_history_data
+        if get_rolling_window:
+            all_hist_data = self._op_hist_data_rolling_windows
+        else:
+            all_hist_data = self._op_history_data
         if price_type is None:
             return list(all_hist_data.values())
         else:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_hist_data[stg_id] for stg_id in relevant_strategy_ids]
 
-    def get_op_ref_data_by_price_type(self, price_type=None):
+    def get_op_ref_data_by_price_type(self, price_type=None, get_rolling_window=True):
         """ 返回Operator对象中每个strategy对应的交易信号参考数据，price_type是一个可选参数
         如果给出price_type时，返回使用该price_type的所有策略的参考数据
 
         :param price_type: str 一个可用的price_type
+        :param get_rolling_window: True时返回rolling_window数据，否则直接返回历史数据
         :return: List
         """
-        all_ref_data = self._op_reference_data
+        if get_rolling_window:
+            all_ref_data = self._op_ref_data_rolling_windows
+        else:
+            all_ref_data = self._op_reference_data
         if price_type is None:
             return list(all_ref_data.values())
         else:
@@ -1247,7 +1255,7 @@ class Operator:
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
-        op_dates = hist_data[first_cash_pos:]
+        op_dates = hist_data.hdates[first_cash_pos:]
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         if not first_cash_pos >= self.max_window_length:
             message = f'History data starts on {hist_data.hdates[0]} does not have' \
@@ -1291,55 +1299,65 @@ class Operator:
             for stg_id, stg in self.get_strategy_id_pairs()
         }
         # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
-        self._op_reference_data = {
-            stg_id: reference_data[stg.refence_data_types, :, (first_cash_pos - stg.window_length):]
-            for stg_id, stg in self.get_strategy_id_pairs()
-        }
+        if reference_data:
+            self._op_reference_data = {
+                stg_id: reference_data[stg.reference_data_types, :, (first_cash_pos - stg.window_length):]
+                for stg_id, stg in self.get_strategy_id_pairs()
+            }
+        else:
+            self._op_reference_data = {
+                stg_id: None
+                for stg_id, stg in self.get_strategy_id_pairs()
+            }
 
         # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的有限窗口数据）
         # 清空可能已经存在的数据
         self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
         for stg_id, stg in self.get_strategy_id_pairs():
-            # 逐个生成历史数据滚动窗口，赋值给各个策略
+            # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策略
             window_length = stg.window_length
-            hist_data = self._op_history_data[stg_id]
-            self._op_ref_data_rolling_windows[stg_id] = rolling_window(hist_data, window=window_length, axis=1)
+            hist_data_val = self._op_history_data[stg_id]
+            self._op_hist_data_rolling_windows[stg_id] = rolling_window(
+                    hist_data_val,
+                    window=window_length,
+                    axis=1
+            )
 
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
             window_length = stg.window_length
-            ref_data = self._op_reference_data[stg_id]
-            self._op_ref_data_rolling_windows[stg_id] = rolling_window(ref_data, window=window_length, axis=0)
+            ref_data_val = self._op_reference_data[stg_id]
+            self._op_ref_data_rolling_windows[stg_id] = rolling_window(
+                    ref_data_val,
+                    window=window_length,
+                    axis=0
+            ) if ref_data_val else None
 
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
             # 根据sample_freq生成一个日期序列
             temp_date_series = pd.date_range(start=op_dates[window_length], end=op_dates[-1], freq=freq)
+            sample_count = len(op_dates[window_length:])
             if len(temp_date_series) == 0:
-                # 如果sample_freq太大，无法生成有意义的选股日期，则生成基础分段，起点是第一日，终点是最后一日
-                seg_pos = np.zeros(shape=(3,), dtype='int')
-                seg_pos[1] = np.searchsorted(op_dates, op_dates[window_length])  # 起点第一日
-                seg_pos[-1] = len(op_dates) - 1  # 终点最后一日
-                self._op_sample_indexes[stg_id] = seg_pos
+                # 如果sample_freq太大，无法生成有意义的取样日期，则生成一个取样点，位于第一日
+                sample_pos = np.zeros(shape=(1,), dtype='int')
+                sample_pos[0] = np.searchsorted(op_dates, op_dates[window_length])  # 起点第一日
+                self._op_sample_indexes[stg_id] = sample_pos
             else:
                 # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
                 # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
-                bnds = temp_date_series - (temp_date_series[0] - op_dates[window_length])
-                # 写入第一个选股区间分隔位——0 (仅当第一个选股区间分隔日期与数据历史第一个日期不相同时才这样处理)
-                seg_pos = np.zeros(shape=(len(bnds) + 2), dtype='int')
-                # 用searchsorted函数把输入的日期与历史数据日期匹配起来
-                seg_pos[1:-1] = np.searchsorted(op_dates, bnds)
-                # 最后一个分隔位等于历史区间的总长度
-                seg_pos[-1] = len(op_dates) - 1
-                # 默认情况下是要在seg_pos的最前面添加0，表示从第一个日期起始
-                # 如果分段界限的首位本身就是0时，需要删除一个0
-                if seg_pos[1] == 0:
-                    self._op_sample_indexes[stg_id] = seg_pos[1:]
-                else:
-                    self._op_sample_indexes[stg_id] = seg_pos
+                target_dates = temp_date_series - (temp_date_series[0] - op_dates[window_length])
+                # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
+                sample_pos = np.searchsorted(op_dates, target_dates)
+                # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
+                # 这里使用一种较快的技巧方法去掉重复值
+                sample_pos = sample_pos[(sample_pos - np.roll(sample_pos, 1)).astype('bool')]
+                import pdb;
+                pdb.set_trace()
+                self._op_sample_indexes[stg_id] = sample_pos
 
-        # 设置策略生成的交易信号清单的各个纬度的序号index，包括shares, hdates, price_types
+        # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types
         self._op_list_price_types = hist_data.shares
         operator_window_length = self.max_window_length
         self._op_list_hdates = hist_data.hdates[operator_window_length:]
@@ -1427,11 +1445,17 @@ class Operator:
             bt_price_types = self.bt_price_types[price_type_idx]
         bt_price_type_count = len(bt_price_types)
         for bt_price_type in bt_price_types:
-            # 针对每种交易价格类型分别调用所有的相关策略
+            # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
             op_signals = []
             relevant_strategies = self.get_strategies_by_price_type(price_type=bt_price_type)
-            relevant_hist_data = self.get_op_history_data_by_price_type(price_type=bt_price_type)
-            relevant_ref_data = self.get_op_ref_data_by_price_type(price_type=bt_price_type)
+            relevant_hist_data = self.get_op_history_data_by_price_type(
+                    price_type=bt_price_type,
+                    get_rolling_window=True
+            )
+            relevant_ref_data = self.get_op_ref_data_by_price_type(
+                    price_type=bt_price_type,
+                    get_rolling_window=True
+            )
             td = trade_data[bt_price_type]
             if sample_idx is None:
                 relevant_sample_indexes = self.get_op_sample_indexes_by_price_type(price_type=bt_price_type)
