@@ -317,12 +317,13 @@ class Operator:
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
         self._op_list = None  # Operator生成的交易信号清单
-        self._op_list_shares = []
-        self._op_list_hdates = []
-        self._op_list_price_types = []
-        self._op_signal = None
-        self._op_signal_hdate_id = None
-        self._op_signal_price_type_id = None
+        self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
+        self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {date: idx}
+        self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {htype: idx}
+
+        self._op_signal = None  # 在realtime模式下，Operator生成的交易信号
+        self._op_signal_hdate_idx = None  # Operator交易信号
+        self._op_signal_price_type_idx = None
 
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
@@ -382,7 +383,7 @@ class Operator:
         elif st.lower() in self.AVAILABLE_SIGNAL_TYPES.values():
             self._signal_type = st.lower()
         else:
-            raise ValueError(f'the signal type {st} is not valid!\n'
+            raise ValueError(f'Invalid signal type ({st})\nChoose one from '
                              f'{self.AVAILABLE_SIGNAL_TYPES}')
 
     @property
@@ -545,11 +546,19 @@ class Operator:
         return len(self.bt_price_types)
 
     @property
+    def op_list(self):
+        """
+
+        :return:
+        """
+        return self._op_list
+
+    @property
     def op_list_shares(self):
         """ 生成的交易清单的shares序号，股票代码清单
         :return:
         """
-        return self._op_list_shares
+        return list(self._op_list_shares.keys())
 
     @property
     def op_list_hdates(self):
@@ -557,7 +566,7 @@ class Operator:
 
         :return:
         """
-        return self._op_list_hdates
+        return list(self._op_list_hdates.keys())
 
     @property
     def op_list_price_types(self):
@@ -565,7 +574,7 @@ class Operator:
 
         :return:
         """
-        return self._op_list_price_types
+        return list(self._op_list_price_types.keys())
 
     @property
     def ready(self):
@@ -859,6 +868,30 @@ class Operator:
         price_types = self.bt_price_types
         price_priority_list = self.get_bt_price_type_id_in_priority(priority=priority)
         return [price_types[i] for i in price_priority_list]
+
+    def get_share_idx(self, share):
+        """ 给定一个share（字符串）返回它对应的index
+
+        :param share:
+        :return:
+        """
+        return self._op_list_shares[share]
+
+    def get_hdate_idx(self, hdate):
+        """ 给定一个hdate（字符串）返回它对应的index
+
+        :param hdate:
+        :return:
+        """
+        return self._op_list_hdates[hdate]
+
+    def get_price_type_idx(self, price_type):
+        """ 给定一个price_type（字符串）返回它对应的index
+
+        :param price_type:
+        :return:
+        """
+        return self._op_list_price_types[price_type]
 
     def set_opt_par(self, opt_par):
         """optimizer接口函数，将输入的opt参数切片后传入stg的参数中
@@ -1264,8 +1297,6 @@ class Operator:
             logger_core.error(message)
             raise ValueError(message)
         # 确保最后一个投资日也在输入的历史数据范围内
-        # TODO: 这里应该提高容错度，如果某个投资日超出了历史数据范围，可以丢弃该笔投资，仅输出警告信息即可
-        #  没必要过度要求用户的输入完美无缺。
         if not last_cash_pos < len(hist_data.hdates):
             message = f'Not enough history data record to cover complete investment plan,' \
                       f' history data ends on {hist_data.hdates[-1]}, last investment ' \
@@ -1338,7 +1369,6 @@ class Operator:
             freq = stg.sample_freq
             # 根据sample_freq生成一个日期序列
             temp_date_series = pd.date_range(start=op_dates[window_length], end=op_dates[-1], freq=freq)
-            sample_count = len(op_dates[window_length:])
             if len(temp_date_series) == 0:
                 # 如果sample_freq太大，无法生成有意义的取样日期，则生成一个取样点，位于第一日
                 sample_pos = np.zeros(shape=(1,), dtype='int')
@@ -1353,15 +1383,17 @@ class Operator:
                 # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
                 # 这里使用一种较快的技巧方法去掉重复值
                 sample_pos = sample_pos[(sample_pos - np.roll(sample_pos, 1)).astype('bool')]
-                import pdb;
-                pdb.set_trace()
-                self._op_sample_indexes[stg_id] = sample_pos
+                self._op_sample_indexes[stg_id] = sample_pos - window_length
 
-        # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types
-        self._op_list_price_types = hist_data.shares
+        # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
+        share_count, hdate_count, htype_count = hist_data.shape
+        self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}
         operator_window_length = self.max_window_length
-        self._op_list_hdates = hist_data.hdates[operator_window_length:]
-        self._op_list_price_types = self.bt_price_types
+        op_list_hdates = hist_data.hdates[operator_window_length:]
+        self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
+        self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
+                                                                                range(len(self.bt_price_types)))}
+        # 设置hdates和price_type的index
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，
@@ -1493,3 +1525,16 @@ class Operator:
 
         return signal_value
 
+    def signal_list_segment(self, start=None, end=None):
+        """ 根据start/end截取signal_list的一段，self._op_list必须存在
+
+        :param start:
+        :param end:
+        :return:
+        """
+        if self.op_list is None:
+            return
+        start_idx = self.get_hdate_idx(pd.to_datetime(start))
+        end_date = self.get_hdate_idx(pd.to_datetime(end))
+
+        return self.op_list[start_idx:end_date]

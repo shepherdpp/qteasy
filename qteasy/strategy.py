@@ -741,7 +741,10 @@ class BaseStrategy:
             # 生成单组信号
             idx = data_idx
             h_seg = hist_data[idx]
-            ref_seg = ref_data[idx]
+            if ref_data is None:
+                ref_seg = ref_data[idx]
+            else:
+                ref_seg = None
             return self.generate_one(h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
         elif isinstance(data_idx, np.ndarray):
             # 生成信号清单

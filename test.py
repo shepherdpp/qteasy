@@ -6129,13 +6129,13 @@ class TestOperator(unittest.TestCase):
     def test_repr(self):
         """ test basic representation of Opeartor class"""
         op = qt.Operator()
-        self.assertEqual(op.__repr__(), 'Operator()')
+        self.assertEqual(op.__repr__(), 'Operator([], \'pt\', \'batch\')')
 
         op = qt.Operator('macd, dma, trix, random, ndayavg')
-        self.assertEqual(op.__repr__(), 'Operator(macd, dma, trix, random, ndayavg)')
+        self.assertEqual(op.__repr__(), 'Operator([macd, dma, trix, random, ndayavg], \'pt\', \'batch\')')
         self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA)')
-        self.assertEqual(op['macd'].__repr__(), 'R-TIMING(MACD)')
-        self.assertEqual(op['trix'].__repr__(), 'R-TIMING(TRIX)')
+        self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD)')
+        self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX)')
         self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
         self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
 
@@ -7019,7 +7019,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['*', '1', '0']})
         print('--test operation signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal(hist_data=self.hp1)
+        op_list = self.op.create_signal()
 
         self.assertTrue(isinstance(op_list, HistoryPanel))
         backtest_price_types = op_list.htypes
@@ -7106,7 +7106,7 @@ class TestOperator(unittest.TestCase):
                          {'close': ['*', '1', '0'],
                           'open':  ['or', '1', '0']})
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
-        op_list = self.op.create_signal(hist_data=self.hp1)
+        op_list = self.op.create_signal()
 
         self.assertTrue(isinstance(op_list, HistoryPanel))
         signal_close = op_list['close'].squeeze().T
@@ -7472,8 +7472,8 @@ class TestOperator(unittest.TestCase):
         self.window_length = 270
 
         self.assertEqual(self.stg.stg_type, self.stg_type)
-        self.assertEqual(self.stg.stg_name, self.stg_name)
-        self.assertEqual(self.stg.stg_text, self.stg_text)
+        self.assertEqual(self.stg.name, self.stg_name)
+        self.assertEqual(self.stg.description, self.stg_text)
         self.assertEqual(self.stg.pars, self.pars)
         self.assertEqual(self.stg.par_types, self.par_types)
         self.assertEqual(self.stg.par_range, self.par_boes)
@@ -7483,10 +7483,10 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.stg.sample_freq, self.sample_freq)
         self.assertEqual(self.stg.data_types, self.data_types)
         self.assertEqual(self.stg.window_length, self.window_length)
-        self.stg.stg_name = 'NEW NAME'
-        self.stg.stg_text = 'NEW TEXT'
-        self.assertEqual(self.stg.stg_name, 'NEW NAME')
-        self.assertEqual(self.stg.stg_text, 'NEW TEXT')
+        self.stg.name = 'NEW NAME'
+        self.stg.description = 'NEW TEXT'
+        self.assertEqual(self.stg.name, 'NEW NAME')
+        self.assertEqual(self.stg.description, 'NEW TEXT')
         self.stg.pars = (1, 2, 3, 4)
         self.assertEqual(self.stg.pars, (1, 2, 3, 4))
         self.stg.par_count = 3
@@ -7495,7 +7495,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.stg.par_range, [(1, 10), (1, 10), (1, 10), (1, 10)])
         self.stg.par_types = ['float', 'float', 'int', 'enum']
         self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'enum'])
-        self.stg.par_types = 'conti, conti, discr, conti'
+        self.stg.par_types = 'float, float, int, float'
         self.assertEqual(self.stg.par_types, ['float', 'float', 'int', 'float'])
         self.stg.data_types = 'close, open'
         self.assertEqual(self.stg.data_types, ['close', 'open'])
@@ -7579,7 +7579,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
         self.assertEqual(seg_count, 8)
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7638,7 +7638,7 @@ class TestOperator(unittest.TestCase):
         stg_pars = (0.2, 0.02, -0.02)
         stg.set_pars(stg_pars)
         history_data = self.hp1['close, open, high, low', :, 3:50]
-        output = stg.generate(hist_data=history_data, shares=self.shares, dates=self.date_indices)
+        output = stg.generate(hist_data=history_data)
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7786,7 +7786,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data)
         selmask = np.array([[0.5, 0.5, 0.0],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7850,7 +7850,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data)
         selmask = np.array([[0.0, 0.33333333, 0.66666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7910,7 +7910,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data)
         selmask = np.array([[0., 0.08333333, 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7970,7 +7970,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data, shares=self.hp1.shares, dates=self.hp1.hdates)
+        output = stg.generate(hist_data=history_data)
         selmask = np.array([[0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
