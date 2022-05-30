@@ -261,12 +261,12 @@ class BaseStrategy:
                                 'sell1', 'sell2', 'sell3', 'sell4', 'sell5']
 
     def __init__(self,
-                 pars: tuple = (),
+                 pars: any = None,
                  opt_tag: int = 0,
                  stg_type: str = 'strategy type',
                  name: str = 'strategy name',
                  description: str = 'intro text of strategy',
-                 par_count: int = 0,
+                 par_count: int = None,
                  par_types: [list, str] = None,
                  par_range: [list, tuple] = None,
                  data_freq: str = 'd',
@@ -286,9 +286,9 @@ class BaseStrategy:
         implied_par_types = None
         implied_par_range = None
         if pars is None:
-            pars = ()
-
-        if isinstance(pars, (tuple, list)):
+            pass
+        # 如果给出了pars且为tuple时，推测 par_count, par_types, par_range 三个参数的值
+        elif isinstance(pars, (tuple, list)):
             implied_par_count = len(pars)
             implied_par_types = []
             implied_par_range = []
@@ -307,7 +307,7 @@ class BaseStrategy:
                                     f'integers, floats or strings')
         elif isinstance(pars, dict):
             if not all(isinstance(item, tuple) for item in pars.values()):
-                raise TypeError(f'All items is a dict type parameter should be tuples, invalid type encounted')
+                raise TypeError(f'All items is a dict type parameter should be tuples, invalid type encountered')
 
         else:
             raise TypeError(f'Invalid parameter type. pars should be a tuple, '
@@ -325,11 +325,11 @@ class BaseStrategy:
                 raise ValueError(f'Invalid parameter count ({par_count}), it should not be less than 0')
             if implied_par_count is not None:
                 if par_count != implied_par_count:
-                    par_count = implied_par_count
                     logger_core.warning(f'Invalid parameter count ({par_count}), given parameter implies '
                                         f'({implied_par_count})'
                                         f'par_count adjusted, you should '
                                         f'probably pass "par_count = {implied_par_count}"')
+                    par_count = implied_par_count
 
         if par_types is None:
             par_types = implied_par_types
@@ -742,9 +742,9 @@ class BaseStrategy:
             idx = data_idx
             h_seg = hist_data[idx]
             if ref_data is None:
-                ref_seg = ref_data[idx]
-            else:
                 ref_seg = None
+            else:
+                ref_seg = ref_data[idx]
             return self.generate_one(h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
         elif isinstance(data_idx, np.ndarray):
             # 生成信号清单

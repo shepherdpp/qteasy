@@ -316,6 +316,8 @@ class Operator:
         self._op_sample_indexes = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
+
+        # 以下属性由Operator自动设置，不允许用户手动设置
         self._op_list = None  # Operator生成的交易信号清单
         self._op_list_shares = {}  # Operator交易信号清单的股票代码，一个dict: {share: idx}
         self._op_list_hdates = {}  # Operator交易信号清单的日期，一个dict: {date: idx}
@@ -558,6 +560,8 @@ class Operator:
         """ 生成的交易清单的shares序号，股票代码清单
         :return:
         """
+        if self._op_list_shares == {}:
+            return
         return list(self._op_list_shares.keys())
 
     @property
@@ -566,6 +570,8 @@ class Operator:
 
         :return:
         """
+        if self._op_list_hdates == {}:
+            return
         return list(self._op_list_hdates.keys())
 
     @property
@@ -574,6 +580,8 @@ class Operator:
 
         :return:
         """
+        if self._op_list_price_types == {}:
+            return
         return list(self._op_list_price_types.keys())
 
     @property
@@ -875,6 +883,8 @@ class Operator:
         :param share:
         :return:
         """
+        if self._op_list_shares == {}:
+            return
         return self._op_list_shares[share]
 
     def get_hdate_idx(self, hdate):
@@ -883,6 +893,8 @@ class Operator:
         :param hdate:
         :return:
         """
+        if self._op_list_hdates == {}:
+            return
         return self._op_list_hdates[hdate]
 
     def get_price_type_idx(self, price_type):
@@ -891,6 +903,8 @@ class Operator:
         :param price_type:
         :return:
         """
+        if self._op_list_price_types == {}:
+            return
         return self._op_list_price_types[price_type]
 
     def set_opt_par(self, opt_par):
@@ -1197,7 +1211,8 @@ class Operator:
             print('=' * 25)
 
     def is_ready(self):
-        """ 全面检查op是否可以开始运行，
+        """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
+        策略参数是否完整
 
         :return: bool
         """
@@ -1205,6 +1220,7 @@ class Operator:
 
     # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
+    # TODO 去掉这个函数中与CashPlan相关的流程，将CashPlan的处理移到core.py中，使Operator与CashPlan无关
     def assign_hist_data(self, hist_data: HistoryPanel, cash_plan: CashPlan, reference_data=None):
         """ 在create_signal之前准备好相关历史数据，检查历史数据是否符合所有策略的要求：
 
@@ -1283,8 +1299,9 @@ class Operator:
                 raise TypeError(f'Reference data should be a HistoryPanel, got {type(reference_data)} instead.')
             # 确保输入的参考数据不为空
             if reference_data.is_empty:
-                raise ValueError(f'reference data can not be empty!')
+                raise ValueError(f'If not None, reference data can not be empty!')
             # 确保reference_data与hist_data的数据量相同
+        # TODO 从这里开始下面的操作都应该移动到core.py中
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
@@ -1312,6 +1329,7 @@ class Operator:
             cash_plan.reset_dates(nearest_next)
             logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
                                 f'trade dates')
+        # TODO 到这里为止上面的操作都应该移动到core.py中
         # 确保op的策略都设置了参数
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
@@ -1341,7 +1359,7 @@ class Operator:
                 for stg_id, stg in self.get_strategy_id_pairs()
             }
 
-        # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的有限窗口数据）
+        # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的数据滑窗）
         # 清空可能已经存在的数据
         self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
@@ -1393,7 +1411,6 @@ class Operator:
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
         self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
                                                                                 range(len(self.bt_price_types)))}
-        # 设置hdates和price_type的index
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，
@@ -1488,7 +1505,10 @@ class Operator:
                     price_type=bt_price_type,
                     get_rolling_window=True
             )
-            td = trade_data[bt_price_type]
+            if trade_data is not None:
+                td = trade_data[bt_price_type]
+            else:
+                td = None
             if sample_idx is None:
                 relevant_sample_indexes = self.get_op_sample_indexes_by_price_type(price_type=bt_price_type)
             # 依次使用选股策略队列中的所有策略逐个生成交易信号

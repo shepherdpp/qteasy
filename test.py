@@ -20,7 +20,7 @@ import itertools
 import datetime
 import logging
 
-from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR
+from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR, CashPlan
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
@@ -5846,13 +5846,15 @@ class TestSigStrategy(GeneralStg):
     """
 
     def __init__(self):
-        super().__init__(name='test_SIG',
-                         description='test signal creation strategy',
-                         par_count=3,
-                         par_types='conti, conti, conti',
-                         par_range=([2, 10], [0, 3], [0, 3]),
-                         data_types='close, open, high, low',
-                         window_length=2)
+        super().__init__(
+                name='test_SIG',
+                description='test signal creation strategy',
+                par_count=3,
+                par_types='conti, conti, conti',
+                par_range=([2, 10], [0, 3], [0, 3]),
+                data_types='close, open, high, low',
+                window_length=2
+        )
         pass
 
     def _realize(self, hist_data: np.ndarray, params: tuple):
@@ -6136,7 +6138,7 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op['dma'].__repr__(), 'RULE-ITER(DMA)')
         self.assertEqual(op['macd'].__repr__(), 'RULE-ITER(MACD)')
         self.assertEqual(op['trix'].__repr__(), 'RULE-ITER(TRIX)')
-        self.assertEqual(op['random'].__repr__(), 'SELECT(RANDOM)')
+        self.assertEqual(op['random'].__repr__(), 'GENERAL(RANDOM)')
         self.assertEqual(op['ndayavg'].__repr__(), 'FACTOR(N-DAY AVG)')
 
     def test_info(self):
@@ -6491,9 +6493,14 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.signal_type, 'ps')
         op = qt.Operator(signal_type='proportion signal')
         self.assertEqual(op.signal_type, 'ps')
-        print(f'"pt" will be the default type if wrong value is given')
-        op = qt.Operator(signal_type='wrong value')
-        self.assertEqual(op.signal_type, 'pt')
+        print(f'Error will be raised if Invalid signal type encountered')
+        self.assertRaises(
+                ValueError,
+                qt.Operator,
+                None,
+                'wrong value',
+                None
+        )
 
         print(f'test signal_type.setter')
         op.signal_type = 'ps'
@@ -6895,8 +6902,8 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(op.strategy_count, 0)
         self.assertEqual(op.strategy_ids, [])
 
-    def test_operator_prepare_data(self):
-        """test processes that related to prepare arr"""
+    def test_operator_assign_history_data(self):
+        """测试分配Operator运行所需历史数据"""
         test_ls = TestLSStrategy()
         test_sel = TestSelStrategy()
         test_sig = TestSigStrategy()
@@ -6907,6 +6914,7 @@ class TestOperator(unittest.TestCase):
         no_trade_cash = qt.CashPlan(dates='2016-07-08, 2016-07-30, 2016-08-11, 2016-09-03',
                                     amounts=[10000, 10000, 10000, 10000])
         # 在所有策略的参数都设置好之前调用prepare_data会发生assertion Error
+        self.op.strategies[0].pars = None
         self.assertRaises(AssertionError,
                           self.op.assign_hist_data,
                           hist_data=self.hp1,
@@ -6928,8 +6936,18 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(self.op.strategies[2].pars, (0.2, 0.02, -0.02)),
         self.op.assign_hist_data(hist_data=self.hp1,
                                  cash_plan=on_spot_cash)
+        # test if all historical data related properties are set
+        self.assertIsInstance(self.op._op_list_shares, dict)
+        self.assertIsInstance(self.op._op_list_hdates, dict)
+        self.assertIsInstance(self.op._op_list_price_types, dict)
+
         self.assertIsInstance(self.op._op_history_data, dict)
         self.assertEqual(len(self.op._op_history_data), 3)
+        self.assertEqual(list(self.op._op_history_data.keys()), ['custom', 'custom_1', 'custom_2'])
+        self.assertIsInstance(self.op._op_hist_data_rolling_windows, dict)
+        self.assertEqual(len(self.op._op_hist_data_rolling_windows), 3)
+        self.assertEqual(list(self.op._op_hist_data_rolling_windows.keys()), ['custom', 'custom_1', 'custom_2'])
+        print(self.op._op_hist_data_rolling_windows)
         # test if automatic strategy blenders are set
         self.assertEqual(self.op.strategy_blenders,
                          {'close': ['+', '2', '+', '1', '0']})
@@ -6959,12 +6977,12 @@ class TestOperator(unittest.TestCase):
                           empty_hp,
                           on_spot_cash)
         # raises Error when first investment date is too early
-        self.assertRaises(AssertionError,
+        self.assertRaises(ValueError,
                           self.op.assign_hist_data,
                           correct_hp,
                           early_cash)
         # raises Error when last investment date is too late
-        self.assertRaises(AssertionError,
+        self.assertRaises(ValueError,
                           self.op.assign_hist_data,
                           correct_hp,
                           late_cash)
