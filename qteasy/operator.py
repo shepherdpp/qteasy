@@ -1307,14 +1307,21 @@ class Operator:
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
         op_dates = hist_data.hdates[first_cash_pos:]
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
-        if not first_cash_pos >= self.max_window_length:
+        if first_cash_pos < self.max_window_length:
             message = f'History data starts on {hist_data.hdates[0]} does not have' \
                       f' enough data to cover first cash date {cash_plan.first_day}, ' \
                       f'expect {self.max_window_length} cycles, got {first_cash_pos} records only'
             logger_core.error(message)
             raise ValueError(message)
-        # 确保最后一个投资日也在输入的历史数据范围内
-        if not last_cash_pos < len(hist_data.hdates):
+        # 如果第一个投资日不在输入的历史数据范围内，raise
+        if first_cash_pos >= len(hist_data.hdates):
+            message = f'Investment plan falls out of historical data range,' \
+                      f' history data ends on {hist_data.hdates[-1]}, first investment ' \
+                      f'on {cash_plan.last_day}'
+            logger_core.error(message)
+            raise ValueError(message)
+        # 如果最后一个投资日不在输入的历史数据范围内，不raise，只记录错误信息
+        if last_cash_pos >= len(hist_data.hdates):
             message = f'Not enough history data record to cover complete investment plan,' \
                       f' history data ends on {hist_data.hdates[-1]}, last investment ' \
                       f'on {cash_plan.last_day}'
@@ -1330,6 +1337,14 @@ class Operator:
             logger_core.warning(f'not all dates in cash plan are on trade dates, they are moved to their nearest next'
                                 f'trade dates')
         # TODO 到这里为止上面的操作都应该移动到core.py中
+        # 确保输入的history_data有足够的htypes
+        hist_data_types = hist_data.htypes
+        if any(htyp not in hist_data_types for htyp in self.op_data_types):
+            missing_htypes = [htyp for htyp in self.op_data_types if htyp not in hist_data_types]
+            message = f'Some historical data types are missing ({missing_htypes}) from the history ' \
+                      f'data ({hist_data_types}), make sure history data types covers all strategies'
+            logger_core.error(message)
+            raise KeyError(message)
         # 确保op的策略都设置了参数
         assert all(stg.has_pars for stg in self.strategies), \
             f'One or more strategies has no parameter set properly!'
