@@ -5727,6 +5727,7 @@ class TestStrategy(unittest.TestCase):
 
     def test_factor_sorter(self):
         """ 测试FactorSorter 因子排序策略类"""
+
         class Stg(qt.FactorSorter):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
@@ -5760,9 +5761,9 @@ class TestLSStrategy(RuleIterator):
                          window_length=5)
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        n, price = params
-        h = hist_data.T
+    def realize(self, h, r=None, t=None, pars=None):
+        n, price = pars
+        h = h.T
 
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
@@ -5776,7 +5777,7 @@ class TestSelStrategy(GeneralStg):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
-    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（OHLC平均股价）最高的两支，放入中选池，否则落选。
+    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（HLC平均股价）最高的两支，放入中选池，否则落选。
     选股比例为平均分配
     """
 
@@ -5792,10 +5793,10 @@ class TestSelStrategy(GeneralStg):
                          window_length=5)
         pass
 
-    def _realize(self, hist_data: np.ndarray):
+    def realize(self, h, r=None, t=None):
         pars = self.pars
-        avg = np.nanmean(hist_data, axis=(1, 2))
-        dif = (hist_data[:, :, 2] - np.roll(hist_data[:, :, 2], 1, 1))
+        avg = np.nanmean(h, axis=(1, 2))
+        dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
         difper = dif_no_nan / avg
         large2 = difper.argsort()[1:]
@@ -6947,9 +6948,9 @@ class TestOperator(unittest.TestCase):
         self.assertEqual(len(self.op._op_hist_data_rolling_windows), 3)
         self.assertEqual(list(self.op._op_hist_data_rolling_windows.keys()), ['custom', 'custom_1', 'custom_2'])
         print(self.op._op_hist_data_rolling_windows)
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom'].shape, (46, 3, 5, 4))
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_1'].shape, (46, 3, 5, 3))
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (46, 3, 2, 4))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom'].shape, (45, 3, 5, 4))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_1'].shape, (45, 3, 5, 3))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (45, 3, 2, 4))
 
         target_hist_data_rolling_window = np.array(
                 [[[10.04, 10.02, 10.07, 9.99],
@@ -7105,15 +7106,16 @@ class TestOperator(unittest.TestCase):
         print('--test operation signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal()
 
-        self.assertTrue(isinstance(op_list, HistoryPanel))
-        backtest_price_types = op_list.htypes
-        self.assertEqual(backtest_price_types[0], 'close')
+        self.assertTrue(isinstance(op_list, np.ndarray))
+        backtest_price_types = self.op.op_list_price_types
+        self.assertEqual(backtest_price_types, ['close'])
         self.assertEqual(op_list.shape, (3, 45, 1))
-        reduced_op_list = op_list.values.squeeze().T
+        reduced_op_list = op_list.squeeze().T
         print(f'op_list created, it is a 3 share/45 days/1 htype array, to make comparison happen, \n'
               f'it will be squeezed to a 2-d array to compare on share-wise:\n'
               f'{reduced_op_list}')
         target_op_values = np.array([[0.0, 0.0, 0.0],
+                                     [0.0, 0.0, 0.0],
                                      [0.0, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
@@ -7133,7 +7135,6 @@ class TestOperator(unittest.TestCase):
                                      [0.5, 0.5, 0.0],
                                      [0.5, 0.0, 0.0],
                                      [0.5, 0.0, 0.0],
-                                     [0.5, 0.5, 0.0],
                                      [0.0, 0.5, 0.0],
                                      [0.0, 0.5, 0.0],
                                      [0.0, 0.5, 0.0],
@@ -7192,9 +7193,9 @@ class TestOperator(unittest.TestCase):
         print('--test opeartion signal created in Proportional Target (PT) Mode--')
         op_list = self.op.create_signal()
 
-        self.assertTrue(isinstance(op_list, HistoryPanel))
-        signal_close = op_list['close'].squeeze().T
-        signal_open = op_list['open'].squeeze().T
+        self.assertTrue(isinstance(op_list, np.ndarray))
+        signal_close = op_list[0].squeeze().T
+        signal_open = op_list[1].squeeze().T
         self.assertEqual(signal_close.shape, (45, 3))
         self.assertEqual(signal_open.shape, (45, 3))
 

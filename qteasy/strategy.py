@@ -749,8 +749,7 @@ class BaseStrategy:
         elif isinstance(data_idx, np.ndarray):
             # 生成信号清单
             # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
-            share_count, date_count, htype_count = hist_data[0].shape
-            signal_count = len(data_idx)
+            signal_count, share_count, date_count, htype_count = hist_data.shape
             sig_list = np.full(shape=(signal_count, share_count), fill_value=np.nan, order='C')
             # 遍历data_idx中的序号，生成N组交易信号，将这些信号填充到清单中对应的位置上
             all_none_list = [None] * signal_count
@@ -767,7 +766,7 @@ class BaseStrategy:
             signals = list(map(self.generate_one, hist_data_list, ref_data_list, trade_data_list))
             sig_list[data_idx] = np.array(signals)
             # 将所有分段组合成完整的ndarray
-            return sig_list[self.window_length:]
+            return sig_list
 
     @abstractmethod
     def generate_one(self, h_seg, ref_seg=None, trade_data=None):
@@ -1128,7 +1127,8 @@ class RuleIterator(BaseStrategy):
         try:
             return self.realize(h=hist_nonan,
                                 r=ref_nonan,
-                                t=trade_data)
+                                t=trade_data,
+                                pars=params)
         except Exception:
             return np.nan
 
@@ -1136,7 +1136,8 @@ class RuleIterator(BaseStrategy):
     def realize(self,
                 h,
                 r=None,
-                t=None):
+                t=None,
+                pars=None):
         """ h_seg和ref_seg都是用于生成交易信号的一段窗口数据，根据这一段窗口数据
             生成一个股票的独立交易信号，同样的规则会被复制到其他股票
         """

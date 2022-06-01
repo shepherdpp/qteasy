@@ -1386,7 +1386,7 @@ class Operator:
                     hist_data_val,
                     window=window_length,
                     axis=1
-            )
+            )[:-1]
 
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
@@ -1396,27 +1396,27 @@ class Operator:
                     ref_data_val,
                     window=window_length,
                     axis=0
-            ) if ref_data_val else None
+            )[:-1] if ref_data_val else None
 
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
             # 根据sample_freq生成一个日期序列
-            temp_date_series = pd.date_range(start=op_dates[window_length], end=op_dates[-1], freq=freq)
+            temp_date_series = pd.date_range(start=op_dates[0], end=op_dates[-1], freq=freq)
             if len(temp_date_series) == 0:
                 # 如果sample_freq太大，无法生成有意义的取样日期，则生成一个取样点，位于第一日
                 sample_pos = np.zeros(shape=(1,), dtype='int')
-                sample_pos[0] = np.searchsorted(op_dates, op_dates[window_length])  # 起点第一日
+                sample_pos[0] = np.searchsorted(op_dates, op_dates[0])  # 起点第一日
                 self._op_sample_indexes[stg_id] = sample_pos
             else:
                 # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
                 # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
-                target_dates = temp_date_series - (temp_date_series[0] - op_dates[window_length])
+                target_dates = temp_date_series - (temp_date_series[0] - op_dates[0])
                 # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
                 sample_pos = np.searchsorted(op_dates, target_dates)
                 # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
                 # 这里使用一种较快的技巧方法去掉重复值
-                sample_pos = sample_pos[(sample_pos - np.roll(sample_pos, 1)).astype('bool')]
-                self._op_sample_indexes[stg_id] = sample_pos - window_length
+                sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
+                self._op_sample_indexes[stg_id] = sample_pos
 
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
