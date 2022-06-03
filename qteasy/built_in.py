@@ -2146,7 +2146,7 @@ class SelectingAvgIndicator(stg.FactorSorter):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
-        factors = np.nanmean(h, axis=1).squeeze()
+        factors = np.nanmean(h, axis=1)
 
         return factors
 

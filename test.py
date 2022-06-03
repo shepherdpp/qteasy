@@ -7767,16 +7767,12 @@ class TestOperator(unittest.TestCase):
         stg.condition = 'greater'
         stg.lbound = 0
         stg.ubound = 0
-        stg.proportion_or_quantity = 0.67
-        history_data = self.hp2.values
+        stg.max_sel_count = 0.67
+        history_data = self.hp2.values[:, :-1]
+        hist_data_rolling_window = rolling_window(history_data, window=stg.window_length, axis=1)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        # seg_pos, seg_length, seg_count = stg._seg_periods(dates=self.hp1.hdates, freq=stg.sample_freq)
-        # self.assertEqual(list(seg_pos), [0, 5, 11, 19, 26, 33, 41, 47, 49])
-        # self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
-        # self.assertEqual(seg_count, 8)
-
-        output = stg.generate(hist_data=history_data)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7843,7 +7839,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0.5, 0.5, 0.0],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7907,7 +7903,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0.0, 0.33333333, 0.66666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7955,10 +7951,13 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
         # test single factor, get max factor in linear weight
-        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
+        stg_pars = (False, 'distance', 'greater', 0, 0, 0.67)
         stg.sort_ascending = False
         stg.weighting = 'distance'
         stg.condition = 'greater'
@@ -7967,14 +7966,14 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data)
-        selmask = np.array([[0., 0.08333333, 0.91666667],
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+        selmask = np.array([[0.,         0.08333333, 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0., 0.91666667, 0.08333333],
+                            [0.,         0.91666667, 0.08333333],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -7989,7 +7988,7 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.08333333, 0., 0.91666667],
+                            [0.08333333, 0.,         0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -8004,17 +8003,83 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.08333333, 0., 0.91666667],
+                            [0.08333333, 0.,         0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.08333333, 0.91666667, 0.],
+                            [0.08333333, 0.91666667, 0.        ],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
+
+        # test single factor, get max factor in proportion weight
+        stg_pars = (False, 'proportion', 'greater', 0, 0, 0.67)
+        stg.sort_ascending = False
+        stg.weighting = 'proportion'
+        stg.condition = 'greater'
+        stg.lbound = 0
+        stg.ubound = 0
+        stg.set_pars(stg_pars)
+        print(f'Start to test financial selection parameter {stg_pars}')
+
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+        selmask = np.array([[0., 0.4, 0.6],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.6, 0.4],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.33333333, 0., 0.66666667],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0., 1.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.25, 0., 0.75],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.375, 0.625, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
+
+        self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
         # test single factor, get max factor in linear weight, threshold 0.2
@@ -8027,7 +8092,7 @@ class TestOperator(unittest.TestCase):
         stg.set_pars(stg_pars)
         print(f'Start to test financial selection parameter {stg_pars}')
 
-        output = stg.generate(hist_data=history_data)
+        output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
         selmask = np.array([[0., 0.5, 0.5],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -8075,6 +8140,9 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
 
     def test_tokenizer(self):
@@ -12228,7 +12296,7 @@ class FastExperiments(unittest.TestCase):
         #                  data_types='wt-000300.SH',
         #                  sort_ascending=False,
         #                  weighting='proportion',
-        #                  sel_limit=300)
+        #                  max_sel_count=300)
         # res = qt.run(op,
         #              mode=1,
         #              visual=True,

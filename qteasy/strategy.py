@@ -846,7 +846,7 @@ class FactorSorter(BaseStrategy):
 
             * 额外的策略属性：
                 策略使用6个额外的选股参数实现因子排序选股:
-                sel_limit:          float,  选股限额，表示最多选出的股票的数量，如果sel_limit小于1，表示选股的比例：
+                max_sel_count:      float,  选股限额，表示最多选出的股票的数量，如果sel_limit小于1，表示选股的比例：
                                             默认值：0.5
                                             例如：
                                             0.25: 最多选出25%的股票, 10:  最多选出10个股票
@@ -906,7 +906,7 @@ class FactorSorter(BaseStrategy):
     def __init__(self,
                  name: str = 'Factor',
                  description: str = 'description of factor sorter strategy',
-                 sel_limit: float = 0.5,
+                 max_sel_count: float = 0.5,
                  condition: str = 'any',
                  lbound: float = -np.inf,
                  ubound: float = np.inf,
@@ -917,7 +917,7 @@ class FactorSorter(BaseStrategy):
                          name=name,
                          description=description,
                          **kwargs)
-        self.proportion_or_quantity = sel_limit
+        self.max_sel_count = max_sel_count
         self.condition = condition
         self.lbound = lbound
         self.ubound = ubound
@@ -935,7 +935,7 @@ class FactorSorter(BaseStrategy):
         :return
             numpy.ndarray, 一个一维向量，代表一个周期内股票的投资组合权重，所有权重的和为1
         """
-        pct = self.proportion_or_quantity
+        pct = self.max_sel_count
         condition = self.condition
         lbound = self.lbound
         ubound = self.ubound
@@ -953,6 +953,7 @@ class FactorSorter(BaseStrategy):
         # 历史数据片段必须是ndarray对象，否则无法进行
         assert isinstance(h_seg, np.ndarray), \
             f'TypeError: expect np.ndarray as history segment, got {type(h_seg)} instead'
+
         factors = self.realize(h=h_seg, r=ref_seg, t=trade_data).squeeze()
         chosen = np.zeros_like(factors)
         # 筛选出不符合要求的指标，将他们设置为nan值
@@ -1003,20 +1004,15 @@ class FactorSorter(BaseStrategy):
         # 与其分值的距离成正比，分值的距离为它与最低分之间的差值，因此不管分值是否大于0，股票都能
         # 获取比例分配
         elif weighting == 'distance':
-            import pdb; pdb.set_trace()
             dist = factors[args]
-            if sort_ascending:
-                d_max = dist[-1]
-                d_min = dist[0]
-            else:
-                d_max = dist[0]
-                d_min = dist[-1]
-            d_sum = dist.sum()
+            d_max = dist[-1]
+            d_min = dist[0]
             d = d_max - d_min
             if not sort_ascending:
                 dist = dist - d_min + d / 10.
             else:
                 dist = d_max - dist + d / 10.
+            d_sum = dist.sum()
             if ~np.any(dist):  # if all distances are zero
                 chosen[args] = 1 / len(dist)
             elif d_sum == 0:  # if not all distances are zero but sum is zero
