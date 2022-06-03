@@ -5722,7 +5722,6 @@ class TestLSStrategy(RuleIterator):
     def realize(self, h, r=None, t=None, pars=None):
         n, price = pars
         h = h.T
-
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
         if ma[-1] < price:
@@ -7554,60 +7553,65 @@ class TestOperator(unittest.TestCase):
                     '000200': (5, 10),
                     '000300': (5, 6)}
         stg.set_pars(stg_pars)
-        history_data = self.hp1.values
-        output = stg.generate(hist_data=history_data)
+        history_data = self.hp1.values[:, :-1]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              data_idx=np.arange(len(history_data_rolling_window)))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        lsmask = np.array([[0., 0., 1.],
-                           [0., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 0., 1.],
-                           [1., 1., 1.],
-                           [1., 1., 1.],
-                           [1., 1., 1.],
-                           [1., 1., 0.],
-                           [1., 1., 0.],
-                           [1., 1., 0.],
-                           [1., 0., 0.],
-                           [1., 0., 0.],
-                           [1., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 0.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.],
-                           [0., 1., 1.]])
-        # TODO: Issue to be solved: the np.nan value are converted to 0 in the lsmask，这样做可能会有意想不到的后果
-        #  需要解决nan值的问题
+        lsmask = np.array([[0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0]])
         self.assertEqual(output.shape, lsmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {lsmask[i]}')
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
     def test_general_strategy(self):
@@ -7615,13 +7619,11 @@ class TestOperator(unittest.TestCase):
         stg = TestSelStrategy()
         stg_pars = ()
         stg.set_pars(stg_pars)
-        history_data = self.hp1['high, low, close', :, :]
-        # seg_pos, seg_length, seg_count = stg._seg_periods(dates=self.hp1.hdates, freq=stg.sample_freq)
-        # self.assertEqual(list(seg_pos), [0, 5, 11, 19, 26, 33, 41, 47, 49])
-        # self.assertEqual(list(seg_length), [5, 6, 8, 7, 7, 8, 6, 2])
-        # self.assertEqual(seg_count, 8)
+        history_data = self.hp1['high, low, close', :, :-1]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
 
-        output = stg.generate(hist_data=history_data)
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
@@ -7673,6 +7675,9 @@ class TestOperator(unittest.TestCase):
                             [np.nan, np.nan, np.nan]])
 
         self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
     def test_simple_timing(self):
