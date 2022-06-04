@@ -385,7 +385,7 @@ def apply_loop(operator: Operator,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-    op_type = operator.signal_type
+    op_type = operator.signal_type_id
     op = op_list
     # TODO: 如何获取shares，price_types，以及hdates？
     shares = operator.op_list_shares
@@ -1546,6 +1546,7 @@ def run(operator, **kwargs):
                 config=config
         )
         # 在生成交易信号之前准备历史数据
+        import pdb; pdb.set_trace()
         operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan)
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
@@ -1882,7 +1883,7 @@ def _evaluate_one_parameter(par,
     st = time.time()
     op_list = None
     if op.op_type == 'batch':
-        op_list = op.create_signal(op_history_data)
+        op_list = op.create_signal()
     et = time.time()
     op_run_time = et - st
     res_dict['op_run_time'] = op_run_time
@@ -1967,7 +1968,7 @@ def _evaluate_one_parameter(par,
             config.cost_slippage
     )
     for start, end in zip(start_dates, end_dates):
-        op_list_seg = op_list.segment(start, end)
+        op_list_seg = op.signal_list_segment(start, end)
         history_list_seg = loop_history_data.segment(start, end)
         if stage != 'loop':
             invest_cash_dates = history_list_seg.hdates[0]

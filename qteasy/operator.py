@@ -269,7 +269,7 @@ class Operator:
                                 历史数据的滚动滑窗视图，每个时间点一个滑窗，滑窗的长度等于window_length
             _op_ref_data_rolling_window:
                                 参考数据的滚动滑窗视图，每个时间点一个滑窗，滑窗的长度等于window_length
-            _op_sample_indexes: 
+            _op_sample_indices: 
                                 策略运行采样点序号
 
         交易策略的混合表达式和混合操作队列保存在以bt_price_type为键的字典中，通过bt_price_type访问：
@@ -313,7 +313,7 @@ class Operator:
         self._op_hist_data_rolling_windows = {}  # Dict——保存各个策略的历史数据滚动窗口（ndarray view, 与个股有关）
         self._op_reference_data = {}  # Dic——保存供各个策略进行交易信号生成的参考数据（ndarray，与个股无关）
         self._op_ref_data_rolling_windows = {}  # Dict——保存各个策略的参考数据滚动窗口（ndarray view，与个股无关）
-        self._op_sample_indexes = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
+        self._op_sample_indices = {}  # Dict——保存各个策略的运行采样序列值，用于运行采样
         self._stg_blender = {}  # Dict——交易信号混合表达式的解析式
         self._stg_blender_strings = {}  # Dict——交易信号混和表达式的原始字符串形式
 
@@ -395,8 +395,10 @@ class Operator:
             return 0
         elif self._signal_type == 'ps':
             return 1
-        else:
+        elif self._signal_type == 'vs':
             return 2
+        else:
+            raise ValueError(f'invalid signal type ({self._signal_type})')
 
     @property
     def op_type(self):
@@ -801,19 +803,19 @@ class Operator:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
             return [all_ref_data[stg_id] for stg_id in relevant_strategy_ids]
 
-    def get_op_sample_indexes_by_price_type(self, price_type=None):
+    def get_op_sample_indices_by_price_type(self, price_type=None):
         """ 返回Operator对象中每个strategy对应的交易信号采样点序列，price_type是一个可选参数
         如果给出price_type时，返回使用该price_type的所有策略的信号采样点序列
 
         :param price_type: str 一个可用的price_type
         :return: List
         """
-        all_sample_indexes = self._op_sample_indexes
+        all_sample_indices = self._op_sample_indices
         if price_type is None:
-            return list(all_sample_indexes.values())
+            return list(all_sample_indices.values())
         else:
             relevant_strategy_ids = self.get_strategy_id_by_price_type(price_type=price_type)
-            return [all_sample_indexes[stg_id] for stg_id in relevant_strategy_ids]
+            return [all_sample_indices[stg_id] for stg_id in relevant_strategy_ids]
 
     def get_strategy_count_by_price_type(self, price_type=None):
         """返回operator中的交易策略的数量, price_type为一个可选参数，
@@ -1378,8 +1380,8 @@ class Operator:
         # 清空可能已经存在的数据
         self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
+        # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策略
         for stg_id, stg in self.get_strategy_id_pairs():
-            # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策略
             window_length = stg.window_length
             hist_data_val = self._op_history_data[stg_id]
             self._op_hist_data_rolling_windows[stg_id] = rolling_window(
@@ -1406,7 +1408,7 @@ class Operator:
                 # 如果sample_freq太大，无法生成有意义的取样日期，则生成一个取样点，位于第一日
                 sample_pos = np.zeros(shape=(1,), dtype='int')
                 sample_pos[0] = np.searchsorted(op_dates, op_dates[0])  # 起点第一日
-                self._op_sample_indexes[stg_id] = sample_pos
+                self._op_sample_indices[stg_id] = sample_pos
             else:
                 # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
                 # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
@@ -1416,7 +1418,7 @@ class Operator:
                 # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
                 # 这里使用一种较快的技巧方法去掉重复值
                 sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
-                self._op_sample_indexes[stg_id] = sample_pos
+                self._op_sample_indices[stg_id] = sample_pos
 
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
@@ -1498,7 +1500,7 @@ class Operator:
         from .blender import signal_blend
         signal_type = self.signal_type
         blended_signal = None
-        relevant_sample_indexes = sample_idx
+        relevant_sample_indices = sample_idx
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
         # 一个字典保存所有交易价格类型各自的交易信号ndarray
         # 如果price_type_idx给出时，只计算这个price_type的交易信号
@@ -1525,12 +1527,12 @@ class Operator:
             else:
                 td = None
             if sample_idx is None:
-                relevant_sample_indexes = self.get_op_sample_indexes_by_price_type(price_type=bt_price_type)
+                relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
                                        relevant_ref_data,
-                                       relevant_sample_indexes):
+                                       relevant_sample_indices):
                 signal = stg.generate(hist_data=hd,
                                       ref_data=rd,
                                       trade_data=td,
@@ -1557,7 +1559,7 @@ class Operator:
         signal_value = np.empty((*signal_shape, bt_price_type_count))
         for i, bt_price_type in zip(range(bt_price_type_count), bt_price_types):
             signal_value[:, :, i] = signal_out[bt_price_type].T
-
+        self._op_list = signal_value
         return signal_value
 
     def signal_list_segment(self, start=None, end=None):
@@ -1572,4 +1574,4 @@ class Operator:
         start_idx = self.get_hdate_idx(pd.to_datetime(start))
         end_date = self.get_hdate_idx(pd.to_datetime(end))
 
-        return self.op_list[start_idx:end_date]
+        return self._op_list[:, start_idx:end_date]

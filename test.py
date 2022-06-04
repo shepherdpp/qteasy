@@ -2753,7 +2753,7 @@ class TestLoop(unittest.TestCase):
         )
         self.multi_signal_hp = stack_dataframes(
                 self.multi_signals,
-                stack_as='htypes',
+                dataframe_as='htypes',
                 htypes='open, high, close'
         )
         self.history_list = dataframe_to_hp(
@@ -2762,7 +2762,7 @@ class TestLoop(unittest.TestCase):
         )
         self.multi_history_list = stack_dataframes(
                 self.multi_histories,
-                stack_as='htypes',
+                dataframe_as='htypes',
                 htypes='open, high, close'
         )
 
@@ -5694,7 +5694,7 @@ class TestStrategy(unittest.TestCase):
                 return np.random.random(size=(5,))
 
         stg = Stg()
-        stg.generate()
+        stg.generate(hist_data=None)
 
     def test_rule_iterator(self):
         """ 测试RuleIterator 规则迭代器策略类"""
@@ -9008,9 +9008,9 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(hp2.values, values1, equal_nan=True))
 
         hp3 = stack_dataframes(dfs={'close': df1, 'high': df2, 'low': df3},
-                               stack_as='htypes')
+                               dataframe_as='htypes')
         hp4 = stack_dataframes(dfs={'close': df1, 'low': df2, 'high': df3},
-                               stack_as='htypes',
+                               dataframe_as='htypes',
                                htypes='open, close, high')
         print('hp3 is:\n', hp3.values)
         print('hp4 is:\n', hp4.values)
@@ -12171,9 +12171,9 @@ class TestBuiltInsMultiple(unittest.TestCase):
 
     def test_select_all(self):
         """ 测试策略selall选择所有股票"""
-        op = qt.Operator(strategies=['all'], signal_type='PS')
+        op = qt.Operator(strategies=['all'], signal_type='Ps')
         op.set_parameter(0, opt_tag=1, sample_freq='w')
-        qt.run(op, mode=1, allow_sell_short=True, visual=True)
+        qt.run(op, mode=1, allow_sell_short=False, visual=True)
 
 
 class StgBuyOpen(GeneralStg):
@@ -12186,10 +12186,10 @@ class StgBuyOpen(GeneralStg):
                          bt_price_type='open')
         pass
 
-    def _realize(self, hist_data, params):
-        n, = params
-        current_price = hist_data[:, -1, 0]
-        n_day_price = hist_data[:, -n, 0]
+    def realize(self, h, r=None, t=None):
+        n, = self.pars
+        current_price = h[:, -1, 0]
+        n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全0
@@ -12218,10 +12218,10 @@ class StgSelClose(GeneralStg):
                          bt_price_type='close')
         pass
 
-    def _realize(self, hist_data, params):
-        n, = params
-        current_price = hist_data[:, -1, 0]
-        n_day_price = hist_data[:, -n, 0]
+    def realize(self, h, r=None, t=None):
+        n, = self.pars
+        current_price = h[:, -1, 0]
+        n_day_price = h[:, -n, 0]
         # 选股指标为各个股票的N日涨幅
         factors = (current_price / n_day_price - 1).squeeze()
         # 初始化选股买卖信号，初始值为全-1

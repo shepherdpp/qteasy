@@ -63,10 +63,10 @@ class TimingCrossline(stg.RuleIterator):
                                      'to the cross point of long and short term moving average prices ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """crossline策略使用四个参数：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        s, l, m, hesitate = self.pars
+        s, l, m, hesitate = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线之间的距离
@@ -111,7 +111,7 @@ class TimingMACD(stg.RuleIterator):
                                   'exponential weighted moving average prices',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """生成单只个股的择时多空信号
         生成MACD多空判断：
         1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
@@ -124,7 +124,7 @@ class TimingMACD(stg.RuleIterator):
 
         """
 
-        s, l, m = self.pars
+        s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
 
@@ -166,16 +166,18 @@ class TimingTRIX(stg.RuleIterator):
                          window_length=270,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
 
         input:
         :param h:
-        :param params:
+        :param r:
+        :param t:
+        :param pars:
         :return:
 
         """
-        s, m = self.pars
+        s, m = pars
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
@@ -209,7 +211,7 @@ class TimingCDL(stg.RuleIterator):
                          window_length=200,
                          data_types='open,high,low,close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
 
         input:
@@ -235,7 +237,7 @@ class SoftBBand(stg.RuleIterator):
                          window_length=200,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
@@ -243,7 +245,7 @@ class SoftBBand(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, u, d, m = self.pars
+        p, u, d, m = pars
         h = h.T
         hi, mid, low = bbands(h[0], p, u, d, m)
         # 策略:
@@ -283,9 +285,9 @@ class TimingBBand(stg.RuleIterator):
                          window_length=270,
                          data_types=['close'])
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
 
-        span, upper, lower = self.pars
+        span, upper, lower = pars
         # 计算指数的指数移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
@@ -317,7 +319,7 @@ class TimingSAREXT(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
@@ -325,7 +327,7 @@ class TimingSAREXT(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        a, m = self.pars
+        a, m = pars
         h = h.T
         sar = sarext(h[0], h[1], a, m)[-1]
         # 策略:
@@ -363,8 +365,8 @@ class SCRSSMA(stg.RuleIterator):
                          description='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        r, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        r, = pars
         h = h.T
         diff = (sma(h[0], r) - h[0])[-1]
         if diff < 0:
@@ -387,11 +389,11 @@ class SCRSDEMA(stg.RuleIterator):
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - DEMA',
                          description='Single moving average strategy that uses DEMA as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        r, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        r, = pars
         h = h.T
         diff = (dema(h[0], r) - h[0])[-1]
         if diff < 0:
@@ -417,8 +419,8 @@ class SCRSEMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        r, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        r, = pars
         h = h.T
         diff = (ema(h[0], r) - h[0])[-1]
         if diff < 0:
@@ -444,7 +446,7 @@ class SCRSHT(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         h = h.T
         diff = (ht(h[0]) - h[0])[-1]
         if diff < 0:
@@ -470,8 +472,8 @@ class SCRSKAMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        r, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        r, = pars
         h = h.T
         diff = (kama(h[0], r) - h[0])[-1]
         if diff < 0:
@@ -495,11 +497,11 @@ class SCRSMAMA(stg.RuleIterator):
                          par_range=[(0.01, 0.99), (0.01, 0.99)],
                          name='SINGLE CROSSLINE - MAMA',
                          description='Single moving average strategy that uses MAMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, s = pars
         h = h.T
         diff = (mama(h[0], f, s)[0] - h[0])[-1]
         if diff < 0:
@@ -526,8 +528,8 @@ class SCRSFAMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, s = pars
         h = h.T
         diff = (mama(h[0], f, s)[1] - h[0])[-1]
         if diff < 0:
@@ -554,8 +556,8 @@ class SCRST3(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        p, v = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        p, v = pars
         h = h.T
         diff = (t3(h[0], p, v) - h[0])[-1]
         if diff < 0:
@@ -581,8 +583,8 @@ class SCRSTEMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        p, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        p, = pars
         h = h.T
         diff = (tema(h[0], p) - h[0])[-1]
         if diff < 0:
@@ -608,8 +610,8 @@ class SCRSTRIMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        p, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        p, = pars
         h = h.T
         diff = (trima(h[0], p) - h[0])[-1]
         if diff < 0:
@@ -635,8 +637,8 @@ class SCRSWMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        p, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        p, = pars
         h = h.T
         diff = (wma(h[0], p) - h[0])[-1]
         if diff < 0:
@@ -670,8 +672,8 @@ class DCRSSMA(stg.RuleIterator):
                          description='Single moving average strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        l, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        l, s = pars
         h = h.T
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         if diff < 0:
@@ -697,8 +699,8 @@ class DCRSDEMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        l, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        l, s = pars
         h = h.T
         diff = (dema(h[0], l) - dema(h[0], s))[-1]
         if diff < 0:
@@ -724,8 +726,8 @@ class DCRSEMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        l, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        l, s = pars
         h = h.T
         diff = (ema(h[0], l) - ema(h[0], s))[-1]
         if diff < 0:
@@ -751,8 +753,8 @@ class DCRSKAMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        l, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        l, s = pars
         h = h.T
         diff = (kama(h[0], l) - kama(h[0], s))[-1]
         if diff < 0:
@@ -779,8 +781,8 @@ class DCRSMAMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        lf, ls, sf, ss = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        lf, ls, sf, ss = pars
         h = h.T
         diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
         if diff < 0:
@@ -807,8 +809,8 @@ class DCRSFAMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        lf, ls, sf, ss = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        lf, ls, sf, ss = pars
         h = h.T
         diff = (mama(h[0], lf, ls)[1] - mama(h[0], sf, ss)[1])[-1]
         if diff < 0:
@@ -835,8 +837,8 @@ class DCRST3(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        fp, fv, sp, sv = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        fp, fv, sp, sv = pars
         h = h.T
         diff = (t3(h[0], fp, fv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
@@ -862,8 +864,8 @@ class DCRSTEMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        fp, sp = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        fp, sp = pars
         h = h.T
         diff = (tema(h[0], fp) - tema(h[0], sp))[-1]
         if diff < 0:
@@ -889,8 +891,8 @@ class DCRSTRIMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        fp, sp = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        fp, sp = pars
         h = h.T
         diff = (trima(h[0], fp) - trima(h[0], sp))[-1]
         if diff < 0:
@@ -916,8 +918,8 @@ class DCRSWMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        fp, sp = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        fp, sp = pars
         h = h.T
         diff = (wma(h[0], fp) - wma(h[0], sp))[-1]
         if diff < 0:
@@ -946,8 +948,8 @@ class SLPSMA(stg.RuleIterator):
                          description='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = sma(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -974,8 +976,8 @@ class SLPDEMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = dema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1002,8 +1004,8 @@ class SLPEMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1030,7 +1032,7 @@ class SLPHT(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         h = h.T
         curve = ht(h[0])
         slope = curve[-1] - curve[-2]
@@ -1057,8 +1059,8 @@ class SLPKAMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = kama(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1086,8 +1088,8 @@ class SLPMAMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, s = pars
         h = h.T
         curve = mama(h[0], f, s)[0]
         slope = curve[-1] - curve[-2]
@@ -1115,8 +1117,8 @@ class SLPFAMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, s = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, s = pars
         h = h.T
         curve = mama(h[0], f, s)[1]
         slope = curve[-1] - curve[-2]
@@ -1144,8 +1146,8 @@ class SLPT3(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        p, v = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        p, v = pars
         h = h.T
         curve = t3(h[0], p, v)
         slope = curve[-1] - curve[-2]
@@ -1172,8 +1174,8 @@ class SLPTEMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1200,8 +1202,8 @@ class SLPTRIMA(stg.RuleIterator):
                                   'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = trima(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1228,8 +1230,8 @@ class SLPWMA(stg.RuleIterator):
                                      'trade line ',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
-        f, = self.pars
+    def realize(self, h, r=None, t=None, pars=None):
+        f, = pars
         h = h.T
         curve = wma(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1259,7 +1261,7 @@ class ADX(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
@@ -1267,7 +1269,7 @@ class ADX(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = adx(h[0], h[1], h[2], p)[-1]
         # 策略:
@@ -1296,7 +1298,7 @@ class APO(stg.RuleIterator):
                          window_length=200,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
@@ -1304,7 +1306,7 @@ class APO(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        f, s, m = self.pars
+        f, s, m = pars
         h = h.T
         res = apo(h[0], f, s, m)[-1]
         # 策略:
@@ -1333,7 +1335,7 @@ class AROON(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
@@ -1341,7 +1343,7 @@ class AROON(stg.RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         ups, dns = aroon(h[0], h[1], p)
         # 策略:
@@ -1376,12 +1378,12 @@ class AROONOSC(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = aroonosc(h[0], p)[-1]
         # 策略:
@@ -1416,12 +1418,12 @@ class CCI(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = cci(h[0], h[1], h[2], p)[-1]
         # 策略:
@@ -1454,12 +1456,12 @@ class CMO(stg.RuleIterator):
                          window_length=200,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = cmo(h[0], p)[-1]
         # 策略:
@@ -1494,7 +1496,7 @@ class MACDEXT(stg.RuleIterator):
                          window_length=200,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             fp: fast periods
@@ -1504,7 +1506,7 @@ class MACDEXT(stg.RuleIterator):
             s: signal periods
             t: signal ma type
         """
-        fp, ft, sp, st, p, t = self.pars
+        fp, ft, sp, st, p, t = pars
         h = h.T
         m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
         # 策略:
@@ -1531,12 +1533,12 @@ class MFI(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low, close, volume')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: period
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = mfi(h[0], h[1], h[2], h[3], p)[-1]
         # 策略:
@@ -1565,13 +1567,13 @@ class DI(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             m: periods for negtive DI
             p: periods for positive DI
         """
-        m, p, = self.pars
+        m, p, = pars
         h = h.T
         ndi = minus_di(h[0], h[1], h[2], m)[-1]
         pdi = plus_di(h[0], h[1], h[2], p)[-1]
@@ -1601,13 +1603,13 @@ class DM(stg.RuleIterator):
                          window_length=200,
                          data_types='high, low')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             m: periods for negtive DM
             p: periods for positive DM
         """
-        m, p, = self.pars
+        m, p, = pars
         h = h.T
         ndm = minus_dm(h[0], h[1], m)[-1]
         pdm = plus_dm(h[0], h[1], p)[-1]
@@ -1637,12 +1639,12 @@ class MOM(stg.RuleIterator):
                          window_length=100,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: periods
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = mom(h[0], p)[-1]
         # 策略:
@@ -1671,14 +1673,14 @@ class PPO(stg.RuleIterator):
                          window_length=100,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             fp: fast moving periods
             sp: slow moving periods
             m: ma type
         """
-        fp, sp, m = self.pars
+        fp, sp, m = pars
         h = h.T
         res = ppo(h[0], fp, sp, m)[-1]
         # 策略:
@@ -1707,12 +1709,12 @@ class RSI(stg.RuleIterator):
                          window_length=100,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: periods
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = rsi(h[0], p)[-1]
         # 策略:
@@ -1741,7 +1743,7 @@ class STOCH(stg.RuleIterator):
                          window_length=100,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             fk: periods
@@ -1750,7 +1752,7 @@ class STOCH(stg.RuleIterator):
             sd: slow d
             sdm: slow d ma type
         """
-        fk, sk, skm, sd, sdm = self.pars
+        fk, sk, skm, sd, sdm = pars
         h = h.T
         k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
         # 策略:
@@ -1780,14 +1782,14 @@ class STOCHF(stg.RuleIterator):
                          window_length=100,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             fk: periods
             fd: fast d
             fdm: fast d ma type
         """
-        fk, fd, fdm = self.pars
+        fk, fd, fdm = pars
         h = h.T
         k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
         # 策略:
@@ -1817,7 +1819,7 @@ class STOCHRSI(stg.RuleIterator):
                          window_length=100,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: periods
@@ -1827,7 +1829,7 @@ class STOCHRSI(stg.RuleIterator):
             sd: slow d
             sdm: slow d ma type
         """
-        p, fk, fd, fdm = self.pars
+        p, fk, fd, fdm = pars
         h = h.T
         k, d = stochrsi(h[0], p, fk, fd, fdm)
         # 策略:
@@ -1857,14 +1859,14 @@ class ULTOSC(stg.RuleIterator):
                          window_length=100,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p1: time period 1
             p2: time period 2
             p3: time period 3
         """
-        p1, p2, p3 = self.pars
+        p1, p2, p3 = pars
         h = h.T
         res = stochf(h[0], h[1], h[2], p1, p2, p3)[-1]
         # 策略:
@@ -1893,12 +1895,12 @@ class WILLR(stg.RuleIterator):
                          window_length=100,
                          data_types='high, low, close')
 
-    def realize(self, h, r=None, t=None) -> float:
+    def realize(self, h, r=None, t=None, pars=None):
         """参数:
         input:
             p: periods
         """
-        p, = self.pars
+        p, = pars
         h = h.T
         res = stochf(h[0], h[1], h[2], p)
         # 策略:
@@ -1923,11 +1925,11 @@ class RiconNone(stg.RuleIterator):
                          name='NONE',
                          description='Do not take any risk control activity')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         return np.zeros_like(h.squeeze())
 
 
-class TimingLong(stg.RuleIterator):
+class TimingLong(stg.GeneralStg):
     """简单择时策略，返回整个历史周期上的恒定多头状态
 
     数据类型：N/A
@@ -1944,11 +1946,11 @@ class TimingLong(stg.RuleIterator):
 
     def realize(self, h, r=None, t=None):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        sc, wl, htp = h.shape
+        return np.ones(shape=(sc, ))
 
-        return np.ones_like(h.squeeze())
 
-
-class TimingShort(stg.RuleIterator):
+class TimingShort(stg.GeneralStg):
     """简单择时策略，返回整个历史周期上的恒定空头状态
 
     数据类型：N/A
@@ -1961,15 +1963,16 @@ class TimingShort(stg.RuleIterator):
     def __init__(self, pars=()):
         super().__init__(pars=pars,
                          name='Short',
-                         description='Simple Timing strategy, return constant Short position on the whole history')
+                         description='Simple Timing strategy, return constant Short (minus) position on '
+                                     'the whole history')
 
     def realize(self, h, r=None, t=None):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        sc, wl, htp = h.shape
+        return -np.ones(shape=(sc, ))
 
-        return -np.ones_like(h.squeeze())
 
-
-class TimingZero(stg.RuleIterator):
+class TimingZero(stg.GeneralStg):
     """简单择时策略，返回整个历史周期上的空仓状态
 
     数据类型：N/A
@@ -1986,8 +1989,8 @@ class TimingZero(stg.RuleIterator):
 
     def realize(self, h, r=None, t=None):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-
-        return np.zeros_like(h.squeeze())
+        sc, wl, htp = h.shape
+        return np.zeros(shape=(sc, ))
 
 
 class TimingDMA(stg.RuleIterator):
@@ -2014,10 +2017,10 @@ class TimingDMA(stg.RuleIterator):
                          par_range=[(10, 250), (10, 250), (10, 250)],
                          name='DMA',
                          description='Quick DMA strategy, determine long/short position according to differences of '
-                                  'moving average prices with simple timing strategy',
+                                     'moving average prices with simple timing strategy',
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
         s, l, d = self.pars
         # print 'Generating Quick dma Long short Mask with parameters', params
@@ -2047,7 +2050,7 @@ class RiconUrgent(stg.RuleIterator):
                          name='URGENT',
                          description='Generate selling signal when N-day drop rate reaches target')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """
         # 根据N日内下跌百分比确定的卖出信号，让N日内下跌百分比达到pct时产生卖出信号
 
@@ -2077,7 +2080,7 @@ class SelectingAll(stg.GeneralStg):
     def realize(self, h, r=None, t=None):
         # 所有股票全部被选中，投资比例平均分配
         share_count = h.shape[0]
-        return [1. / share_count] * share_count
+        return np.ones(shape=(share_count,)) / share_count
 
 
 class SelectingNone(stg.GeneralStg):
@@ -2302,7 +2305,10 @@ class SelectingNDayVolatility(stg.FactorSorter):
 
         """
         n, = self.pars
-        factors = atr(h, n)
+        high = h[:, :, 0]
+        low = h[:, :, 1]
+        close = h[:, :, 2]
+        factors = atr(high, low, close, n)
 
         return factors
 
@@ -2363,22 +2369,22 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'stoch':         STOCH,
                        'stochf':        STOCHF,
                        'stochrsi':      STOCHRSI,
-                       'ultosc':     ULTOSC,
-                       'willr':      WILLR,
-                       'ricon_none': RiconNone,
-                       'urgent':     RiconUrgent,
-                       'long':       TimingLong,
-                       'short':      TimingShort,
-                       'zero':       TimingZero,
-                       'all':        SelectingAll,
-                       'none':       SelectingNone,
-                       'random':     SelectingRandom,
-                       'finance':    SelectingAvgIndicator,
-                       'ndaylast':   SelectingNDayLast,
-                       'ndayavg':    SelectingNDayAvg,
-                       'ndayrate':   SelectingNDayRateChange,
-                       'ndaychg':    SelectingNDayChange,
-                       'ndayvol':    SelectingNDayVolatility
+                       'ultosc':        ULTOSC,
+                       'willr':         WILLR,
+                       'ricon_none':    RiconNone,
+                       'urgent':        RiconUrgent,
+                       'long':          TimingLong,
+                       'short':         TimingShort,
+                       'zero':          TimingZero,
+                       'all':           SelectingAll,
+                       'none':          SelectingNone,
+                       'random':        SelectingRandom,
+                       'finance':       SelectingAvgIndicator,
+                       'ndaylast':      SelectingNDayLast,
+                       'ndayavg':       SelectingNDayAvg,
+                       'ndayrate':      SelectingNDayRateChange,
+                       'ndaychg':       SelectingNDayChange,
+                       'ndayvol':       SelectingNDayVolatility
                        }
 
 AVAILABLE_BUILT_IN_STRATEGIES = BUILT_IN_STRATEGIES.values()
