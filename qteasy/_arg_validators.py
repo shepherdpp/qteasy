@@ -881,7 +881,7 @@ def _validate_asset_type(value):
     :param value:
     :return:
     """
-    from .database import AVAILABLE_ASSET_TYPES
+    from .utilfuncs import AVAILABLE_ASSET_TYPES
     return value in AVAILABLE_ASSET_TYPES
 
 

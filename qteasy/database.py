@@ -17,10 +17,9 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
-from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
+from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day
+from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .history import stack_dataframes, HistoryPanel
 from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']

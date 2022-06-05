@@ -1214,11 +1214,22 @@ class Operator:
 
     def is_ready(self):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
-        策略参数是否完整
+        策略参数是否完整。
+            如果op可以运行，返回True
+            如果op不可以运行，检查所有可能存在的问题，提出改进建议，汇总后raise ValueError
 
         :return: bool
         """
-        return False
+        ready = True
+        err_msg = ''
+        if self.strategy_count == 0:
+            err_msg += f'operator object should contain at least one strategy, use operator.add_strategy() to add one.'
+            ready = False
+
+        if ready:
+            return ready
+        else:
+            raise AttributeError(err_msg)
 
     # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
@@ -1361,13 +1372,13 @@ class Operator:
                                  blender='+'.join(map(str, range(stg_count_for_price_type))))
         # 为每一个交易策略配置所需的历史数据（3D数组，包含每个个股、每个数据种类的数据）
         self._op_history_data = {
-            stg_id: hist_data[stg.data_types, :, (first_cash_pos - stg.window_length):]
+            stg_id: hist_data[stg.data_types, :, :]
             for stg_id, stg in self.get_strategy_id_pairs()
         }
         # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
         if reference_data:
             self._op_reference_data = {
-                stg_id: reference_data[stg.reference_data_types, :, (first_cash_pos - stg.window_length):]
+                stg_id: reference_data[stg.reference_data_types, :, :]
                 for stg_id, stg in self.get_strategy_id_pairs()
             }
         else:
@@ -1572,6 +1583,20 @@ class Operator:
         if self.op_list is None:
             return
         start_idx = self.get_hdate_idx(pd.to_datetime(start))
+        end_idx = self.get_hdate_idx(pd.to_datetime(end))
+
+        return self.op_list[:, start_idx:end_idx]
+
+    def signal_hdates_segment(self, start=None, end=None):
+        """ 根据start/end截取signal_list_hdates的一段，self._op_list_hdates必须存在
+
+        :param start:
+        :param end:
+        :return:
+        """
+        if self.op_list is None:
+            return
+        start_idx = self.get_hdate_idx(pd.to_datetime(start))
         end_date = self.get_hdate_idx(pd.to_datetime(end))
 
-        return self._op_list[:, start_idx:end_date]
+        return self.op_list_hdates[start_idx:end_date]

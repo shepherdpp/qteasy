@@ -327,9 +327,13 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 
 
 # TODO: 使用C实现回测核心功能，并用python接口调用，以实现效率的提升，或者使用numba实现加速
+# TODO: apply_loop应该纯numpy化，删除operator作为传入参数，仅处理回测结果，将回测结果传出
+#  函数后再处理为pandas.DataFrame，并在函数以外进行进一步的记录和处理，这里仅仅使用与回测相关
+#  的参数
 def apply_loop(operator: Operator,
-               op_list: np.ndarray,
                trade_price_list: HistoryPanel,
+               start_idx: int = 0,
+               end_idx: int = -1,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
                moq_buy: float = 100.,
@@ -342,13 +346,14 @@ def apply_loop(operator: Operator,
                allow_sell_short: bool = False,
                max_cash_usage: bool = False,
                trade_log: bool = False,
-               bt_price_priority_ohlc: str = 'OHLC') -> pd.DataFrame:
+               price_priority_list: list = None) -> tuple:
     """使用Numpy快速迭代器完成整个交易清单在历史数据表上的模拟交易，并输出每次交易后持仓、
         现金额及费用，输出的结果可选
 
     input：=====
-        :param operator: Operator, 用于生成交易信号(realtime模式)
-        :param op_list: object HistoryPanel: 批量生成的交易信号清单(batch模式)
+        :param operator: Operator对象, 用于生成交易信号(realtime模式)，预先生成的交易信号清单或清单相关信息也从中读取
+        :param start_idx: int: 一个整数，默认为0。模拟交易从交易清单的该序号开始循环
+        :param end_idx: int: 一个整数，默认为-1，模拟交易到交易清单的该序号为止
         :param trade_price_list: object HistoryPanel: 完整历史价格清单，数据的频率由freq参数决定
         :param cash_plan: CashPlan: 资金投资计划，CashPlan对象
         :param cost_rate: float Rate: 交易成本率对象，包含交易费、滑点及冲击成本
@@ -362,21 +367,15 @@ def apply_loop(operator: Operator,
         :param allow_sell_short: bool, 是否允许卖空操作，如果不允许卖空，则卖出的数量不能超过持仓数量
         :param max_cash_usage: str, 买卖信号处理顺序，'sell'表示先处理卖出信号，'buy'代表优先处理买入信号
         :param trade_log: bool: 为True时，输出回测详细日志为csv格式的表格
-        :param bt_price_priority_ohlc: str: 策略组合中包括多种交易价格时，价格信号执行先后顺序。OHLC四个字母分别代表
-            O - 开盘价
-            H - 最高价
-            L - 最低价
-            C - 收盘价
-            价格的执行顺序等于四个字母的排列顺序
+        :param price_priority_list: list: 各交易价格的执行顺序列表，列表中0～N数字代表operator中的各个交易价格的序号，各个交易价格
+                将按照列表中的序号顺序执行
 
     output：=====
-        Value_history: pandas.DataFrame: 包含交易结果及资产总额的历史清单包含以下列：
-        - [share-x]:        多列，每种投资产品的持有份额数量
-        - cash:             期末现金金额
-        - fee:              当期交易费用（交易成本）
-        - value:            当期资产总额（现金总额 + 所有在手投资产品的价值总额）
+        tuple: 包含以下元素：
+        - loop_results:        用于生成交易结果的数据，如持仓数量、交易费用、持有现金以及总资产
+        - op_log_matrix:       用于生成详细交易记录的数据，包含每次交易的详细交易信息，如持仓、成交量、成交价格、现金变动、交易费用等等
+        - op_summary_matrix:   用于生成详细交易记录的补充数据，包括投入资金量、资金变化量等
     """
-    from qteasy import logger_core
     assert cost_rate is not None, 'TypeError: cost_rate should not be None type'
     assert cash_plan is not None, 'ValueError: cash plan should not be None type'
     if moq_buy == 0:
@@ -386,18 +385,12 @@ def apply_loop(operator: Operator,
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
     op_type = operator.signal_type_id
-    op = op_list
-    # TODO: 如何获取shares，price_types，以及hdates？
-    shares = operator.op_list_shares
-    looped_dates = operator.op_list_hdates
+    op_list = operator.op_list[:, start_idx:end_idx]
+    looped_dates = operator.op_list_hdates[start_idx:end_idx]
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
     share_count, op_count, price_type_count = op_list.shape
-    # TODO: 将下面的函数调用移出apply_loop()
-    # 根据价格交易优先级设置价格执行顺序
-    price_priority_list = operator.get_bt_price_type_id_in_priority(priority=bt_price_priority_ohlc)
-    price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
@@ -406,6 +399,7 @@ def apply_loop(operator: Operator,
     additional_invest = 0.
     if inflation_rate > 0:
         days_difference = np.ones_like(looped_dates, dtype='float')
+        # TODO: inflation_factors与op_freq有关，需要分别处理
         inflation_factors = 1 + days_difference * inflation_rate / 250
     # 获取每一个资金投入日在历史时间序列中的位置
     investment_date_pos = np.searchsorted(looped_dates, cash_plan.dates)
@@ -471,7 +465,7 @@ def apply_loop(operator: Operator,
                 current_op = operator.create_signal(trade_data=trade_data, sample_idx=i, price_type_idx=j)
             else:
                 # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号
-                current_op = op[:, i, j]
+                current_op = op_list[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
                     signal_type=op_type,
                     own_cash=own_cash,
@@ -534,13 +528,47 @@ def apply_loop(operator: Operator,
         fees.append(sub_total_fee)
         values.append(total_value)
         amounts_matrix.append(own_amounts)
-    # TODO: _apply_loop()可以在这里就结束，返回交易结果
-    #  amounts_mateix应该是一个ndarray
-    #  DataFrame可以在_apply_loop()以外组装，
-    #  而且trade_log也可以在_apply_loop()以外生成
+
+    loop_results = (amounts_matrix, cashes, fees, values)
+    op_summary_matrix = (op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value)
+    return loop_results, op_log_matrix, op_summary_matrix
+
+
+def process_loop_results(operator,
+                         start_idx,
+                         end_idx,
+                         loop_results,
+                         op_log_matrix,
+                         op_summary_matrix,
+                         trade_log,
+                         bt_price_priority_ohlc: str = 'OHLC'):
+    """ 接受apply_loop函数传回的计算结果，生成DataFrame型交易模拟结果数据，保存交易记录，并返回结果供下一步处理
+
+    :param operator:
+    :param start_idx:
+    :param end_idx:
+    :param loop_results:
+    :param op_log_matrix:
+    :param op_summary_matrix:
+    :param trade_log:
+    :param bt_price_priority_ohlc:
+    :return:
+    """
+    from qteasy import logger_core
+    amounts_matrix, cashes, fees, values = loop_results
+    shares = operator.op_list_shares
+    looped_dates = operator.op_list_hdates[start_idx:end_idx]
+
+    price_types_in_priority = operator.get_bt_price_types_in_priority(priority=bt_price_priority_ohlc)
+
     # 将向量化计算结果转化回DataFrame格式
     value_history = pd.DataFrame(amounts_matrix, index=looped_dates,
                                  columns=shares)
+    # 填充标量计算结果
+    value_history['cash'] = cashes
+    value_history['fee'] = fees
+    value_history['value'] = values
+
     # 生成trade_log，index为MultiIndex，因为每天的交易可能有多种价格
     if trade_log:
         # create complete trading log
@@ -566,7 +594,7 @@ def apply_loop(operator: Operator,
         )
         op_log_columns = [str(s) for s in shares]
         op_log_df = pd.DataFrame(op_log_matrix, index=op_log_index, columns=op_log_columns)
-        op_summary_df = pd.DataFrame([op_log_add_invest, op_log_cash, op_log_available_cash, op_log_value],
+        op_summary_df = pd.DataFrame(op_summary_matrix,
                                      index=['add. invest', 'own cash', 'available cash', 'value'],
                                      columns=op_sum_index).T
         log_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_log.csv'
@@ -583,6 +611,7 @@ def apply_loop(operator: Operator,
                 share_name = get_basic_info(share, printout=False)['name']
             except Exception as e:
                 share_name = 'unknown'
+                logger_core.warning(f'Error encountered getting share names\n{e}')
             share_df['name'] = share_name
             share_logs.append(share_df)
 
@@ -597,19 +626,16 @@ def apply_loop(operator: Operator,
                       '6, available amounts',
                       '7, summary']
         op_log_shares_abs = pd.concat(share_logs).reindex(columns=re_columns)
-        # 如果how == 'left' 保留无交易日期的记录
-        # 如果how == 'right', 不显示无交易日期的记录
         record_file_path_name = qteasy.QT_TRADE_LOG_PATH + '/trade_records.csv'
+        # TODO: 可以增加一个config属性来控制交易摘要表的生成规则：
+        #  如果how == 'left' 保留无交易日期的记录
+        #  如果how == 'right', 不显示无交易日期的记录
         op_summary_df.join(op_log_shares_abs, how='right', sort=True).to_csv(record_file_path_name)
 
-    # 填充标量计算结果
-    value_history['cash'] = cashes
-    value_history['fee'] = fees
-    value_history['value'] = values
     return value_history
 
 
-def get_current_holdings():
+def get_realtime_holdings():
     """ 获取当前持有的产品在手数量
 
     :return: tuple:
@@ -617,7 +643,7 @@ def get_current_holdings():
     return None
 
 
-def get_recent_trades():
+def get_realtime_trades():
     """ 获取最近的交易记录
 
     :return:
@@ -1466,8 +1492,12 @@ def run(operator, **kwargs):
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
-    if operator.empty:
-        raise ValueError(f'oper object does not have any strategy, please add at least one strategy!')
+    try:
+        # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
+        operator.is_ready()
+    except Exception as e:
+        raise ValueError(f'operator object is not ready for running, please check following info:\n'
+                         f'{e}')
 
     import time
     optimization_methods = {0: _search_grid,
@@ -1507,8 +1537,8 @@ def run(operator, **kwargs):
         #  循环定时运行由QT级别的参数设定，设定快捷键，通过快捷键进行常用控制
         #  定时运行时自动打印交易状态变量和交易信号
         #  如果实现实盘交易接口，则在获取授权后自动发送/接收交易信号并监控交易结果
-        holdings = get_current_holdings()
-        trade_result = get_recent_trades()
+        holdings = get_realtime_holdings()
+        trade_result = get_realtime_trades()
         trade_data = build_trade_data(holdings, trade_result)
         hist_op, hist_benchmark = check_and_prepare_real_time_data(operator, config)
         empty_cash_plan = CashPlan([], [])
@@ -1546,7 +1576,6 @@ def run(operator, **kwargs):
                 config=config
         )
         # 在生成交易信号之前准备历史数据
-        import pdb; pdb.set_trace()
         operator.assign_hist_data(hist_data=hist_op, cash_plan=invest_cash_plan)
 
         # 生成交易清单，对交易清单进行回测，对回测的结果进行基本评价
@@ -1957,7 +1986,7 @@ def _evaluate_one_parameter(par,
         raise KeyError(f'Invalid optimization type: {config.opti_type}')
     # loop over all pairs of start and end dates, get the results separately and output average
     perf_list = []
-    st = time.time()
+    price_priority_list = op.get_bt_price_type_id_in_priority(priority=config.price_priority_OHLC)
     trade_cost = Cost(
             config.cost_fixed_buy,
             config.cost_fixed_sell,
@@ -1967,8 +1996,10 @@ def _evaluate_one_parameter(par,
             config.cost_min_sell,
             config.cost_slippage
     )
+    st = time.time()
     for start, end in zip(start_dates, end_dates):
-        op_list_seg = op.signal_list_segment(start, end)
+        start_idx = op.get_hdate_idx(start)
+        end_idx = op.get_hdate_idx(end)
         history_list_seg = loop_history_data.segment(start, end)
         if stage != 'loop':
             invest_cash_dates = history_list_seg.hdates[0]
@@ -1977,10 +2008,11 @@ def _evaluate_one_parameter(par,
                 invest_cash_amounts,
                 riskfree_ir
         )
-        looped_val = apply_loop(
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
                 operator=op,
-                op_list=op_list_seg,
                 trade_price_list=history_list_seg,
+                start_idx=start_idx,
+                end_idx=end_idx,
                 cash_plan=cash_plan,
                 cost_rate=trade_cost,
                 moq_buy=config.trade_batch_size,
@@ -1992,8 +2024,20 @@ def _evaluate_one_parameter(par,
                 stock_delivery_period=config.stock_deliver_period,
                 allow_sell_short=config.allow_sell_short,
                 max_cash_usage=config.maximize_cash_usage,
-                trade_log=log_backtest
+                trade_log=log_backtest,
+                price_priority_list=price_priority_list
         )
+        looped_val = process_loop_results(
+                operator=op,
+                start_idx=start_idx,
+                end_idx=end_idx,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix,
+                trade_log=log_backtest,
+                bt_price_priority_ohlc='OHLC'
+        )
+        # TODO: 将_get_complete_hist() 与 process_loop_results()合并
         complete_values = _get_complete_hist(
                 looped_value=looped_val,
                 h_list=history_list_seg,
