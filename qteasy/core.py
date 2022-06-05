@@ -1196,7 +1196,8 @@ def check_and_prepare_hist_data(oper: Operator, config):
     hist_opti = get_history_panel(
             shares=config.asset_pool,
             htypes=oper.all_price_and_data_types,
-            start=opti_test_start,
+            start=regulate_date_format(
+                    pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
@@ -1207,7 +1208,8 @@ def check_and_prepare_hist_data(oper: Operator, config):
     hist_opti_ref = get_history_panel(
             shares=None,
             htypes=oper.op_ref_types,
-            start=opti_test_start,
+            start=regulate_date_format(
+                    pd.to_datetime(opti_test_start) - window_offset),
             end=opti_test_end,
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
@@ -1221,12 +1223,12 @@ def check_and_prepare_hist_data(oper: Operator, config):
     # 评价数据的历史区间应该覆盖invest/opti/test的数据区间
     all_starts = [pd.to_datetime(date_str) for date_str in [invest_start, opti_start, test_start]]
     all_ends = [pd.to_datetime(date_str) for date_str in [invest_end, opti_end, test_end]]
-    refer_hist_start = regulate_date_format(min(all_starts))
-    refer_hist_end = regulate_date_format(max(all_ends))
+    benchmark_start = regulate_date_format(min(all_starts))
+    benchmark_end = regulate_date_format(max(all_ends))
 
     hist_benchmark = get_history_panel(
-                start=refer_hist_start,
-                end=refer_hist_end,
+                start=benchmark_start,
+                end=benchmark_end,
                 shares=config.benchmark_asset,
                 htypes=config.benchmark_dtype,
                 freq=oper.op_data_freq,
@@ -1614,7 +1616,11 @@ def run(operator, **kwargs):
                 operator=operator,
                 config=config
         )
-        operator.assign_hist_data(hist_data=hist_opti, cash_plan=opti_cash_plan)  # 在生成交易信号之前准备历史数据
+        operator.assign_hist_data(  # 在生成交易信号之前准备历史数据
+                hist_data=hist_opti,
+                cash_plan=opti_cash_plan,
+                reference_data=hist_opti_ref
+        )
         # 使用how确定优化方法并生成优化后的参数和性能数据
         how = config.opti_method
         optimal_pars, perfs = optimization_methods[how](
@@ -1644,8 +1650,7 @@ def run(operator, **kwargs):
             pass
             # _plot_test_result(opti_eval_res, config=config)
 
-        # 完成策略参数的寻优，在测试数据集上检验寻优的结果
-        operator.assign_hist_data(hist_data=hist_opti_ref, cash_plan=test_cash_plan)
+        # 完成策略参数的寻优，在测试数据集上检验寻优的结果，此时operator的交易数据已经分配好，无需再次分配
         if config.test_type in ['single', 'multiple']:
             result_pool = _evaluate_all_parameters(
                     par_generator=optimal_pars,
@@ -1867,7 +1872,7 @@ def _evaluate_one_parameter(par,
             运行标记，代表不同的运行阶段控制运行过程的不同处理方式，包含三种不同的选项
                 1, 'loop':      运行模式为回测模式，在这种模式下：
                                 使用投资区间回测投资计划
-                                使用config.print_backtest_log来确定是否打印回测结果
+                                使用config.trade_log来确定是否打印回测结果
                 2, 'optimize':  运行模式为优化模式，在这种模式下：
                                 使用优化区间回测投资计划
                                 回测区间利用方式使用opti_type的设置值
@@ -1932,7 +1937,7 @@ def _evaluate_one_parameter(par,
             else pd.to_datetime(config.invest_cash_dates)
         period_util_type = 'single'
         indicators = 'years,fv,return,mdd,v,ref,alpha,beta,sharp,info'
-        log_backtest = config.print_backtest_log  # 回测参数print_backtest_log只有在回测模式下才有用
+        log_backtest = config.trade_log  # 回测参数trade_log只有在回测模式下才有用
     elif stage == 'optimize':
         invest_cash_amounts = config.opti_cash_amounts[0]
         # TODO: only works when config.opti_cash_dates is a string, if it is a list, it will not work

@@ -108,7 +108,7 @@ def _valid_qt_kwargs():
                                  'level':     2,
                                  'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
 
-        'parallel':             {'Default':   False,
+        'parallel':             {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     1,
                                  'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},

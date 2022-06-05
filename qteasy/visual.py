@@ -1510,9 +1510,9 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
     print(f'investment starts on {first_res["loop_start"]}\nends on {first_res["loop_end"]}\n'
           f'Total looped periods: {result.years[0]:.1f} years.')
     print(f'total investment amount: ¥{result.total_invest[0]:13,.2f}')
-    print(f'Reference index type is {config.reference_asset} at {config.ref_asset_type}\n'
-          f'Total reference return: {ref_rtn :.2%} \n'
-          f'Average Yearly reference return rate: {ref_annual_rtn:.2%}')
+    print(f'Reference index type is {config.benchmark_asset} at {config.benchmark_asset_type}\n'
+          f'Total Benchmark rtn: {ref_rtn :.2%} \n'
+          f'Average Yearly Benchmark rtn rate: {ref_annual_rtn:.2%}')
     print(f'statistical analysis of optimal strategy messages indicators: \n'
           f'total return:        {result.rtn.mean():.2%} ±'
           f' {result.rtn.std():.2%}\n'
@@ -1539,7 +1539,7 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                                    "Total fee",
                                    "Final value",
                                    "ROI",
-                                   "Reference return",
+                                   "Benchmark rtn",
                                    "MDD"],
                            formatters={'total_fee':   '{:,.2f}'.format,
                                        'final_value': '{:,.2f}'.format,

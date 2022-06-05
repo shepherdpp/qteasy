@@ -1312,7 +1312,7 @@ class Operator:
                 raise TypeError(f'Reference data should be a HistoryPanel, got {type(reference_data)} instead.')
             # 确保输入的参考数据不为空
             if reference_data.is_empty:
-                raise ValueError(f'If not None, reference data can not be empty!')
+                reference_data = None
             # 确保reference_data与hist_data的数据量相同
         # TODO 从这里开始下面的操作都应该移动到core.py中
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置

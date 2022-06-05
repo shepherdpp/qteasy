@@ -11838,7 +11838,8 @@ class TestBuiltInsSingle(unittest.TestCase):
                      opti_sample_count=100,
                      trade_batch_size=0.,
                      sell_batch_size=0.,
-                     trade_log=False)
+                     trade_log=False,
+                     parallel=True)
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
