@@ -1923,6 +1923,12 @@ class DataSource:
             shares = str_to_list(shares)
         if isinstance(htypes, str):
             htypes = str_to_list(htypes)
+        if isinstance(asset_type, str):
+            if asset_type.lower() == 'any':
+                from utilfuncs import AVAILABLE_ASSET_TYPES
+                asset_type = AVAILABLE_ASSET_TYPES
+            else:
+                asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T

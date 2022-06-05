@@ -611,7 +611,7 @@ def process_loop_results(operator,
                 share_name = get_basic_info(share, printout=False)['name']
             except Exception as e:
                 share_name = 'unknown'
-                logger_core.warning(f'Error encountered getting share names\n{e}')
+                # logger_core.warning(f'Error encountered getting share names\n{e}')
             share_df['name'] = share_name
             share_logs.append(share_df)
 

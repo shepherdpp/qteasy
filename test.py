@@ -371,28 +371,21 @@ class TestSpace(unittest.TestCase):
         types_list = ['foo, bar',
                       ['foo', 'bar']]
 
+        # test invalid par types
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            # print(p)
-            s = Space(*p)
-            b = s.boes
-            t = s.types
-            # print(s, t)
-            self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
-            self.assertEqual(t, ['enum', 'enum'], 'types incorrect')
+            self.assertRaises(KeyError, Space, *p)
 
         pars_list = [[(0, 10), (0, 10)],
                      [[0, 10], [0, 10]]]
 
-        types_list = [['int', 'foobar']]
+        types_list = [['int', 'enumerate']]
 
         input_pars = itertools.product(pars_list, types_list)
         for p in input_pars:
-            # print(p)
             s = Space(*p)
             b = s.boes
             t = s.types
-            # print(s, t)
             self.assertEqual(b, [(0, 10), (0, 10)], 'boes incorrect!')
             self.assertEqual(t, ['int', 'enum'], 'types incorrect')
 
@@ -5690,11 +5683,11 @@ class TestStrategy(unittest.TestCase):
             def __init__(self, **kwargs):
                 super().__init__(**kwargs)
 
-            def realize(self, params, h, r, t):
+            def realize(self, h, r=None, t=None):
                 return np.random.random(size=(5,))
 
         stg = Stg()
-        stg.generate(hist_data=None)
+        stg.generate(hist_data=None, ref_data=None, trade_data=None, data_idx=None)
 
     def test_rule_iterator(self):
         """ 测试RuleIterator 规则迭代器策略类"""
@@ -6905,7 +6898,7 @@ class TestOperator(unittest.TestCase):
         print(self.op._op_hist_data_rolling_windows)
         self.assertEqual(self.op._op_hist_data_rolling_windows['custom'].shape, (45, 3, 5, 4))
         self.assertEqual(self.op._op_hist_data_rolling_windows['custom_1'].shape, (45, 3, 5, 3))
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (45, 3, 2, 4))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (48, 3, 2, 4))
 
         target_hist_data_rolling_window = np.array(
                 [[[10.04, 10.02, 10.07, 9.99],
@@ -6954,14 +6947,14 @@ class TestOperator(unittest.TestCase):
                                         equal_nan=True)
         self.assertTrue(target_comparison)
         target_hist_data_rolling_window = np.array(
-                [[[9.99, 9.97, 10., 9.97],
-                  [9.97, 9.99, 10.03, 9.97]],
+                [[[10.04, 10.02, 10.07, 9.99],
+                  [10., 10., 10., 10.]],
 
-                 [[9.87, 9.75, 10.04, 9.74],
-                  [9.79, 9.74, 9.84, 9.67]],
+                 [[9.68, 9.88, 9.91, 9.63],
+                  [9.87, 9.88, 10.04, 9.84]],
 
-                 [[6.87, 6.91, 7., 6.7],
-                  [np.nan, np.nan, np.nan, np.nan]]]
+                 [[6.64, 7.26, 7.41, 6.53],
+                  [7.26, 7., 7.31, 6.87]]]
         )
         target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom_2'][0],
                                         target_hist_data_rolling_window,
@@ -11296,7 +11289,7 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=1,
                      trade_batch_size=1,
                      visual=False,
-                     print_backtest_log=True,
+                     trade_log=True,
                      invest_cash_dates='20070604', )
         qt.run(self.op)
 
@@ -11308,7 +11301,7 @@ class TestQT(unittest.TestCase):
                mode=1,
                trade_batch_size=1,
                visual=True,
-               print_backtest_log=False,
+               trade_log=False,
                buy_sell_points=False,
                show_positions=False,
                invest_cash_dates='20070616')
@@ -11319,7 +11312,7 @@ class TestQT(unittest.TestCase):
                mode=1,
                trade_batch_size=1,
                visual=True,
-               print_backtest_log=False,
+               trade_log=False,
                buy_sell_points=True,
                show_positions=True,
                invest_cash_dates='20070604')
@@ -11717,13 +11710,13 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         proportion_or_quantity=0.4)
+                         max_sel_count=0.4)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
         qt.configuration()
-        qt.run(op, visual=True, print_backtest_log=True, trade_batch_size=100)
+        qt.run(op, visual=True, trade_log=True, trade_batch_size=100)
 
     def test_many_share_mode_1(self):
         """test built-in strategy selecting finance
@@ -11769,10 +11762,10 @@ class TestQT(unittest.TestCase):
                          condition='greater',
                          ubound=0,
                          lbound=0,
-                         proportion_or_quantity=30)
+                         max_sel_count=30)
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
-        qt.run(op, visual=False, print_backtest_log=True)
+        qt.run(op, visual=False, trade_log=True)
 
 
 class TestVisual(unittest.TestCase):
@@ -11843,8 +11836,9 @@ class TestBuiltInsSingle(unittest.TestCase):
                      asset_type='IDX',
                      reference_asset='000300.SH',
                      opti_sample_count=100,
-                     trade_batch_size=100.,
-                     sell_batch_size=100., )
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
+                     trade_log=False)
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
@@ -11983,7 +11977,7 @@ class TestBuiltInsSingle(unittest.TestCase):
     def test_ddema(self):
         op = qt.Operator(strategies=['ddema'])
         op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
+        qt.run(op, mode=1, trade_log=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
@@ -12164,7 +12158,7 @@ class TestBuiltInsMultiple(unittest.TestCase):
                      trade_batch_size=0.,
                      mode=1,
                      log=True,
-                     print_backtest_log=True,
+                     trade_log=True,
                      PT_buy_threshold=0.03,
                      PT_sell_threshold=-0.03,
                      backtest_price_adj='none')
@@ -12270,7 +12264,7 @@ class FastExperiments(unittest.TestCase):
         #              asset_type='IDX')
         # res = qt.run(op,
         #              visual=True,
-        #              print_backtest_log=True,
+        #              trade_log=True,
         #              log_backtest_detail=False,
         #              invest_start='20110725',
         #              invest_end='20220401',
@@ -12290,7 +12284,7 @@ class FastExperiments(unittest.TestCase):
         #              invest_cash_amounts=[1000000],
         #              mode=1,
         #              log=True,
-        #              print_backtest_log=True,
+        #              trade_log=True,
         #              PT_buy_threshold=0.03,
         #              PT_sell_threshold=-0.03,
         #              backtest_price_adj='none')

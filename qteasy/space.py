@@ -64,9 +64,9 @@ class Space:
             if par_types[i] is None:
                 continue
             elif par_types[i].lower() in ['int', 'discr']:
-                par_types[i] = 'discr'
+                par_types[i] = 'int'
             elif par_types[i].lower() in ['float', 'conti']:
-                par_types[i] = 'conti'
+                par_types[i] = 'float'
             elif par_types[i].lower() in ['enum', 'enumerate']:
                 par_types[i] = 'enum'
             else:
@@ -291,17 +291,17 @@ class Axis:
                 if any(not isinstance(item, numbers.Number) for item in boe):
                     typ = 'enum'
                 elif any(isinstance(item, float) for item in boe):
-                    typ = 'conti'
+                    typ = 'float'
                 else:  # 输入数据类型不是数字时，处理为枚举类型
-                    typ = 'discr'
+                    typ = 'int'
             else:  # list长度为其余值时，全部处理为enum数据
                 typ = 'enum'
-        elif typ != 'enum' and typ != 'discr' and typ != 'conti':
+        elif typ != 'enum' and typ != 'int' and typ != 'float':
             typ = 'enum'  # 当发现typ为异常字符串时，修改typ为enum类型
         # 开始根据typ的值生成具体的Axis
         if typ == 'enum':  # 创建一个枚举数轴
             self._new_enumerate_axis(boe)
-        elif typ == 'discr':  # 创建一个离散型数轴
+        elif typ == 'int':  # 创建一个离散型数轴
             if length == 1:
                 self._new_discrete_axis(0, boe[0])
             else:
@@ -316,9 +316,9 @@ class Axis:
     def count(self):
         """输出数轴中元素的个数，若数轴为连续型，输出为inf"""
         self_type = self._axis_type
-        if self_type == 'conti':
+        if self_type == 'float':
             return np.inf
-        elif self_type == 'discr':
+        elif self_type == 'int':
             return self._ubound - self._lbound + 1
         else:
             return len(self._enum_val)
@@ -326,7 +326,7 @@ class Axis:
     @property
     def size(self):
         """输出数轴的跨度，或长度，对连续型数轴来说，定义为上界减去下界"""
-        if self.axis_type == 'conti':
+        if self.axis_type == 'float':
             return self._ubound - self._lbound
         else:
             return self.count
@@ -404,7 +404,7 @@ class Axis:
         :return:
             None
         """
-        self._axis_type = 'discr'
+        self._axis_type = 'int'
         self._set_bounds(int(lbound), int(ubound))
 
     def _new_continuous_axis(self, lbound, ubound):
@@ -416,7 +416,7 @@ class Axis:
         :return:
             None
         """
-        self._axis_type = 'conti'
+        self._axis_type = 'float'
         self._set_bounds(float(lbound), float(ubound))
 
     def _new_enumerate_axis(self, enum):
@@ -437,9 +437,9 @@ class Axis:
         :return:
             np.array 从数轴中提取出的值对象
         """
-        if self._axis_type == 'conti':
+        if self._axis_type == 'float':
             return np.arange(self._lbound, self._ubound, interval)
-        if self._axis_type == 'discr':
+        if self._axis_type == 'int':
             if not float(interval).is_integer():
                 raise ValueError(f'interval should be an integer, got {interval} instead!')
             if not float(self._lbound).is_integer():
@@ -456,9 +456,9 @@ class Axis:
         """
         if not float(qty).is_integer():
             raise ValueError(f'interval should be an integer, got {qty} instead!')
-        if self._axis_type == 'discr':
+        if self._axis_type == 'int':
             return np.random.randint(self._lbound, self._ubound + 1, size=qty)
-        if self._axis_type == 'conti':
+        if self._axis_type == 'float':
             return np.random.uniform(self._lbound, self._ubound, qty)
 
     def _extract_enum_interval(self, interval):

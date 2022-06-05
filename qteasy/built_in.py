@@ -2033,7 +2033,7 @@ class TimingDMA(stg.RuleIterator):
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
         # print('qDMA generated DMA and ama signal:', dma.size, dma, '\n', ama.size, ama)
 
-        cat = np.where(dma > ama, 1, 0)
+        cat = 1 if dma[-1] > ama[-1] else 0
         return cat
 
 

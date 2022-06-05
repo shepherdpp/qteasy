@@ -208,19 +208,11 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '明细交易日志的存储路径\n'},
 
-        'print_backtest_log':   {'Default':   False,
+        'trade_log':            {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
-                                 'level':     4,
-                                 'text':      '如果True，将回测详细过程信息写入\n'
-                                              '一个DataFrame中，这个文件可以保存下来供仔细研究\n'
-                                              '这个参数只有在回测模式下有用'},
-
-        'log_backtest_detail':  {'Default':   False,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     4,
-                                 'text':      '如果True，将回测详细过程信息写入日志\n'
-                                              '日志级别为DEBUG，用于分析回测的细节，这个参数只有在\n'
-                                              '回测模式下有用'},
+                                 'level':     1,
+                                 'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
+                                              '包括交易信号以及每一步骤的交易结果'},
 
         'benchmark_asset':      {'Default':   '000300.SH',
                                  'Validator': lambda value: isinstance(value, str)
@@ -310,20 +302,6 @@ def _valid_qt_kwargs():
                                                             and 0 <= value < 1,
                                  'level':     2,
                                  'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
-
-        'log':                  {'Default':   True,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     1,
-                                 'text':      '是否生成日志\n'
-                                              'FutureWarning:\n'
-                                              '该参数在未来将会被"trade_log"所取代'},
-
-        'trade_log':            {'Default':   True,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     1,
-                                 'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
-                                              '包括交易信号以及每一步骤的交易结果\n'
-                                              '<该功能尚未实现>'},
 
         'invest_start':         {'Default':   '20160405',
                                  'Validator': lambda value: isinstance(value, str)
