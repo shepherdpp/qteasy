@@ -29,7 +29,7 @@ from qteasy.utilfuncs import weekday_name, nearest_market_trade_day, is_number_l
 from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wildcard_match, rolling_window
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
-from qteasy.core import apply_loop
+from qteasy.core import apply_loop, process_loop_results
 from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
 
 from qteasy.tsfuncs import income, indicators, name_change
@@ -2369,7 +2369,8 @@ class TestLoop(unittest.TestCase):
                             '2016/08/26', '2016/08/29', '2016/08/30', '2016/08/31', '2016/09/01',
                             '2016/09/02', '2016/09/05', '2016/09/06', '2016/09/07', '2016/09/08']
         self.multi_dates = [pd.Timestamp(date_text) for date_text in self.multi_dates]
-        # 操作的交易价格包括开盘价、最高价和收盘价
+
+        # 精心设计的模拟交易价格包括开盘价、最高价和收盘价
         self.multi_prices_open = np.array([[10.02, 9.88, 7.26],
                                            [10.00, 9.88, 7.00],
                                            [9.98, 9.89, 6.88],
@@ -2520,7 +2521,7 @@ class TestLoop(unittest.TestCase):
                                             [9.64, 11.01, 7.80],
                                             [9.65, 11.58, 7.97],
                                             [9.62, 11.80, 8.25]])
-        # 交易信号包括三组，分别作用与开盘价、最高价和收盘价
+        # 精心设计的多重交易信号，交易信号包括三组，分别作用于开盘价、最高价和收盘价
         # 此时的关键是股票交割期的处理，交割期不为0时，以交易日为单位交割
         self.multi_signals = []
         # multisignal的第一组信号为开盘价信号
@@ -2716,22 +2717,7 @@ class TestLoop(unittest.TestCase):
                              )
         )
 
-        # 设置回测参数
-        self.cash = qt.CashPlan(['2016/07/01', '2016/08/12', '2016/09/23'], [10000, 10000, 10000])
-        self.rate = qt.Cost(buy_fix=0,
-                            sell_fix=0,
-                            buy_rate=0,
-                            sell_rate=0,
-                            buy_min=0,
-                            sell_min=0,
-                            slipage=0)
-        self.rate2 = qt.Cost(buy_fix=0,
-                             sell_fix=0,
-                             buy_rate=0,
-                             sell_rate=0,
-                             buy_min=10,
-                             sell_min=5,
-                             slipage=0)
+        # 将上面生成的数据转化成符合要求的交易信号HistoryPanel
         self.pt_signal_hp = dataframe_to_hp(
                 pd.DataFrame(self.pt_signals, index=self.dates, columns=self.shares),
                 htypes='close'
@@ -2749,15 +2735,64 @@ class TestLoop(unittest.TestCase):
                 dataframe_as='htypes',
                 htypes='open, high, close'
         )
+        # 将生成的数据组装成符合要求的交易历史价格清单
         self.history_list = dataframe_to_hp(
                 pd.DataFrame(self.prices, index=self.dates, columns=self.shares),
                 htypes='close'
         )
+        # 将生成的数据组装成符合要求的多重交易历史价格清单
         self.multi_history_list = stack_dataframes(
                 self.multi_histories,
                 dataframe_as='htypes',
                 htypes='open, high, close'
         )
+
+        # 精心设计的交易员Operator对象，承载交易信号后用于apply_loop的测试
+        self.op_pt_batch = qt.Operator(['all'], signal_type='pt', op_type='batch')
+        self.op_ps_batch = qt.Operator(['all'], signal_type='ps', op_type='batch')
+        self.op_vs_batch = qt.Operator(['all'], signal_type='vs', op_type='batch')
+        self.op_pt_realtime = qt.Operator(['all'], signal_type='pt', op_type='realtime')
+        self.op_ps_realtime = qt.Operator(['all'], signal_type='ps', op_type='realtime')
+        self.op_vs_realtime = qt.Operator(['all'], signal_type='vs', op_type='realtime')
+        # 不调用交易员Operator对象的create_signal()方法，直接设置相应交易员的交易信号列表
+        # 注意，正常情况下应该使用operator.assign_hist_data()来设置分配历史数据，同时使用
+        # operator.create_signal()方法来生成交易清单，这里直接设置的方法仅限测试时使用
+        self.op_pt_batch._op_list = self.pt_signal_hp.values
+        self.op_pt_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_pt_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_ps_batch._op_list = self.ps_signal_hp.values
+        self.op_ps_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_ps_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_vs_batch._op_list = self.vs_signal_hp.values
+        self.op_vs_batch._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_vs_batch._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+
+        self.op_pt_realtime._op_list = self.pt_signal_hp.values
+        self.op_pt_realtime._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_pt_realtime._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_ps_realtime._op_list = self.ps_signal_hp.values
+        self.op_ps_realtime._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_ps_realtime._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+        self.op_vs_realtime._op_list = self.vs_signal_hp.values
+        self.op_vs_realtime._op_list_hdates = {hdate: idx for hdate, idx in zip(self.dates, range(len(self.dates)))}
+        self.op_vs_realtime._op_list_shares = {share: idx for share, idx in zip(self.shares, range(7))}
+
+        # 设置回测参数
+        self.cash = qt.CashPlan(['2016/07/01', '2016/08/12', '2016/09/23'], [10000, 10000, 10000])
+        self.rate = qt.Cost(buy_fix=0,
+                            sell_fix=0,
+                            buy_rate=0,
+                            sell_rate=0,
+                            buy_min=0,
+                            sell_min=0,
+                            slipage=0)
+        self.rate2 = qt.Cost(buy_fix=0,
+                             sell_fix=0,
+                             buy_rate=0,
+                             sell_rate=0,
+                             buy_min=10,
+                             sell_min=5,
+                             slipage=0)
 
         # 模拟PT信号回测结果
         # PT信号，先卖后买，交割期为0
@@ -5043,49 +5078,67 @@ class TestLoop(unittest.TestCase):
               'stock delivery delay = 0 days \n'
               'cash delivery delay = 0 day \n'
               'buy-sell sequence = sell first')
-        res = apply_loop(op_type=0,
-                         op_list=self.pt_signal_hp,
-                         trade_price_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate,
-                         moq_buy=0,
-                         moq_sell=0,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate,
+                moq_buy=0,
+                moq_sell=0,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
-        # print(f'in test_loop:\nresult of loop test is \n{res}')
+        # print(f'in test_loop:\nresult of loop test is \n{res}\ntarget is\n{self.pt_res_bs00}')
         self.assertTrue(np.allclose(res, self.pt_res_bs00, 2))
         print(f'test assertion errors in apply_loop: detect moqs that are not compatible')
         self.assertRaises(AssertionError,
                           apply_loop,
-                          0,
-                          self.ps_signal_hp,
+                          self.op_pt_batch,
                           self.history_list,
+                          0,
+                          None,
                           self.cash,
                           self.rate,
                           0, 1,
-                          0,
+                          0, 0.1, 0.1, 0, 0,
                           False)
         self.assertRaises(AssertionError,
                           apply_loop,
-                          0,
-                          self.ps_signal_hp,
+                          self.op_pt_batch,
                           self.history_list,
+                          0,
+                          None,
                           self.cash,
                           self.rate,
                           1, 5,
-                          0,
+                          0, 0.1, 0.1, 0, 0,
                           False)
         print(f'test loop results with moq equal to 100')
-        res = apply_loop(op_type=0,
-                         op_list=self.ps_signal_hp,
-                         trade_price_list=self.history_list,
-                         cash_plan=self.cash,
-                         cost_rate=self.rate2,
-                         moq_buy=100,
-                         moq_sell=1,
-                         inflation_rate=0,
-                         trade_log=False)
+        loop_results, op_log_matrix, op_summary_matrix = apply_loop(
+                operator=self.op_pt_batch,
+                trade_price_list=self.history_list,
+                cash_plan=self.cash,
+                cost_rate=self.rate2,
+                moq_buy=100,
+                moq_sell=1,
+                inflation_rate=0,
+                trade_log=False,
+                price_priority_list=[0]
+        )
+        res = process_loop_results(
+                operator=self.op_pt_batch,
+                loop_results=loop_results,
+                op_log_matrix=op_log_matrix,
+                op_summary_matrix=op_summary_matrix
+        )
         self.assertIsInstance(res, pd.DataFrame)
         # print(f'in test_loop:\nresult of loop test is \n{res}')
 
@@ -5615,7 +5668,7 @@ class TestLoop(unittest.TestCase):
                          stock_delivery_period=2,
                          max_cash_usage=True,
                          inflation_rate=0,
-                         trade_detail_log=True)
+                         trade_log=True)
         self.assertIsInstance(res, pd.DataFrame)
         print(f'in test_loop:\nresult of loop test is \n{res}\n'
               f'result comparison line by line:')
@@ -6973,7 +7026,7 @@ class TestOperator(unittest.TestCase):
         print('difference is \n', sel_hist_data - self.test_data_3D[:, :, [2, 3, 0]])
         self.assertTrue(np.allclose(sel_hist_data, self.test_data_3D[:, :, [2, 3, 0]], equal_nan=True))
         self.assertTrue(np.allclose(tim_hist_data, self.test_data_3D, equal_nan=True))
-        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, 3:, :], equal_nan=True))
+        self.assertTrue(np.allclose(ric_hist_data, self.test_data_3D[:, :, :], equal_nan=True))
 
         # raises Value Error if empty history panel is given
         empty_hp = qt.HistoryPanel()
@@ -11224,8 +11277,8 @@ class TestQT(unittest.TestCase):
         qt.configure(mode=2)
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
-        self.assertEqual(config.reference_asset, '000300.SH')
-        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.benchmark_asset, '000300.SH')
+        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
         # test temp config in run() that works only in run()

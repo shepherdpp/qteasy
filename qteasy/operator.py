@@ -1308,6 +1308,8 @@ class Operator:
         # 如果reference_data不为空
         if reference_data is not None:
             # 确保输入的参考数据类型正确
+            # TODO: 为reference data选择最优的数据类型，
+            #  是HistoryPanel还是DataFrame？
             if not isinstance(reference_data, HistoryPanel):
                 raise TypeError(f'Reference data should be a HistoryPanel, got {type(reference_data)} instead.')
             # 确保输入的参考数据不为空

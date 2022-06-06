@@ -333,7 +333,7 @@ def _merge_invest_dates(op_list: pd.DataFrame, invest: CashPlan) -> pd.DataFrame
 def apply_loop(operator: Operator,
                trade_price_list: HistoryPanel,
                start_idx: int = 0,
-               end_idx: int = -1,
+               end_idx: int = None,
                cash_plan: CashPlan = None,
                cost_rate: Cost = None,
                moq_buy: float = 100.,
@@ -535,12 +535,12 @@ def apply_loop(operator: Operator,
 
 
 def process_loop_results(operator,
-                         start_idx,
-                         end_idx,
-                         loop_results,
-                         op_log_matrix,
-                         op_summary_matrix,
-                         trade_log,
+                         start_idx=0,
+                         end_idx=None,
+                         loop_results=None,
+                         op_log_matrix=None,
+                         op_summary_matrix=None,
+                         trade_log=False,
                          bt_price_priority_ohlc: str = 'OHLC'):
     """ 接受apply_loop函数传回的计算结果，生成DataFrame型交易模拟结果数据，保存交易记录，并返回结果供下一步处理
 
@@ -1542,10 +1542,10 @@ def run(operator, **kwargs):
         holdings = get_realtime_holdings()
         trade_result = get_realtime_trades()
         trade_data = build_trade_data(holdings, trade_result)
-        hist_op, hist_benchmark = check_and_prepare_real_time_data(operator, config)
+        hist_op, hist_ref = check_and_prepare_real_time_data(operator, config)
         empty_cash_plan = CashPlan([], [])
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_benchmark, cash_plan=empty_cash_plan)
+        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_ref, cash_plan=empty_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in real time mode when its op_type == "batch", set '
