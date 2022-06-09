@@ -2002,7 +2002,7 @@ def _evaluate_one_parameter(par,
         end_idx = op.get_hdate_idx(end)
         trade_price_list_seg = trade_price_list.segment(start, end)
         if stage != 'loop':
-            invest_cash_dates = trade_dates[0]
+            invest_cash_dates = trade_price_list_seg.hdates[0]
         cash_plan = CashPlan(
                 invest_cash_dates.strftime('%Y%m%d'),
                 invest_cash_amounts,
