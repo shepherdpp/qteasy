@@ -1442,25 +1442,29 @@ class Operator:
         # 清空可能已经存在的数据
         self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
-        # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策略
+        # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策
+        # 所有strategy的滑窗数量相同，且不包含最后一组滑窗，原因：每一组信号都是基于前一组滑窗
+        # 的数据生成的，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要
+        max_window_length = self.max_window_length
         for stg_id, stg in self.get_strategy_id_pairs():
             window_length = stg.window_length
+            # 一个offset变量用来调整生成滑窗的总数量，确保不管window_length如何变化，滑窗数量相同
+            window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]
             self._op_hist_data_rolling_windows[stg_id] = rolling_window(
                     hist_data_val,
                     window=window_length,
                     axis=1
-            )[:-1]
+            )[window_length_offset:-1]
 
             # 为每一个交易策略分配所需的参考数据滚动窗口（3D数据）
             # 逐个生成参考数据滚动窗口，赋值给各个策略
-            window_length = stg.window_length
             ref_data_val = self._op_reference_data[stg_id]
             self._op_ref_data_rolling_windows[stg_id] = rolling_window(
                     ref_data_val,
                     window=window_length,
                     axis=0
-            )[:-1] if ref_data_val else None
+            )[window_length_offset:-1] if ref_data_val else None
 
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
@@ -1592,6 +1596,7 @@ class Operator:
             else:
                 relevant_sample_indices = [sample_idx]
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
+            import pdb; pdb.set_trace()
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
                                        relevant_ref_data,

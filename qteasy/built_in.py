@@ -1918,7 +1918,7 @@ class WILLR(stg.RuleIterator):
 # Built-in Simple timing strategies:
 
 class RiconNone(stg.RuleIterator):
-    """无风险控制策略，不对任何风险进行控制"""
+    """无风险控制策略，返回全0结果"""
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
@@ -1926,7 +1926,7 @@ class RiconNone(stg.RuleIterator):
                          description='Do not take any risk control activity')
 
     def realize(self, h, r=None, t=None, pars=None):
-        return np.zeros_like(h.squeeze())
+        return 0.
 
 
 class TimingLong(stg.GeneralStg):
