@@ -718,7 +718,12 @@ class TestCashPlan(unittest.TestCase):
         self.cp3.info()
         # test assersion errors
         self.assertRaises(AssertionError, qt.CashPlan, '2016-01-01', [10000, 10000])
+        self.assertRaises(AssertionError, qt.CashPlan, '', '')
+        self.assertRaises(AssertionError, qt.CashPlan, '', [])
         self.assertRaises(KeyError, qt.CashPlan, '2020-20-20', 10000)
+        # test empty cash plan
+        empty = CashPlan([], [])
+        print(empty)
 
     def test_properties(self):
         self.assertEqual(self.cp1.amounts, [20000, 10000], 'property wrong')
@@ -734,6 +739,20 @@ class TestCashPlan(unittest.TestCase):
         self.assertIsInstance(self.cp1.plan, pd.DataFrame)
         self.assertIsInstance(self.cp2.plan, pd.DataFrame)
         self.assertIsInstance(self.cp3.plan, pd.DataFrame)
+        # test empty cash plan
+        empty = CashPlan([], [])
+        self.assertEqual(empty.amounts, [], 'property wrong')
+        self.assertEqual(empty.first_day, None)
+        self.assertEqual(empty.last_day, None)
+        self.assertEqual(empty.investment_count, 0)
+        self.assertEqual(empty.total, 0)
+        self.assertEqual(empty.period, 0)
+        self.assertEqual(empty.dates, [])
+        self.assertEqual(empty.ir, 0.0)
+        self.assertAlmostEqual(empty.closing_value, 0)
+        self.assertAlmostEqual(empty.opening_value, 0)
+        self.assertIsInstance(empty.plan, pd.DataFrame)
+        self.assertTrue(empty.plan.empty)
 
     def test_operation(self):
         cp_self_add = self.cp1 + self.cp1
@@ -7414,8 +7433,6 @@ class TestOperator(unittest.TestCase):
                                    'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
                                    '+', '5', '3', '2', '1', '1'])
 
-        # TODO: ndarray type of signals to be tested:
-
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
         print(f'--------- Testing setting Opt Pars: set_opt_par -------')
@@ -8739,6 +8756,7 @@ class TestHistoryPanel(unittest.TestCase):
         hp.info()
         self.assertRaises(KeyError, qt.dataframe_to_hp, df1)
 
+    # noinspection PyTypeChecker
     def test_to_dataframe(self):
         """ 测试HistoryPanel对象的to_dataframe方法
 
@@ -8772,6 +8790,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
+        # noinspection PyTypeChecker
         self.assertTrue(np.allclose(self.hp['close'].T, values))
 
         print(f'test DataFrame conversion with htype == "high"')
@@ -8780,6 +8799,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(list(self.hp.hdates), list(df_test.index))
         self.assertEqual(list(self.hp.shares), list(df_test.columns))
         values = df_test.values
+        # noinspection PyTypeChecker
         self.assertTrue(np.allclose(self.hp['high'].T, values))
 
         print(f'test DataFrame conversion with htype == "high" and dropna')
@@ -9762,8 +9782,6 @@ class TestTushare(unittest.TestCase):
         df.info()
         print(df.head(10))
 
-    # TODO: solve this problem, error message thrown out: no such module
-    # TODO: called "stock_company"
     def test_stock_company(self):
         print(f'test tushare function: stock_company')
         shares = '600748.SH'
@@ -10053,6 +10071,7 @@ class TestTushare(unittest.TestCase):
         self.assertFalse(df.empty)
 
         print(f'test4, test error thrown out due to bad parameter')
+        # noinspection PyTypeChecker
         df = fund_basic(market=3)
         print(f'df loaded: \ninfo:\n{df.info()}\nhead:\n{df.head(10)}')
         self.assertTrue(df.empty)
@@ -11225,24 +11244,24 @@ class TestQT(unittest.TestCase):
                visual=False)
         self.assertEqual(config.mode, 2)
         self.assertEqual(qt.QT_CONFIG.mode, 2)
-        self.assertEqual(config.reference_asset, '000300.SH')
-        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.benchmark_asset, '000300.SH')
+        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
 
         config_copy = config.copy()
         qt.configure(config_copy,
                      mode=1,
-                     reference_asset='000002.SZ',
-                     ref_asset_type='E')
+                     benchmark_asset='000002.SZ',
+                     benchmark_asset_type='E')
         self.assertEqual(config.mode, 2)
-        self.assertEqual(config.reference_asset, '000300.SH')
-        self.assertEqual(config.ref_asset_type, 'IDX')
+        self.assertEqual(config.benchmark_asset, '000300.SH')
+        self.assertEqual(config.benchmark_asset_type, 'IDX')
         self.assertEqual(config.asset_pool, '000300.SH')
         self.assertEqual(config.invest_start, '20070110')
         self.assertEqual(config_copy.mode, 1)
-        self.assertEqual(config_copy.reference_asset, '000002.SZ')
-        self.assertEqual(config_copy.ref_asset_type, 'E')
+        self.assertEqual(config_copy.benchmark_asset, '000002.SZ')
+        self.assertEqual(config_copy.benchmark_asset_type, 'E')
         self.assertEqual(config_copy.asset_pool, '000300.SH')
         self.assertEqual(config_copy.invest_start, '20070110')
 
@@ -11267,7 +11286,7 @@ class TestQT(unittest.TestCase):
 
     def test_run_mode_0(self):
         """测试策略的实时信号生成模式"""
-        op = qt.Operator(strategies=['stema'])
+        op = qt.Operator(strategies=['stema'], op_type='realtime')
         op.set_parameter('stema', pars=(6,))
         qt.QT_CONFIG.mode = 0
         qt.run(op)

@@ -203,7 +203,7 @@ class Operator:
     AVAILABLE_SIGNAL_TYPES = {'position target':   'pt',
                               'proportion signal': 'ps',
                               'volume signal':     'vs'}
-    AVAILABLE_OP_TYPES = ['batch', 'realtime', 'rt', 'b']
+    AVAILABLE_OP_TYPES = ['batch', 'realtime', 'rt', 'r', 'b']
 
     def __init__(self, strategies=None, signal_type=None, op_type=None):
         """ 生成具体的Operator对象
@@ -324,8 +324,8 @@ class Operator:
         self._op_list_price_types = {}  # Operator交易信号清单的价格类型，一个dict: {htype: idx}
 
         self._op_signal = None  # 在realtime模式下，Operator生成的交易信号
-        self._op_signal_hdate_idx = None  # Operator交易信号
-        self._op_signal_price_type_idx = None
+        self._op_signal_hdate_idx = None  # 在realtime模式下，Operator交易信号的日期序号
+        self._op_signal_price_type_idx = None  # 在realtime模式下，Operator交易信号的价格类型序号
 
         self.signal_type = signal_type  # 保存operator对象输出的信号类型，使用property_setter
         self.op_type = op_type  # 保存operator对象的运行类型，使用property_setter
@@ -409,8 +409,13 @@ class Operator:
         """ 设置op_type的值"""
         if not isinstance(op_type, str):
             raise KeyError(f'op_type should be a string, got {type(op_type)} instead.')
-        if op_type.lower() not in self.AVAILABLE_OP_TYPES:
+        op_type = op_type.lower()
+        if op_type not in self.AVAILABLE_OP_TYPES:
             raise KeyError(f'Invalid op_type ({op_type})')
+        if op_type in ['r', 'rt', 'realtime']:
+            op_type = 'realtime'
+        else:
+            op_type = 'batch'
         self._op_type = op_type
 
     @property
@@ -585,6 +590,49 @@ class Operator:
         if self._op_list_price_types == {}:
             return
         return list(self._op_list_price_types.keys())
+
+    @property
+    def op_signal(self):
+        """ realtime模式下单次生成的交易信号
+
+        :return:
+        """
+        return self._op_signal
+
+    @property
+    def op_signal_hdate_idx(self):
+        """ realtime模式下，单次生成的交易信号对应的日期序号
+
+        :return:
+        """
+        return self._op_signal_hdate_idx
+
+    @property
+    def op_signal_hdate(self):
+        """ realtime模式下，单次生成的交易信号对应的日期
+        根据op_signal_hdate_idx查找
+
+        :return:
+        """
+        idx = self._op_signal_hdate_idx
+        return self.op_list_hdates[idx]
+
+    @property
+    def op_signal_price_type_idx(self):
+        """ realtime模式下，单次生成的交易信号对应的价格类型
+
+        :return:
+        """
+        return self._op_signal_price_type_idx
+
+    @property
+    def op_signal_price_type(self):
+        """ realtime模式下，单次生成的交易信号对应的价格类型
+        等同于op_signal_price_type_idx
+
+        :return:
+        """
+        return self._op_signal_price_type_idx
 
     @property
     def ready(self):
@@ -1316,7 +1364,8 @@ class Operator:
             if reference_data.is_empty:
                 reference_data = None
             # 确保reference_data与hist_data的数据量相同
-        # TODO 从这里开始下面的操作都应该移动到core.py中
+        # TODO 从这里开始下面的操作都应该移动到core.py中，从而吧CashPlan从Operator的设置过程中去掉
+        #  使Operator与CashPlan无关。使二者脱钩
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
@@ -1513,7 +1562,6 @@ class Operator:
         from .blender import signal_blend
         signal_type = self.signal_type
         blended_signal = None
-        relevant_sample_indices = sample_idx
         # 最终输出的所有交易信号都是ndarray，且每种交易价格类型都有且仅有一组信号
         # 一个字典保存所有交易价格类型各自的交易信号ndarray
         # 如果price_type_idx给出时，只计算这个price_type的交易信号
@@ -1521,7 +1569,7 @@ class Operator:
         if price_type_idx is None:
             bt_price_types = self.bt_price_types
         else:
-            bt_price_types = self.bt_price_types[price_type_idx]
+            bt_price_types = [self.bt_price_types[price_type_idx]]
         bt_price_type_count = len(bt_price_types)
         for bt_price_type in bt_price_types:
             # 针对每种交易价格类型分别调用所有的相关策略，准备将rolling_window数据逐个传入策略
@@ -1541,6 +1589,8 @@ class Operator:
                 td = None
             if sample_idx is None:
                 relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
+            else:
+                relevant_sample_indices = [sample_idx]
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
@@ -1551,6 +1601,9 @@ class Operator:
                                       trade_data=td,
                                       data_idx=si)
                 if sample_idx is not None:
+                    self._op_signal = signal
+                    self._op_signal_hdate_idx = sample_idx
+                    self._op_signal_price_type_idx = bt_price_type
                     return signal
                 if signal_type in ['ps', 'vs']:
                     signal = fill_nan_data(signal, 0)

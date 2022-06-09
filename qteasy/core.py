@@ -1185,7 +1185,7 @@ def check_and_prepare_hist_data(oper: Operator, config):
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
-    ).slice_to_dataframe(share='none')
+    )   #.slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.bt_price_types
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -1258,7 +1258,7 @@ def check_and_prepare_real_time_data(operator, config):
      test_cash_plan
      ) = check_and_prepare_hist_data(operator, config)
 
-    return hist_op, hist_ref
+    return hist_op, hist_ref, invest_cash_plan
 
 
 def check_and_prepare_backtest_data(operator, config):
@@ -1542,17 +1542,19 @@ def run(operator, **kwargs):
         holdings = get_realtime_holdings()
         trade_result = get_realtime_trades()
         trade_data = build_trade_data(holdings, trade_result)
-        hist_op, hist_ref = check_and_prepare_real_time_data(operator, config)
-        empty_cash_plan = CashPlan([], [])
+        hist_op, hist_ref, invest_cash_plan = check_and_prepare_real_time_data(operator, config)
+        # TODO: 这里采用临时处理方式，使用mode1所用的hist_op/hist_ref以及invest_cash_plan
+        #  数据来进行实时信号生成，但是这里需要大改进：自动获取当前最新的数据，生成一个足够一个周期
+        #  的交易信号生成即可
+        # empty_cash_plan = CashPlan([], [])
         # 在生成交易信号之前分配历史数据，将正确的历史数据分配给不同的交易策略
-        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_ref, cash_plan=empty_cash_plan)
+        operator.assign_hist_data(hist_data=hist_op, reference_data=hist_ref, cash_plan=invest_cash_plan)
         st = time.time()  # 记录交易信号生成耗时
         if operator.op_type == 'batch':
             raise KeyError(f'Operator can not work in real time mode when its op_type == "batch", set '
                            f'"Operator.op_type = \'realtime\'"')
         else:
             op_list = operator.create_signal(
-                    hist_data=hist_op,
                     trade_data=trade_data,
                     sample_idx=-1,
                     price_type_idx=0
