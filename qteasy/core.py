@@ -1586,8 +1586,7 @@ def run(operator, **kwargs):
         loop_result = _evaluate_one_parameter(
                 par=None,
                 op=operator,
-                op_history_data=hist_op,
-                loop_history_data=back_trade_prices,
+                trade_price_list=back_trade_prices,
                 benchmark_history_data=hist_benchmark,
                 benchmark_history_data_type=benchmark_data_type,
                 config=config,
@@ -1638,8 +1637,7 @@ def run(operator, **kwargs):
                 par_generator=optimal_pars,
                 total=config.opti_output_count,
                 op=operator,
-                op_history_data=hist_opti,
-                loop_history_data=hist_opti_loop,
+                trade_price_list=hist_opti_loop,
                 benchmark_history_data=hist_benchmark,
                 benchmark_history_data_type=benchmark_data_type,
                 config=config,
@@ -1658,8 +1656,7 @@ def run(operator, **kwargs):
                     par_generator=optimal_pars,
                     total=config.opti_output_count,
                     op=operator,
-                    op_history_data=hist_opti_ref,
-                    loop_history_data=opti_trade_prices,
+                    trade_price_list=opti_trade_prices,
                     benchmark_history_data=hist_benchmark,
                     benchmark_history_data_type=benchmark_data_type,
                     config=config,
@@ -1687,8 +1684,7 @@ def run(operator, **kwargs):
                         par_generator=optimal_pars,
                         total=config.opti_output_count,
                         op=operator,
-                        op_history_data=mock_hist,
-                        loop_history_data=mock_hist,
+                        trade_price_list=mock_hist,
                         benchmark_history_data=mock_hist_loop,
                         benchmark_history_data_type=benchmark_data_type,
                         config=config,
@@ -1707,8 +1703,7 @@ def run(operator, **kwargs):
 def _evaluate_all_parameters(par_generator,
                              total,
                              op: Operator,
-                             op_history_data: HistoryPanel,
-                             loop_history_data: HistoryPanel,
+                             trade_price_list: HistoryPanel,
                              benchmark_history_data,
                              benchmark_history_data_type,
                              config,
@@ -1731,7 +1726,7 @@ def _evaluate_all_parameters(par_generator,
             历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
             价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
 
-        :param loop_history_data: pd.DataFrame ->
+        :param trade_price_list: pd.DataFrame ->
             用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，通常为收盘价
             （假设交易价格为收盘价）
 
@@ -1767,8 +1762,7 @@ def _evaluate_all_parameters(par_generator,
         futures = {proc_pool.submit(_evaluate_one_parameter,
                                     par,
                                     op,
-                                    op_history_data,
-                                    loop_history_data,
+                                    trade_price_list,
                                     benchmark_history_data,
                                     benchmark_history_data_type,
                                     config,
@@ -1788,8 +1782,7 @@ def _evaluate_all_parameters(par_generator,
         for par in par_generator:
             perf = _evaluate_one_parameter(par=par,
                                            op=op,
-                                           op_history_data=op_history_data,
-                                           loop_history_data=loop_history_data,
+                                           trade_price_list=trade_price_list,
                                            benchmark_history_data=benchmark_history_data,
                                            benchmark_history_data_type=benchmark_history_data_type,
                                            config=config,
@@ -1809,8 +1802,7 @@ def _evaluate_all_parameters(par_generator,
 
 def _evaluate_one_parameter(par,
                             op: Operator,
-                            op_history_data: HistoryPanel,
-                            loop_history_data: HistoryPanel,
+                            trade_price_list: HistoryPanel,
                             benchmark_history_data,
                             benchmark_history_data_type,
                             config,
@@ -1830,13 +1822,8 @@ def _evaluate_one_parameter(par,
         :param op: qt.Operator
             一个operator对象，包含多个投资策略，用于根据交易策略以及策略的配置参数生成交易信号
 
-        :param op_history_data: qt.HistoryPanel
-            用于生成operation List的历史数据。根据operator中的策略种类不同，需要的历史数据类型也不同，该组
-            历史数据是一个HistoryPanel对象，包含适合于交易信号创建的所有投资品种所有相关数据类型的数据。如交易
-            价格数据（如果策略通过交易价格生成交易信号）、财务报表数据（如果策略通过财务报表生成交易信号）等等
-
-        :param loop_history_data: HistoryPanel
-            用于进行回测的历史数据，该数据历史区间与前面的数据相同，但是仅包含回测所需要的价格信息，可以为收盘价
+        :param trade_price_list: HistoryPanel
+            用于模拟交易回测的历史价格，历史区间覆盖整个模拟交易期间，包含回测所需要的价格信息，可以为收盘价
             和/或其他回测所需要的历史价格
 
         :param benchmark_history_data: pd.DataFrame
@@ -1927,6 +1914,7 @@ def _evaluate_one_parameter(par,
     log_backtest = False
     period_length = 0
     period_count = 0
+    trade_dates = np.array(trade_price_list.hdates)
     if op.op_type == 'batch' and op_list is None:  # 如果策略无法产生有意义的操作清单，则直接返回基本信息
         res_dict['final_value'] = np.NINF
         res_dict['complete_values'] = pd.DataFrame()
@@ -1978,17 +1966,22 @@ def _evaluate_one_parameter(par,
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
         start_dates.append(invest_cash_dates)
-        end_dates.append(loop_history_data.hdates[-1])
+        end_dates.append(trade_dates[-1])
     elif period_util_type == 'multiple':
+        # 多重测试模式，将一个完整的历史区间切割成多个区间，多次测试
         first_history_date = invest_cash_dates
-        last_history_date = loop_history_data.hdates[-1]
+        last_history_date = trade_dates[-1]
         history_range = last_history_date - first_history_date
         sub_hist_range = history_range * period_length
         sub_hist_interval = (1 - period_length) * history_range / period_count
         for i in range(period_count):
+            # 计算每个测试区间的起止点，抖动起止点日期，确保起止点在交易日期列表中
             start_date = first_history_date + i * sub_hist_interval
+            start_date = trade_dates[np.searchsorted(trade_dates, start_date)]
             start_dates.append(start_date)
-            end_dates.append(start_date + sub_hist_range)
+            end_date = start_date + sub_hist_range
+            end_date = trade_dates[np.searchsorted(trade_dates, end_date)]
+            end_dates.append(end_date)
     else:
         raise KeyError(f'Invalid optimization type: {config.opti_type}')
     # loop over all pairs of start and end dates, get the results separately and output average
@@ -2007,9 +2000,9 @@ def _evaluate_one_parameter(par,
     for start, end in zip(start_dates, end_dates):
         start_idx = op.get_hdate_idx(start)
         end_idx = op.get_hdate_idx(end)
-        history_list_seg = loop_history_data.segment(start, end)
+        trade_price_list_seg = trade_price_list.segment(start, end)
         if stage != 'loop':
-            invest_cash_dates = history_list_seg.hdates[0]
+            invest_cash_dates = trade_dates[0]
         cash_plan = CashPlan(
                 invest_cash_dates.strftime('%Y%m%d'),
                 invest_cash_amounts,
@@ -2017,7 +2010,7 @@ def _evaluate_one_parameter(par,
         )
         loop_results, op_log_matrix, op_summary_matrix = apply_loop(
                 operator=op,
-                trade_price_list=history_list_seg,
+                trade_price_list=trade_price_list_seg,
                 start_idx=start_idx,
                 end_idx=end_idx,
                 cash_plan=cash_plan,
@@ -2047,7 +2040,7 @@ def _evaluate_one_parameter(par,
         # TODO: 将_get_complete_hist() 与 process_loop_results()合并
         complete_values = _get_complete_hist(
                 looped_value=looped_val,
-                h_list=history_list_seg,
+                h_list=trade_price_list,
                 benchmark_list=benchmark_history_data,
                 with_price=False
         )
@@ -2149,8 +2142,7 @@ def _search_grid(hist, benchmark, benchmark_type, op, config):
     pool = _evaluate_all_parameters(par_generator=par_generator,
                                     total=total,
                                     op=op,
-                                    op_history_data=hist,
-                                    loop_history_data=history_list,
+                                    trade_price_list=history_list,
                                     benchmark_history_data=benchmark,
                                     benchmark_history_data_type=benchmark_type,
                                     config=config,
@@ -2188,8 +2180,7 @@ def _search_montecarlo(hist, benchmark, benchmark_type, op, config):
     pool = _evaluate_all_parameters(par_generator=par_generator,
                                     total=total,
                                     op=op,
-                                    op_history_data=hist,
-                                    loop_history_data=history_list,
+                                    trade_price_list=history_list,
                                     benchmark_history_data=benchmark,
                                     benchmark_history_data_type=benchmark_type,
                                     config=config,
@@ -2281,8 +2272,7 @@ def _search_incremental(hist, benchmark, benchmark_type, op, config):
             pool = pool + _evaluate_all_parameters(par_generator=par_generator,
                                                    total=total,
                                                    op=op,
-                                                   op_history_data=hist,
-                                                   loop_history_data=history_list,
+                                                   trade_price_list=history_list,
                                                    benchmark_history_data=benchmark,
                                                    benchmark_history_data_type=benchmark_type,
                                                    config=config,
