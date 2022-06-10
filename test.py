@@ -5683,22 +5683,38 @@ class TestStrategy(unittest.TestCase):
     def test_general_stg(self):
         """ 测试GeneralStg 通用策略类"""
 
-    def test_factor_sorter(self):
-        """ 测试FactorSorter 因子排序策略类"""
-
-        class Stg(qt.FactorSorter):
-            def __init__(self, **kwargs):
-                super().__init__(**kwargs)
+        class Stg(qt.GeneralStg):
 
             def realize(self, h, r=None, t=None):
                 return np.random.random(size=(5,))
 
         stg = Stg()
-        stg.generate(hist_data=None, ref_data=None, trade_data=None, data_idx=None)
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, GeneralStg)
+
+    def test_factor_sorter(self):
+        """ 测试FactorSorter 因子排序策略类"""
+
+        class Stg(qt.FactorSorter):
+
+            def realize(self, h, r=None, t=None):
+                return np.random.random(size=(5,))
+
+        stg = Stg()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, FactorSorter)
 
     def test_rule_iterator(self):
         """ 测试RuleIterator 规则迭代器策略类"""
-        pass
+
+        class Stg(qt.RuleIterator):
+
+            def realize(self, h, r=None, t=None, pars=None):
+                return np.random.random(size=(5,))
+
+        stg = Stg()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, RuleIterator)
 
 
 class TestLSStrategy(RuleIterator):
@@ -6905,7 +6921,7 @@ class TestOperator(unittest.TestCase):
         print(self.op._op_hist_data_rolling_windows)
         self.assertEqual(self.op._op_hist_data_rolling_windows['custom'].shape, (45, 3, 5, 4))
         self.assertEqual(self.op._op_hist_data_rolling_windows['custom_1'].shape, (45, 3, 5, 3))
-        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (48, 3, 2, 4))
+        self.assertEqual(self.op._op_hist_data_rolling_windows['custom_2'].shape, (45, 3, 2, 4))
 
         target_hist_data_rolling_window = np.array(
                 [[[10.04, 10.02, 10.07, 9.99],
@@ -6954,14 +6970,14 @@ class TestOperator(unittest.TestCase):
                                         equal_nan=True)
         self.assertTrue(target_comparison)
         target_hist_data_rolling_window = np.array(
-                [[[10.04, 10.02, 10.07, 9.99],
-                  [10., 10., 10., 10.]],
+                [[[9.99, 9.97, 10., 9.97],
+                  [9.97, 9.99, 10.03, 9.97]],
 
-                 [[9.68, 9.88, 9.91, 9.63],
-                  [9.87, 9.88, 10.04, 9.84]],
+                 [[9.87, 9.75, 10.04, 9.74],
+                  [9.79, 9.74, 9.84, 9.67]],
 
-                 [[6.64, 7.26, 7.41, 6.53],
-                  [7.26, 7., 7.31, 6.87]]]
+                 [[6.87, 6.91, 7., 6.7],
+                  [np.nan, np.nan, np.nan, np.nan]]]
         )
         target_comparison = np.allclose(self.op._op_hist_data_rolling_windows['custom_2'][0],
                                         target_hist_data_rolling_window,

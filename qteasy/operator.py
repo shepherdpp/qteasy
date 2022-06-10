@@ -1596,7 +1596,6 @@ class Operator:
             else:
                 relevant_sample_indices = [sample_idx]
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
-            import pdb; pdb.set_trace()
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
                                        relevant_ref_data,

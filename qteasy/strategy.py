@@ -763,7 +763,6 @@ class BaseStrategy:
             else:
                 trade_data_list = [trade_data] * signal_count
             # 使用map完成快速遍历填充
-            import pdb; pdb.set_trace()
             signals = list(map(self.generate_one, hist_data_list, ref_data_list, trade_data_list))
             sig_list[data_idx] = np.array(signals)
             # 将所有分段组合成完整的ndarray

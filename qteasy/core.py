@@ -1673,7 +1673,7 @@ def run(operator, **kwargs):
             for i in range(config.test_cycle_count):
                 # 临时生成用于测试的模拟数据，将模拟数据传送到operator中，使用operator中的新历史数据
                 # 重新生成交易信号，并在模拟的历史数据上进行回测
-                mock_hist = _create_mock_data(hist_opti_ref)
+                mock_hist = _create_mock_data(hist_opti)
                 print(f'config.test_cash_dates is {config.test_cash_dates}')
                 operator.assign_hist_data(
                         hist_data=mock_hist,
@@ -2080,7 +2080,7 @@ def _create_mock_data(history_data: HistoryPanel) -> HistoryPanel:
 
     assert isinstance(history_data, HistoryPanel)
     data_types = history_data.htypes
-    # volume数据的生成还需要继续研究
+    # TODO: volume数据的生成还需要继续研究
     assert any(data_type in ['close', 'open', 'high', 'low', 'volume'] for data_type in data_types), \
         f'the data type {data_types} does not fit'
     has_volume = any(data_type in ['volume'] for data_type in data_types)
