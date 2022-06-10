@@ -16,11 +16,11 @@ import matplotlib.ticker as mtick
 
 import pandas as pd
 import numpy as np
-import warnings
 
 import qteasy
+from qteasy import logger_core
 from .history import get_history_panel
-from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, AVAILABLE_ASSET_TYPES, TIME_FREQ_STRINGS
+from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
 
 from pandas.plotting import register_matplotlib_converters
@@ -209,16 +209,19 @@ class InterCandle:
         plot_type = self.plot_type
         if idx_range >= 350:
             plot_type = 'line'
-        mpf.plot(plot_data,
-                 ax=self.ax1,
-                 volume=self.ax2,
-                 ylabel=ylabel,
-                 addplot=ap,
-                 type=plot_type,
-                 style=self.style,
-                 datetime_format='%y/%m/%d',
-                 xrotation=0)
-        self.fig.show()
+        if not plot_data.empty:
+            mpf.plot(plot_data,
+                     ax=self.ax1,
+                     volume=self.ax2,
+                     ylabel=ylabel,
+                     addplot=ap,
+                     type=plot_type,
+                     style=self.style,
+                     datetime_format='%y/%m/%d',
+                     xrotation=0)
+            self.fig.show()
+        else:
+            logger_core.warning(f'plot data is empty, plot will not be refreshed!')
 
     def refresh_texts(self, display_data):
         """ 更新K线图上的价格文本
@@ -465,7 +468,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
             code_matched = match_ts_code(stock)
             match_count = code_matched['count']
             if match_count == 0:
-                print(f'Sorry, can not find a matched ts_code with "{stock}"')
+                logger_core.warning(f'Can not find a matched ts_code with "{stock}", plotting will be canceled')
                 return
             elif match_count >= 1:
                 if asset_type is None:
@@ -479,15 +482,16 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
                     asset_type = matched_asset_types[0]
                 else:
                     if asset_type not in code_matched.keys():
-                        print(f'Sorry, can not find a matched ts_code with "{stock}" in asset type "{asset_type}"')
+                        logger_core.warning(f'can not find a matched ts_code with "{stock}" in asset type '
+                                            f'"{asset_type}", plotting will be canceled')
                         return
                     matched_codes.extend(code_matched[asset_type])
             else:
                 raise RuntimeError(f'Unknown Error: got code_matched: {code_matched}')
             if len(matched_codes) > 1:
-                warnings.warn(f'More than one matching code is found with input ({stock}):\n'
-                              f'{code_matched}\n'
-                              f'\nonly the first will be used to plot.')
+                logger_core.warning(f'More than one matching code is found with input ({stock}):\n'
+                                    f'{code_matched}\n'
+                                    f'\nonly the first will be used to plot.')
         elif stock_part == 2:
             matched_codes.append(stock)
         else:
@@ -570,7 +574,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
             print(f'{e}')
             return
         if daily.empty:
-            print(f'history data for {stock} can not be found!')
+            logger_core.warning(f'history data for {stock} can not be found!')
             return
     else:
         daily = stock_data
@@ -630,6 +634,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
                                 style=my_style,
                                 avg_type=avg_type,
                                 indicator=indicator)
+        logger_core.info(f'Creating plot with data starts {idx_start} to {idx_start + idx_range}')
         my_candle.refresh_texts(daily.iloc[idx_start + idx_range])
         my_candle.refresh_plot(idx_start, idx_range + 1)
         # 如果需要动态图表，需要传入特别的参数以进入交互模式
