@@ -2023,7 +2023,7 @@ class TimingDMA(stg.RuleIterator):
     def realize(self, h, r=None, t=None, pars=None):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
         s, l, d = self.pars
-        # print 'Generating Quick dma Long short Mask with parameters', params
+        # print 'Generating Quick dma Long short Mask with parameters', pars
 
         # 计算指数的移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可

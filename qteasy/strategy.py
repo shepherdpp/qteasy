@@ -29,7 +29,7 @@ class BaseStrategy:
         初始化策略的目的是为了设定策略的基本参数；
         除了策略名称、介绍以外，还包括有哪些参数，参数的取值范围和类型、需要使用哪些历史数据、
         数据的频率、信号生成的频率（称为采样频率）、数据滑窗的大小、参考数据的类型等等信息，这些信息都可以在
-        策略初始化时通过策略属性设置，如果不在初始化是设置，可以在创建strategy对象时设置。：
+        策略初始化时通过策略属性设置，如果不在初始化时设置，可以在创建strategy对象时设置。：
 
         推荐使用下面的方法设置策略
 
@@ -422,6 +422,8 @@ class BaseStrategy:
 
     @description.setter
     def description(self, description: str):
+        if not isinstance(description, str):
+            raise TypeError(f'description should be a string, got {type(description)} instead.')
         self._stg_text = description
 
     @property
@@ -431,6 +433,8 @@ class BaseStrategy:
 
     @par_count.setter
     def par_count(self, par_count: int):
+        if not isinstance(par_count, int):
+            raise TypeError(f'par count should be an integer, got {type(par_count)} instead.')
         self._par_count = par_count
 
     @property
@@ -734,11 +738,11 @@ class BaseStrategy:
         :param data_idx:
         """
         # 所有的参数有效性检查都在strategy.ready 以及 operator层面执行
-        # 在这里使用map或apply_along_axis快速组装realize()的结果，形成一张交易信号清单
+        # 在这里根据data_idx的类型，生成一组交易信号，或者一张完整的交易信号清单
         if data_idx is None:
             data_idx = -1
         if isinstance(data_idx, (int, np.int)):
-            # 生成单组信号
+            # 如果data_idx为整数时，生成单组信号stg_signal
             idx = data_idx
             h_seg = hist_data[idx]
             if ref_data is None:
@@ -747,7 +751,7 @@ class BaseStrategy:
                 ref_seg = ref_data[idx]
             return self.generate_one(h_seg=h_seg, ref_seg=ref_seg, trade_data=trade_data)
         elif isinstance(data_idx, np.ndarray):
-            # 生成信号清单
+            # 如果data_idx为一组整数时，生成完整信号清单 signal_list
             # 一个空的ndarray对象用于存储生成的选股蒙版，全部填充值为np.nan
             signal_count, share_count, date_count, htype_count = hist_data.shape
             sig_list = np.full(shape=(signal_count, share_count), fill_value=np.nan, order='C')
@@ -791,7 +795,7 @@ class GeneralStg(BaseStrategy):
 
             * realize()方法的实现：realize()方法需要利用输入的参数，输出交易信号
                 :input:
-                params: tuple 一组策略参数
+                pars: tuple 一组策略参数
                 h: 历史数据，一个3D numpy数组，包含所有股票在一个时间窗口内的所有类型的历史数据，
                     参考BaseStrategy的docstring
                 r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据

@@ -1427,9 +1427,10 @@ class Operator:
             for stg_id, stg in self.get_strategy_id_pairs()
         }
         # 如果reference_data存在的时候，为每一个交易策略配置所需的参考数据（2D数据）
+        # reference_data输入形式为HistoryPanel的3D数据，需要降低一个维度后传入
         if reference_data:
             self._op_reference_data = {
-                stg_id: reference_data[stg.reference_data_types, :, :]
+                stg_id: reference_data[stg.reference_data_types, :, 0]
                 for stg_id, stg in self.get_strategy_id_pairs()
             }
         else:
@@ -1438,16 +1439,16 @@ class Operator:
                 for stg_id, stg in self.get_strategy_id_pairs()
             }
 
-        # 为每一个交易策略生成历史数据的滚动窗口（4D数据，包含每个个股、每个数据种类的数据在每一天上的数据滑窗）
+        # 为每一个交易策略生成历史数据的滚动窗口（4D/3D数据，包含每个个股、每个数据种类的数据在每一天上的数据滑窗）
         # 清空可能已经存在的数据
         self._op_hist_data_rolling_windows = {}
         self._op_ref_data_rolling_windows = {}
-        # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策
         # 所有strategy的滑窗数量相同，且不包含最后一组滑窗，原因：每一组信号都是基于前一组滑窗
         # 的数据生成的，最后一组信号基于倒数第二组滑窗，因此，最后一组滑窗不需要
         max_window_length = self.max_window_length
         for stg_id, stg in self.get_strategy_id_pairs():
             window_length = stg.window_length
+            # 逐个生成历史数据滚动窗口(4D数据)，赋值给各个策略
             # 一个offset变量用来调整生成滑窗的总数量，确保不管window_length如何变化，滑窗数量相同
             window_length_offset = max_window_length - window_length
             hist_data_val = self._op_history_data[stg_id]

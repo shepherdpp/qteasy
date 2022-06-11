@@ -20,7 +20,7 @@ import itertools
 import datetime
 import logging
 
-from qteasy import QT_CONFIG, QT_DATA_SOURCE, QT_ROOT_PATH, QT_TRADE_CALENDAR, CashPlan
+from qteasy import QT_CONFIG, QT_DATA_SOURCE, CashPlan
 
 from qteasy.utilfuncs import list_to_str_format, regulate_date_format, time_str_format, str_to_list
 from qteasy.utilfuncs import maybe_trade_day, is_market_trade_day, prev_trade_day, next_trade_day
@@ -30,7 +30,7 @@ from qteasy.utilfuncs import match_ts_code, _lev_ratio, _partial_lev_ratio, _wil
 
 from qteasy.space import Space, Axis, space_around_centre, ResultPool
 from qteasy.core import apply_loop, process_loop_results
-from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL, TimingTRIX
+from qteasy.built_in import SelectingAvgIndicator, TimingDMA, TimingMACD, TimingCDL
 
 from qteasy.tsfuncs import income, indicators, name_change
 from qteasy.tsfuncs import stock_basic, trade_calendar, new_share
@@ -72,14 +72,14 @@ from qteasy.tafuncs import asin, atan, ceil, cos, cosh, exp, floor, ln, log10, s
 from qteasy.tafuncs import sqrt, tan, tanh, add, div, max, maxindex, min, minindex, minmax
 from qteasy.tafuncs import minmaxindex, mult, sub, sum
 
-from qteasy.history import stack_dataframes, dataframe_to_hp, HistoryPanel, ffill_3d_data
+from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, get_built_in_table_schema
+from qteasy.database import get_primary_key_range
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
-from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs, ConfigDict
+from qteasy._arg_validators import _parse_string_kwargs, _valid_qt_kwargs
 
 from qteasy.blender import _exp_to_token, blender_parser, signal_blend
 
@@ -1372,6 +1372,7 @@ class TestEvaluations(unittest.TestCase):
         """
         pass
 
+    # noinspection PyTypeChecker
     def test_fv(self):
         print(f'test with test arr and empty DataFrame')
         self.assertAlmostEqual(eval_fv(self.test_data1), 6.39245474)
@@ -1388,6 +1389,7 @@ class TestEvaluations(unittest.TestCase):
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
 
+    # noinspection PyTypeChecker
     def test_max_drawdown(self):
         print(f'test with test arr and empty DataFrame')
         self.assertAlmostEqual(eval_max_drawdown(self.test_data1)[0], 0.264274308)
@@ -1430,6 +1432,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[1], 14)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[2], 50)
 
+    # noinspection PyTypeChecker
     def test_info_ratio(self):
         reference = self.test_data1
         self.assertAlmostEqual(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
@@ -1561,9 +1564,10 @@ class TestEvaluations(unittest.TestCase):
                                         0.34160916, 0.33811193, 0.33822709, 0.3391685, 0.33883381])
         test_volatility = eval_volatility(self.long_data)
         test_volatility_roll = self.long_data['volatility'].values
-        self.assertAlmostEqual(test_volatility, np.nanmean(expected_volatility))
+        self.assertAlmostEqual=(test_volatility, np.nanmean(expected_volatility))
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
+    # noinspection PyCallingNonCallable
     def test_sharp(self):
         self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
         self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
@@ -5670,58 +5674,18 @@ class TestLoop(unittest.TestCase):
         print(f'in test_loop:\nresult of loop test is \n{res}')
 
 
-class TestStrategy(unittest.TestCase):
-    """ test all properties and methods of strategy base class"""
-
-    def setUp(self) -> None:
-        pass
-
-    def test_base_strategy(self):
-        """ 测试BaseStrategy"""
-        pass
-
-    def test_general_stg(self):
-        """ 测试GeneralStg 通用策略类"""
-
-        class Stg(qt.GeneralStg):
-
-            def realize(self, h, r=None, t=None):
-                return np.random.random(size=(5,))
-
-        stg = Stg()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, GeneralStg)
-
-    def test_factor_sorter(self):
-        """ 测试FactorSorter 因子排序策略类"""
-
-        class Stg(qt.FactorSorter):
-
-            def realize(self, h, r=None, t=None):
-                return np.random.random(size=(5,))
-
-        stg = Stg()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, FactorSorter)
-
-    def test_rule_iterator(self):
-        """ 测试RuleIterator 规则迭代器策略类"""
-
-        class Stg(qt.RuleIterator):
-
-            def realize(self, h, r=None, t=None, pars=None):
-                return np.random.random(size=(5,))
-
-        stg = Stg()
-        self.assertIsInstance(stg, BaseStrategy)
-        self.assertIsInstance(stg, RuleIterator)
-
-
 class TestLSStrategy(RuleIterator):
-    """用于test测试的简单多空蒙板生成策略。基于RollingTiming滚动择时方法生成
+    """用于test测试的简单多空蒙板生成策略。基于RuleIterator策略模版，将下列策略循环应用到所有股票上
+        同时，针对不同股票策略参数可以不相同
 
     该策略有两个参数，N与Price
-    N用于计算OHLC价格平均值的N日简单移动平均，判断，当移动平均值大于等于Price时，状态为看多，否则为看空
+    如果给出的历史数据不包含参考数据时，策略逻辑如下：
+     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于Price时，状态为看多，否则为看空
+    如果给出参考数据时，策略逻辑变为：
+     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于当日参考数据时，状态为看多，否则为看空
+    如果给出交易结果数据时，策略逻辑变为：
+     - 计算OHLC价格平均值的N日简单移动平均，判断：当移动平均价大于等于上次交易价时，状态为看多，否则为看空
+
     """
 
     def __init__(self):
@@ -5736,10 +5700,31 @@ class TestLSStrategy(RuleIterator):
         pass
 
     def realize(self, h, r=None, t=None, pars=None):
-        n, price = pars
+        if pars is not None:
+            n, price = pars
+        else:
+            n, price = self.pars
         h = h.T
         avg = (h[0] + h[1] + h[2] + h[3]) / 4
         ma = sma(avg, n)
+        if r is not None:
+            # 处理参考数据生成信号并返回
+            ref_price = r[-1, 0]  # 当天的参考数据
+            if ma[-1] < ref_price:
+                return 0
+            else:
+                return 1
+
+        if t is not None:
+            # 处理交易结果数据生成信号并返回
+            last_price = t[0, -1]  # 获取最近的交易价格
+            if last_price is None:
+                return 1  # 生成第一次交易信号
+            if ma[-1] < last_price:
+                return 0
+            else:
+                return 1
+
         if ma[-1] < price:
             return 0
         else:
@@ -5750,8 +5735,16 @@ class TestSelStrategy(GeneralStg):
     """用于Test测试的简单选股策略，基于Selecting策略生成
 
     策略没有参数，选股周期为5D
-    在每个选股周期内，从股票池的三只股票中选出今日变化率 = (今收-昨收)/平均股价（HLC平均股价）最高的两支，放入中选池，否则落选。
-    选股比例为平均分配
+    在每个选股周期内，按以下逻辑选择股票并设定多空状态：
+    当历史数据不含参考数据和交易结果数据时：
+     - 计算：今日变化率 = (今收-昨收)/平均股价(HLC平均股价)，
+     - 选择今日变化率最高的两支，设定投资比率50%，否则投资比例为0
+    当给出参考数据时，按下面逻辑设定多空：
+     - 计算：今日相对变化率 = (今收-昨收)/HLC平均股价/参考数据
+     - 选择相对变化率最高的两只股票，设定投资比率为50%，否则为0
+    当给出交易结果数据时，按下面逻辑设定多空：
+     - 计算：交易价差变化率 = (今收-昨收)/上期交易价格
+     - 选择交易价差变化率最高的两只股票，设定投资比率为50%，否则为0
     """
 
     def __init__(self):
@@ -5771,6 +5764,26 @@ class TestSelStrategy(GeneralStg):
         avg = np.nanmean(h, axis=(1, 2))
         dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
+        if r is not None:
+            # calculate difper while r
+            ref_price = r[0, -1]
+            difper = dif_no_nan / avg / ref_price
+            large2 = difper.argsort()[1:]
+            chosen = np.zeros_like(avg)
+            chosen[large2] = 0.5
+            return chosen
+
+        if t is not None:
+            # calculate difper while t
+            last_price = t[0, -1]
+            if last_price is None:
+                return np.ones_like(avg) * 0.333
+            difper = dif_no_nan / last_price
+            large2 = difper.argsort()[1:]
+            chosen = np.zeros_like(avg)
+            chosen[large2] = 0.5
+            return chosen
+
         difper = dif_no_nan / avg
         large2 = difper.argsort()[1:]
         chosen = np.zeros_like(avg)
@@ -5798,9 +5811,9 @@ class TestSelStrategyDiffTime(GeneralStg):
                          window_length=2)
         pass
 
-    def _realize(self, hist_data: np.ndarray, params: tuple):
-        avg = hist_data.mean(axis=1).squeeze()
-        difper = (hist_data[:, :, 0] - np.roll(hist_data[:, :, 0], 1))[:, -1] / avg
+    def realize(self, h, r=None, t=None):
+        avg = h.mean(axis=1).squeeze()
+        difper = (h[:, :, 0] - np.roll(h[:, :, 0], 1))[:, -1] / avg
         large2 = difper.argsort()[0:2]
         chosen = np.zeros_like(avg)
         chosen[large2] = 0.5
@@ -5813,9 +5826,15 @@ class TestSigStrategy(GeneralStg):
     策略有三个参数，第一个参数为ratio，另外两个参数为price1以及price2
     ratio是k线形状比例的阈值，定义为abs((C-O)/(H-L))。当这个比值小于ratio阈值时，判断该K线为十字交叉（其实还有丁字等多种情形，但这里做了
     简化处理。
-    信号生成的规则如下：
-    1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
-    2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
+    如果历史数据中没有给出参考数据，也没有给出交易结果数据时，信号生成的规则如下：
+     1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
+     2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
+    如果给出参考数据(参考数据包含两个种类)时，信号生成的规则如下：
+     1，当某个K线出现十字交叉，且昨收与今收之差大于参考数据type1时，买入信号
+     2，当某个K线出现十字交叉，且昨收与今收之差小于参考数据type2时，卖出信号
+    如果给出交易结果数据时，信号生成的规则如下：
+     1，当某个K线出现十字交叉，且昨收与今收之差大于上期交易价格时，买入信号
+     2，当某个K线出现十字交叉，且昨收与今收之差小于上期交易价格时，卖出信号
     """
 
     def __init__(self):
@@ -5834,6 +5853,12 @@ class TestSigStrategy(GeneralStg):
         r, price1, price2 = self.pars
         ratio = np.abs((h[:, -1, 0] - h[:, -1, 1]) / (h[:, -1, 3] - h[:, -1, 2]))
         diff = h[:, -1, 0] - h[:, -2, 0]
+
+        if r is not None:
+            pass
+
+        if t is not None:
+            pass
 
         sig = np.where((ratio < r) & (diff > price1),
                        1,
@@ -5871,12 +5896,12 @@ class MyStg(qt.RuleIterator):
 
     # 策略的具体实现代码写在策略的_realize()函数中
     # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
-    def _realize(self, hist_price, params):
+    def realize(self, h, r=None, t=None, pars=None):
         """策略的具体实现代码：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        f, s, m = params
+        f, s, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = hist_price.T
+        h = h.T
         # 计算长短均线的当前值
         s_ma = qt.sma(h[0], s)[-1]
         f_ma = qt.sma(h[0], f)[-1]
@@ -5894,7 +5919,7 @@ class MyStg(qt.RuleIterator):
             return -1
 
 
-class TestOperator(unittest.TestCase):
+class TestOperatorAndStrategy(unittest.TestCase):
     """全面测试Operator对象的所有功能。包括：
 
         1, Strategy 参数的设置
@@ -6026,6 +6051,58 @@ class TestOperator(unittest.TestCase):
                                [0.9, np.nan, np.nan],
                                [np.nan, np.nan, 0.1]])
 
+        # for reference history data
+        reference_data = np.array([[9.68],
+                                   [9.87],
+                                   [10],
+                                   [9.87],
+                                   [np.nan],
+                                   [9.82],
+                                   [6.85],
+                                   [10.03],
+                                   [10.06],
+                                   [9.58],
+                                   [10.11],
+                                   [5.91],
+                                   [9.75],
+                                   [10.06],
+                                   [6.23],
+                                   [10.04],
+                                   [10.06],
+                                   [6.27],
+                                   [10.24],
+                                   [10],
+                                   [10.24],
+                                   [9.86],
+                                   [5.69],
+                                   [10.12],
+                                   [10.03],
+                                   [6.25],
+                                   [9.94],
+                                   [9.83],
+                                   [9.77],
+                                   [10.64],
+                                   [6.06],
+                                   [9.93],
+                                   [5.69],
+                                   [5.46],
+                                   [10.24],
+                                   [9.88],
+                                   [7.43],
+                                   [7.72],
+                                   [8.16],
+                                   [10.37],
+                                   [8.7],
+                                   [11.02],
+                                   [np.nan],
+                                   [np.nan],
+                                   [9.55],
+                                   [10.87],
+                                   [11.01],
+                                   [9.64],
+                                   [7.97],
+                                   [8.25]])
+
         self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
                              '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
                              '2016-07-13', '2016-07-14', '2016-07-15', '2016-07-18',
@@ -6046,11 +6123,10 @@ class TestOperator(unittest.TestCase):
         self.sel_finance_tyeps = ['eps']
 
         self.test_data_3D = np.zeros((3, data_rows, 4))
-        self.test_data_2D = np.zeros((data_rows, 3))
-        self.test_data_2D2 = np.zeros((data_rows, 4))
         self.test_data_sel_finance = np.empty((3, data_rows, 1))
+        self.test_ref_data = np.zeros((1, data_rows, 1))
 
-        # Build up 3D data
+        # fill in 3D data
         self.test_data_3D[0, :, 0] = share1_close
         self.test_data_3D[0, :, 1] = share1_open
         self.test_data_3D[0, :, 2] = share1_high
@@ -6065,6 +6141,9 @@ class TestOperator(unittest.TestCase):
         self.test_data_3D[2, :, 1] = share3_open
         self.test_data_3D[2, :, 2] = share3_high
         self.test_data_3D[2, :, 3] = share3_low
+
+        # fill in reference data
+        self.test_ref_data[0, :, :] = reference_data
 
         self.test_data_sel_finance[:, :, 0] = shares_eps.T
 
@@ -7043,7 +7122,7 @@ class TestOperator(unittest.TestCase):
         # test the effect of data type sequence in strategy definition
 
     def test_operator_generate(self):
-        """ Test signal generation process of operator objects
+        """ 测试operator对象生成完整交易信号
 
         :return:
         """
@@ -7277,6 +7356,13 @@ class TestOperator(unittest.TestCase):
         print('--Test two separate signal generation for different price types--')
         # 更多测试集合
 
+    def test_operator_generate_realtime(self):
+        """ 测试operator对象在实时模式下生成交易信号
+
+        :return:
+        """
+        pass
+
     def test_stg_parameter_setting(self):
         """ test setting parameters of strategies
         test the method set_parameters
@@ -7449,6 +7535,45 @@ class TestOperator(unittest.TestCase):
                                    'sum(2)', '*', '6', '+', '5', '4', '3', '*', '4',
                                    '+', '5', '3', '2', '1', '1'])
 
+    def test_tokenizer(self):
+        self.assertListEqual(_exp_to_token('1+1'),
+                             ['1', '+', '1'])
+        print(_exp_to_token('1+1'))
+        self.assertListEqual(_exp_to_token('1 & 1'),
+                             ['1', '&', '1'])
+        print(_exp_to_token('1&1'))
+        self.assertListEqual(_exp_to_token('1 and 1'),
+                             ['1', 'and', '1'])
+        print(_exp_to_token('1 and 1'))
+        self.assertListEqual(_exp_to_token('1 or 1'),
+                             ['1', 'or', '1'])
+        print(_exp_to_token('1 or 1'))
+        self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
+                             ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
+        print(_exp_to_token('(1 - 1 + -1) * pi'))
+        self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
+                             ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
+        print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
+        self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
+                             ['sin(', 'pi', ')', '+', '2.14'])
+        print(_exp_to_token('sin(pi) + 2.14'))
+        self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
+                             ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
+        print(_exp_to_token('(1-2)/3.0 + 0.0000'))
+        self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
+                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
+        print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
+        self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
+                             ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
+        print(_exp_to_token('(x + e * 10) / 10'))
+        self.assertListEqual(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
+                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12',
+                              ')'])
+        print(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
+        self.assertListEqual(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
+                             ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
+        print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
+
     def test_set_opt_par(self):
         """ test setting opt pars in batch"""
         print(f'--------- Testing setting Opt Pars: set_opt_par -------')
@@ -7563,6 +7688,8 @@ class TestOperator(unittest.TestCase):
     def test_rule_iterator(self):
         """测试rule_iterator类型策略"""
         stg = TestLSStrategy()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, RuleIterator)
         stg_pars = {'000100': (5, 10),
                     '000200': (5, 10),
                     '000300': (5, 6)}
@@ -7570,6 +7697,8 @@ class TestOperator(unittest.TestCase):
         history_data = self.hp1.values[:, :-1]
         history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
 
+        # test strategy generate with only hist_data
+        print(f'test strategy generate with only hist_data')
         output = stg.generate(hist_data=history_data_rolling_window,
                               data_idx=np.arange(len(history_data_rolling_window)))
 
@@ -7628,9 +7757,76 @@ class TestOperator(unittest.TestCase):
                   f'selmask:   {lsmask[i]}')
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
+        # test strategy generate with reference_data
+        print(f'\ntest strategy generate with reference_data')
+        ref_data = self.test_ref_data[0, :, :]
+        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              ref_data=ref_rolling_window,
+                              data_idx=np.arange(len(history_data_rolling_window)))
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        lsmask = np.array([[1.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [1.0, 1.0, 1.0]])
+        self.assertEqual(output.shape, lsmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {lsmask[i]}')
+        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
+
+        # test strategy generate with trade_data
+
     def test_general_strategy(self):
         """ 测试基础策略类General Strategy"""
         stg = TestSelStrategy()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, GeneralStg)
         stg_pars = ()
         stg.set_pars(stg_pars)
         history_data = self.hp1['high, low, close', :, :-1]
@@ -7777,6 +7973,8 @@ class TestOperator(unittest.TestCase):
     def test_factor_sorter(self):
         """Test Factor Sorter 策略, test all built-in strategy parameters"""
         stg = SelectingAvgIndicator()
+        self.assertIsInstance(stg, BaseStrategy)
+        self.assertIsInstance(stg, FactorSorter)
         stg_pars = (False, 'even', 'greater', 0, 0, 0.67)
         stg.set_pars(stg_pars)
         stg.window_length = 5
@@ -7787,6 +7985,17 @@ class TestOperator(unittest.TestCase):
         stg.lbound = 0
         stg.ubound = 0
         stg.max_sel_count = 0.67
+        # test additional FactorSorter properties
+        self.assertEqual(stg_pars, (False, 'even', 'greater', 0, 0, 0.67))
+        self.assertEqual(stg.window_length, 5)
+        self.assertEqual(stg.data_freq, 'd')
+        self.assertEqual(stg.sample_freq, '10d')
+        self.assertEqual(stg.sort_ascending, False)
+        self.assertEqual(stg.condition, 'greater')
+        self.assertEqual(stg.lbound, 0)
+        self.assertEqual(stg.ubound, 0)
+        self.assertEqual(stg.max_sel_count, 0.67)
+
         history_data = self.hp2.values[:, :-1]
         hist_data_rolling_window = rolling_window(history_data, window=stg.window_length, axis=1)
         print(f'Start to test financial selection parameter {stg_pars}')
@@ -8163,45 +8372,6 @@ class TestOperator(unittest.TestCase):
             print(f'output:    {output[i]}\n'
                   f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
-
-    def test_tokenizer(self):
-        self.assertListEqual(_exp_to_token('1+1'),
-                             ['1', '+', '1'])
-        print(_exp_to_token('1+1'))
-        self.assertListEqual(_exp_to_token('1 & 1'),
-                             ['1', '&', '1'])
-        print(_exp_to_token('1&1'))
-        self.assertListEqual(_exp_to_token('1 and 1'),
-                             ['1', 'and', '1'])
-        print(_exp_to_token('1 and 1'))
-        self.assertListEqual(_exp_to_token('1 or 1'),
-                             ['1', 'or', '1'])
-        print(_exp_to_token('1 or 1'))
-        self.assertListEqual(_exp_to_token('(1 - 1 + -1) * pi'),
-                             ['(', '1', '-', '1', '+', '-1', ')', '*', 'pi'])
-        print(_exp_to_token('(1 - 1 + -1) * pi'))
-        self.assertListEqual(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'),
-                             ['abs(', '5', '-', 'sqrt(', '2', ')', '/', 'cos(', 'pi', ')', ')'])
-        print(_exp_to_token('abs(5-sqrt(2) /  cos(pi))'))
-        self.assertListEqual(_exp_to_token('sin(pi) + 2.14'),
-                             ['sin(', 'pi', ')', '+', '2.14'])
-        print(_exp_to_token('sin(pi) + 2.14'))
-        self.assertListEqual(_exp_to_token('(1-2)/3.0 + 0.0000'),
-                             ['(', '1', '-', '2', ')', '/', '3.0', '+', '0.0000'])
-        print(_exp_to_token('(1-2)/3.0 + 0.0000'))
-        self.assertListEqual(_exp_to_token('-(1. + .2) * max(1, 3, 5)'),
-                             ['-', '(', '1.', '+', '.2', ')', '*', 'max(', '1', ',', '3', ',', '5', ')'])
-        print(_exp_to_token('-(1. + .2) * max(1, 3, 5)'))
-        self.assertListEqual(_exp_to_token('(x + e * 10) / 10'),
-                             ['(', 'x', '+', 'e', '*', '10', ')', '/', '10'])
-        print(_exp_to_token('(x + e * 10) / 10'))
-        self.assertListEqual(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'),
-                             ['8.2', '/', '(', '(', '-.1', '+', 'abs3(', '3', ',', '4', ',', '5', ')', ')', '*', '0.12',
-                              ')'])
-        print(_exp_to_token('8.2/((-.1+abs3(3,4,5))*0.12)'))
-        self.assertListEqual(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'),
-                             ['8.2', '/', 'abs3(', '3', ',', '4', ',', '25.34', '+', '5', ')', '*', '0.12'])
-        print(_exp_to_token('8.2/abs3(3,4,25.34 + 5)*0.12'))
 
 
 class TestLog(unittest.TestCase):
@@ -13342,7 +13512,7 @@ def test_suite(*args):
                                   TestLog(),
                                   TestCashPlan()])
         elif arg_item == 'core':
-            suite.addTests(tests=[TestOperator(),
+            suite.addTests(tests=[TestOperatorAndStrategy(),
                                   TestLoop(),
                                   TestEvaluations(),
                                   TestBuiltInsSingle(),

@@ -18,7 +18,6 @@ import pandas as pd
 import numpy as np
 
 import qteasy
-from qteasy import logger_core
 from .history import get_history_panel
 from .utilfuncs import time_str_format, list_to_str_format, match_ts_code, TIME_FREQ_STRINGS
 from .tafuncs import macd, dema, rsi, bbands, ma
@@ -170,6 +169,7 @@ class InterCandle:
     def refresh_plot(self, idx_start, idx_range):
         """ 根据最新的参数，重新绘制整个图表
         """
+        from qteasy import logger_core
         ap = []
         # 添加K线图重叠均线，根据均线类型添加移动均线或布林带线
         plot_data = self.data.iloc[idx_start:idx_start + idx_range]
@@ -442,6 +442,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
     :return:
         pd.DataFrame, 包含相应股票数据的DataFrame
     """
+    from qteasy import logger_core
     no_visual = False
     if not isinstance(plot_type, str):
         raise TypeError(f'plot type should be a string, got {type(plot_type)} instead.')
@@ -512,6 +513,7 @@ def _mpf_plot(stock_data=None, share_name=None, stock=None, start=None, end=None
               data_source=None, **kwargs):
     """plot stock data or extracted data in renko form
     """
+    from qteasy import logger_core
     freq_info = '日K线'
     adj = 'none'
     adj_info = ''
