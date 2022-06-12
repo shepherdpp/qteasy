@@ -5709,7 +5709,7 @@ class TestLSStrategy(RuleIterator):
         ma = sma(avg, n)
         if r is not None:
             # 处理参考数据生成信号并返回
-            ref_price = r[-1, 0]  # 当天的参考数据
+            ref_price = r[-1, 0]  # 当天的参考数据，r[-1
             if ma[-1] < ref_price:
                 return 0
             else:
@@ -5717,8 +5717,9 @@ class TestLSStrategy(RuleIterator):
 
         if t is not None:
             # 处理交易结果数据生成信号并返回
-            last_price = t[0, -1]  # 获取最近的交易价格
-            if last_price is None:
+            import pdb; pdb.set_trace()
+            last_price = t[:, 4]  # 获取最近的交易价格
+            if last_price == np.nan:
                 return 1  # 生成第一次交易信号
             if ma[-1] < last_price:
                 return 0
@@ -7878,6 +7879,74 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
         # test strategy generate with trade_data
+        print(f'\ntest strategy generate with trade_data')
+        output = []
+        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
+        trade_data.fill(np.nan)
+        for step in range(len(history_data_rolling_window)):
+            output.append(
+                    stg.generate(
+                            hist_data=history_data_rolling_window,
+                            trade_data=trade_data,
+                            data_idx=step
+                    )
+            )
+        output = np.array(output)
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        lsmask = np.array([[0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 0.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 1.0, 1.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [1.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0],
+                           [0.0, 1.0, 1.0]])
+        self.assertEqual(output.shape, lsmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {lsmask[i]}')
+        self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
     def test_general_strategy(self):
         """ 测试第一种基础策略类General Strategy"""

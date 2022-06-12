@@ -416,7 +416,7 @@ def apply_loop(operator: Operator,
     values = []  # 资产总价值，记录每个操作时点的资产和现金价值总和
     amounts_matrix = []
     total_value = 0
-    trade_data = np.empty(shape=(5, share_count))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
+    trade_data = np.empty(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
                                                    # 持有现金等数据的数组，用于realtime信号生成
     recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
     recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
@@ -457,11 +457,11 @@ def apply_loop(operator: Operator,
             current_prices = price[:, i, j]
             if operator.op_type == 'realtime':
                 # 在realtime模式下，准备trade_data并计算下一步的交易信号
-                trade_data[0] = own_amounts
-                trade_data[1] = available_amounts
-                trade_data[2] = current_prices
-                trade_data[3] = recent_amounts_change
-                trade_data[4] = recent_trade_prices
+                trade_data[:, 0] = own_amounts
+                trade_data[:, 1] = available_amounts
+                trade_data[:, 2] = current_prices
+                trade_data[:, 3] = recent_amounts_change
+                trade_data[:, 4] = recent_trade_prices
                 current_op = operator.create_signal(trade_data=trade_data, sample_idx=i, price_type_idx=j)
             else:
                 # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号

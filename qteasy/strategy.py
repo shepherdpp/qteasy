@@ -136,7 +136,8 @@ class BaseStrategy:
 
             - h(history):   历史数据片段，通常这是一个3D的ndarray，包含了所有股票的所有类型的历史数据，且数据的时间起止点是
                             策略运行当时开始倒推到时间窗口长度前的时刻，具体来说，如果这个array的shape为(M, N, L)，即：
-                            - M层：
+
+                            - M层：股票/证券类型轴
                                 每一层的数据表示一只股票的历史数据，具体哪些股票在qteasy运行参数中设定，
                                 例如：设定：
                                     - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
@@ -147,7 +148,7 @@ class BaseStrategy:
                                 三支股票的数据，使用下面的方法即可获取相应的数据：
                                     h_seg[0, :, :] - 获取000001.SZ的所有历史数据
 
-                            - N行：
+                            - N行： 交易日期/时间轴
                                 每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
                                 传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
                                 data_freq则定义了时间戳的频率。
@@ -161,7 +162,7 @@ class BaseStrategy:
                                 在2020-05-30这一天，获取的数据就会是从2020-01-04开始，一直到2020-05-29这100个交易日
                                 的历史数据
 
-                            - L列：
+                            - L列： 历史数据类型轴
                                 每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性data_types中设置
                                 例如：设定：
                                     - data_types = "open, high, low, close, pe"
@@ -173,6 +174,7 @@ class BaseStrategy:
                                     h_seg[:, :, 4]
 
                             在策略规则中获取历史数据应该使用上面的切片方法，并做相应计算，下面给出几个例子：
+
                                 以下例子都基于前面给出的参数设定
                                 例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
                                     close_last_day = h_seg[:, -1, 3]
@@ -195,8 +197,8 @@ class BaseStrategy:
                                     ma_50 = close_10_days.mean(axis=1)
 
                             **注意**
-                            在RuleIterator策略类中，h_seg的格式稍有不同，是一个2D数据，参见RuleIterator策略类
-                            的docstring
+                            在RuleIterator策略类中，h的格式稍有不同，是一个2D数据，仅包含N行L列，交易日期/时间轴和历史数据类型轴
+                            的数据，详情参见RuleIterator策略类的docstring
 
             - r(reference): 参考历史数据，即与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如根据
                             大盘选股的大盘数据，或者宏观经济数据等。
@@ -205,36 +207,59 @@ class BaseStrategy:
                             ref_seg的结构是一个N行L列的2D array，包含所有可以使用的参考数据类型，而数据的时间段与
                             历史数据h相同:
 
-                            - N行,
+                            - N行, 交易日期/时间轴
                                 每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
                                 传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
                                 data_freq则定义了时间戳的频率。
 
-                            - L列
+                            - L列，参考数据类型轴
                                 每一列数据表示与股票相关的一种参考数据类型。具体的参考数据类型在策略属性
                                 reference_data_types中设置
                                 例如：设定：
-                                    - reference_data_types = "000300.SH.close"
+                                    - reference_data_types = "000300.SH.close, 000001.SH.close"
                                 即表示：
                                     使用的参考历史数据为000300.SH指数的收盘价
                                 如果reference_data_types = ""，则传入的参考数据会是None
 
-            - t(trade):     交易历史数据，最近几次交易的结果数据，2D数据。包含N行L列数据
+                            以下是获取参考数据的几个例子：
+                                例1: 获取最近一天的沪深300收盘价：
+                                    close_300 = r[-1, 0]
+                                例2: 获取五天前的上证指数收盘价:
+                                    close_SH = r[-5, 1]
+
+            - t(trade):     交易历史数据，最近几次交易的结果数据，2D数据。包含N行5列数据
                             如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
                             数据的结构如下
 
-                            - 5行,
-                                每一行数据代表一类数据，包括：
-                                - 当前持有每种股票的份额
-                                - 当前可用的每种股票的份额
-                                - 当前的交易价格
-                                - 最近一次交易的股票变动数量（正数表示买入，负数表示卖出）
-                                - 最近一次交易的成交价格
+                            - N行， 股票/证券类型轴
+                                每一列代表一只个股或证券
 
-                            - L列，
-                                每一列代表一个股票的数据
+                            - 5列,  交易数据类型轴
+                                每一行数据代表一类数据，包括：
+                                - 0, own_amounts:              当前持有每种股票的份额
+                                - 1, available_amounts:        当前可用的每种股票的份额
+                                - 2, current_prices:           当前的交易价格
+                                - 3, recent_amounts_change:    最近一次成交量（正数表示买入，负数表示卖出）
+                                - 4, recent_trade_prices:      最近一次成交价格
 
                             示例：以下是在策略中获取交易数据的几个例子：
+
+                                例1: 获取所有股票最近一次成交的价格和成交量(1D array，没有成交时输出为nan)：
+                                    volume = t[:, 3]
+                                    trade_prices = t[:, 4]
+                                    或者:
+                                    t = t.T
+                                    volume = t[3]
+                                    trade_prices = t[4]
+                                例2: 获取当前持有股票数量:
+                                    own_amounts = t[:, 0]
+                                    或者:
+                                    t = t.T
+                                    own_amounts = t[0]
+
+                            **注意**
+                            在RuleIterator策略类中，t的格式稍有不同，是一个1D数据，包含五个元素，参见RuleIterator策略类
+                            的docstring
 
 
         realize()方法的输出：
@@ -1096,7 +1121,10 @@ class RuleIterator(BaseStrategy):
         # 生成iterators, 将参数送入realize_no_nan中逐个迭代后返回结果
         share_count, window_length, hdata_count = h_seg.shape
         ref_seg_iter = (ref_seg for i in range(share_count))
-        trade_data_iter = (trade_data for i in range(share_count))
+        if trade_data is None:
+            trade_data_iter = (None for i in range(share_count))
+        else:
+            trade_data_iter = trade_data
         pars = self.pars
         if isinstance(pars, dict):
             pars_iter = pars.values()
