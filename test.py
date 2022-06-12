@@ -5732,7 +5732,7 @@ class TestLSStrategy(RuleIterator):
 
 
 class TestSelStrategy(GeneralStg):
-    """用于Test测试的简单选股策略，基于Selecting策略生成
+    """用于Test测试的通用交易策略，基于GeneralStrategy策略生成
 
     策略没有参数，选股周期为5D
     在每个选股周期内，按以下逻辑选择股票并设定多空状态：
@@ -5766,7 +5766,7 @@ class TestSelStrategy(GeneralStg):
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
         if r is not None:
             # calculate difper while r
-            ref_price = r[0, -1]
+            ref_price = np.nanmean(r[:, 0])
             difper = dif_no_nan / avg / ref_price
             large2 = difper.argsort()[1:]
             chosen = np.zeros_like(avg)
@@ -5829,7 +5829,7 @@ class TestSigStrategy(GeneralStg):
     如果历史数据中没有给出参考数据，也没有给出交易结果数据时，信号生成的规则如下：
      1，当某个K线出现十字交叉，且昨收与今收之差大于price1时，买入信号
      2，当某个K线出现十字交叉，且昨收与今收之差小于price2时，卖出信号
-    如果给出参考数据(参考数据包含两个种类)时，信号生成的规则如下：
+    如果给出参考数据(参考数据包含两个种类type1与type2)时，信号生成的规则如下：
      1，当某个K线出现十字交叉，且昨收与今收之差大于参考数据type1时，买入信号
      2，当某个K线出现十字交叉，且昨收与今收之差小于参考数据type2时，卖出信号
     如果给出交易结果数据时，信号生成的规则如下：
@@ -5850,19 +5850,24 @@ class TestSigStrategy(GeneralStg):
         pass
 
     def realize(self, h, r=None, t=None):
-        r, price1, price2 = self.pars
+        max_ratio, price1, price2 = self.pars
         ratio = np.abs((h[:, -1, 0] - h[:, -1, 1]) / (h[:, -1, 3] - h[:, -1, 2]))
         diff = h[:, -1, 0] - h[:, -2, 0]
 
         if r is not None:
-            pass
+            type1 = r[-1, 0]
+            type2 = r[-1, 1]
+            sig = np.where((ratio < max_ratio) & (diff > type1),
+                           1,
+                           np.where((ratio < max_ratio) & (diff < type2), -1, 0))
+            return sig
 
         if t is not None:
             pass
 
-        sig = np.where((ratio < r) & (diff > price1),
+        sig = np.where((ratio < max_ratio) & (diff > price1),
                        1,
-                       np.where((ratio < r) & (diff < price2), -1, 0))
+                       np.where((ratio < max_ratio) & (diff < price2), -1, 0))
 
         return sig
 
@@ -6102,6 +6107,56 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                    [9.64],
                                    [7.97],
                                    [8.25]])
+        reference_data2 = np.array([[0.03403, -0.00679],
+                                    [0.00822, -0.00270],
+                                    [0.03831, -0.04480],
+                                    [0.03389, -0.03428],
+                                    [0.00495, -0.03510],
+                                    [0.01980, -0.03766],
+                                    [0.02131, -0.03213],
+                                    [0.03938, -0.00722],
+                                    [0.01447, -0.02826],
+                                    [0.02945, -0.04790],
+                                    [0.02360, -0.04789],
+                                    [0.00619, -0.04531],
+                                    [0.04896, -0.04129],
+                                    [0.03516, -0.04309],
+                                    [0.03458, -0.03919],
+                                    [0.02444, -0.00516],
+                                    [0.02023, -0.02297],
+                                    [0.02938, -0.02868],
+                                    [0.03827, -0.00575],
+                                    [0.02168, -0.03163],
+                                    [0.01129, -0.04463],
+                                    [0.01640, -0.00991],
+                                    [0.01592, -0.04192],
+                                    [0.04553, -0.00682],
+                                    [0.00105, -0.04323],
+                                    [0.01473, -0.04458],
+                                    [0.04922, -0.00244],
+                                    [0.01109, -0.00762],
+                                    [0.04486, -0.01096],
+                                    [0.03808, -0.03854],
+                                    [0.04887, -0.04125],
+                                    [0.00573, -0.03636],
+                                    [0.02493, -0.01269],
+                                    [0.00295, -0.03817],
+                                    [0.03691, -0.02565],
+                                    [0.00501, -0.04381],
+                                    [0.02859, -0.03429],
+                                    [0.02525, -0.01701],
+                                    [0.02570, -0.01181],
+                                    [0.02488, -0.00623],
+                                    [0.02396, -0.04004],
+                                    [0.00127, -0.00818],
+                                    [0.02775, -0.03364],
+                                    [0.03757, -0.00792],
+                                    [0.04514, -0.00222],
+                                    [0.02610, -0.02855],
+                                    [0.04426, -0.03365],
+                                    [0.02742, -0.04061],
+                                    [0.02031, -0.01752],
+                                    [0.02251, -0.03796]])
 
         self.date_indices = ['2016-07-01', '2016-07-04', '2016-07-05', '2016-07-06',
                              '2016-07-07', '2016-07-08', '2016-07-11', '2016-07-12',
@@ -6125,6 +6180,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.test_data_3D = np.zeros((3, data_rows, 4))
         self.test_data_sel_finance = np.empty((3, data_rows, 1))
         self.test_ref_data = np.zeros((1, data_rows, 1))
+        self.test_ref_data2 = np.zeros((1, data_rows, 2))
 
         # fill in 3D data
         self.test_data_3D[0, :, 0] = share1_close
@@ -6144,6 +6200,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         # fill in reference data
         self.test_ref_data[0, :, :] = reference_data
+        self.test_ref_data2[0, :, :] = reference_data2
 
         self.test_data_sel_finance[:, :, 0] = shares_eps.T
 
@@ -7757,7 +7814,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                   f'selmask:   {lsmask[i]}')
         self.assertTrue(np.allclose(output, lsmask, equal_nan=True))
 
-        # test strategy generate with reference_data
+        # test strategy generate with history data and reference_data
         print(f'\ntest strategy generate with reference_data')
         ref_data = self.test_ref_data[0, :, :]
         ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
@@ -7823,7 +7880,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         # test strategy generate with trade_data
 
     def test_general_strategy(self):
-        """ 测试基础策略类General Strategy"""
+        """ 测试第一种基础策略类General Strategy"""
+        # test strategy with only history data
         stg = TestSelStrategy()
         self.assertIsInstance(stg, BaseStrategy)
         self.assertIsInstance(stg, GeneralStg)
@@ -7890,7 +7948,72 @@ class TestOperatorAndStrategy(unittest.TestCase):
                   f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, equal_nan=True))
 
-    def test_simple_timing(self):
+        # test strategy with history data and reference data
+        print(f'\ntest strategy generate with reference_data')
+        ref_data = self.test_ref_data[0, :, :]
+        ref_rolling_window = rolling_window(ref_data, stg.window_length, 0)
+        output = stg.generate(hist_data=history_data_rolling_window,
+                              ref_data=ref_rolling_window,
+                              data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0., 0.5, 0.5],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan],
+                            [0.5, 0.5, 0.],
+                            [np.nan, np.nan, np.nan],
+                            [np.nan, np.nan, np.nan]])
+        self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, equal_nan=True))
+
+    def test_general_strategy2(self):
+        """ 测试第二种general strategy通用策略类型"""
+        # test strategy with only historical data
         stg = TestSigStrategy()
         stg_pars = (0.2, 0.02, -0.02)
         stg.set_pars(stg_pars)
@@ -7970,8 +8093,98 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(sigmatrix.shape, output.shape)
         self.assertTrue(np.allclose(np.array(output), sigmatrix))
 
+        # test strategy with also reference data
+        print(f'\ntest strategy generate with reference_data')
+        stg_pars = (0.3, 0.02, -0.02)
+        stg.set_pars(stg_pars)
+        history_data = self.hp1['close, open, high, low', :, 4:50]
+        history_data_rolling_window = rolling_window(history_data, stg.window_length, 1)
+        reference_data = self.test_ref_data2[0, 4:50, :]
+        ref_rolling_windows = rolling_window(reference_data, stg.window_length, 0)
+
+        # test generate signal in real time mode:
+        output = []
+        for step in [0, 3, 5, 7, 10]:
+            output.append(stg.generate(
+                    hist_data=history_data_rolling_window,
+                    ref_data=ref_rolling_windows,
+                    data_idx=step
+            ))
+        sigmatrix = np.array([[0.0, 1.0, 0.0],
+                              [1.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 1.0, 0.0]])
+        for signal, target in zip(output, sigmatrix):
+            self.assertIsInstance(signal, np.ndarray)
+            self.assertEqual(signal.shape, (3,))
+            self.assertTrue(np.allclose(signal, target))
+
+        # test generate signal in batch mode:
+        output = stg.generate(
+                hist_data=history_data_rolling_window,
+                ref_data=ref_rolling_windows,
+                data_idx=np.arange(len(history_data_rolling_window))
+        )
+
+        sigmatrix = np.array([[0.0, 1.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [1.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, -1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [1.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [-1.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 1.0],
+                              [0.0, 1.0, 0.0],
+                              [1.0, 0.0, 0.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 0.0, 1.0],
+                              [0.0, 0.0, 0.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 0.0, -1.0],
+                              [0.0, 1.0, 0.0],
+                              [0.0, 1.0, 0.0]])
+
+        side_by_side_array = np.array([[i, out_line == sig_line, out_line, sig_line]
+                                       for
+                                       i, out_line, sig_line
+                                       in zip(range(len(output)), output, sigmatrix)])
+        print(f'output and signal matrix lined up side by side is \n'
+              f'{side_by_side_array}')
+        self.assertEqual(sigmatrix.shape, output.shape)
+        self.assertTrue(np.allclose(np.array(output), sigmatrix, equal_nan=True))
+
     def test_factor_sorter(self):
         """Test Factor Sorter 策略, test all built-in strategy parameters"""
+        print(f'\ntest strategy generate with only history data')
         stg = SelectingAvgIndicator()
         self.assertIsInstance(stg, BaseStrategy)
         self.assertIsInstance(stg, FactorSorter)
@@ -8372,6 +8585,9 @@ class TestOperatorAndStrategy(unittest.TestCase):
             print(f'output:    {output[i]}\n'
                   f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, 0.001, equal_nan=True))
+
+        print(f'\ntest financial generate with reference data')
+        # to be added
 
 
 class TestLog(unittest.TestCase):
