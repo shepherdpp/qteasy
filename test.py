@@ -5717,14 +5717,13 @@ class TestLSStrategy(RuleIterator):
 
         if t is not None:
             # 处理交易结果数据生成信号并返回
-            import pdb; pdb.set_trace()
-            last_price = t[:, 4]  # 获取最近的交易价格
-            if last_price == np.nan:
+            last_price = t[4]  # 获取最近的交易价格
+            if np.isnan(last_price):
                 return 1  # 生成第一次交易信号
             if ma[-1] < last_price:
-                return 0
-            else:
                 return 1
+            else:
+                return 0
 
         if ma[-1] < price:
             return 0
@@ -7883,6 +7882,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         output = []
         trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
         trade_data.fill(np.nan)
+        recent_prices = np.zeros(shape=(3,))
         for step in range(len(history_data_rolling_window)):
             output.append(
                     stg.generate(
@@ -7891,56 +7891,60 @@ class TestOperatorAndStrategy(unittest.TestCase):
                             data_idx=step
                     )
             )
-        output = np.array(output)
+            current_prices = history_data_rolling_window[step, :, -1, 0]
+            current_signals = output[-1]
+            recent_prices = np.where(current_signals == 1., current_prices, recent_prices)
+            trade_data[:, 4] = recent_prices
+        output = np.array(output, dtype='float')
 
         self.assertIsInstance(output, np.ndarray)
         self.assertEqual(output.shape, (45, 3))
 
-        lsmask = np.array([[0.0, 0.0, 1.0],
+        lsmask = np.array([[1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 1.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
                            [0.0, 0.0, 1.0],
                            [0.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 0.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
-                           [1.0, 1.0, 1.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 1.0],
                            [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 1.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
                            [1.0, 0.0, 0.0],
-                           [1.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 0.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0],
-                           [0.0, 1.0, 1.0]])
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [1.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0],
+                           [0.0, 0.0, 0.0]])
         self.assertEqual(output.shape, lsmask.shape)
         for i in range(len(output)):
             print(f'step: {i}:\n'
