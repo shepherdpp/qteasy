@@ -5775,13 +5775,14 @@ class TestSelStrategy(GeneralStg):
 
         if t is not None:
             # calculate difper while t
-            last_price = t[0, -1]
-            if last_price is None:
+            last_price = t[:, 4]
+            if np.all(np.isnan(last_price)):
                 return np.ones_like(avg) * 0.333
             difper = dif_no_nan / last_price
             large2 = difper.argsort()[1:]
             chosen = np.zeros_like(avg)
             chosen[large2] = 0.5
+            # import pdb; pdb.set_trace()
             return chosen
 
         difper = dif_no_nan / avg
@@ -8083,6 +8084,83 @@ class TestOperatorAndStrategy(unittest.TestCase):
                   f'output:    {output[i]}\n'
                   f'selmask:   {selmask[i]}')
         self.assertTrue(np.allclose(output, selmask, equal_nan=True))
+
+        # test strategy generate with trade_data
+        print(f'\ntest strategy generate with trade_data')
+        output = []
+        trade_data = np.empty(shape=(3, 5))  # 生成的trade_data符合5行
+        trade_data.fill(np.nan)
+        recent_prices = np.zeros(shape=(3,))
+        prev_signals = np.zeros(shape=(3,))
+        for step in range(len(history_data_rolling_window)):
+            output.append(
+                    stg.generate(
+                            hist_data=history_data_rolling_window,
+                            trade_data=trade_data,
+                            data_idx=step
+                    )
+            )
+            current_prices = history_data_rolling_window[step, :, -1, 2]
+            current_signals = output[-1]
+            recent_prices = np.where(current_signals != prev_signals, current_prices, recent_prices)
+            trade_data[:, 4] = recent_prices
+            prev_signals = current_signals
+        output = np.array(output, dtype='float')
+
+        self.assertIsInstance(output, np.ndarray)
+        self.assertEqual(output.shape, (45, 3))
+
+        selmask = np.array([[0.33333, 0.33333, 0.33333],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0, 0.5],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0, 0.5],
+                            [0.5, 0, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0.5, 0, 0.5],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5],
+                            [0.5, 0, 0.5],
+                            [0.5, 0.5, 0],
+                            [0.5, 0.5, 0],
+                            [0, 0.5, 0.5]])
+        self.assertEqual(output.shape, selmask.shape)
+        for i in range(len(output)):
+            print(f'step: {i}:\n'
+                  f'output:    {output[i]}\n'
+                  f'selmask:   {selmask[i]}')
+        self.assertTrue(np.allclose(output, selmask, atol=0.001, equal_nan=True))
 
     def test_general_strategy2(self):
         """ 测试第二种general strategy通用策略类型"""
