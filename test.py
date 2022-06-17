@@ -11544,8 +11544,8 @@ class TestBuiltInsSingle(unittest.TestCase):
                      asset_type='IDX',
                      reference_asset='000300.SH',
                      opti_sample_count=100,
-                     trade_batch_size=100.,
-                     sell_batch_size=100.,
+                     trade_batch_size=0.,
+                     sell_batch_size=0.,
                      parallel=True)
 
     def test_crossline(self):
