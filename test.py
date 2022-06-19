@@ -5756,7 +5756,8 @@ class TestSelStrategy(GeneralStg):
                          data_types='high, low, close',
                          data_freq='d',
                          sample_freq='10d',
-                         window_length=5)
+                         window_length=5,
+                         )
         pass
 
     def realize(self, h, r=None, t=None):
@@ -8765,8 +8766,46 @@ class TestConfig(unittest.TestCase):
         print(QT_CONFIG)
         self.assertEqual(QT_CONFIG.mode, 1)
 
-    def test_invest(self):
-        pass
+    def test_config(self):
+        """测试设置不同的配置值，包括测试不合法的配置值以及不存在的配置值"""
+        # test legal parameter configurations in QT_CONFIG
+        qt.reset_config()
+        self.assertEqual(QT_CONFIG.mode, 1)
+        self.assertEqual(QT_CONFIG.opti_type, 'single')
+        self.assertEqual(QT_CONFIG.cash_deliver_period, 0)
+        self.assertEqual(QT_CONFIG.backtest_price_adj, 'none')
+        self.assertEqual(QT_CONFIG.invest_start, '20160405')
+        self.assertEqual(QT_CONFIG.cost_rate_buy, 0.0003)
+        self.assertEqual(QT_CONFIG.benchmark_asset, '000300.SH')
+
+        qt.configure(
+                mode=2,
+                opti_type='multiple',
+                cash_deliver_period=1,
+                backtest_price_adj='b',
+                invest_start='20191010',
+                cost_rate_buy=0.005,
+                benchmark_asset='000001.SH'
+        )
+        self.assertEqual(QT_CONFIG.mode, 2)
+        self.assertEqual(QT_CONFIG.opti_type, 'multiple')
+        self.assertEqual(QT_CONFIG.cash_deliver_period, 1)
+        self.assertEqual(QT_CONFIG.backtest_price_adj, 'b')
+        self.assertEqual(QT_CONFIG.invest_start, '20191010')
+        self.assertEqual(QT_CONFIG.cost_rate_buy, 0.005)
+        self.assertEqual(QT_CONFIG.benchmark_asset, '000001.SH')
+        # test legal parameter configurations in other Config objects
+
+        # test illegal parameter configurations
+        # illegal values
+        self.assertRaises(Exception, qt.configure, mode=5)
+        self.assertRaises(Exception, qt.configure, opti_type='mul')
+        self.assertRaises(Exception, qt.configure, cash_deliver_period='abc')
+        self.assertRaises(Exception, qt.configure, backtest_price_adj='wrong')
+        self.assertRaises(Exception, qt.configure, invest_start=None)
+        self.assertRaises(Exception, qt.configure, benchmark_asset=15)
+        # parameters that do not exist
+        self.assertWarns(Warning, qt.configure, wrong_parameter=3)
 
     def test_pars_string_to_type(self):
         _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())
@@ -12326,6 +12365,43 @@ class TestQT(unittest.TestCase):
         op.set_parameter('ricon_none', pars=())
         op.set_blender('ls', 'avg')
         qt.run(op, visual=False, trade_log=True)
+
+    def test_op_realtime(self):
+        """测试realtime模式下的operator的表，使用两个测试专用交易策略"""
+        stg1 = TestLSStrategy()
+        stg2 = TestSelStrategy()
+        stg1.window_length = 100
+        stg2.window_length = 100
+        stg2.sample_freq = '2w'
+        op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
+        op_realtime = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='realtime')
+        par_stg1 = {'000100': (20, 10),
+                    '000200': (20, 10),
+                    '000300': (20, 6)}
+        par_stg2 = ()
+        for op in [op_batch, op_realtime]:
+            op.set_parameter(0, pars=par_stg1)
+            op.set_parameter(1, pars=par_stg2)
+
+        qt.configure(
+                reference_asset='000300.SH',
+                ref_asset_type='IDX',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
+                invest_start='20190101',
+                invest_end='20201231',
+                trade_batch_size=100.,
+                sell_batch_size=100.,
+                parallel=True
+        )
+        # test running operator in realtime and mode 1
+        res_batch = op_batch.run(mode=1)
+        # test running operator in realtime and mode 2
+        res_realtime = op_realtime.run(mode=1)
+
+        # confirm that operator running results are same in realtime and batch type
+        self.assertEqual(res_batch, res_realtime)
 
 
 class TestVisual(unittest.TestCase):

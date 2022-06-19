@@ -796,7 +796,10 @@ def _validate_key_and_value(key, value):
     """
     vkwargs = _valid_qt_kwargs()
     if key not in vkwargs:
-        return False
+        import warnings
+        warnings.warn(
+                f'kwarg {key} is not a valid parameter key, please check your input!'
+        )
     else:
         try:
             valid = vkwargs[key]['Validator'](value)

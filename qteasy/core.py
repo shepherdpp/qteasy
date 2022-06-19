@@ -385,7 +385,8 @@ def apply_loop(operator: Operator,
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
     op_type = operator.signal_type_id
-    op_list = operator.op_list[:, start_idx:end_idx]
+    if operator.op_type == 'batch':
+        op_list = operator.op_list[:, start_idx:end_idx]
     looped_dates = operator.op_list_hdates[start_idx:end_idx]
 
     # 获取交易信号的总行数、股票数量以及价格种类数量

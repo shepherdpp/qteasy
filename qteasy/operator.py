@@ -1260,11 +1260,15 @@ class Operator:
                 stg.info()
             print('=' * 25)
 
-    def is_ready(self):
+    def is_ready(self, raise_if_not=False):
         """ 全面检查op是否可以开始运行，检查数据是否正确分配，策略属性是否合理，blender是否设置
         策略参数是否完整。
             如果op可以运行，返回True
             如果op不可以运行，检查所有可能存在的问题，提出改进建议，汇总后raise ValueError
+
+        :param raise_if_not, bool
+            如果True，当operator对象未准备好时，raise ValueError
+            如果False，当operator对象未准备好时，返回False
 
         :return: bool
         """
@@ -1274,10 +1278,17 @@ class Operator:
             err_msg += f'operator object should contain at least one strategy, use operator.add_strategy() to add one.'
             ready = False
 
-        if ready:
-            return ready
-        else:
+        if raise_if_not and not ready:
             raise AttributeError(err_msg)
+
+        return ready
+
+    def run(self, **kwargs):
+        """ Alias as qt.run(op)
+        """
+        if self.is_ready(raise_if_not=True):
+            import qteasy as qt
+            return qt.run(self, **kwargs)
 
     # TODO 改造这个函数，仅设置hist_data和ref_data，op的可用性（readiness_check）在另一个函数里检查
     #  op.is_ready（）
