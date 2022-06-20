@@ -745,20 +745,20 @@ def _initialize_config_kwargs(kwargs, vkwargs):
     return config
 
 
-def _update_config_kwargs(config, kwargs):
+def _update_config_kwargs(config, kwargs, raise_if_key_not_existed=False):
     """ given existing configuration dict, verify that all kwargs are valid
         per kwargs table, and update the configuration dictionary
 
     :param config: configuration dictionary to be updated
     :param kwargs: kwargs that are to be updated
-    :param vkwargs: valid keywords table used for validating given kwargs
+    :param raise_if_key_not_existed:  if True, raise when key does not exist in vkwargs
     :return:
         config ConfigDict
     """
     vkwargs = _valid_qt_kwargs()
     for key in kwargs.keys():
         value = _parse_string_kwargs(kwargs[key], key, vkwargs)
-        if _validate_key_and_value(key, value):
+        if _validate_key_and_value(key, value, raise_if_key_not_existed):
             config[key] = value
 
     return config
@@ -785,21 +785,28 @@ def _parse_string_kwargs(value, key, vkwargs):
     return value
 
 
-def _validate_key_and_value(key, value):
-    """ given one key, validate the key according to vkwargs dict
-        return True if the key is valid
-        raise if the key is not valid
+def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
+    """ given one key, validate the value according to vkwargs dict
+        return True if the value is valid
+        raise if the value is not valid
+        return False or raise if the key does not exist in vkwargs, depending on
+        argument "raise_if_key_not_existed"
 
     :param key:
     :param value:
+    :param raise_if_key_not_existed:    when key does not exist in vkwargs:
+                                        raise if True,
+                                        return False if False and warning
     :return:
     """
     vkwargs = _valid_qt_kwargs()
     if key not in vkwargs:
-        import warnings
-        warnings.warn(
-                f'kwarg {key} is not a valid parameter key, please check your input!'
-        )
+        err_msg = f'kwarg <{key}> is not a built-in parameter key, please check your input!'
+        if raise_if_key_not_existed:
+            raise KeyError(err_msg)
+        else:
+            import warnings
+            warnings.warn(err_msg)
     else:
         try:
             valid = vkwargs[key]['Validator'](value)

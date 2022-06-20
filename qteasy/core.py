@@ -909,7 +909,7 @@ def help(**kwargs):
     raise NotImplementedError
 
 
-def configure(config=None, reset=False, **kwargs):
+def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
     """ 配置qteasy的运行参数QT_CONFIG
 
     :param config: ConfigDict 对象
@@ -917,6 +917,9 @@ def configure(config=None, reset=False, **kwargs):
 
     :param reset: bool
         默认值为False，为True时忽略传入的kwargs，将所有的参数设置为默认值
+
+    :param only_built_in_keys: bool
+        默认值False，如果为True，仅允许传入内部参数，False时允许传入任意参数
 
     :param kwargs:
         需要设置的所有参数
@@ -928,12 +931,12 @@ def configure(config=None, reset=False, **kwargs):
         assert isinstance(config, ConfigDict), TypeError(f'config should be a ConfigDict, got {type(config)}')
         set_config = config
     if not reset:
-        _update_config_kwargs(set_config, kwargs)
+        _update_config_kwargs(set_config, kwargs, raise_if_key_not_existed=only_built_in_keys)
     else:
         from qteasy._arg_validators import _valid_qt_kwargs
         default_kwargs = {k: v['Default'] for k, v in zip(_valid_qt_kwargs().keys(),
                                                           _valid_qt_kwargs().values())}
-        _update_config_kwargs(set_config, default_kwargs)
+        _update_config_kwargs(set_config, default_kwargs, raise_if_key_not_existed=True)
 
 
 def configuration(level=0, up_to=0, default=False, verbose=False):

@@ -87,8 +87,8 @@ try:
 except Exception as e:
     logger_core.warning(f'{e}, tushare token was not loaded, features might not work properly!')
 
-# 读取其他本地配置属性，更新QT_CONFIG
-configure(**qt_local_configs)
+# 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
+configure(only_built_in_keys=False, **qt_local_configs)
 
 # 建立默认的本地数据源
 QT_DATA_SOURCE = DataSource(

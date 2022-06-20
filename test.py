@@ -8805,7 +8805,16 @@ class TestConfig(unittest.TestCase):
         self.assertRaises(Exception, qt.configure, invest_start=None)
         self.assertRaises(Exception, qt.configure, benchmark_asset=15)
         # parameters that do not exist
-        self.assertWarns(Warning, qt.configure, wrong_parameter=3)
+        self.assertRaises(Exception, qt.configure, wrong_parameter=3)
+        self.assertRaises(Exception, qt.configure, not_existed=3)
+        # user defined parameters
+        qt.configure(
+                only_built_in_keys=False,
+                self_defined_par1=2,
+                self_defined_par2='user_defined_value'
+        )
+        self.assertEqual(QT_CONFIG.self_defined_par1, 2)
+        self.assertEqual(QT_CONFIG.self_defined_par2, 'user_defined_value')
 
     def test_pars_string_to_type(self):
         _parse_string_kwargs('000300', 'asset_pool', _valid_qt_kwargs())
@@ -11789,9 +11798,9 @@ class TestQT(unittest.TestCase):
         self.op.set_parameter('macd', opt_tag=1, par_range=[(10, 250), (10, 250), (10, 250)])
         self.op.signal_type = 'pt'
 
-        qt.configure(reference_asset='000300.SH',
+        qt.configure(benchmark_asset='000300.SH',
                      mode=1,
-                     ref_asset_type='IDX',
+                     benchmark_asset_type='IDX',
                      asset_pool='000300.SH',
                      asset_type='IDX',
                      opti_output_count=50,
@@ -12384,8 +12393,8 @@ class TestQT(unittest.TestCase):
             op.set_parameter(1, pars=par_stg2)
 
         qt.configure(
-                reference_asset='000300.SH',
-                ref_asset_type='IDX',
+                benchmark_asset='000300.SH',
+                benchmark_asset_type='IDX',
                 asset_pool='601398.SH, 600000.SH, 000002.SZ',
                 asset_type='E',
                 opti_output_count=50,
