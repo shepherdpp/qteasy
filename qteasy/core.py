@@ -384,14 +384,18 @@ def apply_loop(operator: Operator,
     if (moq_buy != 0) and (moq_sell != 0):
         assert moq_buy % moq_sell == 0, \
             f'ValueError, the sell moq should be divisible by moq_buy, or there will be mistake'
-    op_type = operator.signal_type_id
-    if operator.op_type == 'batch':
-        op_list = operator.op_list[:, start_idx:end_idx]
-    looped_dates = operator.op_list_hdates[start_idx:end_idx]
+    signal_type = operator.signal_type_id
+    op_type = operator.op_type
 
     # 获取交易信号的总行数、股票数量以及价格种类数量
     # 在这里，交易信号的价格种类数量与交易价格的价格种类数量必须一致，且顺序也必须一致
-    share_count, op_count, price_type_count = op_list.shape
+    op_list = None
+    if operator.op_type == 'batch':
+        # TODO: 此处应该传递完整的op_list到循环中，不过通过range(start_idx, end_idx)在获取相应的序号
+        op_list = operator.op_list
+    # TODO: 此处应该传递完整的looped_dates到循环中，不过通过range(start_idx, end_idx)在获取相应的序号
+    looped_dates = operator.op_list_hdates
+    share_count, op_count, price_type_count = operator.op_list_shape
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
@@ -429,7 +433,10 @@ def apply_loop(operator: Operator,
     op_log_matrix = []
     prev_date = 0
     # TODO: use Numba to optimize the efficiency of the looping process
-    for i in range(op_count):
+    # TODO: 此处应该避免使用从0开始的index，而是从start_idx到end_idx，从而在batch和realtime两种
+    #  情况下处理方式相同，不管是从op_list中获取信号，还是通过operqtor.create_signal
+    #  创建信号，信号的idx 都是i，而不需要offset
+    for i in range(start_idx, end_idx):
         # 对每一回合历史交易信号开始回测，每一回合包含若干交易价格上所有股票的交易信号
         current_date = looped_dates[i].date()
         sub_total_fee = 0
@@ -455,20 +462,25 @@ def apply_loop(operator: Operator,
                     stock_delivered = stock_delivery_queue.pop(0)
                     available_amounts += stock_delivered
             # 调用loop_step()函数，计算本轮交易的现金和股票变动值以及总交易费用
-            current_prices = price[:, i, j]
-            if operator.op_type == 'realtime':
+            current_prices = price[:, i - start_idx, j]
+            if op_type == 'realtime':
                 # 在realtime模式下，准备trade_data并计算下一步的交易信号
+                # 由于回测不是从op_lsit_hdates的第一天开始，因此需要加上offset
                 trade_data[:, 0] = own_amounts
                 trade_data[:, 1] = available_amounts
                 trade_data[:, 2] = current_prices
                 trade_data[:, 3] = recent_amounts_change
                 trade_data[:, 4] = recent_trade_prices
-                current_op = operator.create_signal(trade_data=trade_data, sample_idx=i, price_type_idx=j)
+                current_op = operator.create_signal(
+                        trade_data=trade_data,
+                        sample_idx=i,
+                        price_type_idx=j
+                )
             else:
                 # 在batch模式下，直接从批量生成的交易信号清单中读取下一步交易信号
                 current_op = op_list[:, i, j]
             cash_gained, cash_spent, amount_purchased, amount_sold, fee = _loop_step(
-                    signal_type=op_type,
+                    signal_type=signal_type,
                     own_cash=own_cash,
                     own_amounts=own_amounts,
                     available_cash=available_cash,

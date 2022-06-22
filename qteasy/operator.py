@@ -592,6 +592,18 @@ class Operator:
         return list(self._op_list_price_types.keys())
 
     @property
+    def op_list_shape(self):
+        """ 生成的交易清单的shape，包含(op_list_shares, op_list_hdates, op_list_price_types)
+        三个维度的数据量"""
+        if self._op_list_shares == {}:
+            return
+        return (
+            len(self._op_list_shares),
+            len(self._op_list_hdates),
+            len(self._op_list_price_types)
+        )
+
+    @property
     def op_signal(self):
         """ realtime模式下单次生成的交易信号
 
@@ -1380,7 +1392,9 @@ class Operator:
         # 默认截取部分历史数据，截取的起点是cash_plan的第一个投资日，在历史数据序列中找到正确的对应位置
         first_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.first_day)
         last_cash_pos = np.searchsorted(hist_data.hdates, cash_plan.last_day)
-        op_dates = hist_data.hdates[first_cash_pos:]
+        operator_window_length = self.max_window_length
+        op_list_hdates = hist_data.hdates[operator_window_length:]
+
         # 确保回测操作的起点前面有足够的数据用于满足回测窗口的要求
         if first_cash_pos < self.max_window_length:
             message = f'History data starts on {hist_data.hdates[0]} does not have' \
@@ -1481,18 +1495,18 @@ class Operator:
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
             # 根据sample_freq生成一个日期序列
-            temp_date_series = pd.date_range(start=op_dates[0], end=op_dates[-1], freq=freq)
+            temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
             if len(temp_date_series) == 0:
                 # 如果sample_freq太大，无法生成有意义的取样日期，则生成一个取样点，位于第一日
                 sample_pos = np.zeros(shape=(1,), dtype='int')
-                sample_pos[0] = np.searchsorted(op_dates, op_dates[0])  # 起点第一日
+                sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
                 self._op_sample_indices[stg_id] = sample_pos
             else:
                 # pd.date_range生成的时间序列并不是从op_dates第一天开始的，而是它未来某一天，
                 # 因此需要使用pd.Timedelta将它平移到op_dates第一天。
-                target_dates = temp_date_series - (temp_date_series[0] - op_dates[0])
+                target_dates = temp_date_series - (temp_date_series[0] - op_list_hdates[0])
                 # 用searchsorted函数在历史数据日期中查找匹配target_dates的取样点
-                sample_pos = np.searchsorted(op_dates, target_dates)
+                sample_pos = np.searchsorted(op_list_hdates, target_dates)
                 # sample_pos中可能有重复的数字，表明target_dates匹配到同一个交易日，此时需去掉重复值
                 # 这里使用一种较快的技巧方法去掉重复值
                 sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
@@ -1501,11 +1515,10 @@ class Operator:
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
         self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}
-        operator_window_length = self.max_window_length
-        op_list_hdates = hist_data.hdates[operator_window_length:]
         self._op_list_hdates = {hdate: idx for hdate, idx in zip(op_list_hdates, range(len(op_list_hdates)))}
         self._op_list_price_types = {price_type: idx for price_type, idx in zip(self.bt_price_types,
                                                                                 range(len(self.bt_price_types)))}
+        return
 
     def create_signal(self, trade_data=None, sample_idx=None, price_type_idx=None):
         """ 生成交易信号，
@@ -1599,14 +1612,10 @@ class Operator:
                     price_type=bt_price_type,
                     get_rolling_window=True
             )
-            if trade_data is not None:
-                td = trade_data[bt_price_type]
-            else:
-                td = None
             if sample_idx is None:
                 relevant_sample_indices = self.get_op_sample_indices_by_price_type(price_type=bt_price_type)
             else:
-                relevant_sample_indices = [sample_idx]
+                relevant_sample_indices = [sample_idx] * len(relevant_strategies)
             # 依次使用选股策略队列中的所有策略逐个生成交易信号
             for stg, hd, rd, si in zip(relevant_strategies,
                                        relevant_hist_data,
@@ -1614,19 +1623,21 @@ class Operator:
                                        relevant_sample_indices):
                 signal = stg.generate(hist_data=hd,
                                       ref_data=rd,
-                                      trade_data=td,
+                                      trade_data=trade_data,
                                       data_idx=si)
                 if sample_idx is not None:
+                    # realtime mode, 填充op_signal相关属性
                     self._op_signal = signal
                     self._op_signal_hdate_idx = sample_idx
                     self._op_signal_price_type_idx = bt_price_type
-                    return signal
-                if signal_type in ['ps', 'vs']:
-                    signal = fill_nan_data(signal, 0)
-                elif signal_type == 'pt':
-                    signal = ffill_2d_data(signal, 0)
                 else:
-                    raise KeyError(f'Invalid signal type: {self.signal_type}')
+                    # batch mode: 填充signal_list中的空缺值
+                    if signal_type in ['ps', 'vs']:
+                        signal = fill_nan_data(signal, 0)
+                    elif signal_type == 'pt':
+                        signal = ffill_2d_data(signal, 0)
+                    else:
+                        raise KeyError(f'Invalid signal type: {self.signal_type}')
                 op_signals.append(signal)
                 # 生成的交易信号添加到交易信号队列中，
 
@@ -1635,6 +1646,8 @@ class Operator:
             # 最终输出的signal是多个ndarray对象，存储在一个字典中
             signal_blender = self.get_blender(bt_price_type)
             blended_signal = signal_blend(op_signals, blender=signal_blender)
+            if sample_idx is not None:
+                return blended_signal
             signal_out[bt_price_type] = blended_signal
         # 将混合后的交易信号赋值给一个3D数组，每一列表示一种交易价格的信号，每一层一个个股
         signal_shape = blended_signal.T.shape

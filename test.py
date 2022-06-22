@@ -12377,20 +12377,56 @@ class TestQT(unittest.TestCase):
 
     def test_op_realtime(self):
         """测试realtime模式下的operator的表，使用两个测试专用交易策略"""
+        # confirm that operator running results are same in realtime and batch type
+        op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
+        op_realtime = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='realtime')
+        for op in [op_batch, op_realtime]:
+            op.set_parameter(0, window_length=100, pars=(12, 26, 9))
+            op.set_parameter(1, window_length=100, pars=(12, 26, 9))
+
+        qt.configure(
+                benchmark_asset='000300.SH',
+                benchmark_asset_type='IDX',
+                asset_pool='601398.SH, 600000.SH, 000002.SZ',
+                asset_type='E',
+                opti_output_count=50,
+                invest_start='20190101',
+                invest_end='20190331',
+                trade_batch_size=1.,
+                sell_batch_size=1.,
+                parallel=True
+        )
+        print('backtest in batch mode:')
+        res_batch = op_batch.run(mode=1)
+        res_batch = op_batch.run(mode=1)
+        print('backtest in realtime mode:')
+        res_realtime = op_realtime.run(mode=1)
+        val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        print(f'the result of batched operation is\n'
+              f'{val_batch}\n'
+              f'and the result of realtime operation is\n'
+              f'{val_realtime}')
+
+        self.assertTrue(np.allclose(val_batch, val_batch))
+        self.assertEqual(res_batch['final_value'],
+                         res_realtime['final_value'])
+
+        # test operator that utilizes trade data
         stg1 = TestLSStrategy()
         stg2 = TestSelStrategy()
         stg1.window_length = 100
         stg2.window_length = 100
         stg2.sample_freq = '2w'
-        op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
-        op_realtime = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='realtime')
+        op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
+        op_realtime = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='realtime')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
                     '000300': (20, 6)}
         par_stg2 = ()
         for op in [op_batch, op_realtime]:
-            op.set_parameter(0, pars=par_stg1)
-            op.set_parameter(1, pars=par_stg2)
+            op.set_parameter(0, )
+            op.set_parameter(1, )
 
         qt.configure(
                 benchmark_asset='000300.SH',
@@ -12404,13 +12440,6 @@ class TestQT(unittest.TestCase):
                 sell_batch_size=100.,
                 parallel=True
         )
-        # test running operator in realtime and mode 1
-        res_batch = op_batch.run(mode=1)
-        # test running operator in realtime and mode 2
-        res_realtime = op_realtime.run(mode=1)
-
-        # confirm that operator running results are same in realtime and batch type
-        self.assertEqual(res_batch, res_realtime)
 
 
 class TestVisual(unittest.TestCase):

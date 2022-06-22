@@ -134,11 +134,10 @@ class TimingMACD(stg.RuleIterator):
         _macd = 2 * (diff - dea)
         # 以下使用tafuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
         # diff, dea, _macd = macd(h, s, l, m)
-
-        if _macd[-1] > 0:
-            return 1
-        else:
-            return -1
+        cat = 1 if _macd[-1] > 0 else 0
+        # print(f'macd: {np.round(_macd[-5:-1], 4)} -- '
+        #       f'signal: {cat}')
+        return cat
 
 
 class TimingTRIX(stg.RuleIterator):
@@ -160,7 +159,7 @@ class TimingTRIX(stg.RuleIterator):
                          par_range=[(2, 50), (3, 150)],
                          name='TRIX',
                          description='TRIX strategy, determine long/short position according to triple exponential '
-                                  'weighted moving average prices',
+                                     'weighted moving average prices',
                          data_freq='d',
                          sample_freq='d',
                          window_length=270,
@@ -2023,7 +2022,6 @@ class TimingDMA(stg.RuleIterator):
     def realize(self, h, r=None, t=None, pars=None):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
         s, l, d = self.pars
-        # print 'Generating Quick dma Long short Mask with parameters', pars
 
         # 计算指数的移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -2031,9 +2029,11 @@ class TimingDMA(stg.RuleIterator):
         dma = sma(h[0], s) - sma(h[0], l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
-        # print('qDMA generated DMA and ama signal:', dma.size, dma, '\n', ama.size, ama)
 
         cat = 1 if dma[-1] > ama[-1] else 0
+        # print(f'dma: {np.round(dma[-5:-1], 4)} / '
+        #       f'ama: {np.round(ama[-5:-1], 4)} -- '
+        #       f'signal: {cat}')
         return cat
 
 

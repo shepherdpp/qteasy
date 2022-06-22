@@ -37,7 +37,7 @@ class BaseStrategy:
 
                 # __init__()是可选，在这里设置的属性值会成为这一策略类的默认值，在创建策略对象的
                 # 时候不需要重复设置。
-                def __init__(self):
+                def __init__(self, **kwargs):
                     # 可选项
                     # 定义这个策略的缺省/默认属性值
                     super().__init_(pars=<default pars>,
