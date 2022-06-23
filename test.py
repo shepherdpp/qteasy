@@ -8756,7 +8756,7 @@ class TestConfig(unittest.TestCase):
     def test_save_load_reset_config(self):
         """保存读取重置configuration"""
         conf = {'mode':           2,
-                'invest_amounts': [200000]}
+                'invest_cash_amounts': [200000]}
         qt.configure(**conf)
         qt.save_config(QT_CONFIG, 'saved3.cnf')
         qt.load_config(QT_CONFIG, 'saved3.cnf')
@@ -12300,15 +12300,15 @@ class TestQT(unittest.TestCase):
         shares_estate = list((all_shares.loc[all_shares.industry == "全国地产"]['ts_code']).values)
         qt.configure(asset_pool=shares_banking[0:10],
                      asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20181231',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     log=True)
+                     trade_log=True)
         op.set_parameter('long', pars=())
         op.set_parameter('finance', pars=(True, 'proportion', 'greater', 0, 0, 0.4),
                          sample_freq='Q',
@@ -12350,15 +12350,15 @@ class TestQT(unittest.TestCase):
                                                             '内蒙', '海南', '重庆', '陕西', '福建', '广西',
                                                             '上海']),
                      asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20070101',
                      invest_end='20171228',
                      invest_cash_dates=None,
                      trade_batch_size=1.,
                      mode=1,
-                     log=False,
+                     trade_log=False,
                      hist_dnld_parallel=0)
         print(f'in total a number of {len(qt.QT_CONFIG.asset_pool)} shares are selected!')
         op.set_parameter('long', pars=())
@@ -12408,7 +12408,26 @@ class TestQT(unittest.TestCase):
               f'and the result of realtime operation is\n'
               f'{val_realtime}')
 
-        self.assertTrue(np.allclose(val_batch, val_batch))
+        self.assertTrue(np.allclose(val_batch, val_realtime))
+        self.assertEqual(res_batch['final_value'],
+                         res_realtime['final_value'])
+
+        print('backtest in batch mode:')
+        res_batch = op_batch.run(
+                mode=1,
+                invest_start='20180101',
+                invest_end='20190331'
+        )
+        print('backtest in realtime mode:')
+        res_realtime = op_realtime.run(
+                mode=1,
+                invest_start='20180101',
+                invest_end='20190331'
+        )
+        val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+
+        self.assertTrue(np.allclose(val_batch, val_realtime))
         self.assertEqual(res_batch['final_value'],
                          res_realtime['final_value'])
 
@@ -12508,7 +12527,7 @@ class TestBuiltInsSingle(unittest.TestCase):
                      invest_end='20211231',
                      asset_pool='000300.SH',
                      asset_type='IDX',
-                     reference_asset='000300.SH',
+                     benchmark_asset='000300.SH',
                      opti_sample_count=100,
                      trade_batch_size=0.,
                      sell_batch_size=0.,
@@ -12824,15 +12843,14 @@ class TestBuiltInsMultiple(unittest.TestCase):
 
         qt.configure(asset_pool=self.stock_pool[-100:],
                      asset_type='E',
-                     reference_asset='000300.SH',
-                     ref_asset_type='IDX',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
                      opti_output_count=50,
                      invest_start='20211013',
                      invest_end='20211231',
                      opti_sample_count=100,
                      trade_batch_size=0.,
                      mode=1,
-                     log=True,
                      trade_log=True,
                      PT_buy_threshold=0.03,
                      PT_sell_threshold=-0.03,
@@ -12948,8 +12966,8 @@ class FastExperiments(unittest.TestCase):
         # stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
         # qt.configure(asset_pool=stock_pool,
         #              asset_type='E',
-        #              reference_asset='000300.SH',
-        #              ref_asset_type='IDX',
+        #              benchmark_asset='000300.SH',
+        #              benchmark_asset_type='IDX',
         #              opti_output_count=50,
         #              invest_start='20211013',
         #              invest_end='20211231',

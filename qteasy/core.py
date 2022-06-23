@@ -396,6 +396,8 @@ def apply_loop(operator: Operator,
     # TODO: 此处应该传递完整的looped_dates到循环中，不过通过range(start_idx, end_idx)在获取相应的序号
     looped_dates = operator.op_list_hdates
     share_count, op_count, price_type_count = operator.op_list_shape
+    if end_idx is None:
+        end_idx = op_count
     # 为防止回测价格数据中存在Nan值，需要首先将Nan值替换成0，否则将造成错误值并一直传递到回测历史最后一天
     price = trade_price_list.ffill(0).values
     # TODO: 回测在每一个交易时间点上进行，因此每一天现金都会增值，不需要计算inflation_factors
