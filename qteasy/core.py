@@ -1059,7 +1059,9 @@ def load_config(config=None, file_name=None):
         logger_core.warning(f'{e}\nError during loading {file_name}! nothing will be read.')
         saved_config = {}
 
-    configure(config, **saved_config)
+    configure(config=config,
+              only_built_in_keys=False,
+              **saved_config)
 
 
 def reset_config(config=None):

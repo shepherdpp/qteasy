@@ -703,21 +703,28 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         output_strings.append('-------------------------------------\n')
     for key in kwargs:
         if key not in vkwargs:
-            raise KeyError(f'Unrecognized kwarg={str(key)}')
+            from qteasy import logger_core
+            logger_core.warning(f'Unrecognized kwarg={str(key)}')
+            cur_value = str(QT_CONFIG[key])
+            default_value = 'N/A'
+            description = 'Customer defined argument key'
         else:
             cur_level = vkwargs[key]['level']
             if cur_level in levels:  # only display kwargs that are in the list of levels
                 cur_value = str(QT_CONFIG[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
-                output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
-                if info:
-                    output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
-                                          f'<{default_value}>\n')
-                    if verbose:
-                        output_strings.append(f'{" " * column_offset_description}{description}\n')
-                else:
-                    output_strings.append(f'{cur_value}\n')
+            else:
+                continue
+
+        output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
+        if info:
+            output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
+                                  f'<{default_value}>\n')
+            if verbose:
+                output_strings.append(f'{" " * column_offset_description}{description}\n')
+        else:
+            output_strings.append(f'{cur_value}\n')
     return ''.join(output_strings)
 
 
