@@ -1177,8 +1177,11 @@ def check_and_prepare_hist_data(oper: Operator, config):
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
-    window_length = oper.max_window_length
-    window_offset_freq = oper.op_data_freq
+    window_length = operator.max_window_length
+    window_offset_freq = operator.op_data_freq
+    if isinstance(window_offset_freq, list):
+        raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
+                                  f'multiple data frequency in one operator is currently not supported')
     if window_offset_freq.lower() not in ['d', 'w', 'm', 'q', 'y']:
         window_offset_freq = 'd'
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)

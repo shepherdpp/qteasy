@@ -13014,7 +13014,23 @@ class FastExperiments(unittest.TestCase):
         #              mode=1,
         #              visual=True,
         #              print_trade_log=True)
-        pass
+        op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
+        op_min.set_parameter(0, data_freq='h', sample_freq='h')
+        op_min.set_parameter(1, data_freq='h', sample_freq='d')
+        op_min.set_parameter(2, data_freq='h', sample_freq='y')
+        op_min.set_blender(blender='(0+1)*2')
+        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
+                                 '000918.SZ', '000819.SZ', '000899.SZ'],
+                     asset_type='E',
+                     visual=True,
+                     print_backtest_log=False)
+        res = qt.run(op_min,
+                     visual=True,
+                     print_backtest_log=False,
+                     invest_start='20160225',
+                     invest_end='20161023',
+                     trade_batch_size=100,
+                     sell_batch_size=100)
 
     def test_time(self):
         print(match_ts_code('000001'))
