@@ -1512,6 +1512,9 @@ class Operator:
                 sample_pos = sample_pos[np.not_equal(sample_pos, np.roll(sample_pos, 1))]
                 self._op_sample_indices[stg_id] = sample_pos
 
+        # TODO: 检查生成的数据滑窗是否有问题，如果有问题则提出改进建议，
+        #  例如：检查是否有部分滑窗存在全NaN数据？
+
         # 设置策略生成的交易信号清单的各个维度的序号index，包括shares, hdates, price_types，以及对应的index
         share_count, hdate_count, htype_count = hist_data.shape
         self._op_list_shares = {share: idx for share, idx in zip(hist_data.shares, range(share_count))}

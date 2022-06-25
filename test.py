@@ -12398,7 +12398,6 @@ class TestQT(unittest.TestCase):
         )
         print('backtest in batch mode:')
         res_batch = op_batch.run(mode=1)
-        res_batch = op_batch.run(mode=1)
         print('backtest in realtime mode:')
         res_realtime = op_realtime.run(mode=1)
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
@@ -12416,13 +12415,13 @@ class TestQT(unittest.TestCase):
         res_batch = op_batch.run(
                 mode=1,
                 invest_start='20180101',
-                invest_end='20190331'
+                invest_end='20191231'
         )
         print('backtest in realtime mode:')
         res_realtime = op_realtime.run(
                 mode=1,
                 invest_start='20180101',
-                invest_end='20190331'
+                invest_end='20191231'
         )
         val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
         val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
@@ -12437,15 +12436,15 @@ class TestQT(unittest.TestCase):
         stg1.window_length = 100
         stg2.window_length = 100
         stg2.sample_freq = '2w'
-        op_batch = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='batch')
-        op_realtime = qt.Operator(strategies=['dma', 'macd'], signal_type='pt', op_type='realtime')
+        op_batch = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='batch')
+        op_realtime = qt.Operator(strategies=[stg1, stg2], signal_type='pt', op_type='realtime')
         par_stg1 = {'000100': (20, 10),
                     '000200': (20, 10),
                     '000300': (20, 6)}
         par_stg2 = ()
         for op in [op_batch, op_realtime]:
-            op.set_parameter(0, )
-            op.set_parameter(1, )
+            op.set_parameter(0, pars=par_stg1, opt_tag=1, par_range=([1, 20], [2, 100]))
+            op.set_parameter(1, pars=par_stg2, opt_tag=1)
 
         qt.configure(
                 benchmark_asset='000300.SH',
@@ -12454,11 +12453,33 @@ class TestQT(unittest.TestCase):
                 asset_type='E',
                 opti_output_count=50,
                 invest_start='20190101',
-                invest_end='20201231',
+                invest_end='20190331',
+                opti_start='20190101',
+                opti_end='20191231',
+                test_start='20200101',
+                test_end='20200331',
                 trade_batch_size=100.,
                 sell_batch_size=100.,
-                parallel=True
+                parallel=True,
+                trade_log=True
         )
+        print('output result back testing with test data')
+
+        print('backtest in batch mode:')
+        res_batch = op_batch.run(mode=1)
+        print('backtest in realtime mode:')
+        res_realtime = op_realtime.run(mode=1)
+        val_batch = res_batch["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        val_realtime = res_realtime["complete_values"][["601398.SH", "600000.SH", "000002.SZ"]].values
+        print(f'the result of batched operation is\n'
+              f'{val_batch}\n'
+              f'and the result of realtime operation is\n'
+              f'{val_realtime}')
+
+        print('backtest in batch mode in optimization mode:')
+        op_batch.run(mode=2)
+        print('backtest in realtime mode in optimization mode')
+        op_realtime.run(mode=2)
 
 
 class TestVisual(unittest.TestCase):
