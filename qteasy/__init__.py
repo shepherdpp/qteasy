@@ -10,18 +10,17 @@
 #   strategy research tool kit.
 # ======================================
 
-import os
 import tushare as ts
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from .core import get_current_holdings, filter_stock_codes
+from .core import get_realtime_holdings, get_realtime_trades, filter_stock_codes, filter_stocks, get_table_info
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
 from .core import run, get_basic_info
 from .history import HistoryPanel, get_history_panel
 from .history import dataframe_to_hp, stack_dataframes
 from .operator import Operator
-from .strategy import RollingTiming, SimpleTiming, SimpleSelecting, FactoralSelecting
+from .strategy import RuleIterator, GeneralStg, FactorSorter
 from .visual import candle
 from .built_in import *
 from .finance import CashPlan, Cost
@@ -88,8 +87,8 @@ try:
 except Exception as e:
     logger_core.warning(f'{e}, tushare token was not loaded, features might not work properly!')
 
-# 读取其他本地配置属性，更新QT_CONFIG
-configure(**qt_local_configs)
+# 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
+configure(only_built_in_keys=False, **qt_local_configs)
 
 # 建立默认的本地数据源
 QT_DATA_SOURCE = DataSource(

@@ -17,10 +17,9 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import AVAILABLE_ASSET_TYPES, progress_bar, time_str_format, nearest_market_trade_day
-from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format, TIME_FREQ_STRINGS
+from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day
+from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .history import stack_dataframes, HistoryPanel
 from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
@@ -37,7 +36,7 @@ TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'min
 '''
 table map中各列的含义如下： 
 key:                        数据表的名称
------------------------------------------------
+---------------------------------------------------------------------------------------------------------
 structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
                             型和详情描述 
                             
@@ -49,6 +48,7 @@ asset_type:                 表内数据对应的资产类型，none表示不对
   
 freq:                       表内数据的频率，如分钟、日、周等
                             设置为'D'、'W'等，用于筛选不同的数据表
+                            'none'表示无频率
   
 tushare:                    对应的tushare API函数名
   
@@ -300,7 +300,8 @@ TABLE_SOURCE_MAPPING = {
         ['income', '上市公司利润表', 'report', 'E', 'q', 'income', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
 
     'balance':
-        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['balance', '上市公司资产负债表', 'report', 'E', 'q', 'balance', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
+         ''],
 
     'cashflow':
         ['cashflow', '上市公司现金流量表', 'report', 'E', 'q', 'cashflow', 'ts_code', 'table_index', 'stock_basic', '',
@@ -311,10 +312,24 @@ TABLE_SOURCE_MAPPING = {
          'Y', ''],
 
     'forecast':
-        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['forecast', '上市公司财报预测', 'report', 'E', 'q', 'forecast', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
+         ''],
 
     'express':
-        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y', ''],
+        ['express', '上市公司财报快报', 'report', 'E', 'q', 'express', 'ts_code', 'table_index', 'stock_basic', '', 'Y',
+         ''],
+
+    'shibor':
+        ['shibor', '上海银行间行业拆放利率(SHIBOR)', 'data', 'none', 'd', 'shibor', 'date', 'trade_date', '20000101', '',
+         'Y', ''],
+
+    'libor':
+        ['libor', '伦敦银行间行业拆放利率(LIBOR)', 'data', 'none', 'd', 'libor', 'date', 'trade_date', '20000101', '',
+         'Y', ''],
+
+    'hibor':
+        ['hibor', '香港银行间行业拆放利率(HIBOR)', 'data', 'none', 'd', 'hibor', 'date', 'trade_date', '20000101', '',
+         'Y', ''],
 
 }
 # 定义Table structure，定义所有数据表的列名、数据类型、限制、主键以及注释，用于定义数据表的结构
@@ -866,7 +881,23 @@ TABLE_STRUCTURES = {
                                         '去年同期营业收入', '去年同期营业利润', '去年同期利润总额', '去年同期净利润',
                                         '去年同期每股收益', '期初净资产', '期初每股净资产', '业绩简要说明', '是否审计： 1是 0否',
                                         '备注'],
-                         'prime_keys': [0, 1]}
+                         'prime_keys': [0, 1]},
+
+    'shibor':           {'columns':    ['date', 'on', '1w', '2w', '1m', '3m', '6m', '9m', '1y'],
+                         'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
+                         'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '3个月', '6个月', '9个月', '1年'],
+                         'prime_keys': [0]},
+
+    'libor':            {'columns':    ['date', 'curr_type', 'on', '1w', '1m', '2m', '3m', '6m', '12m'],
+                         'dtypes':     ['date', 'varchar(9)', 'float', 'float', 'float', 'float', 'float', 'float',
+                                        'float'],
+                         'remarks':    ['日期', '货币', '隔夜', '1周', '1个月', '2个月', '3个月', '6个月', '12个月'],
+                         'prime_keys': [0, 1]},
+
+    'hibor':            {'columns':    ['date', 'on', '1w', '2w', '1m', '2m', '3m', '6m', '12m'],
+                         'dtypes':     ['date', 'float', 'float', 'float', 'float', 'float', 'float', 'float', 'float'],
+                         'remarks':    ['日期', '隔夜', '1周', '2周', '1个月', '2个月', '3个月', '6个月', '12个月'],
+                         'prime_keys': [0]}
 
 }
 
@@ -1457,9 +1488,9 @@ class DataSource:
         在读取数据表时读取所有的列，但是返回值筛选ts_code以及trade_date between start 和 end
 
             TODO: 历史数据表的规模较大，如果数据存储在数据库中，读取和存储时
-            TODO: 没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
-            TODO: ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
-            TODO: csv文件的读取效率，其他文件系统的读取还需要进一步优化
+             没有问题，但是如果数据存储在文件中，需要优化存储和读取过程
+             ，以便提高效率。目前优化了csv文件的读取，通过分块读取提高
+             csv文件的读取效率，其他文件系统的读取还需要进一步优化
 
         :param table: str 数据表名称
         :param shares: list，ts_code筛选条件，为空时给出所有记录
@@ -1558,11 +1589,6 @@ class DataSource:
 
             注意！！不应直接使用该函数将数据写入本地数据库，因为写入的数据不会被检查
             请使用update_table_data()来更新或写入数据到本地数据库
-
-            TODO: potentially: 如果一张数据表的数据量过大，除非将数据存储在数据库中，
-            TODO: 如果将所有数据存储在一个文件中将导致读取速度下降，本函数应该进行分表工作，
-            TODO: 即将数据分成不同的DataFrame，分别保存在不同的文件中。 此时需要建立
-            TODO: 索引数据文件、并通过索引表快速获取所需的数据，这些工作都在本函数中执行
 
         :param df: pd.DataFrame 一个数据表，数据表的列名应该与本地数据表定义一致
         :param table: str 本地数据表名，
@@ -1893,52 +1919,16 @@ class DataSource:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
-        # 检查数据合法性：
-        # TODO: 在History模块中的函数里检查数据合法性，不在这里检查
-        if not isinstance(shares, (str, list)):
-            raise TypeError(f'shares should be a string or list of strings, got {type(shares)}')
         if isinstance(shares, str):
             shares = str_to_list(shares)
-        if isinstance(shares, list):
-            if not all(isinstance(item, str) for item in shares):
-                raise TypeError(f'all items in shares list should be a string, got otherwise')
-
-        if not isinstance(htypes, (str, list)):
-            raise TypeError(f'htypes should be a string or list of strings, got {type(htypes)}')
         if isinstance(htypes, str):
             htypes = str_to_list(htypes)
-        if isinstance(htypes, list):
-            if not all(isinstance(item, str) for item in htypes):
-                raise TypeError(f'all items in htypes list should be a string, got otherwise')
-        htypes = [item.lower() for item in htypes]
-
-        if (not isinstance(start, str)) and (not isinstance(end, str)):
-            raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
-
-        if not isinstance(freq, str):
-            raise TypeError(f'freq should be a string, got {type(freq)} instead')
-        if freq.upper() not in TIME_FREQ_STRINGS:
-            raise KeyError(f'invalid freq, valid freq should be anyone in {TIME_FREQ_STRINGS}')
-        freq = freq.lower()
-
-        if not isinstance(asset_type, (str, list)):
-            raise TypeError(f'asset type should be a string, got {type(asset_type)} instead')
         if isinstance(asset_type, str):
-            asset_type = str_to_list(asset_type)
-        if not all(isinstance(item, str) for item in asset_type):
-            raise KeyError(f'not all items in asset type are strings')
-        if not all(item.upper() in ['ANY'] + AVAILABLE_ASSET_TYPES for item in asset_type):
-            raise KeyError(f'invalid asset_type, asset types should be one or many in {AVAILABLE_ASSET_TYPES}')
-        if any(item.upper() == 'ANY' for item in asset_type):
-            asset_type = AVAILABLE_ASSET_TYPES
-        asset_type = [item.upper() for item in asset_type]
-
-        if not isinstance(adj, str):
-            raise TypeError(f'adj type should be a string, got {type(adj)} instead')
-        if adj.upper() not in ['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']:
-            raise KeyError(f"invalid adj type ({adj}), which should be anyone of "
-                           f"['NONE', 'BACK', 'FORWARD', 'N', 'B', 'FW', 'F']")
-        adj = adj.lower()
+            if asset_type.lower() == 'any':
+                from utilfuncs import AVAILABLE_ASSET_TYPES
+                asset_type = AVAILABLE_ASSET_TYPES
+            else:
+                asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
         table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
@@ -2053,13 +2043,10 @@ class DataSource:
         Dict 一个标准的DataFrame-Dict，满足stack_dataframes()函数的输入要求，以便组装成
             HistoryPanel对象
         """
-        # 检查数据合法性
-        if start is None:
-            raise NotImplementedError
-        if end is None:
-            raise NotImplementedError
         if isinstance(index, str):
             index = str_to_list(index)
+        if isinstance(shares, str):
+            shares = str_to_list(shares)
         # 读取时间内的权重数据
         weight_data = self.read_table_data('index_weight', shares=index, start=start, end=end)
         if not weight_data.empty:
@@ -2088,7 +2075,6 @@ class DataSource:
                 weight_df.drop(columns=columns_to_drop, inplace=True)
                 weight_df = weight_df.reindex(columns=shares)
             df_by_index['wt-' + idx] = weight_df
-        # result_hp = stack_dataframes(df_by_index, stack_as='htypes', htypes=index_names)
         return df_by_index
 
     def refill_local_source(self,
@@ -2210,8 +2196,6 @@ class DataSource:
 
         # 2 生成需要处理的数据表清单 tables
         table_map = get_table_map()
-        # table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        # table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
         tables_to_refill = set()
         tables = [item.lower() for item in tables]
         if 'all' in tables:
@@ -2395,12 +2379,13 @@ class DataSource:
                                                        f'{total_written} downloaded/{time_remain} left')
 
                     self.update_table_data(table, dnld_data)
+                strftime_elapsed = time_str_format(time_elapsed, short_form=True)
                 if len(arg_coverage) > 1:
                     progress_bar(total, total, f'[{table}] <{arg_coverage[0]} to {arg_coverage[-1]}>: '
-                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                                               f'{total_written} written in {strftime_elapsed}\n')
                 else:
                     progress_bar(total, total, f'[{table}] <None>: '
-                                               f'{total_written} written in {time_str_format(time_elapsed)}\n')
+                                               f'{total_written} written in {strftime_elapsed}\n')
                 # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
                 #       f'{total} {arg_name} params '
                 #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')

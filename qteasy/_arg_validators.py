@@ -108,7 +108,7 @@ def _valid_qt_kwargs():
                                  'level':     2,
                                  'text':      '无风险利率，如果选择"考虑现金的时间价值"，则回测时现金按此年利率增值'},
 
-        'parallel':             {'Default':   False,
+        'parallel':             {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     1,
                                  'text':      '如果True，策略参数寻优时将利用多核心CPU进行并行计算提升效率'},
@@ -208,46 +208,38 @@ def _valid_qt_kwargs():
                                  'level':     4,
                                  'text':      '明细交易日志的存储路径\n'},
 
-        'print_backtest_log':   {'Default':   False,
+        'trade_log':            {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
-                                 'level':     4,
-                                 'text':      '如果True，将回测详细过程信息写入\n'
-                                              '一个DataFrame中，这个文件可以保存下来供仔细研究\n'
-                                              '这个参数只有在回测模式下有用'},
+                                 'level':     1,
+                                 'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
+                                              '包括交易信号以及每一步骤的交易结果'},
 
-        'log_backtest_detail':  {'Default':   False,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     4,
-                                 'text':      '如果True，将回测详细过程信息写入日志\n'
-                                              '日志级别为DEBUG，用于分析回测的细节，这个参数只有在\n'
-                                              '回测模式下有用'},
-
-        'reference_asset':      {'Default':   '000300.SH',
+        'benchmark_asset':      {'Default':   '000300.SH',
                                  'Validator': lambda value: isinstance(value, str)
                                                             and _validate_asset_id(value),
                                  'level':     1,
-                                 'text':      '用来产生回测结果评价结果的参考价格，默认参考价格为沪深300指数\n'
-                                              '参考价格用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
+                                 'text':      '用来产生回测结果评价结果基准收益的资产类型，默认基准为沪深300指数\n'
+                                              '基准指数用来生成多用评价结果如alpha、beta比率等，因为这些指标除了考察投资收益的\n'
                                               '绝对值意外，还需要考虑同时期的市场平均表现，只有当投资收益优于市场平均表现的，才会\n'
                                               '被算作超额收益或alpha收益，这才是投资策略追求的目标'},
 
-        'ref_asset_type':       {'Default':   'IDX',
+        'benchmark_asset_type': {'Default':   'IDX',
                                  'Validator': lambda value: _validate_asset_type(value),
                                  'level':     1,
-                                 'text':      '参考价格的资产类型，包括：\n'
+                                 'text':      '基准收益的资产类型，包括：\n'
                                               'IDX  : 指数\n'
                                               'E    : 股票\n'
                                               'FT   : 期货\n'
                                               'FD   : 基金\n'},
 
-        'ref_asset_dtype':      {'Default':   'close',
+        'benchmark_dtype':      {'Default':   'close',
                                  'Validator': lambda value: value in ['open',
                                                                       'high',
                                                                       'low',
                                                                       'close',
                                                                       'vol'],
                                  'level':     1,
-                                 'text':      '作为参考价格的资产的价格类型。'},
+                                 'text':      '作为基准收益的资产的价格类型。'},
 
         'visual':               {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
@@ -310,20 +302,6 @@ def _valid_qt_kwargs():
                                                             and 0 <= value < 1,
                                  'level':     2,
                                  'text':      '交易滑点，一个预设参数，模拟由于交易延迟或交易金额过大产生的额外交易成本'},
-
-        'log':                  {'Default':   True,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     1,
-                                 'text':      '是否生成日志\n'
-                                              'FutureWarning:\n'
-                                              '该参数在未来将会被"trade_log"所取代'},
-
-        'trade_log':            {'Default':   True,
-                                 'Validator': lambda value: isinstance(value, bool),
-                                 'level':     1,
-                                 'text':      '是否生成明细交易清单，以pd.DataFrame形式给出明细的每日交易清单\n'
-                                              '包括交易信号以及每一步骤的交易结果\n'
-                                              '<该功能尚未实现>'},
 
         'invest_start':         {'Default':   '20160405',
                                  'Validator': lambda value: isinstance(value, str)
@@ -725,21 +703,28 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
         output_strings.append('-------------------------------------\n')
     for key in kwargs:
         if key not in vkwargs:
-            raise KeyError(f'Unrecognized kwarg={str(key)}')
+            from qteasy import logger_core
+            logger_core.warning(f'Unrecognized kwarg={str(key)}')
+            cur_value = str(QT_CONFIG[key])
+            default_value = 'N/A'
+            description = 'Customer defined argument key'
         else:
             cur_level = vkwargs[key]['level']
             if cur_level in levels:  # only display kwargs that are in the list of levels
                 cur_value = str(QT_CONFIG[key])
                 default_value = str(vkwargs[key]['Default'])
                 description = str(vkwargs[key]['text'])
-                output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
-                if info:
-                    output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
-                                          f'<{default_value}>\n')
-                    if verbose:
-                        output_strings.append(f'{" " * column_offset_description}{description}\n')
-                else:
-                    output_strings.append(f'{cur_value}\n')
+            else:
+                continue
+
+        output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
+        if info:
+            output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
+                                  f'<{default_value}>\n')
+            if verbose:
+                output_strings.append(f'{" " * column_offset_description}{description}\n')
+        else:
+            output_strings.append(f'{cur_value}\n')
     return ''.join(output_strings)
 
 
@@ -767,20 +752,20 @@ def _initialize_config_kwargs(kwargs, vkwargs):
     return config
 
 
-def _update_config_kwargs(config, kwargs):
+def _update_config_kwargs(config, kwargs, raise_if_key_not_existed=False):
     """ given existing configuration dict, verify that all kwargs are valid
         per kwargs table, and update the configuration dictionary
 
     :param config: configuration dictionary to be updated
     :param kwargs: kwargs that are to be updated
-    :param vkwargs: valid keywords table used for validating given kwargs
+    :param raise_if_key_not_existed:  if True, raise when key does not exist in vkwargs
     :return:
         config ConfigDict
     """
     vkwargs = _valid_qt_kwargs()
     for key in kwargs.keys():
         value = _parse_string_kwargs(kwargs[key], key, vkwargs)
-        if _validate_key_and_value(key, value):
+        if _validate_key_and_value(key, value, raise_if_key_not_existed):
             config[key] = value
 
     return config
@@ -807,18 +792,28 @@ def _parse_string_kwargs(value, key, vkwargs):
     return value
 
 
-def _validate_key_and_value(key, value):
-    """ given one key, validate the key according to vkwargs dict
-        return True if the key is valid
-        raise if the key is not valid
+def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
+    """ given one key, validate the value according to vkwargs dict
+        return True if the value is valid
+        raise if the value is not valid
+        return False or raise if the key does not exist in vkwargs, depending on
+        argument "raise_if_key_not_existed"
 
     :param key:
     :param value:
+    :param raise_if_key_not_existed:    when key does not exist in vkwargs:
+                                        raise if True,
+                                        return False if False and warning
     :return:
     """
     vkwargs = _valid_qt_kwargs()
     if key not in vkwargs:
-        return False
+        err_msg = f'kwarg <{key}> is not a built-in parameter key, please check your input!'
+        if raise_if_key_not_existed:
+            raise KeyError(err_msg)
+        else:
+            import warnings
+            warnings.warn(err_msg)
     else:
         try:
             valid = vkwargs[key]['Validator'](value)
@@ -881,7 +876,7 @@ def _validate_asset_type(value):
     :param value:
     :return:
     """
-    from .database import AVAILABLE_ASSET_TYPES
+    from .utilfuncs import AVAILABLE_ASSET_TYPES
     return value in AVAILABLE_ASSET_TYPES
 
 

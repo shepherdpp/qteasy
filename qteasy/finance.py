@@ -271,7 +271,10 @@ class CashPlan:
 
         :return: pd.Timestamp
         """
-        return self.dates[0]
+        if self.dates:
+            return self.dates[0]
+        else:
+            return
 
     @property
     def last_day(self):
@@ -279,7 +282,10 @@ class CashPlan:
 
         :return: pd.Timestamp
         """
-        return self.dates[-1]
+        if self.dates:
+            return self.dates[-1]
+        else:
+            return
 
     @property
     def period(self):
@@ -287,7 +293,10 @@ class CashPlan:
 
         :return: int
         """
-        return (self.last_day - self.first_day).days
+        if self.dates:
+            return (self.last_day - self.first_day).days
+        else:
+            return 0
 
     @property
     def investment_count(self):
