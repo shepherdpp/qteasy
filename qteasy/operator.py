@@ -17,7 +17,7 @@ import pandas as pd
 from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
-from .strategy import BaseStrategy
+from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
 from .blender import blender_parser
 
@@ -226,7 +226,7 @@ class Operator:
         # 如果对象的种类未在参数中给出，则直接指定最简单的策略种类
         if isinstance(strategies, str):
             stg = str_to_list(strategies)
-        elif isinstance(strategies, BaseStrategy):
+        elif isinstance(strategies, (BaseStrategy, RuleIterator, GeneralStg, FactorSorter)):
             stg = [strategies]
         elif isinstance(strategies, list):
             stg = strategies
@@ -693,7 +693,7 @@ class Operator:
             return self._strategies[item]
         strategy_count = self.strategy_count
         if item >= strategy_count - 1:
-            # 当输入的item明显不符合要求是，仍然返回结果，是否不合理？
+            # 当输入的item明显不符合要求时，仍然返回结果，是否不合理？
             item = strategy_count - 1
         return self._strategies[all_ids[item]]
 

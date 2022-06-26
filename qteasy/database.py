@@ -20,7 +20,6 @@ from functools import lru_cache
 from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
@@ -1643,6 +1642,7 @@ class DataSource:
         :return:
             pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
         """
+        from .tsfuncs import acquire_data
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAPPING.keys():
@@ -2162,6 +2162,7 @@ class DataSource:
         :return:
             None
         """
+        from .tsfuncs import acquire_data
         # 1 参数合法性检查
         if (tables is None) and (dtypes is None):
             raise KeyError(f'tables and dtypes can not both be None.')
@@ -2341,7 +2342,7 @@ class DataSource:
             dnld_data = pd.DataFrame()
             time_elapsed = 0
             try:
-                if parallel:
+                if parallel and (table != 'trade_calendar'):
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
                         futures = {proc_pool.submit(acquire_data, table, **kw): kw
                                    for kw in all_kwargs}
@@ -2375,17 +2376,17 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        progress_bar(completed, total, f'[{table}] <{list(kwargs.values())[0]}>: '
-                                                       f'{total_written} downloaded/{time_remain} left')
+                        progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
+                                                       f'{total_written}dnld/{time_remain}left')
 
                     self.update_table_data(table, dnld_data)
                 strftime_elapsed = time_str_format(time_elapsed, short_form=True)
                 if len(arg_coverage) > 1:
-                    progress_bar(total, total, f'[{table}] <{arg_coverage[0]} to {arg_coverage[-1]}>: '
-                                               f'{total_written} written in {strftime_elapsed}\n')
+                    progress_bar(total, total, f'<{table}:{arg_coverage[0]}-{arg_coverage[-1]}>'
+                                               f'{total_written}wrtn in {strftime_elapsed}\n')
                 else:
-                    progress_bar(total, total, f'[{table}] <None>: '
-                                               f'{total_written} written in {strftime_elapsed}\n')
+                    progress_bar(total, total, f'[{table}:None>'
+                                               f'{total_written}wrtn in {strftime_elapsed}\n')
                 # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
                 #       f'{total} {arg_name} params '
                 #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')

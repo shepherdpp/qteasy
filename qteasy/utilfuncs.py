@@ -59,7 +59,7 @@ def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=
     :type delay: float
     :param backoff: 延迟倍增乘数，每多一次重试延迟时间就延长该倍数
     :type backoff: float
-    :param mute: 静默功能，True时不打印信息也不输出logings
+    :param mute: 静默功能，True时不打印信息也不输出logger.warning, 只输出logger.info()
     :type mute: Boolean default False
     :param logger: 日志logger对象. 如果给出None, 则打印结果
     :type logger: logging.Logger 对象
@@ -74,8 +74,11 @@ def retry(exception_to_check, tries=7, delay=1., backoff=2., mute=False, logger=
                 try:
                     return f(*args, **kwargs)
                 except exception_to_check as e:
-                    msg = f'{str(e)}, Retrying in {mdelay} seconds...'
-                    if not mute:
+                    msg = f'Error in {f.__name__}: {str(e)}, Retrying in {mdelay} seconds...'
+                    if mute:
+                        if logger:
+                            logger.info(msg)
+                    else:
                         if logger:
                             logger.warning(msg)
                         else:

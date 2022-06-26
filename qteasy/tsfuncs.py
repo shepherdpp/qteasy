@@ -11,6 +11,7 @@
 import pandas as pd
 import tushare as ts
 
+from qteasy import logger_core
 from .utilfuncs import regulate_date_format, list_to_str_format
 from .utilfuncs import retry
 
@@ -36,7 +37,7 @@ def acquire_data(table, **kwargs):
 # ==================
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def stock_basic(exchange: str = None):
     """ 获取基础信息数据，包括股票代码、名称、上市日期、退市日期等
 
@@ -65,13 +66,17 @@ def stock_basic(exchange: str = None):
     fields = 'ts_code,symbol,name,area,industry,fullname, enname, cnspell, market, exchange, curr_type, list_status, ' \
              'list_date, delist_date, is_hs'
     pro = ts.pro_api()
-    return pro.stock_basic(exchange=exchange,
-                           list_status=list_status,
-                           is_hs=is_hs,
-                           fields=fields)
+    res = pro.stock_basic(exchange=exchange,
+                          list_status=list_status,
+                          is_hs=is_hs,
+                          fields=fields)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_basic with exchange={exchange}, list_status={list_status}'
+                     f'is_hs={is_hs}, fields={fields}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def trade_calendar(exchange: str = 'SSE',
                    start: str = None,
                    end: str = None,
@@ -96,13 +101,16 @@ def trade_calendar(exchange: str = 'SSE',
                               start_date=start,
                               end_date=end,
                               is_open=is_open)
+    logger_core.info(f'downloaded {len(trade_cal)} rows of data from tushare'
+                     f' table trade_calendar with exchange={exchange}, start_date={start}'
+                     f'end_date={end}, is_open={is_open}')
     if is_open is None:
         return trade_cal
     else:
         return list(pd.to_datetime(trade_cal.cal_date))
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def name_change(ts_code: str = None,
                 start: str = None,
                 end: str = None):
@@ -134,13 +142,17 @@ def name_change(ts_code: str = None,
     """
     fields = 'ts_code,start_date,name,end_date,ann_date,change_reason'
     pro = ts.pro_api()
-    return pro.namechange(ts_code=ts_code,
-                          start_date=start,
-                          end_date=end,
-                          fields=fields)
+    res = pro.namechange(ts_code=ts_code,
+                         start_date=start,
+                         end_date=end,
+                         fields=fields)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table name_change with ts_code={ts_code}, start_date={start}'
+                     f'end_date={end}, fields={fields}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def new_share(start: str = None,
               end: str = None) -> pd.DataFrame:
     """
@@ -196,10 +208,14 @@ def new_share(start: str = None,
         12  16.07  22.99          6.90  37.145    0.12
     """
     pro = ts.pro_api()
-    return pro.new_share(start_date=start, end_date=end)
+    res = pro.new_share(start_date=start, end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table new_share with start_date={start}'
+                     f'end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def stock_company(ts_code: str = None,
                   exchange: str = None,
                   fields: str = None) -> pd.DataFrame:
@@ -246,141 +262,197 @@ def stock_company(ts_code: str = None,
     if fields is None:
         fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
     pro = ts.pro_api()
-    return pro.stock_company(ts_code=ts_code, exchange=exchange, fields=fields)
+    res = pro.stock_company(ts_code=ts_code, exchange=exchange, fields=fields)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stock_company with ts_code={ts_code}, exchange={exchange}'
+                     f'fields={fields}')
+    return res
 
 
 # Bar price data
 # ==================
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def daily_basic(ts_code: object = None,
                 trade_date: object = None,
                 start: object = None,
                 end: object = None) -> pd.DataFrame:
     """ tushare function wrapper: """
     pro = ts.pro_api()
-    return pro.daily_basic(ts_code=ts_code,
-                           trade_date=trade_date,
-                           start_date=start,
-                           end_date=end)
+    res = pro.daily_basic(ts_code=ts_code,
+                          trade_date=trade_date,
+                          start_date=start,
+                          end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table daily_basic with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def daily_basic2(ts_code: object = None,
                  trade_date: object = None,
                  start: object = None,
                  end: object = None) -> pd.DataFrame:
     """ tushare function wrapper: """
     pro = ts.pro_api()
-    return pro.bak_daily(ts_code=ts_code,
-                         trade_date=trade_date,
-                         start_date=start,
-                         end_date=end)
+    res = pro.bak_daily(ts_code=ts_code,
+                        trade_date=trade_date,
+                        start_date=start,
+                        end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table back_basic with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def index_daily_basic(ts_code: object = None,
                       trade_date: object = None,
                       start: object = None,
                       end: object = None) -> pd.DataFrame:
     """ tushare function wrapper: """
     pro = ts.pro_api()
-    return pro.index_dailybasic(ts_code=ts_code,
-                                trade_date=trade_date,
-                                start_date=start,
-                                end_date=end)
+    res = pro.index_dailybasic(ts_code=ts_code,
+                               trade_date=trade_date,
+                               start_date=start,
+                               end_date=end)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table index_daily_basic with ts_code={ts_code}, trade_date={trade_date}'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def mins1(ts_code,
           start=None,
           end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
+    res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq="1min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def mins5(ts_code,
           start=None,
           end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
+    res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq="5min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def mins15(ts_code,
            start=None,
            end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
+    res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq="15min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def mins30(ts_code,
            start=None,
            end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
+    res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq="30min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def mins60(ts_code,
            start=None,
            end=None):
     # 注意，分钟接口minsxx包含股票、基金、指数、期权的分钟数据，全部都在一张表中，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
+    res = pro.stk_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_mins with ts_code={ts_code}, freq="60min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def ft_mins1(ts_code,
              start=None,
              end=None):
     # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
+    res = pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='1min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table future_mins with ts_code={ts_code}, freq="1min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def ft_mins5(ts_code,
              start=None,
              end=None):
     # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
+    res = pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='5min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table future_mins with ts_code={ts_code}, freq="5min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def ft_mins15(ts_code,
               start=None,
               end=None):
     # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
+    res = pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='15min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table future_mins with ts_code={ts_code}, freq="15min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def ft_mins30(ts_code,
               start=None,
               end=None):
     # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
+    res = pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='30min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table future_mins with ts_code={ts_code}, freq="30min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def ft_mins60(ts_code,
               start=None,
               end=None):
     # 注意，分钟接口ft_minsxx包含期货的分钟数据，必须先获取权限后下载
     pro = ts.pro_api()
-    return pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
+    res = pro.ft_mins(ts_code=ts_code, start_date=start, end_date=end, freq='60min')
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table future_mins with ts_code={ts_code}, freq="60min"'
+                     f'start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def daily(ts_code=None,
           trade_date=None,
           start=None,
@@ -394,10 +466,13 @@ def daily(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def weekly(ts_code=None,
            trade_date=None,
            start=None,
@@ -411,10 +486,13 @@ def weekly(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: weekly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def monthly(ts_code=None,
             trade_date=None,
             start=None,
@@ -428,10 +506,13 @@ def monthly(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: monthly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def index_daily(ts_code=None,
                 trade_date=None,
                 start=None,
@@ -445,10 +526,13 @@ def index_daily(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.index_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.index_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def index_weekly(ts_code=None,
                  trade_date=None,
                  start=None,
@@ -462,10 +546,13 @@ def index_weekly(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.index_weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.index_weekly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_weekly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def index_monthly(ts_code=None,
                   trade_date=None,
                   start=None,
@@ -479,10 +566,13 @@ def index_monthly(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.index_monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.index_monthly(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_monthly with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def fund_daily(ts_code=None,
                trade_date=None,
                start=None,
@@ -496,10 +586,13 @@ def fund_daily(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.fund_daily(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_daily with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def adj_factors(ts_code=None,
                 trade_date=None,
                 start=None,
@@ -513,10 +606,13 @@ def adj_factors(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.adj_factor(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.adj_factor(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: adj_factors with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def fund_adj(ts_code=None,
              trade_date=None,
              start=None,
@@ -530,10 +626,13 @@ def fund_adj(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_adj(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.fund_adj(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_adj with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def fund_share(ts_code=None,
                trade_date=None,
                start=None,
@@ -547,10 +646,13 @@ def fund_share(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_share(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    res = pro.fund_share(ts_code=ts_code, trade_date=trade_date, start_date=start, end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_share with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def fund_manager(ts_code=None,
                  ann_date=None,
                  offset=None):
@@ -562,12 +664,15 @@ def fund_manager(ts_code=None,
     :return:
     """
     pro = ts.pro_api()
-    return pro.fund_manager(ts_code=ts_code, ann_date=ann_date, offset=offset)
+    res = pro.fund_manager(ts_code=ts_code, ann_date=ann_date, offset=offset)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_manager with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, offset={offset}')
+    return res
 
 
 # Finance Data
 # ================
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def income(ts_code: str,
            rpt_date: str = None,
            start: str = None,
@@ -697,17 +802,21 @@ def income(ts_code: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    return pro.income(ts_code=ts_code,
-                      ann_date=rpt_date,
-                      start_date=start,
-                      end_date=end,
-                      period=period,
-                      report_type=report_type,
-                      comp_type=comp_type,
-                      fields=fields)
+    res = pro.income(ts_code=ts_code,
+                     ann_date=rpt_date,
+                     start_date=start,
+                     end_date=end,
+                     period=period,
+                     report_type=report_type,
+                     comp_type=comp_type,
+                     fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: income with ts_code={ts_code}, '
+                     f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
+                     f'report_type={report_type}, comp_type={comp_type}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def balance(ts_code: str,
             rpt_date: str = None,
             start: str = None,
@@ -931,10 +1040,13 @@ def balance(ts_code: str,
                            report_type=report_type,
                            comp_type=comp_type,
                            fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: balance with ts_code={ts_code}, '
+                     f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
+                     f'report_type={report_type}, comp_type={comp_type}')
     return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def cashflow(ts_code: str,
              rpt_date: str = None,
              start: str = None,
@@ -1104,10 +1216,13 @@ def cashflow(ts_code: str,
                        report_type=report_type,
                        comp_type=comp_type,
                        fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: cashflow with ts_code={ts_code}, '
+                     f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
+                     f'report_type={report_type}, comp_type={comp_type}')
     return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def indicators(ts_code: str,
                rpt_date: str = None,
                start: str = None,
@@ -1343,10 +1458,12 @@ def indicators(ts_code: str,
                              end_date=end,
                              period=period,
                              fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: indicators with ts_code={ts_code}, '
+                     f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}')
     return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def forecast(ts_code: str = None,
              ann_date: str = None,
              start: str = None,
@@ -1386,24 +1503,28 @@ def forecast(ts_code: str = None,
         end = regulate_date_format(end)
     pro = ts.pro_api()
     try:
-        return pro.forecast_vip(ts_code=ts_code,
-                                ann_date=ann_date,
-                                start_date=start,
-                                end_date=end,
-                                period=period,
-                                type=type,
-                                fields=fields)
+        res = pro.forecast_vip(ts_code=ts_code,
+                               ann_date=ann_date,
+                               start_date=start,
+                               end_date=end,
+                               period=period,
+                               type=type,
+                               fields=fields)
     except Exception as e:
-        return pro.forecast(ts_code=ts_code,
-                            ann_date=ann_date,
-                            start_date=start,
-                            end_date=end,
-                            period=period,
-                            type=type,
-                            fields=fields)
+        res = pro.forecast(ts_code=ts_code,
+                           ann_date=ann_date,
+                           start_date=start,
+                           end_date=end,
+                           period=period,
+                           type=type,
+                           fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: forecast with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, start_date={start}, end_date={end}, period={period}, '
+                     f'type={type}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def express(ts_code: str = None,
             ann_date: str = None,
             start: str = None,
@@ -1464,24 +1585,27 @@ def express(ts_code: str = None,
         end = regulate_date_format(end)
     pro = ts.pro_api()
     try:
-        return pro.express_vip(ts_code=ts_code,
-                               ann_date=ann_date,
-                               start_date=start,
-                               end_date=end,
-                               period=period,
-                               fields=fields)
+        res = pro.express_vip(ts_code=ts_code,
+                              ann_date=ann_date,
+                              start_date=start,
+                              end_date=end,
+                              period=period,
+                              fields=fields)
     except Exception as e:
-        return pro.express(ts_code=ts_code,
-                           ann_date=ann_date,
-                           start_date=start,
-                           end_date=end,
-                           period=period,
-                           fields=fields)
+        res = pro.express(ts_code=ts_code,
+                          ann_date=ann_date,
+                          start_date=start,
+                          end_date=end,
+                          period=period,
+                          fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: express with ts_code={ts_code}, '
+                     f'ann_date={ann_date}, start_date={start}, end_date={end}, period={period}')
+    return res
 
 
 # Market Data
 # =================
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def top_list(trade_date: str = None,
              shares: str = None,
              fields: str = None) -> pd.DataFrame:
@@ -1519,16 +1643,20 @@ def top_list(trade_date: str = None,
         ...
     """
     if fields is None:
-        fields = 'trade_date,ts_code,name,close,l_sell,l_buy,l_amount,float_values,reason'
+        fields = 'trade_date,ts_code,name,close,pct_change,turnover_rate,amount,' \
+                 'l_sell,l_buy,l_amount,net_amount,net_rate,amount_rate,float_values,reason'
     pro = ts.pro_api()
-    return pro.top_list(trade_date=trade_date,
-                        ts_code=shares,
-                        fields=fields)
+    res = pro.top_list(trade_date=trade_date,
+                       ts_code=shares,
+                       fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: top_list with ts_code={shares}, '
+                     f'trade_date={trade_date}, fields={fields}')
+    return res
 
 
 # Index Data
 # ==================
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def index_basic(ts_code: str = None,
                 name: str = None,
                 market: str = None,
@@ -1585,15 +1713,18 @@ def index_basic(ts_code: str = None,
     fields = 'ts_code, name, fullname, market, publisher, index_type, category, ' \
              'base_date, base_point, list_date, weight_rule, desc, exp_date'
     pro = ts.pro_api()
-    return pro.index_basic(ts_code=ts_code,
-                           name=name,
-                           market=market,
-                           publisher=publisher,
-                           category=category,
-                           fields=fields)
+    res = pro.index_basic(ts_code=ts_code,
+                          name=name,
+                          market=market,
+                          publisher=publisher,
+                          category=category,
+                          fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_basic with ts_code={ts_code}, '
+                     f'name={name}, market={market}, publisher={publisher}, category={category}, fields={fields}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def index_indicators(trade_date: str = None,
                      ts_code: str = None,
                      start: str = None,
@@ -1640,14 +1771,17 @@ def index_indicators(trade_date: str = None,
     if fields is None:
         fields = 'ts_code,trade_date,turnover_rate,pe,pe_ttm,pb'
     pro = ts.pro_api()
-    return pro.index_dailybasic(trade_date=trade_date,
-                                ts_code=ts_code,
-                                start_date=start,
-                                end_date=end,
-                                fields=fields)
+    res = pro.index_dailybasic(trade_date=trade_date,
+                               ts_code=ts_code,
+                               start_date=start,
+                               end_date=end,
+                               fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: index_indicators with ts_code={ts_code}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}, fields={fields}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def composite(index: str = None,
               trade_date: str = None,
               start: str = None,
@@ -1677,16 +1811,19 @@ def composite(index: str = None,
         6    399300.SZ  000402.SZ   20180903  0.0816
     """
     pro = ts.pro_api()
-    return pro.index_weight(index_code=index,
-                            trade_date=trade_date,
-                            start_date=start,
-                            end_date=end)
+    res = pro.index_weight(index_code=index,
+                           trade_date=trade_date,
+                           start_date=start,
+                           end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: composite with index_code={index}, '
+                     f'trade_date={trade_date}, start_date={start}, end_date={end}')
+    return res
 
 
 # Funds Data
 # =============
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def fund_basic(market: str = None,
                status: str = None) -> pd.DataFrame:
     """ 获取基金列表
@@ -1739,11 +1876,13 @@ def fund_basic(market: str = None,
     if market is None:
         market = 'E'
     pro = ts.pro_api()
-    return pro.fund_basic(market=market,
-                          status=status)
+    res = pro.fund_basic(market=market, status=status)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_basic with market={market}, '
+                     f'status={status}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def fund_net_value(ts_code: str = None,
                    nav_date: str = None,
                    market: str = None) -> pd.DataFrame:
@@ -1775,15 +1914,18 @@ def fund_net_value(ts_code: str = None,
         ...         ...       ...
     """
     pro = ts.pro_api()
-    return pro.fund_nav(ts_code=ts_code,
-                        nav_date=nav_date,
-                        market=market)
+    res = pro.fund_nav(ts_code=ts_code,
+                       nav_date=nav_date,
+                       market=market)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: fund_net_value with ts_code={ts_code}, '
+                     f'nav_date={nav_date}, market={market}')
+    return res
 
 
 # Futures & Options Data
 # ===============
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def future_basic(exchange: str = None,
                  future_type: str = None) -> pd.DataFrame:
     """ 获取期货合约列表数据
@@ -1825,12 +1967,15 @@ def future_basic(exchange: str = None,
     fields = 'ts_code,symbol,name,fut_code,multiplier,trade_unit,per_unit,quote_unit,quote_unit_desc,d_mode_desc,' \
              'list_date,delist_date,d_month,last_ddate,trade_time_desc'
     pro = ts.pro_api()
-    return pro.fut_basic(exchange=exchange,
-                         fut_type=future_type,
-                         fields=fields)
+    res = pro.fut_basic(exchange=exchange,
+                        fut_type=future_type,
+                        fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: future_basic with exchange={exchange}, '
+                     f'fut_type={future_type}, fields={fields}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def options_basic(exchange: str = None,
                   call_put: str = None) -> pd.DataFrame:
     """ 获取期权合约信息
@@ -1871,12 +2016,15 @@ def options_basic(exchange: str = None,
     fields = 'ts_code,exchange,name,per_unit,opt_code,opt_type,call_put,exercise_type,exercise_price,s_month,' \
              'maturity_date,list_price,list_date,delist_date,last_edate,last_ddate,quote_unit,min_price_chg'
     pro = ts.pro_api()
-    return pro.opt_basic(exchange=exchange,
-                         call_put=call_put,
-                         fields=fields)
+    res = pro.opt_basic(exchange=exchange,
+                        call_put=call_put,
+                        fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: options_basic with exchange={exchange}, '
+                     f'call_put={call_put}, fields={fields}')
+    return res
 
 
-@retry(Exception, mute=True)
+@retry(Exception, mute=True, logger=logger_core)
 def future_daily(trade_date: str = None,
                  future: str = None,
                  exchange: str = None,
@@ -1923,15 +2071,18 @@ def future_daily(trade_date: str = None,
     fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,' \
              'settle,change1,change2,vol,amount,oi,oi_chg,delv_settle'
     pro = ts.pro_api()
-    return pro.fut_daily(trade_date=trade_date,
-                         ts_code=future,
-                         exchange=exchange,
-                         start_date=start,
-                         end_date=end,
-                         fields=fields)
+    res = pro.fut_daily(trade_date=trade_date,
+                        ts_code=future,
+                        exchange=exchange,
+                        start_date=start,
+                        end_date=end,
+                        fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: future_daily with trade_date={trade_date}, '
+                     f'ts_code={future}, exchange={exchange}, start_date={start}, end_date={end}, fields={fields}')
+    return res
 
 
-@retry(Exception, tries=10, mute=True)  # 接口有访问次数限制，因此增加delay
+@retry(Exception, tries=10, mute=True, logger=logger_core)  # 接口有访问次数限制，因此增加delay
 def options_daily(trade_date: str = None,
                   option: str = None,
                   exchange: str = None,
@@ -1982,15 +2133,19 @@ def options_daily(trade_date: str = None,
         raise ValueError(f'one of future and trade_date should be given!')
     fields = 'ts_code,trade_date,pre_close,pre_settle,open,high,low,close,settle,vol,amount,oi'
     pro = ts.pro_api()
-    return pro.opt_daily(trade_date=trade_date,
-                         ts_code=option,
-                         exchange=exchange,
-                         start_date=start,
-                         end_date=end,
-                         fields=fields)
+    res = pro.opt_daily(trade_date=trade_date,
+                        ts_code=option,
+                        exchange=exchange,
+                        start_date=start,
+                        end_date=end,
+                        fields=fields)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: options_daily with '
+                     f'trade_date={trade_date}, ts_code={option}, exchange={exchange}, start_date={start}, '
+                     f'end_date={end}, fields={fields}')
+    return res
 
 
-@retry(Exception, tries=10, mute=True)
+@retry(Exception, tries=10, mute=True, logger=logger_core)
 def shibor(date=None, start=None, end=None):
     """ 获取上海银行间同业拆借利率SHIBOR利率
 
@@ -2011,7 +2166,7 @@ def shibor(date=None, start=None, end=None):
     example:
         df = shibor(start='20180101', end='20181101')
     output:
-             date      on      1w      2w      1m      3m      6m      9m      1y
+                 date      on      1w      2w      1m      3m      6m      9m      1y
         0    20181101  2.5470  2.6730  2.6910  2.6960  2.9760  3.2970  3.5040  3.5500
         1    20181031  2.3700  2.7150  2.7300  2.6890  2.9630  3.2980  3.5040  3.5500
         2    20181030  1.5660  2.5980  2.6400  2.6630  2.9570  3.2950  3.5010  3.5500
@@ -2035,6 +2190,117 @@ def shibor(date=None, start=None, end=None):
         20   20180929  2.0730  2.7830  3.3100  2.8020  2.8460  3.2850  3.4890  3.5210
     """
     pro = ts.pro_api()
-    return pro.opt_daily(date=date,
-                         start_date=start,
-                         end_date=end)
+    res = pro.shibor(date=date,
+                     start_date=start,
+                     end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: shibor with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+@retry(Exception, tries=10, mute=True, logger=logger_core)
+def hibor(date=None, start=None, end=None):
+    """ 获取HIBOR (Hongkong InterBank Offered Rate)，香港银行同行业拆借利率
+
+    :param date: str 利率日期
+    :param start: str 开始日期
+    :param end: str 结束日期
+    :return: pd.DataFrame
+        column  type    default     description
+        date	str	    Y	        日期
+        on	    float	Y	        隔夜
+        1w	    float	Y	        1周
+        2w	    float	Y	        2周
+        1m	    float	Y	        1个月
+        2m	    float	Y	        2个月
+        3m	    float	Y	        3个月
+        6m	    float	Y	        6个月
+        12m	    float	Y	        12个月
+    example:
+        df = hibor(start='20180101', end='20181101')
+    output:
+             date       on       1w       2w       1m       2m       3m       6m      12m
+    0    20181130  1.52500  1.10125  1.08000  1.20286  1.83030  2.03786  2.32821  2.65929
+    1    20181129  0.76143  0.95643  1.01036  1.12357  1.80493  2.01018  2.31643  2.65500
+    2    20181128  0.66786  0.95607  0.99929  1.10964  1.77104  1.97643  2.30143  2.65643
+    3    20181127  0.71357  0.95536  0.99786  1.09321  1.76321  1.98351  2.30374  2.65571
+    4    20181126  0.68821  0.92821  0.99107  1.08214  1.75161  1.97742  2.29957  2.65446
+    5    20181123  0.68571  0.84000  0.91036  1.08214  1.75304  1.97591  2.30088  2.65375
+    6    20181122  0.47161  0.59750  0.76750  1.01214  1.73125  1.96500  2.29250  2.64750
+    7    20181121  0.36893  0.56571  0.74429  0.98929  1.71071  1.96569  2.29286  2.64618
+    8    20181120  0.38964  0.58214  0.75464  1.01107  1.70839  1.96571  2.28893  2.63946
+    9    20181119  0.39672  0.59893  0.77464  1.04143  1.71143  1.96643  2.28643  2.63960
+    10   20181116  0.44429  0.60321  0.75214  1.04429  1.71500  1.96750  2.28893  2.64321
+    11   20181115  0.39179  0.63571  0.77857  1.04627  1.71722  1.97607  2.28697  2.64286
+    12   20181114  0.34571  0.64026  0.78821  1.06393  1.72875  2.00000  2.29554  2.64857
+    13   20181113  0.59232  0.82643  0.91643  1.09286  1.77786  2.06920  2.30982  2.66286
+    14   20181112  0.53571  0.75419  0.83321  1.03536  1.75734  2.08286  2.29929  2.65607
+    15   20181109  0.51571  0.75393  0.83321  1.03464  1.76018  2.08179  2.30283  2.65857
+    16   20181108  0.60536  0.75293  0.85179  1.03357  1.75866  2.08107  2.29907  2.65357
+    17   20181107  0.58071  0.72679  0.83107  1.04714  1.74804  2.08467  2.30446  2.65596
+    18   20181106  0.48714  0.67750  0.78786  1.02536  1.72821  2.08071  2.30589  2.65464
+    19   20181105  0.44929  0.68500  0.80214  1.04321  1.72500  2.08179  2.31941  2.65857
+    20   20181102  0.45571  0.73542  0.87679  1.10536  1.73732  2.10018  2.33276  2.65857
+    """
+    pro = ts.pro_api()
+    res = pro.hibor(date=date,
+                    start_date=start,
+                    end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: hibor with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
+
+
+@retry(Exception, tries=10, mute=True, logger=logger_core)
+def libor(date=None, start=None, end=None, currency=None):
+    """ 获取上海银行间同业拆借利率SHIBOR利率
+
+    :param date: str 利率日期
+    :param start: str 开始日期
+    :param end: str 结束日期
+    :param currency: str 货币种类，包含：USD美元 EUR欧元 JPY日元 GBP英镑 CHF瑞郎，默认USD
+    :return: pd.DataFrame
+        column  type    default     description
+        date	str	    Y	        日期
+        curr    str     Y           货币
+        on	    float	Y	        隔夜
+        1w	    float	Y	        1周
+        1m	    float	Y	        1个月
+        2m	    float	Y	        2个月
+        3m	    float	Y	        3个月
+        6m	    float	Y	        6个月
+        12m	    float	Y	        1年
+    example:
+        df = libor(start='20180101', end='20181101')
+    output:
+         date     curr_type       on       1w       1m       2m       3m       6m       12m
+    0    20181130       USD  2.17750  2.22131  2.34694  2.51006  2.73613  2.89463   3.12025
+    1    20181129       USD  2.18275  2.22881  2.34925  2.51125  2.73813  2.88519   3.11869
+    2    20181128       USD  2.18250  2.22450  2.34463  2.49500  2.70663  2.88663   3.13413
+    3    20181127       USD  2.17850  2.23494  2.34931  2.49900  2.70600  2.88444   3.13075
+    4    20181126       USD  2.18300  2.21900  2.33675  2.49525  2.70681  2.89275   3.12838
+    5    20181123       USD  2.17700  2.22188  2.32188  2.49538  2.69119  2.88625   3.12075
+    6    20181122       USD      NaN  2.22213  2.31488  2.48013  2.68925  2.88725   3.10950
+    7    20181121       USD  2.18050  2.22100  2.31513  2.47313  2.67694  2.88588   3.11038
+    8    20181120       USD  2.17288  2.21638  2.30550  2.45850  2.65313  2.86325   3.09713
+    9    20181119       USD  2.18075  2.21725  2.30025  2.45769  2.64581  2.86575   3.10738
+    10   20181116       USD  2.17538  2.21225  2.30088  2.45213  2.64450  2.86263   3.12363
+    11   20181115       USD  2.17938  2.21125  2.30250  2.44913  2.64000  2.86019   3.11838
+    12   20181114       USD  2.17575  2.20963  2.31038  2.44531  2.62900  2.86344   3.12963
+    13   20181113       USD  2.17788  2.21613  2.30650  2.44413  2.61613  2.85500   3.13206
+    14   20181112       USD      NaN  2.21550  2.30663  2.44525  2.61413  2.85538   3.13475
+    15   20181109       USD  2.17500  2.21913  2.31438  2.45513  2.61813  2.85800   3.14413
+    16   20181108       USD  2.17988  2.21619  2.31844  2.45863  2.61463  2.85763   3.14075
+    17   20181107       USD  2.17725  2.21588  2.31531  2.44550  2.60113  2.84350   3.12513
+    18   20181106       USD  2.17663  2.21138  2.31688  2.42863  2.59125  2.84150   3.11638
+    19   20181105       USD  2.17525  2.21425  2.31600  2.42950  2.58925  2.83575   3.11688
+    20   20181102       USD  2.17463  2.21400  2.31788  2.42625  2.59238  2.82888   3.10488
+
+    """
+    pro = ts.pro_api()
+    res = pro.libor(date=date,
+                    start_date=start,
+                    end_date=end)
+    logger_core.info(f'Downloaded {len(res)} rows from tushare: libor with date={date}, '
+                     f'start_date={start}, end_date={end}')
+    return res
