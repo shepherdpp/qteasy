@@ -24,17 +24,52 @@ from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_fi
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
-
-""" 
-这里定义AVAILABLE_TABLES 以及 TABLE_STRUCTURES
-"""
-DATA_MAPPING_TABLE = []
-
-# 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
+
 '''
-table map中各列的含义如下： 
-key:                        数据表的名称
+量化投资研究所需用到各种金融数据，DataSource提供了管理金融数据的方式：
+
+数据表是金融数据在本地存储的逻辑结构，本地的金融数据包含若干张数据表，每张表内保存一类数据
+数据表可以在本地以csv等文件形式，也可以以MySQL数据库的形式存储，不论存储方式如何，操作接口都是一致的，只是性能有区别
+
+用户需要任何一种金融数据，只要这种数据存在于本地数据表中，就可以通过引用金融数据的"类型名称"也就是htype来获取
+例如，通过"close"获取收盘价，通过"pe"获取市盈率，通过"ebitda"获取息税前利润等。
+
+上述所有的金融数据类型，都存储在不同的数据表中，并且通过一个DATA_TABLE_MAPPING表来索引。
+
+除了这里定义的"内置"数据表以外，用户还可以自定义数据表，自定义数据表的结构直接存储在DataSource的自定义结构表中。
+一旦定义好了自定义数据表，其操作方式与内置数据表是一样的。
+
+完整的数据结构由三个字典（表）来定义：
+DATA_TABLE_MAPPING:     定义了数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到
+                        每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置
+TABLE_SOURCE_MAPPING:   定义了数据表的基本属性和下载API来源（目前仅包括tushare，未来会添加其他API)
+TABLE_STRUCTURES:       定义了数据表的表结构，包括每一列的名称、数据类型、主键以及每一列的说明
+
+Data table mapping中各列的含义如下：
+htype_name(key):            数据类型名称（主键）
+
+freq(key):                  数据的可用频率（主键）
+                            1min
+                            d
+                            w
+                            m
+                            q
+                            
+asset_type(key):            数据对应的金融资产类型:
+                            E 
+                            IDX
+                            FT
+                            FD
+---------------------------------------------------------------------------------------------------------
+table_name:
+
+column:
+
+description:
+
+table source mapping中各列的含义如下： 
+table_name(key):            数据表的名称（主键）
 ---------------------------------------------------------------------------------------------------------
 structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
                             型和详情描述 
@@ -900,6 +935,10 @@ TABLE_STRUCTURES = {
 
 }
 
+"""
+金融数据类型表
+
+"""
 
 class DataConflictWarning(Warning):
     """ Warning Type: Data conflict detected"""

@@ -1511,6 +1511,8 @@ def forecast(ts_code: str = None,
                                type=type,
                                fields=fields)
     except Exception as e:
+        logger_core.info(f'{e}, Access to tushare vip API (pro.express_vip) not available, will fall back to normal API'
+                         f'(pro.express)')
         res = pro.forecast(ts_code=ts_code,
                            ann_date=ann_date,
                            start_date=start,
@@ -1592,6 +1594,8 @@ def express(ts_code: str = None,
                               period=period,
                               fields=fields)
     except Exception as e:
+        logger_core.info(f'{e}, Access to tushare vip API (pro.express_vip) not available, will fall back to normal API'
+                         f'(pro.express)')
         res = pro.express(ts_code=ts_code,
                           ann_date=ann_date,
                           start_date=start,
@@ -2300,7 +2304,8 @@ def libor(date=None, start=None, end=None, currency=None):
     pro = ts.pro_api()
     res = pro.libor(date=date,
                     start_date=start,
-                    end_date=end)
+                    end_date=end,
+                    currency=currency)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: libor with date={date}, '
-                     f'start_date={start}, end_date={end}')
+                     f'start_date={start}, end_date={end}, currency={currency}')
     return res
