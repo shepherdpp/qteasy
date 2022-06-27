@@ -46,6 +46,8 @@ DATA_TABLE_MAPPING:     定义了数据类型与数据表之间的对应关系�
 TABLE_SOURCE_MAPPING:   定义了数据表的基本属性和下载API来源（目前仅包括tushare，未来会添加其他API)
 TABLE_STRUCTURES:       定义了数据表的表结构，包括每一列的名称、数据类型、主键以及每一列的说明
 
+1, DATA_TABLE_MAPPING:
+
 Data table mapping中各列的含义如下：
 htype_name(key):            数据类型名称（主键）
 
@@ -62,17 +64,21 @@ asset_type(key):            数据对应的金融资产类型:
                             FT
                             FD
 ---------------------------------------------------------------------------------------------------------
-table_name:
+table_name:                 历史数据所在的表的名称
 
-column:
+column:                     历史数据在表中的列名称
 
-description:
+description:                历史数据的详细描述，可以用于列搜索
+---------------------------------------------------------------------------------------------------------
 
-table source mapping中各列的含义如下： 
-table_name(key):            数据表的名称（主键）
+2, TABLE_SOURCE_MAPPING
+
+table source mapping定义了一张数据表的基本属性以及数据来源： 
+table_name(key):            数据表的名称（主键）自定义表名称不能与内置表名称重复
 ---------------------------------------------------------------------------------------------------------
 structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
-                            型和详情描述 
+                            型和详情描述
+                            数据表的数据结构存储在不同的数据结构表中，许多表拥有相同的数据结构
                             
 desc:                       数据表的中文描述
   
@@ -133,7 +139,45 @@ start_end_chunk_size:       传入开始结束日期作为附加参数时，是�
                             一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
                             过这个天数。
                             例如，设置该参数为100，则每个分块内的时间跨度不超过100天
+---------------------------------------------------------------------------------------------------------
+
+3, TABLE_STRUCTURES:
+Table structure表定义了数据表的数据结构：
+table_structure_name:       数据结构名称（主键）
+---------------------------------------------------------------------------------------------------------
+columns:                    数据列名称
+
+dtypes:                     数据列的数据类型，包括：
+                            varchar(N) - 长度不超过N的字符串类型
+                            float:
+                            double:
+                            date
+
+remarks:                    数据列含义说明
+
+prime_keys:                 一个列表，包含一个或多个整数，它们代表的列是这个表的数据主键
+---------------------------------------------------------------------------------------------------------
 '''
+
+DATA_TABLE_MAPPING = {
+    'htype_name':
+        [],
+
+    'freq':
+        [],
+
+    'asset_type':
+        [],
+
+    'table_name':
+        [],
+
+    'column':
+        [],
+
+    'description':
+        []
+}
 
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
@@ -939,6 +983,7 @@ TABLE_STRUCTURES = {
 金融数据类型表
 
 """
+
 
 class DataConflictWarning(Warning):
     """ Warning Type: Data conflict detected"""
