@@ -13025,10 +13025,10 @@ class FastExperiments(unittest.TestCase):
                                  '000918.SZ', '000819.SZ', '000899.SZ'],
                      asset_type='E',
                      visual=True,
-                     print_backtest_log=False)
+                     trade_log=False)
         res = qt.run(op_min,
                      visual=True,
-                     print_backtest_log=False,
+                     trade_log=False,
                      invest_start='20160225',
                      invest_end='20161023',
                      trade_batch_size=100,

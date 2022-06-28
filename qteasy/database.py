@@ -158,10 +158,14 @@ remarks:                    数据列含义说明
 prime_keys:                 一个列表，包含一个或多个整数，它们代表的列是这个表的数据主键
 ---------------------------------------------------------------------------------------------------------
 '''
-
 DATA_TABLE_MAPPING = {
     'htype_name':
-        [],
+        ['chairman', 'manager', 'secretary', 'reg_capital', 'setup_date', 'province', 'city', 'introduction',
+         'website', 'email', 'office', 'employees', 'main_business', 'business_scope', 'name', 'gender', 'lev',
+         'title', 'edu', 'national', 'birthday', 'begin_date', 'end_date', 'resume', 'name', 'title', 'reward',
+         'hold_vol', 'ipo_date', 'issue_date', 'amount', 'market_amount', 'price', 'pe', 'limit_amount', 'funds',
+         'ballot', 'open', 'high', 'low', 'close', 'vol', 'amount', 'open', 'high', 'low', 'close', 'vol', 'amount',
+         'open', 'high', 'low', 'close', 'vol', 'amount', 'open', 'high', 'low', 'close', 'vol', 'amount'],
 
     'freq':
         [],
