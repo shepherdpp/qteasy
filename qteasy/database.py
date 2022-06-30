@@ -2653,8 +2653,8 @@ class DataSource:
                             time_elapsed = time.time() - st
                             time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
-                            progress_bar(completed, total, f'[{table}] <{list(cur_kwargs.values())[0]}>: '
-                                                           f'{total_written} downloaded/{time_remain} left')
+                            progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
+                                                           f'{total_written}dnld/{time_remain}left')
 
                         self.update_table_data(table, dnld_data)
                 else:
