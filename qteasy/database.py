@@ -2167,6 +2167,20 @@ class DataSource:
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     # ==============
+    def get_related_tables(self, data_type, freq='d', asset_type='any', fuzzy=True):
+        """ 根据输入的字符串data_type\freq\asset_type,查找包含该data_type的数据表
+            支持模糊查找。
+            如果fuzzy为True时，当无法精确匹配数据表时，模糊查找数据表，至少返回一个模糊结果
+            如果fuzzy为False，且无法精确匹配数据表时，返回None
+
+        :param data_type:
+        :param freq:
+        :param asset_type:
+        :param fuzzy: 是否模糊查找，默认为True
+        :return:
+        """
+        pass
+
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
             HistoryPanel对象，用于策略的运行、回测或优化测试。
