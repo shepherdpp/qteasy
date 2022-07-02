@@ -14040,6 +14040,24 @@ class TestDataSource(unittest.TestCase):
         ds.get_table_info('fund_hourly')
         ds.get_table_info('fund_nav')
 
+    def test_get_related_tables(self):
+        """根据数据名称查找相关数据表"""
+        tbls = self.ds_db.get_related_tables(htypes='close', freq='d')
+        self.assertEqual(
+                tbls,
+                ['stock_daily',
+                 'index_daily',
+                 'fund_daily',
+                 'fund_nav',
+                 'future_daily',
+                 'options_daily',
+                 'stock_indicator',
+                 'stock_indicator2',
+                 'index_indicator',
+                 'index_weight']
+        )
+        
+
 
 def test_suite(*args):
     suite = unittest.TestSuite()

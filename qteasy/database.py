@@ -158,6 +158,8 @@ remarks:                    数据列含义说明
 prime_keys:                 一个列表，包含一个或多个整数，它们代表的列是这个表的数据主键
 ---------------------------------------------------------------------------------------------------------
 '''
+DATA_TABLE_MAPPING_COLUMNS = ['table_name', 'column', 'description']
+DATA_TABLE_MAPPING_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
 DATA_TABLE_MAPPING = {
     ('chairman', 'd', 'E'):       ['stock_company', 'chairman', '公司信息 - 法人代表'],
     ('manager', 'd', 'E'):        ['stock_company', 'manager', '公司信息 - 总经理'],
@@ -2182,14 +2184,15 @@ class DataSource:
             htypes = str_to_list(htypes)
         if isinstance(asset_type, str):
             if asset_type.lower() == 'any':
-                from utilfuncs import AVAILABLE_ASSET_TYPES
+                from .utilfuncs import AVAILABLE_ASSET_TYPES
                 asset_type = AVAILABLE_ASSET_TYPES
             else:
                 asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
-        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+        dtype_map = get_dtype_map()
+        print(dtype_map)
+        table_map = get_table_map()
         tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins', 'report', 'comp'])) &
                                        (table_map.asset_type.isin(asset_type)) &
                                        (table_map.freq == freq)].index.to_list()
@@ -2243,8 +2246,15 @@ class DataSource:
         """
         if isinstance(shares, str):
             shares = str_to_list(shares)
+        if isinstance(asset_type, str):
+            if asset_type.lower() == 'any':
+                from utilfuncs import AVAILABLE_ASSET_TYPES
+                asset_type = AVAILABLE_ASSET_TYPES
+            else:
+                asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+        table_map = get_table_map()
         tables_to_read = self.get_related_tables(htypes=htypes, freq=freq, asset_type=asset_type, fuzzy=True)
         table_data_read = {}
         table_data_columns = {}
@@ -2916,8 +2926,21 @@ def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
         return columns, dtypes, remarks, primary_keys, pk_dtypes
 
 
+@lru_cache(maxsize=1)
+def get_dtype_map():
+    """ 获取所有内置数据类型的清单
+
+    :return:
+    """
+    dtype_map = pd.DataFrame(DATA_TABLE_MAPPING).T
+    dtype_map.columns = DATA_TABLE_MAPPING_COLUMNS
+    dtype_map.index.names = DATA_TABLE_MAPPING_INDEX_NAMES
+    return dtype_map
+
+
+@lru_cache(maxsize=1)
 def get_table_map():
-    """ 打印所有内置数据表的清单
+    """ 获取所有内置数据表的清单
 
     :return:
     """
