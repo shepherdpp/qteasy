@@ -387,7 +387,6 @@ DATA_TABLE_MAPPING = {
     ('low', '60min', 'OPT'):      ['options_hourly', 'low', '期权小时K线 - 最低价'],
     ('close', '60min', 'OPT'):    ['options_hourly', 'close', '期权小时K线 - 收盘价']
 }
-
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                                 'start_end_chunk_size']
@@ -2167,19 +2166,34 @@ class DataSource:
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     # ==============
-    def get_related_tables(self, data_type, freq='d', asset_type='any', fuzzy=True):
-        """ 根据输入的字符串data_type\freq\asset_type,查找包含该data_type的数据表
+    def get_related_tables(self, htypes, freq='d', asset_type='any', fuzzy=True):
+        """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表
             支持模糊查找。
             如果fuzzy为True时，当无法精确匹配数据表时，模糊查找数据表，至少返回一个模糊结果
             如果fuzzy为False，且无法精确匹配数据表时，返回None
 
-        :param data_type:
+        :param htypes:
         :param freq:
         :param asset_type:
         :param fuzzy: 是否模糊查找，默认为True
         :return:
         """
-        pass
+        if isinstance(htypes, str):
+            htypes = str_to_list(htypes)
+        if isinstance(asset_type, str):
+            if asset_type.lower() == 'any':
+                from utilfuncs import AVAILABLE_ASSET_TYPES
+                asset_type = AVAILABLE_ASSET_TYPES
+            else:
+                asset_type = str_to_list(asset_type)
+
+        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
+        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins', 'report', 'comp'])) &
+                                       (table_map.asset_type.isin(asset_type)) &
+                                       (table_map.freq == freq)].index.to_list()
+        return tables_to_read
 
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
@@ -2229,21 +2243,9 @@ class DataSource:
         """
         if isinstance(shares, str):
             shares = str_to_list(shares)
-        if isinstance(htypes, str):
-            htypes = str_to_list(htypes)
-        if isinstance(asset_type, str):
-            if asset_type.lower() == 'any':
-                from utilfuncs import AVAILABLE_ASSET_TYPES
-                asset_type = AVAILABLE_ASSET_TYPES
-            else:
-                asset_type = str_to_list(asset_type)
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
-        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins', 'report', 'comp'])) &
-                                       (table_map.asset_type.isin(asset_type)) &
-                                       (table_map.freq == freq)].index.to_list()
+        tables_to_read = self.get_related_tables(htypes=htypes, freq=freq, asset_type=asset_type, fuzzy=True)
         table_data_read = {}
         table_data_columns = {}
         for tbl in tables_to_read:
@@ -2708,9 +2710,19 @@ class DataSource:
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
 
-    @lru_cache()
-    def get_all_basic_table_data(self):
-        """ 一个快速获取所有basic数据表的函数，缓存处理以加快速度
+    def get_all_basic_table_data(self, refresh_cache=False):
+        """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
+        如果设置refresh_cache为True，则清空缓存并重新下载数据
+
+        :return:
+        """
+        if refresh_cache:
+            self._get_all_basic_table_data.cache_clear()
+        return self._get_all_basic_table_data()
+
+    @lru_cache(maxsize=1)
+    def _get_all_basic_table_data(self):
+        """ 获取所有basic数据表
 
         :return:
         """
