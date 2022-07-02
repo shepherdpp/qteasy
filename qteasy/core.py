@@ -1988,7 +1988,7 @@ def _evaluate_one_parameter(par,
     start_dates = []
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
-        start_dates.append(invest_cash_dates)
+        start_dates.append(trade_dates[np.searchsorted(trade_dates, invest_cash_dates)])
         end_dates.append(trade_dates[-1])
     elif period_util_type == 'multiple':
         # 多重测试模式，将一个完整的历史区间切割成多个区间，多次测试

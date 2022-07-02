@@ -1494,10 +1494,10 @@ class Operator:
 
             # 根据策略运行频率sample_freq生成信号生成采样点序列
             freq = stg.sample_freq
-            # 根据sample_freq生成一个日期序列
+            # 根据sample_freq生成一个策略运行采样日期序列
             temp_date_series = pd.date_range(start=op_list_hdates[0], end=op_list_hdates[-1], freq=freq)
-            if len(temp_date_series) == 0:
-                # 如果sample_freq太大，无法生成有意义的取样日期，则生成一个取样点，位于第一日
+            if len(temp_date_series) <= 1:
+                # 如果sample_freq太大，无法生成有意义的多个取样日期，则生成一个取样点，位于第一日
                 sample_pos = np.zeros(shape=(1,), dtype='int')
                 sample_pos[0] = np.searchsorted(op_list_hdates, op_list_hdates[0])  # 起点第一日
                 self._op_sample_indices[stg_id] = sample_pos
