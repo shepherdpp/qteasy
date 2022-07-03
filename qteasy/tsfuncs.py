@@ -802,14 +802,26 @@ def income(ts_code: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.income(ts_code=ts_code,
-                     ann_date=rpt_date,
-                     start_date=start,
-                     end_date=end,
-                     period=period,
-                     report_type=report_type,
-                     comp_type=comp_type,
-                     fields=fields)
+    try:
+        res = pro.income_vip(ts_code=ts_code,
+                             ann_date=rpt_date,
+                             start_date=start,
+                             end_date=end,
+                             period=period,
+                             report_type=report_type,
+                             comp_type=comp_type,
+                             fields=fields)
+    except Exception as e:
+        logger_core.info(f'{e}, Access to tushare vip API (pro.invome_vip) denied, will fall back to normal API'
+                         f'(pro.income)')
+        res = pro.income(ts_code=ts_code,
+                         ann_date=rpt_date,
+                         start_date=start,
+                         end_date=end,
+                         period=period,
+                         report_type=report_type,
+                         comp_type=comp_type,
+                         fields=fields)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: income with ts_code={ts_code}, '
                      f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
                      f'report_type={report_type}, comp_type={comp_type}')
@@ -1032,14 +1044,26 @@ def balance(ts_code: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.balancesheet(ts_code=ts_code,
-                           ann_date=rpt_date,
-                           start_date=start,
-                           end_date=end,
-                           period=period,
-                           report_type=report_type,
-                           comp_type=comp_type,
-                           fields=fields)
+    try:
+        res = pro.balancesheet_vip(ts_code=ts_code,
+                                   ann_date=rpt_date,
+                                   start_date=start,
+                                   end_date=end,
+                                   period=period,
+                                   report_type=report_type,
+                                   comp_type=comp_type,
+                                   fields=fields)
+    except Exception as e:
+        logger_core.info(f'{e}, Access to tushare vip API (pro.balancesheet_vip) denied, will fall back to normal API'
+                         f'(pro.balancesheet)')
+        res = pro.balancesheet(ts_code=ts_code,
+                               ann_date=rpt_date,
+                               start_date=start,
+                               end_date=end,
+                               period=period,
+                               report_type=report_type,
+                               comp_type=comp_type,
+                               fields=fields)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: balance with ts_code={ts_code}, '
                      f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
                      f'report_type={report_type}, comp_type={comp_type}')
@@ -1208,14 +1232,26 @@ def cashflow(ts_code: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.cashflow(ts_code=ts_code,
-                       ann_date=rpt_date,
-                       start_date=start,
-                       end_date=end,
-                       period=period,
-                       report_type=report_type,
-                       comp_type=comp_type,
-                       fields=fields)
+    try:
+        res = pro.cashflow_vip(ts_code=ts_code,
+                               ann_date=rpt_date,
+                               start_date=start,
+                               end_date=end,
+                               period=period,
+                               report_type=report_type,
+                               comp_type=comp_type,
+                               fields=fields)
+    except Exception as e:
+        logger_core.info(f'{e}, Access to tushare vip API (pro.cashflow_vip) denied, will fall back to normal API'
+                         f'(pro.cashflow)')
+        res = pro.cashflow(ts_code=ts_code,
+                           ann_date=rpt_date,
+                           start_date=start,
+                           end_date=end,
+                           period=period,
+                           report_type=report_type,
+                           comp_type=comp_type,
+                           fields=fields)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: cashflow with ts_code={ts_code}, '
                      f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}, '
                      f'report_type={report_type}, comp_type={comp_type}')
@@ -1452,12 +1488,22 @@ def indicators(ts_code: str,
     if end is not None:
         end = regulate_date_format(end)
     pro = ts.pro_api()
-    res = pro.fina_indicator(ts_code=ts_code,
-                             ann_date=rpt_date,
-                             start_date=start,
-                             end_date=end,
-                             period=period,
-                             fields=fields)
+    try:
+        res = pro.fina_indicator_vip(ts_code=ts_code,
+                                     ann_date=rpt_date,
+                                     start_date=start,
+                                     end_date=end,
+                                     period=period,
+                                     fields=fields)
+    except Exception as e:
+        logger_core.info(f'{e}, Access to tushare vip API(pro.fina_indicator_vip) denied, will fall back to '
+                         f'normal API(pro.fina_indicator)')
+        res = pro.fina_indicator(ts_code=ts_code,
+                                 ann_date=rpt_date,
+                                 start_date=start,
+                                 end_date=end,
+                                 period=period,
+                                 fields=fields)
     logger_core.info(f'Downloaded {len(res)} rows from tushare: indicators with ts_code={ts_code}, '
                      f'ann_date={rpt_date}, start_date={start}, end_date={end}, period={period}')
     return res
@@ -1594,7 +1640,7 @@ def express(ts_code: str = None,
                               period=period,
                               fields=fields)
     except Exception as e:
-        logger_core.info(f'{e}, Access to tushare vip API (pro.express_vip) not available, will fall back to normal API'
+        logger_core.info(f'{e}, Access to tushare vip API (pro.express_vip) denied, will fall back to normal API'
                          f'(pro.express)')
         res = pro.express(ts_code=ts_code,
                           ann_date=ann_date,

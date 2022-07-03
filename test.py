@@ -14056,7 +14056,6 @@ class TestDataSource(unittest.TestCase):
                  'index_indicator',
                  'index_weight']
         )
-        
 
 
 def test_suite(*args):
