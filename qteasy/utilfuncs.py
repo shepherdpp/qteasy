@@ -311,7 +311,7 @@ def str_to_list(input_string, sep_char: str = ','):
     return res
 
 
-# TODO: this function can be merged with str_to_list()y
+# TODO: this function can be merged with str_to_list()
 def input_to_list(pars: [str, int, list], dim: int, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
@@ -335,7 +335,7 @@ def input_to_list(pars: [str, int, list], dim: int, padder=None):
 
 
 def regulate_date_format(date_str: [str, object]) -> str:
-    """ tushare的财务报表函数只支持YYYYMMDD格式的日期，因此需要把YYYY-MM-DD及YYYY/MM/DD格式的日期转化为YYYYMMDD格式
+    """ 把YYYY-MM-DD或YYYY/MM/DD等各种格式的日期转化为YYYYMMDD格式
 
     :param date_str:
     :return:
@@ -348,9 +348,7 @@ def regulate_date_format(date_str: [str, object]) -> str:
 
 
 def list_to_str_format(str_list: [list, str]) -> str:
-    """ tushare的财务报表函数只支持逗号分隔值的字符串形式作为ts_code或fields等字段的输入，如果输入是list[str]类型，则需要转换
-
-    将list型数据转变为str类型，如
+    """ 将list型的str数据转变为逗号分隔的str类型，如
     ['close', 'open', 'high', 'low'] -> 'close, open, high, low'
 
     :param str_list: type: list[str]

@@ -17,7 +17,7 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day
+from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
 
@@ -2762,48 +2762,6 @@ class DataSource:
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
     # ==============
-    def get_related_tables(self, htypes, freq='d', asset_type='any', fuzzy=True):
-        """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表
-            支持模糊查找。
-            如果fuzzy为True时，当无法精确匹配数据表时，模糊查找数据表，至少返回一个模糊结果
-            如果fuzzy为False，且无法精确匹配数据表时，返回空列表
-
-        :param htypes:
-        :param freq:
-        :param asset_type:
-        :param fuzzy: 是否模糊查找，默认为True
-        :return:
-        """
-        if isinstance(htypes, str):
-            htypes = str_to_list(htypes)
-        if isinstance(asset_type, str):
-            if asset_type.lower() == 'any':
-                from .utilfuncs import AVAILABLE_ASSET_TYPES
-                asset_type = AVAILABLE_ASSET_TYPES
-            else:
-                asset_type = str_to_list(asset_type)
-
-        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
-        dtype_map = get_dtype_map()
-        print(dtype_map)
-        dtype_idx = (htypes, freq, asset_type)
-        matched_tables = dtype_map.loc[dtype_idx].table_name.to_list()
-        if not matched_tables:
-            # 没有找到匹配的数据表
-            if fuzzy:  # 进行模糊查找
-                from .utilfuncs import _partial_lev_ratio
-                # 首先模糊匹配所有的数据名称
-                all_dtype_names = dtype_map.index.get_level_values('dtype')
-                for dtype in htypes:
-                    import numpy as np
-                    dtype_list = [dtype] * len(all_dtype_names)
-                    match_points = np.array(list(map(_partial_lev_ratio, dtype_list, all_dtype_names)))
-                    matched_dtypes = all_dtype_names[np.where(match_points > 0.75)]
-
-        # 处理列表中的重复数据
-
-        return matched_tables
-
     def get_history_data(self, shares, htypes, start, end, freq, asset_type='any', adj='none'):
         """ 根据给出的参数从不同的本地数据表中获取数据，并打包成一系列的DataFrame，以便组装成
             HistoryPanel对象，用于策略的运行、回测或优化测试。
@@ -2859,11 +2817,17 @@ class DataSource:
             else:
                 asset_type = str_to_list(asset_type)
 
-        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
         table_map = get_table_map()
-        tables_to_read = self.get_related_tables(htypes=htypes, freq=freq, asset_type=asset_type, fuzzy=True)
+        tables_to_read, columns = self.match_htype_to_table_col(
+                htypes=htypes,
+                freq=freq,
+                asset_type=asset_type,
+                fuzzy=True
+        )
         table_data_read = {}
         table_data_columns = {}
+        # 逐个读取相关数据表，并删除名称与数据类型不同的列
         for tbl in tables_to_read:
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
@@ -2871,7 +2835,7 @@ class DataSource:
                 df.drop(columns=cols_to_remove, inplace=True)
             table_data_read[tbl] = df
             table_data_columns[tbl] = df.columns
-        # 提取数据，生成单个数据类型的dataframe
+        # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
         df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
             for tbl in tables_to_read:
@@ -2890,7 +2854,7 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
-        # 如果在历史数据合并时发现列名称冲突，发出警告信息，并删除后添加的列
+        # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
         for htyp in htypes:
             df_columns = df_by_htypes[htyp].columns.to_list()
@@ -3489,6 +3453,57 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
         else:
             raise KeyError(f'invalid dtype: {dtype}')
     return res
+
+
+def match_htype_to_table_col(htypes, freq='d', asset_type='E', fuzzy=True):
+    """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
+        支持模糊查找。
+        如果fuzzy为True时，当无法精确匹配数据表时，模糊查找数据表，至少返回一个模糊结果
+        如果fuzzy为False，且无法精确匹配数据表时，返回dict
+
+    :param htypes:
+    :param freq:
+    :param asset_type:
+    :param fuzzy: 是否模糊查找，默认为True
+    :return:
+        一个dict:
+        {table: column}
+    """
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    if isinstance(freq, str):
+        freq = str_to_list(freq)
+    if isinstance(asset_type, str):
+        if asset_type.lower() == 'any':
+            from .utilfuncs import AVAILABLE_ASSET_TYPES
+            asset_type = AVAILABLE_ASSET_TYPES
+        else:
+            asset_type = str_to_list(asset_type)
+
+    # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+    dtype_map = get_dtype_map()
+    idx_count = max(len(htypes), len(freq), len(asset_type))
+    htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
+    freq = input_to_list(freq, idx_count, padder='d')
+    asset_type = input_to_list(asset_type, idx_count, padder='E')
+    dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
+    matched_tables = dtype_map.loc[dtype_idx].table_name.to_list()
+    matched_columns = dtype_map.loc[dtype_idx].column.to_list()
+    if not matched_tables:
+        # 没有找到匹配的数据表
+        if fuzzy:  # 进行模糊查找
+            from .utilfuncs import _partial_lev_ratio
+            # 首先模糊匹配所有的数据名称
+            all_dtype_names = dtype_map.index.get_level_values('dtype')
+            for dtype in htypes:
+                import numpy as np
+                dtype_list = [dtype] * len(all_dtype_names)
+                match_points = np.array(list(map(_partial_lev_ratio, dtype_list, all_dtype_names)))
+                matched_dtypes = all_dtype_names[np.where(match_points > 0.75)]
+
+    # 处理列表中的重复数据
+
+    return matched_tables, matched_columns
 
 
 # noinspection PyTypeChecker
