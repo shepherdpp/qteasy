@@ -1384,7 +1384,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertAlmostEquals(eval_fv(self.test_data7), 2.92532313)
         self.assertAlmostEquals(eval_fv(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(AssertionError, eval_fv, 15)
+        self.assertRaises(TypeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
@@ -1422,7 +1422,7 @@ class TestEvaluations(unittest.TestCase):
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data7)[3]))
         self.assertEqual(eval_max_drawdown(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(AssertionError, eval_fv, 15)
+        self.assertRaises(TypeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
@@ -14004,7 +14004,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel with price:\n{dfs}')
-        htypes = ['open', 'high', 'low', 'close', 'vol']
+        htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
         dfs = ds.get_history_data(shares=shares,
                                   htypes=htypes,
                                   start=start,
@@ -14015,7 +14015,7 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with price:\n{dfs}')
+        print(f'got history data:\n{dfs}')
 
     def test_get_index_weights(self):
         """ test get_index_weights() function"""
@@ -14044,6 +14044,7 @@ class TestDataSource(unittest.TestCase):
         """根据数据名称查找相关数据表及数据列名称"""
         # 精确查找数据表及数据列
         tbls = htype_to_table_col(htypes='close', freq='d')
+        print("by: htype_to_table_col(htypes='close', freq='d')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
@@ -14051,6 +14052,7 @@ class TestDataSource(unittest.TestCase):
                  ['close'])
         )
         tbls = htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')
+        print("by: htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
@@ -14058,28 +14060,59 @@ class TestDataSource(unittest.TestCase):
                  ['invest_income'])
         )
         # 精确查找多个数据表及数据列
-        tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E')
+        tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')
+        print("by: htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
                 (['stock_daily', 'stock_daily'],
                  ['close', 'open'])
         )
+        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                (['stock_daily', 'index_weekly'],
+                 ['close', 'open'])
+        )
+        tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
+        print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                (['stk_managers', 'stock_daily'],
+                 ['name', 'close'])
+        )
         tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
+        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily', 'index_weekly'],
-                 ['close', 'open'])
+                (['stock_daily', 'stock_daily', 'stock_weekly', 'stock_weekly',
+                  'index_daily', 'index_daily', 'index_weekly', 'index_weekly'],
+                 ['open', 'close', 'open', 'close',
+                  'open', 'close', 'open', 'close'])
         )
-        # 无法精确匹配时，报错
-        tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX')
+        # 部分无法精确匹配时，只输出可以匹配的部分
+        tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily', 'index_weekly'],
-                 ['close', 'open'])
+                (['stock_daily', 'stock_weekly', 'index_daily', 'index_weekly'],
+                 ['close', 'close', 'close', 'close'])
         )
+        tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                (['stock_daily'],
+                 ['close'])
+        )
+        # 全部无法精确匹配时，报错
+        self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')
 
 
 def test_suite(*args):

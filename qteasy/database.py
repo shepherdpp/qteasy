@@ -3543,14 +3543,23 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
-def htype_to_table_col(htypes, freq='d', asset_type='E'):
+def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
     """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
         仅支持精确匹配。无法精确匹配数据表时，报错
 
     :param htypes:
     :param freq:
     :param asset_type:
-    :param fuzzy: 是否模糊查找，默认为True
+    :param method: 两种匹配方式：
+                    - 'exact': 一一对应匹配，针对输入的每一个参数匹配一张数据表
+                    举例：
+                        输入为: ['close', 'pe'], ['E', 'IDX'] 时，输出为：
+                        ['stock_daily', 'index_indicator'], ['close', 'pe']
+                    - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
+                    举例：
+                        输入为: ['close', 'pe'], ['E', 'IDX']时，输出为：
+                        ['stock_daily', 'index_daily', 'stock_indicator', 'index_indicator'],
+                        ['close', 'close', 'pe', 'pe']
     :return:
         一个dict:
         {table: column}
@@ -3568,11 +3577,18 @@ def htype_to_table_col(htypes, freq='d', asset_type='E'):
 
     # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
     dtype_map = get_dtype_map()
-    idx_count = max(len(htypes), len(freq), len(asset_type))
-    htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
-    freq = input_to_list(freq, idx_count, padder='d')
-    asset_type = input_to_list(asset_type, idx_count, padder='E')
-    dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
+    if method.lower() == 'exact':
+        # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
+        idx_count = max(len(htypes), len(freq), len(asset_type))
+        htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
+        freq = input_to_list(freq, idx_count, padder='d')
+        asset_type = input_to_list(asset_type, idx_count, padder='E')
+        dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
+    elif method.lower() == 'permute':
+        # 排列组合方式
+        dtype_idx = (htypes, freq, asset_type)
+    else:
+        raise KeyError(f'invalid method {method}')
     try:
         matched_tables = dtype_map.loc[dtype_idx].table_name.to_list()
         matched_columns = dtype_map.loc[dtype_idx].column.to_list()
@@ -3580,8 +3596,13 @@ def htype_to_table_col(htypes, freq='d', asset_type='E'):
         raise e
     if any(pd.isna(item) for item in matched_tables):
         # 部分输入数据匹配到nan值
-        pass
-
+        print(f'some of the input items are invalid, they will be removed')
+        matched_tables = [item for item in matched_tables if pd.notna(item)]
+        matched_columns = [item for item in matched_columns if pd.notna(item)]
+        if len(matched_tables) == 0:
+            raise KeyError()
+        if len(matched_columns) != len(matched_tables):
+            raise ValueError(f'')
     # 处理列表中的重复数据
 
     return matched_tables, matched_columns
