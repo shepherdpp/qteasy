@@ -193,8 +193,8 @@ DATA_TABLE_MAPPING = {
     ('issue_date', 'd', 'E'):                         ['new_share', 'issue_date', '新股上市信息 - 上市日期'],
     ('IPO_amount', 'd', 'E'):                         ['new_share', 'amount', '新股上市信息 - 发行总量（万股）'],
     ('market_amount', 'd', 'E'):                      ['new_share', 'market_amount', '新股上市信息 - 上网发行总量（万股）'],
-    ('price', 'd', 'E'):                              ['new_share', 'price', '新股上市信息 - 发行价格'],
-    ('pe', 'd', 'E'):                                 ['new_share', 'pe', '新股上市信息 - 市盈率'],
+    ('initial_price', 'd', 'E'):                      ['new_share', 'price', '新股上市信息 - 发行价格'],
+    ('initial_pe', 'd', 'E'):                         ['new_share', 'pe', '新股上市信息 - 发行市盈率'],
     ('limit_amount', 'd', 'E'):                       ['new_share', 'limit_amount', '新股上市信息 - 个人申购上限（万股）'],
     ('funds', 'd', 'E'):                              ['new_share', 'funds', '新股上市信息 - 募集资金（亿元）'],
     ('ballot', 'd', 'E'):                             ['new_share', 'ballot', '新股上市信息 - 中签率'],
@@ -390,6 +390,48 @@ DATA_TABLE_MAPPING = {
     ('close', '60min', 'OPT'):                        ['options_hourly', 'close', '期权小时K线 - 收盘价'],
     ('vol', '60min', 'OPT'):                          ['options_hourly', 'vol', '期权小时K线 - 成交量 （手）'],
     ('amount', '60min', 'OPT'):                       ['options_hourly', 'amount', '期权小时K线 - 成交额 （千元）'],
+    ('open', 'd', 'FD'):                              ['fund_daily', 'open', '基金日K线 - 开盘价'],
+    ('high', 'd', 'FD'):                              ['fund_daily', 'high', '基金日K线 - 最高价'],
+    ('low', 'd', 'FD'):                               ['fund_daily', 'low', '基金日K线 - 最低价'],
+    ('close', 'd', 'FD'):                             ['fund_daily', 'close', '基金日K线 - 收盘价'],
+    ('vol', 'd', 'FD'):                               ['fund_daily', 'vol', '基金日K线 - 成交量 （手）'],
+    ('amount', 'd', 'FD'):                            ['fund_daily', 'amount', '基金日K线 - 成交额 （千元）'],
+    ('open', '1min', 'FD'):                           ['fund_1min', 'open', '基金60秒K线 - 开盘价'],
+    ('high', '1min', 'FD'):                           ['fund_1min', 'high', '基金60秒K线 - 最高价'],
+    ('low', '1min', 'FD'):                            ['fund_1min', 'low', '基金60秒K线 - 最低价'],
+    ('close', '1min', 'FD'):                          ['fund_1min', 'close', '基金60秒K线 - 收盘价'],
+    ('vol', '1min', 'FD'):                            ['fund_1min', 'vol', '基金60秒K线 - 成交量 （手）'],
+    ('amount', '1min', 'FD'):                         ['fund_1min', 'amount', '基金60秒K线 - 成交额 （千元）'],
+    ('open', '5min', 'FD'):                           ['fund_5min', 'open', '基金5分钟K线 - 开盘价'],
+    ('high', '5min', 'FD'):                           ['fund_5min', 'high', '基金5分钟K线 - 最高价'],
+    ('low', '5min', 'FD'):                            ['fund_5min', 'low', '基金5分钟K线 - 最低价'],
+    ('close', '5min', 'FD'):                          ['fund_5min', 'close', '基金5分钟K线 - 收盘价'],
+    ('vol', '5min', 'FD'):                            ['fund_5min', 'vol', '基金5分钟K线 - 成交量 （手）'],
+    ('amount', '5min', 'FD'):                         ['fund_5min', 'amount', '基金5分钟K线 - 成交额 （千元）'],
+    ('open', '15min', 'FD'):                          ['fund_15min', 'open', '基金15分钟K线 - 开盘价'],
+    ('high', '15min', 'FD'):                          ['fund_15min', 'high', '基金15分钟K线 - 最高价'],
+    ('low', '15min', 'FD'):                           ['fund_15min', 'low', '基金15分钟K线 - 最低价'],
+    ('close', '15min', 'FD'):                         ['fund_15min', 'close', '基金15分钟K线 - 收盘价'],
+    ('vol', '15min', 'FD'):                           ['fund_15min', 'vol', '基金15分钟K线 - 成交量 （手）'],
+    ('amount', '15min', 'FD'):                        ['fund_15min', 'amount', '基金15分钟K线 - 成交额 （千元）'],
+    ('open', '30min', 'FD'):                          ['fund_30min', 'open', '基金30分钟K线 - 开盘价'],
+    ('high', '30min', 'FD'):                          ['fund_30min', 'high', '基金30分钟K线 - 最高价'],
+    ('low', '30min', 'FD'):                           ['fund_30min', 'low', '基金30分钟K线 - 最低价'],
+    ('close', '30min', 'FD'):                         ['fund_30min', 'close', '基金30分钟K线 - 收盘价'],
+    ('vol', '30min', 'FD'):                           ['fund_30min', 'vol', '基金30分钟K线 - 成交量 （手）'],
+    ('amount', '30min', 'FD'):                        ['fund_30min', 'amount', '基金30分钟K线 - 成交额 （千元）'],
+    ('open', '60min', 'FD'):                          ['fund_hourly', 'open', '基金小时K线 - 开盘价'],
+    ('high', '60min', 'FD'):                          ['fund_hourly', 'high', '基金小时K线 - 最高价'],
+    ('low', '60min', 'FD'):                           ['fund_hourly', 'low', '基金小时K线 - 最低价'],
+    ('close', '60min', 'FD'):                         ['fund_hourly', 'close', '基金小时K线 - 收盘价'],
+    ('vol', '60min', 'FD'):                           ['fund_hourly', 'vol', '基金小时K线 - 成交量 （手）'],
+    ('amount', '60min', 'FD'):                        ['fund_hourly', 'amount', '基金小时K线 - 成交额 （千元）'],
+    ('unit_nav', 'd', 'FD'):                          ['fund_nav', 'unit_nav', '基金净值 - 单位净值'],
+    ('accum_nav', 'd', 'FD'):                         ['fund_nav', 'accum_nav', '基金净值 - 累计净值'],
+    ('accum_div', 'd', 'FD'):                         ['fund_nav', 'accum_div', '基金净值 - 累计分红'],
+    ('net_asset', 'd', 'FD'):                         ['fund_nav', 'net_asset', '基金净值 - 资产净值'],
+    ('total_netasset', 'd', 'FD'):                    ['fund_nav', 'total_netasset', '基金净值 - 累计资产净值'],
+    ('adj_nav', 'd', 'FD'):                           ['fund_nav', 'adj_nav', '基金净值 - 复权净值'],
     ('buy_sm_vol', 'd', 'E'):                         ['money_flow', 'buy_sm_vol', '个股资金流向 - 小单买入量（手）'],
     ('buy_sm_amount', 'd', 'E'):                      ['money_flow', 'buy_sm_amount', '个股资金流向 - 小单买入金额（万元）'],
     ('sell_sm_vol', 'd', 'E'):                        ['money_flow', 'sell_sm_vol', '个股资金流向 - 小单卖出量（手）'],
@@ -981,7 +1023,51 @@ DATA_TABLE_MAPPING = {
     ('net_rate', 'd', 'Any'):                         ['top_list', 'net_rate', '融资融券交易明细 - 龙虎榜净买额占比'],
     ('amount_rate', 'd', 'Any'):                      ['top_list', 'amount_rate', '融资融券交易明细 - 龙虎榜成交额占比'],
     ('float_values', 'd', 'Any'):                     ['top_list', 'float_values', '融资融券交易明细 - 当日流通市值'],
-    ('reason', 'd', 'Any'):                           ['top_list', 'reason', '融资融券交易明细 - 上榜理由']
+    ('reason', 'd', 'Any'):                           ['top_list', 'reason', '融资融券交易明细 - 上榜理由'],
+    ('total_mv', 'd', 'IDX'):                         ['index_indicator', 'total_mv', '指数技术指标 - 当日总市值（元）'],
+    ('float_mv', 'd', 'IDX'):                         ['index_indicator', 'float_mv', '指数技术指标 - 当日流通市值（元）'],
+    ('total_share     float', 'd', 'IDX'):            ['index_indicator', 'total_share     float', '指数技术指标 - 当日总股本（股）'],
+    ('float_share', 'd', 'IDX'):                      ['index_indicator', 'float_share', '指数技术指标 - 当日流通股本（股）'],
+    ('free_share', 'd', 'IDX'):                       ['index_indicator', 'free_share', '指数技术指标 - 当日自由流通股本（股）'],
+    ('turnover_rate', 'd', 'IDX'):                    ['index_indicator', 'turnover_rate', '指数技术指标 - 换手率'],
+    ('turnover_rate_f', 'd', 'IDX'):                  ['index_indicator', 'turnover_rate_f', '指数技术指标 - 换手率(基于自由流通股本)'],
+    ('pe', 'd', 'IDX'):                               ['index_indicator', 'pe', '指数技术指标 - 市盈率'],
+    ('pe_ttm', 'd', 'IDX'):                           ['index_indicator', 'pe_ttm', '指数技术指标 - 市盈率TTM'],
+    ('pb', 'd', 'IDX'):                               ['index_indicator', 'pb', '指数技术指标 - 市净率'],
+    ('turnover_rate', 'd', 'E'):                      ['stock_indicator', 'turnover_rate', '股票技术指标 - 换手率（%）'],
+    ('turnover_rate_f', 'd', 'E'):                    ['stock_indicator', 'turnover_rate_f', '股票技术指标 - 换手率（自由流通股）'],
+    ('volume_ratio', 'd', 'E'):                       ['stock_indicator', 'volume_ratio', '股票技术指标 - 量比'],
+    ('pe', 'd', 'E'):                                 ['stock_indicator', 'pe', '股票技术指标 - 市盈率（总市值/净利润， 亏损的PE为空）'],
+    ('pe_ttm', 'd', 'E'):                             ['stock_indicator', 'pe_ttm', '股票技术指标 - 市盈率（TTM，亏损的PE为空）'],
+    ('pb', 'd', 'E'):                                 ['stock_indicator', 'pb', '股票技术指标 - 市净率（总市值/净资产）'],
+    ('ps', 'd', 'E'):                                 ['stock_indicator', 'ps', '股票技术指标 - 市销率'],
+    ('ps_ttm', 'd', 'E'):                             ['stock_indicator', 'ps_ttm', '股票技术指标 - 市销率（TTM）'],
+    ('dv_ratio', 'd', 'E'):                           ['stock_indicator', 'dv_ratio', '股票技术指标 - 股息率 （%）'],
+    ('dv_ttm', 'd', 'E'):                             ['stock_indicator', 'dv_ttm', '股票技术指标 - 股息率（TTM）（%）'],
+    ('total_share', 'd', 'E'):                        ['stock_indicator', 'total_share', '股票技术指标 - 总股本 （万股）'],
+    ('float_share', 'd', 'E'):                        ['stock_indicator', 'float_share', '股票技术指标 - 流通股本 （万股）'],
+    ('free_share', 'd', 'E'):                         ['stock_indicator', 'free_share', '股票技术指标 - 自由流通股本 （万）'],
+    ('total_mv', 'd', 'E'):                           ['stock_indicator', 'total_mv', '股票技术指标 - 总市值 （万元）'],
+    ('circ_mv', 'd', 'E'):                            ['stock_indicator', 'circ_mv', '股票技术指标 - 流通市值（万元）'],
+    ('vol_ratio', 'd', 'E'):                          ['stock_indicator2', 'vol_ratio', '备用股票技术指标 - 量比'],
+    ('turn_over', 'd', 'E'):                          ['stock_indicator2', 'turn_over', '备用股票技术指标 - 换手率'],
+    ('swing', 'd', 'E'):                              ['stock_indicator2', 'swing', '备用股票技术指标 - 振幅'],
+    ('selling', 'd', 'E'):                            ['stock_indicator2', 'selling', '备用股票技术指标 - 内盘（主动卖，手）'],
+    ('buying', 'd', 'E'):                             ['stock_indicator2', 'buying', '备用股票技术指标 - 外盘（主动买， 手）'],
+    ('total_share_b', 'd', 'E'):                      ['stock_indicator2', 'total_share', '备用股票技术指标 - 总股本(亿)'],
+    ('float_share_b', 'd', 'E'):                      ['stock_indicator2', 'float_share', '备用股票技术指标 - 流通股本(亿)'],
+    ('pe_2', 'd', 'E'):                               ['stock_indicator2', 'pe', '备用股票技术指标 - 市盈(动)'],
+    ('industry', 'd', 'E'):                           ['stock_indicator2', 'industry', '备用股票技术指标 - 所属行业'],
+    ('area', 'd', 'E'):                               ['stock_indicator2', 'area', '备用股票技术指标 - 所属地域'],
+    ('float_mv_2', 'd', 'E'):                         ['stock_indicator2', 'float_mv', '备用股票技术指标 - 流通市值'],
+    ('total_mv_2', 'd', 'E'):                         ['stock_indicator2', 'total_mv', '备用股票技术指标 - 总市值'],
+    ('avg_price', 'd', 'E'):                          ['stock_indicator2', 'avg_price', '备用股票技术指标 - 平均价'],
+    ('strength', 'd', 'E'):                           ['stock_indicator2', 'strength', '备用股票技术指标 - 强弱度(%)'],
+    ('activity', 'd', 'E'):                           ['stock_indicator2', 'activity', '备用股票技术指标 - 活跃度(%)'],
+    ('avg_turnover', 'd', 'E'):                       ['stock_indicator2', 'avg_turnover', '备用股票技术指标 - 笔换手'],
+    ('attack', 'd', 'E'):                             ['stock_indicator2', 'attack', '备用股票技术指标 - 攻击波(%)'],
+    ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '备用股票技术指标 - 近3月涨幅'],
+    ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '备用股票技术指标 - 近6月涨幅'],
 }
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
@@ -1165,12 +1251,12 @@ TABLE_SOURCE_MAPPING = {
          ''],
 
     'stock_indicator':
-        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
+        ['stock_indicator', '股票技术指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
          '', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date', '19990101',
-         '', '', ''],
+        ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date',
+         '19990101', '', '', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
@@ -2819,28 +2905,30 @@ class DataSource:
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
         table_map = get_table_map()
-        tables_to_read, columns = self.match_htype_to_table_col(
+        tables_to_read, columns_to_read = htype_to_table_col(
                 htypes=htypes,
                 freq=freq,
-                asset_type=asset_type,
-                fuzzy=True
+                asset_type=asset_type
         )
-        table_data_read = {}
+        table_data_acquired = {}
         table_data_columns = {}
-        # 逐个读取相关数据表，并删除名称与数据类型不同的列
-        for tbl in tables_to_read:
+        # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
+        for tbl, column in zip(tables_to_read, columns_to_read):
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
-                cols_to_remove = [col for col in df.columns if col not in htypes]
-                df.drop(columns=cols_to_remove, inplace=True)
-            table_data_read[tbl] = df
+                cols_to_drop = [col for col in df.columns if col != column]
+                df.drop(columns=cols_to_drop, inplace=True)
+                df.columns = [column]
+            table_data_acquired[tbl] = df
             table_data_columns[tbl] = df.columns
         # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
+        # 在df_by_htypes中预先存储了多个空DataFrame，用于逐个合并相关的历史数据
         df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
             for tbl in tables_to_read:
                 if htyp in table_data_columns[tbl]:
-                    df = table_data_read[tbl]
+                    df = table_data_acquired[tbl]
+                    # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstac，成为多列、单index的数据
                     if not df.empty:
                         htyp_series = df[htyp]
                         new_df = htyp_series.unstack(level=0)
@@ -3455,11 +3543,9 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
-def match_htype_to_table_col(htypes, freq='d', asset_type='E', fuzzy=True):
+def htype_to_table_col(htypes, freq='d', asset_type='E'):
     """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
-        支持模糊查找。
-        如果fuzzy为True时，当无法精确匹配数据表时，模糊查找数据表，至少返回一个模糊结果
-        如果fuzzy为False，且无法精确匹配数据表时，返回dict
+        仅支持精确匹配。无法精确匹配数据表时，报错
 
     :param htypes:
     :param freq:
@@ -3487,19 +3573,14 @@ def match_htype_to_table_col(htypes, freq='d', asset_type='E', fuzzy=True):
     freq = input_to_list(freq, idx_count, padder='d')
     asset_type = input_to_list(asset_type, idx_count, padder='E')
     dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
-    matched_tables = dtype_map.loc[dtype_idx].table_name.to_list()
-    matched_columns = dtype_map.loc[dtype_idx].column.to_list()
-    if not matched_tables:
-        # 没有找到匹配的数据表
-        if fuzzy:  # 进行模糊查找
-            from .utilfuncs import _partial_lev_ratio
-            # 首先模糊匹配所有的数据名称
-            all_dtype_names = dtype_map.index.get_level_values('dtype')
-            for dtype in htypes:
-                import numpy as np
-                dtype_list = [dtype] * len(all_dtype_names)
-                match_points = np.array(list(map(_partial_lev_ratio, dtype_list, all_dtype_names)))
-                matched_dtypes = all_dtype_names[np.where(match_points > 0.75)]
+    try:
+        matched_tables = dtype_map.loc[dtype_idx].table_name.to_list()
+        matched_columns = dtype_map.loc[dtype_idx].column.to_list()
+    except KeyError as e:
+        raise e
+    if any(pd.isna(item) for item in matched_tables):
+        # 部分输入数据匹配到nan值
+        pass
 
     # 处理列表中的重复数据
 
