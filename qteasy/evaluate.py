@@ -11,8 +11,6 @@
 import numpy as np
 import pandas as pd
 
-from numba import njit
-
 import qteasy
 from .utilfuncs import str_to_list
 from .space import ResultPool
@@ -488,7 +486,6 @@ def eval_fv(looped_val):
     return perf
 
 
-@njit()
 def eval_return(looped_val, cash_plan):
     """ 评价函数 Return Rate 收益率评价，在looped_value中补充完整的收益率和年化收益率数据
         在looped_val中添加以下数据：
@@ -565,7 +562,6 @@ def eval_return(looped_val, cash_plan):
     return looped_val.rtn.iloc[-1], looped_val.annual_rtn.iloc[-1], skewness, kurtosis, monthly_return_df
 
 
-@njit()
 def eval_operation(looped_value, cash_plan):
     """ 评价函数，统计操作过程中的基本信息:
 

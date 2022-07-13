@@ -5785,7 +5785,6 @@ class TestSelStrategy(GeneralStg):
             large2 = difper.argsort()[1:]
             chosen = np.zeros_like(avg)
             chosen[large2] = 0.5
-            # import pdb; pdb.set_trace()
             return chosen
 
         difper = dif_no_nan / avg
@@ -14048,16 +14047,14 @@ class TestDataSource(unittest.TestCase):
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily'],
-                 ['close'])
+                {'stock_daily': ['close']}
         )
         tbls = htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')
         print("by: htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['income'],
-                 ['invest_income'])
+                {'income': ['invest_income']}
         )
         # 精确查找多个数据表及数据列
         tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')
@@ -14065,34 +14062,33 @@ class TestDataSource(unittest.TestCase):
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily', 'stock_daily'],
-                 ['close', 'open'])
+                {'stock_daily': ['close', 'open']}
         )
         tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')
         print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily', 'index_weekly'],
-                 ['close', 'open'])
+                {'index_weekly': ['open'],
+                 'stock_daily': ['close']}
         )
         tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
         print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stk_managers', 'stock_daily'],
-                 ['name', 'close'])
+                {'stk_managers': ['name'],
+                 'stock_daily': ['close']}
         )
         tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
         print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily', 'stock_daily', 'stock_weekly', 'stock_weekly',
-                  'index_daily', 'index_daily', 'index_weekly', 'index_weekly'],
-                 ['open', 'close', 'open', 'close',
-                  'open', 'close', 'open', 'close'])
+                {'index_daily':  ['open', 'close'],
+                 'index_weekly': ['open', 'close'],
+                 'stock_daily':  ['open', 'close'],
+                 'stock_weekly': ['open', 'close']}
         )
         # 部分无法精确匹配时，只输出可以匹配的部分
         tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
@@ -14100,16 +14096,17 @@ class TestDataSource(unittest.TestCase):
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily', 'stock_weekly', 'index_daily', 'index_weekly'],
-                 ['close', 'close', 'close', 'close'])
+                {'index_daily':  ['close'],
+                 'index_weekly': ['close'],
+                 'stock_daily':  ['close'],
+                 'stock_weekly': ['close']}
         )
         tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')
         print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                (['stock_daily'],
-                 ['close'])
+                {'stock_daily': ['close']}
         )
         # 全部无法精确匹配时，报错
         self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')

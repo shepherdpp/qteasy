@@ -395,7 +395,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         K线图的终止日期
 
     :param stock_data: pd.DataFrame
-        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数
+        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
 
     :param freq: str
         K线图的时间频率，合法输入包括：
@@ -1545,8 +1545,8 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                            header=["Strategy items",
                                    "Sell-outs",
                                    "Buy-ins",
-                                   "Total fee",
-                                   "Final value",
+                                   "ttl-fee",
+                                   "FV",
                                    "ROI",
                                    "Benchmark rtn",
                                    "MDD"],

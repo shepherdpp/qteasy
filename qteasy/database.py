@@ -240,12 +240,12 @@ DATA_TABLE_MAPPING = {
     ('close', '30min', 'E'):                          ['stock_30min', 'close', '股票30分钟K线 - 收盘价'],
     ('vol', '30min', 'E'):                            ['stock_30min', 'vol', '股票30分钟K线 - 成交量 （手）'],
     ('amount', '30min', 'E'):                         ['stock_30min', 'amount', '股票30分钟K线 - 成交额 （千元）'],
-    ('open', '60min', 'E'):                           ['stock_hourly', 'open', '股票小时K线 - 开盘价'],
-    ('high', '60min', 'E'):                           ['stock_hourly', 'high', '股票小时K线 - 最高价'],
-    ('low', '60min', 'E'):                            ['stock_hourly', 'low', '股票小时K线 - 最低价'],
-    ('close', '60min', 'E'):                          ['stock_hourly', 'close', '股票小时K线 - 收盘价'],
-    ('vol', '60min', 'E'):                            ['stock_hourly', 'vol', '股票小时K线 - 成交量 （手）'],
-    ('amount', '60min', 'E'):                         ['stock_hourly', 'amount', '股票小时K线 - 成交额 （千元）'],
+    ('open', 'h', 'E'):                               ['stock_hourly', 'open', '股票小时K线 - 开盘价'],
+    ('high', 'h', 'E'):                               ['stock_hourly', 'high', '股票小时K线 - 最高价'],
+    ('low', 'h', 'E'):                                ['stock_hourly', 'low', '股票小时K线 - 最低价'],
+    ('close', 'h', 'E'):                              ['stock_hourly', 'close', '股票小时K线 - 收盘价'],
+    ('vol', 'h', 'E'):                                ['stock_hourly', 'vol', '股票小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'E'):                             ['stock_hourly', 'amount', '股票小时K线 - 成交额 （千元）'],
     ('open', 'd', 'IDX'):                             ['index_daily', 'open', '指数日K线 - 开盘价'],
     ('high', 'd', 'IDX'):                             ['index_daily', 'high', '指数日K线 - 最高价'],
     ('low', 'd', 'IDX'):                              ['index_daily', 'low', '指数日K线 - 最低价'],
@@ -288,30 +288,18 @@ DATA_TABLE_MAPPING = {
     ('close', '30min', 'IDX'):                        ['index_30min', 'close', '指数30分钟K线 - 收盘价'],
     ('vol', '30min', 'IDX'):                          ['index_30min', 'vol', '指数30分钟K线 - 成交量 （手）'],
     ('amount', '30min', 'IDX'):                       ['index_30min', 'amount', '指数30分钟K线 - 成交额 （千元）'],
-    ('open', '60min', 'IDX'):                         ['index_hourly', 'open', '指数小时K线 - 开盘价'],
-    ('high', '60min', 'IDX'):                         ['index_hourly', 'high', '指数小时K线 - 最高价'],
-    ('low', '60min', 'IDX'):                          ['index_hourly', 'low', '指数小时K线 - 最低价'],
-    ('close', '60min', 'IDX'):                        ['index_hourly', 'close', '指数小时K线 - 收盘价'],
-    ('vol', '60min', 'IDX'):                          ['index_hourly', 'vol', '指数小时K线 - 成交量 （手）'],
-    ('amount', '60min', 'IDX'):                       ['index_hourly', 'amount', '指数小时K线 - 成交额 （千元）'],
+    ('open', 'h', 'IDX'):                             ['index_hourly', 'open', '指数小时K线 - 开盘价'],
+    ('high', 'h', 'IDX'):                             ['index_hourly', 'high', '指数小时K线 - 最高价'],
+    ('low', 'h', 'IDX'):                              ['index_hourly', 'low', '指数小时K线 - 最低价'],
+    ('close', 'h', 'IDX'):                            ['index_hourly', 'close', '指数小时K线 - 收盘价'],
+    ('vol', 'h', 'IDX'):                              ['index_hourly', 'vol', '指数小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'IDX'):                           ['index_hourly', 'amount', '指数小时K线 - 成交额 （千元）'],
     ('open', 'd', 'FT'):                              ['future_daily', 'open', '期货日K线 - 开盘价'],
     ('high', 'd', 'FT'):                              ['future_daily', 'high', '期货日K线 - 最高价'],
     ('low', 'd', 'FT'):                               ['future_daily', 'low', '期货日K线 - 最低价'],
     ('close', 'd', 'FT'):                             ['future_daily', 'close', '期货日K线 - 收盘价'],
     ('vol', 'd', 'FT'):                               ['future_daily', 'vol', '期货日K线 - 成交量 （手）'],
     ('amount', 'd', 'FT'):                            ['future_daily', 'amount', '期货日K线 - 成交额 （千元）'],
-    ('open', 'w', 'FT'):                              ['future_weekly', 'open', '期货周K线 - 开盘价'],
-    ('high', 'w', 'FT'):                              ['future_weekly', 'high', '期货周K线 - 最高价'],
-    ('low', 'w', 'FT'):                               ['future_weekly', 'low', '期货周K线 - 最低价'],
-    ('close', 'w', 'FT'):                             ['future_weekly', 'close', '期货周K线 - 收盘价'],
-    ('vol', 'w', 'FT'):                               ['future_weekly', 'vol', '期货周K线 - 成交量 （手）'],
-    ('amount', 'w', 'FT'):                            ['future_weekly', 'amount', '期货周K线 - 成交额 （千元）'],
-    ('open', 'm', 'FT'):                              ['future_monthly', 'open', '期货月K线 - 开盘价'],
-    ('high', 'm', 'FT'):                              ['future_monthly', 'high', '期货月K线 - 最高价'],
-    ('low', 'm', 'FT'):                               ['future_monthly', 'low', '期货月K线 - 最低价'],
-    ('close', 'm', 'FT'):                             ['future_monthly', 'close', '期货月K线 - 收盘价'],
-    ('vol', 'm', 'FT'):                               ['future_monthly', 'vol', '期货月K线 - 成交量 （手）'],
-    ('amount', 'm', 'FT'):                            ['future_monthly', 'amount', '期货月K线 - 成交额 （千元）'],
     ('open', '1min', 'FT'):                           ['future_1min', 'open', '期货60秒K线 - 开盘价'],
     ('high', '1min', 'FT'):                           ['future_1min', 'high', '期货60秒K线 - 最高价'],
     ('low', '1min', 'FT'):                            ['future_1min', 'low', '期货60秒K线 - 最低价'],
@@ -336,30 +324,18 @@ DATA_TABLE_MAPPING = {
     ('close', '30min', 'FT'):                         ['future_30min', 'close', '期货30分钟K线 - 收盘价'],
     ('vol', '30min', 'FT'):                           ['future_30min', 'vol', '期货30分钟K线 - 成交量 （手）'],
     ('amount', '30min', 'FT'):                        ['future_30min', 'amount', '期货30分钟K线 - 成交额 （千元）'],
-    ('open', '60min', 'FT'):                          ['future_hourly', 'open', '期货小时K线 - 开盘价'],
-    ('high', '60min', 'FT'):                          ['future_hourly', 'high', '期货小时K线 - 最高价'],
-    ('low', '60min', 'FT'):                           ['future_hourly', 'low', '期货小时K线 - 最低价'],
-    ('close', '60min', 'FT'):                         ['future_hourly', 'close', '期货小时K线 - 收盘价'],
-    ('vol', '60min', 'FT'):                           ['future_hourly', 'vol', '期货小时K线 - 成交量 （手）'],
-    ('amount', '60min', 'FT'):                        ['future_hourly', 'amount', '期货小时K线 - 成交额 （千元）'],
+    ('open', 'h', 'FT'):                              ['future_hourly', 'open', '期货小时K线 - 开盘价'],
+    ('high', 'h', 'FT'):                              ['future_hourly', 'high', '期货小时K线 - 最高价'],
+    ('low', 'h', 'FT'):                               ['future_hourly', 'low', '期货小时K线 - 最低价'],
+    ('close', 'h', 'FT'):                             ['future_hourly', 'close', '期货小时K线 - 收盘价'],
+    ('vol', 'h', 'FT'):                               ['future_hourly', 'vol', '期货小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'FT'):                            ['future_hourly', 'amount', '期货小时K线 - 成交额 （千元）'],
     ('open', 'd', 'OPT'):                             ['options_daily', 'open', '期权日K线 - 开盘价'],
     ('high', 'd', 'OPT'):                             ['options_daily', 'high', '期权日K线 - 最高价'],
     ('low', 'd', 'OPT'):                              ['options_daily', 'low', '期权日K线 - 最低价'],
     ('close', 'd', 'OPT'):                            ['options_daily', 'close', '期权日K线 - 收盘价'],
     ('vol', 'd', 'OPT'):                              ['options_daily', 'vol', '期权日K线 - 成交量 （手）'],
     ('amount', 'd', 'OPT'):                           ['options_daily', 'amount', '期权日K线 - 成交额 （千元）'],
-    ('open', 'w', 'OPT'):                             ['options_weekly', 'open', '期权周K线 - 开盘价'],
-    ('high', 'w', 'OPT'):                             ['options_weekly', 'high', '期权周K线 - 最高价'],
-    ('low', 'w', 'OPT'):                              ['options_weekly', 'low', '期权周K线 - 最低价'],
-    ('close', 'w', 'OPT'):                            ['options_weekly', 'close', '期权周K线 - 收盘价'],
-    ('vol', 'w', 'OPT'):                              ['options_weekly', 'vol', '期权周K线 - 成交量 （手）'],
-    ('amount', 'w', 'OPT'):                           ['options_weekly', 'amount', '期权周K线 - 成交额 （千元）'],
-    ('open', 'm', 'OPT'):                             ['options_monthly', 'open', '期权月K线 - 开盘价'],
-    ('high', 'm', 'OPT'):                             ['options_monthly', 'high', '期权月K线 - 最高价'],
-    ('low', 'm', 'OPT'):                              ['options_monthly', 'low', '期权月K线 - 最低价'],
-    ('close', 'm', 'OPT'):                            ['options_monthly', 'close', '期权月K线 - 收盘价'],
-    ('vol', 'm', 'OPT'):                              ['options_monthly', 'vol', '期权月K线 - 成交量 （手）'],
-    ('amount', 'm', 'OPT'):                           ['options_monthly', 'amount', '期权月K线 - 成交额 （千元）'],
     ('open', '1min', 'OPT'):                          ['options_1min', 'open', '期权60秒K线 - 开盘价'],
     ('high', '1min', 'OPT'):                          ['options_1min', 'high', '期权60秒K线 - 最高价'],
     ('low', '1min', 'OPT'):                           ['options_1min', 'low', '期权60秒K线 - 最低价'],
@@ -384,12 +360,12 @@ DATA_TABLE_MAPPING = {
     ('close', '30min', 'OPT'):                        ['options_30min', 'close', '期权30分钟K线 - 收盘价'],
     ('vol', '30min', 'OPT'):                          ['options_30min', 'vol', '期权30分钟K线 - 成交量 （手）'],
     ('amount', '30min', 'OPT'):                       ['options_30min', 'amount', '期权30分钟K线 - 成交额 （千元）'],
-    ('open', '60min', 'OPT'):                         ['options_hourly', 'open', '期权小时K线 - 开盘价'],
-    ('high', '60min', 'OPT'):                         ['options_hourly', 'high', '期权小时K线 - 最高价'],
-    ('low', '60min', 'OPT'):                          ['options_hourly', 'low', '期权小时K线 - 最低价'],
-    ('close', '60min', 'OPT'):                        ['options_hourly', 'close', '期权小时K线 - 收盘价'],
-    ('vol', '60min', 'OPT'):                          ['options_hourly', 'vol', '期权小时K线 - 成交量 （手）'],
-    ('amount', '60min', 'OPT'):                       ['options_hourly', 'amount', '期权小时K线 - 成交额 （千元）'],
+    ('open', 'h', 'OPT'):                             ['options_hourly', 'open', '期权小时K线 - 开盘价'],
+    ('high', 'h', 'OPT'):                             ['options_hourly', 'high', '期权小时K线 - 最高价'],
+    ('low', 'h', 'OPT'):                              ['options_hourly', 'low', '期权小时K线 - 最低价'],
+    ('close', 'h', 'OPT'):                            ['options_hourly', 'close', '期权小时K线 - 收盘价'],
+    ('vol', 'h', 'OPT'):                              ['options_hourly', 'vol', '期权小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'OPT'):                           ['options_hourly', 'amount', '期权小时K线 - 成交额 （千元）'],
     ('open', 'd', 'FD'):                              ['fund_daily', 'open', '基金日K线 - 开盘价'],
     ('high', 'd', 'FD'):                              ['fund_daily', 'high', '基金日K线 - 最高价'],
     ('low', 'd', 'FD'):                               ['fund_daily', 'low', '基金日K线 - 最低价'],
@@ -420,12 +396,12 @@ DATA_TABLE_MAPPING = {
     ('close', '30min', 'FD'):                         ['fund_30min', 'close', '基金30分钟K线 - 收盘价'],
     ('vol', '30min', 'FD'):                           ['fund_30min', 'vol', '基金30分钟K线 - 成交量 （手）'],
     ('amount', '30min', 'FD'):                        ['fund_30min', 'amount', '基金30分钟K线 - 成交额 （千元）'],
-    ('open', '60min', 'FD'):                          ['fund_hourly', 'open', '基金小时K线 - 开盘价'],
-    ('high', '60min', 'FD'):                          ['fund_hourly', 'high', '基金小时K线 - 最高价'],
-    ('low', '60min', 'FD'):                           ['fund_hourly', 'low', '基金小时K线 - 最低价'],
-    ('close', '60min', 'FD'):                         ['fund_hourly', 'close', '基金小时K线 - 收盘价'],
-    ('vol', '60min', 'FD'):                           ['fund_hourly', 'vol', '基金小时K线 - 成交量 （手）'],
-    ('amount', '60min', 'FD'):                        ['fund_hourly', 'amount', '基金小时K线 - 成交额 （千元）'],
+    ('open', 'h', 'FD'):                              ['fund_hourly', 'open', '基金小时K线 - 开盘价'],
+    ('high', 'h', 'FD'):                              ['fund_hourly', 'high', '基金小时K线 - 最高价'],
+    ('low', 'h', 'FD'):                               ['fund_hourly', 'low', '基金小时K线 - 最低价'],
+    ('close', 'h', 'FD'):                             ['fund_hourly', 'close', '基金小时K线 - 收盘价'],
+    ('vol', 'h', 'FD'):                               ['fund_hourly', 'vol', '基金小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'FD'):                            ['fund_hourly', 'amount', '基金小时K线 - 成交额 （千元）'],
     ('unit_nav', 'd', 'FD'):                          ['fund_nav', 'unit_nav', '基金净值 - 单位净值'],
     ('accum_nav', 'd', 'FD'):                         ['fund_nav', 'accum_nav', '基金净值 - 累计净值'],
     ('accum_div', 'd', 'FD'):                         ['fund_nav', 'accum_div', '基金净值 - 累计分红'],
@@ -2905,7 +2881,7 @@ class DataSource:
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
         table_map = get_table_map()
-        tables_to_read, columns_to_read = htype_to_table_col(
+        tables_to_read = htype_to_table_col(
                 htypes=htypes,
                 freq=freq,
                 asset_type=asset_type
@@ -2913,12 +2889,11 @@ class DataSource:
         table_data_acquired = {}
         table_data_columns = {}
         # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
-        for tbl, column in zip(tables_to_read, columns_to_read):
+        for tbl, columns in tables_to_read.items():
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
-                cols_to_drop = [col for col in df.columns if col != column]
+                cols_to_drop = [col for col in df.columns if col not in columns]
                 df.drop(columns=cols_to_drop, inplace=True)
-                df.columns = [column]
             table_data_acquired[tbl] = df
             table_data_columns[tbl] = df.columns
         # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
@@ -3562,7 +3537,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
                         ['close', 'close', 'pe', 'pe']
     :return:
         一个dict:
-        {table: column}
+        {table: columns}
     """
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
@@ -3590,22 +3565,19 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
     else:
         raise KeyError(f'invalid method {method}')
     try:
-        matched_tables = dtype_map.loc[dtype_idx].table_name.to_list()
-        matched_columns = dtype_map.loc[dtype_idx].column.to_list()
+        group = dtype_map.loc[dtype_idx].groupby(['table_name'])
+        matched_tables = group['column'].apply(list).to_dict()
     except KeyError as e:
         raise e
     if any(pd.isna(item) for item in matched_tables):
         # 部分输入数据匹配到nan值
         print(f'some of the input items are invalid, they will be removed')
         matched_tables = [item for item in matched_tables if pd.notna(item)]
-        matched_columns = [item for item in matched_columns if pd.notna(item)]
         if len(matched_tables) == 0:
             raise KeyError()
-        if len(matched_columns) != len(matched_tables):
-            raise ValueError(f'')
     # 处理列表中的重复数据
 
-    return matched_tables, matched_columns
+    return matched_tables
 
 
 # noinspection PyTypeChecker
