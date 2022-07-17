@@ -1846,11 +1846,6 @@ TABLE_STRUCTURES = {
 
 }
 
-"""
-金融数据类型表
-
-"""
-
 
 class DataConflictWarning(Warning):
     """ Warning Type: Data conflict detected"""

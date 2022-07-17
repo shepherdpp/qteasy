@@ -922,7 +922,7 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["info"]:.3f}  \n'
                          f'{loop_results["volatility"]:.3f}')
 
-    # 绘制参考数据的收益率曲线图
+    # 绘制基准数据的收益率曲线图
     ax1.set_title('cum-return, benchmark and history operations')
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')

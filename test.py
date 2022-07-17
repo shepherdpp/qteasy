@@ -1074,6 +1074,9 @@ class TestCoreSubFuncs(unittest.TestCase):
         qt.find_history_data('open')
         qt.find_history_data('市盈率')
         qt.find_history_data('市?率*')
+        qt.find_history_data('市值')
+        qt.find_history_data('net_profit')
+        qt.find_history_data('净利润')
 
 
 class TestEvaluations(unittest.TestCase):
@@ -9913,15 +9916,15 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_list_truncate(self):
         """ test util func list_truncate()"""
-        l = [1, 2, 3, 4, 5]
-        ls = list_truncate(l, 2)
+        the_list = [1, 2, 3, 4, 5]
+        ls = list_truncate(the_list, 2)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
         self.assertEqual(ls[2], [5])
 
-        self.assertRaises(AssertionError, list_truncate, l, 0)
+        self.assertRaises(AssertionError, list_truncate, the_list, 0)
         self.assertRaises(AssertionError, list_truncate, 12, 0)
-        self.assertRaises(AssertionError, list_truncate, 0, l)
+        self.assertRaises(AssertionError, list_truncate, 0, the_list)
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
@@ -13656,15 +13659,15 @@ class TestDataSource(unittest.TestCase):
               f'{df}')
         con = self.ds_db.con
         cursor = self.ds_db.cursor
-        TABLE_NAME = 'test_db_table'
+        table_name = 'test_db_table'
         # 删除数据库中的临时表
-        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
         # 为确保update顺利进行，建立新表并设置primary_key
 
-        self.ds_db.write_database(df, TABLE_NAME)
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(df, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = df.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(df.values)
@@ -13680,7 +13683,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(TABLE_NAME,
+        loaded_df = self.ds_db.read_database(table_name,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ"],
                                              date_like_pk='trade_date',
@@ -13704,14 +13707,14 @@ class TestDataSource(unittest.TestCase):
         print(f'write and read a MultiIndex dataframe to database')
         print(f'following dataframe with multiple index will be written to database:\n'
               f'{self.df2}')
-        TABLE_NAME = 'test_db_table2'
+        table_name = 'test_db_table2'
         # 删除数据库中的临时表
-        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
 
-        self.ds_db.write_database(self.df2, TABLE_NAME)
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(self.df2, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = self.df2.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(self.df2.values)
@@ -13726,7 +13729,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(TABLE_NAME,
+        loaded_df = self.ds_db.read_database(table_name,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
         print(f'retrieve partial arr table from database with:\n'
@@ -13746,7 +13749,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
         print(f'Test getting database table coverages')
-        cov = self.ds_db.get_db_table_coverage(TABLE_NAME, 'ts_code')
+        cov = self.ds_db.get_db_table_coverage(table_name, 'ts_code')
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,

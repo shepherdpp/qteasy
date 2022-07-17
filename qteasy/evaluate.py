@@ -120,12 +120,13 @@ def evaluate(looped_values: pd.DataFrame,
         - final_value:        回测区间最后一天的总资产金额
         - loop_start:        回测区间起始日
         - loop_end:          回测区间终止日
-        - complete_values:   完整的回测历史价格记录  TODO：在完整的历史回测记录中增加各个评价指标的历史值）
+        - complete_values:   完整的回测历史价格记录
                              此DF包含的数据如下：
                              - stocks;
                              - operation fee;
                              - own cash;
                              - total value;
+                             - indicators like rolling sharp/rolling alpha/rolling beta/rolling volatility
         - days:              回测历史周期总天数
         - months:            回测历史周期总月数
         - years:             回测历史周期年份数
@@ -134,18 +135,18 @@ def evaluate(looped_values: pd.DataFrame,
         - total_fee          总交易费用
         - rtn:               回测的总回报率
         - annual_rtn:        回测的年均回报率
-        - mdd:               最大回测  TODO: 应该增强DD的判断，输出前五个最大的DD区间，增加"recover_date"
+        - mdd:               最大回测
         - peak_date:         最大回测峰值日期
         - valley_date:       最大回测谷值日期
         - volatility:        回测区间波动率（最后一日波动率）
         - ref_rtn:           benchmark参照指标的回报率
         - ref_annual_rtn:    benchmark参照指标的年均回报率
         - beta:              回测区间的beta值
-        - sharp:             回测区间的夏普率             TODO: 将rolling sharp写入complete_value中
+        - sharp:             回测区间的夏普率
         - alpha:             回测区间的阿尔法值
-        - info:              回测区间的信息比率           TODO: 将rolling info写入complete_value中
+        - info:              回测区间的信息比率
         - worst_drawdowns    一个DataFrame，五次最大的回撤记录
-        TODO: 增加Skew，Kurtosis，Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
+        TODO: 增加Omega Ratio、Calma Ratio、Stability、Tail Ratio、Daily value at risk
     input:
         :param looped_values:
         :param hist_benchmark: 参考数据，通常为有参考意义的大盘数据，代表市场平均收益水平
@@ -257,10 +258,12 @@ def eval_benchmark(looped_value, reference_value, reference_data):
 
 
 def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk_free_ror: float = 0.0035):
-    """ 回测结果评价函数：alpha率
+    """ 回测结果评价函数：alpha系数
+    阿尔法系数(α)是基金的超额收益和按照β系数计算的期望收益之间的差额。 其计算方法如下：超额收益是基金的实际收益减去无
+    风险投资收益(例如1年期银行定期存款收益)；期望收益是贝塔系数β和市场超额收益的乘积，反映基金由于市场整体变动而获得的收益；
+    超额收益和期望收益的差额即α系数。
 
-    阿尔法比率 alpha Rate。具体计算方式为 (策略年化收益 - 无风险收益) - b × (参考标准年化收益 - 无风险收益)，
-    这里的无风险收益指的是中国固定利率国债收益率曲线上10年期国债的年化到期收益率。
+    阿尔法比率 alpha Ratio。具体计算方式为 (投资组合年化收益 - 无风险收益) - b × (基准组合年化收益 - 无风险收益)，
     :param risk_free_ror: 无风险利率，默认值设置为0.35%
     :param looped_value:
     :param total_invest: float 总投资金额
@@ -294,7 +297,14 @@ def eval_alpha(looped_value, total_invest, reference_value, reference_data, risk
 
 
 def eval_beta(looped_value, reference_value, reference_data):
-    """ 贝塔。具体计算方法为 策略每日收益与参考标准每日收益的协方差 / 参考标准每日收益的方差 。
+    """ 贝塔系数。考察投资组合与基准投资组合之间的相关性，它度量了投资组合相对于基准组合的风险大小或波动大小。
+    贝塔系数越大，表示该投资组合相对于基准组合波动越大（通常使用市场平均水平作为基准）：
+     - 当贝塔系数为1时，表示投资组合的波动等于市场平均水平
+     - 当贝塔系数大于1时，投资组合的波动大于市场平均水平
+     - 当贝塔系数小于1时，投资组合的波动小于市场平均水平
+     - 当贝塔系数小于0时，投资组合的波动与市场平均水平相反
+
+    具体计算方法为 策略每日收益与基准组合每日收益的协方差 / 基准组合每日收益的方差 。
 
     :param looped_value: pandas.DataFrame, 回测结果，需要计算Beta的股票价格或投资收益历史价格
     :param reference_value: pandas.DataFrame, 参考结果，用于评价股票价格波动的基准价格，通常用市场平均或股票指数价格代表，代表市场平均波动
@@ -336,7 +346,6 @@ def eval_sharp(looped_value, riskfree_interest_rate: float = 0.0035):
     # 计算年化收益，如果回测期间大于一年，直接计算滚动年收益率（250天）
     ret = looped_value['value'] / looped_value['value'].shift(1) - 1
     volatility = eval_volatility(looped_value, logarithm=False)
-    year_span = loop_len / 250
     if loop_len <= 250:
         yearly_return = ret.mean() * 250
         sharp = (yearly_return - riskfree_interest_rate) / volatility
