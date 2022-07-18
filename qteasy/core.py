@@ -1177,8 +1177,8 @@ def check_and_prepare_hist_data(oper: Operator, config):
     opti_test_end = opti_end if pd.to_datetime(opti_end) > pd.to_datetime(test_end) else test_end
 
     # 设置历史数据前置偏移，以便有足够的历史数据用于生成最初的信号
-    window_length = operator.max_window_length
-    window_offset_freq = operator.op_data_freq
+    window_length = oper.max_window_length
+    window_offset_freq = oper.op_data_freq
     if isinstance(window_offset_freq, list):
         raise NotImplementedError(f'There are more than one data frequencies in operator ({window_offset_freq}), '
                                   f'multiple data frequency in one operator is currently not supported')
@@ -1988,7 +1988,7 @@ def _evaluate_one_parameter(par,
     start_dates = []
     end_dates = []
     if period_util_type == 'single' or period_util_type == 'montecarlo':
-        start_dates.append(invest_cash_dates)
+        start_dates.append(trade_dates[np.searchsorted(trade_dates, invest_cash_dates)])
         end_dates.append(trade_dates[-1])
     elif period_util_type == 'multiple':
         # 多重测试模式，将一个完整的历史区间切割成多个区间，多次测试

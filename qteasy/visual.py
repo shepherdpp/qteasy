@@ -395,7 +395,7 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         K线图的终止日期
 
     :param stock_data: pd.DataFrame
-        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数
+        直接用于K线图的数据，如果给出stock_data，则忽略其他的参数,否则使用其他参数从dataSource读取数据
 
     :param freq: str
         K线图的时间频率，合法输入包括：
@@ -922,7 +922,7 @@ def _plot_loop_result(loop_results: dict, config):
                          f'{loop_results["info"]:.3f}  \n'
                          f'{loop_results["volatility"]:.3f}')
 
-    # 绘制参考数据的收益率曲线图
+    # 绘制基准数据的收益率曲线图
     ax1.set_title('cum-return, benchmark and history operations')
     ax1.plot(looped_values.index, ref_rate, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
@@ -1545,8 +1545,8 @@ def _print_test_result(result, config=None, columns=None, headers=None, formatte
                            header=["Strategy items",
                                    "Sell-outs",
                                    "Buy-ins",
-                                   "Total fee",
-                                   "Final value",
+                                   "ttl-fee",
+                                   "FV",
                                    "ROI",
                                    "Benchmark rtn",
                                    "MDD"],

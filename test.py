@@ -75,7 +75,7 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range
+from qteasy.database import get_primary_key_range, htype_to_table_col
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -128,43 +128,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33299.999667, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.333332999999996, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1.))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 33296.67, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33.33, msg='result incorrect')
 
         print('\nSell result with fixed rate = 0.001 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_rate_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 0., -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), 32967.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 33, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 0:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997.00897308, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82053838484547, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 1:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 1))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 1)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 997., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -19999.82, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 59.82, msg='result incorrect')
 
         print('\nPurchase result with fixed rate = 0.003 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_rate_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_rate_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
-        self.assertAlmostEqual(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[1].sum(), -18054., msg='result incorrect')
+        self.assertAlmostEquals(test_rate_fee_result[2].sum(), 54.0, msg='result incorrect')
 
     def test_min_fee(self):
         """测试最低交易费用"""
@@ -179,43 +179,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 985, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_min_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33033.333)
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33033.333)
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), 33030)
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), 33030)
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
 
         print('\nselling result with fixed cost rate with min fee = 300 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_min_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_min_fee_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_min_fee_result[1].sum(), 32700)
-        self.assertAlmostEqual(test_min_fee_result[2].sum(), 300.0)
+        self.assertAlmostEquals(test_min_fee_result[1].sum(), 32700)
+        self.assertAlmostEquals(test_min_fee_result[2].sum(), 300.0)
 
     def test_rate_with_min(self):
         """测试最低交易费用对其他交易费率参数的影响"""
@@ -230,43 +230,43 @@ class TestCost(unittest.TestCase):
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 984.9305624, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 301.3887520929774, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 10:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 10))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 10)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 980, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -19900.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\npurchase result with fixed cost rate with buy_rate = 0.0153, min fee = 300 and moq = 100:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_rate_with_min_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0., 900, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), -18300.0, msg='result incorrect')
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 300.0, msg='result incorrect')
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 0:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32999.99967)
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.33333)
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32999.99967)
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.33333)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 1:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 1))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 1)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32996.7)
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.3)
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32996.7)
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.3)
 
         print('\nselling result with fixed cost rate with sell_rate = 0.01, min fee = 333 and moq = 100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_rate_with_min_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_rate_with_min_result[0], [0, 0, -3300]), True, 'result incorrect')
-        self.assertAlmostEqual(test_rate_with_min_result[1].sum(), 32667.0)
-        self.assertAlmostEqual(test_rate_with_min_result[2].sum(), 333.0)
+        self.assertAlmostEquals(test_rate_with_min_result[1].sum(), 32667.0)
+        self.assertAlmostEquals(test_rate_with_min_result[2].sum(), 333.0)
 
     def test_fixed_fee(self):
         """测试固定交易费用"""
@@ -281,30 +281,30 @@ class TestCost(unittest.TestCase):
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 0))
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33183.333, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150.0, msg='result incorrect')
 
         print('\nselling result of fixed cost with fixed fee = 150 and moq=100:')
         print(self.r.get_selling_result(self.prices, self.amounts_to_sell, 100))
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3300.]), True,
                       f'result incorrect, {test_fixed_fee_result[0]} does not equal to [0,0,-3400]')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 32850., msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 150., msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 0))
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 990., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
         print('\npurchase result of fixed cost with fixed fee = 200:')
         print(self.r.get_purchase_result(self.prices, self.cash_to_spend, 100))
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18200.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 200.0, msg='result incorrect')
 
     def test_slipage(self):
         """测试交易滑点"""
@@ -325,20 +325,20 @@ class TestCost(unittest.TestCase):
         test_fixed_fee_result = self.r.get_selling_result(self.prices, self.amounts_to_sell)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0, 0, -3333.3333]), True,
                       f'{test_fixed_fee_result[0]} does not equal to [0, 0, -10000]')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), 33298.88855591,
-                               msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 34.44444409,
-                               msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), 33298.88855591,
+                                msg=f'{test_fixed_fee_result[1]} does not equal to 33298.')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 34.44444409,
+                                msg=f'{test_fixed_fee_result[2]} does not equal to -36.666663.')
 
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 0)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 996.98909294, 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -20000.0, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 60.21814121353513, msg='result incorrect')
 
         test_fixed_fee_result = self.r.get_purchase_result(self.prices, self.cash_to_spend, 100)
         self.assertIs(np.allclose(test_fixed_fee_result[0], [0., 900., 0.]), True, 'result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
-        self.assertAlmostEqual(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[1].sum(), -18054.36, msg='result incorrect')
+        self.assertAlmostEquals(test_fixed_fee_result[2].sum(), 54.36, msg='result incorrect')
 
 
 class TestSpace(unittest.TestCase):
@@ -733,9 +733,9 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(self.cp1.period, 730)
         self.assertEqual(self.cp1.dates, [Timestamp('2010-01-01'), Timestamp('2012-01-01')])
         self.assertEqual(self.cp1.ir, 0.1)
-        self.assertAlmostEqual(self.cp1.closing_value, 34200)
-        self.assertAlmostEqual(self.cp2.closing_value, 10000)
-        self.assertAlmostEqual(self.cp3.closing_value, 220385.3483685)
+        self.assertAlmostEquals(self.cp1.closing_value, 34200)
+        self.assertAlmostEquals(self.cp2.closing_value, 10000)
+        self.assertAlmostEquals(self.cp3.closing_value, 220385.3483685)
         self.assertIsInstance(self.cp1.plan, pd.DataFrame)
         self.assertIsInstance(self.cp2.plan, pd.DataFrame)
         self.assertIsInstance(self.cp3.plan, pd.DataFrame)
@@ -749,8 +749,8 @@ class TestCashPlan(unittest.TestCase):
         self.assertEqual(empty.period, 0)
         self.assertEqual(empty.dates, [])
         self.assertEqual(empty.ir, 0.0)
-        self.assertAlmostEqual(empty.closing_value, 0)
-        self.assertAlmostEqual(empty.opening_value, 0)
+        self.assertAlmostEquals(empty.closing_value, 0)
+        self.assertAlmostEquals(empty.opening_value, 0)
         self.assertIsInstance(empty.plan, pd.DataFrame)
         self.assertTrue(empty.plan.empty)
 
@@ -1074,6 +1074,9 @@ class TestCoreSubFuncs(unittest.TestCase):
         qt.find_history_data('open')
         qt.find_history_data('市盈率')
         qt.find_history_data('市?率*')
+        qt.find_history_data('市值')
+        qt.find_history_data('net_profit')
+        qt.find_history_data('净利润')
 
 
 class TestEvaluations(unittest.TestCase):
@@ -1081,7 +1084,7 @@ class TestEvaluations(unittest.TestCase):
 
     # 以下手动计算结果在Excel文件中
     def setUp(self):
-        """用np.random生成测试用数据，使用cumsum()模拟股票走势"""
+        """生成模拟股票价格数据"""
         self.test_data1 = pd.DataFrame([5.34892759, 5.65768696, 5.79227076, 5.56266871, 5.88189632,
                                         6.24795001, 5.92755558, 6.38748165, 6.31331899, 5.86001665,
                                         5.61048472, 5.30696736, 5.40406792, 5.03180571, 5.37886353,
@@ -1375,16 +1378,16 @@ class TestEvaluations(unittest.TestCase):
     # noinspection PyTypeChecker
     def test_fv(self):
         print(f'test with test arr and empty DataFrame')
-        self.assertAlmostEqual(eval_fv(self.test_data1), 6.39245474)
-        self.assertAlmostEqual(eval_fv(self.test_data2), 10.05126375)
-        self.assertAlmostEqual(eval_fv(self.test_data3), 6.95068113)
-        self.assertAlmostEqual(eval_fv(self.test_data4), 8.86508591)
-        self.assertAlmostEqual(eval_fv(self.test_data5), 4.58627048)
-        self.assertAlmostEqual(eval_fv(self.test_data6), 4.10346795)
-        self.assertAlmostEqual(eval_fv(self.test_data7), 2.92532313)
-        self.assertAlmostEqual(eval_fv(pd.DataFrame()), -np.inf)
+        self.assertAlmostEquals(eval_fv(self.test_data1), 6.39245474)
+        self.assertAlmostEquals(eval_fv(self.test_data2), 10.05126375)
+        self.assertAlmostEquals(eval_fv(self.test_data3), 6.95068113)
+        self.assertAlmostEquals(eval_fv(self.test_data4), 8.86508591)
+        self.assertAlmostEquals(eval_fv(self.test_data5), 4.58627048)
+        self.assertAlmostEquals(eval_fv(self.test_data6), 4.10346795)
+        self.assertAlmostEquals(eval_fv(self.test_data7), 2.92532313)
+        self.assertAlmostEquals(eval_fv(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(AssertionError, eval_fv, 15)
+        self.assertRaises(TypeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
@@ -1392,71 +1395,71 @@ class TestEvaluations(unittest.TestCase):
     # noinspection PyTypeChecker
     def test_max_drawdown(self):
         print(f'test with test arr and empty DataFrame')
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data1)[0], 0.264274308)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data1)[0], 0.264274308)
         self.assertEqual(eval_max_drawdown(self.test_data1)[1], 53)
         self.assertEqual(eval_max_drawdown(self.test_data1)[2], 86)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data1)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data2)[0], 0.334690849)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data2)[0], 0.334690849)
         self.assertEqual(eval_max_drawdown(self.test_data2)[1], 0)
         self.assertEqual(eval_max_drawdown(self.test_data2)[2], 10)
         self.assertEqual(eval_max_drawdown(self.test_data2)[3], 19)
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data3)[0], 0.244452899)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data3)[0], 0.244452899)
         self.assertEqual(eval_max_drawdown(self.test_data3)[1], 90)
         self.assertEqual(eval_max_drawdown(self.test_data3)[2], 99)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data3)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data4)[0], 0.201849684)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data4)[0], 0.201849684)
         self.assertEqual(eval_max_drawdown(self.test_data4)[1], 14)
         self.assertEqual(eval_max_drawdown(self.test_data4)[2], 50)
         self.assertEqual(eval_max_drawdown(self.test_data4)[3], 54)
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data5)[0], 0.534206456)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data5)[0], 0.534206456)
         self.assertEqual(eval_max_drawdown(self.test_data5)[1], 21)
         self.assertEqual(eval_max_drawdown(self.test_data5)[2], 60)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data5)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data6)[0], 0.670062689)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data6)[0], 0.670062689)
         self.assertEqual(eval_max_drawdown(self.test_data6)[1], 0)
         self.assertEqual(eval_max_drawdown(self.test_data6)[2], 70)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data6)[3]))
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data7)[0], 0.783577449)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data7)[0], 0.783577449)
         self.assertEqual(eval_max_drawdown(self.test_data7)[1], 17)
         self.assertEqual(eval_max_drawdown(self.test_data7)[2], 51)
         self.assertTrue(np.isnan(eval_max_drawdown(self.test_data7)[3]))
         self.assertEqual(eval_max_drawdown(pd.DataFrame()), -np.inf)
         print(f'Error testing')
-        self.assertRaises(AssertionError, eval_fv, 15)
+        self.assertRaises(TypeError, eval_fv, 15)
         self.assertRaises(KeyError,
                           eval_fv,
                           pd.DataFrame([1, 2, 3], columns=['non_value']))
         # test max drawdown == 0:
         # TODO: investigate: how does divide by zero change?
-        self.assertAlmostEqual(eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
+        self.assertAlmostEquals(eval_max_drawdown(self.test_data4 - 5)[0], 1.0770474121951792)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[1], 14)
         self.assertEqual(eval_max_drawdown(self.test_data4 - 5)[2], 50)
 
     # noinspection PyTypeChecker
     def test_info_ratio(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
-        self.assertAlmostEqual(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data2, reference, 'value'), 0.075553316)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data3, reference, 'value'), 0.018949457)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data4, reference, 'value'), 0.056328143)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data5, reference, 'value'), -0.004270068)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data6, reference, 'value'), 0.009198027)
+        self.assertAlmostEquals(eval_info_ratio(self.test_data7, reference, 'value'), -0.000890283)
 
     def test_volatility(self):
-        self.assertAlmostEqual(eval_volatility(self.test_data1), 0.748646166)
-        self.assertAlmostEqual(eval_volatility(self.test_data2), 0.75527442)
-        self.assertAlmostEqual(eval_volatility(self.test_data3), 0.654188853)
-        self.assertAlmostEqual(eval_volatility(self.test_data4), 0.688375814)
-        self.assertAlmostEqual(eval_volatility(self.test_data5), 1.089989522)
-        self.assertAlmostEqual(eval_volatility(self.test_data6), 1.775419308)
-        self.assertAlmostEqual(eval_volatility(self.test_data7), 1.962758406)
-        self.assertAlmostEqual(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
-        self.assertAlmostEqual(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
-        self.assertAlmostEqual(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
-        self.assertAlmostEqual(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
-        self.assertAlmostEqual(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
-        self.assertAlmostEqual(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
-        self.assertAlmostEqual(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
+        self.assertAlmostEquals(eval_volatility(self.test_data1), 0.748646166)
+        self.assertAlmostEquals(eval_volatility(self.test_data2), 0.75527442)
+        self.assertAlmostEquals(eval_volatility(self.test_data3), 0.654188853)
+        self.assertAlmostEquals(eval_volatility(self.test_data4), 0.688375814)
+        self.assertAlmostEquals(eval_volatility(self.test_data5), 1.089989522)
+        self.assertAlmostEquals(eval_volatility(self.test_data6), 1.775419308)
+        self.assertAlmostEquals(eval_volatility(self.test_data7), 1.962758406)
+        self.assertAlmostEquals(eval_volatility(self.test_data1, logarithm=False), 0.750993311)
+        self.assertAlmostEquals(eval_volatility(self.test_data2, logarithm=False), 0.75571473)
+        self.assertAlmostEquals(eval_volatility(self.test_data3, logarithm=False), 0.655331424)
+        self.assertAlmostEquals(eval_volatility(self.test_data4, logarithm=False), 0.692683021)
+        self.assertAlmostEquals(eval_volatility(self.test_data5, logarithm=False), 1.09602969)
+        self.assertAlmostEquals(eval_volatility(self.test_data6, logarithm=False), 1.774789504)
+        self.assertAlmostEquals(eval_volatility(self.test_data7, logarithm=False), 2.003329156)
 
         self.assertEqual(eval_volatility(pd.DataFrame()), -np.inf)
         self.assertRaises(AssertionError, eval_volatility, [1, 2, 3])
@@ -1564,18 +1567,18 @@ class TestEvaluations(unittest.TestCase):
                                         0.34160916, 0.33811193, 0.33822709, 0.3391685, 0.33883381])
         test_volatility = eval_volatility(self.long_data)
         test_volatility_roll = self.long_data['volatility'].values
-        self.assertAlmostEqual=(test_volatility, np.nanmean(expected_volatility))
+        self.assertAlmostEqual = (test_volatility, np.nanmean(expected_volatility))
         self.assertTrue(np.allclose(expected_volatility, test_volatility_roll, equal_nan=True))
 
     # noinspection PyCallingNonCallable
     def test_sharp(self):
-        self.assertAlmostEqual(eval_sharp(self.test_data1, 0), 0.970116743)
-        self.assertAlmostEqual(eval_sharp(self.test_data2, 0), 2.654078559)
-        self.assertAlmostEqual(eval_sharp(self.test_data3, 0), 1.573319618)
-        self.assertAlmostEqual(eval_sharp(self.test_data4, 0), 2.449630585)
-        self.assertAlmostEqual(eval_sharp(self.test_data5, 0.002), 0.578781892)
-        self.assertAlmostEqual(eval_sharp(self.test_data6, 0.002), 0.570048419)
-        self.assertAlmostEqual(eval_sharp(self.test_data7, 0.002), 0.347565045)
+        self.assertAlmostEquals(eval_sharp(self.test_data1, 0), 0.970116743)
+        self.assertAlmostEquals(eval_sharp(self.test_data2, 0), 2.654078559)
+        self.assertAlmostEquals(eval_sharp(self.test_data3, 0), 1.573319618)
+        self.assertAlmostEquals(eval_sharp(self.test_data4, 0), 2.449630585)
+        self.assertAlmostEquals(eval_sharp(self.test_data5, 0.002), 0.578781892)
+        self.assertAlmostEquals(eval_sharp(self.test_data6, 0.002), 0.570048419)
+        self.assertAlmostEquals(eval_sharp(self.test_data7, 0.002), 0.347565045)
 
         # 测试长数据的sharp率计算
         expected_sharp = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1679,17 +1682,18 @@ class TestEvaluations(unittest.TestCase):
                                    1.53541187, 1.55148893, 1.52791909, 1.59902474, 1.70742124,
                                    1.84548298, 2.08064663, 1.98788139, 2.04559367, 2.05991876])
         test_sharp = eval_sharp(self.long_data, 0.015)
-        self.assertAlmostEqual(np.nanmean(expected_sharp), test_sharp)
+        expected = float(np.nanmean(expected_sharp))
+        self.assertAlmostEquals(expected, test_sharp)
         self.assertTrue(np.allclose(self.long_data['sharp'].values, expected_sharp, equal_nan=True))
 
     def test_beta(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
-        self.assertAlmostEqual(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
-        self.assertAlmostEqual(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
-        self.assertAlmostEqual(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
-        self.assertAlmostEqual(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
-        self.assertAlmostEqual(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
+        self.assertAlmostEquals(eval_beta(self.test_data2, reference, 'value'), -0.017148939)
+        self.assertAlmostEquals(eval_beta(self.test_data3, reference, 'value'), -0.042204233)
+        self.assertAlmostEquals(eval_beta(self.test_data4, reference, 'value'), -0.15652986)
+        self.assertAlmostEquals(eval_beta(self.test_data5, reference, 'value'), -0.049195532)
+        self.assertAlmostEquals(eval_beta(self.test_data6, reference, 'value'), -0.026995082)
+        self.assertAlmostEquals(eval_beta(self.test_data7, reference, 'value'), -0.01147809)
 
         self.assertRaises(TypeError, eval_beta, [1, 2, 3], reference, 'value')
         self.assertRaises(TypeError, eval_beta, self.test_data3, [1, 2, 3], 'value')
@@ -1798,17 +1802,18 @@ class TestEvaluations(unittest.TestCase):
                                   -0.10645088, -0.09982498, -0.10542734, -0.09631372, -0.08229695])
         test_beta_mean = eval_beta(self.long_data, self.long_bench, 'value')
         test_beta_roll = self.long_data['beta'].values
-        self.assertAlmostEqual(test_beta_mean, np.nanmean(expected_beta))
+        expected = float(np.nanmean(expected_beta))
+        self.assertAlmostEquals(test_beta_mean, expected)
         self.assertTrue(np.allclose(test_beta_roll, expected_beta, equal_nan=True))
 
     def test_alpha(self):
         reference = self.test_data1
-        self.assertAlmostEqual(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
-        self.assertAlmostEqual(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
-        self.assertAlmostEqual(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
-        self.assertAlmostEqual(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
-        self.assertAlmostEqual(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
-        self.assertAlmostEqual(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
+        self.assertAlmostEquals(eval_alpha(self.test_data2, 5, reference, 'value', 0.5), 11.63072977)
+        self.assertAlmostEquals(eval_alpha(self.test_data3, 5, reference, 'value', 0.5), 1.886590071)
+        self.assertAlmostEquals(eval_alpha(self.test_data4, 5, reference, 'value', 0.5), 6.827021872)
+        self.assertAlmostEquals(eval_alpha(self.test_data5, 5, reference, 'value', 0.92), -1.192265168)
+        self.assertAlmostEquals(eval_alpha(self.test_data6, 5, reference, 'value', 0.92), -1.437142359)
+        self.assertAlmostEquals(eval_alpha(self.test_data7, 5, reference, 'value', 0.92), -1.781311545)
 
         # 测试长数据的alpha计算
         expected_alpha = np.array([np.nan, np.nan, np.nan, np.nan, np.nan,
@@ -1913,7 +1918,8 @@ class TestEvaluations(unittest.TestCase):
                                    0.75573056, 0.89501633, 0.8347253, 0.87964685, 0.89015835])
         test_alpha_mean = eval_alpha(self.long_data, 100, self.long_bench, 'value')
         test_alpha_roll = self.long_data['alpha'].values
-        self.assertAlmostEqual(test_alpha_mean, np.nanmean(expected_alpha))
+        expected = float(np.nanmean(expected_alpha))
+        self.assertAlmostEquals(test_alpha_mean, expected)
         self.assertTrue(np.allclose(test_alpha_roll, expected_alpha, equal_nan=True))
 
     def test_calmar(self):
@@ -1923,23 +1929,23 @@ class TestEvaluations(unittest.TestCase):
     def test_benchmark(self):
         reference = self.test_data1
         tr, yr = eval_benchmark(self.test_data2, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data3, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data4, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data5, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data6, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
         tr, yr = eval_benchmark(self.test_data7, reference, 'value')
-        self.assertAlmostEqual(tr, 0.19509091)
-        self.assertAlmostEqual(yr, 0.929154957)
+        self.assertAlmostEquals(tr, 0.19509091)
+        self.assertAlmostEquals(yr, 0.929154957)
 
     def test_evaluate(self):
         pass
@@ -4130,7 +4136,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4153,7 +4159,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[3][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4176,7 +4182,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[31][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4199,7 +4205,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[60][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4222,7 +4228,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[61][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4245,7 +4251,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[96][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4268,7 +4274,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_sb00[97][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_sb00[97][0:7]))
 
     def test_loop_step_pt_bs00(self):
@@ -4293,7 +4299,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4316,7 +4322,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[3][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4339,7 +4345,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[31][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4362,7 +4368,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.pt_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[60][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4385,7 +4391,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[61][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4408,7 +4414,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.pt_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.pt_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[96][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=0,
@@ -4431,7 +4437,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.pt_res_bs00[97][7], 2)
+        self.assertAlmostEquals(cash, self.pt_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.pt_res_bs00[97][0:7]))
 
     def test_loop_step_ps_sb00(self):
@@ -4456,7 +4462,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4479,7 +4485,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[3][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4502,7 +4508,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[31][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4525,7 +4531,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[60][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4548,7 +4554,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[61][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4571,7 +4577,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[96][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4594,7 +4600,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_sb00[97][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_sb00[97][0:7]))
 
     def test_loop_step_ps_bs00(self):
@@ -4619,7 +4625,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7500)
+        self.assertAlmostEquals(cash, 7500)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 555.5555556, 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4642,7 +4648,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[3][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4665,7 +4671,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[31][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4688,7 +4694,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.ps_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[60][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4711,7 +4717,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[61][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4734,7 +4740,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.ps_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.ps_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[96][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=1,
@@ -4757,7 +4763,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.ps_res_bs00[97][7], 2)
+        self.assertAlmostEquals(cash, self.ps_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.ps_res_bs00[97][0:7]))
 
     def test_loop_step_vs_sb00(self):
@@ -4782,7 +4788,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7750)
+        self.assertAlmostEquals(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4805,7 +4811,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[3][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4828,7 +4834,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[31][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4851,7 +4857,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_sb00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[60][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4874,7 +4880,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[61][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4897,7 +4903,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_sb00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_sb00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[96][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4920,7 +4926,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_sb00[97][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_sb00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_sb00[97][0:7]))
 
     def test_loop_step_vs_bs00(self):
@@ -4945,7 +4951,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = 10000 + c_g.sum() + c_s.sum()
         amounts = np.zeros(7, dtype='float') + a_p + a_s
-        self.assertAlmostEqual(cash, 7750)
+        self.assertAlmostEquals(cash, 7750)
         self.assertTrue(np.allclose(amounts, np.array([0, 0, 0, 0, 500., 0, 0])))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4968,7 +4974,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[2][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[2][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[3][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[3][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[3][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -4991,7 +4997,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[30][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[30][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[31][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[31][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[31][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5014,7 +5020,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[59][7] + c_g.sum() + c_s.sum() + 10000
         amounts = self.vs_res_bs00[59][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[60][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[60][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[60][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5037,7 +5043,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[61][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[61][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[61][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5060,7 +5066,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = self.vs_res_bs00[96][7] + c_g.sum() + c_s.sum()
         amounts = self.vs_res_bs00[96][0:7] + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[96][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[96][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[96][0:7]))
 
         c_g, c_s, a_p, a_s, fee = qt.core._loop_step(signal_type=2,
@@ -5083,7 +5089,7 @@ class TestLoop(unittest.TestCase):
               f'----------------------------------\n')
         cash = cash + c_g.sum() + c_s.sum()
         amounts = amounts + a_p + a_s
-        self.assertAlmostEqual(cash, self.vs_res_bs00[97][7], 2)
+        self.assertAlmostEquals(cash, self.vs_res_bs00[97][7], 2)
         self.assertTrue(np.allclose(amounts, self.vs_res_bs00[97][0:7]))
 
     def test_loop_pt(self):
@@ -5761,7 +5767,6 @@ class TestSelStrategy(GeneralStg):
         pass
 
     def realize(self, h, r=None, t=None):
-        pars = self.pars
         avg = np.nanmean(h, axis=(1, 2))
         dif = (h[:, :, 2] - np.roll(h[:, :, 2], 1, 1))
         dif_no_nan = np.array([arr[~np.isnan(arr)][-1] for arr in dif])
@@ -5783,7 +5788,6 @@ class TestSelStrategy(GeneralStg):
             large2 = difper.argsort()[1:]
             chosen = np.zeros_like(avg)
             chosen[large2] = 0.5
-            # import pdb; pdb.set_trace()
             return chosen
 
         difper = dif_no_nan / avg
@@ -7547,11 +7551,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(0-1)/2 + 3")
         print(f'RPN of notation: "(0-1)/2 + 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
+        self.assertAlmostEquals(signal_blend([1, 2, 3, 0.0], blender), -0.33333333)
         blender = blender_parser("0 + 1 / 2")
         print(f'RPN of notation: "0 + 1 / 2" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, math.pi, 4], blender), 1.78539816)
+        self.assertAlmostEquals(signal_blend([1, math.pi, 4], blender), 1.78539816)
         blender = blender_parser("(0 + 1) / 2")
         print(f'RPN of notation: "(0 + 1) / 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7559,7 +7563,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(0 + 1 * 2) / 3")
         print(f'RPN of notation: "(0 + 1 * 2) / 3" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
+        self.assertAlmostEquals(signal_blend([3, math.e, 10, 10], blender), 3.0182818284590454)
         blender = blender_parser("0 / 1 * 2")
         print(f'RPN of notation: "0 / 1 * 2" is:\n'
               f'{" ".join(blender[::-1])}')
@@ -7567,11 +7571,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         blender = blender_parser("(0 - 1 + 2) * 4")
         print(f'RPN of notation: "(0 - 1 + 2) * 4" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
+        self.assertAlmostEquals(signal_blend([1, 1, -1, np.nan, math.pi], blender), -3.141592653589793)
         blender = blender_parser("0 * 1")
         print(f'RPN of notation: "0 * 1" is:\n'
               f'{" ".join(blender[::-1])}')
-        self.assertAlmostEqual(signal_blend([math.pi, math.e], blender), 8.539734222673566)
+        self.assertAlmostEquals(signal_blend([math.pi, math.e], blender), 8.539734222673566)
 
         blender = blender_parser('abs(3-sqrt(2) /  cos(1))')
         print(f'RPN of notation: "abs(3-sqrt(2) /  cos(1))" is:\n'
@@ -8560,13 +8564,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'Start to test financial selection parameter {stg_pars}')
 
         output = stg.generate(hist_data=hist_data_rolling_window, data_idx=np.array([0, 6, 14, 21, 28, 36, 42]))
-        selmask = np.array([[0.,         0.08333333, 0.91666667],
+        selmask = np.array([[0., 0.08333333, 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.,         0.91666667, 0.08333333],
+                            [0., 0.91666667, 0.08333333],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -8581,7 +8585,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.08333333, 0.,         0.91666667],
+                            [0.08333333, 0., 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
@@ -8596,13 +8600,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.08333333, 0.,         0.91666667],
+                            [0.08333333, 0., 0.91666667],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan],
-                            [0.08333333, 0.91666667, 0.        ],
+                            [0.08333333, 0.91666667, 0.],
                             [np.nan, np.nan, np.nan],
                             [np.nan, np.nan, np.nan]])
 
@@ -8755,7 +8759,7 @@ class TestConfig(unittest.TestCase):
 
     def test_save_load_reset_config(self):
         """保存读取重置configuration"""
-        conf = {'mode':           2,
+        conf = {'mode':                2,
                 'invest_cash_amounts': [200000]}
         qt.configure(**conf)
         qt.save_config(QT_CONFIG, 'saved3.cnf')
@@ -8834,7 +8838,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.htypes = 'close,open,high,low'
         self.data2 = np.random.randint(10, size=(10, 5))
         self.data3 = np.random.randint(10, size=(10, 4))
-        self.data4 = np.random.randint(10, size=(10))
+        self.data4 = np.random.randint(10, size=(10, ))
         self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
         self.hp2 = qt.HistoryPanel(values=self.data2, levels=self.shares, columns='close', rows=self.index)
         self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index2)
@@ -9912,15 +9916,15 @@ class TestUtilityFuncs(unittest.TestCase):
 
     def test_list_truncate(self):
         """ test util func list_truncate()"""
-        l = [1, 2, 3, 4, 5]
-        ls = list_truncate(l, 2)
+        the_list = [1, 2, 3, 4, 5]
+        ls = list_truncate(the_list, 2)
         self.assertEqual(ls[0], [1, 2])
         self.assertEqual(ls[1], [3, 4])
         self.assertEqual(ls[2], [5])
 
-        self.assertRaises(AssertionError, list_truncate, l, 0)
+        self.assertRaises(AssertionError, list_truncate, the_list, 0)
         self.assertRaises(AssertionError, list_truncate, 12, 0)
-        self.assertRaises(AssertionError, list_truncate, 0, l)
+        self.assertRaises(AssertionError, list_truncate, 0, the_list)
 
     def test_maybe_trade_day(self):
         """ test util function maybe_trade_day()"""
@@ -13023,10 +13027,10 @@ class FastExperiments(unittest.TestCase):
                                  '000918.SZ', '000819.SZ', '000899.SZ'],
                      asset_type='E',
                      visual=True,
-                     print_backtest_log=False)
+                     trade_log=False)
         res = qt.run(op_min,
                      visual=True,
-                     print_backtest_log=False,
+                     trade_log=False,
                      invest_start='20160225',
                      invest_end='20161023',
                      trade_batch_size=100,
@@ -13267,17 +13271,17 @@ class TestDataSource(unittest.TestCase):
         f_name = self.ds_csv.file_path + "file_that_does_not_exist.csv"
         try:
             os.remove(f_name)
-        except:
+        except Exception:
             pass
         f_name = self.ds_hdf.file_path + "file_that_does_not_exist.hdf"
         try:
             os.remove(f_name)
-        except:
+        except Exception:
             pass
         f_name = self.ds_fth.file_path + "file_that_does_not_exist.fth"
         try:
             os.remove(f_name)
-        except:
+        except Exception:
             pass
         self.assertFalse(self.ds_csv.file_exists('file_that_does_not_exist'))
         self.assertFalse(self.ds_hdf.file_exists('file_that_does_not_exist'))
@@ -13655,15 +13659,15 @@ class TestDataSource(unittest.TestCase):
               f'{df}')
         con = self.ds_db.con
         cursor = self.ds_db.cursor
-        TABLE_NAME = 'test_db_table'
+        table_name = 'test_db_table'
         # 删除数据库中的临时表
-        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
         # 为确保update顺利进行，建立新表并设置primary_key
 
-        self.ds_db.write_database(df, TABLE_NAME)
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(df, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = df.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(df.values)
@@ -13679,7 +13683,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(TABLE_NAME,
+        loaded_df = self.ds_db.read_database(table_name,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ"],
                                              date_like_pk='trade_date',
@@ -13703,14 +13707,14 @@ class TestDataSource(unittest.TestCase):
         print(f'write and read a MultiIndex dataframe to database')
         print(f'following dataframe with multiple index will be written to database:\n'
               f'{self.df2}')
-        TABLE_NAME = 'test_db_table2'
+        table_name = 'test_db_table2'
         # 删除数据库中的临时表
-        sql = f"DROP TABLE IF EXISTS {TABLE_NAME}"
+        sql = f"DROP TABLE IF EXISTS {table_name}"
         cursor.execute(sql)
         con.commit()
 
-        self.ds_db.write_database(self.df2, TABLE_NAME)
-        loaded_df = self.ds_db.read_database(TABLE_NAME)
+        self.ds_db.write_database(self.df2, table_name)
+        loaded_df = self.ds_db.read_database(table_name)
         saved_index = self.df2.index.values
         loaded_index = loaded_df.index.values
         saved_values = np.array(self.df2.values)
@@ -13725,7 +13729,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertEqual(saved_values[i, j], loaded_values[i, j])
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
         # test reading partial of the datatable
-        loaded_df = self.ds_db.read_database(TABLE_NAME,
+        loaded_df = self.ds_db.read_database(table_name,
                                              share_like_pk='ts_code',
                                              shares=["000001.SZ", "000003.SZ", "000004.SZ", "000009.SZ", "000005.SZ"])
         print(f'retrieve partial arr table from database with:\n'
@@ -13745,7 +13749,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(self.df2.columns), list(loaded_df.columns))
 
         print(f'Test getting database table coverages')
-        cov = self.ds_db.get_db_table_coverage(TABLE_NAME, 'ts_code')
+        cov = self.ds_db.get_db_table_coverage(table_name, 'ts_code')
         print(cov)
         self.assertIsInstance(cov, list)
         self.assertEqual(cov,
@@ -14002,7 +14006,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
         print(f'got history panel with price:\n{dfs}')
-        htypes = ['open', 'high', 'low', 'close', 'vol']
+        htypes = ['open', 'high', 'low', 'close', 'vol', 'manager_name']
         dfs = ds.get_history_data(shares=shares,
                                   htypes=htypes,
                                   start=start,
@@ -14013,7 +14017,7 @@ class TestDataSource(unittest.TestCase):
         self.assertIsInstance(dfs, dict)
         self.assertEqual(list(dfs.keys()), htypes)
         self.assertTrue(all(isinstance(item, pd.DataFrame) for item in dfs.values()))
-        print(f'got history panel with price:\n{dfs}')
+        print(f'got history data:\n{dfs}')
 
     def test_get_index_weights(self):
         """ test get_index_weights() function"""
@@ -14037,6 +14041,78 @@ class TestDataSource(unittest.TestCase):
         ds.get_table_info('future_daily')
         ds.get_table_info('fund_hourly')
         ds.get_table_info('fund_nav')
+
+    def test_get_related_tables(self):
+        """根据数据名称查找相关数据表及数据列名称"""
+        # 精确查找数据表及数据列
+        tbls = htype_to_table_col(htypes='close', freq='d')
+        print("by: htype_to_table_col(htypes='close', freq='d')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close']}
+        )
+        tbls = htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')
+        print("by: htype_to_table_col(htypes='invest_income', freq='q', asset_type='E')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'income': ['invest_income']}
+        )
+        # 精确查找多个数据表及数据列
+        tbls = htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')
+        print("by: htype_to_table_col(htypes='close, open', freq='d', asset_type='E', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close', 'open']}
+        )
+        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'index_weekly': ['open'],
+                 'stock_daily': ['close']}
+        )
+        tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
+        print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stk_managers': ['name'],
+                 'stock_daily': ['close']}
+        )
+        tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
+        print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'index_daily':  ['open', 'close'],
+                 'index_weekly': ['open', 'close'],
+                 'stock_daily':  ['open', 'close'],
+                 'stock_weekly': ['open', 'close']}
+        )
+        # 部分无法精确匹配时，只输出可以匹配的部分
+        tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'index_daily':  ['close'],
+                 'index_weekly': ['close'],
+                 'stock_daily':  ['close'],
+                 'stock_weekly': ['close']}
+        )
+        tbls = htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close']}
+        )
+        # 全部无法精确匹配时，报错
+        self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')
 
 
 def test_suite(*args):

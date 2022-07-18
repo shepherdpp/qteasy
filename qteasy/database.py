@@ -17,28 +17,68 @@ import warnings
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import lru_cache
 
-from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day
+from .utilfuncs import progress_bar, time_str_format, nearest_market_trade_day, input_to_list
 from .utilfuncs import is_market_trade_day, str_to_list, regulate_date_format
 from .utilfuncs import _wildcard_match, _partial_lev_ratio, _lev_ratio, human_file_size, human_units
-from .tsfuncs import acquire_data
 
 AVAILABLE_DATA_FILE_TYPES = ['csv', 'hdf', 'feather', 'fth']
 AVAILABLE_CHANNELS = ['df', 'csv', 'excel', 'tushare']
 ADJUSTABLE_PRICE_TYPES = ['open', 'high', 'low', 'close']
-
-""" 
-这里定义AVAILABLE_TABLES 以及 TABLE_STRUCTURES
-"""
-DATA_MAPPING_TABLE = []
-
-# 定义所有的数据表，并定义数据表的结构名称、数据表类型、资产类别、频率、tushare来源、更新规则
 TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'mins']
+
 '''
-table map中各列的含义如下： 
-key:                        数据表的名称
+量化投资研究所需用到各种金融数据，DataSource提供了管理金融数据的方式：
+
+数据表是金融数据在本地存储的逻辑结构，本地的金融数据包含若干张数据表，每张表内保存一类数据
+数据表可以在本地以csv等文件形式，也可以以MySQL数据库的形式存储，不论存储方式如何，操作接口都是一致的，只是性能有区别
+
+用户需要任何一种金融数据，只要这种数据存在于本地数据表中，就可以通过引用金融数据的"类型名称"也就是htype来获取
+例如，通过"close"获取收盘价，通过"pe"获取市盈率，通过"ebitda"获取息税前利润等。
+
+上述所有的金融数据类型，都存储在不同的数据表中，并且通过一个DATA_TABLE_MAPPING表来索引。
+
+除了这里定义的"内置"数据表以外，用户还可以自定义数据表，自定义数据表的结构直接存储在DataSource的自定义结构表中。
+一旦定义好了自定义数据表，其操作方式与内置数据表是一样的。
+
+完整的数据结构由三个字典（表）来定义：
+DATA_TABLE_MAPPING:     定义了数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到
+                        每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置
+TABLE_SOURCE_MAPPING:   定义了数据表的基本属性和下载API来源（目前仅包括tushare，未来会添加其他API)
+TABLE_STRUCTURES:       定义了数据表的表结构，包括每一列的名称、数据类型、主键以及每一列的说明
+
+1, DATA_TABLE_MAPPING:
+
+Data table mapping中各列的含义如下：
+htype_name(key):            数据类型名称（主键）
+
+freq(key):                  数据的可用频率（主键）
+                            1min
+                            d
+                            w
+                            m
+                            q
+                            
+asset_type(key):            数据对应的金融资产类型:
+                            E 
+                            IDX
+                            FT
+                            FD
+---------------------------------------------------------------------------------------------------------
+table_name:                 历史数据所在的表的名称
+
+column:                     历史数据在表中的列名称
+
+description:                历史数据的详细描述，可以用于列搜索
+---------------------------------------------------------------------------------------------------------
+
+2, TABLE_SOURCE_MAPPING
+
+table source mapping定义了一张数据表的基本属性以及数据来源： 
+table_name(key):            数据表的名称（主键）自定义表名称不能与内置表名称重复
 ---------------------------------------------------------------------------------------------------------
 structure:                  数据表的结构名称，根据该名称在TABLE_STRUCTUERS表中可以查到表格包含的所有列、主键、数据类
-                            型和详情描述 
+                            型和详情描述
+                            数据表的数据结构存储在不同的数据结构表中，许多表拥有相同的数据结构
                             
 desc:                       数据表的中文描述
   
@@ -99,8 +139,912 @@ start_end_chunk_size:       传入开始结束日期作为附加参数时，是�
                             一个正整数字符串，表示一个天数，并将开始结束日期之间的数据分块下载，每个块中数据的时间跨度不超
                             过这个天数。
                             例如，设置该参数为100，则每个分块内的时间跨度不超过100天
-'''
+---------------------------------------------------------------------------------------------------------
 
+3, TABLE_STRUCTURES:
+Table structure表定义了数据表的数据结构：
+table_structure_name:       数据结构名称（主键）
+---------------------------------------------------------------------------------------------------------
+columns:                    数据列名称
+
+dtypes:                     数据列的数据类型，包括：
+                            varchar(N) - 长度不超过N的字符串类型
+                            float:
+                            double:
+                            date
+
+remarks:                    数据列含义说明
+
+prime_keys:                 一个列表，包含一个或多个整数，它们代表的列是这个表的数据主键
+---------------------------------------------------------------------------------------------------------
+'''
+DATA_TABLE_MAPPING_COLUMNS = ['table_name', 'column', 'description']
+DATA_TABLE_MAPPING_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
+DATA_TABLE_MAPPING = {
+    ('chairman', 'd', 'E'):                           ['stock_company', 'chairman', '公司信息 - 法人代表'],
+    ('manager', 'd', 'E'):                            ['stock_company', 'manager', '公司信息 - 总经理'],
+    ('secretary', 'd', 'E'):                          ['stock_company', 'secretary', '公司信息 - 董秘'],
+    ('reg_capital', 'd', 'E'):                        ['stock_company', 'reg_capital', '公司信息 - 注册资本'],
+    ('setup_date', 'd', 'E'):                         ['stock_company', 'setup_date', '公司信息 - 注册日期'],
+    ('province', 'd', 'E'):                           ['stock_company', 'province', '公司信息 - 所在省份'],
+    ('city', 'd', 'E'):                               ['stock_company', 'city', '公司信息 - 所在城市'],
+    ('introduction', 'd', 'E'):                       ['stock_company', 'introduction', '公司信息 - 公司介绍'],
+    ('website', 'd', 'E'):                            ['stock_company', 'website', '公司信息 - 公司主页'],
+    ('email', 'd', 'E'):                              ['stock_company', 'email', '公司信息 - 电子邮件'],
+    ('office', 'd', 'E'):                             ['stock_company', 'office', '公司信息 - 办公室'],
+    ('employees', 'd', 'E'):                          ['stock_company', 'employees', '公司信息 - 员工人数'],
+    ('main_business', 'd', 'E'):                      ['stock_company', 'main_business', '公司信息 - 主要业务及产品'],
+    ('business_scope', 'd', 'E'):                     ['stock_company', 'business_scope', '公司信息 - 经营范围'],
+    ('manager_name', 'd', 'E'):                       ['stk_managers', 'name', '公司高管信息 - 高管姓名'],
+    ('gender', 'd', 'E'):                             ['stk_managers', 'gender', '公司高管信息 - 性别'],
+    ('lev', 'd', 'E'):                                ['stk_managers', 'lev', '公司高管信息 - 岗位类别'],
+    ('manager_title', 'd', 'E'):                      ['stk_managers', 'title', '公司高管信息 - 岗位'],
+    ('edu', 'd', 'E'):                                ['stk_managers', 'edu', '公司高管信息 - 学历'],
+    ('national', 'd', 'E'):                           ['stk_managers', 'national', '公司高管信息 - 国籍'],
+    ('birthday', 'd', 'E'):                           ['stk_managers', 'birthday', '公司高管信息 - 出生年月'],
+    ('begin_date', 'd', 'E'):                         ['stk_managers', 'begin_date', '公司高管信息 - 上任日期'],
+    ('end_date', 'd', 'E'):                           ['stk_managers', 'end_date', '公司高管信息 - 离任日期'],
+    ('resume', 'd', 'E'):                             ['stk_managers', 'resume', '公司高管信息 - 个人简历'],
+    ('manager_salary_name', 'd', 'E'):                ['stk_rewards', 'name', '管理层薪酬 - 姓名'],
+    ('manager_salary_title', 'd', 'E'):               ['stk_rewards', 'title', '管理层薪酬 - 职务'],
+    ('reward', 'd', 'E'):                             ['stk_rewards', 'reward', '管理层薪酬 - 报酬'],
+    ('hold_vol', 'd', 'E'):                           ['stk_rewards', 'hold_vol', '管理层薪酬 - 持股数'],
+    ('ipo_date', 'd', 'E'):                           ['new_share', 'ipo_date', '新股上市信息 - 上网发行日期'],
+    ('issue_date', 'd', 'E'):                         ['new_share', 'issue_date', '新股上市信息 - 上市日期'],
+    ('IPO_amount', 'd', 'E'):                         ['new_share', 'amount', '新股上市信息 - 发行总量（万股）'],
+    ('market_amount', 'd', 'E'):                      ['new_share', 'market_amount', '新股上市信息 - 上网发行总量（万股）'],
+    ('initial_price', 'd', 'E'):                      ['new_share', 'price', '新股上市信息 - 发行价格'],
+    ('initial_pe', 'd', 'E'):                         ['new_share', 'pe', '新股上市信息 - 发行市盈率'],
+    ('limit_amount', 'd', 'E'):                       ['new_share', 'limit_amount', '新股上市信息 - 个人申购上限（万股）'],
+    ('funds', 'd', 'E'):                              ['new_share', 'funds', '新股上市信息 - 募集资金（亿元）'],
+    ('ballot', 'd', 'E'):                             ['new_share', 'ballot', '新股上市信息 - 中签率'],
+    ('open', 'd', 'E'):                               ['stock_daily', 'open', '股票日K线 - 开盘价'],
+    ('high', 'd', 'E'):                               ['stock_daily', 'high', '股票日K线 - 最高价'],
+    ('low', 'd', 'E'):                                ['stock_daily', 'low', '股票日K线 - 最低价'],
+    ('close', 'd', 'E'):                              ['stock_daily', 'close', '股票日K线 - 收盘价'],
+    ('vol', 'd', 'E'):                                ['stock_daily', 'vol', '股票日K线 - 成交量 （手）'],
+    ('amount', 'd', 'E'):                             ['stock_daily', 'amount', '股票日K线 - 成交额 （千元）'],
+    ('open', 'w', 'E'):                               ['stock_weekly', 'open', '股票周K线 - 开盘价'],
+    ('high', 'w', 'E'):                               ['stock_weekly', 'high', '股票周K线 - 最高价'],
+    ('low', 'w', 'E'):                                ['stock_weekly', 'low', '股票周K线 - 最低价'],
+    ('close', 'w', 'E'):                              ['stock_weekly', 'close', '股票周K线 - 收盘价'],
+    ('vol', 'w', 'E'):                                ['stock_weekly', 'vol', '股票周K线 - 成交量 （手）'],
+    ('amount', 'w', 'E'):                             ['stock_weekly', 'amount', '股票周K线 - 成交额 （千元）'],
+    ('open', 'm', 'E'):                               ['stock_monthly', 'open', '股票月K线 - 开盘价'],
+    ('high', 'm', 'E'):                               ['stock_monthly', 'high', '股票月K线 - 最高价'],
+    ('low', 'm', 'E'):                                ['stock_monthly', 'low', '股票月K线 - 最低价'],
+    ('close', 'm', 'E'):                              ['stock_monthly', 'close', '股票月K线 - 收盘价'],
+    ('vol', 'm', 'E'):                                ['stock_monthly', 'vol', '股票月K线 - 成交量 （手）'],
+    ('amount', 'm', 'E'):                             ['stock_monthly', 'amount', '股票月K线 - 成交额 （千元）'],
+    ('open', '1min', 'E'):                            ['stock_1min', 'open', '股票60秒K线 - 开盘价'],
+    ('high', '1min', 'E'):                            ['stock_1min', 'high', '股票60秒K线 - 最高价'],
+    ('low', '1min', 'E'):                             ['stock_1min', 'low', '股票60秒K线 - 最低价'],
+    ('close', '1min', 'E'):                           ['stock_1min', 'close', '股票60秒K线 - 收盘价'],
+    ('vol', '1min', 'E'):                             ['stock_1min', 'vol', '股票60秒K线 - 成交量 （手）'],
+    ('amount', '1min', 'E'):                          ['stock_1min', 'amount', '股票60秒K线 - 成交额 （千元）'],
+    ('open', '5min', 'E'):                            ['stock_5min', 'open', '股票5分钟K线 - 开盘价'],
+    ('high', '5min', 'E'):                            ['stock_5min', 'high', '股票5分钟K线 - 最高价'],
+    ('low', '5min', 'E'):                             ['stock_5min', 'low', '股票5分钟K线 - 最低价'],
+    ('close', '5min', 'E'):                           ['stock_5min', 'close', '股票5分钟K线 - 收盘价'],
+    ('vol', '5min', 'E'):                             ['stock_5min', 'vol', '股票5分钟K线 - 成交量 （手）'],
+    ('amount', '5min', 'E'):                          ['stock_5min', 'amount', '股票5分钟K线 - 成交额 （千元）'],
+    ('open', '15min', 'E'):                           ['stock_15min', 'open', '股票15分钟K线 - 开盘价'],
+    ('high', '15min', 'E'):                           ['stock_15min', 'high', '股票15分钟K线 - 最高价'],
+    ('low', '15min', 'E'):                            ['stock_15min', 'low', '股票15分钟K线 - 最低价'],
+    ('close', '15min', 'E'):                          ['stock_15min', 'close', '股票15分钟K线 - 收盘价'],
+    ('vol', '15min', 'E'):                            ['stock_15min', 'vol', '股票15分钟K线 - 成交量 （手）'],
+    ('amount', '15min', 'E'):                         ['stock_15min', 'amount', '股票15分钟K线 - 成交额 （千元）'],
+    ('open', '30min', 'E'):                           ['stock_30min', 'open', '股票30分钟K线 - 开盘价'],
+    ('high', '30min', 'E'):                           ['stock_30min', 'high', '股票30分钟K线 - 最高价'],
+    ('low', '30min', 'E'):                            ['stock_30min', 'low', '股票30分钟K线 - 最低价'],
+    ('close', '30min', 'E'):                          ['stock_30min', 'close', '股票30分钟K线 - 收盘价'],
+    ('vol', '30min', 'E'):                            ['stock_30min', 'vol', '股票30分钟K线 - 成交量 （手）'],
+    ('amount', '30min', 'E'):                         ['stock_30min', 'amount', '股票30分钟K线 - 成交额 （千元）'],
+    ('open', 'h', 'E'):                               ['stock_hourly', 'open', '股票小时K线 - 开盘价'],
+    ('high', 'h', 'E'):                               ['stock_hourly', 'high', '股票小时K线 - 最高价'],
+    ('low', 'h', 'E'):                                ['stock_hourly', 'low', '股票小时K线 - 最低价'],
+    ('close', 'h', 'E'):                              ['stock_hourly', 'close', '股票小时K线 - 收盘价'],
+    ('vol', 'h', 'E'):                                ['stock_hourly', 'vol', '股票小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'E'):                             ['stock_hourly', 'amount', '股票小时K线 - 成交额 （千元）'],
+    ('open', 'd', 'IDX'):                             ['index_daily', 'open', '指数日K线 - 开盘价'],
+    ('high', 'd', 'IDX'):                             ['index_daily', 'high', '指数日K线 - 最高价'],
+    ('low', 'd', 'IDX'):                              ['index_daily', 'low', '指数日K线 - 最低价'],
+    ('close', 'd', 'IDX'):                            ['index_daily', 'close', '指数日K线 - 收盘价'],
+    ('vol', 'd', 'IDX'):                              ['index_daily', 'vol', '指数日K线 - 成交量 （手）'],
+    ('amount', 'd', 'IDX'):                           ['index_daily', 'amount', '指数日K线 - 成交额 （千元）'],
+    ('open', 'w', 'IDX'):                             ['index_weekly', 'open', '指数周K线 - 开盘价'],
+    ('high', 'w', 'IDX'):                             ['index_weekly', 'high', '指数周K线 - 最高价'],
+    ('low', 'w', 'IDX'):                              ['index_weekly', 'low', '指数周K线 - 最低价'],
+    ('close', 'w', 'IDX'):                            ['index_weekly', 'close', '指数周K线 - 收盘价'],
+    ('vol', 'w', 'IDX'):                              ['index_weekly', 'vol', '指数周K线 - 成交量 （手）'],
+    ('amount', 'w', 'IDX'):                           ['index_weekly', 'amount', '指数周K线 - 成交额 （千元）'],
+    ('open', 'm', 'IDX'):                             ['index_monthly', 'open', '指数月K线 - 开盘价'],
+    ('high', 'm', 'IDX'):                             ['index_monthly', 'high', '指数月K线 - 最高价'],
+    ('low', 'm', 'IDX'):                              ['index_monthly', 'low', '指数月K线 - 最低价'],
+    ('close', 'm', 'IDX'):                            ['index_monthly', 'close', '指数月K线 - 收盘价'],
+    ('vol', 'm', 'IDX'):                              ['index_monthly', 'vol', '指数月K线 - 成交量 （手）'],
+    ('amount', 'm', 'IDX'):                           ['index_monthly', 'amount', '指数月K线 - 成交额 （千元）'],
+    ('open', '1min', 'IDX'):                          ['index_1min', 'open', '指数60秒K线 - 开盘价'],
+    ('high', '1min', 'IDX'):                          ['index_1min', 'high', '指数60秒K线 - 最高价'],
+    ('low', '1min', 'IDX'):                           ['index_1min', 'low', '指数60秒K线 - 最低价'],
+    ('close', '1min', 'IDX'):                         ['index_1min', 'close', '指数60秒K线 - 收盘价'],
+    ('vol', '1min', 'IDX'):                           ['index_1min', 'vol', '指数60秒K线 - 成交量 （手）'],
+    ('amount', '1min', 'IDX'):                        ['index_1min', 'amount', '指数60秒K线 - 成交额 （千元）'],
+    ('open', '5min', 'IDX'):                          ['index_5min', 'open', '指数5分钟K线 - 开盘价'],
+    ('high', '5min', 'IDX'):                          ['index_5min', 'high', '指数5分钟K线 - 最高价'],
+    ('low', '5min', 'IDX'):                           ['index_5min', 'low', '指数5分钟K线 - 最低价'],
+    ('close', '5min', 'IDX'):                         ['index_5min', 'close', '指数5分钟K线 - 收盘价'],
+    ('vol', '5min', 'IDX'):                           ['index_5min', 'vol', '指数5分钟K线 - 成交量 （手）'],
+    ('amount', '5min', 'IDX'):                        ['index_5min', 'amount', '指数5分钟K线 - 成交额 （千元）'],
+    ('open', '15min', 'IDX'):                         ['index_15min', 'open', '指数15分钟K线 - 开盘价'],
+    ('high', '15min', 'IDX'):                         ['index_15min', 'high', '指数15分钟K线 - 最高价'],
+    ('low', '15min', 'IDX'):                          ['index_15min', 'low', '指数15分钟K线 - 最低价'],
+    ('close', '15min', 'IDX'):                        ['index_15min', 'close', '指数15分钟K线 - 收盘价'],
+    ('vol', '15min', 'IDX'):                          ['index_15min', 'vol', '指数15分钟K线 - 成交量 （手）'],
+    ('amount', '15min', 'IDX'):                       ['index_15min', 'amount', '指数15分钟K线 - 成交额 （千元）'],
+    ('open', '30min', 'IDX'):                         ['index_30min', 'open', '指数30分钟K线 - 开盘价'],
+    ('high', '30min', 'IDX'):                         ['index_30min', 'high', '指数30分钟K线 - 最高价'],
+    ('low', '30min', 'IDX'):                          ['index_30min', 'low', '指数30分钟K线 - 最低价'],
+    ('close', '30min', 'IDX'):                        ['index_30min', 'close', '指数30分钟K线 - 收盘价'],
+    ('vol', '30min', 'IDX'):                          ['index_30min', 'vol', '指数30分钟K线 - 成交量 （手）'],
+    ('amount', '30min', 'IDX'):                       ['index_30min', 'amount', '指数30分钟K线 - 成交额 （千元）'],
+    ('open', 'h', 'IDX'):                             ['index_hourly', 'open', '指数小时K线 - 开盘价'],
+    ('high', 'h', 'IDX'):                             ['index_hourly', 'high', '指数小时K线 - 最高价'],
+    ('low', 'h', 'IDX'):                              ['index_hourly', 'low', '指数小时K线 - 最低价'],
+    ('close', 'h', 'IDX'):                            ['index_hourly', 'close', '指数小时K线 - 收盘价'],
+    ('vol', 'h', 'IDX'):                              ['index_hourly', 'vol', '指数小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'IDX'):                           ['index_hourly', 'amount', '指数小时K线 - 成交额 （千元）'],
+    ('open', 'd', 'FT'):                              ['future_daily', 'open', '期货日K线 - 开盘价'],
+    ('high', 'd', 'FT'):                              ['future_daily', 'high', '期货日K线 - 最高价'],
+    ('low', 'd', 'FT'):                               ['future_daily', 'low', '期货日K线 - 最低价'],
+    ('close', 'd', 'FT'):                             ['future_daily', 'close', '期货日K线 - 收盘价'],
+    ('vol', 'd', 'FT'):                               ['future_daily', 'vol', '期货日K线 - 成交量 （手）'],
+    ('amount', 'd', 'FT'):                            ['future_daily', 'amount', '期货日K线 - 成交额 （千元）'],
+    ('open', '1min', 'FT'):                           ['future_1min', 'open', '期货60秒K线 - 开盘价'],
+    ('high', '1min', 'FT'):                           ['future_1min', 'high', '期货60秒K线 - 最高价'],
+    ('low', '1min', 'FT'):                            ['future_1min', 'low', '期货60秒K线 - 最低价'],
+    ('close', '1min', 'FT'):                          ['future_1min', 'close', '期货60秒K线 - 收盘价'],
+    ('vol', '1min', 'FT'):                            ['future_1min', 'vol', '期货60秒K线 - 成交量 （手）'],
+    ('amount', '1min', 'FT'):                         ['future_1min', 'amount', '期货60秒K线 - 成交额 （千元）'],
+    ('open', '5min', 'FT'):                           ['future_5min', 'open', '期货5分钟K线 - 开盘价'],
+    ('high', '5min', 'FT'):                           ['future_5min', 'high', '期货5分钟K线 - 最高价'],
+    ('low', '5min', 'FT'):                            ['future_5min', 'low', '期货5分钟K线 - 最低价'],
+    ('close', '5min', 'FT'):                          ['future_5min', 'close', '期货5分钟K线 - 收盘价'],
+    ('vol', '5min', 'FT'):                            ['future_5min', 'vol', '期货5分钟K线 - 成交量 （手）'],
+    ('amount', '5min', 'FT'):                         ['future_5min', 'amount', '期货5分钟K线 - 成交额 （千元）'],
+    ('open', '15min', 'FT'):                          ['future_15min', 'open', '期货15分钟K线 - 开盘价'],
+    ('high', '15min', 'FT'):                          ['future_15min', 'high', '期货15分钟K线 - 最高价'],
+    ('low', '15min', 'FT'):                           ['future_15min', 'low', '期货15分钟K线 - 最低价'],
+    ('close', '15min', 'FT'):                         ['future_15min', 'close', '期货15分钟K线 - 收盘价'],
+    ('vol', '15min', 'FT'):                           ['future_15min', 'vol', '期货15分钟K线 - 成交量 （手）'],
+    ('amount', '15min', 'FT'):                        ['future_15min', 'amount', '期货15分钟K线 - 成交额 （千元）'],
+    ('open', '30min', 'FT'):                          ['future_30min', 'open', '期货30分钟K线 - 开盘价'],
+    ('high', '30min', 'FT'):                          ['future_30min', 'high', '期货30分钟K线 - 最高价'],
+    ('low', '30min', 'FT'):                           ['future_30min', 'low', '期货30分钟K线 - 最低价'],
+    ('close', '30min', 'FT'):                         ['future_30min', 'close', '期货30分钟K线 - 收盘价'],
+    ('vol', '30min', 'FT'):                           ['future_30min', 'vol', '期货30分钟K线 - 成交量 （手）'],
+    ('amount', '30min', 'FT'):                        ['future_30min', 'amount', '期货30分钟K线 - 成交额 （千元）'],
+    ('open', 'h', 'FT'):                              ['future_hourly', 'open', '期货小时K线 - 开盘价'],
+    ('high', 'h', 'FT'):                              ['future_hourly', 'high', '期货小时K线 - 最高价'],
+    ('low', 'h', 'FT'):                               ['future_hourly', 'low', '期货小时K线 - 最低价'],
+    ('close', 'h', 'FT'):                             ['future_hourly', 'close', '期货小时K线 - 收盘价'],
+    ('vol', 'h', 'FT'):                               ['future_hourly', 'vol', '期货小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'FT'):                            ['future_hourly', 'amount', '期货小时K线 - 成交额 （千元）'],
+    ('open', 'd', 'OPT'):                             ['options_daily', 'open', '期权日K线 - 开盘价'],
+    ('high', 'd', 'OPT'):                             ['options_daily', 'high', '期权日K线 - 最高价'],
+    ('low', 'd', 'OPT'):                              ['options_daily', 'low', '期权日K线 - 最低价'],
+    ('close', 'd', 'OPT'):                            ['options_daily', 'close', '期权日K线 - 收盘价'],
+    ('vol', 'd', 'OPT'):                              ['options_daily', 'vol', '期权日K线 - 成交量 （手）'],
+    ('amount', 'd', 'OPT'):                           ['options_daily', 'amount', '期权日K线 - 成交额 （千元）'],
+    ('open', '1min', 'OPT'):                          ['options_1min', 'open', '期权60秒K线 - 开盘价'],
+    ('high', '1min', 'OPT'):                          ['options_1min', 'high', '期权60秒K线 - 最高价'],
+    ('low', '1min', 'OPT'):                           ['options_1min', 'low', '期权60秒K线 - 最低价'],
+    ('close', '1min', 'OPT'):                         ['options_1min', 'close', '期权60秒K线 - 收盘价'],
+    ('vol', '1min', 'OPT'):                           ['options_1min', 'vol', '期权60秒K线 - 成交量 （手）'],
+    ('amount', '1min', 'OPT'):                        ['options_1min', 'amount', '期权60秒K线 - 成交额 （千元）'],
+    ('open', '5min', 'OPT'):                          ['options_5min', 'open', '期权5分钟K线 - 开盘价'],
+    ('high', '5min', 'OPT'):                          ['options_5min', 'high', '期权5分钟K线 - 最高价'],
+    ('low', '5min', 'OPT'):                           ['options_5min', 'low', '期权5分钟K线 - 最低价'],
+    ('close', '5min', 'OPT'):                         ['options_5min', 'close', '期权5分钟K线 - 收盘价'],
+    ('vol', '5min', 'OPT'):                           ['options_5min', 'vol', '期权5分钟K线 - 成交量 （手）'],
+    ('amount', '5min', 'OPT'):                        ['options_5min', 'amount', '期权5分钟K线 - 成交额 （千元）'],
+    ('open', '15min', 'OPT'):                         ['options_15min', 'open', '期权15分钟K线 - 开盘价'],
+    ('high', '15min', 'OPT'):                         ['options_15min', 'high', '期权15分钟K线 - 最高价'],
+    ('low', '15min', 'OPT'):                          ['options_15min', 'low', '期权15分钟K线 - 最低价'],
+    ('close', '15min', 'OPT'):                        ['options_15min', 'close', '期权15分钟K线 - 收盘价'],
+    ('vol', '15min', 'OPT'):                          ['options_15min', 'vol', '期权15分钟K线 - 成交量 （手）'],
+    ('amount', '15min', 'OPT'):                       ['options_15min', 'amount', '期权15分钟K线 - 成交额 （千元）'],
+    ('open', '30min', 'OPT'):                         ['options_30min', 'open', '期权30分钟K线 - 开盘价'],
+    ('high', '30min', 'OPT'):                         ['options_30min', 'high', '期权30分钟K线 - 最高价'],
+    ('low', '30min', 'OPT'):                          ['options_30min', 'low', '期权30分钟K线 - 最低价'],
+    ('close', '30min', 'OPT'):                        ['options_30min', 'close', '期权30分钟K线 - 收盘价'],
+    ('vol', '30min', 'OPT'):                          ['options_30min', 'vol', '期权30分钟K线 - 成交量 （手）'],
+    ('amount', '30min', 'OPT'):                       ['options_30min', 'amount', '期权30分钟K线 - 成交额 （千元）'],
+    ('open', 'h', 'OPT'):                             ['options_hourly', 'open', '期权小时K线 - 开盘价'],
+    ('high', 'h', 'OPT'):                             ['options_hourly', 'high', '期权小时K线 - 最高价'],
+    ('low', 'h', 'OPT'):                              ['options_hourly', 'low', '期权小时K线 - 最低价'],
+    ('close', 'h', 'OPT'):                            ['options_hourly', 'close', '期权小时K线 - 收盘价'],
+    ('vol', 'h', 'OPT'):                              ['options_hourly', 'vol', '期权小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'OPT'):                           ['options_hourly', 'amount', '期权小时K线 - 成交额 （千元）'],
+    ('open', 'd', 'FD'):                              ['fund_daily', 'open', '基金日K线 - 开盘价'],
+    ('high', 'd', 'FD'):                              ['fund_daily', 'high', '基金日K线 - 最高价'],
+    ('low', 'd', 'FD'):                               ['fund_daily', 'low', '基金日K线 - 最低价'],
+    ('close', 'd', 'FD'):                             ['fund_daily', 'close', '基金日K线 - 收盘价'],
+    ('vol', 'd', 'FD'):                               ['fund_daily', 'vol', '基金日K线 - 成交量 （手）'],
+    ('amount', 'd', 'FD'):                            ['fund_daily', 'amount', '基金日K线 - 成交额 （千元）'],
+    ('open', '1min', 'FD'):                           ['fund_1min', 'open', '基金60秒K线 - 开盘价'],
+    ('high', '1min', 'FD'):                           ['fund_1min', 'high', '基金60秒K线 - 最高价'],
+    ('low', '1min', 'FD'):                            ['fund_1min', 'low', '基金60秒K线 - 最低价'],
+    ('close', '1min', 'FD'):                          ['fund_1min', 'close', '基金60秒K线 - 收盘价'],
+    ('vol', '1min', 'FD'):                            ['fund_1min', 'vol', '基金60秒K线 - 成交量 （手）'],
+    ('amount', '1min', 'FD'):                         ['fund_1min', 'amount', '基金60秒K线 - 成交额 （千元）'],
+    ('open', '5min', 'FD'):                           ['fund_5min', 'open', '基金5分钟K线 - 开盘价'],
+    ('high', '5min', 'FD'):                           ['fund_5min', 'high', '基金5分钟K线 - 最高价'],
+    ('low', '5min', 'FD'):                            ['fund_5min', 'low', '基金5分钟K线 - 最低价'],
+    ('close', '5min', 'FD'):                          ['fund_5min', 'close', '基金5分钟K线 - 收盘价'],
+    ('vol', '5min', 'FD'):                            ['fund_5min', 'vol', '基金5分钟K线 - 成交量 （手）'],
+    ('amount', '5min', 'FD'):                         ['fund_5min', 'amount', '基金5分钟K线 - 成交额 （千元）'],
+    ('open', '15min', 'FD'):                          ['fund_15min', 'open', '基金15分钟K线 - 开盘价'],
+    ('high', '15min', 'FD'):                          ['fund_15min', 'high', '基金15分钟K线 - 最高价'],
+    ('low', '15min', 'FD'):                           ['fund_15min', 'low', '基金15分钟K线 - 最低价'],
+    ('close', '15min', 'FD'):                         ['fund_15min', 'close', '基金15分钟K线 - 收盘价'],
+    ('vol', '15min', 'FD'):                           ['fund_15min', 'vol', '基金15分钟K线 - 成交量 （手）'],
+    ('amount', '15min', 'FD'):                        ['fund_15min', 'amount', '基金15分钟K线 - 成交额 （千元）'],
+    ('open', '30min', 'FD'):                          ['fund_30min', 'open', '基金30分钟K线 - 开盘价'],
+    ('high', '30min', 'FD'):                          ['fund_30min', 'high', '基金30分钟K线 - 最高价'],
+    ('low', '30min', 'FD'):                           ['fund_30min', 'low', '基金30分钟K线 - 最低价'],
+    ('close', '30min', 'FD'):                         ['fund_30min', 'close', '基金30分钟K线 - 收盘价'],
+    ('vol', '30min', 'FD'):                           ['fund_30min', 'vol', '基金30分钟K线 - 成交量 （手）'],
+    ('amount', '30min', 'FD'):                        ['fund_30min', 'amount', '基金30分钟K线 - 成交额 （千元）'],
+    ('open', 'h', 'FD'):                              ['fund_hourly', 'open', '基金小时K线 - 开盘价'],
+    ('high', 'h', 'FD'):                              ['fund_hourly', 'high', '基金小时K线 - 最高价'],
+    ('low', 'h', 'FD'):                               ['fund_hourly', 'low', '基金小时K线 - 最低价'],
+    ('close', 'h', 'FD'):                             ['fund_hourly', 'close', '基金小时K线 - 收盘价'],
+    ('vol', 'h', 'FD'):                               ['fund_hourly', 'vol', '基金小时K线 - 成交量 （手）'],
+    ('amount', 'h', 'FD'):                            ['fund_hourly', 'amount', '基金小时K线 - 成交额 （千元）'],
+    ('unit_nav', 'd', 'FD'):                          ['fund_nav', 'unit_nav', '基金净值 - 单位净值'],
+    ('accum_nav', 'd', 'FD'):                         ['fund_nav', 'accum_nav', '基金净值 - 累计净值'],
+    ('accum_div', 'd', 'FD'):                         ['fund_nav', 'accum_div', '基金净值 - 累计分红'],
+    ('net_asset', 'd', 'FD'):                         ['fund_nav', 'net_asset', '基金净值 - 资产净值'],
+    ('total_netasset', 'd', 'FD'):                    ['fund_nav', 'total_netasset', '基金净值 - 累计资产净值'],
+    ('adj_nav', 'd', 'FD'):                           ['fund_nav', 'adj_nav', '基金净值 - 复权净值'],
+    ('buy_sm_vol', 'd', 'E'):                         ['money_flow', 'buy_sm_vol', '个股资金流向 - 小单买入量（手）'],
+    ('buy_sm_amount', 'd', 'E'):                      ['money_flow', 'buy_sm_amount', '个股资金流向 - 小单买入金额（万元）'],
+    ('sell_sm_vol', 'd', 'E'):                        ['money_flow', 'sell_sm_vol', '个股资金流向 - 小单卖出量（手）'],
+    ('sell_sm_amount', 'd', 'E'):                     ['money_flow', 'sell_sm_amount', '个股资金流向 - 小单卖出金额（万元）'],
+    ('buy_md_vol', 'd', 'E'):                         ['money_flow', 'buy_md_vol', '个股资金流向 - 中单买入量（手）'],
+    ('buy_md_amount', 'd', 'E'):                      ['money_flow', 'buy_md_amount', '个股资金流向 - 中单买入金额（万元）'],
+    ('sell_md_vol', 'd', 'E'):                        ['money_flow', 'sell_md_vol', '个股资金流向 - 中单卖出量（手）'],
+    ('sell_md_amount', 'd', 'E'):                     ['money_flow', 'sell_md_amount', '个股资金流向 - 中单卖出金额（万元）'],
+    ('buy_lg_vol', 'd', 'E'):                         ['money_flow', 'buy_lg_vol', '个股资金流向 - 大单买入量（手）'],
+    ('buy_lg_amount', 'd', 'E'):                      ['money_flow', 'buy_lg_amount', '个股资金流向 - 大单买入金额（万元）'],
+    ('sell_lg_vol', 'd', 'E'):                        ['money_flow', 'sell_lg_vol', '个股资金流向 - 大单卖出量（手）'],
+    ('sell_lg_amount', 'd', 'E'):                     ['money_flow', 'sell_lg_amount', '个股资金流向 - 大单卖出金额（万元）'],
+    ('buy_elg_vol', 'd', 'E'):                        ['money_flow', 'buy_elg_vol', '个股资金流向 - 特大单买入量（手）'],
+    ('buy_elg_amount', 'd', 'E'):                     ['money_flow', 'buy_elg_amount', '个股资金流向 - 特大单买入金额（万元）'],
+    ('sell_elg_vol', 'd', 'E'):                       ['money_flow', 'sell_elg_vol', '个股资金流向 - 特大单卖出量（手）'],
+    ('sell_elg_amount', 'd', 'E'):                    ['money_flow', 'sell_elg_amount', '个股资金流向 - 特大单卖出金额（万元）'],
+    ('net_mf_vol', 'd', 'E'):                         ['money_flow', 'net_mf_vol', '个股资金流向 - 净流入量（手）'],
+    ('net_mf_amount', 'd', 'E'):                      ['money_flow', 'net_mf_amount', '个股资金流向 - 净流入额（万元）'],
+    ('ggt_ss', 'd', 'Any'):                           ['moneyflow_hsgt', 'ggt_ss', '沪深港通资金流向 - 港股通（上海）'],
+    ('ggt_sz', 'd', 'Any'):                           ['moneyflow_hsgt', 'ggt_sz', '沪深港通资金流向 - 港股通（深圳）'],
+    ('hgt', 'd', 'Any'):                              ['moneyflow_hsgt', 'hgt', '沪深港通资金流向 - 沪股通（百万元）'],
+    ('sgt', 'd', 'Any'):                              ['moneyflow_hsgt', 'sgt', '沪深港通资金流向 - 深股通（百万元）'],
+    ('north_money', 'd', 'Any'):                      ['moneyflow_hsgt', 'north_money', '沪深港通资金流向 - 北向资金（百万元）'],
+    ('south_money', 'd', 'Any'):                      ['moneyflow_hsgt', 'south_money', '沪深港通资金流向 - 南向资金（百万元）'],
+    ('basic_eps', 'q', 'E'):                          ['income', 'basic_eps', '上市公司利润表 - 基本每股收益'],
+    ('diluted_eps', 'q', 'E'):                        ['income', 'diluted_eps', '上市公司利润表 - 稀释每股收益'],
+    ('total_revenue', 'q', 'E'):                      ['income', 'total_revenue', '上市公司利润表 - 营业总收入'],
+    ('revenue', 'q', 'E'):                            ['income', 'revenue', '上市公司利润表 - 营业收入'],
+    ('int_income', 'q', 'E'):                         ['income', 'int_income', '上市公司利润表 - 利息收入'],
+    ('prem_earned', 'q', 'E'):                        ['income', 'prem_earned', '上市公司利润表 - 已赚保费'],
+    ('comm_income', 'q', 'E'):                        ['income', 'comm_income', '上市公司利润表 - 手续费及佣金收入'],
+    ('n_commis_income', 'q', 'E'):                    ['income', 'n_commis_income', '上市公司利润表 - 手续费及佣金净收入'],
+    ('n_oth_income', 'q', 'E'):                       ['income', 'n_oth_income', '上市公司利润表 - 其他经营净收益'],
+    ('n_oth_b_income', 'q', 'E'):                     ['income', 'n_oth_b_income', '上市公司利润表 - 加:其他业务净收益'],
+    ('prem_income', 'q', 'E'):                        ['income', 'prem_income', '上市公司利润表 - 保险业务收入'],
+    ('out_prem', 'q', 'E'):                           ['income', 'out_prem', '上市公司利润表 - 减:分出保费'],
+    ('une_prem_reser', 'q', 'E'):                     ['income', 'une_prem_reser', '上市公司利润表 - 提取未到期责任准备金'],
+    ('reins_income', 'q', 'E'):                       ['income', 'reins_income', '上市公司利润表 - 其中:分保费收入'],
+    ('n_sec_tb_income', 'q', 'E'):                    ['income', 'n_sec_tb_income', '上市公司利润表 - 代理买卖证券业务净收入'],
+    ('n_sec_uw_income', 'q', 'E'):                    ['income', 'n_sec_uw_income', '上市公司利润表 - 证券承销业务净收入'],
+    ('n_asset_mg_income', 'q', 'E'):                  ['income', 'n_asset_mg_income', '上市公司利润表 - 受托客户资产管理业务净收入'],
+    ('oth_b_income', 'q', 'E'):                       ['income', 'oth_b_income', '上市公司利润表 - 其他业务收入'],
+    ('fv_value_chg_gain', 'q', 'E'):                  ['income', 'fv_value_chg_gain', '上市公司利润表 - 加:公允价值变动净收益'],
+    ('invest_income', 'q', 'E'):                      ['income', 'invest_income', '上市公司利润表 - 加:投资净收益'],
+    ('ass_invest_income', 'q', 'E'):                  ['income', 'ass_invest_income', '上市公司利润表 - 其中:对联营企业和合营企业的投资收益'],
+    ('forex_gain', 'q', 'E'):                         ['income', 'forex_gain', '上市公司利润表 - 加:汇兑净收益'],
+    ('total_cogs', 'q', 'E'):                         ['income', 'total_cogs', '上市公司利润表 - 营业总成本'],
+    ('oper_cost', 'q', 'E'):                          ['income', 'oper_cost', '上市公司利润表 - 减:营业成本'],
+    ('int_exp', 'q', 'E'):                            ['income', 'int_exp', '上市公司利润表 - 减:利息支出'],
+    ('comm_exp', 'q', 'E'):                           ['income', 'comm_exp', '上市公司利润表 - 减:手续费及佣金支出'],
+    ('biz_tax_surchg', 'q', 'E'):                     ['income', 'biz_tax_surchg', '上市公司利润表 - 减:营业税金及附加'],
+    ('sell_exp', 'q', 'E'):                           ['income', 'sell_exp', '上市公司利润表 - 减:销售费用'],
+    ('admin_exp', 'q', 'E'):                          ['income', 'admin_exp', '上市公司利润表 - 减:管理费用'],
+    ('fin_exp', 'q', 'E'):                            ['income', 'fin_exp', '上市公司利润表 - 减:财务费用'],
+    ('assets_impair_loss', 'q', 'E'):                 ['income', 'assets_impair_loss', '上市公司利润表 - 减:资产减值损失'],
+    ('prem_refund', 'q', 'E'):                        ['income', 'prem_refund', '上市公司利润表 - 退保金'],
+    ('compens_payout', 'q', 'E'):                     ['income', 'compens_payout', '上市公司利润表 - 赔付总支出'],
+    ('reser_insur_liab', 'q', 'E'):                   ['income', 'reser_insur_liab', '上市公司利润表 - 提取保险责任准备金'],
+    ('div_payt', 'q', 'E'):                           ['income', 'div_payt', '上市公司利润表 - 保户红利支出'],
+    ('reins_exp', 'q', 'E'):                          ['income', 'reins_exp', '上市公司利润表 - 分保费用'],
+    ('oper_exp', 'q', 'E'):                           ['income', 'oper_exp', '上市公司利润表 - 营业支出'],
+    ('compens_payout_refu', 'q', 'E'):                ['income', 'compens_payout_refu', '上市公司利润表 - 减:摊回赔付支出'],
+    ('insur_reser_refu', 'q', 'E'):                   ['income', 'insur_reser_refu', '上市公司利润表 - 减:摊回保险责任准备金'],
+    ('reins_cost_refund', 'q', 'E'):                  ['income', 'reins_cost_refund', '上市公司利润表 - 减:摊回分保费用'],
+    ('other_bus_cost', 'q', 'E'):                     ['income', 'other_bus_cost', '上市公司利润表 - 其他业务成本'],
+    ('operate_profit', 'q', 'E'):                     ['income', 'operate_profit', '上市公司利润表 - 营业利润'],
+    ('non_oper_income', 'q', 'E'):                    ['income', 'non_oper_income', '上市公司利润表 - 加:营业外收入'],
+    ('non_oper_exp', 'q', 'E'):                       ['income', 'non_oper_exp', '上市公司利润表 - 减:营业外支出'],
+    ('nca_disploss', 'q', 'E'):                       ['income', 'nca_disploss', '上市公司利润表 - 其中:减:非流动资产处置净损失'],
+    ('total_profit', 'q', 'E'):                       ['income', 'total_profit', '上市公司利润表 - 利润总额'],
+    ('income_tax', 'q', 'E'):                         ['income', 'income_tax', '上市公司利润表 - 所得税费用'],
+    ('net_income', 'q', 'E'):                         ['income', 'n_income', '上市公司利润表 - 净利润(含少数股东损益)'],
+    ('n_income_attr_p', 'q', 'E'):                    ['income', 'n_income_attr_p', '上市公司利润表 - 净利润(不含少数股东损益)'],
+    ('minority_gain', 'q', 'E'):                      ['income', 'minority_gain', '上市公司利润表 - 少数股东损益'],
+    ('oth_compr_income', 'q', 'E'):                   ['income', 'oth_compr_income', '上市公司利润表 - 其他综合收益'],
+    ('t_compr_income', 'q', 'E'):                     ['income', 't_compr_income', '上市公司利润表 - 综合收益总额'],
+    ('compr_inc_attr_p', 'q', 'E'):                   ['income', 'compr_inc_attr_p', '上市公司利润表 - 归属于母公司(或股东)的综合收益总额'],
+    ('compr_inc_attr_m_s', 'q', 'E'):                 ['income', 'compr_inc_attr_m_s', '上市公司利润表 - 归属于少数股东的综合收益总额'],
+    ('income_ebit', 'q', 'E'):                        ['income', 'ebit', '上市公司利润表 - 息税前利润'],
+    ('income_ebitda', 'q', 'E'):                      ['income', 'ebitda', '上市公司利润表 - 息税折旧摊销前利润'],
+    ('insurance_exp', 'q', 'E'):                      ['income', 'insurance_exp', '上市公司利润表 - 保险业务支出'],
+    ('undist_profit', 'q', 'E'):                      ['income', 'undist_profit', '上市公司利润表 - 年初未分配利润'],
+    ('distable_profit', 'q', 'E'):                    ['income', 'distable_profit', '上市公司利润表 - 可分配利润'],
+    ('income_rd_exp', 'q', 'E'):                      ['income', 'rd_exp', '上市公司利润表 - 研发费用'],
+    ('fin_exp_int_exp', 'q', 'E'):                    ['income', 'fin_exp_int_exp', '上市公司利润表 - 财务费用:利息费用'],
+    ('fin_exp_int_inc', 'q', 'E'):                    ['income', 'fin_exp_int_inc', '上市公司利润表 - 财务费用:利息收入'],
+    ('transfer_surplus_rese', 'q', 'E'):              ['income', 'transfer_surplus_rese', '上市公司利润表 - 盈余公积转入'],
+    ('transfer_housing_imprest', 'q', 'E'):           ['income', 'transfer_housing_imprest', '上市公司利润表 - 住房周转金转入'],
+    ('transfer_oth', 'q', 'E'):                       ['income', 'transfer_oth', '上市公司利润表 - 其他转入'],
+    ('adj_lossgain', 'q', 'E'):                       ['income', 'adj_lossgain', '上市公司利润表 - 调整以前年度损益'],
+    ('withdra_legal_surplus', 'q', 'E'):              ['income', 'withdra_legal_surplus', '上市公司利润表 - 提取法定盈余公积'],
+    ('withdra_legal_pubfund', 'q', 'E'):              ['income', 'withdra_legal_pubfund', '上市公司利润表 - 提取法定公益金'],
+    ('withdra_biz_devfund', 'q', 'E'):                ['income', 'withdra_biz_devfund', '上市公司利润表 - 提取企业发展基金'],
+    ('withdra_rese_fund', 'q', 'E'):                  ['income', 'withdra_rese_fund', '上市公司利润表 - 提取储备基金'],
+    ('withdra_oth_ersu', 'q', 'E'):                   ['income', 'withdra_oth_ersu', '上市公司利润表 - 提取任意盈余公积金'],
+    ('workers_welfare', 'q', 'E'):                    ['income', 'workers_welfare', '上市公司利润表 - 职工奖金福利'],
+    ('distr_profit_shrhder', 'q', 'E'):               ['income', 'distr_profit_shrhder', '上市公司利润表 - 可供股东分配的利润'],
+    ('prfshare_payable_dvd', 'q', 'E'):               ['income', 'prfshare_payable_dvd', '上市公司利润表 - 应付优先股股利'],
+    ('comshare_payable_dvd', 'q', 'E'):               ['income', 'comshare_payable_dvd', '上市公司利润表 - 应付普通股股利'],
+    ('capit_comstock_div', 'q', 'E'):                 ['income', 'capit_comstock_div', '上市公司利润表 - 转作股本的普通股股利'],
+    ('net_after_nr_lp_correct', 'q', 'E'):            ['income', 'net_after_nr_lp_correct',
+                                                       '上市公司利润表 - 扣除非经常性损益后的净利润（更正前）'],
+    ('income_credit_impa_loss', 'q', 'E'):            ['income', 'credit_impa_loss', '上市公司利润表 - 信用减值损失'],
+    ('net_expo_hedging_benefits', 'q', 'E'):          ['income', 'net_expo_hedging_benefits', '上市公司利润表 - 净敞口套期收益'],
+    ('oth_impair_loss_assets', 'q', 'E'):             ['income', 'oth_impair_loss_assets', '上市公司利润表 - 其他资产减值损失'],
+    ('total_opcost', 'q', 'E'):                       ['income', 'total_opcost', '上市公司利润表 - 营业总成本（二）'],
+    ('amodcost_fin_assets', 'q', 'E'):                ['income', 'amodcost_fin_assets', '上市公司利润表 - 以摊余成本计量的金融资产终止确认收益'],
+    ('oth_income', 'q', 'E'):                         ['income', 'oth_income', '上市公司利润表 - 其他收益'],
+    ('asset_disp_income', 'q', 'E'):                  ['income', 'asset_disp_income', '上市公司利润表 - 资产处置收益'],
+    ('continued_net_profit', 'q', 'E'):               ['income', 'continued_net_profit', '上市公司利润表 - 持续经营净利润'],
+    ('end_net_profit', 'q', 'E'):                     ['income', 'end_net_profit', '上市公司利润表 - 终止经营净利润'],
+    ('total_share', 'q', 'E'):                        ['balance', 'total_share', '上市公司资产负债表 - 期末总股本'],
+    ('cap_rese', 'q', 'E'):                           ['balance', 'cap_rese', '上市公司资产负债表 - 资本公积金'],
+    ('undistr_porfit', 'q', 'E'):                     ['balance', 'undistr_porfit', '上市公司资产负债表 - 未分配利润'],
+    ('surplus_rese', 'q', 'E'):                       ['balance', 'surplus_rese', '上市公司资产负债表 - 盈余公积金'],
+    ('special_rese', 'q', 'E'):                       ['balance', 'special_rese', '上市公司资产负债表 - 专项储备'],
+    ('money_cap', 'q', 'E'):                          ['balance', 'money_cap', '上市公司资产负债表 - 货币资金'],
+    ('trad_asset', 'q', 'E'):                         ['balance', 'trad_asset', '上市公司资产负债表 - 交易性金融资产'],
+    ('notes_receiv', 'q', 'E'):                       ['balance', 'notes_receiv', '上市公司资产负债表 - 应收票据'],
+    ('accounts_receiv', 'q', 'E'):                    ['balance', 'accounts_receiv', '上市公司资产负债表 - 应收账款'],
+    ('oth_receiv', 'q', 'E'):                         ['balance', 'oth_receiv', '上市公司资产负债表 - 其他应收款'],
+    ('prepayment', 'q', 'E'):                         ['balance', 'prepayment', '上市公司资产负债表 - 预付款项'],
+    ('div_receiv', 'q', 'E'):                         ['balance', 'div_receiv', '上市公司资产负债表 - 应收股利'],
+    ('int_receiv', 'q', 'E'):                         ['balance', 'int_receiv', '上市公司资产负债表 - 应收利息'],
+    ('inventories', 'q', 'E'):                        ['balance', 'inventories', '上市公司资产负债表 - 存货'],
+    ('amor_exp', 'q', 'E'):                           ['balance', 'amor_exp', '上市公司资产负债表 - 长期待摊费用'],
+    ('nca_within_1y', 'q', 'E'):                      ['balance', 'nca_within_1y', '上市公司资产负债表 - 一年内到期的非流动资产'],
+    ('sett_rsrv', 'q', 'E'):                          ['balance', 'sett_rsrv', '上市公司资产负债表 - 结算备付金'],
+    ('loanto_oth_bank_fi', 'q', 'E'):                 ['balance', 'loanto_oth_bank_fi', '上市公司资产负债表 - 拆出资金'],
+    ('premium_receiv', 'q', 'E'):                     ['balance', 'premium_receiv', '上市公司资产负债表 - 应收保费'],
+    ('reinsur_receiv', 'q', 'E'):                     ['balance', 'reinsur_receiv', '上市公司资产负债表 - 应收分保账款'],
+    ('reinsur_res_receiv', 'q', 'E'):                 ['balance', 'reinsur_res_receiv', '上市公司资产负债表 - 应收分保合同准备金'],
+    ('pur_resale_fa', 'q', 'E'):                      ['balance', 'pur_resale_fa', '上市公司资产负债表 - 买入返售金融资产'],
+    ('oth_cur_assets', 'q', 'E'):                     ['balance', 'oth_cur_assets', '上市公司资产负债表 - 其他流动资产'],
+    ('total_cur_assets', 'q', 'E'):                   ['balance', 'total_cur_assets', '上市公司资产负债表 - 流动资产合计'],
+    ('fa_avail_for_sale', 'q', 'E'):                  ['balance', 'fa_avail_for_sale', '上市公司资产负债表 - 可供出售金融资产'],
+    ('htm_invest', 'q', 'E'):                         ['balance', 'htm_invest', '上市公司资产负债表 - 持有至到期投资'],
+    ('lt_eqt_invest', 'q', 'E'):                      ['balance', 'lt_eqt_invest', '上市公司资产负债表 - 长期股权投资'],
+    ('invest_real_estate', 'q', 'E'):                 ['balance', 'invest_real_estate', '上市公司资产负债表 - 投资性房地产'],
+    ('time_deposits', 'q', 'E'):                      ['balance', 'time_deposits', '上市公司资产负债表 - 定期存款'],
+    ('oth_assets', 'q', 'E'):                         ['balance', 'oth_assets', '上市公司资产负债表 - 其他资产'],
+    ('lt_rec', 'q', 'E'):                             ['balance', 'lt_rec', '上市公司资产负债表 - 长期应收款'],
+    ('fix_assets', 'q', 'E'):                         ['balance', 'fix_assets', '上市公司资产负债表 - 固定资产'],
+    ('cip', 'q', 'E'):                                ['balance', 'cip', '上市公司资产负债表 - 在建工程'],
+    ('const_materials', 'q', 'E'):                    ['balance', 'const_materials', '上市公司资产负债表 - 工程物资'],
+    ('fixed_assets_disp', 'q', 'E'):                  ['balance', 'fixed_assets_disp', '上市公司资产负债表 - 固定资产清理'],
+    ('produc_bio_assets', 'q', 'E'):                  ['balance', 'produc_bio_assets', '上市公司资产负债表 - 生产性生物资产'],
+    ('oil_and_gas_assets', 'q', 'E'):                 ['balance', 'oil_and_gas_assets', '上市公司资产负债表 - 油气资产'],
+    ('intan_assets', 'q', 'E'):                       ['balance', 'intan_assets', '上市公司资产负债表 - 无形资产'],
+    ('r_and_d', 'q', 'E'):                            ['balance', 'r_and_d', '上市公司资产负债表 - 研发支出'],
+    ('goodwill', 'q', 'E'):                           ['balance', 'goodwill', '上市公司资产负债表 - 商誉'],
+    ('lt_amor_exp', 'q', 'E'):                        ['balance', 'lt_amor_exp', '上市公司资产负债表 - 长期待摊费用'],
+    ('defer_tax_assets', 'q', 'E'):                   ['balance', 'defer_tax_assets', '上市公司资产负债表 - 递延所得税资产'],
+    ('decr_in_disbur', 'q', 'E'):                     ['balance', 'decr_in_disbur', '上市公司资产负债表 - 发放贷款及垫款'],
+    ('oth_nca', 'q', 'E'):                            ['balance', 'oth_nca', '上市公司资产负债表 - 其他非流动资产'],
+    ('total_nca', 'q', 'E'):                          ['balance', 'total_nca', '上市公司资产负债表 - 非流动资产合计'],
+    ('cash_reser_cb', 'q', 'E'):                      ['balance', 'cash_reser_cb', '上市公司资产负债表 - 现金及存放中央银行款项'],
+    ('depos_in_oth_bfi', 'q', 'E'):                   ['balance', 'depos_in_oth_bfi', '上市公司资产负债表 - 存放同业和其它金融机构款项'],
+    ('prec_metals', 'q', 'E'):                        ['balance', 'prec_metals', '上市公司资产负债表 - 贵金属'],
+    ('deriv_assets', 'q', 'E'):                       ['balance', 'deriv_assets', '上市公司资产负债表 - 衍生金融资产'],
+    ('rr_reins_une_prem', 'q', 'E'):                  ['balance', 'rr_reins_une_prem', '上市公司资产负债表 - 应收分保未到期责任准备金'],
+    ('rr_reins_outstd_cla', 'q', 'E'):                ['balance', 'rr_reins_outstd_cla', '上市公司资产负债表 - 应收分保未决赔款准备金'],
+    ('rr_reins_lins_liab', 'q', 'E'):                 ['balance', 'rr_reins_lins_liab', '上市公司资产负债表 - 应收分保寿险责任准备金'],
+    ('rr_reins_lthins_liab', 'q', 'E'):               ['balance', 'rr_reins_lthins_liab', '上市公司资产负债表 - 应收分保长期健康险责任准备金'],
+    ('refund_depos', 'q', 'E'):                       ['balance', 'refund_depos', '上市公司资产负债表 - 存出保证金'],
+    ('ph_pledge_loans', 'q', 'E'):                    ['balance', 'ph_pledge_loans', '上市公司资产负债表 - 保户质押贷款'],
+    ('refund_cap_depos', 'q', 'E'):                   ['balance', 'refund_cap_depos', '上市公司资产负债表 - 存出资本保证金'],
+    ('indep_acct_assets', 'q', 'E'):                  ['balance', 'indep_acct_assets', '上市公司资产负债表 - 独立账户资产'],
+    ('client_depos', 'q', 'E'):                       ['balance', 'client_depos', '上市公司资产负债表 - 其中：客户资金存款'],
+    ('client_prov', 'q', 'E'):                        ['balance', 'client_prov', '上市公司资产负债表 - 其中：客户备付金'],
+    ('transac_seat_fee', 'q', 'E'):                   ['balance', 'transac_seat_fee', '上市公司资产负债表 - 其中:交易席位费'],
+    ('invest_as_receiv', 'q', 'E'):                   ['balance', 'invest_as_receiv', '上市公司资产负债表 - 应收款项类投资'],
+    ('total_assets', 'q', 'E'):                       ['balance', 'total_assets', '上市公司资产负债表 - 资产总计'],
+    ('lt_borr', 'q', 'E'):                            ['balance', 'lt_borr', '上市公司资产负债表 - 长期借款'],
+    ('st_borr', 'q', 'E'):                            ['balance', 'st_borr', '上市公司资产负债表 - 短期借款'],
+    ('cb_borr', 'q', 'E'):                            ['balance', 'cb_borr', '上市公司资产负债表 - 向中央银行借款'],
+    ('depos_ib_deposits', 'q', 'E'):                  ['balance', 'depos_ib_deposits', '上市公司资产负债表 - 吸收存款及同业存放'],
+    ('loan_oth_bank', 'q', 'E'):                      ['balance', 'loan_oth_bank', '上市公司资产负债表 - 拆入资金'],
+    ('trading_fl', 'q', 'E'):                         ['balance', 'trading_fl', '上市公司资产负债表 - 交易性金融负债'],
+    ('notes_payable', 'q', 'E'):                      ['balance', 'notes_payable', '上市公司资产负债表 - 应付票据'],
+    ('acct_payable', 'q', 'E'):                       ['balance', 'acct_payable', '上市公司资产负债表 - 应付账款'],
+    ('adv_receipts', 'q', 'E'):                       ['balance', 'adv_receipts', '上市公司资产负债表 - 预收款项'],
+    ('sold_for_repur_fa', 'q', 'E'):                  ['balance', 'sold_for_repur_fa', '上市公司资产负债表 - 卖出回购金融资产款'],
+    ('comm_payable', 'q', 'E'):                       ['balance', 'comm_payable', '上市公司资产负债表 - 应付手续费及佣金'],
+    ('payroll_payable', 'q', 'E'):                    ['balance', 'payroll_payable', '上市公司资产负债表 - 应付职工薪酬'],
+    ('taxes_payable', 'q', 'E'):                      ['balance', 'taxes_payable', '上市公司资产负债表 - 应交税费'],
+    ('int_payable', 'q', 'E'):                        ['balance', 'int_payable', '上市公司资产负债表 - 应付利息'],
+    ('div_payable', 'q', 'E'):                        ['balance', 'div_payable', '上市公司资产负债表 - 应付股利'],
+    ('oth_payable', 'q', 'E'):                        ['balance', 'oth_payable', '上市公司资产负债表 - 其他应付款'],
+    ('acc_exp', 'q', 'E'):                            ['balance', 'acc_exp', '上市公司资产负债表 - 预提费用'],
+    ('deferred_inc', 'q', 'E'):                       ['balance', 'deferred_inc', '上市公司资产负债表 - 递延收益'],
+    ('st_bonds_payable', 'q', 'E'):                   ['balance', 'st_bonds_payable', '上市公司资产负债表 - 应付短期债券'],
+    ('payable_to_reinsurer', 'q', 'E'):               ['balance', 'payable_to_reinsurer', '上市公司资产负债表 - 应付分保账款'],
+    ('rsrv_insur_cont', 'q', 'E'):                    ['balance', 'rsrv_insur_cont', '上市公司资产负债表 - 保险合同准备金'],
+    ('acting_trading_sec', 'q', 'E'):                 ['balance', 'acting_trading_sec', '上市公司资产负债表 - 代理买卖证券款'],
+    ('acting_uw_sec', 'q', 'E'):                      ['balance', 'acting_uw_sec', '上市公司资产负债表 - 代理承销证券款'],
+    ('non_cur_liab_due_1y', 'q', 'E'):                ['balance', 'non_cur_liab_due_1y', '上市公司资产负债表 - 一年内到期的非流动负债'],
+    ('oth_cur_liab', 'q', 'E'):                       ['balance', 'oth_cur_liab', '上市公司资产负债表 - 其他流动负债'],
+    ('total_cur_liab', 'q', 'E'):                     ['balance', 'total_cur_liab', '上市公司资产负债表 - 流动负债合计'],
+    ('bond_payable', 'q', 'E'):                       ['balance', 'bond_payable', '上市公司资产负债表 - 应付债券'],
+    ('lt_payable', 'q', 'E'):                         ['balance', 'lt_payable', '上市公司资产负债表 - 长期应付款'],
+    ('specific_payables', 'q', 'E'):                  ['balance', 'specific_payables', '上市公司资产负债表 - 专项应付款'],
+    ('estimated_liab', 'q', 'E'):                     ['balance', 'estimated_liab', '上市公司资产负债表 - 预计负债'],
+    ('defer_tax_liab', 'q', 'E'):                     ['balance', 'defer_tax_liab', '上市公司资产负债表 - 递延所得税负债'],
+    ('defer_inc_non_cur_liab', 'q', 'E'):             ['balance', 'defer_inc_non_cur_liab', '上市公司资产负债表 - 递延收益-非流动负债'],
+    ('oth_ncl', 'q', 'E'):                            ['balance', 'oth_ncl', '上市公司资产负债表 - 其他非流动负债'],
+    ('total_ncl', 'q', 'E'):                          ['balance', 'total_ncl', '上市公司资产负债表 - 非流动负债合计'],
+    ('depos_oth_bfi', 'q', 'E'):                      ['balance', 'depos_oth_bfi', '上市公司资产负债表 - 同业和其它金融机构存放款项'],
+    ('deriv_liab', 'q', 'E'):                         ['balance', 'deriv_liab', '上市公司资产负债表 - 衍生金融负债'],
+    ('depos', 'q', 'E'):                              ['balance', 'depos', '上市公司资产负债表 - 吸收存款'],
+    ('agency_bus_liab', 'q', 'E'):                    ['balance', 'agency_bus_liab', '上市公司资产负债表 - 代理业务负债'],
+    ('oth_liab', 'q', 'E'):                           ['balance', 'oth_liab', '上市公司资产负债表 - 其他负债'],
+    ('prem_receiv_adva', 'q', 'E'):                   ['balance', 'prem_receiv_adva', '上市公司资产负债表 - 预收保费'],
+    ('depos_received', 'q', 'E'):                     ['balance', 'depos_received', '上市公司资产负债表 - 存入保证金'],
+    ('ph_invest', 'q', 'E'):                          ['balance', 'ph_invest', '上市公司资产负债表 - 保户储金及投资款'],
+    ('reser_une_prem', 'q', 'E'):                     ['balance', 'reser_une_prem', '上市公司资产负债表 - 未到期责任准备金'],
+    ('reser_outstd_claims', 'q', 'E'):                ['balance', 'reser_outstd_claims', '上市公司资产负债表 - 未决赔款准备金'],
+    ('reser_lins_liab', 'q', 'E'):                    ['balance', 'reser_lins_liab', '上市公司资产负债表 - 寿险责任准备金'],
+    ('reser_lthins_liab', 'q', 'E'):                  ['balance', 'reser_lthins_liab', '上市公司资产负债表 - 长期健康险责任准备金'],
+    ('indept_acc_liab', 'q', 'E'):                    ['balance', 'indept_acc_liab', '上市公司资产负债表 - 独立账户负债'],
+    ('pledge_borr', 'q', 'E'):                        ['balance', 'pledge_borr', '上市公司资产负债表 - 其中:质押借款'],
+    ('indem_payable', 'q', 'E'):                      ['balance', 'indem_payable', '上市公司资产负债表 - 应付赔付款'],
+    ('policy_div_payable', 'q', 'E'):                 ['balance', 'policy_div_payable', '上市公司资产负债表 - 应付保单红利'],
+    ('total_liab', 'q', 'E'):                         ['balance', 'total_liab', '上市公司资产负债表 - 负债合计'],
+    ('treasury_share', 'q', 'E'):                     ['balance', 'treasury_share', '上市公司资产负债表 - 减:库存股'],
+    ('ordin_risk_reser', 'q', 'E'):                   ['balance', 'ordin_risk_reser', '上市公司资产负债表 - 一般风险准备'],
+    ('forex_differ', 'q', 'E'):                       ['balance', 'forex_differ', '上市公司资产负债表 - 外币报表折算差额'],
+    ('invest_loss_unconf', 'q', 'E'):                 ['balance', 'invest_loss_unconf', '上市公司资产负债表 - 未确认的投资损失'],
+    ('minority_int', 'q', 'E'):                       ['balance', 'minority_int', '上市公司资产负债表 - 少数股东权益'],
+    ('total_hldr_eqy_exc_min_int', 'q', 'E'):         ['balance', 'total_hldr_eqy_exc_min_int',
+                                                       '上市公司资产负债表 - 股东权益合计(不含少数股东权益)'],
+    ('total_hldr_eqy_inc_min_int', 'q', 'E'):         ['balance', 'total_hldr_eqy_inc_min_int',
+                                                       '上市公司资产负债表 - 股东权益合计(含少数股东权益)'],
+    ('total_liab_hldr_eqy', 'q', 'E'):                ['balance', 'total_liab_hldr_eqy', '上市公司资产负债表 - 负债及股东权益总计'],
+    ('lt_payroll_payable', 'q', 'E'):                 ['balance', 'lt_payroll_payable', '上市公司资产负债表 - 长期应付职工薪酬'],
+    ('oth_comp_income', 'q', 'E'):                    ['balance', 'oth_comp_income', '上市公司资产负债表 - 其他综合收益'],
+    ('oth_eqt_tools', 'q', 'E'):                      ['balance', 'oth_eqt_tools', '上市公司资产负债表 - 其他权益工具'],
+    ('oth_eqt_tools_p_shr', 'q', 'E'):                ['balance', 'oth_eqt_tools_p_shr', '上市公司资产负债表 - 其他权益工具(优先股)'],
+    ('lending_funds', 'q', 'E'):                      ['balance', 'lending_funds', '上市公司资产负债表 - 融出资金'],
+    ('acc_receivable', 'q', 'E'):                     ['balance', 'acc_receivable', '上市公司资产负债表 - 应收款项'],
+    ('st_fin_payable', 'q', 'E'):                     ['balance', 'st_fin_payable', '上市公司资产负债表 - 应付短期融资款'],
+    ('payables', 'q', 'E'):                           ['balance', 'payables', '上市公司资产负债表 - 应付款项'],
+    ('hfs_assets', 'q', 'E'):                         ['balance', 'hfs_assets', '上市公司资产负债表 - 持有待售的资产'],
+    ('hfs_sales', 'q', 'E'):                          ['balance', 'hfs_sales', '上市公司资产负债表 - 持有待售的负债'],
+    ('cost_fin_assets', 'q', 'E'):                    ['balance', 'cost_fin_assets', '上市公司资产负债表 - 以摊余成本计量的金融资产'],
+    ('fair_value_fin_assets', 'q', 'E'):              ['balance', 'fair_value_fin_assets',
+                                                       '上市公司资产负债表 - 以公允价值计量且其变动计入其他综合收益的金融资产'],
+    ('cip_total', 'q', 'E'):                          ['balance', 'cip_total', '上市公司资产负债表 - 在建工程(合计)(元)'],
+    ('oth_pay_total', 'q', 'E'):                      ['balance', 'oth_pay_total', '上市公司资产负债表 - 其他应付款(合计)(元)'],
+    ('long_pay_total', 'q', 'E'):                     ['balance', 'long_pay_total', '上市公司资产负债表 - 长期应付款(合计)(元)'],
+    ('debt_invest', 'q', 'E'):                        ['balance', 'debt_invest', '上市公司资产负债表 - 债权投资(元)'],
+    ('oth_debt_invest', 'q', 'E'):                    ['balance', 'oth_debt_invest', '上市公司资产负债表 - 其他债权投资(元)'],
+    ('oth_eq_invest', 'q', 'E'):                      ['balance', 'oth_eq_invest', '上市公司资产负债表 - 其他权益工具投资(元)'],
+    ('oth_illiq_fin_assets', 'q', 'E'):               ['balance', 'oth_illiq_fin_assets', '上市公司资产负债表 - 其他非流动金融资产(元)'],
+    ('oth_eq_ppbond', 'q', 'E'):                      ['balance', 'oth_eq_ppbond', '上市公司资产负债表 - 其他权益工具:永续债(元)'],
+    ('receiv_financing', 'q', 'E'):                   ['balance', 'receiv_financing', '上市公司资产负债表 - 应收款项融资'],
+    ('use_right_assets', 'q', 'E'):                   ['balance', 'use_right_assets', '上市公司资产负债表 - 使用权资产'],
+    ('lease_liab', 'q', 'E'):                         ['balance', 'lease_liab', '上市公司资产负债表 - 租赁负债'],
+    ('contract_assets', 'q', 'E'):                    ['balance', 'contract_assets', '上市公司资产负债表 - 合同资产'],
+    ('contract_liab', 'q', 'E'):                      ['balance', 'contract_liab', '上市公司资产负债表 - 合同负债'],
+    ('accounts_receiv_bill', 'q', 'E'):               ['balance', 'accounts_receiv_bill', '上市公司资产负债表 - 应收票据及应收账款'],
+    ('accounts_pay', 'q', 'E'):                       ['balance', 'accounts_pay', '上市公司资产负债表 - 应付票据及应付账款'],
+    ('oth_rcv_total', 'q', 'E'):                      ['balance', 'oth_rcv_total', '上市公司资产负债表 - 其他应收款(合计)（元）'],
+    ('fix_assets_total', 'q', 'E'):                   ['balance', 'fix_assets_total', '上市公司资产负债表 - 固定资产(合计)(元)'],
+    ('net_profit', 'q', 'E'):                         ['cashflow', 'net_profit', '上市公司现金流量表 - 净利润'],
+    ('finan_exp', 'q', 'E'):                          ['cashflow', 'finan_exp', '上市公司现金流量表 - 财务费用'],
+    ('c_fr_sale_sg', 'q', 'E'):                       ['cashflow', 'c_fr_sale_sg', '上市公司现金流量表 - 销售商品、提供劳务收到的现金'],
+    ('recp_tax_rends', 'q', 'E'):                     ['cashflow', 'recp_tax_rends', '上市公司现金流量表 - 收到的税费返还'],
+    ('n_depos_incr_fi', 'q', 'E'):                    ['cashflow', 'n_depos_incr_fi', '上市公司现金流量表 - 客户存款和同业存放款项净增加额'],
+    ('n_incr_loans_cb', 'q', 'E'):                    ['cashflow', 'n_incr_loans_cb', '上市公司现金流量表 - 向中央银行借款净增加额'],
+    ('n_inc_borr_oth_fi', 'q', 'E'):                  ['cashflow', 'n_inc_borr_oth_fi', '上市公司现金流量表 - 向其他金融机构拆入资金净增加额'],
+    ('prem_fr_orig_contr', 'q', 'E'):                 ['cashflow', 'prem_fr_orig_contr', '上市公司现金流量表 - 收到原保险合同保费取得的现金'],
+    ('n_incr_insured_dep', 'q', 'E'):                 ['cashflow', 'n_incr_insured_dep', '上市公司现金流量表 - 保户储金净增加额'],
+    ('n_reinsur_prem', 'q', 'E'):                     ['cashflow', 'n_reinsur_prem', '上市公司现金流量表 - 收到再保业务现金净额'],
+    ('n_incr_disp_tfa', 'q', 'E'):                    ['cashflow', 'n_incr_disp_tfa', '上市公司现金流量表 - 处置交易性金融资产净增加额'],
+    ('ifc_cash_incr', 'q', 'E'):                      ['cashflow', 'ifc_cash_incr', '上市公司现金流量表 - 收取利息和手续费净增加额'],
+    ('n_incr_disp_faas', 'q', 'E'):                   ['cashflow', 'n_incr_disp_faas', '上市公司现金流量表 - 处置可供出售金融资产净增加额'],
+    ('n_incr_loans_oth_bank', 'q', 'E'):              ['cashflow', 'n_incr_loans_oth_bank', '上市公司现金流量表 - 拆入资金净增加额'],
+    ('n_cap_incr_repur', 'q', 'E'):                   ['cashflow', 'n_cap_incr_repur', '上市公司现金流量表 - 回购业务资金净增加额'],
+    ('c_fr_oth_operate_a', 'q', 'E'):                 ['cashflow', 'c_fr_oth_operate_a', '上市公司现金流量表 - 收到其他与经营活动有关的现金'],
+    ('c_inf_fr_operate_a', 'q', 'E'):                 ['cashflow', 'c_inf_fr_operate_a', '上市公司现金流量表 - 经营活动现金流入小计'],
+    ('c_paid_goods_s', 'q', 'E'):                     ['cashflow', 'c_paid_goods_s', '上市公司现金流量表 - 购买商品、接受劳务支付的现金'],
+    ('c_paid_to_for_empl', 'q', 'E'):                 ['cashflow', 'c_paid_to_for_empl', '上市公司现金流量表 - 支付给职工以及为职工支付的现金'],
+    ('c_paid_for_taxes', 'q', 'E'):                   ['cashflow', 'c_paid_for_taxes', '上市公司现金流量表 - 支付的各项税费'],
+    ('n_incr_clt_loan_adv', 'q', 'E'):                ['cashflow', 'n_incr_clt_loan_adv', '上市公司现金流量表 - 客户贷款及垫款净增加额'],
+    ('n_incr_dep_cbob', 'q', 'E'):                    ['cashflow', 'n_incr_dep_cbob', '上市公司现金流量表 - 存放央行和同业款项净增加额'],
+    ('c_pay_claims_orig_inco', 'q', 'E'):             ['cashflow', 'c_pay_claims_orig_inco',
+                                                       '上市公司现金流量表 - 支付原保险合同赔付款项的现金'],
+    ('pay_handling_chrg', 'q', 'E'):                  ['cashflow', 'pay_handling_chrg', '上市公司现金流量表 - 支付手续费的现金'],
+    ('pay_comm_insur_plcy', 'q', 'E'):                ['cashflow', 'pay_comm_insur_plcy', '上市公司现金流量表 - 支付保单红利的现金'],
+    ('oth_cash_pay_oper_act', 'q', 'E'):              ['cashflow', 'oth_cash_pay_oper_act',
+                                                       '上市公司现金流量表 - 支付其他与经营活动有关的现金'],
+    ('st_cash_out_act', 'q', 'E'):                    ['cashflow', 'st_cash_out_act', '上市公司现金流量表 - 经营活动现金流出小计'],
+    ('n_cashflow_act', 'q', 'E'):                     ['cashflow', 'n_cashflow_act', '上市公司现金流量表 - 经营活动产生的现金流量净额'],
+    ('oth_recp_ral_inv_act', 'q', 'E'):               ['cashflow', 'oth_recp_ral_inv_act',
+                                                       '上市公司现金流量表 - 收到其他与投资活动有关的现金'],
+    ('c_disp_withdrwl_invest', 'q', 'E'):             ['cashflow', 'c_disp_withdrwl_invest', '上市公司现金流量表 - 收回投资收到的现金'],
+    ('c_recp_return_invest', 'q', 'E'):               ['cashflow', 'c_recp_return_invest', '上市公司现金流量表 - 取得投资收益收到的现金'],
+    ('n_recp_disp_fiolta', 'q', 'E'):                 ['cashflow', 'n_recp_disp_fiolta',
+                                                       '上市公司现金流量表 - 处置固定资产、无形资产和其他长期资产收回的现金净额'],
+    ('n_recp_disp_sobu', 'q', 'E'):                   ['cashflow', 'n_recp_disp_sobu',
+                                                       '上市公司现金流量表 - 处置子公司及其他营业单位收到的现金净额'],
+    ('stot_inflows_inv_act', 'q', 'E'):               ['cashflow', 'stot_inflows_inv_act', '上市公司现金流量表 - 投资活动现金流入小计'],
+    ('c_pay_acq_const_fiolta', 'q', 'E'):             ['cashflow', 'c_pay_acq_const_fiolta',
+                                                       '上市公司现金流量表 - 购建固定资产、无形资产和其他长期资产支付的现金'],
+    ('c_paid_invest', 'q', 'E'):                      ['cashflow', 'c_paid_invest', '上市公司现金流量表 - 投资支付的现金'],
+    ('n_disp_subs_oth_biz', 'q', 'E'):                ['cashflow', 'n_disp_subs_oth_biz',
+                                                       '上市公司现金流量表 - 取得子公司及其他营业单位支付的现金净额'],
+    ('oth_pay_ral_inv_act', 'q', 'E'):                ['cashflow', 'oth_pay_ral_inv_act', '上市公司现金流量表 - 支付其他与投资活动有关的现金'],
+    ('n_incr_pledge_loan', 'q', 'E'):                 ['cashflow', 'n_incr_pledge_loan', '上市公司现金流量表 - 质押贷款净增加额'],
+    ('stot_out_inv_act', 'q', 'E'):                   ['cashflow', 'stot_out_inv_act', '上市公司现金流量表 - 投资活动现金流出小计'],
+    ('n_cashflow_inv_act', 'q', 'E'):                 ['cashflow', 'n_cashflow_inv_act', '上市公司现金流量表 - 投资活动产生的现金流量净额'],
+    ('c_recp_borrow', 'q', 'E'):                      ['cashflow', 'c_recp_borrow', '上市公司现金流量表 - 取得借款收到的现金'],
+    ('proc_issue_bonds', 'q', 'E'):                   ['cashflow', 'proc_issue_bonds', '上市公司现金流量表 - 发行债券收到的现金'],
+    ('oth_cash_recp_ral_fnc_act', 'q', 'E'):          ['cashflow', 'oth_cash_recp_ral_fnc_act',
+                                                       '上市公司现金流量表 - 收到其他与筹资活动有关的现金'],
+    ('stot_cash_in_fnc_act', 'q', 'E'):               ['cashflow', 'stot_cash_in_fnc_act', '上市公司现金流量表 - 筹资活动现金流入小计'],
+    ('free_cashflow', 'q', 'E'):                      ['cashflow', 'free_cashflow', '上市公司现金流量表 - 企业自由现金流量'],
+    ('c_prepay_amt_borr', 'q', 'E'):                  ['cashflow', 'c_prepay_amt_borr', '上市公司现金流量表 - 偿还债务支付的现金'],
+    ('c_pay_dist_dpcp_int_exp', 'q', 'E'):            ['cashflow', 'c_pay_dist_dpcp_int_exp',
+                                                       '上市公司现金流量表 - 分配股利、利润或偿付利息支付的现金'],
+    ('incl_dvd_profit_paid_sc_ms', 'q', 'E'):         ['cashflow', 'incl_dvd_profit_paid_sc_ms',
+                                                       '上市公司现金流量表 - 其中:子公司支付给少数股东的股利、利润'],
+    ('oth_cashpay_ral_fnc_act', 'q', 'E'):            ['cashflow', 'oth_cashpay_ral_fnc_act',
+                                                       '上市公司现金流量表 - 支付其他与筹资活动有关的现金'],
+    ('stot_cashout_fnc_act', 'q', 'E'):               ['cashflow', 'stot_cashout_fnc_act', '上市公司现金流量表 - 筹资活动现金流出小计'],
+    ('n_cash_flows_fnc_act', 'q', 'E'):               ['cashflow', 'n_cash_flows_fnc_act', '上市公司现金流量表 - 筹资活动产生的现金流量净额'],
+    ('eff_fx_flu_cash', 'q', 'E'):                    ['cashflow', 'eff_fx_flu_cash', '上市公司现金流量表 - 汇率变动对现金的影响'],
+    ('n_incr_cash_cash_equ', 'q', 'E'):               ['cashflow', 'n_incr_cash_cash_equ', '上市公司现金流量表 - 现金及现金等价物净增加额'],
+    ('c_cash_equ_beg_period', 'q', 'E'):              ['cashflow', 'c_cash_equ_beg_period', '上市公司现金流量表 - 期初现金及现金等价物余额'],
+    ('c_cash_equ_end_period', 'q', 'E'):              ['cashflow', 'c_cash_equ_end_period', '上市公司现金流量表 - 期末现金及现金等价物余额'],
+    ('c_recp_cap_contrib', 'q', 'E'):                 ['cashflow', 'c_recp_cap_contrib', '上市公司现金流量表 - 吸收投资收到的现金'],
+    ('incl_cash_rec_saims', 'q', 'E'):                ['cashflow', 'incl_cash_rec_saims',
+                                                       '上市公司现金流量表 - 其中:子公司吸收少数股东投资收到的现金'],
+    ('uncon_invest_loss', 'q', 'E'):                  ['cashflow', 'uncon_invest_loss', '上市公司现金流量表 - 未确认投资损失'],
+    ('prov_depr_assets', 'q', 'E'):                   ['cashflow', 'prov_depr_assets', '上市公司现金流量表 - 加:资产减值准备'],
+    ('depr_fa_coga_dpba', 'q', 'E'):                  ['cashflow', 'depr_fa_coga_dpba',
+                                                       '上市公司现金流量表 - 固定资产折旧、油气资产折耗、生产性生物资产折旧'],
+    ('amort_intang_assets', 'q', 'E'):                ['cashflow', 'amort_intang_assets', '上市公司现金流量表 - 无形资产摊销'],
+    ('lt_amort_deferred_exp', 'q', 'E'):              ['cashflow', 'lt_amort_deferred_exp', '上市公司现金流量表 - 长期待摊费用摊销'],
+    ('decr_deferred_exp', 'q', 'E'):                  ['cashflow', 'decr_deferred_exp', '上市公司现金流量表 - 待摊费用减少'],
+    ('incr_acc_exp', 'q', 'E'):                       ['cashflow', 'incr_acc_exp', '上市公司现金流量表 - 预提费用增加'],
+    ('loss_disp_fiolta', 'q', 'E'):                   ['cashflow', 'loss_disp_fiolta',
+                                                       '上市公司现金流量表 - 处置固定、无形资产和其他长期资产的损失'],
+    ('loss_scr_fa', 'q', 'E'):                        ['cashflow', 'loss_scr_fa', '上市公司现金流量表 - 固定资产报废损失'],
+    ('loss_fv_chg', 'q', 'E'):                        ['cashflow', 'loss_fv_chg', '上市公司现金流量表 - 公允价值变动损失'],
+    ('invest_loss', 'q', 'E'):                        ['cashflow', 'invest_loss', '上市公司现金流量表 - 投资损失'],
+    ('decr_def_inc_tax_assets', 'q', 'E'):            ['cashflow', 'decr_def_inc_tax_assets', '上市公司现金流量表 - 递延所得税资产减少'],
+    ('incr_def_inc_tax_liab', 'q', 'E'):              ['cashflow', 'incr_def_inc_tax_liab', '上市公司现金流量表 - 递延所得税负债增加'],
+    ('decr_inventories', 'q', 'E'):                   ['cashflow', 'decr_inventories', '上市公司现金流量表 - 存货的减少'],
+    ('decr_oper_payable', 'q', 'E'):                  ['cashflow', 'decr_oper_payable', '上市公司现金流量表 - 经营性应收项目的减少'],
+    ('incr_oper_payable', 'q', 'E'):                  ['cashflow', 'incr_oper_payable', '上市公司现金流量表 - 经营性应付项目的增加'],
+    ('others', 'q', 'E'):                             ['cashflow', 'others', '上市公司现金流量表 - 其他'],
+    ('im_net_cashflow_oper_act', 'q', 'E'):           ['cashflow', 'im_net_cashflow_oper_act',
+                                                       '上市公司现金流量表 - 经营活动产生的现金流量净额(间接法)'],
+    ('conv_debt_into_cap', 'q', 'E'):                 ['cashflow', 'conv_debt_into_cap', '上市公司现金流量表 - 债务转为资本'],
+    ('conv_copbonds_due_within_1y', 'q', 'E'):        ['cashflow', 'conv_copbonds_due_within_1y',
+                                                       '上市公司现金流量表 - 一年内到期的可转换公司债券'],
+    ('fa_fnc_leases', 'q', 'E'):                      ['cashflow', 'fa_fnc_leases', '上市公司现金流量表 - 融资租入固定资产'],
+    ('im_n_incr_cash_equ', 'q', 'E'):                 ['cashflow', 'im_n_incr_cash_equ',
+                                                       '上市公司现金流量表 - 现金及现金等价物净增加额(间接法)'],
+    ('net_dism_capital_add', 'q', 'E'):               ['cashflow', 'net_dism_capital_add', '上市公司现金流量表 - 拆出资金净增加额'],
+    ('net_cash_rece_sec', 'q', 'E'):                  ['cashflow', 'net_cash_rece_sec', '上市公司现金流量表 - 代理买卖证券收到的现金净额(元)'],
+    ('cashflow_credit_impa_loss', 'q', 'E'):          ['cashflow', 'credit_impa_loss', '上市公司现金流量表 - 信用减值损失'],
+    ('use_right_asset_dep', 'q', 'E'):                ['cashflow', 'use_right_asset_dep', '上市公司现金流量表 - 使用权资产折旧'],
+    ('oth_loss_asset', 'q', 'E'):                     ['cashflow', 'oth_loss_asset', '上市公司现金流量表 - 其他资产减值损失'],
+    ('end_bal_cash', 'q', 'E'):                       ['cashflow', 'end_bal_cash', '上市公司现金流量表 - 现金的期末余额'],
+    ('beg_bal_cash', 'q', 'E'):                       ['cashflow', 'beg_bal_cash', '上市公司现金流量表 - 减:现金的期初余额'],
+    ('end_bal_cash_equ', 'q', 'E'):                   ['cashflow', 'end_bal_cash_equ', '上市公司现金流量表 - 加:现金等价物的期末余额'],
+    ('beg_bal_cash_equ', 'q', 'E'):                   ['cashflow', 'beg_bal_cash_equ', '上市公司现金流量表 - 减:现金等价物的期初余额'],
+    ('express_revenue', 'q', 'E'):                    ['express', 'revenue', '上市公司业绩快报 - 营业收入(元)'],
+    ('express_operate_profit', 'q', 'E'):             ['express', 'operate_profit', '上市公司业绩快报 - 营业利润(元)'],
+    ('express_total_profit', 'q', 'E'):               ['express', 'total_profit', '上市公司业绩快报 - 利润总额(元)'],
+    ('express_n_income', 'q', 'E'):                   ['express', 'n_income', '上市公司业绩快报 - 净利润(元)'],
+    ('express_total_assets', 'q', 'E'):               ['express', 'total_assets', '上市公司业绩快报 - 总资产(元)'],
+    ('express_total_hldr_eqy_exc_min_int', 'q', 'E'): ['express', 'total_hldr_eqy_exc_min_int',
+                                                       '上市公司业绩快报 - 股东权益合计(不含少数股东权益)(元)'],
+    ('express_diluted_eps', 'q', 'E'):                ['express', 'diluted_eps', '上市公司业绩快报 - 每股收益(摊薄)(元)'],
+    ('diluted_roe', 'q', 'E'):                        ['express', 'diluted_roe', '上市公司业绩快报 - 净资产收益率(摊薄)(%)'],
+    ('yoy_net_profit', 'q', 'E'):                     ['express', 'yoy_net_profit', '上市公司业绩快报 - 去年同期修正后净利润'],
+    ('bps', 'q', 'E'):                                ['express', 'bps', '上市公司业绩快报 - 每股净资产'],
+    ('yoy_sales', 'q', 'E'):                          ['express', 'yoy_sales', '上市公司业绩快报 - 同比增长率:营业收入'],
+    ('yoy_op', 'q', 'E'):                             ['express', 'yoy_op', '上市公司业绩快报 - 同比增长率:营业利润'],
+    ('yoy_tp', 'q', 'E'):                             ['express', 'yoy_tp', '上市公司业绩快报 - 同比增长率:利润总额'],
+    ('yoy_dedu_np', 'q', 'E'):                        ['express', 'yoy_dedu_np', '上市公司业绩快报 - 同比增长率:归属母公司股东的净利润'],
+    ('yoy_eps', 'q', 'E'):                            ['express', 'yoy_eps', '上市公司业绩快报 - 同比增长率:基本每股收益'],
+    ('yoy_roe', 'q', 'E'):                            ['express', 'yoy_roe', '上市公司业绩快报 - 同比增减:加权平均净资产收益率'],
+    ('growth_assets', 'q', 'E'):                      ['express', 'growth_assets', '上市公司业绩快报 - 比年初增长率:总资产'],
+    ('yoy_equity', 'q', 'E'):                         ['express', 'yoy_equity', '上市公司业绩快报 - 比年初增长率:归属母公司的股东权益'],
+    ('growth_bps', 'q', 'E'):                         ['express', 'growth_bps', '上市公司业绩快报 - 比年初增长率:归属于母公司股东的每股净资产'],
+    ('or_last_year', 'q', 'E'):                       ['express', 'or_last_year', '上市公司业绩快报 - 去年同期营业收入'],
+    ('op_last_year', 'q', 'E'):                       ['express', 'op_last_year', '上市公司业绩快报 - 去年同期营业利润'],
+    ('tp_last_year', 'q', 'E'):                       ['express', 'tp_last_year', '上市公司业绩快报 - 去年同期利润总额'],
+    ('np_last_year', 'q', 'E'):                       ['express', 'np_last_year', '上市公司业绩快报 - 去年同期净利润'],
+    ('eps_last_year', 'q', 'E'):                      ['express', 'eps_last_year', '上市公司业绩快报 - 去年同期每股收益'],
+    ('open_net_assets', 'q', 'E'):                    ['express', 'open_net_assets', '上市公司业绩快报 - 期初净资产'],
+    ('open_bps', 'q', 'E'):                           ['express', 'open_bps', '上市公司业绩快报 - 期初每股净资产'],
+    ('perf_summary', 'q', 'E'):                       ['express', 'perf_summary', '上市公司业绩快报 - 业绩简要说明'],
+    ('eps', 'q', 'E'):                                ['finance', 'eps', '上市公司财务指标 - 基本每股收益'],
+    ('dt_eps', 'q', 'E'):                             ['finance', 'dt_eps', '上市公司财务指标 - 稀释每股收益'],
+    ('total_revenue_ps', 'q', 'E'):                   ['finance', 'total_revenue_ps', '上市公司财务指标 - 每股营业总收入'],
+    ('revenue_ps', 'q', 'E'):                         ['finance', 'revenue_ps', '上市公司财务指标 - 每股营业收入'],
+    ('capital_rese_ps', 'q', 'E'):                    ['finance', 'capital_rese_ps', '上市公司财务指标 - 每股资本公积'],
+    ('surplus_rese_ps', 'q', 'E'):                    ['finance', 'surplus_rese_ps', '上市公司财务指标 - 每股盈余公积'],
+    ('undist_profit_ps', 'q', 'E'):                   ['finance', 'undist_profit_ps', '上市公司财务指标 - 每股未分配利润'],
+    ('extra_item', 'q', 'E'):                         ['finance', 'extra_item', '上市公司财务指标 - 非经常性损益'],
+    ('profit_dedt', 'q', 'E'):                        ['finance', 'profit_dedt', '上市公司财务指标 - 扣除非经常性损益后的净利润（扣非净利润）'],
+    ('gross_margin', 'q', 'E'):                       ['finance', 'gross_margin', '上市公司财务指标 - 毛利'],
+    ('current_ratio', 'q', 'E'):                      ['finance', 'current_ratio', '上市公司财务指标 - 流动比率'],
+    ('quick_ratio', 'q', 'E'):                        ['finance', 'quick_ratio', '上市公司财务指标 - 速动比率'],
+    ('cash_ratio', 'q', 'E'):                         ['finance', 'cash_ratio', '上市公司财务指标 - 保守速动比率'],
+    ('invturn_days', 'q', 'E'):                       ['finance', 'invturn_days', '上市公司财务指标 - 存货周转天数'],
+    ('arturn_days', 'q', 'E'):                        ['finance', 'arturn_days', '上市公司财务指标 - 应收账款周转天数'],
+    ('inv_turn', 'q', 'E'):                           ['finance', 'inv_turn', '上市公司财务指标 - 存货周转率'],
+    ('ar_turn', 'q', 'E'):                            ['finance', 'ar_turn', '上市公司财务指标 - 应收账款周转率'],
+    ('ca_turn', 'q', 'E'):                            ['finance', 'ca_turn', '上市公司财务指标 - 流动资产周转率'],
+    ('fa_turn', 'q', 'E'):                            ['finance', 'fa_turn', '上市公司财务指标 - 固定资产周转率'],
+    ('assets_turn', 'q', 'E'):                        ['finance', 'assets_turn', '上市公司财务指标 - 总资产周转率'],
+    ('op_income', 'q', 'E'):                          ['finance', 'op_income', '上市公司财务指标 - 经营活动净收益'],
+    ('valuechange_income', 'q', 'E'):                 ['finance', 'valuechange_income', '上市公司财务指标 - 价值变动净收益'],
+    ('interst_income', 'q', 'E'):                     ['finance', 'interst_income', '上市公司财务指标 - 利息费用'],
+    ('daa', 'q', 'E'):                                ['finance', 'daa', '上市公司财务指标 - 折旧与摊销'],
+    ('ebit', 'q', 'E'):                               ['finance', 'ebit', '上市公司财务指标 - 息税前利润'],
+    ('ebitda', 'q', 'E'):                             ['finance', 'ebitda', '上市公司财务指标 - 息税折旧摊销前利润'],
+    ('fcff', 'q', 'E'):                               ['finance', 'fcff', '上市公司财务指标 - 企业自由现金流量'],
+    ('fcfe', 'q', 'E'):                               ['finance', 'fcfe', '上市公司财务指标 - 股权自由现金流量'],
+    ('current_exint', 'q', 'E'):                      ['finance', 'current_exint', '上市公司财务指标 - 无息流动负债'],
+    ('noncurrent_exint', 'q', 'E'):                   ['finance', 'noncurrent_exint', '上市公司财务指标 - 无息非流动负债'],
+    ('interestdebt', 'q', 'E'):                       ['finance', 'interestdebt', '上市公司财务指标 - 带息债务'],
+    ('netdebt', 'q', 'E'):                            ['finance', 'netdebt', '上市公司财务指标 - 净债务'],
+    ('tangible_asset', 'q', 'E'):                     ['finance', 'tangible_asset', '上市公司财务指标 - 有形资产'],
+    ('working_capital', 'q', 'E'):                    ['finance', 'working_capital', '上市公司财务指标 - 营运资金'],
+    ('networking_capital', 'q', 'E'):                 ['finance', 'networking_capital', '上市公司财务指标 - 营运流动资本'],
+    ('invest_capital', 'q', 'E'):                     ['finance', 'invest_capital', '上市公司财务指标 - 全部投入资本'],
+    ('retained_earnings', 'q', 'E'):                  ['finance', 'retained_earnings', '上市公司财务指标 - 留存收益'],
+    ('diluted2_eps', 'q', 'E'):                       ['finance', 'diluted2_eps', '上市公司财务指标 - 期末摊薄每股收益'],
+    ('express_bps', 'q', 'E'):                        ['finance', 'bps', '上市公司财务指标 - 每股净资产'],
+    ('ocfps', 'q', 'E'):                              ['finance', 'ocfps', '上市公司财务指标 - 每股经营活动产生的现金流量净额'],
+    ('retainedps', 'q', 'E'):                         ['finance', 'retainedps', '上市公司财务指标 - 每股留存收益'],
+    ('cfps', 'q', 'E'):                               ['finance', 'cfps', '上市公司财务指标 - 每股现金流量净额'],
+    ('ebit_ps', 'q', 'E'):                            ['finance', 'ebit_ps', '上市公司财务指标 - 每股息税前利润'],
+    ('fcff_ps', 'q', 'E'):                            ['finance', 'fcff_ps', '上市公司财务指标 - 每股企业自由现金流量'],
+    ('fcfe_ps', 'q', 'E'):                            ['finance', 'fcfe_ps', '上市公司财务指标 - 每股股东自由现金流量'],
+    ('netprofit_margin', 'q', 'E'):                   ['finance', 'netprofit_margin', '上市公司财务指标 - 销售净利率'],
+    ('grossprofit_margin', 'q', 'E'):                 ['finance', 'grossprofit_margin', '上市公司财务指标 - 销售毛利率'],
+    ('cogs_of_sales', 'q', 'E'):                      ['finance', 'cogs_of_sales', '上市公司财务指标 - 销售成本率'],
+    ('expense_of_sales', 'q', 'E'):                   ['finance', 'expense_of_sales', '上市公司财务指标 - 销售期间费用率'],
+    ('profit_to_gr', 'q', 'E'):                       ['finance', 'profit_to_gr', '上市公司财务指标 - 净利润/营业总收入'],
+    ('saleexp_to_gr', 'q', 'E'):                      ['finance', 'saleexp_to_gr', '上市公司财务指标 - 销售费用/营业总收入'],
+    ('adminexp_of_gr', 'q', 'E'):                     ['finance', 'adminexp_of_gr', '上市公司财务指标 - 管理费用/营业总收入'],
+    ('finaexp_of_gr', 'q', 'E'):                      ['finance', 'finaexp_of_gr', '上市公司财务指标 - 财务费用/营业总收入'],
+    ('impai_ttm', 'q', 'E'):                          ['finance', 'impai_ttm', '上市公司财务指标 - 资产减值损失/营业总收入'],
+    ('gc_of_gr', 'q', 'E'):                           ['finance', 'gc_of_gr', '上市公司财务指标 - 营业总成本/营业总收入'],
+    ('op_of_gr', 'q', 'E'):                           ['finance', 'op_of_gr', '上市公司财务指标 - 营业利润/营业总收入'],
+    ('ebit_of_gr', 'q', 'E'):                         ['finance', 'ebit_of_gr', '上市公司财务指标 - 息税前利润/营业总收入'],
+    ('roe', 'q', 'E'):                                ['finance', 'roe', '上市公司财务指标 - 净资产收益率'],
+    ('roe_waa', 'q', 'E'):                            ['finance', 'roe_waa', '上市公司财务指标 - 加权平均净资产收益率'],
+    ('roe_dt', 'q', 'E'):                             ['finance', 'roe_dt', '上市公司财务指标 - 净资产收益率(扣除非经常损益)'],
+    ('roa', 'q', 'E'):                                ['finance', 'roa', '上市公司财务指标 - 总资产报酬率'],
+    ('npta', 'q', 'E'):                               ['finance', 'npta', '上市公司财务指标 - 总资产净利润'],
+    ('roic', 'q', 'E'):                               ['finance', 'roic', '上市公司财务指标 - 投入资本回报率'],
+    ('roe_yearly', 'q', 'E'):                         ['finance', 'roe_yearly', '上市公司财务指标 - 年化净资产收益率'],
+    ('roa2_yearly', 'q', 'E'):                        ['finance', 'roa2_yearly', '上市公司财务指标 - 年化总资产报酬率'],
+    ('roe_avg', 'q', 'E'):                            ['finance', 'roe_avg', '上市公司财务指标 - 平均净资产收益率(增发条件)'],
+    ('opincome_of_ebt', 'q', 'E'):                    ['finance', 'opincome_of_ebt', '上市公司财务指标 - 经营活动净收益/利润总额'],
+    ('investincome_of_ebt', 'q', 'E'):                ['finance', 'investincome_of_ebt', '上市公司财务指标 - 价值变动净收益/利润总额'],
+    ('n_op_profit_of_ebt', 'q', 'E'):                 ['finance', 'n_op_profit_of_ebt', '上市公司财务指标 - 营业外收支净额/利润总额'],
+    ('tax_to_ebt', 'q', 'E'):                         ['finance', 'tax_to_ebt', '上市公司财务指标 - 所得税/利润总额'],
+    ('dtprofit_to_profit', 'q', 'E'):                 ['finance', 'dtprofit_to_profit', '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
+    ('salescash_to_or', 'q', 'E'):                    ['finance', 'salescash_to_or', '上市公司财务指标 - 销售商品提供劳务收到的现金/营业收入'],
+    ('ocf_to_or', 'q', 'E'):                          ['finance', 'ocf_to_or', '上市公司财务指标 - 经营活动产生的现金流量净额/营业收入'],
+    ('ocf_to_opincome', 'q', 'E'):                    ['finance', 'ocf_to_opincome',
+                                                       '上市公司财务指标 - 经营活动产生的现金流量净额/经营活动净收益'],
+    ('capitalized_to_da', 'q', 'E'):                  ['finance', 'capitalized_to_da', '上市公司财务指标 - 资本支出/折旧和摊销'],
+    ('debt_to_assets', 'q', 'E'):                     ['finance', 'debt_to_assets', '上市公司财务指标 - 资产负债率'],
+    ('assets_to_eqt', 'q', 'E'):                      ['finance', 'assets_to_eqt', '上市公司财务指标 - 权益乘数'],
+    ('dp_assets_to_eqt', 'q', 'E'):                   ['finance', 'dp_assets_to_eqt', '上市公司财务指标 - 权益乘数(杜邦分析)'],
+    ('ca_to_assets', 'q', 'E'):                       ['finance', 'ca_to_assets', '上市公司财务指标 - 流动资产/总资产'],
+    ('nca_to_assets', 'q', 'E'):                      ['finance', 'nca_to_assets', '上市公司财务指标 - 非流动资产/总资产'],
+    ('tbassets_to_totalassets', 'q', 'E'):            ['finance', 'tbassets_to_totalassets', '上市公司财务指标 - 有形资产/总资产'],
+    ('int_to_talcap', 'q', 'E'):                      ['finance', 'int_to_talcap', '上市公司财务指标 - 带息债务/全部投入资本'],
+    ('eqt_to_talcapital', 'q', 'E'):                  ['finance', 'eqt_to_talcapital', '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
+    ('currentdebt_to_debt', 'q', 'E'):                ['finance', 'currentdebt_to_debt', '上市公司财务指标 - 流动负债/负债合计'],
+    ('longdeb_to_debt', 'q', 'E'):                    ['finance', 'longdeb_to_debt', '上市公司财务指标 - 非流动负债/负债合计'],
+    ('ocf_to_shortdebt', 'q', 'E'):                   ['finance', 'ocf_to_shortdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
+    ('debt_to_eqt', 'q', 'E'):                        ['finance', 'debt_to_eqt', '上市公司财务指标 - 产权比率'],
+    ('eqt_to_debt', 'q', 'E'):                        ['finance', 'eqt_to_debt', '上市公司财务指标 - 归属于母公司的股东权益/负债合计'],
+    ('eqt_to_interestdebt', 'q', 'E'):                ['finance', 'eqt_to_interestdebt', '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
+    ('tangibleasset_to_debt', 'q', 'E'):              ['finance', 'tangibleasset_to_debt', '上市公司财务指标 - 有形资产/负债合计'],
+    ('tangasset_to_intdebt', 'q', 'E'):               ['finance', 'tangasset_to_intdebt', '上市公司财务指标 - 有形资产/带息债务'],
+    ('tangibleasset_to_netdebt', 'q', 'E'):           ['finance', 'tangibleasset_to_netdebt', '上市公司财务指标 - 有形资产/净债务'],
+    ('ocf_to_debt', 'q', 'E'):                        ['finance', 'ocf_to_debt', '上市公司财务指标 - 经营活动产生的现金流量净额/负债合计'],
+    ('ocf_to_interestdebt', 'q', 'E'):                ['finance', 'ocf_to_interestdebt',
+                                                       '上市公司财务指标 - 经营活动产生的现金流量净额/带息债务'],
+    ('ocf_to_netdebt', 'q', 'E'):                     ['finance', 'ocf_to_netdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/净债务'],
+    ('ebit_to_interest', 'q', 'E'):                   ['finance', 'ebit_to_interest', '上市公司财务指标 - 已获利息倍数(EBIT/利息费用)'],
+    ('longdebt_to_workingcapital', 'q', 'E'):         ['finance', 'longdebt_to_workingcapital',
+                                                       '上市公司财务指标 - 长期债务与营运资金比率'],
+    ('ebitda_to_debt', 'q', 'E'):                     ['finance', 'ebitda_to_debt', '上市公司财务指标 - 息税折旧摊销前利润/负债合计'],
+    ('turn_days', 'q', 'E'):                          ['finance', 'turn_days', '上市公司财务指标 - 营业周期'],
+    ('roa_yearly', 'q', 'E'):                         ['finance', 'roa_yearly', '上市公司财务指标 - 年化总资产净利率'],
+    ('roa_dp', 'q', 'E'):                             ['finance', 'roa_dp', '上市公司财务指标 - 总资产净利率(杜邦分析)'],
+    ('fixed_assets', 'q', 'E'):                       ['finance', 'fixed_assets', '上市公司财务指标 - 固定资产合计'],
+    ('profit_prefin_exp', 'q', 'E'):                  ['finance', 'profit_prefin_exp', '上市公司财务指标 - 扣除财务费用前营业利润'],
+    ('non_op_profit', 'q', 'E'):                      ['finance', 'non_op_profit', '上市公司财务指标 - 非营业利润'],
+    ('op_to_ebt', 'q', 'E'):                          ['finance', 'op_to_ebt', '上市公司财务指标 - 营业利润／利润总额'],
+    ('nop_to_ebt', 'q', 'E'):                         ['finance', 'nop_to_ebt', '上市公司财务指标 - 非营业利润／利润总额'],
+    ('ocf_to_profit', 'q', 'E'):                      ['finance', 'ocf_to_profit', '上市公司财务指标 - 经营活动产生的现金流量净额／营业利润'],
+    ('cash_to_liqdebt', 'q', 'E'):                    ['finance', 'cash_to_liqdebt', '上市公司财务指标 - 货币资金／流动负债'],
+    ('cash_to_liqdebt_withinterest', 'q', 'E'):       ['finance', 'cash_to_liqdebt_withinterest',
+                                                       '上市公司财务指标 - 货币资金／带息流动负债'],
+    ('op_to_liqdebt', 'q', 'E'):                      ['finance', 'op_to_liqdebt', '上市公司财务指标 - 营业利润／流动负债'],
+    ('op_to_debt', 'q', 'E'):                         ['finance', 'op_to_debt', '上市公司财务指标 - 营业利润／负债合计'],
+    ('roic_yearly', 'q', 'E'):                        ['finance', 'roic_yearly', '上市公司财务指标 - 年化投入资本回报率'],
+    ('total_fa_trun', 'q', 'E'):                      ['finance', 'total_fa_trun', '上市公司财务指标 - 固定资产合计周转率'],
+    ('profit_to_op', 'q', 'E'):                       ['finance', 'profit_to_op', '上市公司财务指标 - 利润总额／营业收入'],
+    ('q_opincome', 'q', 'E'):                         ['finance', 'q_opincome', '上市公司财务指标 - 经营活动单季度净收益'],
+    ('q_investincome', 'q', 'E'):                     ['finance', 'q_investincome', '上市公司财务指标 - 价值变动单季度净收益'],
+    ('q_dtprofit', 'q', 'E'):                         ['finance', 'q_dtprofit', '上市公司财务指标 - 扣除非经常损益后的单季度净利润'],
+    ('q_eps', 'q', 'E'):                              ['finance', 'q_eps', '上市公司财务指标 - 每股收益(单季度)'],
+    ('q_netprofit_margin', 'q', 'E'):                 ['finance', 'q_netprofit_margin', '上市公司财务指标 - 销售净利率(单季度)'],
+    ('q_gsprofit_margin', 'q', 'E'):                  ['finance', 'q_gsprofit_margin', '上市公司财务指标 - 销售毛利率(单季度)'],
+    ('q_exp_to_sales', 'q', 'E'):                     ['finance', 'q_exp_to_sales', '上市公司财务指标 - 销售期间费用率(单季度)'],
+    ('q_profit_to_gr', 'q', 'E'):                     ['finance', 'q_profit_to_gr', '上市公司财务指标 - 净利润／营业总收入(单季度)'],
+    ('q_saleexp_to_gr', 'q', 'E'):                    ['finance', 'q_saleexp_to_gr', '上市公司财务指标 - 销售费用／营业总收入 (单季度)'],
+    ('q_adminexp_to_gr', 'q', 'E'):                   ['finance', 'q_adminexp_to_gr', '上市公司财务指标 - 管理费用／营业总收入 (单季度)'],
+    ('q_finaexp_to_gr', 'q', 'E'):                    ['finance', 'q_finaexp_to_gr', '上市公司财务指标 - 财务费用／营业总收入 (单季度)'],
+    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['finance', 'q_impair_to_gr_ttm', '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
+    ('q_gc_to_gr', 'q', 'E'):                         ['finance', 'q_gc_to_gr', '上市公司财务指标 - 营业总成本／营业总收入 (单季度)'],
+    ('q_op_to_gr', 'q', 'E'):                         ['finance', 'q_op_to_gr', '上市公司财务指标 - 营业利润／营业总收入(单季度)'],
+    ('q_roe', 'q', 'E'):                              ['finance', 'q_roe', '上市公司财务指标 - 净资产收益率(单季度)'],
+    ('q_dt_roe', 'q', 'E'):                           ['finance', 'q_dt_roe', '上市公司财务指标 - 净资产单季度收益率(扣除非经常损益)'],
+    ('q_npta', 'q', 'E'):                             ['finance', 'q_npta', '上市公司财务指标 - 总资产净利润(单季度)'],
+    ('q_opincome_to_ebt', 'q', 'E'):                  ['finance', 'q_opincome_to_ebt', '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
+    ('q_investincome_to_ebt', 'q', 'E'):              ['finance', 'q_investincome_to_ebt',
+                                                       '上市公司财务指标 - 价值变动净收益／利润总额(单季度)'],
+    ('q_dtprofit_to_profit', 'q', 'E'):               ['finance', 'q_dtprofit_to_profit',
+                                                       '上市公司财务指标 - 扣除非经常损益后的净利润／净利润(单季度)'],
+    ('q_salescash_to_or', 'q', 'E'):                  ['finance', 'q_salescash_to_or',
+                                                       '上市公司财务指标 - 销售商品提供劳务收到的现金／营业收入(单季度)'],
+    ('q_ocf_to_sales', 'q', 'E'):                     ['finance', 'q_ocf_to_sales',
+                                                       '上市公司财务指标 - 经营活动产生的现金流量净额／营业收入(单季度)'],
+    ('q_ocf_to_or', 'q', 'E'):                        ['finance', 'q_ocf_to_or',
+                                                       '上市公司财务指标 - 经营活动产生的现金流量净额／经营活动净收益(单季度)'],
+    ('basic_eps_yoy', 'q', 'E'):                      ['finance', 'basic_eps_yoy', '上市公司财务指标 - 基本每股收益同比增长率(%)'],
+    ('dt_eps_yoy', 'q', 'E'):                         ['finance', 'dt_eps_yoy', '上市公司财务指标 - 稀释每股收益同比增长率(%)'],
+    ('cfps_yoy', 'q', 'E'):                           ['finance', 'cfps_yoy', '上市公司财务指标 - 每股经营活动产生的现金流量净额同比增长率(%)'],
+    ('op_yoy', 'q', 'E'):                             ['finance', 'op_yoy', '上市公司财务指标 - 营业利润同比增长率(%)'],
+    ('ebt_yoy', 'q', 'E'):                            ['finance', 'ebt_yoy', '上市公司财务指标 - 利润总额同比增长率(%)'],
+    ('netprofit_yoy', 'q', 'E'):                      ['finance', 'netprofit_yoy', '上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)'],
+    ('dt_netprofit_yoy', 'q', 'E'):                   ['finance', 'dt_netprofit_yoy',
+                                                       '上市公司财务指标 - 归属母公司股东的净利润-扣除非经常损益同比增长率(%)'],
+    ('ocf_yoy', 'q', 'E'):                            ['finance', 'ocf_yoy', '上市公司财务指标 - 经营活动产生的现金流量净额同比增长率(%)'],
+    ('roe_yoy', 'q', 'E'):                            ['finance', 'roe_yoy', '上市公司财务指标 - 净资产收益率(摊薄)同比增长率(%)'],
+    ('bps_yoy', 'q', 'E'):                            ['finance', 'bps_yoy', '上市公司财务指标 - 每股净资产相对年初增长率(%)'],
+    ('assets_yoy', 'q', 'E'):                         ['finance', 'assets_yoy', '上市公司财务指标 - 资产总计相对年初增长率(%)'],
+    ('eqt_yoy', 'q', 'E'):                            ['finance', 'eqt_yoy', '上市公司财务指标 - 归属母公司的股东权益相对年初增长率(%)'],
+    ('tr_yoy', 'q', 'E'):                             ['finance', 'tr_yoy', '上市公司财务指标 - 营业总收入同比增长率(%)'],
+    ('or_yoy', 'q', 'E'):                             ['finance', 'or_yoy', '上市公司财务指标 - 营业收入同比增长率(%)'],
+    ('q_gr_yoy', 'q', 'E'):                           ['finance', 'q_gr_yoy', '上市公司财务指标 - 营业总收入同比增长率(%)(单季度)'],
+    ('q_gr_qoq', 'q', 'E'):                           ['finance', 'q_gr_qoq', '上市公司财务指标 - 营业总收入环比增长率(%)(单季度)'],
+    ('q_sales_yoy', 'q', 'E'):                        ['finance', 'q_sales_yoy', '上市公司财务指标 - 营业收入同比增长率(%)(单季度)'],
+    ('q_sales_qoq', 'q', 'E'):                        ['finance', 'q_sales_qoq', '上市公司财务指标 - 营业收入环比增长率(%)(单季度)'],
+    ('q_op_yoy', 'q', 'E'):                           ['finance', 'q_op_yoy', '上市公司财务指标 - 营业利润同比增长率(%)(单季度)'],
+    ('q_op_qoq', 'q', 'E'):                           ['finance', 'q_op_qoq', '上市公司财务指标 - 营业利润环比增长率(%)(单季度)'],
+    ('q_profit_yoy', 'q', 'E'):                       ['finance', 'q_profit_yoy', '上市公司财务指标 - 净利润同比增长率(%)(单季度)'],
+    ('q_profit_qoq', 'q', 'E'):                       ['finance', 'q_profit_qoq', '上市公司财务指标 - 净利润环比增长率(%)(单季度)'],
+    ('q_netprofit_yoy', 'q', 'E'):                    ['finance', 'q_netprofit_yoy',
+                                                       '上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)(单季度)'],
+    ('q_netprofit_qoq', 'q', 'E'):                    ['finance', 'q_netprofit_qoq',
+                                                       '上市公司财务指标 - 归属母公司股东的净利润环比增长率(%)(单季度)'],
+    ('equity_yoy', 'q', 'E'):                         ['finance', 'equity_yoy', '上市公司财务指标 - 净资产同比增长率'],
+    ('rd_exp', 'q', 'E'):                             ['finance', 'rd_exp', '上市公司财务指标 - 研发费用'],
+    ('rzye', 'd', 'Any'):                             ['margin', 'rzye', '融资融券交易汇总 - 融资余额(元)'],
+    ('rzmre', 'd', 'Any'):                            ['margin', 'rzmre', '融资融券交易汇总 - 融资买入额(元)'],
+    ('rzche', 'd', 'Any'):                            ['margin', 'rzche', '融资融券交易汇总 - 融资偿还额(元)'],
+    ('rqye', 'd', 'Any'):                             ['margin', 'rqye', '融资融券交易汇总 - 融券余额(元)'],
+    ('rqmcl', 'd', 'Any'):                            ['margin', 'rqmcl', '融资融券交易汇总 - 融券卖出量(股,份,手)'],
+    ('rzrqye', 'd', 'Any'):                           ['margin', 'rzrqye', '融资融券交易汇总 - 融资融券余额(元)'],
+    ('rqyl', 'd', 'Any'):                             ['margin', 'rqyl', '融资融券交易汇总 - 融券余量(股,份,手)'],
+    ('close', 'd', 'Any'):                            ['top_list', 'close', '融资融券交易明细 - 收盘价'],
+    ('pct_change', 'd', 'Any'):                       ['top_list', 'pct_change', '融资融券交易明细 - 涨跌幅'],
+    ('turnover_rate', 'd', 'Any'):                    ['top_list', 'turnover_rate', '融资融券交易明细 - 换手率'],
+    ('amount', 'd', 'Any'):                           ['top_list', 'amount', '融资融券交易明细 - 总成交额'],
+    ('l_sell', 'd', 'Any'):                           ['top_list', 'l_sell', '融资融券交易明细 - 龙虎榜卖出额'],
+    ('l_buy', 'd', 'Any'):                            ['top_list', 'l_buy', '融资融券交易明细 - 龙虎榜买入额'],
+    ('l_amount', 'd', 'Any'):                         ['top_list', 'l_amount', '融资融券交易明细 - 龙虎榜成交额'],
+    ('net_amount', 'd', 'Any'):                       ['top_list', 'net_amount', '融资融券交易明细 - 龙虎榜净买入额'],
+    ('net_rate', 'd', 'Any'):                         ['top_list', 'net_rate', '融资融券交易明细 - 龙虎榜净买额占比'],
+    ('amount_rate', 'd', 'Any'):                      ['top_list', 'amount_rate', '融资融券交易明细 - 龙虎榜成交额占比'],
+    ('float_values', 'd', 'Any'):                     ['top_list', 'float_values', '融资融券交易明细 - 当日流通市值'],
+    ('reason', 'd', 'Any'):                           ['top_list', 'reason', '融资融券交易明细 - 上榜理由'],
+    ('total_mv', 'd', 'IDX'):                         ['index_indicator', 'total_mv', '指数技术指标 - 当日总市值（元）'],
+    ('float_mv', 'd', 'IDX'):                         ['index_indicator', 'float_mv', '指数技术指标 - 当日流通市值（元）'],
+    ('total_share     float', 'd', 'IDX'):            ['index_indicator', 'total_share     float', '指数技术指标 - 当日总股本（股）'],
+    ('float_share', 'd', 'IDX'):                      ['index_indicator', 'float_share', '指数技术指标 - 当日流通股本（股）'],
+    ('free_share', 'd', 'IDX'):                       ['index_indicator', 'free_share', '指数技术指标 - 当日自由流通股本（股）'],
+    ('turnover_rate', 'd', 'IDX'):                    ['index_indicator', 'turnover_rate', '指数技术指标 - 换手率'],
+    ('turnover_rate_f', 'd', 'IDX'):                  ['index_indicator', 'turnover_rate_f', '指数技术指标 - 换手率(基于自由流通股本)'],
+    ('pe', 'd', 'IDX'):                               ['index_indicator', 'pe', '指数技术指标 - 市盈率'],
+    ('pe_ttm', 'd', 'IDX'):                           ['index_indicator', 'pe_ttm', '指数技术指标 - 市盈率TTM'],
+    ('pb', 'd', 'IDX'):                               ['index_indicator', 'pb', '指数技术指标 - 市净率'],
+    ('turnover_rate', 'd', 'E'):                      ['stock_indicator', 'turnover_rate', '股票技术指标 - 换手率（%）'],
+    ('turnover_rate_f', 'd', 'E'):                    ['stock_indicator', 'turnover_rate_f', '股票技术指标 - 换手率（自由流通股）'],
+    ('volume_ratio', 'd', 'E'):                       ['stock_indicator', 'volume_ratio', '股票技术指标 - 量比'],
+    ('pe', 'd', 'E'):                                 ['stock_indicator', 'pe', '股票技术指标 - 市盈率（总市值/净利润， 亏损的PE为空）'],
+    ('pe_ttm', 'd', 'E'):                             ['stock_indicator', 'pe_ttm', '股票技术指标 - 市盈率（TTM，亏损的PE为空）'],
+    ('pb', 'd', 'E'):                                 ['stock_indicator', 'pb', '股票技术指标 - 市净率（总市值/净资产）'],
+    ('ps', 'd', 'E'):                                 ['stock_indicator', 'ps', '股票技术指标 - 市销率'],
+    ('ps_ttm', 'd', 'E'):                             ['stock_indicator', 'ps_ttm', '股票技术指标 - 市销率（TTM）'],
+    ('dv_ratio', 'd', 'E'):                           ['stock_indicator', 'dv_ratio', '股票技术指标 - 股息率 （%）'],
+    ('dv_ttm', 'd', 'E'):                             ['stock_indicator', 'dv_ttm', '股票技术指标 - 股息率（TTM）（%）'],
+    ('total_share', 'd', 'E'):                        ['stock_indicator', 'total_share', '股票技术指标 - 总股本 （万股）'],
+    ('float_share', 'd', 'E'):                        ['stock_indicator', 'float_share', '股票技术指标 - 流通股本 （万股）'],
+    ('free_share', 'd', 'E'):                         ['stock_indicator', 'free_share', '股票技术指标 - 自由流通股本 （万）'],
+    ('total_mv', 'd', 'E'):                           ['stock_indicator', 'total_mv', '股票技术指标 - 总市值 （万元）'],
+    ('circ_mv', 'd', 'E'):                            ['stock_indicator', 'circ_mv', '股票技术指标 - 流通市值（万元）'],
+    ('vol_ratio', 'd', 'E'):                          ['stock_indicator2', 'vol_ratio', '备用股票技术指标 - 量比'],
+    ('turn_over', 'd', 'E'):                          ['stock_indicator2', 'turn_over', '备用股票技术指标 - 换手率'],
+    ('swing', 'd', 'E'):                              ['stock_indicator2', 'swing', '备用股票技术指标 - 振幅'],
+    ('selling', 'd', 'E'):                            ['stock_indicator2', 'selling', '备用股票技术指标 - 内盘（主动卖，手）'],
+    ('buying', 'd', 'E'):                             ['stock_indicator2', 'buying', '备用股票技术指标 - 外盘（主动买， 手）'],
+    ('total_share_b', 'd', 'E'):                      ['stock_indicator2', 'total_share', '备用股票技术指标 - 总股本(亿)'],
+    ('float_share_b', 'd', 'E'):                      ['stock_indicator2', 'float_share', '备用股票技术指标 - 流通股本(亿)'],
+    ('pe_2', 'd', 'E'):                               ['stock_indicator2', 'pe', '备用股票技术指标 - 市盈(动)'],
+    ('industry', 'd', 'E'):                           ['stock_indicator2', 'industry', '备用股票技术指标 - 所属行业'],
+    ('area', 'd', 'E'):                               ['stock_indicator2', 'area', '备用股票技术指标 - 所属地域'],
+    ('float_mv_2', 'd', 'E'):                         ['stock_indicator2', 'float_mv', '备用股票技术指标 - 流通市值'],
+    ('total_mv_2', 'd', 'E'):                         ['stock_indicator2', 'total_mv', '备用股票技术指标 - 总市值'],
+    ('avg_price', 'd', 'E'):                          ['stock_indicator2', 'avg_price', '备用股票技术指标 - 平均价'],
+    ('strength', 'd', 'E'):                           ['stock_indicator2', 'strength', '备用股票技术指标 - 强弱度(%)'],
+    ('activity', 'd', 'E'):                           ['stock_indicator2', 'activity', '备用股票技术指标 - 活跃度(%)'],
+    ('avg_turnover', 'd', 'E'):                       ['stock_indicator2', 'avg_turnover', '备用股票技术指标 - 笔换手'],
+    ('attack', 'd', 'E'):                             ['stock_indicator2', 'attack', '备用股票技术指标 - 攻击波(%)'],
+    ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '备用股票技术指标 - 近3月涨幅'],
+    ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '备用股票技术指标 - 近6月涨幅'],
+}
 TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                                 'start_end_chunk_size']
@@ -118,11 +1062,11 @@ TABLE_SOURCE_MAPPING = {
          '', '', ''],
 
     'index_basic':
-        ['index_basic', '指数基本信息', 'basics', 'IDX', 'none',  'index_basic', 'market', 'list',
+        ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', 'index_basic', 'market', 'list',
          'SSE,MSCI,CSI,SZSE,CICC,SW,OTH', '', '', ''],
 
     'fund_basic':
-        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none',  'fund_basic', 'market', 'list', 'E,O', '', '', ''],
+        ['fund_basic', '基金基本信息', 'basics', 'FD', 'none', 'fund_basic', 'market', 'list', 'E,O', '', '', ''],
 
     'future_basic':
         ['future_basic', '期货基本信息', 'basics', 'FT', 'none', 'future_basic', 'exchange', 'list',
@@ -219,7 +1163,8 @@ TABLE_SOURCE_MAPPING = {
          '', ''],
 
     'fund_share':
-        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', '', ''],
+        ['fund_share', '基金份额', 'events', 'FD', 'none', 'fund_share', 'ts_code', 'table_index', 'fund_basic', '', '',
+         ''],
 
     'fund_manager':
         ['fund_manager', '基金经理', 'events', 'FD', 'none', 'fund_manager', 'ts_code', 'table_index', 'fund_basic',
@@ -282,12 +1227,12 @@ TABLE_SOURCE_MAPPING = {
          ''],
 
     'stock_indicator':
-        ['stock_indicator', '股票关键指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
+        ['stock_indicator', '股票技术指标', 'data', 'E', 'd', 'daily_basic', 'trade_date', 'trade_date', '19990101', '',
          '', ''],
 
     'stock_indicator2':
-        ['stock_indicator2', '股票关键指标2', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date', '19990101',
-         '', '', ''],
+        ['stock_indicator2', '股票技术指标备用表', 'data', 'E', 'd', 'daily_basic2', 'trade_date', 'trade_date',
+         '19990101', '', '', ''],
 
     'index_indicator':
         ['index_indicator', '指数关键指标', 'data', 'IDX', 'd', 'index_daily_basic', 'trade_date', 'datetime',
@@ -1643,6 +2588,7 @@ class DataSource:
         :return:
             pd.DataFrame: 下载后并处理完毕的数据，DataFrame形式，仅含简单range-index格式
         """
+        from .tsfuncs import acquire_data
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
         if table not in TABLE_SOURCE_MAPPING.keys():
@@ -1836,7 +2782,7 @@ class DataSource:
                                                                                       with_primary_keys=True)
         critical_key = TABLE_SOURCE_MAPPING[table][6]
         table_schema = pd.DataFrame({'columns': columns,
-                                     'dtypes': dtypes,
+                                     'dtypes':  dtypes,
                                      'remarks': remarks})
         table_exists = self.table_data_exists(table)
         if table_exists:
@@ -1921,8 +2867,6 @@ class DataSource:
         """
         if isinstance(shares, str):
             shares = str_to_list(shares)
-        if isinstance(htypes, str):
-            htypes = str_to_list(htypes)
         if isinstance(asset_type, str):
             if asset_type.lower() == 'any':
                 from utilfuncs import AVAILABLE_ASSET_TYPES
@@ -1930,27 +2874,31 @@ class DataSource:
             else:
                 asset_type = str_to_list(asset_type)
 
-        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
-        table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-        table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
-        tables_to_read = table_map.loc[(table_map.table_usage.isin(['data', 'mins', 'report', 'comp'])) &
-                                       (table_map.asset_type.isin(asset_type)) &
-                                       (table_map.freq == freq)].index.to_list()
-        table_data_read = {}
+        # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
+        table_map = get_table_map()
+        tables_to_read = htype_to_table_col(
+                htypes=htypes,
+                freq=freq,
+                asset_type=asset_type
+        )
+        table_data_acquired = {}
         table_data_columns = {}
-        for tbl in tables_to_read:
+        # 逐个读取相关数据表，删除名称与数据类型不同的，保存到一个字典中，这个字典的健为表名，值为读取的DataFrame
+        for tbl, columns in tables_to_read.items():
             df = self.read_table_data(tbl, shares=shares, start=start, end=end)
             if not df.empty:
-                cols_to_remove = [col for col in df.columns if col not in htypes]
-                df.drop(columns=cols_to_remove, inplace=True)
-            table_data_read[tbl] = df
+                cols_to_drop = [col for col in df.columns if col not in columns]
+                df.drop(columns=cols_to_drop, inplace=True)
+            table_data_acquired[tbl] = df
             table_data_columns[tbl] = df.columns
-        # 提取数据，生成单个数据类型的dataframe
+        # 从读取的数据表中提取数据，生成单个数据类型的dataframe，并把各个dataframe合并起来
+        # 在df_by_htypes中预先存储了多个空DataFrame，用于逐个合并相关的历史数据
         df_by_htypes = {k: v for k, v in zip(htypes, [pd.DataFrame()] * len(htypes))}
         for htyp in htypes:
             for tbl in tables_to_read:
                 if htyp in table_data_columns[tbl]:
-                    df = table_data_read[tbl]
+                    df = table_data_acquired[tbl]
+                    # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstac，成为多列、单index的数据
                     if not df.empty:
                         htyp_series = df[htyp]
                         new_df = htyp_series.unstack(level=0)
@@ -1964,7 +2912,7 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
-        # 如果在历史数据合并时发现列名称冲突，发出警告信息，并删除后添加的列
+        # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
         for htyp in htypes:
             df_columns = df_by_htypes[htyp].columns.to_list()
@@ -2162,6 +3110,7 @@ class DataSource:
         :return:
             None
         """
+        from .tsfuncs import acquire_data
         # 1 参数合法性检查
         if (tables is None) and (dtypes is None):
             raise KeyError(f'tables and dtypes can not both be None.')
@@ -2288,7 +3237,7 @@ class DataSource:
                     start_end_chunk_rbounds = list(start_end_chunk_rbounds.strftime('%Y%m%d'))
 
                 start_end_chunk_rbounds.append(end)
-                chunked_additional_args = [{'start': s, 'end':   e} for s, e in
+                chunked_additional_args = [{'start': s, 'end': e} for s, e in
                                            zip(start_end_chunk_lbounds, start_end_chunk_rbounds)]
                 start_end_chunk_multiplier = len(chunked_additional_args)
 
@@ -2341,7 +3290,7 @@ class DataSource:
             dnld_data = pd.DataFrame()
             time_elapsed = 0
             try:
-                if parallel:
+                if parallel and (table != 'trade_calendar'):
                     with ProcessPoolExecutor(max_workers=process_count) as proc_pool:
                         futures = {proc_pool.submit(acquire_data, table, **kw): kw
                                    for kw in all_kwargs}
@@ -2358,8 +3307,8 @@ class DataSource:
                             time_elapsed = time.time() - st
                             time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                           estimation=True, short_form=False)
-                            progress_bar(completed, total, f'[{table}] <{list(cur_kwargs.values())[0]}>: '
-                                                           f'{total_written} downloaded/{time_remain} left')
+                            progress_bar(completed, total, f'<{table}:{list(cur_kwargs.values())[0]}>'
+                                                           f'{total_written}dnld/{time_remain}left')
 
                         self.update_table_data(table, dnld_data)
                 else:
@@ -2375,17 +3324,17 @@ class DataSource:
                         time_elapsed = time.time() - st
                         time_remain = time_str_format((total - completed) * time_elapsed / completed,
                                                       estimation=True, short_form=False)
-                        progress_bar(completed, total, f'[{table}] <{list(kwargs.values())[0]}>: '
-                                                       f'{total_written} downloaded/{time_remain} left')
+                        progress_bar(completed, total, f'<{table}:{list(kwargs.values())[0]}>'
+                                                       f'{total_written}dnld/{time_remain}left')
 
                     self.update_table_data(table, dnld_data)
                 strftime_elapsed = time_str_format(time_elapsed, short_form=True)
                 if len(arg_coverage) > 1:
-                    progress_bar(total, total, f'[{table}] <{arg_coverage[0]} to {arg_coverage[-1]}>: '
-                                               f'{total_written} written in {strftime_elapsed}\n')
+                    progress_bar(total, total, f'<{table}:{arg_coverage[0]}-{arg_coverage[-1]}>'
+                                               f'{total_written}wrtn in {strftime_elapsed}\n')
                 else:
-                    progress_bar(total, total, f'[{table}] <None>: '
-                                               f'{total_written} written in {strftime_elapsed}\n')
+                    progress_bar(total, total, f'[{table}:None>'
+                                               f'{total_written}wrtn in {strftime_elapsed}\n')
                 # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
                 #       f'{total} {arg_name} params '
                 #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
@@ -2399,9 +3348,19 @@ class DataSource:
                 # progress_bar(completed, total, f'[Interrupted! {table}] <{arg_coverage[0]} to {arg_coverage[-1]}>:'
                 #                                f'{total_written} written in {time_str_format(time_elapsed)}\n')
 
-    @lru_cache()
-    def get_all_basic_table_data(self):
-        """ 一个快速获取所有basic数据表的函数，缓存处理以加快速度
+    def get_all_basic_table_data(self, refresh_cache=False):
+        """ 一个快速获取所有basic数据表的函数，通常情况缓存处理以加快速度
+        如果设置refresh_cache为True，则清空缓存并重新下载数据
+
+        :return:
+        """
+        if refresh_cache:
+            self._get_all_basic_table_data.cache_clear()
+        return self._get_all_basic_table_data()
+
+    @lru_cache(maxsize=1)
+    def _get_all_basic_table_data(self):
+        """ 获取所有basic数据表
 
         :return:
         """
@@ -2554,6 +3513,68 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
+def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
+    """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
+        仅支持精确匹配。无法精确匹配数据表时，报错
+
+    :param htypes:
+    :param freq:
+    :param asset_type:
+    :param method: 两种匹配方式：
+                    - 'exact': 一一对应匹配，针对输入的每一个参数匹配一张数据表
+                    举例：
+                        输入为: ['close', 'pe'], ['E', 'IDX'] 时，输出为：
+                        ['stock_daily', 'index_indicator'], ['close', 'pe']
+                    - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
+                    举例：
+                        输入为: ['close', 'pe'], ['E', 'IDX']时，输出为：
+                        ['stock_daily', 'index_daily', 'stock_indicator', 'index_indicator'],
+                        ['close', 'close', 'pe', 'pe']
+    :return:
+        一个dict:
+        {table: columns}
+    """
+    if isinstance(htypes, str):
+        htypes = str_to_list(htypes)
+    if isinstance(freq, str):
+        freq = str_to_list(freq)
+    if isinstance(asset_type, str):
+        if asset_type.lower() == 'any':
+            from .utilfuncs import AVAILABLE_ASSET_TYPES
+            asset_type = AVAILABLE_ASSET_TYPES
+        else:
+            asset_type = str_to_list(asset_type)
+
+    # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+    dtype_map = get_dtype_map()
+    if method.lower() == 'exact':
+        # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
+        idx_count = max(len(htypes), len(freq), len(asset_type))
+        htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
+        freq = input_to_list(freq, idx_count, padder='d')
+        asset_type = input_to_list(asset_type, idx_count, padder='E')
+        dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
+    elif method.lower() == 'permute':
+        # 排列组合方式
+        dtype_idx = (htypes, freq, asset_type)
+    else:
+        raise KeyError(f'invalid method {method}')
+    try:
+        group = dtype_map.loc[dtype_idx].groupby(['table_name'])
+        matched_tables = group['column'].apply(list).to_dict()
+    except KeyError as e:
+        raise e
+    if any(pd.isna(item) for item in matched_tables):
+        # 部分输入数据匹配到nan值
+        print(f'some of the input items are invalid, they will be removed')
+        matched_tables = [item for item in matched_tables if pd.notna(item)]
+        if len(matched_tables) == 0:
+            raise KeyError()
+    # 处理列表中的重复数据
+
+    return matched_tables
+
+
 # noinspection PyTypeChecker
 @lru_cache(maxsize=16)
 def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
@@ -2595,8 +3616,21 @@ def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
         return columns, dtypes, remarks, primary_keys, pk_dtypes
 
 
+@lru_cache(maxsize=1)
+def get_dtype_map():
+    """ 获取所有内置数据类型的清单
+
+    :return:
+    """
+    dtype_map = pd.DataFrame(DATA_TABLE_MAPPING).T
+    dtype_map.columns = DATA_TABLE_MAPPING_COLUMNS
+    dtype_map.index.names = DATA_TABLE_MAPPING_INDEX_NAMES
+    return dtype_map
+
+
+@lru_cache(maxsize=1)
 def get_table_map():
-    """ 打印所有内置数据表的清单
+    """ 获取所有内置数据表的清单
 
     :return:
     """
@@ -2643,13 +3677,13 @@ def find_history_data(s):
         is_ascii = True
 
     table_map = get_table_map()
-    items_found = {'h_data':        [],
-                   'dtype':         [],
-                   'table':         [],
-                   'asset':         [],
-                   'freq':          [],
-                   'plot':          [],
-                   'remarks':       []
+    items_found = {'h_data':  [],
+                   'dtype':   [],
+                   'table':   [],
+                   'asset':   [],
+                   'freq':    [],
+                   'plot':    [],
+                   'remarks': []
                    }
     for table in table_map.index:
         table_structure_name = table_map['structure'].loc[table]
@@ -2670,7 +3704,7 @@ def find_history_data(s):
         if ('?' in s) or ('*' in s):
             matched = _wildcard_match(s, where_to_look)
         else:
-            match_values = list(map(match_how, [s]*len(where_to_look), where_to_look))
+            match_values = list(map(match_how, [s] * len(where_to_look), where_to_look))
             matched = [where_to_look[i] for i in range(len(where_to_look)) if match_values[i] >= 0.9]
 
         if len(matched) > 0:
