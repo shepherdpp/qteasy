@@ -8773,7 +8773,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
         res = qt.run(op,
                      visual=True,
                      trade_log=True,
-                     log_backtest_detail=False,
                      invest_start='20110725',
                      invest_end='20220401',
                      trade_batch_size=1,
@@ -8791,7 +8790,6 @@ class TestOperatorAndStrategy(unittest.TestCase):
                      sell_batch_size=100.,
                      invest_cash_amounts=[1000000],
                      mode=1,
-                     log=True,
                      trade_log=True,
                      PT_buy_threshold=0.03,
                      PT_sell_threshold=-0.03,
@@ -8807,7 +8805,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         res = qt.run(op,
                      mode=1,
                      visual=True,
-                     print_trade_log=True)
+                     trade_log=True)
 
     def test_non_day_data_freqs(self):
         """测试除d之外的其他数据频率交易策略"""
@@ -12569,6 +12567,43 @@ class TestQT(unittest.TestCase):
         print('backtest in realtime mode in optimization mode')
         op_realtime.run(mode=2)
 
+    def test_sell_short(self):
+        """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
+        op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
+        op.set_parameter(0, pars=(23, 100, 0.02))
+        res = qt.run(op,
+                     mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=False,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertTrue(no_short_in_res)
+        res = qt.run(op,
+                     mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=True,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertFalse(no_short_in_res)
+        op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
+        op.set_parameter(0, (23, 100, 0.02))
+        res = qt.run(op, mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=False,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertTrue(no_short_in_res)
+        res = qt.run(op, mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=True,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertFalse(no_short_in_res)
+
 
 class TestVisual(unittest.TestCase):
     """ Test the visual effects and charts
@@ -12976,7 +13011,7 @@ class StgBuyOpen(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['descr'],
+                         par_types=['int'],
                          name='OPEN_BUY',
                          par_range=[(0, 100)],
                          bt_price_type='open')
@@ -13008,7 +13043,7 @@ class StgSelClose(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['descr'],
+                         par_types=['int'],
                          name='SELL_CLOSE',
                          par_range=[(0, 100)],
                          bt_price_type='close')
@@ -13155,44 +13190,8 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        """测试allow_sell_short"""
-        op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
-        op.set_parameter(0, pars=(23, 100, 0.02))
-        res = qt.run(op,
-                     mode=1,
-                     invest_start='20060101',
-                     allow_sell_short=False,
-                     trade_log=True,
-                     visual=True)
-        res = qt.run(op,
-                     mode=1,
-                     invest_start='20060101',
-                     allow_sell_short=True,
-                     trade_log=True,
-                     visual=True)
-        op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
-        op.set_parameter(0, (23, 100, 0.02))
-        res = qt.run(op, mode=1,
-                     invest_start='20060101',
-                     allow_sell_short=False,
-                     trade_log=True,
-                     visual=True)
-        res = qt.run(op, mode=1,
-                     invest_start='20060101',
-                     allow_sell_short=True,
-                     trade_log=True,
-                     visual=True)
-
-
-    def test_time(self):
-        print(match_ts_code('000001'))
-        print(match_ts_code('中国电信'))
-        print(match_ts_code('嘉实服务'))
-        print(match_ts_code('中?集团'))
-        print(match_ts_code('中*金'))
-        print(match_ts_code('工商银行'))
-        print(match_ts_code('招商银行', asset_types='E, FD'))
-        print(match_ts_code('贵阳银行', asset_types='E, FT'))
+        """temp test"""
+        pass
 
 
 # noinspection SqlDialectInspection,PyTypeChecker
