@@ -8745,6 +8745,88 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print(f'\ntest financial generate with reference data')
         # to be added
 
+    def test_stg_trading_different_prices(self):
+        """测试op包含的策略有不同的交易价格，以开盘价买入，以收盘价卖出"""
+        qt.get_basic_info('000899.SZ')
+        stg_buy = StgBuyOpen()
+        stg_sel = StgSelClose()
+        op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
+        op.set_parameter(0,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         bt_price_type='open')
+        op.set_parameter(1,
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=50,
+                         pars=(20,),
+                         data_types='close',
+                         bt_price_type='close')
+        op.set_blender(blender='0')
+        op.get_blender()
+        qt.configure(asset_pool=['000300.SH',
+                                 '399006.SZ'],
+                     asset_type='IDX')
+        res = qt.run(op,
+                     visual=True,
+                     trade_log=True,
+                     invest_start='20110725',
+                     invest_end='20220401',
+                     trade_batch_size=1,
+                     sell_batch_size=0)
+        stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
+        qt.configure(asset_pool=stock_pool,
+                     asset_type='E',
+                     benchmark_asset='000300.SH',
+                     benchmark_asset_type='IDX',
+                     opti_output_count=50,
+                     invest_start='20211013',
+                     invest_end='20211231',
+                     opti_sample_count=100,
+                     trade_batch_size=100.,
+                     sell_batch_size=100.,
+                     invest_cash_amounts=[1000000],
+                     mode=1,
+                     trade_log=True,
+                     PT_buy_threshold=0.03,
+                     PT_sell_threshold=-0.03,
+                     backtest_price_adj='none')
+        op = qt.Operator(strategies=['finance'], signal_type='PS')
+        op.set_parameter(0,
+                         opt_tag=1,
+                         sample_freq='m',
+                         data_types='wt-000300.SH',
+                         sort_ascending=False,
+                         weighting='proportion',
+                         max_sel_count=300)
+        res = qt.run(op,
+                     mode=1,
+                     visual=True,
+                     trade_log=True)
+
+    def test_non_day_data_freqs(self):
+        """测试除d之外的其他数据频率交易策略"""
+        op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
+        op_min.set_parameter(0, data_freq='h', sample_freq='h')
+        op_min.set_parameter(1, data_freq='h', sample_freq='d')
+        op_min.set_parameter(2, data_freq='h', sample_freq='y')
+        op_min.set_blender(blender='(0+1)*2')
+        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
+                                 '000918.SZ', '000819.SZ', '000899.SZ'],
+                     asset_type='E',
+                     visual=True,
+                     trade_log=False)
+        res = qt.run(op_min,
+                     visual=True,
+                     trade_log=False,
+                     invest_start='20160225',
+                     invest_end='20161023',
+                     trade_batch_size=100,
+                     sell_batch_size=100)
+
 
 class TestLog(unittest.TestCase):
     def test_init(self):
@@ -12485,6 +12567,43 @@ class TestQT(unittest.TestCase):
         print('backtest in realtime mode in optimization mode')
         op_realtime.run(mode=2)
 
+    def test_sell_short(self):
+        """ 测试sell_short模式是否能正常工作（买入卖出负份额）"""
+        op = qt.Operator([Cross_SMA_PS()], signal_type='PS')
+        op.set_parameter(0, pars=(23, 100, 0.02))
+        res = qt.run(op,
+                     mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=False,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertTrue(no_short_in_res)
+        res = qt.run(op,
+                     mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=True,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertFalse(no_short_in_res)
+        op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
+        op.set_parameter(0, (23, 100, 0.02))
+        res = qt.run(op, mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=False,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertTrue(no_short_in_res)
+        res = qt.run(op, mode=1,
+                     invest_start='20060101',
+                     allow_sell_short=True,
+                     trade_log=True,
+                     visual=True)
+        no_short_in_res = np.all(res['oper_count'].short == 0)
+        self.assertFalse(no_short_in_res)
+
 
 class TestVisual(unittest.TestCase):
     """ Test the visual effects and charts
@@ -12892,7 +13011,7 @@ class StgBuyOpen(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['descr'],
+                         par_types=['int'],
                          name='OPEN_BUY',
                          par_range=[(0, 100)],
                          bt_price_type='open')
@@ -12924,7 +13043,7 @@ class StgSelClose(GeneralStg):
     def __init__(self, pars=(20,)):
         super().__init__(pars=pars,
                          par_count=1,
-                         par_types=['descr'],
+                         par_types=['int'],
                          name='SELL_CLOSE',
                          par_range=[(0, 100)],
                          bt_price_type='close')
@@ -12950,6 +13069,120 @@ class StgSelClose(GeneralStg):
             return sig
 
 
+class Cross_SMA_PS(qt.RuleIterator):
+    """自定义双均线择时策略策略，产生的信号类型为交易信号"""
+
+    def __init__(self):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        """
+        必须初始化的关键策略参数清单：
+
+        """
+        super().__init__(
+                pars=(25, 100, 0.01),
+                par_count=3,
+                par_types=['discr', 'discr', 'conti'],
+                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
+                data_types='close',
+                window_length=200,
+        )
+
+    # 策略的具体实现代码写在策略的realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def realize(self, h, r=None, t=None, pars=None):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度
+        """
+        f, s, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+        # 计算长短均线的当前值和昨天的值
+        s_ma = qt.sma(h[0], s)
+        f_ma = qt.sma(h[0], f)
+
+        s_today, s_last = s_ma[-1], s_ma[-2]
+        f_today, f_last = f_ma[-1], f_ma[-2]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_today * (1 + m)
+        s_ma_l = s_today * (1 - m)
+
+        # 根据观望模式在不同的点位产生交易信号
+        if (f_last < s_ma_u) and (f_today > s_ma_u):  # 当快均线自下而上穿过上边界，开多仓
+            return 1
+        elif (f_last > s_ma_u) and (f_today < s_ma_u):  # 当快均线自上而下穿过上边界，平多仓
+            return -1
+        elif (f_last > s_ma_l) and (f_today < s_ma_l):  # 当快均线自上而下穿过下边界，开空仓
+            return -1
+        elif (f_last < s_ma_l) and (f_today > s_ma_l):  # 当快均线自下而上穿过下边界，平空仓
+            return 1
+        else:  # 其余情况不产生任何信号
+            return 0
+
+
+class Cross_SMA_PT(qt.RuleIterator):
+    """自定义双均线择时策略策略，产生的信号类型为持仓目标信号"""
+
+    def __init__(self):
+        """这个均线择时策略只有三个参数：
+            - SMA 慢速均线，所选择的股票
+            - FMA 快速均线
+            - M   边界值
+
+            策略的其他说明
+
+        """
+        """
+        必须初始化的关键策略参数清单：
+
+        """
+        super().__init__(
+                pars=(25, 100, 0.01),
+                par_count=3,
+                par_types=['discr', 'discr', 'conti'],
+                par_range=[(10, 250), (10, 250), (0.0, 0.5)],
+                name='CUSTOM ROLLING TIMING STRATEGY',
+                description='Customized Rolling Timing Strategy for Testing',
+                data_types='close',
+                window_length=200,
+        )
+
+    # 策略的具体实现代码写在策略的_realize()函数中
+    # 这个函数固定接受两个参数： hist_price代表特定组合的历史数据， params代表具体的策略参数
+    def realize(self, h, r=None, t=None, pars=None):
+        """策略的具体实现代码：
+        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
+        f, s, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+        # 计算长短均线的当前值
+        s_ma = qt.sma(h[0], s)[-1]
+        f_ma = qt.sma(h[0], f)[-1]
+
+        # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
+        s_ma_u = s_ma * (1 + m)
+        s_ma_l = s_ma * (1 - m)
+
+        # 根据观望模式在不同的点位产生交易信号
+        if s_ma_u < f_ma:  # 当快均线在上边界以上时，持有多头仓位
+            return 1
+        elif s_ma_l <= f_ma <= s_ma_u:  # 当快均线在上下边界之间时，清空所有持仓
+            return 0
+        elif f_ma < s_ma_l:  # 当快均线在下边界以下时，持有空头仓位
+            return -1
+        else:  # 其余情况不产生任何信号
+            return 0
+
+
 class FastExperiments(unittest.TestCase):
     """This test case is created to have experiments done that can be quickly called from Command line"""
 
@@ -12957,94 +13190,8 @@ class FastExperiments(unittest.TestCase):
         pass
 
     def test_fast_experiments(self):
-        # qt.get_basic_info('000899.SZ')
-        # stg_buy = StgBuyOpen()
-        # stg_sel = StgSelClose()
-        # op = qt.Operator(strategies=[stg_buy, stg_sel], signal_type='ps')
-        # op.set_parameter(0,
-        #                  data_freq='d',
-        #                  sample_freq='d',
-        #                  window_length=50,
-        #                  pars=(20,),
-        #                  data_types='close',
-        #                  bt_price_type='open')
-        # op.set_parameter(1,
-        #                  data_freq='d',
-        #                  sample_freq='d',
-        #                  window_length=50,
-        #                  pars=(20,),
-        #                  data_types='close',
-        #                  bt_price_type='close')
-        # op.set_blender(blender='0')
-        # op.get_blender()
-        # qt.configure(asset_pool=['000300.SH',
-        #                          '399006.SZ'],
-        #              asset_type='IDX')
-        # res = qt.run(op,
-        #              visual=True,
-        #              trade_log=True,
-        #              log_backtest_detail=False,
-        #              invest_start='20110725',
-        #              invest_end='20220401',
-        #              trade_batch_size=1,
-        #              sell_batch_size=0)
-        # stock_pool = qt.filter_stock_codes(index='000300.SH', date='20211001')
-        # qt.configure(asset_pool=stock_pool,
-        #              asset_type='E',
-        #              benchmark_asset='000300.SH',
-        #              benchmark_asset_type='IDX',
-        #              opti_output_count=50,
-        #              invest_start='20211013',
-        #              invest_end='20211231',
-        #              opti_sample_count=100,
-        #              trade_batch_size=100.,
-        #              sell_batch_size=100.,
-        #              invest_cash_amounts=[1000000],
-        #              mode=1,
-        #              log=True,
-        #              trade_log=True,
-        #              PT_buy_threshold=0.03,
-        #              PT_sell_threshold=-0.03,
-        #              backtest_price_adj='none')
-        # op = qt.Operator(strategies=['finance'], signal_type='PS')
-        # op.set_parameter(0,
-        #                  opt_tag=1,
-        #                  sample_freq='m',
-        #                  data_types='wt-000300.SH',
-        #                  sort_ascending=False,
-        #                  weighting='proportion',
-        #                  max_sel_count=300)
-        # res = qt.run(op,
-        #              mode=1,
-        #              visual=True,
-        #              print_trade_log=True)
-        op_min = qt.Operator(strategies='DMA, MACD, ALL', signal_type='pt')
-        op_min.set_parameter(0, data_freq='h', sample_freq='h')
-        op_min.set_parameter(1, data_freq='h', sample_freq='d')
-        op_min.set_parameter(2, data_freq='h', sample_freq='y')
-        op_min.set_blender(blender='(0+1)*2')
-        qt.configure(asset_pool=['000001.SZ', '000002.SZ', '000005.SZ', '000006.SZ', '000007.SZ',
-                                 '000918.SZ', '000819.SZ', '000899.SZ'],
-                     asset_type='E',
-                     visual=True,
-                     trade_log=False)
-        res = qt.run(op_min,
-                     visual=True,
-                     trade_log=False,
-                     invest_start='20160225',
-                     invest_end='20161023',
-                     trade_batch_size=100,
-                     sell_batch_size=100)
-
-    def test_time(self):
-        print(match_ts_code('000001'))
-        print(match_ts_code('中国电信'))
-        print(match_ts_code('嘉实服务'))
-        print(match_ts_code('中?集团'))
-        print(match_ts_code('中*金'))
-        print(match_ts_code('工商银行'))
-        print(match_ts_code('招商银行', asset_types='E, FD'))
-        print(match_ts_code('贵阳银行', asset_types='E, FT'))
+        """temp test"""
+        pass
 
 
 # noinspection SqlDialectInspection,PyTypeChecker

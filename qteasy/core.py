@@ -172,10 +172,13 @@ def _loop_step(signal_type: int,
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 =交易信号 * 当前总资产
-            cash_to_spend += np.where((op < 0) & (own_amounts == 0), op * total_value, 0)
+            cash_to_spend += np.where((op < 0) & (own_amounts <= 0), op * total_value, 0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op * own_amounts, 0)
-
+            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op * own_amounts, 0)
+        # debug
+        # print(f'a:{np.round(own_amounts,2)}, signal:{op}, '
+        #       f'a2sell: {np.round(amounts_to_sell,2)}, '
+        #       f'c2spnd: {np.round(cash_to_spend,2)}')
     elif signal_type == 2:
         # signal_type 为VS，交易信号就是计划交易的股票数量，符号代表交易方向
         # 当不允许买空卖空操作时，只需要考虑持有股票时卖出或买入，即开多仓和平多仓
@@ -187,9 +190,9 @@ def _loop_step(signal_type: int,
         # 当允许买空卖空时，允许开启空头头寸：
         if allow_sell_short:
             # 当持有份额小于等于零且交易信号为负，开空仓：买入空头金额 = 信号数量 * 资产价格
-            cash_to_spend += np.where((op > 0) & (own_amounts == 0), op * prices, 0)
+            cash_to_spend += np.where((op > 0) & (own_amounts <= 0), op * prices, 0)
             # 当持有份额小于0（即持有空头头寸）且交易信号为正时，平空仓：卖出空头数量 = 交易信号 * 当前持有空头份额
-            amounts_to_sell -= np.where((op > 0) & (own_amounts <= 0), op, 0)
+            amounts_to_sell -= np.where((op > 0) & (own_amounts < 0), op, 0)
 
     else:
         raise ValueError(f'Invalid signal_type value ({signal_type})')
@@ -223,6 +226,8 @@ def _loop_step(signal_type: int,
 
     # 批量提交股份买入计划，计算实际买入的股票份额和交易费用
     # 由于已经提前确认过现金总额，因此不存在买入总金额超过持有现金的情况
+    # if total_cash_to_spend < 0:
+    #     import pdb; pdb.set_trace()
     amount_purchased, cash_spent, fee_buying = rate.get_purchase_result(prices=prices,
                                                                         cash_to_spend=cash_to_spend,
                                                                         moq=moq_buy)
