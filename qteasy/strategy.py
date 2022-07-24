@@ -1078,12 +1078,55 @@ class RuleIterator(BaseStrategy):
         RuleIterator 策略类继承了交易策略基类
 
         Rolling_Timing类会自动把上述特定计算算法滚动应用到整个历史数据区间，并且推广到所有的个股中。
-
-        * realize()方法的实现：realize()方法需要利用输入的参数，输出一组选股因子，用于筛选排序选股
-
             :input:
             h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，
+                h 的shape为(N, L)，含义如下：
+
+                - N行：交易时间轴
+                    传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
+                    data_freq则定义了时间戳的频率。
+                    例如：设定：
+                        - data_freq = 'd'
+                        - window_length = 100
+                    即表示：
+                        每次信号生成使用的历史数据频率为'天"，且使用100天的数据来生成交易信号
+
+                    这样在每一组strategy运行时，传入的历史数据片段就会包含从100天前到昨天的历史数据，例如
+                    在2020-05-30这一天，获取的数据就会是从2020-01-04开始，一直到2020-05-29这100个交易日
+                    的历史数据
+
+                - L列： 历史数据类型轴
+                    每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性data_types中设置
+                    例如：设定：
+                        - data_types = "open, high, low, close, pe"
+                    即表示：
+                        传入的数据会包含5列，分别代表股票的开、高、收、低、市盈率物种数据类型
+
+                    传入的数据排列顺序与data_types的设置一致，也就是说，如果需要获取市盈率数据，可以这样
+                    获取：
+                        h_seg[:, 4]
+
                 示例：
+                    以下例子都基于前面给出的参数设定
+                    例1，计算最近的收盘价相对于10天前的涨跌幅：
+                        close_last_day = h_seg[-1, 3]
+                        close_10_day = h_seg[-10, 3]
+                        rate_10 = (close_last_day / close_10_day) - 1
+
+                    例2, 判断股票最近的收盘价是否大于10日内的最高价：
+                        max_10_day = h_seg[-10:-1, 1].max(axis=1)
+                        close_last_day = h_seg[-1, 3]
+                        penetrate = close_last_day > max_10_day
+
+                    例3, 获取股票最近10日市盈率的平均值
+                        pe_10_days = h_seg[-10:-1, 4]
+                        avg_pe = pe_10_days.mean(axis=1)
+
+                    例4, 计算股票最近收盘价的10日移动平均价和50日移动平均价
+                        close_10_days = h_seg[-10:-1, 3]
+                        close_50_days = h_seg[-50:-1, 3]
+                        ma_10 = close_10_days.mean(axis=1)
+                        ma_50 = close_10_days.mean(axis=1)
 
             r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
                 参考BaseStrategy的docstring
