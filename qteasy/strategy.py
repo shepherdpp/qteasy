@@ -394,6 +394,14 @@ class BaseStrategy:
         return:
             int: 1: 设置成功，0: 设置失败
         """
+        # TODO: 使用set_pars设定参数时，会绕开__init__()中定义的根据pars推测
+        #  par_count/par_type/par_range的过程，应该重构这部分代码：
+        #  在set_pars()函数中检查输入的par是否符合已有的par_count，par_type，par_range，
+        #  如果符合，则直接更新set_pars，
+        #  如果不符合，则根据输入的pars推测新的par_count，par_type和par_range。
+        #  在__init__()中直接引用set_pars函数。
+        #  为了实现策略运行过程中的快速更新参数操作，创建新的函数update_par()，
+        #  采用极简方式更新参数
         assert isinstance(pars, (tuple, dict)) or pars is None, \
             f'parameter should be either a tuple or a dict, got {type(pars)} instead'
         if pars is None:
@@ -555,68 +563,42 @@ class BaseStrategy:
 class GeneralStg(BaseStrategy):
     """ 通用交易策略类，用户可以使用策略输入的历史数据、参考数据和成交数据，自定信号生成规则，生成交易信号。
 
-        类属性定义了策略类型、策略名称、策略关键属性的数量、类型和取值范围等
-        所有的策略类都有一个generate()方法，供Operator对象调用，传入相关的历史数据，并生成一组交易信号。
-
         策略的实现
-        基于一个策略类实现一个具体的策略，需要创建一个策略类，设定策略的基本参数，并重写realize()方法，在
-        realize()中编写交易信号的生成规则：
+        要创建一个通用交易策略，需要创建一个GeneralStg策略类，并重写realize()方法，在其中定义交易信号
+        的生成规则，并在策略属性中定义相关的数据类型和策略的运行参数。这样就可以将策略用于实盘或回测了。
 
-        - 策略的初始化(可选)
-        初始化策略的目的是为了设定策略的基本参数；
-        除了策略名称、介绍以外，还包括有哪些参数，参数的取值范围和类型、需要使用哪些历史数据、
-        数据的频率、信号生成的频率（称为采样频率）、数据滑窗的大小、参考数据的类型等等信息，这些信息都可以在
-        策略初始化时通过策略属性设置，如果不在初始化时设置，可以在创建strategy对象时设置。：
-
-        推荐使用下面的方法设置策略
+        推荐使用下面的方法创建策略类：
 
             Class ExampleStrategy(GeneralStg):
-
-                # __init__()是可选，在这里设置的属性值会成为这一策略类的默认值，在创建策略对象的
-                # 时候不需要重复设置。
-                def __init__(self, **kwargs):
-                    # 可选项
-                    # 定义这个策略的缺省/默认属性值
-                    super().__init_(pars=<default pars>,
-                                    par_count=<default par_count>,
-                                    par_types=<default par_types>,
-                                    par_range=<default par_range>,
-                                    # ... 定义其他的缺省属性值
-                                    **kwargs
-                                    )
 
                 def realize(self, pars, h, r, t):
 
                     # 在这里编写信号生成逻辑
-                    # res代表信号输出值
+                    ...
+                    result = ...
+                    # result代表策略的输出
 
-                    return res
+                    return result
 
         用下面的方法创建一个策略对象：
 
-            example_strategy = ExampleStrategy(name='example',
+            example_strategy = ExampleStrategy(pars=<example pars>,
+                                               name='example',
                                                description='example strategy',
-                                               pars=(2, 3.0, 'int'),
-                                               data_types='close',
-                                               bt_price_types='close'
-                                               data_freq='d',
-                                               sample_freq='2d',
-                                               window_length=100)
-            # 如果上面的属性在定义策略类的时候已经输入了，那么可以省略
+                                               data_types='close'
+                                               ...
+                                               )
+            在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
 
-        除了某些策略需要更多特殊属性以外，基本属性的含义及取值范围如下：
+        GeneralStg通用策略的参数如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
 
-            pars: tuple,            策略参数, 用于生成交易信号时所需的可变参数，在opt模式下，qteasy可以
-                                    通过修改这个参数寻找参数空间中的最优参数组合
-            opt_tag: int,           0: 参加优化，1: 不参加优化
-            name: str,              策略名称，用户自定义字符串
-            description: str,       策略简介，类似于docstring，简单介绍该类的策略内容
+            pars: tuple,            策略参数
+            opt_tag: int,           优化标记，策略是否参与参数优化
+            name: str,              策略名称
+            description: str,       策略简介
             par_count: int,         策略参数个数
-            par_types: tuple/list,  策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
-                                    1, 'int' 或 'discr': 离散型参数，通常数据类型为int
-                                    2, 'float' 或 'conti': 连续型参数，通常数据类型为float
-                                    3, 'enum': 枚举型参数，数据类型不限，可以为其他类型如str或tuple等
-            par_range:              策略参数取值范围，该参数供优化器使用，用于产生正确的参数空间并用于优化
+            par_types: tuple/list,  策略参数类型
+            par_range:              策略参数取值范围
             data_freq: str:         静态属性，依赖的数据频率，用于生成策略输出所需的历史数据的频率，取值范围包括：
                                     1, 'MIN'/'min': 可以接受1min/5min/15min/30min等参数
                                     2, 'H'/'h':
@@ -1622,8 +1604,6 @@ class RuleIterator(BaseStrategy):
 
         关于Strategy类的更详细说明，请参见qteasy的文档。
         RuleIterator 策略类继承了交易策略基类
-
-
 
     """
     __mataclass__ = ABCMeta
