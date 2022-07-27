@@ -599,101 +599,43 @@ class GeneralStg(BaseStrategy):
             par_count: int,         策略参数个数
             par_types: tuple/list,  策略参数类型
             par_range:              策略参数取值范围
-            data_freq: str:         静态属性，依赖的数据频率，用于生成策略输出所需的历史数据的频率，取值范围包括：
-                                    1, 'MIN'/'min': 可以接受1min/5min/15min/30min等参数
-                                    2, 'H'/'h':
-                                    3, 'D'/'d':
-                                    4, 'W'/'w':
-                                    5, 'M'/'m':
-                                    6, 'Q'/'q':
-                                    7, 'Y'/'y':
-            sample_freq:            静态属性，策略生成时的采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
-                                    一样，支持data_freq的倍数频率，如'3d', '2w'等，但是不能高于数据频率。
-            window_length:          静态属性，历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成，可选的参数
-                                    字符串包括所有qteasy中内置的标准数据类型或自定义数据类型：
-                                    1, 'open'
-                                    2, 'high'
-                                    3, 'low'
-                                    4, 'close'
-                                    5, 'volume'
-                                    6, 'eps'
-                                    7, ...
-            bt_price_type:          静态属性，策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价，也可以设置
-                                    为五档交易价格中的某一个价格，根据交易当时的时间戳动态确定具体的交易价格
+            data_freq: str:         数据频率，用于生成策略输出所需的历史数据的频率
+            sample_freq:            策略运行采样频率，即相邻两次策略生成的间隔频率。
+            window_length:          历史数据视窗长度。即生成策略输出所需要的历史数据的数量
+            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+            bt_price_type:          策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
             reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                     生成，如指数、宏观经济数据等。
-                                    如果参考数据是某指数或个股的数据，必须在数据类型后指明股票或指数代码，如：
-                                    - 'close-000300.SH': 表示沪深300指数的收盘价
-                                    - 'pe-600517.SH':    股票600517.SH的pe值
-                                    如果某种类型的数据本身与股票、指数等具体证券无关，则直接指明即可：
-                                    - 'shibor_on':       SHIBOR隔夜拆借利率数据
 
-        - 编写策略规则
-        策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
-        策略规则必须在realize()方法中定义，realize()方法具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
-        需要考虑股票的数量、历史周期、数据选择等等问题；
-        realize()方法是整个量化交易策略的核心，它体现了从输入数据到交易信号的逻辑过程
-        因此realize函数的输入包含历史数据、输出就是交易信号。
+        - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
 
-        realize()方法的定义如下：
+        realize()的定义：
 
             def realize(self,
                         h: np.ndarray,
                         r: np.ndarray,
                         t: np.ndarray)
 
-        realize()方法的实现：
-
-        策略参数的获取：
-            在realize()方法中，可以使用self.pars获取策略参数：
+        realize()中获取策略参数：
 
                 par_1, par_2, ..., par_n = self.pars
 
-        历史数据及其他相关数据的获取：
-        不管Strategy继承了哪一个策略类，realize()方法的输入都可以包括以下几个输入数据：
+        realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
 
-            - h(history):
-                历史数据片段，通常这是一个3D的ndarray，包含了所有股票的所有类型的历史数据，且数据的时间起止点是
-                策略运行当时开始倒推到时间窗口长度前的时刻，具体来说，如果这个array的shape为(M, N, L)，即：
+            - h(history): 历史数据片段，shape为(M, N, L)，即：
 
-                - M层：股票/证券类型轴
-                    每一层的数据表示一只股票的历史数据，具体哪些股票在qteasy运行参数中设定，
-                    例如：设定：
+                - M层：   股票类型
+
+                - N行：   交易日期/时间轴
+
+                - L列：   历史数据类型轴
+
+                在realize()中获取历史数据可以使用切片的方法，获取的数据可用于策略。下面给出几个例子：
+                例如：设定：
                         - asset_pool = "000001.SZ, 000002.SZ, 600001.SH"
-                    表示：
-                        使用"000001.SZ, 000002.SZ, 600000.SH"三支股票参与回测
-
-                    那么输入的数据就会包含3层，且第0、1、2层分别对应了000001.SZ, 000002.SZ, 600000.SH
-                    三支股票的数据，使用下面的方法即可获取相应的数据：
-                        h_seg[0, :, :] - 获取000001.SZ的所有历史数据
-
-                - N行： 交易日期/时间轴
-                    每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
-                    传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
-                    data_freq则定义了时间戳的频率。
-                    例如：设定：
                         - data_freq = 'd'
                         - window_length = 100
-                    即表示：
-                        每次信号生成使用的历史数据频率为'天"，且使用100天的数据来生成交易信号
-
-                    这样在每一组strategy运行时，传入的历史数据片段就会包含从100天前到昨天的历史数据，例如
-                    在2020-05-30这一天，获取的数据就会是从2020-01-04开始，一直到2020-05-29这100个交易日
-                    的历史数据
-
-                - L列： 历史数据类型轴
-                    每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性data_types中设置
-                    例如：设定：
                         - data_types = "open, high, low, close, pe"
-                    即表示：
-                        传入的数据会包含5列，分别代表股票的开、高、收、低、市盈率物种数据类型
-
-                    传入的数据排列顺序与data_types的设置一致，也就是说，如果需要获取市盈率数据，可以这样
-                    获取：
-                        h_seg[:, :, 4]
-
-                在策略规则中获取历史数据应该使用上面的切片方法，并做相应计算，下面给出几个例子：
 
                     以下例子都基于前面给出的参数设定
                     例1，计算每只股票最近的收盘价相对于10天前的涨跌幅：
@@ -716,40 +658,25 @@ class GeneralStg(BaseStrategy):
                         ma_10 = close_10_days.mean(axis=1)
                         ma_50 = close_10_days.mean(axis=1)
 
-                **注意**
-                在RuleIterator策略类中，h的格式稍有不同，是一个2D数据，仅包含N行L列，交易日期/时间轴和历史数据类型轴
-                的数据，详情参见RuleIterator策略类的docstring
-
-            - r(reference):
-                参考历史数据，即与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如根据
-                大盘选股的大盘数据，或者宏观经济数据等。
-                如果不需要参考数据，r 会是None
-
-                ref_seg的结构是一个N行L列的2D array，包含所有可以使用的参考数据类型，而数据的时间段与
-                历史数据h相同:
+            - r(reference):参考历史数据，默认为None，shape为(N, L)
+                与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
+                宏观经济数据等，
 
                 - N行, 交易日期/时间轴
-                    每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
-                    传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
-                    data_freq则定义了时间戳的频率。
 
                 - L列，参考数据类型轴
-                    每一列数据表示与股票相关的一种参考数据类型。具体的参考数据类型在策略属性
-                    reference_data_types中设置
-                    例如：设定：
-                        - reference_data_types = "000300.SH.close, 000001.SH.close"
-                    即表示：
-                        使用的参考历史数据为000300.SH指数的收盘价
-                    如果reference_data_types = ""，则传入的参考数据会是None
 
                 以下是获取参考数据的几个例子：
+                    设定：
+                        - reference_data_types = "000300.SH.close, 000001.SH.close"
+
                     例1: 获取最近一天的沪深300收盘价：
                         close_300 = r[-1, 0]
                     例2: 获取五天前的上证指数收盘价:
                         close_SH = r[-5, 1]
 
-            - t(trade):
-                交易历史数据，最近几次交易的结果数据，2D数据。包含N行5列数据
+            - t(trade):交易历史数据，默认为None，shape为(N, 5)
+                最近几次交易的结果数据，2D数据。包含N行5列数据
                 如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
                 数据的结构如下
 
@@ -757,7 +684,6 @@ class GeneralStg(BaseStrategy):
                     每一列代表一只个股或证券
 
                 - 5列,  交易数据类型轴
-                    每一行数据代表一类数据，包括：
                     - 0, own_amounts:              当前持有每种股票的份额
                     - 1, available_amounts:        当前可用的每种股票的份额
                     - 2, current_prices:           当前的交易价格
@@ -779,28 +705,23 @@ class GeneralStg(BaseStrategy):
                         t = t.T
                         own_amounts = t[0]
 
-                **注意**
-                在RuleIterator策略类中，t的格式稍有不同，是一个1D数据，包含五个元素，参见RuleIterator策略类
-                的docstring
-
 
         realize()方法的输出：
-        realize()方法的输出就是交易信号，为了确保交易信号有意义，输出信息必须遵循一定的格式。
-        对于GeneralStg和FactorSorter两类交易策略来说，输出信号为1D ndarray，这个数组包含的元素数量与参与策略的股票数量
-        相同，例如参与策略的股票有20个，则生成的交易策略为shape为(20,)的numpy数组
-        特殊情况是RuleIterator策略类，这一类策略会将相同的规则重复应用到所有的股票上，因此仅需要输出一个数字即可。
+        realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
+        ndarray中每个元素代表相应股票的操作信号。在不同的信号类型时，交易信号的含义不同：
 
-            - GeneralStg / FactorSorter:
-                output：
-                        np.array(arr), 如： np.array[0.2, 1.0, 10.0, 100.0]
-            - RuleIterator:
-                output:
-                        float / np.float, 如: 1.0
+            signal type  |        PT          |            PS            |         VS
+            ------------------------------------------------------------------------------------
+               sig > 1   |        N/A         |            N/A           |   Buy in sig shares
+            1 >= sig > 0 |Buy to sig position | Buy with sig% of cash    |   Buy in sig shares
+               sig = 0   |Sell to hold 0 share|        Do Nothing        |       Do Nothing
+            0 > sig >= -1|       N/A          | Sell sig% of share hold  |    Sell sig shares
+              sig < -1   |       N/A          |           N/A            |    Sell sig shares
 
         按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
         中，并产生交易信号了。
 
-        关于Strategy类的更详细说明，请参见qteasy的文档。
+        关于GeneralStg类的更详细说明，请参见qteasy的文档。
     """
     __metaclass__ = ABCMeta
 
