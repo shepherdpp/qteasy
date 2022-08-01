@@ -821,12 +821,7 @@ class FactorSorter(BaseStrategy):
                                         'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
                                         'proportion' :权重与股票的因子分值成正比
 
-        - 编写策略规则
-        策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
-        策略规则必须在realize()方法中定义，realize()方法具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
-        需要考虑股票的数量、历史周期、数据选择等等问题；
-        realize()方法是整个量化交易策略的核心，它体现了从输入数据到交易信号的逻辑过程
-        因此realize函数的输入包含历史数据、输出就是交易信号。
+        - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
 
         realize()的定义：
 
@@ -1087,206 +1082,72 @@ class FactorSorter(BaseStrategy):
 
 
 class RuleIterator(BaseStrategy):
-    """ 规则横向分配策略类。这一类策略不考虑每一只股票的区别，将同一套规则同时套用到所有的股票上。
+    """ 规则迭代策略类。这一类策略不考虑每一只股票的区别，将同一套规则同时迭代应用到所有的股票上。
 
-        这类策略要求用户从历史数据中提取一个选股因子，并根据选股因子的大小排序后确定投资组合中股票的交易信号
-        用户需要在realize()方法中计算选股因子，计算出选股因子后，接下来的排序和选股逻辑都不需要用户自行定义。
-        策略会根据预设的条件，从中筛选出符合标准的因子，并将剩下的因子排序，从中选择特定
-        数量的股票，最后根据它们的因子值分配权重或信号值。
-
-        这些选股因子的排序和筛选条件，由6个额外的选股参数来控制，因此用户只需要在策略属性中设置好相应的参数，
-        策略就可以根据选股因子输出交易信号了。用户只需要集中精力思考选股因子的定义逻辑即可，无需费时费力编写
-        因子的筛选排序取舍逻辑了。
-
-            * 额外的策略属性：
-                策略使用6个额外的选股参数实现因子排序选股:
+        这类策略要求用户针对投资组合中的一个投资品种设计交易规则，在realize()方法定义该交易规则，
+        策略可以把同样的交易规则应用推广到投资组合中的所有投资品种上，同时可以采用不同的策略参数。
 
 
-            * realize()方法的实现：realize()方法需要利用输入的参数，输出一组选股因子，用于筛选排序选股
-
-                :input:
-                h: 历史数据，一个3D numpy数组，包含所有股票在一个时间窗口内的所有类型的历史数据，
-                    参考BaseStrategy的docstring
-                r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
-                    参考BaseStrategy的docstring
-                t: 交易数据，一个2D numpy数组，包含最近一次交易的实际结果
-                    参考BaseStraegy的docstring
-类属性定义了策略类型、策略名称、策略关键属性的数量、类型和取值范围等
-        所有的策略类都有一个generate()方法，供Operator对象调用，传入相关的历史数据，并生成一组交易信号。
-
-        策略的实现
-        基于一个策略类实现一个具体的策略，需要创建一个策略类，设定策略的基本参数，并重写realize()方法，在
-        realize()中编写交易信号的生成规则：
-
-        - 策略的初始化(可选)
-        初始化策略的目的是为了设定策略的基本参数；
-        除了策略名称、介绍以外，还包括有哪些参数，参数的取值范围和类型、需要使用哪些历史数据、
-        数据的频率、信号生成的频率（称为采样频率）、数据滑窗的大小、参考数据的类型等等信息，这些信息都可以在
-        策略初始化时通过策略属性设置，如果不在初始化时设置，可以在创建strategy对象时设置。：
-
-        推荐使用下面的方法设置策略
+        推荐使用下面的方法创建策略类：
 
             Class ExampleStrategy(GeneralStg):
-
-                # __init__()是可选，在这里设置的属性值会成为这一策略类的默认值，在创建策略对象的
-                # 时候不需要重复设置。
-                def __init__(self, **kwargs):
-                    # 可选项
-                    # 定义这个策略的缺省/默认属性值
-                    super().__init_(pars=<default pars>,
-                                    par_count=<default par_count>,
-                                    par_types=<default par_types>,
-                                    par_range=<default par_range>,
-                                    # ... 定义其他的缺省属性值
-                                    **kwargs
-                                    )
 
                 def realize(self, pars, h, r, t):
 
                     # 在这里编写信号生成逻辑
-                    # res代表信号输出值
+                    ...
+                    result = ...
+                    # result代表策略的输出
 
-                    return res
+                    return result
 
         用下面的方法创建一个策略对象：
 
-            example_strategy = ExampleStrategy(name='example',
+            example_strategy = ExampleStrategy(pars=<example pars>,
+                                               name='example',
                                                description='example strategy',
-                                               pars=(2, 3.0, 'int'),
-                                               data_types='close',
-                                               bt_price_types='close'
-                                               data_freq='d',
-                                               sample_freq='2d',
-                                               window_length=100)
-            # 如果上面的属性在定义策略类的时候已经输入了，那么可以省略
+                                               data_types='close'
+                                               ...
+                                               )
+            在创建策略类的时候可以定义默认策略参数，详见qteasy的文档——创建交易策略
 
-        除了某些策略需要更多特殊属性以外，基本属性的含义及取值范围如下：
+        RuleIterator策略类的策略属性如下，更详细的参数说明、取值范围和含义请参见qteasy文档：
 
-            pars: tuple,            策略参数, 用于生成交易信号时所需的可变参数，在opt模式下，qteasy可以
-                                    通过修改这个参数寻找参数空间中的最优参数组合
-            opt_tag: int,           0: 参加优化，1: 不参加优化
-            name: str,              策略名称，用户自定义字符串
-            description: str,       策略简介，类似于docstring，简单介绍该类的策略内容
-            par_count: int,         策略参数个数
-            par_types: tuple/list,  策略参数类型，注意这里并不是数据类型，而是策略参数空间数轴的类型，包含三种类型：
-                                    1, 'int' 或 'discr': 离散型参数，通常数据类型为int
-                                    2, 'float' 或 'conti': 连续型参数，通常数据类型为float
-                                    3, 'enum': 枚举型参数，数据类型不限，可以为其他类型如str或tuple等
-            par_range:              策略参数取值范围，该参数供优化器使用，用于产生正确的参数空间并用于优化
-            data_freq: str:         静态属性，依赖的数据频率，用于生成策略输出所需的历史数据的频率，取值范围包括：
-                                    1, 'MIN'/'min': 可以接受1min/5min/15min/30min等参数
-                                    2, 'H'/'h':
-                                    3, 'D'/'d':
-                                    4, 'W'/'w':
-                                    5, 'M'/'m':
-                                    6, 'Q'/'q':
-                                    7, 'Y'/'y':
-            sample_freq:            静态属性，策略生成时的采样频率，即相邻两次策略生成的间隔频率，可选参数与data_freq
-                                    一样，支持data_freq的倍数频率，如'3d', '2w'等，但是不能高于数据频率。
-            window_length:          静态属性，历史数据视窗长度。即生成策略输出所需要的历史数据的数量
-            data_types:             静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成，可选的参数
-                                    字符串包括所有qteasy中内置的标准数据类型或自定义数据类型：
-                                    1, 'open'
-                                    2, 'high'
-                                    3, 'low'
-                                    4, 'close'
-                                    5, 'volume'
-                                    6, 'eps'
-                                    7, ...
-            bt_price_type:          静态属性，策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价，也可以设置
-                                    为五档交易价格中的某一个价格，根据交易当时的时间戳动态确定具体的交易价格
-            reference_data_types:   参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
-                                    生成，如指数、宏观经济数据等。
-                                    如果参考数据是某指数或个股的数据，必须在数据类型后指明股票或指数代码，如：
-                                    - 'close-000300.SH': 表示沪深300指数的收盘价
-                                    - 'pe-600517.SH':    股票600517.SH的pe值
-                                    如果某种类型的数据本身与股票、指数等具体证券无关，则直接指明即可：
-                                    - 'shibor_on':       SHIBOR隔夜拆借利率数据
+            pars:               tuple,  策略参数
+            opt_tag:            int,    优化标记，策略是否参与参数优化
+            name:               str,    策略名称
+            description:        str,    策略简介
+            par_count:          int,    策略参数个数
+            par_types:          tuple,  策略参数类型
+            par_range:          tuple,  策略参数取值范围
+            data_freq:          str:    数据频率，用于生成策略输出所需的历史数据的频率
+            sample_freq:                策略运行采样频率，即相邻两次策略生成的间隔频率。
+            window_length:              历史数据视窗长度。即生成策略输出所需要的历史数据的数量
+            data_types:                 静态属性生成策略输出所需要的历史数据的种类，由以逗号分隔的参数字符串组成
+            bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
+            reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
+                                        生成，如指数、宏观经济数据等。
 
-            以下属性为FactorSorter策略的专有属性
-            *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，如果sel_limit小于1，表示选股的比例：
-                                        默认值：0.5
-                                        例如：
-                                        0.25: 最多选出25%的股票, 10:  最多选出10个股票
-            *condition:         str ,   确定股票的筛选条件，默认值'any'
-                                        可用值包括：
-                                        'any'        :默认值，选择所有可用股票
-                                        'greater'    :筛选出因子大于ubound的股票
-                                        'less'       :筛选出因子小于lbound的股票
-                                        'between'    :筛选出因子介于lbound与ubound之间的股票
-                                        'not_between':筛选出因子不在lbound与ubound之间的股票
-            *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
-            *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
-            *sort_ascending:    bool,   排序方法，对选中的股票进行排序以选择或分配权重：
-                                        默认值: False
-                                        True         :对选股因子从小到大排列，优先选择因子最小的股票
-                                        False        :对选股因子从大到小排列，优先选择因子最大的股票
-            *weighting:         str ,   确定如何分配选中股票的权重
-                                        默认值: 'even'
-                                        'even'       :所有被选中的股票都获得同样的权重
-                                                      例如:
-                                                      Factors: [-0.1,    0,  0.3,  0.4]
-                                                      signals: [0.25, 0.25, 0.25, 0.25]
-                                        'linear'     :权重根据因子排序线性分配，分值最高者占比约为分值最低者占比的三倍，
-                                                      其余居中者的比例按序呈等差数列
-                                                      例如:
-                                                      Factors: [ -0.1,     0,   0.3,   0.4]
-                                                      signals: [0.143, 0.214, 0.286, 0.357]
-                                        'distance'   :指标最低的股票获得一个基本权重，其余股票的权重与他们的指标与最低
-                                                      指标之间的差值（距离）成比例
-                                                      例如:
-                                                      Factors: [ -0.1,     0,   0.3,   0.4]
-                                                      signals: [0.042, 0.125, 0.375, 0.458]
-                                        'proportion' :舍去不合理的因子值后（如负数），其余股票的权重与它们的因子分值
-                                                      成正比
-                                                      例如:
-                                                      Factors: [ -0.1,    0.,   0.3,   0.4]
-                                                      signals: [   0.,    0., 0.429, 0.571]
+        - 编写策略规则，策略规则是通过realize()函数实现的，关于realize()函数更详细的介绍，请参见qteasy文档。
 
-        - 编写策略规则
-        策略规则是交易策略的核心，体现了交易信号与历史数据之间的逻辑关系。
-        策略规则必须在realize()方法中定义，realize()方法具有标准的数据输入，用户在规则中只需要考虑交易信号的产生逻辑即可，不
-        需要考虑股票的数量、历史周期、数据选择等等问题；
-        realize()方法是整个量化交易策略的核心，它体现了从输入数据到交易信号的逻辑过程
-        因此realize函数的输入包含历史数据、输出就是交易信号。
-
-        realize()方法的定义如下：
+        realize()的定义：
 
             def realize(self,
                         h: np.ndarray,
                         r: np.ndarray,
-                        t: np.ndarray)
+                        t: np.ndarray):
 
-        realize()方法的实现：
+        realize()中获取策略参数：
 
-        Rolling_Timing类会自动把上述特定计算算法滚动应用到整个历史数据区间，并且推广到所有的个股中。
+                par_1, par_2, ..., par_n = self.pars
+
+        realize()中获取历史数据及其他相关数据，关于历史数据的更多详细说明，请参考qteasy文档：
             :input:
             h: 历史数据，一个2D numpy数组，包含一只股票在一个时间窗口内的所有类型的历史数据，
                 h 的shape为(N, L)，含义如下：
 
                 - N行：交易时间轴
-                    传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
-                    data_freq则定义了时间戳的频率。
-                    例如：设定：
-                        - data_freq = 'd'
-                        - window_length = 100
-                    即表示：
-                        每次信号生成使用的历史数据频率为'天"，且使用100天的数据来生成交易信号
-
-                    这样在每一组strategy运行时，传入的历史数据片段就会包含从100天前到昨天的历史数据，例如
-                    在2020-05-30这一天，获取的数据就会是从2020-01-04开始，一直到2020-05-29这100个交易日
-                    的历史数据
-
                 - L列： 历史数据类型轴
-                    每一列数据表示与股票相关的一种历史数据类型。具体的历史数据类型在策略属性data_types中设置
-                    例如：设定：
-                        - data_types = "open, high, low, close, pe"
-                    即表示：
-                        传入的数据会包含5列，分别代表股票的开、高、收、低、市盈率物种数据类型
-
-                    传入的数据排列顺序与data_types的设置一致，也就是说，如果需要获取市盈率数据，可以这样
-                    获取：
-                        h_seg[:, 4]
 
                 示例：
                     以下例子都基于前面给出的参数设定
@@ -1310,45 +1171,25 @@ class RuleIterator(BaseStrategy):
                         ma_10 = close_10_days.mean(axis=1)
                         ma_50 = close_10_days.mean(axis=1)
 
-            r: 参考数据，一个2D numpy数组，包含一个时间窗口内所有参考类型的历史数据
-                参考BaseStrategy的docstring
-
-            t: 交易数据，一个2D numpy数组，包含最近一次交易的实际结果
-                参考BaseStraegy的docstring
-
-            :output
-            signals: 一个代表交易信号的数字，dtype为float
-
-            - r(reference):
-                参考历史数据，即与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如根据
-                大盘选股的大盘数据，或者宏观经济数据等。
-                如果不需要参考数据，r 会是None
-
-                ref_seg的结构是一个N行L列的2D array，包含所有可以使用的参考数据类型，而数据的时间段与
-                历史数据h相同:
+            - r(reference):参考历史数据，默认为None，shape为(N, L)
+                与每个个股并不直接相关，但是可以在生成交易信号时用做参考的数据，例如大盘数据，或者
+                宏观经济数据等，
 
                 - N行, 交易日期/时间轴
-                    每一行数据表示股票在一个时间戳（或时间点）上的历史数据。
-                    传入的数据一共有N行，N也就是时间戳的数量是通过策略的window_length参数设定的，而
-                    data_freq则定义了时间戳的频率。
 
                 - L列，参考数据类型轴
-                    每一列数据表示与股票相关的一种参考数据类型。具体的参考数据类型在策略属性
-                    reference_data_types中设置
-                    例如：设定：
-                        - reference_data_types = "000300.SH.close, 000001.SH.close"
-                    即表示：
-                        使用的参考历史数据为000300.SH指数的收盘价
-                    如果reference_data_types = ""，则传入的参考数据会是None
 
                 以下是获取参考数据的几个例子：
+                    设定：
+                        - reference_data_types = "000300.SH.close, 000001.SH.close"
+
                     例1: 获取最近一天的沪深300收盘价：
                         close_300 = r[-1, 0]
                     例2: 获取五天前的上证指数收盘价:
                         close_SH = r[-5, 1]
 
-            - t(trade):
-                交易历史数据，最近几次交易的结果数据，2D数据。包含N行5列数据
+            - t(trade):交易历史数据，默认为None，shape为(N, 5)
+                最近几次交易的结果数据，2D数据。包含N行5列数据
                 如果交易信号不依赖交易结果（只有这样才能批量生成交易信号），t会是None。
                 数据的结构如下
 
@@ -1356,7 +1197,6 @@ class RuleIterator(BaseStrategy):
                     每一列代表一只个股或证券
 
                 - 5列,  交易数据类型轴
-                    每一行数据代表一类数据，包括：
                     - 0, own_amounts:              当前持有每种股票的份额
                     - 1, available_amounts:        当前可用的每种股票的份额
                     - 2, current_prices:           当前的交易价格
@@ -1378,15 +1218,27 @@ class RuleIterator(BaseStrategy):
                         t = t.T
                         own_amounts = t[0]
 
+            :output
+            signals: 一个代表交易信号的数字，dtype为float
 
         realize()方法的输出：
-        realize()方法的输出就是交易信号，为了确保交易信号有意义，输出信息必须遵循一定的格式。
-        对于GeneralStg和FactorSorter两类交易策略来说，输出信号为1D ndarray，这个数组包含的元素数量与参与策略的股票数量
-        相同，例如参与策略的股票有20个，则生成的交易策略为shape为(20,)的numpy数组
-        特殊情况是RuleIterator策略类，这一类策略会将相同的规则重复应用到所有的股票上，因此仅需要输出一个数字即可。
+        realize()方法的输出就是交易信号，该交易信号是一个数字，策略会将其推广到整个投资组合：
 
-            output：
-                    np.array(arr), 如： np.array[0.2, 1.0, 10.0, 100.0]
+            def realize(): -> int
+
+            投资组合： [share1, share2, share3, share4]
+                        |        |       |       |
+                     [ int1,    int2,   int3,   int4] -> np.array[ int1,    int2,   int3,   int4]
+
+        在不同的信号类型下，信号的含义不同。
+
+            signal type  |        PT          |            PS            |         VS
+            ------------------------------------------------------------------------------------
+               sig > 1   |        N/A         |            N/A           |   Buy in sig shares
+            1 >= sig > 0 |Buy to sig position | Buy with sig% of cash    |   Buy in sig shares
+               sig = 0   |Sell to hold 0 share|        Do Nothing        |       Do Nothing
+            0 > sig >= -1|       N/A          | Sell sig% of share hold  |    Sell sig shares
+              sig < -1   |       N/A          |           N/A            |    Sell sig shares
 
         按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
         中，并产生交易信号了。
