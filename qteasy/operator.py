@@ -18,7 +18,7 @@ from .finance import CashPlan
 from .history import HistoryPanel
 from .utilfuncs import str_to_list, ffill_2d_data, fill_nan_data, rolling_window
 from .strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
-from .built_in import AVAILABLE_BUILT_IN_STRATEGIES, BUILT_IN_STRATEGIES
+from .built_in import available_built_in_strategies, BUILT_IN_STRATEGIES
 from .blender import blender_parser
 
 
@@ -756,8 +756,8 @@ class Operator:
             strategy = BUILT_IN_STRATEGIES[stg]()
         # 当传入的对象是一个strategy对象时，直接添加该策略对象
         elif isinstance(stg, BaseStrategy):
-            if stg in AVAILABLE_BUILT_IN_STRATEGIES:
-                stg_id_index = list(AVAILABLE_BUILT_IN_STRATEGIES).index(stg)
+            if stg in available_built_in_strategies:
+                stg_id_index = list(available_built_in_strategies).index(stg)
                 stg_id = list(BUILT_IN_STRATEGIES)[stg_id_index]
             else:
                 stg_id = 'custom'

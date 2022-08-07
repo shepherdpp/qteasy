@@ -2387,4 +2387,5 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'ndayvol':       SelectingNDayVolatility
                        }
 
-AVAILABLE_BUILT_IN_STRATEGIES = BUILT_IN_STRATEGIES.values()
+
+available_built_in_strategies = BUILT_IN_STRATEGIES.values()

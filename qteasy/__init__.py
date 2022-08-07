@@ -11,6 +11,7 @@
 # ======================================
 
 import tushare as ts
+import numpy as np
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
@@ -21,8 +22,8 @@ from .history import HistoryPanel, get_history_panel
 from .history import dataframe_to_hp, stack_dataframes
 from .operator import Operator
 from .strategy import RuleIterator, GeneralStg, FactorSorter
+from .built_in import built_ins, built_in_list, built_in_strategies
 from .visual import candle
-from .built_in import *
 from .finance import CashPlan, Cost
 from .database import DataSource, find_history_data
 from ._arg_validators import QT_CONFIG
