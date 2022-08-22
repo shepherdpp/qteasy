@@ -6906,35 +6906,35 @@ class TestOperatorAndStrategy(unittest.TestCase):
         op = qt.Operator('dma, all, urgent')
 
         self.assertIsInstance(op, qt.Operator)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[1], qt.SelectingAll)
-        self.assertIsInstance(op.strategies[2], qt.RiconUrgent)
-        self.assertIsInstance(op[0], qt.TimingDMA)
-        self.assertIsInstance(op[1], qt.SelectingAll)
-        self.assertIsInstance(op[2], qt.RiconUrgent)
-        self.assertIsInstance(op['dma'], qt.TimingDMA)
-        self.assertIsInstance(op['all'], qt.SelectingAll)
-        self.assertIsInstance(op['urgent'], qt.RiconUrgent)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op.strategies[2], qt.built_in.RiconUrgent)
+        self.assertIsInstance(op[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op[2], qt.built_in.RiconUrgent)
+        self.assertIsInstance(op['dma'], qt.built_in.TimingDMA)
+        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
+        self.assertIsInstance(op['urgent'], qt.built_in.RiconUrgent)
         self.assertEqual(op.strategy_count, 3)
         print(f'test adding strategies into existing op')
         print('test adding strategy by string')
         op.add_strategy('macd')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[3], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.TimingMACD)
         self.assertEqual(op.strategy_count, 4)
         op.add_strategy('random')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[4], qt.SelectingRandom)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
         self.assertEqual(op.strategy_count, 5)
         test_ls = TestLSStrategy()
         op.add_strategy(test_ls)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
         self.assertIsInstance(op.strategies[5], TestLSStrategy)
         self.assertEqual(op.strategy_count, 6)
         print(f'Test different instance of objects are added to operator')
         op.add_strategy('dma')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[6], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.TimingDMA)
         self.assertIsNot(op.strategies[0], op.strategies[6])
 
     def test_operator_add_strategies(self):
@@ -6944,27 +6944,27 @@ class TestOperatorAndStrategy(unittest.TestCase):
         print('test adding multiple strategies -- adding strategy by list of strings')
         op.add_strategies(['dma', 'macd'])
         self.assertEqual(op.strategy_count, 5)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[3], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[4], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by comma separated strings')
         op.add_strategies('dma, macd')
         self.assertEqual(op.strategy_count, 7)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[5], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[6], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[5], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by list of strategies')
-        op.add_strategies([qt.TimingDMA(), qt.TimingMACD()])
+        op.add_strategies([qt.built_in.TimingDMA(), qt.built_in.TimingMACD()])
         self.assertEqual(op.strategy_count, 9)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[7], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[8], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[7], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[8], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by list of strategy and str')
-        op.add_strategies(['DMA', qt.TimingMACD()])
+        op.add_strategies(['DMA', qt.built_in.TimingMACD()])
         self.assertEqual(op.strategy_count, 11)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[9], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[10], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[9], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[10], qt.built_in.TimingMACD)
         self.assertIsNot(op.strategies[0], op.strategies[9])
         self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
         print('test adding fault arr')
@@ -7433,7 +7433,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         :return:
         """
         op = qt.Operator(strategies='dma, all, urgent')
-        print(op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
+        print(op.strategies, '\n', [qt.built_in.TimingDMA, qt.built_in.SelectingAll, qt.built_in.RiconUrgent])
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
         # TODO: allow set_parameters to a list of strategies or str-listed strategies
         # TODO: allow set_parameters to all strategies of specific bt price type
@@ -7697,7 +7697,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertRaises(AssertionError, op.set_opt_par, [5, 12, 9, 7, 15, 12, 'sell'])
 
     def test_stg_attribute_get_and_set(self):
-        self.stg = qt.TimingCrossline()
+        self.stg = qt.built_in.TimingCrossline()
         self.stg_type = 'RULE-ITER'
         self.stg_name = "CROSSLINE"
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
@@ -12585,6 +12585,7 @@ class TestQT(unittest.TestCase):
                      allow_sell_short=True,
                      trade_log=True,
                      visual=True)
+        import pdb; pdb.set_trace()
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
         op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
@@ -13106,8 +13107,9 @@ class Cross_SMA_PS(qt.RuleIterator):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线的当前值和昨天的值
-        s_ma = qt.sma(h[0], s)
-        f_ma = qt.sma(h[0], f)
+        sma = qt.tafuncs.sma
+        s_ma = sma(h[0], s)
+        f_ma = sma(h[0], f)
 
         s_today, s_last = s_ma[-1], s_ma[-2]
         f_today, f_last = f_ma[-1], f_ma[-2]
@@ -13165,8 +13167,9 @@ class Cross_SMA_PT(qt.RuleIterator):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线的当前值
-        s_ma = qt.sma(h[0], s)[-1]
-        f_ma = qt.sma(h[0], f)[-1]
+        sma = qt.tafuncs.sma
+        s_ma = sma(h[0], s)[-1]
+        f_ma = sma(h[0], f)[-1]
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_ma * (1 + m)

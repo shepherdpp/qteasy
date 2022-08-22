@@ -110,8 +110,8 @@ if not QT_TRADE_CALENDAR.empty:
     logger_core.info(f'qteasy trade calendar created')
 else:
     QT_TRADE_CALENDAR = None
-    logger_core.warning(f'trade calendar can not be loaded, some of the trade day related functions may not work properly.'
-                        f'\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
+    logger_core.warning(f'trade calendar can not be loaded, some of the trade day related functions may not work '
+                        f'properly.\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
                         f'download trade calendar data')
 
 np.seterr(divide='ignore', invalid='ignore')
