@@ -12585,7 +12585,6 @@ class TestQT(unittest.TestCase):
                      allow_sell_short=True,
                      trade_log=True,
                      visual=True)
-        import pdb; pdb.set_trace()
         no_short_in_res = np.all(res['oper_count'].short == 0)
         self.assertFalse(no_short_in_res)
         op = qt.Operator([Cross_SMA_PT()], signal_type='PT')
