@@ -40,24 +40,32 @@ def built_in_strategies(*args, **kwargs):
 class TimingCrossline(stg.RuleIterator):
     """crossline择时策略类，利用长短均线的交叉确定多空状态
 
-    数据类型：close 收盘价，单数据输入
-    数据分析频率：天
-    数据窗口长度：270
-    策略使用4个参数，
+    策略参数：
         s: int, 短均线计算日期；
         l: int, 长均线计算日期；
-        m: int, 均线边界宽度；
-        hesitate: str, 均线跨越类型
-    参数输入数据范围：[(10, 250), (10, 250), (10, 250), ('buy', 'sell', 'none')]
+        m: float, 均线边界宽度（百分比）；
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        1，当短均线位于长均线上方，且距离大于l*m%时，设置仓位目标为1
+        2，当短均线位于长均线下方，且距离大于l*mM时，设置仓位目标为-1
+        3，当长短均线之间的距离不大于l*m%时，设置仓位目标为0
+
+    策略属性缺省值：
+    默认参数：(35, 120, 0.02)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (0, 1)]
 
     """
 
-    def __init__(self, pars: tuple = (35, 120, 10, 'buy')):
+    def __init__(self, pars: tuple = (35, 120, 0.02)):
         """Crossline交叉线策略只有一个动态属性，其余属性均不可变"""
         super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['int', 'int', 'float', 'enum'],
-                         par_range=[(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')],
+                         par_count=3,
+                         par_types=['int', 'int', 'float'],
+                         par_range=[(10, 250), (10, 250), (0, 1)],
                          name='CROSSLINE',
                          description='Moving average crossline strategy, determine long/short position according '
                                      'to the cross point of long and short term moving average prices ',
@@ -66,20 +74,12 @@ class TimingCrossline(stg.RuleIterator):
     def realize(self, h, r=None, t=None, pars=None):
         """crossline策略使用四个参数：
         s：短均线计算日期；l：长均线计算日期；m：均线边界宽度；hesitate：均线跨越类型"""
-        s, l, m, hesitate = pars
+        s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线之间的距离
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
-        # 根据观望模式在不同的点位产生Long/short标记
-        if hesitate == 'buy':
-            pass
-            # m = -m
-        elif hesitate == 'sell':
-            pass
-        else:  # hesitate == 'none'
-            pass
-            # m = 0
+        m = m * l
         if diff < -m:
             return 1
         elif diff > m:
@@ -89,16 +89,25 @@ class TimingCrossline(stg.RuleIterator):
 
 
 class TimingMACD(stg.RuleIterator):
-    """MACD择时策略类，运用MACD均线策略，在hist_price Series对象上生成交易信号
+    """MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
 
+    策略参数：
+        s: int, 短周期指数平滑均线计算日期；
+        l: int, 长周期指数平滑均线计算日期；
+        m: int, MACD中间值DEA的计算周期；
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        计算MACD值：
+        1，当MACD值大于0时，设置仓位目标为1
+        3，当MACD值小于0时，设置仓位目标为0
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
     数据类型：close 收盘价，单数据输入
-    数据分析频率：天
-    数据窗口长度：270
-    策略使用3个参数，
-        s: int,
-        l: int,
-        d: int,
-    参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (10, 250)]
     """
 
     def __init__(self, pars: tuple = (12, 26, 9)):
@@ -112,18 +121,6 @@ class TimingMACD(stg.RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """生成单只个股的择时多空信号
-        生成MACD多空判断：
-        1， MACD柱状线为正，多头状态，为负空头状态：由于MACD = diff - dea
-
-        输入:
-            idx: 指定的参考指数历史数据
-            sRange, 短均线参数，短均线的指数移动平均计算窗口宽度，单位为日
-            lRange, 长均线参数，长均线的指数移动平均计算窗口宽度，单位为日
-            dRange, DIFF的指数移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
-
-        """
-
         s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
@@ -132,11 +129,7 @@ class TimingMACD(stg.RuleIterator):
         diff = ema(h[0], s) - ema(h[0], l)
         dea = ema(diff, m)
         _macd = 2 * (diff - dea)
-        # 以下使用tafuncs中的macd函数（基于talib）生成相同结果，但速度稍慢
-        # diff, dea, _macd = macd(h, s, l, m)
         cat = 1 if _macd[-1] > 0 else 0
-        # print(f'macd: {np.round(_macd[-5:-1], 4)} -- '
-        #       f'signal: {cat}')
         return cat
 
 
