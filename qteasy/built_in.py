@@ -57,7 +57,7 @@ class TimingCrossline(stg.RuleIterator):
     采样频率：天
     窗口长度：270
     参数范围：[(10, 250), (10, 250), (0, 1)]
-
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars: tuple = (35, 120, 0.02)):
@@ -108,6 +108,7 @@ class TimingMACD(stg.RuleIterator):
     采样频率：天
     窗口长度：270
     参数范围：[(10, 250), (10, 250), (10, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars: tuple = (12, 26, 9)):
@@ -117,7 +118,7 @@ class TimingMACD(stg.RuleIterator):
                          par_range=[(10, 250), (10, 250), (10, 250)],
                          name='MACD',
                          description='MACD strategy, determine long/short position according to differences of '
-                                  'exponential weighted moving average prices',
+                                     'exponential weighted moving average prices',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -134,15 +135,25 @@ class TimingMACD(stg.RuleIterator):
 
 
 class TimingTRIX(stg.RuleIterator):
-    """TRIX择时策略，运用TRIX均线策略，利用历史序列上生成交易信号
+    """TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断
 
+    策略参数：
+        s: int, 均线参数，单位为日，用于计算周期为S的三重平滑指数移动平均线TRIX
+        m: int, 平滑均线参数，用于计算TRIX的M日简单移动平均线
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：
+        1， TRIX位于MATRIX上方时，设置仓位目标为1
+        2， TRIX位于MATRIX下方时，设置仓位目标位-1
+
+    策略属性缺省值：
+    默认参数：(25, 125)
     数据类型：close 收盘价，单数据输入
-    数据分析频率：天
-    数据窗口长度：270天
-    策略使用2个参数，
-        s: int, 短均线参数，短均线的移动平均计算窗口宽度，单位为日
-        m: int, DIFF的移动平均线计算窗口宽度，用于区分短均线与长均线的“初次相交”和“彻底击穿”
-    参数输入数据范围：[(10, 250), (10, 250)]
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 50), (3, 150)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(25, 125)):
@@ -159,25 +170,10 @@ class TimingTRIX(stg.RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-
-        input:
-        :param h:
-        :param r:
-        :param t:
-        :param pars:
-        :return:
-
-        """
         s, m = pars
-        # 计算指数的指数移动平均价格
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         trx = trix(h[0], s) * 100
         matrix = sma(trx, m)
-        # 生成TRIX多空判断：
-        # 1， TRIX位于MATRIX上方时，长期多头状态, signal = 1
-        # 2， TRIX位于MATRIX下方时，长期空头状态, signal = 0
         if trx[-1] > matrix[-1]:
             return 1
         else:
@@ -187,10 +183,22 @@ class TimingTRIX(stg.RuleIterator):
 class TimingCDL(stg.RuleIterator):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
-    数据类型：open, high, low, close 开盘，最高，最低，收盘价，多数据输入
-    数据分析频率：天
-    数据窗口长度：100天
-    参数数量：0个，参数类型：N/A，输入数据范围：N/A
+    策略参数：
+        无
+    信号类型：
+        PS型：百分比交易信号
+        VS型：交易数量信号
+    信号规则：
+        搜索历史数据窗口内出现的cdldoji模式（匹配度0～100之间），加总后/100，计算
+        等效cdldoji匹配数量，
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：open, high, low, close 开盘，最高，最低，收盘价
+    采样频率：天
+    窗口长度：100
+    参数范围：None
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=()):
@@ -204,11 +212,6 @@ class TimingCDL(stg.RuleIterator):
                          data_types='open,high,low,close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-
-        input:
-            None
-        """
         # 计算历史数据上的CDL指标
         h = h.T
         cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
