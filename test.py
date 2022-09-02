@@ -7649,33 +7649,33 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
         op.set_opt_par((5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
 
         op.set_parameter('crossline',
-                         pars=(5, 10, 5, 'sell'),
+                         pars=(5, 10, 0.1),
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 15), (0, 1)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.opt_tags, [1, 0, 1])
         op.set_opt_par((5, 12, 9, 8, 26, 9, 'buy'))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         op.set_opt_par((9, 200, 155, 8, 26, 9, 'buy', 5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
-                         pars=(5, 10, 5, 'sell'),
+                         pars=(5, 10, 5),
                          opt_tag=2,
                          par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
                          window_length=10,
@@ -7683,11 +7683,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.opt_tags, [1, 0, 2])
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (5, 10, 5, 'sell'))
-        op.set_opt_par((5, 12, 9, (8, 26, 9, 'buy')))
+        self.assertEqual(op.strategies[2].pars, (5, 10, 5))
+        op.set_opt_par((5, 12, 9, (8, 26, 9)))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # Test Errors
         # Not enough values for parameter
@@ -7703,10 +7703,10 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '
-        self.pars = (35, 120, 10, 'buy')
-        self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
-        self.par_count = 4
-        self.par_types = ['int', 'int', 'float', 'enum']
+        self.pars = (35, 120, 0.02)
+        self.par_boes = [(10, 250), (10, 250), (0, 1)]
+        self.par_count = 3
+        self.par_types = ['int', 'int', 'float']
         self.opt_tag = 0
         self.data_types = ['close']
         self.data_freq = 'd'
@@ -7729,8 +7729,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.stg.description = 'NEW TEXT'
         self.assertEqual(self.stg.name, 'NEW NAME')
         self.assertEqual(self.stg.description, 'NEW TEXT')
-        self.stg.pars = (1, 2, 3, 4)
-        self.assertEqual(self.stg.pars, (1, 2, 3, 4))
+        self.stg.pars = (1, 2, 3)
+        self.assertEqual(self.stg.pars, (1, 2, 3))
         self.stg.par_count = 3
         self.assertEqual(self.stg.par_count, 3)
         self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
@@ -12680,7 +12680,7 @@ class TestBuiltInsSingle(unittest.TestCase):
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
-        op.set_parameter(0, pars=(35, 120, 10, 'buy'))
+        op.set_parameter(0, pars=(35, 120, 10))
         op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1, allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
