@@ -39,9 +39,6 @@ class BaseStrategy:
                  data_types: [str, list] = 'close',
                  bt_price_type: str = 'close',
                  reference_data_types: [str, list] = ''):
-        """ 初始化策略，赋予策略基本属性，包括策略的参数及其他控制属性
-
-        """
         # 检查策略参数是否合法：
         # 如果给出了策略参数，则根据参数推测并设置par_count/par_types/par_range等三个参数
         from qteasy import logger_core
