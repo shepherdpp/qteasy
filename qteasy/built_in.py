@@ -394,7 +394,7 @@ class TimingSAREXT(RuleIterator):
 # moving averages.
 
 class SCRSSMA(RuleIterator):
-    """ 单均线交叉策略——SMA均线：根据股价与SMA均线的相对位置设定持仓比例
+    """ 单均线交叉策略——SMA均线(简单移动平均线)：根据股价与SMA均线的相对位置设定持仓比例
 
     策略参数：
         rng: int, 均线的计算周期
@@ -437,7 +437,7 @@ class SCRSSMA(RuleIterator):
 
 
 class SCRSDEMA(RuleIterator):
-    """ 单均线交叉策略——DEMA均线：根据股价与DEMA均线的相对位置设定持仓比例
+    """ 单均线交叉策略——DEMA均线(双重指数平滑移动平均线)：根据股价与DEMA均线的相对位置设定持仓比例
 
     策略参数：
         rng: int, 均线的计算周期
@@ -481,7 +481,7 @@ class SCRSDEMA(RuleIterator):
 
 
 class SCRSEMA(RuleIterator):
-    """ 单均线交叉策略——EMA均线：根据股价与EMA均线的相对位置设定持仓比例
+    """ 单均线交叉策略——EMA均线(指数平滑移动均线)：根据股价与EMA均线的相对位置设定持仓比例
 
     策略参数：
         rng: int, 均线的计算周期
@@ -565,10 +565,24 @@ class SCRSHT(RuleIterator):
 
 
 class SCRSKAMA(RuleIterator):
-    """ Single cross line strategy with KAMA line
+    """ 单均线交叉策略——KAMA均线(考夫曼自适应移动均线)：根据股价与KAMA均线的相对位置设定持仓比例
 
-        one parameters:
-        - range - range of KAMA
+    策略参数：
+        rng: int, 均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -595,11 +609,25 @@ class SCRSKAMA(RuleIterator):
 
 
 class SCRSMAMA(RuleIterator):
-    """ Single cross line strategy with MAMA line
+    """ 单均线交叉策略——MAMA均线(MESA自适应移动平均线)：根据股价与MAMA均线的相对位置设定持仓比例
 
-        two parameters:
-        - fastlimit -> fastlimit, float between 0 and 1, not included
-        - slowlimit -> slowlimit, float between 0 and 1, not included
+    策略参数：
+        f: float between 0 and 1, 快速移动极限
+        s: float between 0 and 1, 慢速移动极限
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(0.5, 0.05)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(0.01, 0.99), (0.01, 0.99)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(0.5, 0.05)):
@@ -625,43 +653,26 @@ class SCRSMAMA(RuleIterator):
             return 0
 
 
-class SCRSFAMA(RuleIterator):
-    """ Single cross line strategy with FAMA line
-
-        two parameters:
-        - fastlimit -> fastlimit, float between 0 and 1, not included
-        - slowlimit -> slowlimit, float between 0 and 1, not included
-    """
-
-    def __init__(self, pars=(0.5, 0.05)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['float', 'float'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99)],
-                         name='SINGLE CROSSLINE - FAMA',
-                         description='Single moving average strategy that uses MAMA line as the '
-                                  'trade line ',
-                         data_types='close')
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            f, s = self.pars
-        else:
-            f, s = pars
-        h = h.T
-        diff = (mama(h[0], f, s)[1] - h[0])[-1]
-        if diff < 0:
-            return 1
-        else:
-            return 0
-
-
 class SCRST3(RuleIterator):
-    """ Single cross line strategy with T3 line
+    """  单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
-        - vfactor = vfactor
+    策略参数：
+        t: int 均线计算周期
+        v: float v因子，调整因子，取值范围0～1之间
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(12, 0.5)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 20), (0, 1)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(12, 0.5)):
@@ -2584,7 +2595,6 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'sht':           SCRSHT,
                        'skama':         SCRSKAMA,
                        'smama':         SCRSMAMA,
-                       'sfama':         SCRSFAMA,
                        'st3':           SCRST3,
                        'stema':         SCRSTEMA,
                        'strima':        SCRSTRIMA,
