@@ -70,9 +70,10 @@ class TimingCrossline(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """crossline策略使用四个参数：
-        s：短均线计算日期；l：长均线计算日期；m：均线边界宽度"""
-        s, l, m = pars
+        if pars is None:
+            s, l, m = self.pars
+        else:
+            s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线之间的距离
@@ -120,7 +121,10 @@ class TimingMACD(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        s, l, m = pars
+        if pars is None:
+            s, l, m = self.pars
+        else:
+            s, l, m = pars
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
 
@@ -168,7 +172,10 @@ class TimingTRIX(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        s, m = pars
+        if pars is None:
+            s, m = self.pars
+        else:
+            s, m = pars
         h = h.T
         trx = trix(h[0], s) * 100
         matrix = sma(trx, m)
@@ -210,7 +217,6 @@ class TimingCDL(RuleIterator):
                          data_types='open,high,low,close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        # 计算历史数据上的CDL指标
         h = h.T
         cat = (cdldoji(h[0], h[1], h[2], h[3]).cumsum() // 100)
 
@@ -253,14 +259,10 @@ class SoftBBand(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-            u: number deviation up
-            d: number deviation down
-            m: ma type
-        """
-        p, u, d, m = pars
+        if pars is None:
+            p, u, d, m = self.pars
+        else:
+            p, u, d, m = pars
         h = h.T
         hi, mid, low = bbands(h[0], p, u, d, m)
         # 策略:
@@ -313,7 +315,10 @@ class TimingBBand(RuleIterator):
                          data_types=['close'])
 
     def realize(self, h, r=None, t=None, pars=None):
-        span, upper, lower = pars
+        if pars is None:
+            span, upper, lower = self.pars
+        else:
+            span, upper, lower = pars
         # 计算指数的指数移动平均价格
         h = h.T
         price = h[0]
@@ -335,7 +340,7 @@ class TimingSAREXT(RuleIterator):
 
     策略参数：
         a: int, Parabolic SAR参数：加速度
-        m: float，上轨偏移量，单位为标准差的倍数，如2表示上偏移2倍标准差
+        m: float, maximum最大值
     信号类型：
         PT型：仓位百分比目标信号
     信号规则：
@@ -363,7 +368,10 @@ class TimingSAREXT(RuleIterator):
                          data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
-        a, m = pars
+        if pars is None:
+            a, m = self.pars
+        else:
+            a, m = pars
         h = h.T
         sar = sarext(h[0], h[1], a, m)[-1]
         # 策略:
@@ -387,9 +395,27 @@ class TimingSAREXT(RuleIterator):
 
 class SCRSSMA(RuleIterator):
     """ Single cross line strategy with simple moving average
+    单均线交叉策略——SMA均线：根据股价与SMA均线的相对位置
+
+    策略参数：
+        rng: int, 均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250)]
+    策略不支持参考数据，不支持交易数据
 
         two parameters:
-        - range - range of simple moving average
+        rng - range of simple moving average
     """
 
     def __init__(self, pars=(14,)):
@@ -402,9 +428,12 @@ class SCRSSMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        r, = pars
+        if pars is None:
+            rng, = self.pars
+        else:
+            rng, = pars
         h = h.T
-        diff = (sma(h[0], r) - h[0])[-1]
+        diff = (sma(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -429,9 +458,12 @@ class SCRSDEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        r, = pars
+        if pars is None:
+            rng, = self.pars
+        else:
+            rng, = pars
         h = h.T
-        diff = (dema(h[0], r) - h[0])[-1]
+        diff = (dema(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -456,9 +488,12 @@ class SCRSEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        r, = pars
+        if pars is None:
+            rng, = self.pars
+        else:
+            rng, = pars
         h = h.T
-        diff = (ema(h[0], r) - h[0])[-1]
+        diff = (ema(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -509,9 +544,12 @@ class SCRSKAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        r, = pars
+        if pars is None:
+            rng, = self.pars
+        else:
+            rng, = pars
         h = h.T
-        diff = (kama(h[0], r) - h[0])[-1]
+        diff = (kama(h[0], rng) - h[0])[-1]
         if diff < 0:
             return 1
         else:
@@ -537,7 +575,10 @@ class SCRSMAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, s = pars
+        if pars is None:
+            f, s = self.pars
+        else:
+            f, s = pars
         h = h.T
         diff = (mama(h[0], f, s)[0] - h[0])[-1]
         if diff < 0:
@@ -565,7 +606,10 @@ class SCRSFAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, s = pars
+        if pars is None:
+            f, s = self.pars
+        else:
+            f, s = pars
         h = h.T
         diff = (mama(h[0], f, s)[1] - h[0])[-1]
         if diff < 0:
@@ -593,7 +637,10 @@ class SCRST3(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        p, v = pars
+        if pars is None:
+            p, v = self.pars
+        else:
+            p, v = pars
         h = h.T
         diff = (t3(h[0], p, v) - h[0])[-1]
         if diff < 0:
@@ -620,7 +667,10 @@ class SCRSTEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         diff = (tema(h[0], p) - h[0])[-1]
         if diff < 0:
@@ -647,7 +697,10 @@ class SCRSTRIMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         diff = (trima(h[0], p) - h[0])[-1]
         if diff < 0:
@@ -674,7 +727,10 @@ class SCRSWMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         diff = (wma(h[0], p) - h[0])[-1]
         if diff < 0:
@@ -709,7 +765,10 @@ class DCRSSMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        l, s = pars
+        if pars is None:
+            l, s = self.pars
+        else:
+            l, s = pars
         h = h.T
         diff = (sma(h[0], l) - sma(h[0], s))[-1]
         if diff < 0:
@@ -736,7 +795,10 @@ class DCRSDEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        l, s = pars
+        if pars is None:
+            l, s = self.pars
+        else:
+            l, s = pars
         h = h.T
         diff = (dema(h[0], l) - dema(h[0], s))[-1]
         if diff < 0:
@@ -763,7 +825,10 @@ class DCRSEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        l, s = pars
+        if pars is None:
+            l, s = self.pars
+        else:
+            l, s = pars
         h = h.T
         diff = (ema(h[0], l) - ema(h[0], s))[-1]
         if diff < 0:
@@ -790,7 +855,10 @@ class DCRSKAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        l, s = pars
+        if pars is None:
+            l, s = self.pars
+        else:
+            l, s = pars
         h = h.T
         diff = (kama(h[0], l) - kama(h[0], s))[-1]
         if diff < 0:
@@ -818,7 +886,10 @@ class DCRSMAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        lf, ls, sf, ss = pars
+        if pars is None:
+            lf, ls, sf, ss = self.pars
+        else:
+            lf, ls, sf, ss = pars
         h = h.T
         diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
         if diff < 0:
@@ -846,7 +917,10 @@ class DCRSFAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        lf, ls, sf, ss = pars
+        if pars is None:
+            lf, ls, sf, ss = self.pars
+        else:
+            lf, ls, sf, ss = pars
         h = h.T
         diff = (mama(h[0], lf, ls)[1] - mama(h[0], sf, ss)[1])[-1]
         if diff < 0:
@@ -874,7 +948,10 @@ class DCRST3(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        fp, fv, sp, sv = pars
+        if pars is None:
+            fp, fv, sp, sv = self.pars
+        else:
+            fp, fv, sp, sv = pars
         h = h.T
         diff = (t3(h[0], fp, fv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
@@ -901,7 +978,10 @@ class DCRSTEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        fp, sp = pars
+        if pars is None:
+            fp, sp = self.pars
+        else:
+            fp, sp = pars
         h = h.T
         diff = (tema(h[0], fp) - tema(h[0], sp))[-1]
         if diff < 0:
@@ -928,7 +1008,10 @@ class DCRSTRIMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        fp, sp = pars
+        if pars is None:
+            fp, sp = self.pars
+        else:
+            fp, sp = pars
         h = h.T
         diff = (trima(h[0], fp) - trima(h[0], sp))[-1]
         if diff < 0:
@@ -955,7 +1038,10 @@ class DCRSWMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        fp, sp = pars
+        if pars is None:
+            fp, sp = self.pars
+        else:
+            fp, sp = pars
         h = h.T
         diff = (wma(h[0], fp) - wma(h[0], sp))[-1]
         if diff < 0:
@@ -985,7 +1071,10 @@ class SLPSMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = sma(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1013,7 +1102,10 @@ class SLPDEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = dema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1041,7 +1133,10 @@ class SLPEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1096,7 +1191,10 @@ class SLPKAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = kama(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1125,7 +1223,10 @@ class SLPMAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, s = pars
+        if pars is None:
+            f, s = self.pars
+        else:
+            f, s = pars
         h = h.T
         curve = mama(h[0], f, s)[0]
         slope = curve[-1] - curve[-2]
@@ -1154,7 +1255,10 @@ class SLPFAMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, s = pars
+        if pars is None:
+            f, s = self.pars
+        else:
+            f, s = pars
         h = h.T
         curve = mama(h[0], f, s)[1]
         slope = curve[-1] - curve[-2]
@@ -1183,7 +1287,10 @@ class SLPT3(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        p, v = pars
+        if pars is None:
+            p, v = self.pars
+        else:
+            p, v = pars
         h = h.T
         curve = t3(h[0], p, v)
         slope = curve[-1] - curve[-2]
@@ -1211,7 +1318,10 @@ class SLPTEMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = ema(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1239,7 +1349,10 @@ class SLPTRIMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = trima(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1267,7 +1380,10 @@ class SLPWMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        f, = pars
+        if pars is None:
+            f, = self.pars
+        else:
+            f, = pars
         h = h.T
         curve = wma(h[0], f)
         slope = curve[-1] - curve[-2]
@@ -1305,7 +1421,10 @@ class ADX(RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = adx(h[0], h[1], h[2], p)[-1]
         # 策略:
@@ -1342,7 +1461,10 @@ class APO(RuleIterator):
             d: number deviation down
             m: ma type
         """
-        f, s, m = pars
+        if pars is None:
+            f, s, m = self.pars
+        else:
+            f, s, m = pars
         h = h.T
         res = apo(h[0], f, s, m)[-1]
         # 策略:
@@ -1379,7 +1501,10 @@ class AROON(RuleIterator):
             d: number deviation down
             m: ma type
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         ups, dns = aroon(h[0], h[1], p)
         # 策略:
@@ -1419,7 +1544,10 @@ class AROONOSC(RuleIterator):
         input:
             p: period
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = aroonosc(h[0], p)[-1]
         # 策略:
@@ -1459,7 +1587,10 @@ class CCI(RuleIterator):
         input:
             p: period
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = cci(h[0], h[1], h[2], p)[-1]
         # 策略:
@@ -1497,7 +1628,10 @@ class CMO(RuleIterator):
         input:
             p: period
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = cmo(h[0], p)[-1]
         # 策略:
@@ -1542,7 +1676,10 @@ class MACDEXT(RuleIterator):
             s: signal periods
             t: signal ma type
         """
-        fp, ft, sp, st, p, t = pars
+        if pars is None:
+            fp, ft, sp, st, p, t = self.pars
+        else:
+            fp, ft, sp, st, p, t = pars
         h = h.T
         m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
         # 策略:
@@ -1574,7 +1711,10 @@ class MFI(RuleIterator):
         input:
             p: period
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = mfi(h[0], h[1], h[2], h[3], p)[-1]
         # 策略:
@@ -1609,7 +1749,10 @@ class DI(RuleIterator):
             m: periods for negtive DI
             p: periods for positive DI
         """
-        m, p, = pars
+        if pars is None:
+            m, p, = self.pars
+        else:
+            m, p, = pars
         h = h.T
         ndi = minus_di(h[0], h[1], h[2], m)[-1]
         pdi = plus_di(h[0], h[1], h[2], p)[-1]
@@ -1645,7 +1788,10 @@ class DM(RuleIterator):
             m: periods for negtive DM
             p: periods for positive DM
         """
-        m, p, = pars
+        if pars is None:
+            m, p, = self.pars
+        else:
+            m, p, = pars
         h = h.T
         ndm = minus_dm(h[0], h[1], m)[-1]
         pdm = plus_dm(h[0], h[1], p)[-1]
@@ -1680,7 +1826,10 @@ class MOM(RuleIterator):
         input:
             p: periods
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = mom(h[0], p)[-1]
         # 策略:
@@ -1716,7 +1865,10 @@ class PPO(RuleIterator):
             sp: slow moving periods
             m: ma type
         """
-        fp, sp, m = pars
+        if pars is None:
+            fp, sp, m = self.pars
+        else:
+            fp, sp, m = pars
         h = h.T
         res = ppo(h[0], fp, sp, m)[-1]
         # 策略:
@@ -1750,7 +1902,10 @@ class RSI(RuleIterator):
         input:
             p: periods
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = rsi(h[0], p)[-1]
         # 策略:
@@ -1788,7 +1943,10 @@ class STOCH(RuleIterator):
             sd: slow d
             sdm: slow d ma type
         """
-        fk, sk, skm, sd, sdm = pars
+        if pars is None:
+            fk, sk, skm, sd, sdm = self.pars
+        else:
+            fk, sk, skm, sd, sdm = pars
         h = h.T
         k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
         # 策略:
@@ -1825,7 +1983,10 @@ class STOCHF(RuleIterator):
             fd: fast d
             fdm: fast d ma type
         """
-        fk, fd, fdm = pars
+        if pars is None:
+            fk, fd, fdm = self.pars
+        else:
+            fk, fd, fdm = pars
         h = h.T
         k, d = stochf(h[0], h[1], h[2], fk, fd, fdm)
         # 策略:
@@ -1865,7 +2026,10 @@ class STOCHRSI(RuleIterator):
             sd: slow d
             sdm: slow d ma type
         """
-        p, fk, fd, fdm = pars
+        if pars is None:
+            p, fk, fd, fdm = self.pars
+        else:
+            p, fk, fd, fdm = pars
         h = h.T
         k, d = stochrsi(h[0], p, fk, fd, fdm)
         # 策略:
@@ -1902,7 +2066,10 @@ class ULTOSC(RuleIterator):
             p2: time period 2
             p3: time period 3
         """
-        p1, p2, p3 = pars
+        if pars is None:
+            p1, p2, p3 = self.pars
+        else:
+            p1, p2, p3 = pars
         h = h.T
         res = stochf(h[0], h[1], h[2], p1, p2, p3)[-1]
         # 策略:
@@ -1936,7 +2103,10 @@ class WILLR(RuleIterator):
         input:
             p: periods
         """
-        p, = pars
+        if pars is None:
+            p, = self.pars
+        else:
+            p, = pars
         h = h.T
         res = stochf(h[0], h[1], h[2], p)
         # 策略:
@@ -1980,8 +2150,7 @@ class TimingLong(GeneralStg):
                          name='Long',
                          description='Simple Timing strategy, return constant long position on the whole history')
 
-    def realize(self, h, r=None, t=None):
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+    def realize(self, h, r=None, t=None, pars=None):
         sc, wl, htp = h.shape
         return np.ones(shape=(sc, ))
 
@@ -2002,8 +2171,7 @@ class TimingShort(GeneralStg):
                          description='Simple Timing strategy, return constant Short (minus) position on '
                                      'the whole history')
 
-    def realize(self, h, r=None, t=None):
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+    def realize(self, h, r=None, t=None, pars=None):
         sc, wl, htp = h.shape
         return -np.ones(shape=(sc, ))
 
@@ -2023,8 +2191,7 @@ class TimingZero(GeneralStg):
                          name='Zero',
                          description='Simple Timing strategy, return constant Zero position ratio on the whole history')
 
-    def realize(self, h, r=None, t=None):
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+    def realize(self, h, r=None, t=None, pars=None):
         sc, wl, htp = h.shape
         return np.zeros(shape=(sc, ))
 
@@ -2058,7 +2225,10 @@ class TimingDMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         # 使用基于np的移动平均计算函数的快速DMA择时方法
-        s, l, d = self.pars
+        if pars is None:
+            s, l, d = self.pars
+        else:
+            s, l, d = pars
 
         # 计算指数的移动平均价格
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
@@ -2088,7 +2258,10 @@ class RiconUrgent(RuleIterator):
                          description='Generate selling signal when N-day drop rate reaches target')
 
     def realize(self, h, r=None, t=None, pars=None):
-        day, drop = self.pars
+        if pars is None:
+            day, drop = self.pars
+        else:
+            day, drop = pars
         h = h
         diff = (h - np.roll(h, day)) / h
         diff[:day] = h[:day]
@@ -2105,7 +2278,7 @@ class SelectingAll(GeneralStg):
                          name='SIMPLE ',
                          description='GeneralStg all share and distribute weights evenly')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         # 所有股票全部被选中，投资比例平均分配
         share_count = h.shape[0]
         return np.ones(shape=(share_count,)) / share_count
@@ -2119,7 +2292,7 @@ class SelectingNone(GeneralStg):
                          name='NONE ',
                          description='None of the shares will be selected')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         # 所有股票全部被选中，投资比例平均分配
         share_count = h.shape[0]
         return [0.] * share_count
@@ -2136,8 +2309,11 @@ class SelectingRandom(GeneralStg):
                          name='RANDOM',
                          description='GeneralStg share Randomly and distribute weights evenly')
 
-    def realize(self, h, r=None, t=None):
-        pct = self.pars[0]
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            pct, = self.pars
+        else:
+            pct, = pars
         share_count = h.shape[0]
         if pct < 1:
             # 给定参数小于1，按照概率随机抽取若干股票
@@ -2173,7 +2349,7 @@ class SelectingAvgIndicator(FactorSorter):
                          window_length=90,
                          data_types='eps')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """ 根据hist_segment中的EPS数据选择一定数量的股票
 
         """
@@ -2201,13 +2377,16 @@ class SelectingNDayLast(FactorSorter):
                          window_length=100,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """ 以股票过去N天前的量价作为选股指标
             N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
             默认的data_types为'close'
 
         """
-        n, = self.pars
+        if pars is None:
+            n, = self.pars
+        else:
+            n, = pars
         factors = h[:, -n-1, 0]
 
         return factors
@@ -2234,11 +2413,14 @@ class SelectingNDayAvg(FactorSorter):
                          window_length=150,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """ 获取的数据为昨天的开盘价
 
         """
-        n, = self.pars
+        if pars is None:
+            n, = self.pars
+        else:
+            n, = pars
         n_average = h[:, -n-1:, 0].mean(axis=1)
         factors = n_average
 
@@ -2265,11 +2447,14 @@ class SelectingNDayChange(FactorSorter):
                          window_length=150,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """ 获取的数据为昨天的开盘价
 
         """
-        n, = self.pars
+        if pars is None:
+            n, = self.pars
+        else:
+            n, = pars
         current_price = h[:, -1, 0]
         n_previous = h[:, -n-1, 0]
         factors = current_price - n_previous
@@ -2297,11 +2482,14 @@ class SelectingNDayRateChange(FactorSorter):
                          window_length=150,
                          data_types='close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """ 获取的数据为昨天的开盘价
 
         """
-        n, = self.pars
+        if pars is None:
+            n, = self.pars
+        else:
+            n, = pars
         current_price = h[:, -1, 0]
         n_previous = h[:, -n-1, 0]
         factors = (current_price - n_previous) / n_previous
@@ -2328,11 +2516,14 @@ class SelectingNDayVolatility(FactorSorter):
                          window_length=150,
                          data_types='high,low,close')
 
-    def realize(self, h, r=None, t=None):
+    def realize(self, h, r=None, t=None, pars=None):
         """ 获取的数据为昨天的开盘价
 
         """
-        n, = self.pars
+        if pars is None:
+            n, = self.pars
+        else:
+            n, = pars
         high = h[:, :, 0]
         low = h[:, :, 1]
         close = h[:, :, 2]
