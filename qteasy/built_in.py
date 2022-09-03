@@ -394,8 +394,7 @@ class TimingSAREXT(RuleIterator):
 # moving averages.
 
 class SCRSSMA(RuleIterator):
-    """ Single cross line strategy with simple moving average
-    单均线交叉策略——SMA均线：根据股价与SMA均线的相对位置
+    """ 单均线交叉策略——SMA均线：根据股价与SMA均线的相对位置设定持仓比例
 
     策略参数：
         rng: int, 均线的计算周期
@@ -413,9 +412,6 @@ class SCRSSMA(RuleIterator):
     窗口长度：270
     参数范围：[(3, 250)]
     策略不支持参考数据，不支持交易数据
-
-        two parameters:
-        rng - range of simple moving average
     """
 
     def __init__(self, pars=(14,)):
@@ -441,10 +437,24 @@ class SCRSSMA(RuleIterator):
 
 
 class SCRSDEMA(RuleIterator):
-    """ Single cross line strategy with DEMA
+    """ 单均线交叉策略——DEMA均线：根据股价与DEMA均线的相对位置设定持仓比例
 
-        two parameters:
-        - range - range of DEMA
+    策略参数：
+        rng: int, 均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -471,10 +481,24 @@ class SCRSDEMA(RuleIterator):
 
 
 class SCRSEMA(RuleIterator):
-    """ Single cross line strategy with EMA
+    """ 单均线交叉策略——EMA均线：根据股价与EMA均线的相对位置设定持仓比例
 
-        two parameters:
-        - range - range of EMA
+    策略参数：
+        rng: int, 均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -501,10 +525,24 @@ class SCRSEMA(RuleIterator):
 
 
 class SCRSHT(RuleIterator):
-    """ Single cross line strategy with ht line
+    """ 单均线交叉策略——HT(希尔伯特变换瞬时趋势线)：根据股价与HT线的相对位置设定持仓比例
 
-        zero parameters:
-        - range - range of ht
+    策略参数：
+        None: 计算HT线不需要参数
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于HT线时，设定持仓比例为1
+        2，当价格低于HT线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=()):
