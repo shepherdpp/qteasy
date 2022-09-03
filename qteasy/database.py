@@ -2189,6 +2189,9 @@ class DataSource:
         """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
         与db_table的schema相同
 
+        ** 注意 ** 通常情况下不要使用这个函数写入数据到数据表。因为这个函数并不会检查
+        写入的数据是否存在冲突的键值，如果键值冲突时，会导致错误
+
         :param df: 需要添加的DataFrame
         :param db_table: 需要添加数据的数据库表
         :return:
@@ -2200,6 +2203,7 @@ class DataSource:
         """ 用DataFrame中的数据更新数据表中的数据记录，假定
             df的列与db_table的列相同且顺序也相同
             在插入数据之前，必须确保表的primary_key已经正确设定
+            如果写入记录的键值存在冲突时，更新数据库中的记录
 
         :param df: 用于更新数据表的数据DataFrame
         :param db_table: 需要更新的数据表

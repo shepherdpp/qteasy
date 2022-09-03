@@ -218,7 +218,29 @@ class TimingCDL(RuleIterator):
 
 
 class SoftBBand(RuleIterator):
-    """布林带线择时策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空, 均线的种类可选"""
+    """布林带线渐进交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，
+        交易信号不是一次性产生的，而是逐步渐进买入和卖出。
+
+    策略参数：
+        p: int, 均线周期，用于计算布林带线的均线周期
+        u: float，上轨偏移量，单位为标准差的倍数，如2表示上偏移2倍标准差
+        d: float，下轨偏移量，单位为标准差的倍数，如2表示下偏移2倍标准差
+        m: int，移动均线类型，取值范围0~8，表示9种不同的均线类型：
+    信号类型：
+        PS型：百分比例交易信号
+    信号规则：
+        计算BBAND，检查价格是否超过BBAND的上轨或下轨：
+        1，当价格大于上轨后，每天产生10%的比例买入交易信号
+        2，当价格低于下轨后，每天产生33%的比例卖出交易信号
+
+    策略属性缺省值：
+    默认参数：(20, 2, 2, 0)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100), (0.5, 5), (0.5, 5), (0, 8)]
+    策略不支持参考数据，不支持交易数据
+    """
 
     def __init__(self, pars=(20, 2, 2, 0)):
         super().__init__(pars=pars,
@@ -254,16 +276,28 @@ class SoftBBand(RuleIterator):
 
 
 class TimingBBand(RuleIterator):
-    """BBand择时策略，运用布林带线策略，利用历史序列上生成交易信号
+    """ 布林带线交易策略，根据股价与布林带上轨和布林带下轨之间的关系确定多空，
+        在价格上穿或下穿布林带线上下轨时产生交易信号。
+        布林带线的均线类型不可选
 
-        数据类型：close 收盘价，单数据输入
-        数据分析频率：天
-        数据窗口长度：270天
-        策略使用2个参数，
-            span: int, 移动平均计算窗口宽度，单位为日
-            upper: float, 布林带的上边缘所处的标准差倍数
-            lower: float, 布林带的下边缘所处的标准差倍数
-        参数输入数据范围：[(10, 250), (0.5, 2.5), (0.5, 2.5)]
+    策略参数：
+        p: int, 均线周期，用于计算布林带线的均线周期
+        u: float，上轨偏移量，单位为标准差的倍数，如2表示上偏移2倍标准差
+        d: float，下轨偏移量，单位为标准差的倍数，如2表示下偏移2倍标准差
+    信号类型：
+        PS型：百分比例交易信号
+    信号规则：
+        计算BBAND，检查价格是否超过BBAND的上轨或下轨：
+        1，当价格上穿上轨时，产生全仓买入信号
+        2，当价格下穿下轨时，产生全仓卖出信号
+
+    策略属性缺省值：
+    默认参数：(20, 2, 2)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 100), (0.5, 5), (0.5, 5)]
+    策略不支持参考数据，不支持交易数据
         """
 
     def __init__(self, pars=(20, 2, 2)):
@@ -279,10 +313,8 @@ class TimingBBand(RuleIterator):
                          data_types=['close'])
 
     def realize(self, h, r=None, t=None, pars=None):
-
         span, upper, lower = pars
         # 计算指数的指数移动平均价格
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         price = h[0]
         upper, middle, lower = bbands(close=price, timeperiod=span, nbdevup=upper, nbdevdn=lower)
@@ -300,6 +332,24 @@ class TimingBBand(RuleIterator):
 
 class TimingSAREXT(RuleIterator):
     """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
+
+    策略参数：
+        a: int, Parabolic SAR参数：加速度
+        m: float，上轨偏移量，单位为标准差的倍数，如2表示上偏移2倍标准差
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        计算Parabolic SAR：
+        1，当Parabolic SAR大于0时，输出多头
+        2，当Parabolic SAR小于0时，输出空头
+
+    策略属性缺省值：
+    默认参数：(0, 3)
+    数据类型：high, low最高价和最低价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(-100, 100), (0, 5)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(0, 3)):
@@ -308,18 +358,11 @@ class TimingSAREXT(RuleIterator):
                          par_types=['int', 'float'],
                          par_range=[(-100, 100), (0, 5)],
                          name='Parabolic SAREXT',
-                         description='Parabolic SAR Extended Strategy, determine buy/sell signals according to CDL Indicators',
+                         description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
                          window_length=200,
                          data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-            u: number deviation up
-            d: number deviation down
-            m: ma type
-        """
         a, m = pars
         h = h.T
         sar = sarext(h[0], h[1], a, m)[-1]

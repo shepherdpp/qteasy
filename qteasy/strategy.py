@@ -66,6 +66,7 @@ class BaseStrategy:
                 else:
                     raise TypeError(f'Invalid parameter item type: ({type(item)}), parameter can only contain'
                                     f'integers, floats or strings')
+        # 如果给出了pars且为dict时，仅检查是否dict中的所有值都是tuple
         elif isinstance(pars, dict):
             if not all(isinstance(item, tuple) for item in pars.values()):
                 raise TypeError(f'All items is a dict type parameter should be tuples, invalid type encountered')
