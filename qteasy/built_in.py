@@ -420,7 +420,7 @@ class SCRSSMA(RuleIterator):
                          par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - SMA',
-                         description='Single moving average strategy that uses simple moving average as the trade line ',
+                         description='Single moving average strategy that uses simple moving average as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -463,8 +463,7 @@ class SCRSDEMA(RuleIterator):
                          par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - DEMA',
-                         description='Single moving average strategy that uses DEMA as the '
-                                     'trade line ',
+                         description='Single moving average strategy that uses DEMA as the trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -507,8 +506,7 @@ class SCRSEMA(RuleIterator):
                          par_types=['int'],
                          par_range=[(3, 250)],
                          name='SINGLE CROSSLINE - EMA',
-                         description='Single moving average strategy that uses EMA as the '
-                                  'trade line ',
+                         description='Single moving average strategy that uses EMA as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -551,8 +549,7 @@ class SCRSHT(RuleIterator):
                          par_types=[],
                          par_range=[],
                          name='SINGLE CROSSLINE - HT',
-                         description='Single moving average strategy that uses HT line as the '
-                                  'trade line ',
+                         description='Single moving average strategy that uses HT line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -654,7 +651,7 @@ class SCRSMAMA(RuleIterator):
 
 
 class SCRST3(RuleIterator):
-    """  单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例
+    """ 单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例
 
     策略参数：
         p: int 均线计算周期
@@ -681,8 +678,7 @@ class SCRST3(RuleIterator):
                          par_types=['int', 'float'],
                          par_range=[(2, 20), (0, 1)],
                          name='SINGLE CROSSLINE - T3',
-                         description='Single moving average strategy that uses T3 line as the '
-                                     'trade line ',
+                         description='Single moving average strategy that uses T3 line as the trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1015,7 +1011,7 @@ class DCRSKAMA(RuleIterator):
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSMAMA(RuleIterator):
@@ -1062,15 +1058,32 @@ class DCRSMAMA(RuleIterator):
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRST3(RuleIterator):
-    """ Double cross line strategy with T3 line
+    """ 双均线交叉策略——T3均线(三重指数平滑移动平均线)：
+        基于T3均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
-        - vfactor = vfactor
+    策略参数：
+        lp: int 长周期参数，用于计算慢均线
+        lv: float 长周期v因子，调整因子，取值范围0～1之间，用于计算慢均线
+        sp: int 慢均线计算周期
+        sv: float 慢均线v因子，调整因子，取值范围0～1之间
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(20, 0.5, 5, 0.5)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 20), (0, 1), (2, 20), (0, 1)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(20, 0.5, 5, 0.5)):
@@ -1079,21 +1092,20 @@ class DCRST3(RuleIterator):
                          par_types=['int', 'float', 'int', 'float'],
                          par_range=[(2, 20), (0, 1), (2, 20), (0, 1)],
                          name='DOUBLE CROSSLINE - T3',
-                         description='Double moving average strategy that uses T3 line as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses T3 line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fp, fv, sp, sv = self.pars
+            lp, lv, sp, sv = self.pars
         else:
-            fp, fv, sp, sv = pars
+            lp, lv, sp, sv = pars
         h = h.T
-        diff = (t3(h[0], fp, fv) - t3(h[0], sp, sv))[-1]
+        diff = (t3(h[0], lp, lv) - t3(h[0], sp, sv))[-1]
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSTEMA(RuleIterator):
@@ -1109,8 +1121,7 @@ class DCRSTEMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(2, 20), (2, 20)],
                          name='DOUBLE CROSSLINE - TEMA',
-                         description='Double moving average strategy that uses TEMA line as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses TEMA line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1139,8 +1150,7 @@ class DCRSTRIMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(3, 200), (3, 200)],
                          name='DOUBLE CROSSLINE - TRIMA',
-                         description='Double moving average strategy that uses TRIMA line as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses TRIMA line as the trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1169,8 +1179,7 @@ class DCRSWMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(3, 200), (3, 200)],
                          name='DOUBLE CROSSLINE - WMA',
-                         description='Double moving average strategy that uses WMA line as the '
-                                     'trade line ',
+                         description='Double moving average strategy that uses WMA line as the trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1203,7 +1212,7 @@ class SLPSMA(RuleIterator):
                          par_types=['int'],
                          par_range=[(3, 250)],
                          name='SLOPE - SMA',
-                         description='Smoothed Curve Slope strategy that uses simple moving average as the trade line ',
+                         description='Smoothed Curve Slope strategy that uses simple moving average as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
