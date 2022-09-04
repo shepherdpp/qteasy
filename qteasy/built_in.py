@@ -839,11 +839,26 @@ class SCRSWMA(RuleIterator):
 
 
 class DCRSSMA(RuleIterator):
-    """ Double cross line strategy with simple moving average
+    """ 双均线交叉策略——SMA均线(简单移动平均线)：
+        基于SMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-    two parameters:
-    - fast
-    - slow
+    策略参数：
+        l: int, 长周期，慢速均线的计算周期
+        s: int, 短周期，快速均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250), (3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(125, 25)):
@@ -852,7 +867,7 @@ class DCRSSMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='SINGLE CROSSLINE - SMA',
-                         description='Single moving average strategy that uses simple moving average as the trade line ',
+                         description='Double moving average strategy that uses simple moving average as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -865,14 +880,30 @@ class DCRSSMA(RuleIterator):
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSDEMA(RuleIterator):
-    """ Double cross line strategy with DEMA
+    """ 双均线交叉策略——DEMA均线(简单移动平均线)：
+        基于DEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - range - range of DEMA
+    策略参数：
+        l: int, 长周期，慢速均线的计算周期
+        s: int, 短周期，快速均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250), (3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(125, 25)):
@@ -881,8 +912,7 @@ class DCRSDEMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - DEMA',
-                         description='Double moving average strategy that uses DEMA as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses DEMA as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -895,14 +925,30 @@ class DCRSDEMA(RuleIterator):
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSEMA(RuleIterator):
-    """ Double cross line strategy with EMA
+    """ 双均线交叉策略——EMA均线(指数平滑移动平均线)：
+        基于EMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - range - range of EMA
+    策略参数：
+        l: int, 长周期，慢速均线的计算周期
+        s: int, 短周期，快速均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250), (3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(20, 5)):
@@ -911,8 +957,7 @@ class DCRSEMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - EMA',
-                         description='Double moving average strategy that uses EMA as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses EMA as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -925,7 +970,7 @@ class DCRSEMA(RuleIterator):
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSKAMA(RuleIterator):
