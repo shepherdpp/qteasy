@@ -974,10 +974,26 @@ class DCRSEMA(RuleIterator):
 
 
 class DCRSKAMA(RuleIterator):
-    """ Double cross line strategy with KAMA line
+    """ 双均线交叉策略——KAMA均线(考夫曼自适应移动平均线)：
+        基于KAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        one parameters:
-        - range - range of KAMA
+    策略参数：
+        l: int, 长周期，慢速均线的计算周期
+        s: int, 短周期，快速均线的计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 250), (3, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(125, 25)):
@@ -986,8 +1002,7 @@ class DCRSKAMA(RuleIterator):
                          par_types=['int', 'int'],
                          par_range=[(3, 250), (3, 250)],
                          name='DOUBLE CROSSLINE - KAMA',
-                         description='Double moving average strategy that uses KAMA line as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses KAMA line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1004,11 +1019,28 @@ class DCRSKAMA(RuleIterator):
 
 
 class DCRSMAMA(RuleIterator):
-    """ Double cross line strategy with MAMA line
+    """ 双均线交叉策略——MAMA均线(MESA自适应移动平均线)：
+        基于MAMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - fastlimit - fastlimit
-        - slowlimit = slowlimit
+    策略参数：
+        lf: float, 长周期快速移动极限，慢速均线的KAMA计算参数
+        ls: float, 长周期慢速移动极限，慢速均线的KAMA计算参数
+        sf: float, 短周期快速移动极限，快速均线的KAMA计算参数
+        ss: float, 短周期慢速移动极限，快速均线的KAMA计算参数
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(0.15, 0.05, 0.55, 0.25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
@@ -1017,8 +1049,7 @@ class DCRSMAMA(RuleIterator):
                          par_types=['float', 'float', 'float', 'float'],
                          par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
                          name='DOUBLE CROSSLINE - MAMA',
-                         description='Double moving average strategy that uses MAMA line as the '
-                                  'trade line ',
+                         description='Double moving average strategy that uses MAMA line as the trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -1028,37 +1059,6 @@ class DCRSMAMA(RuleIterator):
             lf, ls, sf, ss = pars
         h = h.T
         diff = (mama(h[0], lf, ls)[0] - mama(h[0], sf, ss)[0])[-1]
-        if diff < 0:
-            return 1
-        else:
-            return 0
-
-
-class DCRSFAMA(RuleIterator):
-    """ Double cross line strategy with FAMA line
-
-        two parameters:
-        - fastlimit - fastlimit
-        - slowlimit = slowlimit
-    """
-
-    def __init__(self, pars=(0.15, 0.05, 0.55, 0.25)):
-        super().__init__(pars=pars,
-                         par_count=4,
-                         par_types=['float', 'float', 'float', 'float'],
-                         par_range=[(0.01, 0.99), (0.01, 0.99), (0.01, 0.99), (0.01, 0.99)],
-                         name='DOUBLE CROSSLINE - FAMA',
-                         description='Double moving average strategy that uses FAMA line as the '
-                                  'trade line ',
-                         data_types='close')
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            lf, ls, sf, ss = self.pars
-        else:
-            lf, ls, sf, ss = pars
-        h = h.T
-        diff = (mama(h[0], lf, ls)[1] - mama(h[0], sf, ss)[1])[-1]
         if diff < 0:
             return 1
         else:
@@ -2691,7 +2691,6 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'dema':          DCRSEMA,
                        'dkama':         DCRSKAMA,
                        'dmama':         DCRSMAMA,
-                       'dfama':         DCRSFAMA,
                        'dt3':           DCRST3,
                        'dtema':         DCRSTEMA,
                        'dtrima':        DCRSTRIMA,
