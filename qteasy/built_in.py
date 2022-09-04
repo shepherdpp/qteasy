@@ -657,7 +657,7 @@ class SCRST3(RuleIterator):
     """  单均线交叉策略——T3均线(三重指数平滑移动平均线)：根据股价与T3均线的相对位置设定持仓比例
 
     策略参数：
-        t: int 均线计算周期
+        p: int 均线计算周期
         v: float v因子，调整因子，取值范围0～1之间
     信号类型：
         PT型：仓位百分比目标信号
@@ -682,7 +682,7 @@ class SCRST3(RuleIterator):
                          par_range=[(2, 20), (0, 1)],
                          name='SINGLE CROSSLINE - T3',
                          description='Single moving average strategy that uses T3 line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -699,10 +699,24 @@ class SCRST3(RuleIterator):
 
 
 class SCRSTEMA(RuleIterator):
-    """ Single cross line strategy with TEMA line
+    """ 单均线交叉策略——TEMA均线(三重指数平滑移动平均线)：根据股价与TEMA均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        p: int 均线计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(6,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 20)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(6,)):
@@ -712,7 +726,7 @@ class SCRSTEMA(RuleIterator):
                          par_range=[(2, 20)],
                          name='SINGLE CROSSLINE - TEMA',
                          description='Single moving average strategy that uses TEMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -729,10 +743,24 @@ class SCRSTEMA(RuleIterator):
 
 
 class SCRSTRIMA(RuleIterator):
-    """ Single cross line strategy with TRIMA line
+    """ 单均线交叉策略——TRIMA均线(三重指数平滑移动平均线)：根据股价与TRIMA均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        p: int 均线计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 200)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -742,7 +770,7 @@ class SCRSTRIMA(RuleIterator):
                          par_range=[(3, 200)],
                          name='SINGLE CROSSLINE - TRIMA',
                          description='Single moving average strategy that uses TRIMA line as the '
-                                  'trade line ',
+                                     'trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
@@ -759,10 +787,24 @@ class SCRSTRIMA(RuleIterator):
 
 
 class SCRSWMA(RuleIterator):
-    """ Single cross line strategy with WMA line
+    """ 单均线交叉策略——WMA均线(加权移动平均线)：根据股价与WMA均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        p: int 均线计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        检查当前价格与均线的关系：
+        1，当价格高于均线时，设定持仓比例为1
+        2，当价格低于均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 200)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -772,7 +814,7 @@ class SCRSWMA(RuleIterator):
                          par_range=[(3, 200)],
                          name='SINGLE CROSSLINE - WMA',
                          description='Single moving average strategy that uses MAMA line as the '
-                                  'trade line ',
+                                     'trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
