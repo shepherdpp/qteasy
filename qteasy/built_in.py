@@ -1068,8 +1068,8 @@ class DCRST3(RuleIterator):
     策略参数：
         lp: int 长周期参数，用于计算慢均线
         lv: float 长周期v因子，调整因子，取值范围0～1之间，用于计算慢均线
-        sp: int 慢均线计算周期
-        sv: float 慢均线v因子，调整因子，取值范围0～1之间
+        sp: int 短周期参数，用于计算快均线
+        sv: float 短周期v因子，调整因子，取值范围0～1之间，用于计算快均线
     信号类型：
         PT型：仓位百分比目标信号
     信号规则：
@@ -1109,10 +1109,26 @@ class DCRST3(RuleIterator):
 
 
 class DCRSTEMA(RuleIterator):
-    """ Double cross line strategy with TEMA line
+    """ 双均线交叉策略——TEMA均线(三重指数平滑移动平均线)：
+        基于TEMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        lp: int 长周期参数，用于计算慢均线
+        sp: int 短周期参数，用于计算快均线
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(11, 6)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 20), (2, 20)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(11, 6)):
@@ -1126,22 +1142,38 @@ class DCRSTEMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fp, sp = self.pars
+            lp, sp = self.pars
         else:
-            fp, sp = pars
+            lp, sp = pars
         h = h.T
-        diff = (tema(h[0], fp) - tema(h[0], sp))[-1]
+        diff = (tema(h[0], lp) - tema(h[0], sp))[-1]
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSTRIMA(RuleIterator):
-    """ Double cross line strategy with TRIMA line
+    """ 双均线交叉策略——TRIMA均线(三重指数平滑移动平均线)：
+        基于TRIMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        lp: int 长周期参数，用于计算慢均线
+        sp: int 短周期参数，用于计算快均线
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 200), (3, 200)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(125, 25)):
@@ -1155,22 +1187,38 @@ class DCRSTRIMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fp, sp = self.pars
+            lp, sp = self.pars
         else:
-            fp, sp = pars
+            lp, sp = pars
         h = h.T
-        diff = (trima(h[0], fp) - trima(h[0], sp))[-1]
+        diff = (trima(h[0], lp) - trima(h[0], sp))[-1]
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class DCRSWMA(RuleIterator):
-    """ Double cross line strategy with WMA line
+    """ 双均线交叉策略——WMA均线(加权移动平均线)：
+        基于WMA均线计算规则生成快慢两根均线，根据快与慢两根均线的相对位置设定持仓比例
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        lp: int 长周期参数，用于计算慢均线
+        sp: int 短周期参数，用于计算快均线
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        用长短两个周期分别计算慢快两根均线：
+        1，当快均线高于慢均线时，设定持仓比例为1
+        2，当慢均线高于快均线时，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 25)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 200), (3, 200)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(125, 25)):
@@ -1184,15 +1232,15 @@ class DCRSWMA(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            fp, sp = self.pars
+            lp, sp = self.pars
         else:
-            fp, sp = pars
+            lp, sp = pars
         h = h.T
-        diff = (wma(h[0], fp) - wma(h[0], sp))[-1]
+        diff = (wma(h[0], lp) - wma(h[0], sp))[-1]
         if diff < 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 # Built-in Sloping strategies:
