@@ -1550,128 +1550,200 @@ class SLPMAMA(RuleIterator):
 
 
 class SLPT3(RuleIterator):
-    """ Curve Slope  strategy with T3 line
+    """ 均线斜率交易策略——T3均线(三重指数平滑移动平均线)：
+        基于T3计算规则生成移动均线，根据均线的斜率设定持仓比例目标
+        （当均线斜率为正时，表示价格趋势向上，提高持仓比例，当均线斜率为负时，表示趋势
+        向下，设定持仓比例为负一或零）
 
-        two parameters:
-        - timeperiod - timeperiod
-        - vfactor = vfactor
+    策略参数：
+        p: int 均线计算周期
+        v: float v因子，调整因子，取值范围0～1之间
+        N: int, 估算斜率使用的数据点数量
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算价格的移动均线，并且计算均线的当前斜率slope
+        slope使用最近的N个移动均线数据点通过线性回归得到：
+        1，当slope斜率大于零时，判断趋势向上，设定持仓比例为1
+        2，当slope斜率小于零时，判断趋势向下，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(12, 0.25, 5)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 20), (0, 1), (2, 20)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 0.25)):
+    def __init__(self, pars=(12, 0.25, 5)):
         super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(2, 20), (0, 1)],
+                         par_count=3,
+                         par_types=['int', 'float', 'int'],
+                         par_range=[(2, 20), (0, 1), (2, 20)],
                          name='SLOPE - T3',
-                         description='Smoothed Curve Slope Strategy that uses T3 line as the '
-                                  'trade line ',
+                         description='Smoothed Curve Slope Strategy that uses T3 line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, v = self.pars
+            p, v, n = self.pars
         else:
-            p, v = pars
+            p, v, n = pars
         h = h.T
         curve = t3(h[0], p, v)
-        slope = curve[-1] - curve[-2]
+        slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
         else:
-            return 0
+            return 01
 
 
 class SLPTEMA(RuleIterator):
-    """ Curve Slope strategy with TEMA line
+    """ 均线斜率交易策略——TEMA均线(三重指数平滑移动平均线)：
+        基于TEMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标
+        （当均线斜率为正时，表示价格趋势向上，提高持仓比例，当均线斜率为负时，表示趋势
+        向下，设定持仓比例为负一或零）
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        p: int 均线计算周期
+        N: int, 估算斜率使用的数据点数量
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算价格的移动均线，并且计算均线的当前斜率slope
+        slope使用最近的N个移动均线数据点通过线性回归得到：
+        1，当slope斜率大于零时，判断趋势向上，设定持仓比例为1
+        2，当slope斜率小于零时，判断趋势向下，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(6, 5)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 20), (2, 20)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(6,)):
+    def __init__(self, pars=(6, 5)):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 20)],
+                         par_count=2,
+                         par_types=['int', 'int'],
+                         par_range=[(2, 20), (2, 20)],
                          name='SLOPE - TEMA',
-                         description='Smoothed Curve Slope Strategy that uses TEMA line as the '
-                                  'trade line ',
+                         description='Smoothed Curve Slope Strategy that uses TEMA line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, = self.pars
+            f, n = self.pars
         else:
-            f, = pars
+            f, n = pars
         h = h.T
         curve = ema(h[0], f)
-        slope = curve[-1] - curve[-2]
+        slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class SLPTRIMA(RuleIterator):
-    """ Curve Slope  strategy with TRIMA line
+    """ 均线斜率交易策略——TRIMA均线(三重指数平滑移动平均线)：
+        基于TRIMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标
+        （当均线斜率为正时，表示价格趋势向上，提高持仓比例，当均线斜率为负时，表示趋势
+        向下，设定持仓比例为负一或零）
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        f: int 均线计算周期
+        N: int, 估算斜率使用的数据点数量
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算价格的移动均线，并且计算均线的当前斜率slope
+        slope使用最近的N个移动均线数据点通过线性回归得到：
+        1，当slope斜率大于零时，判断趋势向上，设定持仓比例为1
+        2，当slope斜率小于零时，判断趋势向下，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(35, 5)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 200), (2, 20)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(35,)):
+    def __init__(self, pars=(35, 5)):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 200)],
+                         par_count=2,
+                         par_types=['int', 'int'],
+                         par_range=[(3, 200), (2, 20)],
                          name='SLOPE - TRIMA',
-                         description='Smoothed Curve Slope Strategy that uses TRIMA line as the '
-                                  'trade line ',
+                         description='Smoothed Curve Slope Strategy that uses TRIMA line as the trade line',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, = self.pars
+            f, n = self.pars
         else:
-            f, = pars
+            f, n = pars
         h = h.T
         curve = trima(h[0], f)
-        slope = curve[-1] - curve[-2]
+        slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 class SLPWMA(RuleIterator):
-    """ Curve Slope  strategy with WMA line
+    """ 均线斜率交易策略——WMA均线(加权移动平均线)：
+        基于WMA计算规则生成移动均线，根据均线的斜率设定持仓比例目标
+        （当均线斜率为正时，表示价格趋势向上，提高持仓比例，当均线斜率为负时，表示趋势
+        向下，设定持仓比例为负一或零）
 
-        two parameters:
-        - timeperiod - timeperiod
+    策略参数：
+        f: int, 均线计算周期
+        N: int, 估算斜率使用的数据点数量
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算价格的移动均线，并且计算均线的当前斜率slope
+        slope使用最近的N个移动均线数据点通过线性回归得到：
+        1，当slope斜率大于零时，判断趋势向上，设定持仓比例为1
+        2，当slope斜率小于零时，判断趋势向下，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(125, 5)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(3, 200), (2, 20)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(125,)):
+    def __init__(self, pars=(125, 5)):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(3, 200)],
+                         par_count=2,
+                         par_types=['int', 'int'],
+                         par_range=[(3, 200), (2, 20)],
                          name='SLOPE - WMA',
-                         description='Smoothed Curve Slope Strategy that uses WMA line as the '
-                                     'trade line ',
+                         description='Smoothed Curve Slope Strategy that uses WMA line as the trade line ',
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            f, = self.pars
+            f, n = self.pars
         else:
-            f, = pars
+            f, n = pars
         h = h.T
         curve = wma(h[0], f)
-        slope = curve[-1] - curve[-2]
+        slope = curve[-1] - curve[-n]
         if slope > 0:
             return 1
         else:
-            return 0
+            return -1
 
 
 # momentum-based strategies:
