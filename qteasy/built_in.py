@@ -17,7 +17,7 @@ from .tafuncs import plus_di, minus_dm, plus_dm, mom, ppo, rsi, stoch, stochf
 from .tafuncs import stochrsi, ultosc, willr
 
 
-# All following strategies can be used to create strategies by referring to its stragety ID
+# All following strategies can be used to create strategies by referring to its strategy ID
 
 # Built-in Rolling timing strategies:
 def built_in_list(*args, **kwargs):
@@ -1596,7 +1596,7 @@ class SLPT3(RuleIterator):
         if slope > 0:
             return 1
         else:
-            return 01
+            return -1
 
 
 class SLPTEMA(RuleIterator):
