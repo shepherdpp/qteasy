@@ -1753,7 +1753,26 @@ class SLPWMA(RuleIterator):
 # methods
 
 class ADX(RuleIterator):
-    """ADX 策略
+    """ ADX指标（平均定向运动指数）选股策略：
+        基于ADX指标判断当前趋势的强度，从而根据趋势强度产生交易信号
+
+    策略参数：
+        p: int, ADX计算时间周期，取值范围2～35
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算ADX趋势强度：
+        1, 当ADX大于25时，判断趋势向上，设定持仓比例为1
+        2, 当ADX介于20到25之间时，判断为中性趋势，设定持仓比例为0
+        3, 当ADX小于20时，判断趋势向下，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low, close 最高价，最低价，收盘价，多数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 35)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -1762,27 +1781,20 @@ class ADX(RuleIterator):
                          par_types=['int'],
                          par_range=[(2, 35)],
                          name='ADX',
-                         description='Average Directional Movement Index, determine buy/sell signals according to ADX Indicators',
+                         description='Average Directional Movement Index, determine buy/sell signals by ADX Indicator',
                          window_length=200,
                          data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-            u: number deviation up
-            d: number deviation down
-            m: ma type
-        """
         if pars is None:
             p, = self.pars
         else:
             p, = pars
         h = h.T
         res = adx(h[0], h[1], h[2], p)[-1]
-        # 策略:
-        # 指标比较复杂，需要深入研究一下
-        # 指标大于25时属于强趋势。。。未完待续
+        # TODO 策略:
+        #  指标比较复杂，需要深入研究一下
+        #  指标大于25时属于强趋势。。。未完待续
         if res > 25:
             cat = 1
         elif res < 20:
