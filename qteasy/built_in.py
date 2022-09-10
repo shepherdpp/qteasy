@@ -1805,7 +1805,28 @@ class ADX(RuleIterator):
 
 
 class APO(RuleIterator):
-    """APO 策略
+    """ APO指标（绝对价格震荡指标）选股策略：
+        APO指标通过两条均线的相对关系生成，
+        基于APO指标判断当前股价变动的牛熊趋势，从而根据趋势产生交易信号
+
+    策略参数：
+        f: int, 快速均线周期
+        s: int, 慢速均线周期
+        m: int, 移动均线类型，取值范围0～8
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算APO趋势：
+        1, 当APO大于0时，判断为牛市趋势，设定持仓比例为1
+        2, 当ADX小于0时，判断为熊市趋势，设定持仓比例为-1
+
+    策略属性缺省值：
+    默认参数：(12, 26, 0)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(10, 100), (10, 100), (0, 8)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(12, 26, 0)):
@@ -1819,13 +1840,6 @@ class APO(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-            u: number deviation up
-            d: number deviation down
-            m: ma type
-        """
         if pars is None:
             f, s, m = self.pars
         else:
