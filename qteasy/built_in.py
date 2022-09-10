@@ -2062,21 +2062,13 @@ class CMO(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-        """
         if pars is None:
             p, = self.pars
         else:
             p, = pars
         h = h.T
         res = cmo(h[0], p)[-1]
-        # 策略:
-        # 当res大于0时，输出弱多头
-        # 当res小于0时，输出弱空头
-        # 当res大于50时，输出强多头
-        # 当res小于-50时，输出强空头
+
         if 50 > res > 0:
             cat = 0.5
         elif res > 50:
@@ -2091,7 +2083,30 @@ class CMO(RuleIterator):
 
 
 class MACDEXT(RuleIterator):
-    """MACD Extention 策略
+    """ MACDEXT (Extendec MACD 扩展MACD指数) 选股策略：
+        本策略使用MACD指标生成持仓目标，但是与标准的MACD不同，MACDEXT的快、慢、及信号均线的类型均可选
+
+    策略参数：
+        fp: int, 快速均线计算周期
+        ft: int, 快速均线类型，取值范围0～8
+        sp: int, 慢速均线计算周期
+        st: int, 慢速均线类型，取值范围0～8
+        s:  int, MACD信号线计算周期
+        t:  int, MACD信号线类型，取值范围0～8
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算MACD，根据MACD的H线生成持仓比例信号：
+        1, 当hist>0时输出多头
+        2, 当hist<0时输出空头
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low, close 最高价，最低，收盘价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(12, 0, 26, 0, 9, 0)):
@@ -2099,34 +2114,23 @@ class MACDEXT(RuleIterator):
                          par_count=1,
                          par_types=['int', 'int', 'int', 'int', 'int', 'int'],
                          par_range=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
-                         name='MACD Extention',
-                         description='MACD Extention, determine long/short position according to extended MACD Indicators',
+                         name='MACD Extension',
+                         description='MACD Extension, determine long/short position according to extended MACD',
                          window_length=200,
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            fp: fast periods
-            ft: fast ma type
-            sp: slow periods
-            st: slow ma type
-            s: signal periods
-            t: signal ma type
-        """
         if pars is None:
             fp, ft, sp, st, p, t = self.pars
         else:
             fp, ft, sp, st, p, t = pars
         h = h.T
         m, sig, hist = macdext(h[0], fp, ft, sp, st, p, t)[-1]
-        # 策略:
-        # 当hist>0时输出多头
-        # 当hist<0时输出空头
+
         if hist > 0:
             cat = 1
         else:
-            cat = 0
+            cat = -1
         return cat
 
 
