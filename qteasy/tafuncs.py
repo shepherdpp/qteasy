@@ -461,7 +461,7 @@ def apo(close, fastperiod=12, slowperiod=26, matype=0):
 
 
 def aroon(high, low, timeperiod=14):
-    """Aroon
+    """AROON
 
     The Aroon indicator, developed by Tushar Chande, indicates if a price is
     trending or is in a trading range. It can also reveal the beginning of a
@@ -497,7 +497,7 @@ def aroon(high, low, timeperiod=14):
 
 
 def aroonosc(high, low, timeperiod=14):
-    """Aroon Oscillator
+    """Aroon Oscillator (AROON振荡指标)
 
     The Aroon Oscillator is a trend-following indicator that uses
     aspects of the Aroon Indicator (Aroon Up and Aroon Down) to
@@ -507,8 +507,6 @@ def aroonosc(high, low, timeperiod=14):
     is present. Traders watch for zero line crossovers to signal
     potential trend changes. They also watch for big moves, above
     50 or below -50 to signal strong price moves.
-
-
 
     :param high:
     :param low:

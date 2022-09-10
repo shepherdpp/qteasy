@@ -1859,7 +1859,28 @@ class APO(RuleIterator):
 
 
 class AROON(RuleIterator):
-    """APOON 策略
+    """ AROON指标选股策略：
+        AROON指标被用于判断当前股价处于趋势区间还是僵持区间，通过计算AROON指标
+        策略可以根据趋势的强弱程度输出强多/空头和弱多/空头
+
+    策略参数：
+        p: int, 趋势判断周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算AROON UP / DOWN两条趋势线，并生成持仓比例信号：
+        1, 当UP在DOWN的上方时，输出弱多头
+        2, 当UP位于DOWN下方时，输出弱空头
+        3, 当UP大于70且DOWN小于30时，输出强多头
+        4, 当UP小于30且DOWN大于70时，输出强空头
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low 最高价，最低价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -1873,24 +1894,13 @@ class AROON(RuleIterator):
                          data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-            u: number deviation up
-            d: number deviation down
-            m: ma type
-        """
         if pars is None:
             p, = self.pars
         else:
             p, = pars
         h = h.T
         ups, dns = aroon(h[0], h[1], p)
-        # 策略:
-        # 当up在dn的上方时，输出弱多头
-        # 当up位于dn下方时，输出弱空头
-        # 当up大于70且dn小于30时，输出强多头
-        # 当up小于30且dn大于70时，输出强空头
+
         if ups[-1] > dns[-1]:
             cat = 0.5
         elif ups[-1] > 70 and dns[-1] < 30:
@@ -1905,7 +1915,28 @@ class AROON(RuleIterator):
 
 
 class AROONOSC(RuleIterator):
-    """AROON Oscillator 策略
+    """ AROON Oscillator (AROON震荡指标) 选股策略：
+        AROONOSC指标基于AROON指标计算，用于判断当前价格变动的趋势以及趋势强度
+        当AROONOSC大于0时表示价格趋势向上，反之趋势向下，绝对值大于50时表示强烈的趋势
+
+    策略参数：
+        p: int, 趋势判断周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算AROONOSC，并生成持仓比例信号：
+        1, 当AROONOSC大于0时，输出弱多头
+        2, 当AROONOSC小于0时，输出弱空头
+        3, 当AROONOSC大于50时，输出强多头
+        4, 当AROONOSC小于-50时，输出强空头
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low 最高价，最低价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -1913,27 +1944,19 @@ class AROONOSC(RuleIterator):
                          par_count=1,
                          par_types=['int'],
                          par_range=[(2, 100)],
-                         name='AROON Oscilator',
-                         description='Aroon Oscilator, determine buy/sell signals according to AROON Indicators',
+                         name='AROON Oscillator',
+                         description='Aroon Oscillator, determine buy/sell signals according to AROON Indicators',
                          window_length=200,
                          data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-        """
         if pars is None:
             p, = self.pars
         else:
             p, = pars
         h = h.T
         res = aroonosc(h[0], p)[-1]
-        # 策略:
-        # 当res大于0时，输出弱多头
-        # 当res小于0时，输出弱空头
-        # 当res大于50时，输出强多头
-        # 当res小于-50时，输出强空头
+
         if res > 0:
             cat = 0.5
         elif res > 50:
