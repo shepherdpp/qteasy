@@ -12947,23 +12947,64 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
-    # TODO:
-    #  add more test cases for more momentum-based strategies
     def test_adx(self):
-        pass
+        op = qt.Operator(strategies=['adx'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
 
     def test_apo(self):
-        pass
+        op = qt.Operator(strategies=['apo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
 
     def test_aroon(self):
-        pass
+        op = qt.Operator(strategies=['aroon'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
 
     def test_aroonosc(self):
-        pass
+        op = qt.Operator(strategies=['aroonosc'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
 
     def test_cci(self):
-        pass
+        op = qt.Operator(strategies=['cci'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
 
+    def test_cmo(self):
+        op = qt.Operator(strategies=['cmo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_macdext(self):
+        op = qt.Operator(strategies=['macdext'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    # TODO:
+    #  add more test cases for more momentum-based strategies
 
 class TestBuiltInsMultiple(unittest.TestCase):
     """ 测试标的为多种证券的投资策略
