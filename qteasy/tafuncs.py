@@ -529,7 +529,7 @@ def bop(opn, high, low, close):
 
 
 def cci(high, low, close, timeperiod=14):
-    """Commodity Channel Index:
+    """Commodity Channel Index: (商品渠道指数)
 
     Developed by Donald Lambert, the Commodity Channel Index​ (CCI)
     is a momentum-based oscillator used to help determine when an

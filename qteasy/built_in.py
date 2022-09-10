@@ -1971,7 +1971,28 @@ class AROONOSC(RuleIterator):
 
 
 class CCI(RuleIterator):
-    """CCI the Commodity Channel Index 策略
+    """ CCI (Commodity Channel Index商品渠道指数) 选股策略：
+        CCI商品渠道指数被用来判断当前股价位于超卖还是超买区间，并使用这个指标
+        生成投资仓位目标
+
+    策略参数：
+        p: int, 趋势判断周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算CCI，并生成持仓比例信号：
+        1, 当CCI大于0时，输出弱多头
+        2, 当CCI小于0时，输出弱空头
+        3, 当CCI大于50时，输出强多头
+        4, 当CCI小于-50时，输出强空头
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low, close 最高价，最低，收盘价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -1991,9 +2012,7 @@ class CCI(RuleIterator):
             p, = pars
         h = h.T
         res = cci(h[0], h[1], h[2], p)[-1]
-        # 策略:
-        # 当res大于0时输出多头，大于50时输出强多头
-        # 当res小于0时输出空头，小于-50时输出强空头
+
         if res > 0:
             cat = 0.5
         elif res > 50:
