@@ -12947,6 +12947,23 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
+    # TODO:
+    #  add more test cases for more momentum-based strategies
+    def test_adx(self):
+        pass
+
+    def test_apo(self):
+        pass
+
+    def test_aroon(self):
+        pass
+
+    def test_aroonosc(self):
+        pass
+
+    def test_cci(self):
+        pass
+
 
 class TestBuiltInsMultiple(unittest.TestCase):
     """ 测试标的为多种证券的投资策略

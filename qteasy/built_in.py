@@ -1985,10 +1985,6 @@ class CCI(RuleIterator):
                          data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-        """
         if pars is None:
             p, = self.pars
         else:
