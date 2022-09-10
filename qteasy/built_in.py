@@ -1972,7 +1972,7 @@ class AROONOSC(RuleIterator):
 
 class CCI(RuleIterator):
     """ CCI (Commodity Channel Index商品渠道指数) 选股策略：
-        CCI商品渠道指数被用来判断当前股价位于超卖还是超买区间，并使用这个指标
+        CCI商品渠道指数被用来判断当前股价位于超卖还是超买区间，本策略使用这个指标
         生成投资仓位目标
 
     策略参数：
@@ -2027,7 +2027,28 @@ class CCI(RuleIterator):
 
 
 class CMO(RuleIterator):
-    """CMO Chande Momentum Oscillator 钱德动量振荡器 策略
+    """ CMO (Chande Momentum Oscillator 钱德动量振荡器) 选股策略：
+        CMO 是一个在-100到100之间波动的动量指标，它被用来判断当前股价位于
+        超卖还是超买区间，本策略使用这个指标生成投资仓位目标
+
+    策略参数：
+        p: int, 动量计算周期
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        按照规则计算CMO，并生成持仓比例信号：
+        1, 当CMO大于0时，输出弱多头
+        2, 当CMO小于0时，输出弱空头
+        3, 当CMO大于50时，输出强多头
+        4, 当CMO小于-50时，输出强空头
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low, close 最高价，最低，收盘价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -2056,11 +2077,11 @@ class CMO(RuleIterator):
         # 当res小于0时，输出弱空头
         # 当res大于50时，输出强多头
         # 当res小于-50时，输出强空头
-        if res > 0:
+        if 50 > res > 0:
             cat = 0.5
         elif res > 50:
             cat = 1
-        elif res < 0:
+        elif -50 < res < 0:
             cat = -0.5
         elif res < -50:
             cat = -1
