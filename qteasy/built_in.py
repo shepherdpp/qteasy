@@ -2184,7 +2184,26 @@ class MFI(RuleIterator):
 
 
 class DI(RuleIterator):
-    """DI index that uses both negtive and positive DI 策略
+    """ DI (Directory Indicator 方向指标) 交易策略：
+        DI 指标包含负方向指标与正方向指标，它们分别表示价格上行和下行的趋势强度，本策略使用±DI指标生成交易信号
+
+    策略参数：
+        n:  int, 负DI信号计算周期
+        p:  int, 正DI信号计算周期
+    信号类型：
+        PT型：百分比持仓目标信号
+    信号规则：
+        按照规则计算正负DI，根据DI的值生成持仓目标信号：
+        1, 当+DI > -DI时，设置持仓目标为1
+        2, 当+DI < -DI时，设置持仓目标为-1
+
+    策略属性缺省值：
+    默认参数：(14, 14)
+    数据类型：high, low, close 最高价，最低，收盘，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(1, 100), (1, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14, 14)):
@@ -2198,24 +2217,17 @@ class DI(RuleIterator):
                          data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            m: periods for negtive DI
-            p: periods for positive DI
-        """
         if pars is None:
-            m, p, = self.pars
+            n, p, = self.pars
         else:
-            m, p, = pars
+            n, p, = pars
         h = h.T
-        ndi = minus_di(h[0], h[1], h[2], m)[-1]
+        ndi = minus_di(h[0], h[1], h[2], n)[-1]
         pdi = plus_di(h[0], h[1], h[2], p)[-1]
-        # 策略:
-        # 当ndi小于pdi时，输出多头
-        # 当ndi大于pdi时，输出空头
+        
         if pdi > ndi:
             cat = 1
-        elif ndi < pdi:
+        elif pdi < ndi:
             cat = -1
         else:
             cat = 0
