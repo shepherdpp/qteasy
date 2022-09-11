@@ -760,7 +760,7 @@ def macdfix(close, signalperiod=9):
 
 
 def mfi(high, low, close, volume, timeperiod=14):
-    """Money Flow Index:
+    """Money Flow Index (货币流指标):
 
     The Money Flow Index (MFI) is a momentum indicator that measures the
     flow of money into and out of a security over a specified period of time.

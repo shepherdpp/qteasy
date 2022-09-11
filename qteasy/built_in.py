@@ -2135,7 +2135,25 @@ class MACDEXT(RuleIterator):
 
 
 class MFI(RuleIterator):
-    """MFI money flow index 策略
+    """ MFI (Money Flow Index 货币流指数) 交易策略：
+        MFI指数用于判断股价属于超买还是超卖状态，本策略使用MFI指标生成交易信号
+
+    策略参数：
+        p:  int, MFI信号计算周期
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        按照规则计算MFI，根据MFI的值生成比例交易信号：
+        1, 当MFI>20时，持续不断产生10%买入交易信号
+        2, 当MFI>80时，持续不断产生30%卖出交易信号，持续卖出持仓股票
+
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high, low, close, volume 最高价，最低，收盘，交易量，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -2149,22 +2167,16 @@ class MFI(RuleIterator):
                          data_types='high, low, close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: period
-        """
         if pars is None:
             p, = self.pars
         else:
             p, = pars
         h = h.T
         res = mfi(h[0], h[1], h[2], h[3], p)[-1]
-        # 策略:
-        # 当res小于20时，分批买入
-        # 当res大于80时，分批卖出
-        if res > 20:
+
+        if res < 20:
             sig = 0.1
-        elif res < 80:
+        elif res > 80:
             sig = -0.3
         else:
             sig = 0
