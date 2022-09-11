@@ -2111,7 +2111,7 @@ class MACDEXT(RuleIterator):
 
     def __init__(self, pars=(12, 0, 26, 0, 9, 0)):
         super().__init__(pars=pars,
-                         par_count=1,
+                         par_count=6,
                          par_types=['int', 'int', 'int', 'int', 'int', 'int'],
                          par_range=[(2, 35), (0, 8), (2, 35), (0, 8), (2, 35), (0, 8)],
                          name='MACD Extension',

@@ -13006,6 +13006,7 @@ class TestBuiltInsSingle(unittest.TestCase):
     # TODO:
     #  add more test cases for more momentum-based strategies
 
+
 class TestBuiltInsMultiple(unittest.TestCase):
     """ 测试标的为多种证券的投资策略
         投资标的为20200102的沪深300指数的300种成分股票，投资回测区间为
@@ -13174,10 +13175,6 @@ class Cross_SMA_PT(qt.RuleIterator):
             - M   边界值
 
             策略的其他说明
-
-        """
-        """
-        必须初始化的关键策略参数清单：
 
         """
         super().__init__(

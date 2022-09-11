@@ -1315,18 +1315,20 @@ def _plot_test_result(opti_eval_res: list,
             with pd.option_context('mode.use_inf_as_na', True):
                 opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
                 test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
+                opti_v = opti_indicator_df[name].fillna(np.nan)
+                test_v = test_indicator_df[name].fillna(np.nan)
                 if p_type == 0 or p_type == 'errorbar':
-                    max_v = opti_indicator_df[name].max()
-                    min_v = opti_indicator_df[name].min()
-                    mean = opti_indicator_df[name].mean()
-                    std = opti_indicator_df[name].std()
+                    max_v = np.nanmax(opti_v)
+                    min_v = np.nanmin(opti_v)
+                    mean = np.nanmean(opti_v)
+                    std = np.nanstd(opti_v)
                     ax.errorbar(1, mean, std, fmt='ok', lw=3)
                     ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
                                 label=opti_label)
-                    max_v = test_indicator_df[name].max()
-                    min_v = test_indicator_df[name].min()
-                    mean = test_indicator_df[name].mean()
-                    std = test_indicator_df[name].std()
+                    max_v = np.nanmax(test_v)
+                    min_v = np.nanmin(test_v)
+                    mean = np.nanmean(test_v)
+                    std = np.nanstd(test_v)
                     ax.errorbar(2, mean, std, fmt='ok', lw=3)
                     ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
                                 label=test_label)
@@ -1337,22 +1339,24 @@ def _plot_test_result(opti_eval_res: list,
                     ax.set_xlim(0.25, len(labels) + 0.75)
                     ax.legend()
                 elif p_type == 1 or p_type == 'scatter':
-                    ax.scatter(opti_indicator_df[name].fillna(np.nan),
-                               test_indicator_df[name].fillna(np.nan),
-                               label=name, marker='^', alpha=0.9)
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        ax.scatter(opti_v, test_v,
+                                   label=name, marker='^', alpha=0.9)
                     ax.set_title(opti_label)
                     ax.set_ylabel(test_label)
                     ax.legend()
                 elif p_type == 2 or p_type == 'histo':
-                    ax.hist(opti_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
-                            label=opti_label)
-                    ax.hist(test_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
-                            label=test_label)
+                    if not all(pd.isna(opti_v)):
+                        ax.hist(opti_v, bins=15, alpha=0.5,
+                                label=opti_label)
+                    if not all(pd.isna(test_v)):
+                        ax.hist(test_v, bins=15, alpha=0.5,
+                                label=test_label)
                     ax.legend()
                 elif p_type == 3 or p_type == 'violin':
-                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
-                                                     test_indicator_df[name].fillna(np.nan)]).T,
-                                           columns=[opti_label, test_label])
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                               columns=[opti_label, test_label])
                     ax.violinplot(data_df)
                     labels = ['opti', 'test']
                     ax.set_xticks(np.arange(1, len(labels) + 1))
@@ -1360,9 +1364,9 @@ def _plot_test_result(opti_eval_res: list,
                     ax.set_xlim(0.25, len(labels) + 0.75)
                     ax.legend()
                 else:
-                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
-                                                     test_indicator_df[name].fillna(np.nan)]).T,
-                                           columns=[opti_label, test_label])
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                               columns=[opti_label, test_label])
                     ax.boxplot(data_df)
                     labels = ['opti', 'test']
                     ax.set_xticks(np.arange(1, len(labels) + 1))
