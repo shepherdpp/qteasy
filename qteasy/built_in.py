@@ -2135,7 +2135,7 @@ class MACDEXT(RuleIterator):
 
 
 class MFI(RuleIterator):
-    """ MFI (Money Flow Index 货币流指数) 交易策略：
+    """ MFI (Money Flow Index 货币流向指数) 交易策略：
         MFI指数用于判断股价属于超买还是超卖状态，本策略使用MFI指标生成交易信号
 
     策略参数：
@@ -2224,7 +2224,7 @@ class DI(RuleIterator):
         h = h.T
         ndi = minus_di(h[0], h[1], h[2], n)[-1]
         pdi = plus_di(h[0], h[1], h[2], p)[-1]
-        
+
         if pdi > ndi:
             cat = 1
         elif pdi < ndi:
@@ -2235,7 +2235,28 @@ class DI(RuleIterator):
 
 
 class DM(RuleIterator):
-    """ DM index that uses both negtive and positive DM 策略
+    """ DM (Directional Movement 方向运动指标) 交易策略：
+        DM 指标包含负方向运动指标(Negative Directional Movement)与正方向运动指标(Positive Directional Movement)，
+        它们分别表示价格上行和下行的趋势，本策略使用±DM指标生成交易信号
+
+    策略参数：
+        n:  int, 负DM信号计算周期
+        p:  int, 正DM信号计算周期
+    信号类型：
+        PT型：百分比持仓目标信号
+    信号规则：
+        按照规则计算正负DI，根据DI的值生成持仓目标信号：
+        1, 当+DM > -DM时，设置持仓目标为1
+        2, 当+DM < -DM时，设置持仓目标为-1
+        3, 其余情况设置持仓目标为0
+
+    策略属性缺省值：
+    默认参数：(14, 14)
+    数据类型：high, low 最高价，最低，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(1, 100), (1, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14, 14)):
@@ -2255,18 +2276,18 @@ class DM(RuleIterator):
             p: periods for positive DM
         """
         if pars is None:
-            m, p, = self.pars
+            n, p, = self.pars
         else:
-            m, p, = pars
+            n, p, = pars
         h = h.T
-        ndm = minus_dm(h[0], h[1], m)[-1]
+        ndm = minus_dm(h[0], h[1], n)[-1]
         pdm = plus_dm(h[0], h[1], p)[-1]
         # 策略:
         # 当ndi小于pdi时，输出多头
         # 当ndi大于pdi时，输出空头
         if pdm > ndm:
             cat = 1
-        elif ndm < pdm:
+        elif pdm < ndm:
             cat = -1
         else:
             cat = 0
