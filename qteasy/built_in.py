@@ -2303,7 +2303,7 @@ class MOM(RuleIterator):
 
     策略属性缺省值：
     默认参数：(14, )
-    数据类型：high, low 最高价，最低，多数据输入
+    数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：100
     参数范围：[(1, 100)]
@@ -2338,35 +2338,49 @@ class MOM(RuleIterator):
 
 
 class PPO(RuleIterator):
-    """ PPO 策略
+    """ PPO (Percentage Price Oscillator 百分比价格振荡器) 交易策略：
+        PPO 指标表示快慢两根移动均线之间的百分比差值，用于判断价格的变化趋势。长短均线的计算周期和
+        均线类型均为策略参数。
+
+    策略参数：
+        fp: int, 快速均线计算周期
+        sp: int, 慢速均线计算周期
+        m: int, 移动均线类型（取值范围0～8）
+    信号类型：
+        PT型：百分比持仓目标信号
+    信号规则：
+        按照规则计算PPO，根据PPO的值生成持仓目标信号：
+        1, 当PPO > 0时，设置持仓目标为1
+        2, 当PPO < 0时，设置持仓目标为-1
+        3, 其余情况设置持仓目标为0
+
+    策略属性缺省值：
+    默认参数：(12, 26, 0)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(2, 100), (20, 200), (0, 8)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(12, 26, 0)):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (2, 100), (0, 8)],
+                         par_range=[(2, 100), (20, 200), (0, 8)],
                          name='PPO',
                          description='PPO, determine long/short positions according to PPO Indicators',
                          window_length=100,
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            fp: fast moving periods
-            sp: slow moving periods
-            m: ma type
-        """
         if pars is None:
             fp, sp, m = self.pars
         else:
             fp, sp, m = pars
         h = h.T
         res = ppo(h[0], fp, sp, m)[-1]
-        # 策略:
-        # 当res小于0时，输出空头
-        # 当res大于0时，输出多头
+
         if res > 0:
             cat = 1
         elif res < 0:

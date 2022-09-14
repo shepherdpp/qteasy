@@ -1015,11 +1015,11 @@ def plus_dm(high, low, timeperiod=14):
 
 
 def ppo(close, fastperiod=12, slowperiod=26, matype=0):
-    """Percentage Price Oscillator
+    """Percentage Price Oscillator 百分比价格振荡器
 
     The percentage price oscillator (PPO) is a technical momentum indicator that shows
     the relationship between two moving averages in percentage terms. The moving averages
-    are a 26-period and 12-period exponential moving average (EMA).
+    periods and type are provided as arguments.
 
     The PPO is used to compare asset performance and volatility, spot divergence which
     could lead to price reversals, generate trade signals, and help confirm trend direction.
