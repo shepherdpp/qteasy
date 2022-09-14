@@ -2270,11 +2270,6 @@ class DM(RuleIterator):
                          data_types='high, low')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            m: periods for negtive DM
-            p: periods for positive DM
-        """
         if pars is None:
             n, p, = self.pars
         else:
@@ -2282,9 +2277,7 @@ class DM(RuleIterator):
         h = h.T
         ndm = minus_dm(h[0], h[1], n)[-1]
         pdm = plus_dm(h[0], h[1], p)[-1]
-        # 策略:
-        # 当ndi小于pdi时，输出多头
-        # 当ndi大于pdi时，输出空头
+
         if pdm > ndm:
             cat = 1
         elif pdm < ndm:
@@ -2295,7 +2288,26 @@ class DM(RuleIterator):
 
 
 class MOM(RuleIterator):
-    """ Momentum 策略
+    """ MOM (momentum indicator 动量指标) 交易策略：
+        MOM 指标可以用于识别价格的上行或下行趋势的强度，当前价格高于N日前价格时，MOM为正，反之为负。
+
+    策略参数：
+        n:  int, MOM信号计算周期
+    信号类型：
+        PT型：百分比持仓目标信号
+    信号规则：
+        按照规则计算MOM，根据MOM的值生成持仓目标信号：
+        1, 当MOM > 0时，设置持仓目标为1
+        2, 当MOM < 0时，设置持仓目标为-1
+        3, 其余情况设置持仓目标为0
+
+    策略属性缺省值：
+    默认参数：(14, )
+    数据类型：high, low 最高价，最低，多数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(1, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -2309,19 +2321,13 @@ class MOM(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: periods
-        """
         if pars is None:
             p, = self.pars
         else:
             p, = pars
         h = h.T
         res = mom(h[0], p)[-1]
-        # 策略:
-        # 当res小于0时，输出空头
-        # 当res大于0时，输出多头
+
         if res > 0:
             cat = 1
         elif res < 0:
