@@ -2391,36 +2391,52 @@ class PPO(RuleIterator):
 
 
 class RSI(RuleIterator):
-    """ RSI Relative Strength Index 策略
+    """ RSI (Relative Strength Index 相对强度指数) 交易策略：
+        RSI 指标度量最近价格变化的幅度，从而判断目前股票属于超卖还是超买状态，并据此判断变化趋势。RSI指标总是在0到100之间
+        震荡，是一条震荡曲线。
+
+    策略参数：
+        p: int, RSI计算周期
+        ulim: int, 触发多头仓位的最低限
+        llim: int, 触发空头仓位的最高限
+    信号类型：
+        PT型：百分比持仓目标信号
+    信号规则：
+        按照规则计算RSI，根据RSI的值与ulim/llim的关系生成持仓目标信号：
+        1, 当RSI > ulim时，设置持仓目标为1
+        2, 当RSI < llim时，设置持仓目标为-1
+        3, 其余情况设置持仓目标为0
+
+    策略属性缺省值：
+    默认参数：(12, 60, 40)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(2, 100), (50, 100), (0, 50)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12,)):
+    def __init__(self, pars=(12, 60, 40)):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
+                         par_count=3,
+                         par_types=['int', 'int', 'int'],
+                         par_range=[(2, 100), (50, 100), (0, 50)],
                          name='RSI',
                          description='RSI, determine long/short positions according to RSI Indicators',
                          window_length=100,
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: periods
-        """
         if pars is None:
-            p, = self.pars
+            p, ulim, llim = self.pars
         else:
-            p, = pars
+            p, ulim, llim = pars
         h = h.T
         res = rsi(h[0], p)[-1]
-        # 策略:
-        # 当res小于40时，输出空头
-        # 当res大于60时，输出多头
-        if res > 60:
+
+        if res > ulim:
             cat = 1
-        elif res < 40:
+        elif res < llim:
             cat = -1
         else:
             cat = 0
