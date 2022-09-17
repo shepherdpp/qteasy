@@ -2476,7 +2476,7 @@ class STOCH(RuleIterator):
                          par_types=['int', 'int', 'int', 'int', 'int'],
                          par_range=[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)],
                          name='Stochastic',
-                         description='Stoch, determine buy/sell signals according to Stochastic Indicator',
+                         description='Stochastic, determine buy/sell signals according to Stochastic Indicator',
                          window_length=100,
                          data_types='high, low, close')
 
@@ -2550,7 +2550,29 @@ class STOCHF(RuleIterator):
 
 
 class STOCHRSI(RuleIterator):
-    """ Stochastic RSI 策略
+    """ STOCHRSI (Stochastic Relative Strength Index 随机相对强弱指标) 交易策略：
+        STOCHRSI 指标度量价格变化的动量，该指标在0～1之间波动，表示相对的价格趋势强弱程度，并生成比例买卖交易信号。
+
+    策略参数：
+        p: int, 计算周期
+        fk: int, 快速K均线计算周期
+        fd: int, 快速D均线计算周期
+        fdm: int, 快速D均线类型，取值范围0～8
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        按照规则计算k值和d值，根据k值生成比例买卖交易信号：
+        1, 当k > 0.8时，产生逐步卖出信号，每周期卖出持有份额的30%
+        2, 当k < 0.2时，产生逐步买入信号，每周期买入总投资额的10%
+        3, 当k和d发生背离的时候，也会产生信号（未来改进）
+
+    策略属性缺省值：
+    默认参数：(14, 5, 3, 0)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(2, 100), (2, 100), (2, 100), (0, 8)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14, 5, 3, 0)):
@@ -2559,30 +2581,18 @@ class STOCHRSI(RuleIterator):
                          par_types=['int', 'int', 'int', 'int'],
                          par_range=[(2, 100), (2, 100), (2, 100), (0, 8)],
                          name='Stochastic RSI',
-                         description='Stochaxtic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
+                         description='Stochastic RSI, determine buy/sell signals according to Stochastic RSI Indicator',
                          window_length=100,
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: periods
-            fk: fastk
-            sk: slowk
-            skm: slowk ma type
-            sd: slow d
-            sdm: slow d ma type
-        """
         if pars is None:
             p, fk, fd, fdm = self.pars
         else:
             p, fk, fd, fdm = pars
         h = h.T
         k, d = stochrsi(h[0], p, fk, fd, fdm)
-        # 策略:
-        # 当k小于0.2时，逐步买进
-        # 当k大于0.8时，逐步卖出
-        # 当k与d背离的时候，同样会产生信号，需要研究
+
         if k[-1] > 0.8:
             sig = -0.3
         elif k[-1] < 0.2:
