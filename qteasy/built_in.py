@@ -2416,7 +2416,7 @@ class RSI(RuleIterator):
     策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(12, 60, 40)):
+    def __init__(self, pars=(12, 70, 30)):
         super().__init__(pars=pars,
                          par_count=3,
                          par_types=['int', 'int', 'int'],
@@ -2444,7 +2444,31 @@ class RSI(RuleIterator):
 
 
 class STOCH(RuleIterator):
-    """ Stochastic 策略
+    """ RSI (Relative Strength Index 相对强度指数) 交易策略：
+        RSI 指标度量最近价格变化的幅度，从而判断目前股票属于超卖还是超买状态，并据此判断变化趋势。RSI指标总是在0到100之间
+        震荡，是一条震荡曲线。
+
+    策略参数：
+        fk: int, 快速均线计算周期
+        sk: int, 慢速K均线计算周期
+        skm: int, 慢速K均线类型，取值范围0～8
+        sd: int, 慢速D均线计算周期
+        sdm: int, 慢速D均线类型
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        按照规则计算k值和d值，根据k值生成比例买卖交易信号：
+        1, 当k > 80时，产生逐步卖出信号，每周期卖出持有份额的30%
+        2, 当k < 20时，产生逐步买入信号，每周期买入总投资额的10%
+        3, 当k和d发生背离的时候，也会产生信号（未来改进）
+
+    策略属性缺省值：
+    默认参数：(5, 3, 0, 3, 0)
+    数据类型：high, low, close 最高价，最低价，收盘价，多数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(2, 100), (2, 100), (0, 8), (2, 100), (0, 8)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(5, 3, 0, 3, 0)):
@@ -2458,24 +2482,13 @@ class STOCH(RuleIterator):
                          data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            fk: periods
-            sk: slowk
-            skm: slowk ma type
-            sd: slow d
-            sdm: slow d ma type
-        """
         if pars is None:
             fk, sk, skm, sd, sdm = self.pars
         else:
             fk, sk, skm, sd, sdm = pars
         h = h.T
         k, d = stoch(h[0], h[1], h[2], fk, sk, skm, sd, sdm)
-        # 策略:
-        # 当k小于20时，逐步买进
-        # 当k大于80时，逐步卖出
-        # 当k与d背离的时候，同样会产生信号，需要研究
+
         if k[-1] > 80:
             sig = -0.3
         elif k[-1] < 20:
