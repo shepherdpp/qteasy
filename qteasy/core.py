@@ -1535,7 +1535,8 @@ def run(operator, **kwargs):
                             2: _search_incremental,
                             3: _search_ga,
                             4: _search_gradient,
-                            5: _search_particles
+                            5: _search_pso,
+                            6: _search_aco
                             }
     # 如果函数调用时用户给出了关键字参数(**kwargs），将关键字参数赋值给一个临时配置参数对象，
     # 覆盖QT_CONFIG的设置，但是仅本次运行有效
@@ -2390,8 +2391,22 @@ def _search_gradient(hist, benchmark, benchmark_type, op, config):
     raise NotImplementedError
 
 
-def _search_particles(hist, benchmark, benchmark_type, op, config):
-    """ 粒子群算法，与梯度下降相似，不过同时有N个粒子同时向山坡下滚动，输出结果为所有N个球的最后一步结果
+def _search_pso(hist, benchmark, benchmark_type, op, config):
+    """ Particle Swarm Optimization 粒子群优化算法，与梯度下降相似，从随机解出发，通过迭代寻找最优解
+
+    :input
+        :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
+        :param benchmark:
+        :param benchmark_type:
+        :param op，object，交易信号生成器对象
+        :param config, object, 用于存储交易相关参数配置对象
+    :return:
+    """
+    raise NotImplementedError
+
+
+def _search_aco(hist, benchmark, benchmark_type, op, config):
+    """ Ant Colony Optimization 蚁群优化算法，
 
     :input
         :param hist，object，历史数据，优化器的整个优化过程在历史数据上完成
