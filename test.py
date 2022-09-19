@@ -13003,6 +13003,94 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
+    def test_mfi(self):
+        op = qt.Operator(strategies=['mfi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_di(self):
+        op = qt.Operator(strategies=['di'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_dm(self):
+        op = qt.Operator(strategies=['dm'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_mom(self):
+        op = qt.Operator(strategies=['mom'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_ppo(self):
+        op = qt.Operator(strategies=['ppo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_rsi(self):
+        op = qt.Operator(strategies=['rsi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stoch(self):
+        op = qt.Operator(strategies=['stoch'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stochf(self):
+        op = qt.Operator(strategies=['stochf'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stochrsi(self):
+        op = qt.Operator(strategies=['stochrsi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_ultosc(self):
+        op = qt.Operator(strategies=['ultosc'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_willr(self):
+        op = qt.Operator(strategies=['willr'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
     # TODO:
     #  add more test cases for more momentum-based strategies
 
