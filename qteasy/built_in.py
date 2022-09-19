@@ -2644,7 +2644,7 @@ class ULTOSC(RuleIterator):
         else:
             p1, p2, p3, u, l = pars
         h = h.T
-        res = stochf(h[0], h[1], h[2], p1, p2, p3)[-1]
+        res = ultosc(h[0], h[1], h[2], p1, p2, p3)[-1]
 
         if res > u:
             sig = -0.3
@@ -2666,9 +2666,9 @@ class WILLR(RuleIterator):
     信号类型：
         PS型：百分比买卖交易信号
     信号规则：
-        计算ULTOSC指标，并根据指标的大小生成交易信号：
-        1, 当ULTOSC > -l时，产生逐步卖出信号，每周期卖出持有份额的30%
-        2, 当ULTOSC < -u时，产生逐步买入信号，每周期买入总投资额的10%
+        计算WILLR指标，并根据指标的大小生成交易信号：
+        1, 当WILLR > -l时，产生逐步卖出信号，每周期卖出持有份额的30%
+        2, 当WILLR < -u时，产生逐步买入信号，每周期买入总投资额的10%
 
     策略属性缺省值：
     默认参数：(14, 80, 20)
@@ -2695,7 +2695,7 @@ class WILLR(RuleIterator):
         else:
             p, u, l = pars
         h = h.T
-        res = stochf(h[0], h[1], h[2], p)
+        res = willr(h[0], h[1], h[2], p)
         if res > -l:
             sig = -0.3
         elif res < -u:
