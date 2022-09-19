@@ -2616,12 +2616,12 @@ class ULTOSC(RuleIterator):
         PS型：百分比买卖交易信号
     信号规则：
         计算ULTOSC指标，并根据指标的大小生成交易信号：
-        1, 当ULTOSC > 80时，产生逐步卖出信号，每周期卖出持有份额的30%
-        2, 当ULTOSC < 20时，产生逐步买入信号，每周期买入总投资额的10%
+        1, 当ULTOSC > u时，产生逐步卖出信号，每周期卖出持有份额的30%
+        2, 当ULTOSC < l时，产生逐步买入信号，每周期买入总投资额的10%
 
     策略属性缺省值：
     默认参数：(7, 14, 28, 70, 30)
-    数据类型：close 收盘价，单数据输入
+    数据类型：high, low, close 最高价，最低价，收盘价，多数据输入
     采样频率：天
     窗口长度：100
     参数范围：[(1, 100), (1, 100), (1, 100), (70, 99), (1, 30)]
@@ -2656,36 +2656,49 @@ class ULTOSC(RuleIterator):
 
 
 class WILLR(RuleIterator):
-    """ Williams' %R 策略
+    """ WILLR (William's %R 威廉姆斯百分比) 交易策略：
+        WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号
+
+    策略参数：
+        p:  int, 动量计算周期
+        u:  int, 卖出信号阈值
+        l:  int, 买入信号阈值
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        计算ULTOSC指标，并根据指标的大小生成交易信号：
+        1, 当ULTOSC > -l时，产生逐步卖出信号，每周期卖出持有份额的30%
+        2, 当ULTOSC < -u时，产生逐步买入信号，每周期买入总投资额的10%
+
+    策略属性缺省值：
+    默认参数：(14, 80, 20)
+    数据类型：high, low, close 最高价，最低价，收盘价，多数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(2, 100), (70, 99), (1, 30)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(14,)):
+    def __init__(self, pars=(14, 80, 20)):
         super().__init__(pars=pars,
-                         par_count=1,
-                         par_types=['int'],
-                         par_range=[(2, 100)],
+                         par_count=3,
+                         par_types=['int', 'int', 'int'],
+                         par_range=[(2, 100), (70, 99), (1, 30)],
                          name='Williams\' R',
                          description='Williams R, determine buy/sell signals according to Williams R',
                          window_length=100,
                          data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p: periods
-        """
         if pars is None:
-            p, = self.pars
+            p, u, l = self.pars
         else:
-            p, = pars
+            p, u, l = pars
         h = h.T
         res = stochf(h[0], h[1], h[2], p)
-        # 策略:
-        # 当res小于-80时，逐步买进
-        # 当res大于-20时，逐步卖出
-        if res > -20:
+        if res > -l:
             sig = -0.3
-        elif res < -80:
+        elif res < -u:
             sig = 0.1
         else:
             sig = 0
