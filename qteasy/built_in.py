@@ -2603,38 +2603,52 @@ class STOCHRSI(RuleIterator):
 
 
 class ULTOSC(RuleIterator):
-    """ Ultimate Oscillator 策略
+    """ ULTOSC (Ultimate Oscillator Indicator 终极振荡器指标) 交易策略：
+        ULTOSC 指标通过三个不同的时间跨度计算价格动量，并根据多种不同动量之间的偏离值生成交易信号。
+
+    策略参数：
+        p1: int, 动量计算周期 1
+        p2: int, 动量计算周期 2
+        p3: int, 动量计算周期 3
+        u:  int, 卖出信号阈值
+        l:  int, 买入信号阈值
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        计算ULTOSC指标，并根据指标的大小生成交易信号：
+        1, 当ULTOSC > 80时，产生逐步卖出信号，每周期卖出持有份额的30%
+        2, 当ULTOSC < 20时，产生逐步买入信号，每周期买入总投资额的10%
+
+    策略属性缺省值：
+    默认参数：(7, 14, 28, 70, 30)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：100
+    参数范围：[(1, 100), (1, 100), (1, 100), (70, 99), (1, 30)]
+    策略不支持参考数据，不支持交易数据
     """
 
-    def __init__(self, pars=(7, 14, 28)):
+    def __init__(self, pars=(7, 14, 28, 70, 30)):
         super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(1, 100), (1, 100), (1, 100)],
+                         par_count=5,
+                         par_types=['int', 'int', 'int', 'int', 'int'],
+                         par_range=[(1, 100), (1, 100), (1, 100), (70, 99), (1, 30)],
                          name='Ultimate Oscillator',
-                         description='Ultimate Oscillator, determine buy/sell signals according to Stochastic Indicator',
+                         description='Ultimate Oscillator, determine buy/sell signals according to multiple momentum',
                          window_length=100,
                          data_types='high, low, close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """参数:
-        input:
-            p1: time period 1
-            p2: time period 2
-            p3: time period 3
-        """
         if pars is None:
-            p1, p2, p3 = self.pars
+            p1, p2, p3, u, l = self.pars
         else:
-            p1, p2, p3 = pars
+            p1, p2, p3, u, l = pars
         h = h.T
         res = stochf(h[0], h[1], h[2], p1, p2, p3)[-1]
-        # 策略:
-        # 当res小于30时，逐步买进
-        # 当res大于70时，逐步卖出
-        if res > 70:
+
+        if res > u:
             sig = -0.3
-        elif res < 30:
+        elif res < l:
             sig = 0.1
         else:
             sig = 0
@@ -2850,7 +2864,6 @@ class SelectingNone(GeneralStg):
                          description='None of the shares will be selected')
 
     def realize(self, h, r=None, t=None, pars=None):
-        # 所有股票全部被选中，投资比例平均分配
         share_count = h.shape[0]
         return [0.] * share_count
 
@@ -2907,9 +2920,6 @@ class SelectingAvgIndicator(FactorSorter):
                          data_types='eps')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """ 根据hist_segment中的EPS数据选择一定数量的股票
-
-        """
         factors = np.nanmean(h, axis=1)
 
         return factors
@@ -2935,11 +2945,6 @@ class SelectingNDayLast(FactorSorter):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """ 以股票过去N天前的量价作为选股指标
-            N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
-            默认的data_types为'close'
-
-        """
         if pars is None:
             n, = self.pars
         else:
@@ -2971,9 +2976,6 @@ class SelectingNDayAvg(FactorSorter):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """ 获取的数据为昨天的开盘价
-
-        """
         if pars is None:
             n, = self.pars
         else:
@@ -3005,9 +3007,6 @@ class SelectingNDayChange(FactorSorter):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """ 获取的数据为昨天的开盘价
-
-        """
         if pars is None:
             n, = self.pars
         else:
@@ -3040,9 +3039,6 @@ class SelectingNDayRateChange(FactorSorter):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """ 获取的数据为昨天的开盘价
-
-        """
         if pars is None:
             n, = self.pars
         else:
@@ -3074,9 +3070,6 @@ class SelectingNDayVolatility(FactorSorter):
                          data_types='high,low,close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        """ 获取的数据为昨天的开盘价
-
-        """
         if pars is None:
             n, = self.pars
         else:
