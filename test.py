@@ -6908,13 +6908,13 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op, qt.Operator)
         self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
         self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
-        self.assertIsInstance(op.strategies[2], qt.built_in.RiconUrgent)
+        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
         self.assertIsInstance(op[0], qt.built_in.TimingDMA)
         self.assertIsInstance(op[1], qt.built_in.SelectingAll)
-        self.assertIsInstance(op[2], qt.built_in.RiconUrgent)
+        self.assertIsInstance(op[2], qt.built_in.SellRate)
         self.assertIsInstance(op['dma'], qt.built_in.TimingDMA)
         self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
-        self.assertIsInstance(op['urgent'], qt.built_in.RiconUrgent)
+        self.assertIsInstance(op['urgent'], qt.built_in.SellRate)
         self.assertEqual(op.strategy_count, 3)
         print(f'test adding strategies into existing op')
         print('test adding strategy by string')
@@ -7433,7 +7433,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         :return:
         """
         op = qt.Operator(strategies='dma, all, urgent')
-        print(op.strategies, '\n', [qt.built_in.TimingDMA, qt.built_in.SelectingAll, qt.built_in.RiconUrgent])
+        print(op.strategies, '\n', [qt.built_in.TimingDMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
         # TODO: allow set_parameters to a list of strategies or str-listed strategies
         # TODO: allow set_parameters to all strategies of specific bt price type
