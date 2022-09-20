@@ -2707,8 +2707,25 @@ class WILLR(RuleIterator):
 
 # Built-in Simple timing strategies:
 
-class RiconNone(RuleIterator):
-    """无风险控制策略，返回全0结果"""
+class SignalNone(RuleIterator):
+    """ 空交易信号策略：
+        不生成任何交易信号的策略
+
+    策略参数：
+        <none>
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        整个信号周期内不产生任何交易信号
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[]
+    策略不支持参考数据，不支持交易数据
+    """
 
     def __init__(self, pars=()):
         super().__init__(pars=pars,
@@ -2717,6 +2734,49 @@ class RiconNone(RuleIterator):
 
     def realize(self, h, r=None, t=None, pars=None):
         return 0.
+
+
+class SellRate(RuleIterator):
+    """ 变化率卖出信号策略：
+        当价格的变化率超过阈值时，产生卖出信号
+
+    策略参数：
+        day, int, 涨跌幅计算周期
+        change, float，涨跌幅阈值
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        整个信号周期内不产生任何交易信号
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[]
+    策略不支持参考数据，不支持交易数据
+
+    """
+
+    # 跌幅控制策略，当N日涨跌幅超过p%的时候，强制生成卖出信号
+
+    def __init__(self, pars=(0, 0)):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['int', 'float'],
+                         par_range=[(1, 40), (-0.5, 0.5)],
+                         name='URGENT',
+                         description='Generate selling signal when N-day drop rate reaches target')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            day, change = self.pars
+        else:
+            day, change = pars
+        h = h
+        diff = (h - np.roll(h, day)) / h
+        diff[:day] = h[:day]
+        return np.where(diff < change, -1, 0).squeeze()
 
 
 class TimingLong(GeneralStg):
@@ -2826,30 +2886,6 @@ class TimingDMA(RuleIterator):
         #       f'ama: {np.round(ama[-5:-1], 4)} -- '
         #       f'signal: {cat}')
         return cat
-
-
-class RiconUrgent(RuleIterator):
-    """urgent风控类，继承自Ricon类，重写_realize方法"""
-
-    # 跌幅控制策略，当N日跌幅超过p%的时候，强制生成卖出信号
-
-    def __init__(self, pars=(0, 0)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(1, 40), (-0.5, 0.5)],
-                         name='URGENT',
-                         description='Generate selling signal when N-day drop rate reaches target')
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            day, drop = self.pars
-        else:
-            day, drop = pars
-        h = h
-        diff = (h - np.roll(h, day)) / h
-        diff[:day] = h[:day]
-        return np.where(diff < drop, -1, 0).squeeze()
 
 
 # Built-in GeneralStg strategies:
@@ -3141,27 +3177,27 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'macdext':       MACDEXT,
                        'mfi':           MFI,
                        'di':            DI,
-                       'dm':            DM,
-                       'mom':           MOM,
-                       'ppo':           PPO,
-                       'rsi':           RSI,
-                       'stoch':         STOCH,
-                       'stochf':        STOCHF,
-                       'stochrsi':      STOCHRSI,
-                       'ultosc':        ULTOSC,
-                       'willr':         WILLR,
-                       'ricon_none':    RiconNone,
-                       'urgent':        RiconUrgent,
-                       'long':          TimingLong,
-                       'short':         TimingShort,
-                       'zero':          TimingZero,
-                       'all':           SelectingAll,
-                       'none':          SelectingNone,
-                       'random':        SelectingRandom,
-                       'finance':       SelectingAvgIndicator,
-                       'ndaylast':      SelectingNDayLast,
-                       'ndayavg':       SelectingNDayAvg,
-                       'ndayrate':      SelectingNDayRateChange,
+                       'dm':          DM,
+                       'mom':         MOM,
+                       'ppo':         PPO,
+                       'rsi':         RSI,
+                       'stoch':       STOCH,
+                       'stochf':      STOCHF,
+                       'stochrsi':    STOCHRSI,
+                       'ultosc':      ULTOSC,
+                       'willr':       WILLR,
+                       'signal_none': SignalNone,
+                       'sellrate':    SellRate,
+                       'long':        TimingLong,
+                       'short':       TimingShort,
+                       'zero':        TimingZero,
+                       'all':         SelectingAll,
+                       'select_none': SelectingNone,
+                       'random':      SelectingRandom,
+                       'finance':     SelectingAvgIndicator,
+                       'ndaylast':    SelectingNDayLast,
+                       'ndayavg':     SelectingNDayAvg,
+                       'ndayrate':    SelectingNDayRateChange,
                        'ndaychg':       SelectingNDayChange,
                        'ndayvol':       SelectingNDayVolatility
                        }
