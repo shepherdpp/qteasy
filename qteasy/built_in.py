@@ -2746,14 +2746,16 @@ class SellRate(RuleIterator):
     信号类型：
         PS型：百分比买卖交易信号
     信号规则：
-        整个信号周期内不产生任何交易信号
+        在下面情况下产生卖出信号：
+        1，当change > 0，且day日涨幅大于change时，产生-1卖出信号
+        2，当change < 0，且day日跌幅大于change时，产生-1卖出信号
 
     策略属性缺省值：
-    默认参数：()
+    默认参数：(0, 0)
     数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：270
-    参数范围：[]
+    参数范围：[(1, 40), (-0.5, 0.5)]
     策略不支持参考数据，不支持交易数据
 
     """
@@ -2765,8 +2767,8 @@ class SellRate(RuleIterator):
                          par_count=2,
                          par_types=['int', 'float'],
                          par_range=[(1, 40), (-0.5, 0.5)],
-                         name='URGENT',
-                         description='Generate selling signal when N-day drop rate reaches target')
+                         name='SELLRATE',
+                         description='Generate selling signal when N-day change rate is over a certain value')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
@@ -2774,9 +2776,12 @@ class SellRate(RuleIterator):
         else:
             day, change = pars
         h = h
-        diff = (h - np.roll(h, day)) / h
-        diff[:day] = h[:day]
-        return np.where(diff < change, -1, 0).squeeze()
+        diff = h[-1] - h[-day]
+        if (change >= 0) and (diff > change):
+            return -1
+        if (change < 0) and (diff < change):
+            return -1
+        return 0
 
 
 class TimingLong(GeneralStg):
