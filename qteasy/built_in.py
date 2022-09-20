@@ -2751,22 +2751,23 @@ class SellRate(RuleIterator):
         2，当change < 0，且day日跌幅大于change时，产生-1卖出信号
 
     策略属性缺省值：
-    默认参数：(0, 0)
+    默认参数：(20, 0.1)
     数据类型：close 收盘价，单数据输入
     采样频率：天
     窗口长度：270
-    参数范围：[(1, 40), (-0.5, 0.5)]
+    参数范围：[(1, 100), (-0.5, 0.5)]
     策略不支持参考数据，不支持交易数据
 
     """
 
     # 跌幅控制策略，当N日涨跌幅超过p%的时候，强制生成卖出信号
 
-    def __init__(self, pars=(0, 0)):
+    def __init__(self, pars=(20, 0.1)):
         super().__init__(pars=pars,
                          par_count=2,
                          par_types=['int', 'float'],
-                         par_range=[(1, 40), (-0.5, 0.5)],
+                         par_range=[(1, 100), (-0.5, 0.5)],
+                         window_length=100,
                          name='SELLRATE',
                          description='Generate selling signal when N-day change rate is over a certain value')
 
@@ -2781,6 +2782,55 @@ class SellRate(RuleIterator):
             return -1
         if (change < 0) and (diff < change):
             return -1
+        return 0
+
+
+class BuyRate(RuleIterator):
+    """ 变化率买入信号策略：
+        当价格的变化率超过阈值时，产生买入信号
+
+    策略参数：
+        day, int, 涨跌幅计算周期
+        change, float，涨跌幅阈值
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        在下面情况下产生买入信号：
+        1，当change > 0，且day日涨幅大于change时，产生1卖出信号
+        2，当change < 0，且day日跌幅大于change时，产生1卖出信号
+
+    策略属性缺省值：
+    默认参数：(20, 0.1)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(1, 100), (-0.5, 0.5)]
+    策略不支持参考数据，不支持交易数据
+
+    """
+
+    # 跌幅控制策略，当N日涨跌幅超过p%的时候，强制生成卖出信号
+
+    def __init__(self, pars=(20, 0.1)):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['int', 'float'],
+                         par_range=[(1, 100), (-0.5, 0.5)],
+                         window_length=100,
+                         name='BUYRATE',
+                         description='Generate buying signal when N-day change rate is over a certain value')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            day, change = self.pars
+        else:
+            day, change = pars
+        h = h
+        diff = h[-1] - h[-day]
+        if (change >= 0) and (diff > change):
+            return 1
+        if (change < 0) and (diff < change):
+            return 1
         return 0
 
 
@@ -3182,27 +3232,28 @@ BUILT_IN_STRATEGIES = {'crossline':     TimingCrossline,
                        'macdext':       MACDEXT,
                        'mfi':           MFI,
                        'di':            DI,
-                       'dm':          DM,
-                       'mom':         MOM,
-                       'ppo':         PPO,
-                       'rsi':         RSI,
-                       'stoch':       STOCH,
-                       'stochf':      STOCHF,
-                       'stochrsi':    STOCHRSI,
-                       'ultosc':      ULTOSC,
-                       'willr':       WILLR,
-                       'signal_none': SignalNone,
-                       'sellrate':    SellRate,
-                       'long':        TimingLong,
-                       'short':       TimingShort,
-                       'zero':        TimingZero,
-                       'all':         SelectingAll,
-                       'select_none': SelectingNone,
-                       'random':      SelectingRandom,
-                       'finance':     SelectingAvgIndicator,
-                       'ndaylast':    SelectingNDayLast,
-                       'ndayavg':     SelectingNDayAvg,
-                       'ndayrate':    SelectingNDayRateChange,
+                       'dm':            DM,
+                       'mom':           MOM,
+                       'ppo':           PPO,
+                       'rsi':           RSI,
+                       'stoch':         STOCH,
+                       'stochf':        STOCHF,
+                       'stochrsi':      STOCHRSI,
+                       'ultosc':        ULTOSC,
+                       'willr':         WILLR,
+                       'signal_none':   SignalNone,
+                       'sellrate':      SellRate,
+                       'buyrate':       BuyRate,
+                       'long':          TimingLong,
+                       'short':         TimingShort,
+                       'zero':          TimingZero,
+                       'all':           SelectingAll,
+                       'select_none':   SelectingNone,
+                       'random':        SelectingRandom,
+                       'finance':       SelectingAvgIndicator,
+                       'ndaylast':      SelectingNDayLast,
+                       'ndayavg':       SelectingNDayAvg,
+                       'ndayrate':      SelectingNDayRateChange,
                        'ndaychg':       SelectingNDayChange,
                        'ndayvol':       SelectingNDayVolatility
                        }
