@@ -6903,7 +6903,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
 
         self.assertIsInstance(op, qt.Operator)
         self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
@@ -6914,7 +6914,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertIsInstance(op[2], qt.built_in.SellRate)
         self.assertIsInstance(op['dma'], qt.built_in.TimingDMA)
         self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
-        self.assertIsInstance(op['urgent'], qt.built_in.SellRate)
+        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
         self.assertEqual(op.strategy_count, 3)
         print(f'test adding strategies into existing op')
         print('test adding strategy by string')
@@ -6939,7 +6939,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_add_strategies(self):
         """ etst adding multiple strategies to Operator"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         self.assertEqual(op.strategy_count, 3)
         print('test adding multiple strategies -- adding strategy by list of strings')
         op.add_strategies(['dma', 'macd'])
@@ -6973,32 +6973,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_remove_strategy(self):
         """ test method remove strategy"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
         op.add_strategies(['DMA', TestLSStrategy()])
         self.assertEqual(op.strategy_count, 7)
         print('test removing strategies from Operator')
         op.remove_strategy('dma')
         self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['dma_1'])
         self.assertEqual(op.strategies[3], op['macd'])
         self.assertEqual(op.strategies[4], op['dma_2'])
         self.assertEqual(op.strategies[5], op['custom'])
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['macd'])
         self.assertEqual(op.strategies[3], op['dma_2'])
         self.assertEqual(op.strategies[4], op['custom'])
 
     def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
         op.add_strategies(['DMA', TestLSStrategy()])
         self.assertEqual(op.strategy_count, 7)
@@ -7432,7 +7432,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         :return:
         """
-        op = qt.Operator(strategies='dma, all, urgent')
+        op = qt.Operator(strategies='dma, all, sellrate')
         print(op.strategies, '\n', [qt.built_in.TimingDMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
         # TODO: allow set_parameters to a list of strategies or str-listed strategies
@@ -12378,7 +12378,7 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
-        op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
         all_shares = stock_basic()
         shares_banking = qt.filter_stock_codes(date='20070101', industry='银行')
         print('extracted banking share pool:')
@@ -12405,7 +12405,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=0.4)
-        op.set_parameter('ricon_none', pars=())
+        op.set_parameter('signal_none', pars=())
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
@@ -12416,7 +12416,7 @@ class TestQT(unittest.TestCase):
         """test built-in strategy selecting finance
         """
         print(f'test portfolio selection from large quantities of shares')
-        op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
         qt.configure(asset_pool=qt.filter_stock_codes(date='20070101',
                                                       industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                                 '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
@@ -12457,7 +12457,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=30)
-        op.set_parameter('ricon_none', pars=())
+        op.set_parameter('signal_none', pars=())
         op.set_blender('ls', 'avg')
         qt.run(op, visual=False, trade_log=True)
 
