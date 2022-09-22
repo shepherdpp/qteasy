@@ -7459,7 +7459,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.op_data_freq, 'd')
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
+                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.max_window_length, 20)
         print(f'KeyError will be raised if wrong strategy id is given')
@@ -7483,7 +7483,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                             'open':  ['|', '2', '&', '1', '0']})
 
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
+                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
