@@ -1387,7 +1387,7 @@ def willr(high, low, close, timeperiod=14):
 
 
 # =============================================================
-# Volume Indicators 量指标函数
+# Volume & Price Indicators 量价指标函数
 
 
 def ad(high, low, close, volume):
