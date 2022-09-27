@@ -2709,49 +2709,25 @@ class WILLR(RuleIterator):
 
 
 class AD(RuleIterator):
-    """ WILLR (William's %R 威廉姆斯百分比) 交易策略：
-        WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号
-
-    策略参数：
-        p:  int, 动量计算周期
-        u:  int, 卖出信号阈值
-        l:  int, 买入信号阈值
-    信号类型：
-        PS型：百分比买卖交易信号
-    信号规则：
-        计算WILLR指标，并根据指标的大小生成交易信号：
-        1, 当WILLR > -l时，产生逐步卖出信号，每周期卖出持有份额的30%
-        2, 当WILLR < -u时，产生逐步买入信号，每周期买入总投资额的10%
-
-    策略属性缺省值：
-    默认参数：(14, 80, 20)
-    数据类型：high, low, close 最高价，最低价，收盘价，多数据输入
-    采样频率：天
-    窗口长度：100
-    参数范围：[(2, 100), (70, 99), (1, 30)]
-    策略不支持参考数据，不支持交易数据
+    """
     """
 
-    def __init__(self, pars=(14, 80, 20)):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (70, 99), (1, 30)],
-                         name='Williams\' R',
-                         description='Williams R, determine buy/sell signals according to Williams R',
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='AD',
+                         description='Accumulation Distribution Line Strategy',
                          window_length=100,
-                         data_types='high, low, close')
+                         data_types='high, low, close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, u, l = self.pars
-        else:
-            p, u, l = pars
         h = h.T
-        res = ad(h[0], h[1], h[2], p)
-        if res > -l:
+        res = ad(h[0], h[1], h[2], h[3])
+        if res > 0:
             sig = -0.3
-        elif res < -u:
+        elif res < 0:
             sig = 0.1
         else:
             sig = 0
@@ -2759,49 +2735,29 @@ class AD(RuleIterator):
 
 
 class ADOSC(RuleIterator):
-    """ WILLR (William's %R 威廉姆斯百分比) 交易策略：
-        WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号
-
-    策略参数：
-        p:  int, 动量计算周期
-        u:  int, 卖出信号阈值
-        l:  int, 买入信号阈值
-    信号类型：
-        PS型：百分比买卖交易信号
-    信号规则：
-        计算WILLR指标，并根据指标的大小生成交易信号：
-        1, 当WILLR > -l时，产生逐步卖出信号，每周期卖出持有份额的30%
-        2, 当WILLR < -u时，产生逐步买入信号，每周期买入总投资额的10%
-
-    策略属性缺省值：
-    默认参数：(14, 80, 20)
-    数据类型：close, volume 最高价，最低价，收盘价，多数据输入
-    采样频率：天
-    窗口长度：100
-    参数范围：[(2, 100), (70, 99), (1, 30)]
-    策略不支持参考数据，不支持交易数据
+    """
     """
 
-    def __init__(self, pars=(14, 80, 20)):
+    def __init__(self, pars=(3, 10)):
         super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (70, 99), (1, 30)],
-                         name='Williams\' R',
-                         description='Williams R, determine buy/sell signals according to Williams R',
+                         par_count=2,
+                         par_types=['int', 'int'],
+                         par_range=[(2, 10), (10, 99)],
+                         name='A/D Oscillator',
+                         description='Accumulation Distribution Line Oscillator',
                          window_length=100,
-                         data_types='high, low, close')
+                         data_types='high, low, close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
         if pars is None:
-            p, u, l = self.pars
+            f, s = self.pars
         else:
-            p, u, l = pars
+            f, s = pars
         h = h.T
-        res = ad(h[0], h[1], h[2], p)
-        if res > -l:
+        res = ad(h[0], h[1], h[2], h[3], f, s)
+        if res > 0:
             sig = -0.3
-        elif res < -u:
+        elif res < 0:
             sig = 0.1
         else:
             sig = 0
@@ -2809,49 +2765,25 @@ class ADOSC(RuleIterator):
 
 
 class OBV(RuleIterator):
-    """ WILLR (William's %R 威廉姆斯百分比) 交易策略：
-        WILLR 指标被用于计算股价当前处于超买还是超卖区间，并用于生成交易信号
-
-    策略参数：
-        p:  int, 动量计算周期
-        u:  int, 卖出信号阈值
-        l:  int, 买入信号阈值
-    信号类型：
-        PS型：百分比买卖交易信号
-    信号规则：
-        计算WILLR指标，并根据指标的大小生成交易信号：
-        1, 当WILLR > -l时，产生逐步卖出信号，每周期卖出持有份额的30%
-        2, 当WILLR < -u时，产生逐步买入信号，每周期买入总投资额的10%
-
-    策略属性缺省值：
-    默认参数：(14, 80, 20)
-    数据类型：high, low, close 最高价，最低价，收盘价，多数据输入
-    采样频率：天
-    窗口长度：100
-    参数范围：[(2, 100), (70, 99), (1, 30)]
-    策略不支持参考数据，不支持交易数据
+    """
     """
 
-    def __init__(self, pars=(14, 80, 20)):
+    def __init__(self, pars=()):
         super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(2, 100), (70, 99), (1, 30)],
-                         name='Williams\' R',
-                         description='Williams R, determine buy/sell signals according to Williams R',
+                         par_count=0,
+                         par_types=[],
+                         par_range=[],
+                         name='AD',
+                         description='Accumulation Distribution Line Strategy',
                          window_length=100,
-                         data_types='high, low, close')
+                         data_types='close, volume')
 
     def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            p, u, l = self.pars
-        else:
-            p, u, l = pars
         h = h.T
-        res = ad(h[0], h[1], h[2], p)
-        if res > -l:
+        res = ad(h[0], h[1])
+        if res > 0:
             sig = -0.3
-        elif res < -u:
+        elif res < 0:
             sig = 0.1
         else:
             sig = 0
