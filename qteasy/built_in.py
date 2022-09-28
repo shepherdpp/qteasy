@@ -2797,9 +2797,11 @@ class SignalNone(RuleIterator):
         不生成任何交易信号的策略
 
     策略参数：
-        <none>
+        none
     信号类型：
+        PT型：百分比持仓比例信号
         PS型：百分比买卖交易信号
+        VS型：买卖交易信号
     信号规则：
         整个信号周期内不产生任何交易信号
 
@@ -2920,13 +2922,22 @@ class BuyRate(RuleIterator):
 
 
 class TimingLong(GeneralStg):
-    """简单择时策略，返回整个历史周期上的恒定多头状态
+    """ 简单择时策略，返回整个历史周期上的恒定多头状态
 
-    数据类型：N/A
-    数据分析频率：N/A
-    数据窗口长度：N/A
-    策略使用0个参数，
-    参数输入数据范围：N/A
+    策略参数：
+        none
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        整个信号周期内持仓比例恒定为100%满仓
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=()):
@@ -2940,13 +2951,22 @@ class TimingLong(GeneralStg):
 
 
 class TimingShort(GeneralStg):
-    """简单择时策略，返回整个历史周期上的恒定空头状态
+    """ 简单择时策略，返回整个历史周期上的恒定空头全仓状态
 
-    数据类型：N/A
-    数据分析频率：N/A
-    数据窗口长度：N/A
-    策略使用0个参数，
-    参数输入数据范围：N/A
+    策略参数：
+        none
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        整个信号周期内持仓比例恒定为-100%空头全仓
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=()):
@@ -2961,13 +2981,22 @@ class TimingShort(GeneralStg):
 
 
 class TimingZero(GeneralStg):
-    """简单择时策略，返回整个历史周期上的空仓状态
+    """ 简单择时策略，返回整个历史周期上的恒定空仓状态
 
-    数据类型：N/A
-    数据分析频率：N/A
-    数据窗口长度：N/A
-    策略使用0个参数，
-    参数输入数据范围：N/A
+    策略参数：
+        none
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        整个信号周期内持仓比例恒定为0%空仓
+
+    策略属性缺省值：
+    默认参数：()
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=()):
@@ -2982,19 +3011,26 @@ class TimingZero(GeneralStg):
 
 class TimingDMA(RuleIterator):
     """DMA择时策略
-    生成DMA多空判断：
-        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线, signal = -1
-        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线
+
+    策略参数：
+        s, int, 短均线周期
+        l, int, 长均线周期
+        d, int, DMA周期
+    信号类型：
+        PS型：百分比买卖交易信号
+    信号规则：
+        在下面情况下产生买入信号：
+        1， DMA在AMA上方时，多头区间，即DMA线自下而上穿越AMA线后，输出为1
+        2， DMA在AMA下方时，空头区间，即DMA线自上而下穿越AMA线后，输出为0
         3， DMA与股价发生背离时的交叉信号，可信度较高
 
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
     数据类型：close 收盘价，单数据输入
-    数据分析频率：天
-    数据窗口长度：270
-    策略使用3个参数，
-        s: int,
-        l: int,
-        d: int,
-    参数输入数据范围：[(10, 250), (10, 250), (10, 250)]
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (10, 250)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(12, 26, 9)):
@@ -3008,23 +3044,17 @@ class TimingDMA(RuleIterator):
                          data_types='close')
 
     def realize(self, h, r=None, t=None, pars=None):
-        # 使用基于np的移动平均计算函数的快速DMA择时方法
         if pars is None:
             s, l, d = self.pars
         else:
             s, l, d = pars
 
-        # 计算指数的移动平均价格
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         dma = sma(h[0], s) - sma(h[0], l)
         ama = dma.copy()
         ama[~np.isnan(dma)] = sma(dma[~np.isnan(dma)], d)
 
         cat = 1 if dma[-1] > ama[-1] else 0
-        # print(f'dma: {np.round(dma[-5:-1], 4)} / '
-        #       f'ama: {np.round(ama[-5:-1], 4)} -- '
-        #       f'signal: {cat}')
         return cat
 
 
