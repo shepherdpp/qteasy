@@ -3172,26 +3172,29 @@ class SelectingAvgIndicator(FactorSorter):
         基础选股策略：以股票的历史指标的平均值作为选股因子，因子排序参数可以作为策略参数传入
         改变策略数据类型，根据不同的历史数据选股，选股参数可以通过pars传入
 
-    策略参数：
+    策略参数：(参数含义与FactorSorter策略的属性一致)
         sort_ascending: enum, 是否升序排列因子
-        weighting, enum
-        condition, enum
-        lbound: float
-        ubound: float
-        max_sel_count: float
-        p: float, 抽取的股票的数量(p>=1)或比例(p<1)
+        weighting, enum, 股票仓位分配比例权重
+        condition, enum, 股票筛选条件
+        lbound: float, 股票筛选下限值
+        ubound: float, 股票筛选上限值
+        max_sel_count: float, 抽取的股票的数量(p>=1)或比例(p<1)
     信号类型：
         PT型：百分比持仓比例信号
     信号规则：
-        当p>=1时，从所有股票池中随机抽取p支股票，并设定所有被选中股票的持仓比例都为1/p
-        当0>p>1时，从股票池中以p为比例抽取若干股票，并设定所有股票的持仓比例都相同且和为1
+        使用data_types指定一种数据类型，将股票过去的datatypes数据取平均值，将该平均值作为选股因子进行选股
 
     策略属性缺省值：
     默认参数：(True, 'even', 'greater', 0, 0, 0.25)
     数据类型：eps 每股收益，单数据输入
     采样频率：天
     窗口长度：270
-    参数范围：[(0, np.inf)]
+    参数范围：[(True, False),
+             ('even', 'linear', 'proportion'),
+             ('any', 'greater', 'less', 'between', 'not_between'),
+             (-np.inf, np.inf),
+             (-np.inf, np.inf),
+             (0, 1.)]
     策略不支持参考数据，不支持交易数据
 
     """
