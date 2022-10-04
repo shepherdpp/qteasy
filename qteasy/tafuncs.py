@@ -27,7 +27,9 @@ from talib import BBANDS, DEMA, EMA, HT_TRENDLINE, KAMA, MA, MAMA, MAVP, MIDPOIN
     MINMAX, MINMAXINDEX, MULT, SUB, SUM
 
 
-# 以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数
+# TODO: 假设talib没有正确安装时，需要提供替代办法计算相应值
+#   以Technical Analysis talib为基础创建的一个金融函数库，包括talib库中已经实现的所有技术分析函数
+
 # ========================
 # Overlap Studies Functions 滚动窗口叠加算例函数
 
@@ -461,7 +463,7 @@ def apo(close, fastperiod=12, slowperiod=26, matype=0):
 
 
 def aroon(high, low, timeperiod=14):
-    """Aroon
+    """AROON
 
     The Aroon indicator, developed by Tushar Chande, indicates if a price is
     trending or is in a trading range. It can also reveal the beginning of a
@@ -497,7 +499,7 @@ def aroon(high, low, timeperiod=14):
 
 
 def aroonosc(high, low, timeperiod=14):
-    """Aroon Oscillator
+    """Aroon Oscillator (AROON振荡指标)
 
     The Aroon Oscillator is a trend-following indicator that uses
     aspects of the Aroon Indicator (Aroon Up and Aroon Down) to
@@ -507,8 +509,6 @@ def aroonosc(high, low, timeperiod=14):
     is present. Traders watch for zero line crossovers to signal
     potential trend changes. They also watch for big moves, above
     50 or below -50 to signal strong price moves.
-
-
 
     :param high:
     :param low:
@@ -531,7 +531,7 @@ def bop(opn, high, low, close):
 
 
 def cci(high, low, close, timeperiod=14):
-    """Commodity Channel Index:
+    """Commodity Channel Index: (商品渠道指数)
 
     Developed by Donald Lambert, the Commodity Channel Index​ (CCI)
     is a momentum-based oscillator used to help determine when an
@@ -762,7 +762,7 @@ def macdfix(close, signalperiod=9):
 
 
 def mfi(high, low, close, volume, timeperiod=14):
-    """Money Flow Index:
+    """Money Flow Index (货币流向指标):
 
     The Money Flow Index (MFI) is a momentum indicator that measures the
     flow of money into and out of a security over a specified period of time.
@@ -1017,11 +1017,11 @@ def plus_dm(high, low, timeperiod=14):
 
 
 def ppo(close, fastperiod=12, slowperiod=26, matype=0):
-    """Percentage Price Oscillator
+    """Percentage Price Oscillator 百分比价格振荡器
 
     The percentage price oscillator (PPO) is a technical momentum indicator that shows
     the relationship between two moving averages in percentage terms. The moving averages
-    are a 26-period and 12-period exponential moving average (EMA).
+    periods and type are provided as arguments.
 
     The PPO is used to compare asset performance and volatility, spot divergence which
     could lead to price reversals, generate trade signals, and help confirm trend direction.
@@ -1302,6 +1302,33 @@ def ultosc(high, low, close, timeperiod1=7, timeperiod2=14, timeperiod3=28):
     one. Sum the weights in the denominator (in this case, the sum is seven, or 4+2+1).
     Multiply by 100 when other calculations are complete.
 
+    Ultimate Oscillator 是一种技术指标，由 Larry Williams 于 1976 年开发，用于衡量资产在多个时间
+    范围内的价格动量。通过使用三个不同时间框架的加权平均值，与其他依赖单一时间框架的振荡器相比，该指标的
+    波动性和交易信号更少。出现分歧后会产生买入和卖出信号。由于其多时间框架结构，最终振荡器产生的发散信号
+    少于其他振荡器。
+
+    - 该指标在其计算中使用三个时间框架：7、14 和 28 个周期。
+
+    - 较短的时间范围在计算中的权重最大，而较长的时间范围的权重最小。
+
+    - 当出现看涨背离时出现买入信号，指标上背离低点低于 30，然后震荡指标升至背离高点上方。
+
+    - 当出现看跌背离时出现卖出信号，背离高点高于 70，然后震荡指标跌破背离低点。
+
+    如何计算终极振荡器
+
+    - 计算买入压力 (BP)，即该时段的收盘价减去该时段的低点或前一收盘价，以较低者为准。记录每个时期的这些值，
+    因为它们将在过去 7 个、14 个和 28 个时期相加，以创建 BP 总和。
+
+    - 计算真实范围 (TR)，即当前时段的高点或前收盘价，以较高者为准，减去当前时段的低点或前收盘价的最低值。
+    记录每个时期的这些值，因为它们将在过去 7 个、14 个和 28 个时期相加，以创建 TR Sum。
+
+    - 使用第一步和第二步中的 BP 和 TR 总和计算来计算平均值 7、14 和 28。例如，Average7 BP Sum 是过去
+    七个期间计算的 BP 值相加。
+
+    - 使用平均 7、14 和 28 值计算终极振荡器。平均 7 的权重为 4，平均 14 的权重为 2，平均 28 的权重为 1。
+    将分母中的权重相加（在这种情况下，和为 7，或 4+2+1）。其他计算完成后乘以 100。
+
     :param high:
     :param low:
     :param close:
@@ -1360,7 +1387,7 @@ def willr(high, low, close, timeperiod=14):
 
 
 # =============================================================
-# Volume Indicators 量指标函数
+# Volume & Price Indicators 量价指标函数
 
 
 def ad(high, low, close, volume):

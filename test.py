@@ -6903,68 +6903,68 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_add_strategy(self):
         """test adding strategies to Operator"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
 
         self.assertIsInstance(op, qt.Operator)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[1], qt.SelectingAll)
-        self.assertIsInstance(op.strategies[2], qt.RiconUrgent)
-        self.assertIsInstance(op[0], qt.TimingDMA)
-        self.assertIsInstance(op[1], qt.SelectingAll)
-        self.assertIsInstance(op[2], qt.RiconUrgent)
-        self.assertIsInstance(op['dma'], qt.TimingDMA)
-        self.assertIsInstance(op['all'], qt.SelectingAll)
-        self.assertIsInstance(op['urgent'], qt.RiconUrgent)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op.strategies[2], qt.built_in.SellRate)
+        self.assertIsInstance(op[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op[1], qt.built_in.SelectingAll)
+        self.assertIsInstance(op[2], qt.built_in.SellRate)
+        self.assertIsInstance(op['dma'], qt.built_in.TimingDMA)
+        self.assertIsInstance(op['all'], qt.built_in.SelectingAll)
+        self.assertIsInstance(op['sellrate'], qt.built_in.SellRate)
         self.assertEqual(op.strategy_count, 3)
         print(f'test adding strategies into existing op')
         print('test adding strategy by string')
         op.add_strategy('macd')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[3], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.TimingMACD)
         self.assertEqual(op.strategy_count, 4)
         op.add_strategy('random')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[4], qt.SelectingRandom)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.SelectingRandom)
         self.assertEqual(op.strategy_count, 5)
         test_ls = TestLSStrategy()
         op.add_strategy(test_ls)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
         self.assertIsInstance(op.strategies[5], TestLSStrategy)
         self.assertEqual(op.strategy_count, 6)
         print(f'Test different instance of objects are added to operator')
         op.add_strategy('dma')
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[6], qt.TimingDMA)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.TimingDMA)
         self.assertIsNot(op.strategies[0], op.strategies[6])
 
     def test_operator_add_strategies(self):
         """ etst adding multiple strategies to Operator"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         self.assertEqual(op.strategy_count, 3)
         print('test adding multiple strategies -- adding strategy by list of strings')
         op.add_strategies(['dma', 'macd'])
         self.assertEqual(op.strategy_count, 5)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[3], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[4], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[3], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[4], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by comma separated strings')
         op.add_strategies('dma, macd')
         self.assertEqual(op.strategy_count, 7)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[5], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[6], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[5], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[6], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by list of strategies')
-        op.add_strategies([qt.TimingDMA(), qt.TimingMACD()])
+        op.add_strategies([qt.built_in.TimingDMA(), qt.built_in.TimingMACD()])
         self.assertEqual(op.strategy_count, 9)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[7], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[8], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[7], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[8], qt.built_in.TimingMACD)
         print('test adding multiple strategies -- adding strategy by list of strategy and str')
-        op.add_strategies(['DMA', qt.TimingMACD()])
+        op.add_strategies(['DMA', qt.built_in.TimingMACD()])
         self.assertEqual(op.strategy_count, 11)
-        self.assertIsInstance(op.strategies[0], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[9], qt.TimingDMA)
-        self.assertIsInstance(op.strategies[10], qt.TimingMACD)
+        self.assertIsInstance(op.strategies[0], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[9], qt.built_in.TimingDMA)
+        self.assertIsInstance(op.strategies[10], qt.built_in.TimingMACD)
         self.assertIsNot(op.strategies[0], op.strategies[9])
         self.assertIs(type(op.strategies[0]), type(op.strategies[9]))
         print('test adding fault arr')
@@ -6973,32 +6973,32 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_operator_remove_strategy(self):
         """ test method remove strategy"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
         op.add_strategies(['DMA', TestLSStrategy()])
         self.assertEqual(op.strategy_count, 7)
         print('test removing strategies from Operator')
         op.remove_strategy('dma')
         self.assertEqual(op.strategy_count, 6)
-        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'dma_1', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'dma_1', 'macd', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['dma_1'])
         self.assertEqual(op.strategies[3], op['macd'])
         self.assertEqual(op.strategies[4], op['dma_2'])
         self.assertEqual(op.strategies[5], op['custom'])
         op.remove_strategy('dma_1')
         self.assertEqual(op.strategy_count, 5)
-        self.assertEqual(op.strategy_ids, ['all', 'urgent', 'macd', 'dma_2', 'custom'])
+        self.assertEqual(op.strategy_ids, ['all', 'sellrate', 'macd', 'dma_2', 'custom'])
         self.assertEqual(op.strategies[0], op['all'])
-        self.assertEqual(op.strategies[1], op['urgent'])
+        self.assertEqual(op.strategies[1], op['sellrate'])
         self.assertEqual(op.strategies[2], op['macd'])
         self.assertEqual(op.strategies[3], op['dma_2'])
         self.assertEqual(op.strategies[4], op['custom'])
 
     def test_operator_clear_strategies(self):
         """ test operator clear strategies"""
-        op = qt.Operator('dma, all, urgent')
+        op = qt.Operator('dma, all, sellrate')
         op.add_strategies(['dma', 'macd'])
         op.add_strategies(['DMA', TestLSStrategy()])
         self.assertEqual(op.strategy_count, 7)
@@ -7432,8 +7432,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
         :return:
         """
-        op = qt.Operator(strategies='dma, all, urgent')
-        print(op.strategies, '\n', [qt.TimingDMA, qt.SelectingAll, qt.RiconUrgent])
+        op = qt.Operator(strategies='dma, all, sellrate')
+        print(op.strategies, '\n', [qt.built_in.TimingDMA, qt.built_in.SelectingAll, qt.built_in.SellRate])
         print(f'info of Timing strategy in new op: \n{op.strategies[0].info()}')
         # TODO: allow set_parameters to a list of strategies or str-listed strategies
         # TODO: allow set_parameters to all strategies of specific bt price type
@@ -7459,7 +7459,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.op_data_freq, 'd')
         self.assertEqual(op.op_data_types, ['close', 'high', 'open'])
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
+                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.max_window_length, 20)
         print(f'KeyError will be raised if wrong strategy id is given')
@@ -7483,7 +7483,7 @@ class TestOperatorAndStrategy(unittest.TestCase):
                                             'open':  ['|', '2', '&', '1', '0']})
 
         self.assertEqual(op.opt_space_par,
-                         ([(5, 10), (5, 15), (10, 15), (1, 40), (-0.5, 0.5)],
+                         ([(5, 10), (5, 15), (10, 15), (1, 100), (-0.5, 0.5)],
                           ['int', 'int', 'int', 'int', 'float']))
         self.assertEqual(op.opt_tags, [1, 0, 1])
 
@@ -7649,33 +7649,33 @@ class TestOperatorAndStrategy(unittest.TestCase):
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.strategies[0].pars, (5, 10, 5))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
         self.assertEqual(op.opt_tags, [1, 0, 0])
         op.set_opt_par((5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (35, 120, 10, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (35, 120, 0.02))
 
         op.set_parameter('crossline',
-                         pars=(5, 10, 5, 'sell'),
+                         pars=(5, 10, 0.1),
                          opt_tag=1,
-                         par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
+                         par_range=((5, 10), (5, 15), (0, 1)),
                          window_length=10,
                          data_types=['close', 'open', 'high'])
         self.assertEqual(op.opt_tags, [1, 0, 1])
         op.set_opt_par((5, 12, 9, 8, 26, 9, 'buy'))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         op.set_opt_par((9, 200, 155, 8, 26, 9, 'buy', 5, 12, 9))
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # test set_opt_par when opt_tag is set to be 2 (enumerate type of parameters)
         op.set_parameter('crossline',
-                         pars=(5, 10, 5, 'sell'),
+                         pars=(5, 10, 5),
                          opt_tag=2,
                          par_range=((5, 10), (5, 15), (10, 15), ('buy', 'sell', 'none')),
                          window_length=10,
@@ -7683,11 +7683,11 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertEqual(op.opt_tags, [1, 0, 2])
         self.assertEqual(op.strategies[0].pars, (9, 200, 155))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (5, 10, 5, 'sell'))
-        op.set_opt_par((5, 12, 9, (8, 26, 9, 'buy')))
+        self.assertEqual(op.strategies[2].pars, (5, 10, 5))
+        op.set_opt_par((5, 12, 9, (8, 26, 9)))
         self.assertEqual(op.strategies[0].pars, (5, 12, 9))
         self.assertEqual(op.strategies[1].pars, (0.5,))
-        self.assertEqual(op.strategies[2].pars, (8, 26, 9, 'buy'))
+        self.assertEqual(op.strategies[2].pars, (8, 26, 9))
 
         # Test Errors
         # Not enough values for parameter
@@ -7697,16 +7697,16 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.assertRaises(AssertionError, op.set_opt_par, [5, 12, 9, 7, 15, 12, 'sell'])
 
     def test_stg_attribute_get_and_set(self):
-        self.stg = qt.TimingCrossline()
+        self.stg = qt.built_in.TimingCrossline()
         self.stg_type = 'RULE-ITER'
         self.stg_name = "CROSSLINE"
         self.stg_text = 'Moving average crossline strategy, determine long/short position according to the cross ' \
                         'point' \
                         ' of long and short term moving average prices '
-        self.pars = (35, 120, 10, 'buy')
-        self.par_boes = [(10, 250), (10, 250), (1, 100), ('buy', 'sell', 'none')]
-        self.par_count = 4
-        self.par_types = ['int', 'int', 'float', 'enum']
+        self.pars = (35, 120, 0.02)
+        self.par_boes = [(10, 250), (10, 250), (0, 1)]
+        self.par_count = 3
+        self.par_types = ['int', 'int', 'float']
         self.opt_tag = 0
         self.data_types = ['close']
         self.data_freq = 'd'
@@ -7729,8 +7729,8 @@ class TestOperatorAndStrategy(unittest.TestCase):
         self.stg.description = 'NEW TEXT'
         self.assertEqual(self.stg.name, 'NEW NAME')
         self.assertEqual(self.stg.description, 'NEW TEXT')
-        self.stg.pars = (1, 2, 3, 4)
-        self.assertEqual(self.stg.pars, (1, 2, 3, 4))
+        self.stg.pars = (1, 2, 3)
+        self.assertEqual(self.stg.pars, (1, 2, 3))
         self.stg.par_count = 3
         self.assertEqual(self.stg.par_count, 3)
         self.stg.par_range = [(1, 10), (1, 10), (1, 10), (1, 10)]
@@ -12378,7 +12378,7 @@ class TestQT(unittest.TestCase):
     def test_multi_share_mode_1(self):
         """test built-in strategy selecting finance
         """
-        op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
         all_shares = stock_basic()
         shares_banking = qt.filter_stock_codes(date='20070101', industry='银行')
         print('extracted banking share pool:')
@@ -12405,7 +12405,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=0.4)
-        op.set_parameter('ricon_none', pars=())
+        op.set_parameter('signal_none', pars=())
         op.set_blender('ls', 'avg')
         op.info()
         print(f'test portfolio selecting from shares_estate: \n{shares_estate}')
@@ -12416,7 +12416,7 @@ class TestQT(unittest.TestCase):
         """test built-in strategy selecting finance
         """
         print(f'test portfolio selection from large quantities of shares')
-        op = qt.Operator(strategies=['long', 'finance', 'ricon_none'])
+        op = qt.Operator(strategies=['long', 'finance', 'signal_none'])
         qt.configure(asset_pool=qt.filter_stock_codes(date='20070101',
                                                       industry=['银行', '全国地产', '互联网', '环境保护', '区域地产',
                                                                 '酒店餐饮', '运输设备', '综合类', '建筑工程', '玻璃',
@@ -12457,7 +12457,7 @@ class TestQT(unittest.TestCase):
                          ubound=0,
                          lbound=0,
                          max_sel_count=30)
-        op.set_parameter('ricon_none', pars=())
+        op.set_parameter('signal_none', pars=())
         op.set_blender('ls', 'avg')
         qt.run(op, visual=False, trade_log=True)
 
@@ -12680,7 +12680,7 @@ class TestBuiltInsSingle(unittest.TestCase):
 
     def test_crossline(self):
         op = qt.Operator(strategies=['crossline'])
-        op.set_parameter(0, pars=(35, 120, 10, 'buy'))
+        op.set_parameter(0, pars=(35, 120, 10))
         op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1, allow_sell_short=True)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -12764,14 +12764,6 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
-    def test_sfama(self):
-        op = qt.Operator(strategies=['sfama'])
-        op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
-
     def test_st3(self):
         op = qt.Operator(strategies=['st3'])
         op.set_parameter(0, opt_tag=1)
@@ -12838,14 +12830,6 @@ class TestBuiltInsSingle(unittest.TestCase):
 
     def test_dmama(self):
         op = qt.Operator(strategies=['dmama'])
-        op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
-
-    def test_dfama(self):
-        op = qt.Operator(strategies=['dfama'])
         op.set_parameter(0, opt_tag=1)
         qt.run(op, mode=1)
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
@@ -12931,14 +12915,6 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
 
-    def test_slfama(self):
-        op = qt.Operator(strategies=['slfama'])
-        op.set_parameter(0, opt_tag=1)
-        qt.run(op, mode=1)
-        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
-        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
-        qt.run(op, mode=2)
-
     def test_slt3(self):
         op = qt.Operator(strategies=['slt3'])
         op.set_parameter(0, opt_tag=1)
@@ -12970,6 +12946,153 @@ class TestBuiltInsSingle(unittest.TestCase):
         self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
         self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
         qt.run(op, mode=2)
+
+    def test_adx(self):
+        op = qt.Operator(strategies=['adx'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_apo(self):
+        op = qt.Operator(strategies=['apo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_aroon(self):
+        op = qt.Operator(strategies=['aroon'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_aroonosc(self):
+        op = qt.Operator(strategies=['aroonosc'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_cci(self):
+        op = qt.Operator(strategies=['cci'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_cmo(self):
+        op = qt.Operator(strategies=['cmo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_macdext(self):
+        op = qt.Operator(strategies=['macdext'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_mfi(self):
+        op = qt.Operator(strategies=['mfi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_di(self):
+        op = qt.Operator(strategies=['di'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_dm(self):
+        op = qt.Operator(strategies=['dm'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_mom(self):
+        op = qt.Operator(strategies=['mom'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_ppo(self):
+        op = qt.Operator(strategies=['ppo'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_rsi(self):
+        op = qt.Operator(strategies=['rsi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stoch(self):
+        op = qt.Operator(strategies=['stoch'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stochf(self):
+        op = qt.Operator(strategies=['stochf'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_stochrsi(self):
+        op = qt.Operator(strategies=['stochrsi'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_ultosc(self):
+        op = qt.Operator(strategies=['ultosc'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    def test_willr(self):
+        op = qt.Operator(strategies=['willr'])
+        op.set_parameter(0, opt_tag=1)
+        qt.run(op, mode=1)
+        self.assertEqual(qt.QT_CONFIG.invest_start, '20200113')
+        self.assertEqual(qt.QT_CONFIG.opti_sample_count, 100)
+        qt.run(op, mode=2)
+
+    # TODO:
+    #  add more test cases for more momentum-based strategies
 
 
 class TestBuiltInsMultiple(unittest.TestCase):
@@ -13106,8 +13229,9 @@ class Cross_SMA_PS(qt.RuleIterator):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线的当前值和昨天的值
-        s_ma = qt.sma(h[0], s)
-        f_ma = qt.sma(h[0], f)
+        sma = qt.tafuncs.sma
+        s_ma = sma(h[0], s)
+        f_ma = sma(h[0], f)
 
         s_today, s_last = s_ma[-1], s_ma[-2]
         f_today, f_last = f_ma[-1], f_ma[-2]
@@ -13141,10 +13265,6 @@ class Cross_SMA_PT(qt.RuleIterator):
             策略的其他说明
 
         """
-        """
-        必须初始化的关键策略参数清单：
-
-        """
         super().__init__(
                 pars=(25, 100, 0.01),
                 par_count=3,
@@ -13165,8 +13285,9 @@ class Cross_SMA_PT(qt.RuleIterator):
         # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
         h = h.T
         # 计算长短均线的当前值
-        s_ma = qt.sma(h[0], s)[-1]
-        f_ma = qt.sma(h[0], f)[-1]
+        sma = qt.tafuncs.sma
+        s_ma = sma(h[0], s)[-1]
+        f_ma = sma(h[0], f)[-1]
 
         # 计算慢均线的停止边界，当快均线在停止边界范围内时，平仓，不发出买卖信号
         s_ma_u = s_ma * (1 + m)

@@ -41,12 +41,12 @@ TABLE_USAGES = ['cal', 'basics', 'data', 'adj', 'events', 'comp', 'report', 'min
 一旦定义好了自定义数据表，其操作方式与内置数据表是一样的。
 
 完整的数据结构由三个字典（表）来定义：
-DATA_TABLE_MAPPING:     定义了数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到
+DATA_TABLE_MAP:     定义了数据类型与数据表之间的对应关系，以查询每种数据可以再哪一张表里查到
                         每种数据类型都有一个唯一的ID，且每种数据类型都只有一个唯一的存储位置
-TABLE_SOURCE_MAPPING:   定义了数据表的基本属性和下载API来源（目前仅包括tushare，未来会添加其他API)
+TABLE_SOURCE_MAP:   定义了数据表的基本属性和下载API来源（目前仅包括tushare，未来会添加其他API)
 TABLE_STRUCTURES:       定义了数据表的表结构，包括每一列的名称、数据类型、主键以及每一列的说明
 
-1, DATA_TABLE_MAPPING:
+1, DATA_TABLE_MAP:
 
 Data table mapping中各列的含义如下：
 htype_name(key):            数据类型名称（主键）
@@ -71,7 +71,7 @@ column:                     历史数据在表中的列名称
 description:                历史数据的详细描述，可以用于列搜索
 ---------------------------------------------------------------------------------------------------------
 
-2, TABLE_SOURCE_MAPPING
+2, TABLE_SOURCE_MAP
 
 table source mapping定义了一张数据表的基本属性以及数据来源： 
 table_name(key):            数据表的名称（主键）自定义表名称不能与内置表名称重复
@@ -158,9 +158,9 @@ remarks:                    数据列含义说明
 prime_keys:                 一个列表，包含一个或多个整数，它们代表的列是这个表的数据主键
 ---------------------------------------------------------------------------------------------------------
 '''
-DATA_TABLE_MAPPING_COLUMNS = ['table_name', 'column', 'description']
-DATA_TABLE_MAPPING_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
-DATA_TABLE_MAPPING = {
+DATA_TABLE_MAP_COLUMNS = ['table_name', 'column', 'description']
+DATA_TABLE_MAP_INDEX_NAMES = ['dtype', 'freq', 'asset_type']
+DATA_TABLE_MAP = {
     ('chairman', 'd', 'E'):                           ['stock_company', 'chairman', '公司信息 - 法人代表'],
     ('manager', 'd', 'E'):                            ['stock_company', 'manager', '公司信息 - 总经理'],
     ('secretary', 'd', 'E'):                          ['stock_company', 'secretary', '公司信息 - 董秘'],
@@ -806,181 +806,181 @@ DATA_TABLE_MAPPING = {
     ('open_net_assets', 'q', 'E'):                    ['express', 'open_net_assets', '上市公司业绩快报 - 期初净资产'],
     ('open_bps', 'q', 'E'):                           ['express', 'open_bps', '上市公司业绩快报 - 期初每股净资产'],
     ('perf_summary', 'q', 'E'):                       ['express', 'perf_summary', '上市公司业绩快报 - 业绩简要说明'],
-    ('eps', 'q', 'E'):                                ['finance', 'eps', '上市公司财务指标 - 基本每股收益'],
-    ('dt_eps', 'q', 'E'):                             ['finance', 'dt_eps', '上市公司财务指标 - 稀释每股收益'],
-    ('total_revenue_ps', 'q', 'E'):                   ['finance', 'total_revenue_ps', '上市公司财务指标 - 每股营业总收入'],
-    ('revenue_ps', 'q', 'E'):                         ['finance', 'revenue_ps', '上市公司财务指标 - 每股营业收入'],
-    ('capital_rese_ps', 'q', 'E'):                    ['finance', 'capital_rese_ps', '上市公司财务指标 - 每股资本公积'],
-    ('surplus_rese_ps', 'q', 'E'):                    ['finance', 'surplus_rese_ps', '上市公司财务指标 - 每股盈余公积'],
-    ('undist_profit_ps', 'q', 'E'):                   ['finance', 'undist_profit_ps', '上市公司财务指标 - 每股未分配利润'],
-    ('extra_item', 'q', 'E'):                         ['finance', 'extra_item', '上市公司财务指标 - 非经常性损益'],
-    ('profit_dedt', 'q', 'E'):                        ['finance', 'profit_dedt', '上市公司财务指标 - 扣除非经常性损益后的净利润（扣非净利润）'],
-    ('gross_margin', 'q', 'E'):                       ['finance', 'gross_margin', '上市公司财务指标 - 毛利'],
-    ('current_ratio', 'q', 'E'):                      ['finance', 'current_ratio', '上市公司财务指标 - 流动比率'],
-    ('quick_ratio', 'q', 'E'):                        ['finance', 'quick_ratio', '上市公司财务指标 - 速动比率'],
-    ('cash_ratio', 'q', 'E'):                         ['finance', 'cash_ratio', '上市公司财务指标 - 保守速动比率'],
-    ('invturn_days', 'q', 'E'):                       ['finance', 'invturn_days', '上市公司财务指标 - 存货周转天数'],
-    ('arturn_days', 'q', 'E'):                        ['finance', 'arturn_days', '上市公司财务指标 - 应收账款周转天数'],
-    ('inv_turn', 'q', 'E'):                           ['finance', 'inv_turn', '上市公司财务指标 - 存货周转率'],
-    ('ar_turn', 'q', 'E'):                            ['finance', 'ar_turn', '上市公司财务指标 - 应收账款周转率'],
-    ('ca_turn', 'q', 'E'):                            ['finance', 'ca_turn', '上市公司财务指标 - 流动资产周转率'],
-    ('fa_turn', 'q', 'E'):                            ['finance', 'fa_turn', '上市公司财务指标 - 固定资产周转率'],
-    ('assets_turn', 'q', 'E'):                        ['finance', 'assets_turn', '上市公司财务指标 - 总资产周转率'],
-    ('op_income', 'q', 'E'):                          ['finance', 'op_income', '上市公司财务指标 - 经营活动净收益'],
-    ('valuechange_income', 'q', 'E'):                 ['finance', 'valuechange_income', '上市公司财务指标 - 价值变动净收益'],
-    ('interst_income', 'q', 'E'):                     ['finance', 'interst_income', '上市公司财务指标 - 利息费用'],
-    ('daa', 'q', 'E'):                                ['finance', 'daa', '上市公司财务指标 - 折旧与摊销'],
-    ('ebit', 'q', 'E'):                               ['finance', 'ebit', '上市公司财务指标 - 息税前利润'],
-    ('ebitda', 'q', 'E'):                             ['finance', 'ebitda', '上市公司财务指标 - 息税折旧摊销前利润'],
-    ('fcff', 'q', 'E'):                               ['finance', 'fcff', '上市公司财务指标 - 企业自由现金流量'],
-    ('fcfe', 'q', 'E'):                               ['finance', 'fcfe', '上市公司财务指标 - 股权自由现金流量'],
-    ('current_exint', 'q', 'E'):                      ['finance', 'current_exint', '上市公司财务指标 - 无息流动负债'],
-    ('noncurrent_exint', 'q', 'E'):                   ['finance', 'noncurrent_exint', '上市公司财务指标 - 无息非流动负债'],
-    ('interestdebt', 'q', 'E'):                       ['finance', 'interestdebt', '上市公司财务指标 - 带息债务'],
-    ('netdebt', 'q', 'E'):                            ['finance', 'netdebt', '上市公司财务指标 - 净债务'],
-    ('tangible_asset', 'q', 'E'):                     ['finance', 'tangible_asset', '上市公司财务指标 - 有形资产'],
-    ('working_capital', 'q', 'E'):                    ['finance', 'working_capital', '上市公司财务指标 - 营运资金'],
-    ('networking_capital', 'q', 'E'):                 ['finance', 'networking_capital', '上市公司财务指标 - 营运流动资本'],
-    ('invest_capital', 'q', 'E'):                     ['finance', 'invest_capital', '上市公司财务指标 - 全部投入资本'],
-    ('retained_earnings', 'q', 'E'):                  ['finance', 'retained_earnings', '上市公司财务指标 - 留存收益'],
-    ('diluted2_eps', 'q', 'E'):                       ['finance', 'diluted2_eps', '上市公司财务指标 - 期末摊薄每股收益'],
-    ('express_bps', 'q', 'E'):                        ['finance', 'bps', '上市公司财务指标 - 每股净资产'],
-    ('ocfps', 'q', 'E'):                              ['finance', 'ocfps', '上市公司财务指标 - 每股经营活动产生的现金流量净额'],
-    ('retainedps', 'q', 'E'):                         ['finance', 'retainedps', '上市公司财务指标 - 每股留存收益'],
-    ('cfps', 'q', 'E'):                               ['finance', 'cfps', '上市公司财务指标 - 每股现金流量净额'],
-    ('ebit_ps', 'q', 'E'):                            ['finance', 'ebit_ps', '上市公司财务指标 - 每股息税前利润'],
-    ('fcff_ps', 'q', 'E'):                            ['finance', 'fcff_ps', '上市公司财务指标 - 每股企业自由现金流量'],
-    ('fcfe_ps', 'q', 'E'):                            ['finance', 'fcfe_ps', '上市公司财务指标 - 每股股东自由现金流量'],
-    ('netprofit_margin', 'q', 'E'):                   ['finance', 'netprofit_margin', '上市公司财务指标 - 销售净利率'],
-    ('grossprofit_margin', 'q', 'E'):                 ['finance', 'grossprofit_margin', '上市公司财务指标 - 销售毛利率'],
-    ('cogs_of_sales', 'q', 'E'):                      ['finance', 'cogs_of_sales', '上市公司财务指标 - 销售成本率'],
-    ('expense_of_sales', 'q', 'E'):                   ['finance', 'expense_of_sales', '上市公司财务指标 - 销售期间费用率'],
-    ('profit_to_gr', 'q', 'E'):                       ['finance', 'profit_to_gr', '上市公司财务指标 - 净利润/营业总收入'],
-    ('saleexp_to_gr', 'q', 'E'):                      ['finance', 'saleexp_to_gr', '上市公司财务指标 - 销售费用/营业总收入'],
-    ('adminexp_of_gr', 'q', 'E'):                     ['finance', 'adminexp_of_gr', '上市公司财务指标 - 管理费用/营业总收入'],
-    ('finaexp_of_gr', 'q', 'E'):                      ['finance', 'finaexp_of_gr', '上市公司财务指标 - 财务费用/营业总收入'],
-    ('impai_ttm', 'q', 'E'):                          ['finance', 'impai_ttm', '上市公司财务指标 - 资产减值损失/营业总收入'],
-    ('gc_of_gr', 'q', 'E'):                           ['finance', 'gc_of_gr', '上市公司财务指标 - 营业总成本/营业总收入'],
-    ('op_of_gr', 'q', 'E'):                           ['finance', 'op_of_gr', '上市公司财务指标 - 营业利润/营业总收入'],
-    ('ebit_of_gr', 'q', 'E'):                         ['finance', 'ebit_of_gr', '上市公司财务指标 - 息税前利润/营业总收入'],
-    ('roe', 'q', 'E'):                                ['finance', 'roe', '上市公司财务指标 - 净资产收益率'],
-    ('roe_waa', 'q', 'E'):                            ['finance', 'roe_waa', '上市公司财务指标 - 加权平均净资产收益率'],
-    ('roe_dt', 'q', 'E'):                             ['finance', 'roe_dt', '上市公司财务指标 - 净资产收益率(扣除非经常损益)'],
-    ('roa', 'q', 'E'):                                ['finance', 'roa', '上市公司财务指标 - 总资产报酬率'],
-    ('npta', 'q', 'E'):                               ['finance', 'npta', '上市公司财务指标 - 总资产净利润'],
-    ('roic', 'q', 'E'):                               ['finance', 'roic', '上市公司财务指标 - 投入资本回报率'],
-    ('roe_yearly', 'q', 'E'):                         ['finance', 'roe_yearly', '上市公司财务指标 - 年化净资产收益率'],
-    ('roa2_yearly', 'q', 'E'):                        ['finance', 'roa2_yearly', '上市公司财务指标 - 年化总资产报酬率'],
-    ('roe_avg', 'q', 'E'):                            ['finance', 'roe_avg', '上市公司财务指标 - 平均净资产收益率(增发条件)'],
-    ('opincome_of_ebt', 'q', 'E'):                    ['finance', 'opincome_of_ebt', '上市公司财务指标 - 经营活动净收益/利润总额'],
-    ('investincome_of_ebt', 'q', 'E'):                ['finance', 'investincome_of_ebt', '上市公司财务指标 - 价值变动净收益/利润总额'],
-    ('n_op_profit_of_ebt', 'q', 'E'):                 ['finance', 'n_op_profit_of_ebt', '上市公司财务指标 - 营业外收支净额/利润总额'],
-    ('tax_to_ebt', 'q', 'E'):                         ['finance', 'tax_to_ebt', '上市公司财务指标 - 所得税/利润总额'],
-    ('dtprofit_to_profit', 'q', 'E'):                 ['finance', 'dtprofit_to_profit', '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
-    ('salescash_to_or', 'q', 'E'):                    ['finance', 'salescash_to_or', '上市公司财务指标 - 销售商品提供劳务收到的现金/营业收入'],
-    ('ocf_to_or', 'q', 'E'):                          ['finance', 'ocf_to_or', '上市公司财务指标 - 经营活动产生的现金流量净额/营业收入'],
-    ('ocf_to_opincome', 'q', 'E'):                    ['finance', 'ocf_to_opincome',
+    ('eps', 'q', 'E'):                                ['financial', 'eps', '上市公司财务指标 - 基本每股收益'],
+    ('dt_eps', 'q', 'E'):                             ['financial', 'dt_eps', '上市公司财务指标 - 稀释每股收益'],
+    ('total_revenue_ps', 'q', 'E'):                   ['financial', 'total_revenue_ps', '上市公司财务指标 - 每股营业总收入'],
+    ('revenue_ps', 'q', 'E'):                         ['financial', 'revenue_ps', '上市公司财务指标 - 每股营业收入'],
+    ('capital_rese_ps', 'q', 'E'):                    ['financial', 'capital_rese_ps', '上市公司财务指标 - 每股资本公积'],
+    ('surplus_rese_ps', 'q', 'E'):                    ['financial', 'surplus_rese_ps', '上市公司财务指标 - 每股盈余公积'],
+    ('undist_profit_ps', 'q', 'E'):                   ['financial', 'undist_profit_ps', '上市公司财务指标 - 每股未分配利润'],
+    ('extra_item', 'q', 'E'):                         ['financial', 'extra_item', '上市公司财务指标 - 非经常性损益'],
+    ('profit_dedt', 'q', 'E'):                        ['financial', 'profit_dedt', '上市公司财务指标 - 扣除非经常性损益后的净利润（扣非净利润）'],
+    ('gross_margin', 'q', 'E'):                       ['financial', 'gross_margin', '上市公司财务指标 - 毛利'],
+    ('current_ratio', 'q', 'E'):                      ['financial', 'current_ratio', '上市公司财务指标 - 流动比率'],
+    ('quick_ratio', 'q', 'E'):                        ['financial', 'quick_ratio', '上市公司财务指标 - 速动比率'],
+    ('cash_ratio', 'q', 'E'):                         ['financial', 'cash_ratio', '上市公司财务指标 - 保守速动比率'],
+    ('invturn_days', 'q', 'E'):                       ['financial', 'invturn_days', '上市公司财务指标 - 存货周转天数'],
+    ('arturn_days', 'q', 'E'):                        ['financial', 'arturn_days', '上市公司财务指标 - 应收账款周转天数'],
+    ('inv_turn', 'q', 'E'):                           ['financial', 'inv_turn', '上市公司财务指标 - 存货周转率'],
+    ('ar_turn', 'q', 'E'):                            ['financial', 'ar_turn', '上市公司财务指标 - 应收账款周转率'],
+    ('ca_turn', 'q', 'E'):                            ['financial', 'ca_turn', '上市公司财务指标 - 流动资产周转率'],
+    ('fa_turn', 'q', 'E'):                            ['financial', 'fa_turn', '上市公司财务指标 - 固定资产周转率'],
+    ('assets_turn', 'q', 'E'):                        ['financial', 'assets_turn', '上市公司财务指标 - 总资产周转率'],
+    ('op_income', 'q', 'E'):                          ['financial', 'op_income', '上市公司财务指标 - 经营活动净收益'],
+    ('valuechange_income', 'q', 'E'):                 ['financial', 'valuechange_income', '上市公司财务指标 - 价值变动净收益'],
+    ('interst_income', 'q', 'E'):                     ['financial', 'interst_income', '上市公司财务指标 - 利息费用'],
+    ('daa', 'q', 'E'):                                ['financial', 'daa', '上市公司财务指标 - 折旧与摊销'],
+    ('ebit', 'q', 'E'):                               ['financial', 'ebit', '上市公司财务指标 - 息税前利润'],
+    ('ebitda', 'q', 'E'):                             ['financial', 'ebitda', '上市公司财务指标 - 息税折旧摊销前利润'],
+    ('fcff', 'q', 'E'):                               ['financial', 'fcff', '上市公司财务指标 - 企业自由现金流量'],
+    ('fcfe', 'q', 'E'):                               ['financial', 'fcfe', '上市公司财务指标 - 股权自由现金流量'],
+    ('current_exint', 'q', 'E'):                      ['financial', 'current_exint', '上市公司财务指标 - 无息流动负债'],
+    ('noncurrent_exint', 'q', 'E'):                   ['financial', 'noncurrent_exint', '上市公司财务指标 - 无息非流动负债'],
+    ('interestdebt', 'q', 'E'):                       ['financial', 'interestdebt', '上市公司财务指标 - 带息债务'],
+    ('netdebt', 'q', 'E'):                            ['financial', 'netdebt', '上市公司财务指标 - 净债务'],
+    ('tangible_asset', 'q', 'E'):                     ['financial', 'tangible_asset', '上市公司财务指标 - 有形资产'],
+    ('working_capital', 'q', 'E'):                    ['financial', 'working_capital', '上市公司财务指标 - 营运资金'],
+    ('networking_capital', 'q', 'E'):                 ['financial', 'networking_capital', '上市公司财务指标 - 营运流动资本'],
+    ('invest_capital', 'q', 'E'):                     ['financial', 'invest_capital', '上市公司财务指标 - 全部投入资本'],
+    ('retained_earnings', 'q', 'E'):                  ['financial', 'retained_earnings', '上市公司财务指标 - 留存收益'],
+    ('diluted2_eps', 'q', 'E'):                       ['financial', 'diluted2_eps', '上市公司财务指标 - 期末摊薄每股收益'],
+    ('express_bps', 'q', 'E'):                        ['financial', 'bps', '上市公司财务指标 - 每股净资产'],
+    ('ocfps', 'q', 'E'):                              ['financial', 'ocfps', '上市公司财务指标 - 每股经营活动产生的现金流量净额'],
+    ('retainedps', 'q', 'E'):                         ['financial', 'retainedps', '上市公司财务指标 - 每股留存收益'],
+    ('cfps', 'q', 'E'):                               ['financial', 'cfps', '上市公司财务指标 - 每股现金流量净额'],
+    ('ebit_ps', 'q', 'E'):                            ['financial', 'ebit_ps', '上市公司财务指标 - 每股息税前利润'],
+    ('fcff_ps', 'q', 'E'):                            ['financial', 'fcff_ps', '上市公司财务指标 - 每股企业自由现金流量'],
+    ('fcfe_ps', 'q', 'E'):                            ['financial', 'fcfe_ps', '上市公司财务指标 - 每股股东自由现金流量'],
+    ('netprofit_margin', 'q', 'E'):                   ['financial', 'netprofit_margin', '上市公司财务指标 - 销售净利率'],
+    ('grossprofit_margin', 'q', 'E'):                 ['financial', 'grossprofit_margin', '上市公司财务指标 - 销售毛利率'],
+    ('cogs_of_sales', 'q', 'E'):                      ['financial', 'cogs_of_sales', '上市公司财务指标 - 销售成本率'],
+    ('expense_of_sales', 'q', 'E'):                   ['financial', 'expense_of_sales', '上市公司财务指标 - 销售期间费用率'],
+    ('profit_to_gr', 'q', 'E'):                       ['financial', 'profit_to_gr', '上市公司财务指标 - 净利润/营业总收入'],
+    ('saleexp_to_gr', 'q', 'E'):                      ['financial', 'saleexp_to_gr', '上市公司财务指标 - 销售费用/营业总收入'],
+    ('adminexp_of_gr', 'q', 'E'):                     ['financial', 'adminexp_of_gr', '上市公司财务指标 - 管理费用/营业总收入'],
+    ('finaexp_of_gr', 'q', 'E'):                      ['financial', 'finaexp_of_gr', '上市公司财务指标 - 财务费用/营业总收入'],
+    ('impai_ttm', 'q', 'E'):                          ['financial', 'impai_ttm', '上市公司财务指标 - 资产减值损失/营业总收入'],
+    ('gc_of_gr', 'q', 'E'):                           ['financial', 'gc_of_gr', '上市公司财务指标 - 营业总成本/营业总收入'],
+    ('op_of_gr', 'q', 'E'):                           ['financial', 'op_of_gr', '上市公司财务指标 - 营业利润/营业总收入'],
+    ('ebit_of_gr', 'q', 'E'):                         ['financial', 'ebit_of_gr', '上市公司财务指标 - 息税前利润/营业总收入'],
+    ('roe', 'q', 'E'):                                ['financial', 'roe', '上市公司财务指标 - 净资产收益率'],
+    ('roe_waa', 'q', 'E'):                            ['financial', 'roe_waa', '上市公司财务指标 - 加权平均净资产收益率'],
+    ('roe_dt', 'q', 'E'):                             ['financial', 'roe_dt', '上市公司财务指标 - 净资产收益率(扣除非经常损益)'],
+    ('roa', 'q', 'E'):                                ['financial', 'roa', '上市公司财务指标 - 总资产报酬率'],
+    ('npta', 'q', 'E'):                               ['financial', 'npta', '上市公司财务指标 - 总资产净利润'],
+    ('roic', 'q', 'E'):                               ['financial', 'roic', '上市公司财务指标 - 投入资本回报率'],
+    ('roe_yearly', 'q', 'E'):                         ['financial', 'roe_yearly', '上市公司财务指标 - 年化净资产收益率'],
+    ('roa2_yearly', 'q', 'E'):                        ['financial', 'roa2_yearly', '上市公司财务指标 - 年化总资产报酬率'],
+    ('roe_avg', 'q', 'E'):                            ['financial', 'roe_avg', '上市公司财务指标 - 平均净资产收益率(增发条件)'],
+    ('opincome_of_ebt', 'q', 'E'):                    ['financial', 'opincome_of_ebt', '上市公司财务指标 - 经营活动净收益/利润总额'],
+    ('investincome_of_ebt', 'q', 'E'):                ['financial', 'investincome_of_ebt', '上市公司财务指标 - 价值变动净收益/利润总额'],
+    ('n_op_profit_of_ebt', 'q', 'E'):                 ['financial', 'n_op_profit_of_ebt', '上市公司财务指标 - 营业外收支净额/利润总额'],
+    ('tax_to_ebt', 'q', 'E'):                         ['financial', 'tax_to_ebt', '上市公司财务指标 - 所得税/利润总额'],
+    ('dtprofit_to_profit', 'q', 'E'):                 ['financial', 'dtprofit_to_profit', '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
+    ('salescash_to_or', 'q', 'E'):                    ['financial', 'salescash_to_or', '上市公司财务指标 - 销售商品提供劳务收到的现金/营业收入'],
+    ('ocf_to_or', 'q', 'E'):                          ['financial', 'ocf_to_or', '上市公司财务指标 - 经营活动产生的现金流量净额/营业收入'],
+    ('ocf_to_opincome', 'q', 'E'):                    ['financial', 'ocf_to_opincome',
                                                        '上市公司财务指标 - 经营活动产生的现金流量净额/经营活动净收益'],
-    ('capitalized_to_da', 'q', 'E'):                  ['finance', 'capitalized_to_da', '上市公司财务指标 - 资本支出/折旧和摊销'],
-    ('debt_to_assets', 'q', 'E'):                     ['finance', 'debt_to_assets', '上市公司财务指标 - 资产负债率'],
-    ('assets_to_eqt', 'q', 'E'):                      ['finance', 'assets_to_eqt', '上市公司财务指标 - 权益乘数'],
-    ('dp_assets_to_eqt', 'q', 'E'):                   ['finance', 'dp_assets_to_eqt', '上市公司财务指标 - 权益乘数(杜邦分析)'],
-    ('ca_to_assets', 'q', 'E'):                       ['finance', 'ca_to_assets', '上市公司财务指标 - 流动资产/总资产'],
-    ('nca_to_assets', 'q', 'E'):                      ['finance', 'nca_to_assets', '上市公司财务指标 - 非流动资产/总资产'],
-    ('tbassets_to_totalassets', 'q', 'E'):            ['finance', 'tbassets_to_totalassets', '上市公司财务指标 - 有形资产/总资产'],
-    ('int_to_talcap', 'q', 'E'):                      ['finance', 'int_to_talcap', '上市公司财务指标 - 带息债务/全部投入资本'],
-    ('eqt_to_talcapital', 'q', 'E'):                  ['finance', 'eqt_to_talcapital', '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
-    ('currentdebt_to_debt', 'q', 'E'):                ['finance', 'currentdebt_to_debt', '上市公司财务指标 - 流动负债/负债合计'],
-    ('longdeb_to_debt', 'q', 'E'):                    ['finance', 'longdeb_to_debt', '上市公司财务指标 - 非流动负债/负债合计'],
-    ('ocf_to_shortdebt', 'q', 'E'):                   ['finance', 'ocf_to_shortdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
-    ('debt_to_eqt', 'q', 'E'):                        ['finance', 'debt_to_eqt', '上市公司财务指标 - 产权比率'],
-    ('eqt_to_debt', 'q', 'E'):                        ['finance', 'eqt_to_debt', '上市公司财务指标 - 归属于母公司的股东权益/负债合计'],
-    ('eqt_to_interestdebt', 'q', 'E'):                ['finance', 'eqt_to_interestdebt', '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
-    ('tangibleasset_to_debt', 'q', 'E'):              ['finance', 'tangibleasset_to_debt', '上市公司财务指标 - 有形资产/负债合计'],
-    ('tangasset_to_intdebt', 'q', 'E'):               ['finance', 'tangasset_to_intdebt', '上市公司财务指标 - 有形资产/带息债务'],
-    ('tangibleasset_to_netdebt', 'q', 'E'):           ['finance', 'tangibleasset_to_netdebt', '上市公司财务指标 - 有形资产/净债务'],
-    ('ocf_to_debt', 'q', 'E'):                        ['finance', 'ocf_to_debt', '上市公司财务指标 - 经营活动产生的现金流量净额/负债合计'],
-    ('ocf_to_interestdebt', 'q', 'E'):                ['finance', 'ocf_to_interestdebt',
+    ('capitalized_to_da', 'q', 'E'):                  ['financial', 'capitalized_to_da', '上市公司财务指标 - 资本支出/折旧和摊销'],
+    ('debt_to_assets', 'q', 'E'):                     ['financial', 'debt_to_assets', '上市公司财务指标 - 资产负债率'],
+    ('assets_to_eqt', 'q', 'E'):                      ['financial', 'assets_to_eqt', '上市公司财务指标 - 权益乘数'],
+    ('dp_assets_to_eqt', 'q', 'E'):                   ['financial', 'dp_assets_to_eqt', '上市公司财务指标 - 权益乘数(杜邦分析)'],
+    ('ca_to_assets', 'q', 'E'):                       ['financial', 'ca_to_assets', '上市公司财务指标 - 流动资产/总资产'],
+    ('nca_to_assets', 'q', 'E'):                      ['financial', 'nca_to_assets', '上市公司财务指标 - 非流动资产/总资产'],
+    ('tbassets_to_totalassets', 'q', 'E'):            ['financial', 'tbassets_to_totalassets', '上市公司财务指标 - 有形资产/总资产'],
+    ('int_to_talcap', 'q', 'E'):                      ['financial', 'int_to_talcap', '上市公司财务指标 - 带息债务/全部投入资本'],
+    ('eqt_to_talcapital', 'q', 'E'):                  ['financial', 'eqt_to_talcapital', '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
+    ('currentdebt_to_debt', 'q', 'E'):                ['financial', 'currentdebt_to_debt', '上市公司财务指标 - 流动负债/负债合计'],
+    ('longdeb_to_debt', 'q', 'E'):                    ['financial', 'longdeb_to_debt', '上市公司财务指标 - 非流动负债/负债合计'],
+    ('ocf_to_shortdebt', 'q', 'E'):                   ['financial', 'ocf_to_shortdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
+    ('debt_to_eqt', 'q', 'E'):                        ['financial', 'debt_to_eqt', '上市公司财务指标 - 产权比率'],
+    ('eqt_to_debt', 'q', 'E'):                        ['financial', 'eqt_to_debt', '上市公司财务指标 - 归属于母公司的股东权益/负债合计'],
+    ('eqt_to_interestdebt', 'q', 'E'):                ['financial', 'eqt_to_interestdebt', '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
+    ('tangibleasset_to_debt', 'q', 'E'):              ['financial', 'tangibleasset_to_debt', '上市公司财务指标 - 有形资产/负债合计'],
+    ('tangasset_to_intdebt', 'q', 'E'):               ['financial', 'tangasset_to_intdebt', '上市公司财务指标 - 有形资产/带息债务'],
+    ('tangibleasset_to_netdebt', 'q', 'E'):           ['financial', 'tangibleasset_to_netdebt', '上市公司财务指标 - 有形资产/净债务'],
+    ('ocf_to_debt', 'q', 'E'):                        ['financial', 'ocf_to_debt', '上市公司财务指标 - 经营活动产生的现金流量净额/负债合计'],
+    ('ocf_to_interestdebt', 'q', 'E'):                ['financial', 'ocf_to_interestdebt',
                                                        '上市公司财务指标 - 经营活动产生的现金流量净额/带息债务'],
-    ('ocf_to_netdebt', 'q', 'E'):                     ['finance', 'ocf_to_netdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/净债务'],
-    ('ebit_to_interest', 'q', 'E'):                   ['finance', 'ebit_to_interest', '上市公司财务指标 - 已获利息倍数(EBIT/利息费用)'],
-    ('longdebt_to_workingcapital', 'q', 'E'):         ['finance', 'longdebt_to_workingcapital',
+    ('ocf_to_netdebt', 'q', 'E'):                     ['financial', 'ocf_to_netdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/净债务'],
+    ('ebit_to_interest', 'q', 'E'):                   ['financial', 'ebit_to_interest', '上市公司财务指标 - 已获利息倍数(EBIT/利息费用)'],
+    ('longdebt_to_workingcapital', 'q', 'E'):         ['financial', 'longdebt_to_workingcapital',
                                                        '上市公司财务指标 - 长期债务与营运资金比率'],
-    ('ebitda_to_debt', 'q', 'E'):                     ['finance', 'ebitda_to_debt', '上市公司财务指标 - 息税折旧摊销前利润/负债合计'],
-    ('turn_days', 'q', 'E'):                          ['finance', 'turn_days', '上市公司财务指标 - 营业周期'],
-    ('roa_yearly', 'q', 'E'):                         ['finance', 'roa_yearly', '上市公司财务指标 - 年化总资产净利率'],
-    ('roa_dp', 'q', 'E'):                             ['finance', 'roa_dp', '上市公司财务指标 - 总资产净利率(杜邦分析)'],
-    ('fixed_assets', 'q', 'E'):                       ['finance', 'fixed_assets', '上市公司财务指标 - 固定资产合计'],
-    ('profit_prefin_exp', 'q', 'E'):                  ['finance', 'profit_prefin_exp', '上市公司财务指标 - 扣除财务费用前营业利润'],
-    ('non_op_profit', 'q', 'E'):                      ['finance', 'non_op_profit', '上市公司财务指标 - 非营业利润'],
-    ('op_to_ebt', 'q', 'E'):                          ['finance', 'op_to_ebt', '上市公司财务指标 - 营业利润／利润总额'],
-    ('nop_to_ebt', 'q', 'E'):                         ['finance', 'nop_to_ebt', '上市公司财务指标 - 非营业利润／利润总额'],
-    ('ocf_to_profit', 'q', 'E'):                      ['finance', 'ocf_to_profit', '上市公司财务指标 - 经营活动产生的现金流量净额／营业利润'],
-    ('cash_to_liqdebt', 'q', 'E'):                    ['finance', 'cash_to_liqdebt', '上市公司财务指标 - 货币资金／流动负债'],
-    ('cash_to_liqdebt_withinterest', 'q', 'E'):       ['finance', 'cash_to_liqdebt_withinterest',
+    ('ebitda_to_debt', 'q', 'E'):                     ['financial', 'ebitda_to_debt', '上市公司财务指标 - 息税折旧摊销前利润/负债合计'],
+    ('turn_days', 'q', 'E'):                          ['financial', 'turn_days', '上市公司财务指标 - 营业周期'],
+    ('roa_yearly', 'q', 'E'):                         ['financial', 'roa_yearly', '上市公司财务指标 - 年化总资产净利率'],
+    ('roa_dp', 'q', 'E'):                             ['financial', 'roa_dp', '上市公司财务指标 - 总资产净利率(杜邦分析)'],
+    ('fixed_assets', 'q', 'E'):                       ['financial', 'fixed_assets', '上市公司财务指标 - 固定资产合计'],
+    ('profit_prefin_exp', 'q', 'E'):                  ['financial', 'profit_prefin_exp', '上市公司财务指标 - 扣除财务费用前营业利润'],
+    ('non_op_profit', 'q', 'E'):                      ['financial', 'non_op_profit', '上市公司财务指标 - 非营业利润'],
+    ('op_to_ebt', 'q', 'E'):                          ['financial', 'op_to_ebt', '上市公司财务指标 - 营业利润／利润总额'],
+    ('nop_to_ebt', 'q', 'E'):                         ['financial', 'nop_to_ebt', '上市公司财务指标 - 非营业利润／利润总额'],
+    ('ocf_to_profit', 'q', 'E'):                      ['financial', 'ocf_to_profit', '上市公司财务指标 - 经营活动产生的现金流量净额／营业利润'],
+    ('cash_to_liqdebt', 'q', 'E'):                    ['financial', 'cash_to_liqdebt', '上市公司财务指标 - 货币资金／流动负债'],
+    ('cash_to_liqdebt_withinterest', 'q', 'E'):       ['financial', 'cash_to_liqdebt_withinterest',
                                                        '上市公司财务指标 - 货币资金／带息流动负债'],
-    ('op_to_liqdebt', 'q', 'E'):                      ['finance', 'op_to_liqdebt', '上市公司财务指标 - 营业利润／流动负债'],
-    ('op_to_debt', 'q', 'E'):                         ['finance', 'op_to_debt', '上市公司财务指标 - 营业利润／负债合计'],
-    ('roic_yearly', 'q', 'E'):                        ['finance', 'roic_yearly', '上市公司财务指标 - 年化投入资本回报率'],
-    ('total_fa_trun', 'q', 'E'):                      ['finance', 'total_fa_trun', '上市公司财务指标 - 固定资产合计周转率'],
-    ('profit_to_op', 'q', 'E'):                       ['finance', 'profit_to_op', '上市公司财务指标 - 利润总额／营业收入'],
-    ('q_opincome', 'q', 'E'):                         ['finance', 'q_opincome', '上市公司财务指标 - 经营活动单季度净收益'],
-    ('q_investincome', 'q', 'E'):                     ['finance', 'q_investincome', '上市公司财务指标 - 价值变动单季度净收益'],
-    ('q_dtprofit', 'q', 'E'):                         ['finance', 'q_dtprofit', '上市公司财务指标 - 扣除非经常损益后的单季度净利润'],
-    ('q_eps', 'q', 'E'):                              ['finance', 'q_eps', '上市公司财务指标 - 每股收益(单季度)'],
-    ('q_netprofit_margin', 'q', 'E'):                 ['finance', 'q_netprofit_margin', '上市公司财务指标 - 销售净利率(单季度)'],
-    ('q_gsprofit_margin', 'q', 'E'):                  ['finance', 'q_gsprofit_margin', '上市公司财务指标 - 销售毛利率(单季度)'],
-    ('q_exp_to_sales', 'q', 'E'):                     ['finance', 'q_exp_to_sales', '上市公司财务指标 - 销售期间费用率(单季度)'],
-    ('q_profit_to_gr', 'q', 'E'):                     ['finance', 'q_profit_to_gr', '上市公司财务指标 - 净利润／营业总收入(单季度)'],
-    ('q_saleexp_to_gr', 'q', 'E'):                    ['finance', 'q_saleexp_to_gr', '上市公司财务指标 - 销售费用／营业总收入 (单季度)'],
-    ('q_adminexp_to_gr', 'q', 'E'):                   ['finance', 'q_adminexp_to_gr', '上市公司财务指标 - 管理费用／营业总收入 (单季度)'],
-    ('q_finaexp_to_gr', 'q', 'E'):                    ['finance', 'q_finaexp_to_gr', '上市公司财务指标 - 财务费用／营业总收入 (单季度)'],
-    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['finance', 'q_impair_to_gr_ttm', '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
-    ('q_gc_to_gr', 'q', 'E'):                         ['finance', 'q_gc_to_gr', '上市公司财务指标 - 营业总成本／营业总收入 (单季度)'],
-    ('q_op_to_gr', 'q', 'E'):                         ['finance', 'q_op_to_gr', '上市公司财务指标 - 营业利润／营业总收入(单季度)'],
-    ('q_roe', 'q', 'E'):                              ['finance', 'q_roe', '上市公司财务指标 - 净资产收益率(单季度)'],
-    ('q_dt_roe', 'q', 'E'):                           ['finance', 'q_dt_roe', '上市公司财务指标 - 净资产单季度收益率(扣除非经常损益)'],
-    ('q_npta', 'q', 'E'):                             ['finance', 'q_npta', '上市公司财务指标 - 总资产净利润(单季度)'],
-    ('q_opincome_to_ebt', 'q', 'E'):                  ['finance', 'q_opincome_to_ebt', '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
-    ('q_investincome_to_ebt', 'q', 'E'):              ['finance', 'q_investincome_to_ebt',
+    ('op_to_liqdebt', 'q', 'E'):                      ['financial', 'op_to_liqdebt', '上市公司财务指标 - 营业利润／流动负债'],
+    ('op_to_debt', 'q', 'E'):                         ['financial', 'op_to_debt', '上市公司财务指标 - 营业利润／负债合计'],
+    ('roic_yearly', 'q', 'E'):                        ['financial', 'roic_yearly', '上市公司财务指标 - 年化投入资本回报率'],
+    ('total_fa_trun', 'q', 'E'):                      ['financial', 'total_fa_trun', '上市公司财务指标 - 固定资产合计周转率'],
+    ('profit_to_op', 'q', 'E'):                       ['financial', 'profit_to_op', '上市公司财务指标 - 利润总额／营业收入'],
+    ('q_opincome', 'q', 'E'):                         ['financial', 'q_opincome', '上市公司财务指标 - 经营活动单季度净收益'],
+    ('q_investincome', 'q', 'E'):                     ['financial', 'q_investincome', '上市公司财务指标 - 价值变动单季度净收益'],
+    ('q_dtprofit', 'q', 'E'):                         ['financial', 'q_dtprofit', '上市公司财务指标 - 扣除非经常损益后的单季度净利润'],
+    ('q_eps', 'q', 'E'):                              ['financial', 'q_eps', '上市公司财务指标 - 每股收益(单季度)'],
+    ('q_netprofit_margin', 'q', 'E'):                 ['financial', 'q_netprofit_margin', '上市公司财务指标 - 销售净利率(单季度)'],
+    ('q_gsprofit_margin', 'q', 'E'):                  ['financial', 'q_gsprofit_margin', '上市公司财务指标 - 销售毛利率(单季度)'],
+    ('q_exp_to_sales', 'q', 'E'):                     ['financial', 'q_exp_to_sales', '上市公司财务指标 - 销售期间费用率(单季度)'],
+    ('q_profit_to_gr', 'q', 'E'):                     ['financial', 'q_profit_to_gr', '上市公司财务指标 - 净利润／营业总收入(单季度)'],
+    ('q_saleexp_to_gr', 'q', 'E'):                    ['financial', 'q_saleexp_to_gr', '上市公司财务指标 - 销售费用／营业总收入 (单季度)'],
+    ('q_adminexp_to_gr', 'q', 'E'):                   ['financial', 'q_adminexp_to_gr', '上市公司财务指标 - 管理费用／营业总收入 (单季度)'],
+    ('q_finaexp_to_gr', 'q', 'E'):                    ['financial', 'q_finaexp_to_gr', '上市公司财务指标 - 财务费用／营业总收入 (单季度)'],
+    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['financial', 'q_impair_to_gr_ttm', '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
+    ('q_gc_to_gr', 'q', 'E'):                         ['financial', 'q_gc_to_gr', '上市公司财务指标 - 营业总成本／营业总收入 (单季度)'],
+    ('q_op_to_gr', 'q', 'E'):                         ['financial', 'q_op_to_gr', '上市公司财务指标 - 营业利润／营业总收入(单季度)'],
+    ('q_roe', 'q', 'E'):                              ['financial', 'q_roe', '上市公司财务指标 - 净资产收益率(单季度)'],
+    ('q_dt_roe', 'q', 'E'):                           ['financial', 'q_dt_roe', '上市公司财务指标 - 净资产单季度收益率(扣除非经常损益)'],
+    ('q_npta', 'q', 'E'):                             ['financial', 'q_npta', '上市公司财务指标 - 总资产净利润(单季度)'],
+    ('q_opincome_to_ebt', 'q', 'E'):                  ['financial', 'q_opincome_to_ebt', '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
+    ('q_investincome_to_ebt', 'q', 'E'):              ['financial', 'q_investincome_to_ebt',
                                                        '上市公司财务指标 - 价值变动净收益／利润总额(单季度)'],
-    ('q_dtprofit_to_profit', 'q', 'E'):               ['finance', 'q_dtprofit_to_profit',
+    ('q_dtprofit_to_profit', 'q', 'E'):               ['financial', 'q_dtprofit_to_profit',
                                                        '上市公司财务指标 - 扣除非经常损益后的净利润／净利润(单季度)'],
-    ('q_salescash_to_or', 'q', 'E'):                  ['finance', 'q_salescash_to_or',
+    ('q_salescash_to_or', 'q', 'E'):                  ['financial', 'q_salescash_to_or',
                                                        '上市公司财务指标 - 销售商品提供劳务收到的现金／营业收入(单季度)'],
-    ('q_ocf_to_sales', 'q', 'E'):                     ['finance', 'q_ocf_to_sales',
+    ('q_ocf_to_sales', 'q', 'E'):                     ['financial', 'q_ocf_to_sales',
                                                        '上市公司财务指标 - 经营活动产生的现金流量净额／营业收入(单季度)'],
-    ('q_ocf_to_or', 'q', 'E'):                        ['finance', 'q_ocf_to_or',
+    ('q_ocf_to_or', 'q', 'E'):                        ['financial', 'q_ocf_to_or',
                                                        '上市公司财务指标 - 经营活动产生的现金流量净额／经营活动净收益(单季度)'],
-    ('basic_eps_yoy', 'q', 'E'):                      ['finance', 'basic_eps_yoy', '上市公司财务指标 - 基本每股收益同比增长率(%)'],
-    ('dt_eps_yoy', 'q', 'E'):                         ['finance', 'dt_eps_yoy', '上市公司财务指标 - 稀释每股收益同比增长率(%)'],
-    ('cfps_yoy', 'q', 'E'):                           ['finance', 'cfps_yoy', '上市公司财务指标 - 每股经营活动产生的现金流量净额同比增长率(%)'],
-    ('op_yoy', 'q', 'E'):                             ['finance', 'op_yoy', '上市公司财务指标 - 营业利润同比增长率(%)'],
-    ('ebt_yoy', 'q', 'E'):                            ['finance', 'ebt_yoy', '上市公司财务指标 - 利润总额同比增长率(%)'],
-    ('netprofit_yoy', 'q', 'E'):                      ['finance', 'netprofit_yoy', '上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)'],
-    ('dt_netprofit_yoy', 'q', 'E'):                   ['finance', 'dt_netprofit_yoy',
+    ('basic_eps_yoy', 'q', 'E'):                      ['financial', 'basic_eps_yoy', '上市公司财务指标 - 基本每股收益同比增长率(%)'],
+    ('dt_eps_yoy', 'q', 'E'):                         ['financial', 'dt_eps_yoy', '上市公司财务指标 - 稀释每股收益同比增长率(%)'],
+    ('cfps_yoy', 'q', 'E'):                           ['financial', 'cfps_yoy', '上市公司财务指标 - 每股经营活动产生的现金流量净额同比增长率(%)'],
+    ('op_yoy', 'q', 'E'):                             ['financial', 'op_yoy', '上市公司财务指标 - 营业利润同比增长率(%)'],
+    ('ebt_yoy', 'q', 'E'):                            ['financial', 'ebt_yoy', '上市公司财务指标 - 利润总额同比增长率(%)'],
+    ('netprofit_yoy', 'q', 'E'):                      ['financial', 'netprofit_yoy', '上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)'],
+    ('dt_netprofit_yoy', 'q', 'E'):                   ['financial', 'dt_netprofit_yoy',
                                                        '上市公司财务指标 - 归属母公司股东的净利润-扣除非经常损益同比增长率(%)'],
-    ('ocf_yoy', 'q', 'E'):                            ['finance', 'ocf_yoy', '上市公司财务指标 - 经营活动产生的现金流量净额同比增长率(%)'],
-    ('roe_yoy', 'q', 'E'):                            ['finance', 'roe_yoy', '上市公司财务指标 - 净资产收益率(摊薄)同比增长率(%)'],
-    ('bps_yoy', 'q', 'E'):                            ['finance', 'bps_yoy', '上市公司财务指标 - 每股净资产相对年初增长率(%)'],
-    ('assets_yoy', 'q', 'E'):                         ['finance', 'assets_yoy', '上市公司财务指标 - 资产总计相对年初增长率(%)'],
-    ('eqt_yoy', 'q', 'E'):                            ['finance', 'eqt_yoy', '上市公司财务指标 - 归属母公司的股东权益相对年初增长率(%)'],
-    ('tr_yoy', 'q', 'E'):                             ['finance', 'tr_yoy', '上市公司财务指标 - 营业总收入同比增长率(%)'],
-    ('or_yoy', 'q', 'E'):                             ['finance', 'or_yoy', '上市公司财务指标 - 营业收入同比增长率(%)'],
-    ('q_gr_yoy', 'q', 'E'):                           ['finance', 'q_gr_yoy', '上市公司财务指标 - 营业总收入同比增长率(%)(单季度)'],
-    ('q_gr_qoq', 'q', 'E'):                           ['finance', 'q_gr_qoq', '上市公司财务指标 - 营业总收入环比增长率(%)(单季度)'],
-    ('q_sales_yoy', 'q', 'E'):                        ['finance', 'q_sales_yoy', '上市公司财务指标 - 营业收入同比增长率(%)(单季度)'],
-    ('q_sales_qoq', 'q', 'E'):                        ['finance', 'q_sales_qoq', '上市公司财务指标 - 营业收入环比增长率(%)(单季度)'],
-    ('q_op_yoy', 'q', 'E'):                           ['finance', 'q_op_yoy', '上市公司财务指标 - 营业利润同比增长率(%)(单季度)'],
-    ('q_op_qoq', 'q', 'E'):                           ['finance', 'q_op_qoq', '上市公司财务指标 - 营业利润环比增长率(%)(单季度)'],
-    ('q_profit_yoy', 'q', 'E'):                       ['finance', 'q_profit_yoy', '上市公司财务指标 - 净利润同比增长率(%)(单季度)'],
-    ('q_profit_qoq', 'q', 'E'):                       ['finance', 'q_profit_qoq', '上市公司财务指标 - 净利润环比增长率(%)(单季度)'],
-    ('q_netprofit_yoy', 'q', 'E'):                    ['finance', 'q_netprofit_yoy',
+    ('ocf_yoy', 'q', 'E'):                            ['financial', 'ocf_yoy', '上市公司财务指标 - 经营活动产生的现金流量净额同比增长率(%)'],
+    ('roe_yoy', 'q', 'E'):                            ['financial', 'roe_yoy', '上市公司财务指标 - 净资产收益率(摊薄)同比增长率(%)'],
+    ('bps_yoy', 'q', 'E'):                            ['financial', 'bps_yoy', '上市公司财务指标 - 每股净资产相对年初增长率(%)'],
+    ('assets_yoy', 'q', 'E'):                         ['financial', 'assets_yoy', '上市公司财务指标 - 资产总计相对年初增长率(%)'],
+    ('eqt_yoy', 'q', 'E'):                            ['financial', 'eqt_yoy', '上市公司财务指标 - 归属母公司的股东权益相对年初增长率(%)'],
+    ('tr_yoy', 'q', 'E'):                             ['financial', 'tr_yoy', '上市公司财务指标 - 营业总收入同比增长率(%)'],
+    ('or_yoy', 'q', 'E'):                             ['financial', 'or_yoy', '上市公司财务指标 - 营业收入同比增长率(%)'],
+    ('q_gr_yoy', 'q', 'E'):                           ['financial', 'q_gr_yoy', '上市公司财务指标 - 营业总收入同比增长率(%)(单季度)'],
+    ('q_gr_qoq', 'q', 'E'):                           ['financial', 'q_gr_qoq', '上市公司财务指标 - 营业总收入环比增长率(%)(单季度)'],
+    ('q_sales_yoy', 'q', 'E'):                        ['financial', 'q_sales_yoy', '上市公司财务指标 - 营业收入同比增长率(%)(单季度)'],
+    ('q_sales_qoq', 'q', 'E'):                        ['financial', 'q_sales_qoq', '上市公司财务指标 - 营业收入环比增长率(%)(单季度)'],
+    ('q_op_yoy', 'q', 'E'):                           ['financial', 'q_op_yoy', '上市公司财务指标 - 营业利润同比增长率(%)(单季度)'],
+    ('q_op_qoq', 'q', 'E'):                           ['financial', 'q_op_qoq', '上市公司财务指标 - 营业利润环比增长率(%)(单季度)'],
+    ('q_profit_yoy', 'q', 'E'):                       ['financial', 'q_profit_yoy', '上市公司财务指标 - 净利润同比增长率(%)(单季度)'],
+    ('q_profit_qoq', 'q', 'E'):                       ['financial', 'q_profit_qoq', '上市公司财务指标 - 净利润环比增长率(%)(单季度)'],
+    ('q_netprofit_yoy', 'q', 'E'):                    ['financial', 'q_netprofit_yoy',
                                                        '上市公司财务指标 - 归属母公司股东的净利润同比增长率(%)(单季度)'],
-    ('q_netprofit_qoq', 'q', 'E'):                    ['finance', 'q_netprofit_qoq',
+    ('q_netprofit_qoq', 'q', 'E'):                    ['financial', 'q_netprofit_qoq',
                                                        '上市公司财务指标 - 归属母公司股东的净利润环比增长率(%)(单季度)'],
-    ('equity_yoy', 'q', 'E'):                         ['finance', 'equity_yoy', '上市公司财务指标 - 净资产同比增长率'],
-    ('rd_exp', 'q', 'E'):                             ['finance', 'rd_exp', '上市公司财务指标 - 研发费用'],
+    ('equity_yoy', 'q', 'E'):                         ['financial', 'equity_yoy', '上市公司财务指标 - 净资产同比增长率'],
+    ('rd_exp', 'q', 'E'):                             ['financial', 'rd_exp', '上市公司财务指标 - 研发费用'],
     ('rzye', 'd', 'Any'):                             ['margin', 'rzye', '融资融券交易汇总 - 融资余额(元)'],
     ('rzmre', 'd', 'Any'):                            ['margin', 'rzmre', '融资融券交易汇总 - 融资买入额(元)'],
     ('rzche', 'd', 'Any'):                            ['margin', 'rzche', '融资融券交易汇总 - 融资偿还额(元)'],
@@ -1045,10 +1045,10 @@ DATA_TABLE_MAPPING = {
     ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '备用股票技术指标 - 近3月涨幅'],
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '备用股票技术指标 - 近6月涨幅'],
 }
-TABLE_SOURCE_MAPPING_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
+TABLE_SOURCE_MAP_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                                 'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
                                 'start_end_chunk_size']
-TABLE_SOURCE_MAPPING = {
+TABLE_SOURCE_MAP = {
 
     'trade_calendar':
         ['trade_calendar', '交易日历', 'cal', 'none', 'none', 'trade_calendar', 'exchange', 'list',
@@ -2189,6 +2189,9 @@ class DataSource:
         """ 将DataFrame中的数据添加到数据库表的末尾，假定df的列
         与db_table的schema相同
 
+        ** 注意 ** 通常情况下不要使用这个函数写入数据到数据表。因为这个函数并不会检查
+        写入的数据是否存在冲突的键值，如果键值冲突时，会导致错误
+
         :param df: 需要添加的DataFrame
         :param db_table: 需要添加数据的数据库表
         :return:
@@ -2200,6 +2203,7 @@ class DataSource:
         """ 用DataFrame中的数据更新数据表中的数据记录，假定
             df的列与db_table的列相同且顺序也相同
             在插入数据之前，必须确保表的primary_key已经正确设定
+            如果写入记录的键值存在冲突时，更新数据库中的记录
 
         :param df: 用于更新数据表的数据DataFrame
         :param db_table: 需要更新的数据表
@@ -2448,7 +2452,7 @@ class DataSource:
         """
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
-        if table not in TABLE_SOURCE_MAPPING.keys():
+        if table not in TABLE_SOURCE_MAP.keys():
             raise KeyError(f'Invalid table name: {table}.')
 
         if shares is not None:
@@ -2548,7 +2552,7 @@ class DataSource:
         assert isinstance(df, pd.DataFrame)
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
-        if table not in TABLE_SOURCE_MAPPING.keys():
+        if table not in TABLE_SOURCE_MAP.keys():
             raise KeyError(f'Invalid table name.')
         columns, dtypes, primary_key, pk_dtype = get_built_in_table_schema(table)
         if self.source_type == 'file':
@@ -2591,7 +2595,7 @@ class DataSource:
         from .tsfuncs import acquire_data
         if not isinstance(table, str):
             raise TypeError(f'table name should be a string, got {type(table)} instead.')
-        if table not in TABLE_SOURCE_MAPPING.keys():
+        if table not in TABLE_SOURCE_MAP.keys():
             raise KeyError(f'Invalid table name {table}')
         if not isinstance(channel, str):
             raise TypeError(f'channel should be a string, got {type(channel)} instead.')
@@ -2774,13 +2778,13 @@ class DataSource:
         """
         if not isinstance(table, str):
             raise TypeError(f'table should be name of a table, got {type(table)} instead')
-        if not table.lower() in TABLE_SOURCE_MAPPING:
+        if not table.lower() in TABLE_SOURCE_MAP:
             raise ValueError(f'in valid table name: {table}')
 
         columns, dtypes, remarks, primary_keys, pk_dtypes = get_built_in_table_schema(table,
                                                                                       with_remark=True,
                                                                                       with_primary_keys=True)
-        critical_key = TABLE_SOURCE_MAPPING[table][6]
+        critical_key = TABLE_SOURCE_MAP[table][6]
         table_schema = pd.DataFrame({'columns': columns,
                                      'dtypes':  dtypes,
                                      'remarks': remarks})
@@ -3118,7 +3122,7 @@ class DataSource:
             tables = []
         if dtypes is None:
             dtypes = []
-        valid_table_values = list(TABLE_SOURCE_MAPPING.keys()) + TABLE_USAGES + ['all']
+        valid_table_values = list(TABLE_SOURCE_MAP.keys()) + TABLE_USAGES + ['all']
         if not isinstance(tables, (str, list)):
             raise TypeError(f'tables should be a list or a string, got {type(tables)} instead.')
         if isinstance(tables, str):
@@ -3148,10 +3152,10 @@ class DataSource:
         tables_to_refill = set()
         tables = [item.lower() for item in tables]
         if 'all' in tables:
-            tables_to_refill.update(TABLE_SOURCE_MAPPING)
+            tables_to_refill.update(TABLE_SOURCE_MAP)
         else:
             for item in tables:
-                if item in TABLE_SOURCE_MAPPING:
+                if item in TABLE_SOURCE_MAP:
                     tables_to_refill.add(item)
                 elif item in TABLE_USAGES:
                     tables_to_refill.update(
@@ -3594,10 +3598,10 @@ def get_built_in_table_schema(table, with_remark=False, with_primary_keys=True):
     """
     if not isinstance(table, str):
         raise TypeError(f'table name should be a string, got {type(table)} instead')
-    if table not in TABLE_SOURCE_MAPPING.keys():
+    if table not in TABLE_SOURCE_MAP.keys():
         raise KeyError(f'invalid table name')
 
-    table_structure = TABLE_SOURCE_MAPPING[table][TABLE_SOURCE_MAPPING_COLUMNS.index('structure')]
+    table_structure = TABLE_SOURCE_MAP[table][TABLE_SOURCE_MAP_COLUMNS.index('structure')]
     structure = TABLE_STRUCTURES[table_structure]
     columns = structure['columns']
     dtypes = structure['dtypes']
@@ -3622,9 +3626,9 @@ def get_dtype_map():
 
     :return:
     """
-    dtype_map = pd.DataFrame(DATA_TABLE_MAPPING).T
-    dtype_map.columns = DATA_TABLE_MAPPING_COLUMNS
-    dtype_map.index.names = DATA_TABLE_MAPPING_INDEX_NAMES
+    dtype_map = pd.DataFrame(DATA_TABLE_MAP).T
+    dtype_map.columns = DATA_TABLE_MAP_COLUMNS
+    dtype_map.index.names = DATA_TABLE_MAP_INDEX_NAMES
     return dtype_map
 
 
@@ -3634,8 +3638,8 @@ def get_table_map():
 
     :return:
     """
-    table_map = pd.DataFrame(TABLE_SOURCE_MAPPING).T
-    table_map.columns = TABLE_SOURCE_MAPPING_COLUMNS
+    table_map = pd.DataFrame(TABLE_SOURCE_MAP).T
+    table_map.columns = TABLE_SOURCE_MAP_COLUMNS
     return table_map
 
 

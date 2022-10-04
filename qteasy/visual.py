@@ -888,15 +888,15 @@ def _plot_loop_result(loop_results: dict, config):
     # 投资回测结果的评价指标全部被打印在图表上，所有的指标按照表格形式打印
     # 为了实现表格效果，指标的标签和值分成两列打印，每一列的打印位置相同
     fig.text(0.07, 0.955, f'periods: {loop_results["years"]:3.1f} years, '
-                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}'
-                          f'time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
+                          f'from: {loop_results["loop_start"].date()} to {loop_results["loop_end"].date()}       '
+                          f'  time consumed:   signal creation: {time_str_format(loop_results["op_run_time"])};'
                           f'  back test:{time_str_format(loop_results["loop_run_time"])}')
     fig.text(0.21, 0.90, f'Operation summary:\n\n'
                          f'Total op fee:\n'
                          f'total investment:\n'
                          f'final value:', ha='right')
-    fig.text(0.23, 0.90, f'{loop_results["oper_count"].buy.sum()}     buys \n'
-                         f'{loop_results["oper_count"].sell.sum()}     sells\n'
+    fig.text(0.23, 0.90, f'{loop_results["oper_count"].buy.sum():.0f}     buys \n'
+                         f'{loop_results["oper_count"].sell.sum():.0f}     sells\n'
                          f'¥{loop_results["total_fee"]:13,.2f}\n'
                          f'¥{loop_results["total_invest"]:13,.2f}\n'
                          f'¥{loop_results["final_value"]:13,.2f}')
@@ -905,11 +905,11 @@ def _plot_loop_result(loop_results: dict, config):
                          f'Benchmark return:\n'
                          f'Avg annual ref return:\n'
                          f'Max drawdown:', ha='right')
-    fig.text(0.52, 0.90, f'{loop_results["rtn"]:.2%}    \n'
-                         f'{loop_results["annual_rtn"]: .2%}    \n'
-                         f'{loop_results["ref_rtn"]:.2%}    \n'
-                         f'{loop_results["ref_annual_rtn"]:.2%}\n'
-                         f'{loop_results["mdd"]:.1%}'
+    fig.text(0.52, 0.90, f'{loop_results["rtn"]:3.2%}    \n'
+                         f'{loop_results["annual_rtn"]:3.2%}    \n'
+                         f'{loop_results["ref_rtn"]:3.2%}    \n'
+                         f'{loop_results["ref_annual_rtn"]:3.2%}\n'
+                         f'{loop_results["mdd"]:3.1%}'
                          f' on {loop_results["valley_date"].date()}')
     fig.text(0.82, 0.90, f'alpha:\n'
                          f'Beta:\n'
@@ -1003,38 +1003,38 @@ def _plot_loop_result(loop_results: dict, config):
     ax1.legend()
 
     # 绘制参考数据的收益率曲线图
-    ax2.set_title('benchmark and cumulative value in Logarithm scale')
+    ax2.set_title('Benchmark and Cumulative Return in Logarithm Scale')
     ax2.plot(looped_values.index, adjusted_bench_start, linestyle='-',
              color=(0.4, 0.6, 0.8), alpha=0.85, label='Benchmark')
 
     # 绘制回测结果的收益率曲线图
     ax2.plot(looped_values.index, looped_values.value, linestyle='-',
              color=(0.8, 0.2, 0.0), alpha=0.85, label='Cum Value')
-    ax2.set_ylabel('Cumulative Value\n in logarithm scale')
+    ax2.set_ylabel('Cumulative Return\n in logarithm scale')
     ax2.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax2.set_yscale('log')
     ax2.legend()
 
-    ax3.set_title('Rolling beta and alpha')
-    ax3.plot(looped_values.index, beta, label='beta')
-    ax3.plot(looped_values.index, alpha, label='alpha')
-    ax3.set_ylabel('rolling\nbeta/alpha')
-    ax3.legend()
+    ax3.set_title('Return Values')
+    ax3.bar(looped_values.index, ret)
+    ax3.set_ylabel('Return')
 
-    ax4.set_title('returns')
-    ax4.bar(looped_values.index, ret)
-    ax4.set_ylabel('return')
+    ax4.set_title('Portfolio Profitability Indicators - Sharp and Alpha')
+    ax4.plot(looped_values.index, sharp, label='sharp')
+    ax4.plot(looped_values.index, alpha, label='alpha')
+    ax4.set_ylabel('Profitability')
+    ax4.legend()
 
-    ax5.set_title('Rolling volatility and sharp')
+    ax5.set_title('Portfolio Risk Exposure - Volatility and Beta')
+    ax5.plot(looped_values.index, beta, label='beta')
     ax5.plot(looped_values.index, volatility, label='volatility')
-    ax5.plot(looped_values.index, sharp, label='sharp')
-    ax5.set_ylabel('Volatility\nsharp')
+    ax5.set_ylabel('Risk Exposure')
     ax5.legend()
 
     # 绘制underwater图（drawdown可视化图表）
-    ax6.set_title('underwater plot and 5 worst drawdowns')
+    ax6.set_title('Drawdown Analysis - 5 Worst Drawdowns in History')
     ax6.plot(underwater, label='underwater')
-    ax6.set_ylabel('underwater')
+    ax6.set_ylabel('Max Drawdown')
     ax6.set_xlabel('date')
     ax6.set_ylim(-1, 0)
     ax6.fill_between(looped_values.index, 0, underwater,
@@ -1070,7 +1070,7 @@ def _plot_loop_result(loop_results: dict, config):
     return_months = monthly_return_df.columns
     return_values = monthly_return_df.values
     c = ax7.imshow(return_values, cmap='RdYlGn')
-    ax7.set_title('monthly returns')
+    ax7.set_title('Monthly Return Heat Map')
     ax7.set_xticks(np.arange(len(return_months)))
     ax7.set_yticks(np.arange(len(return_years)))
     ax7.set_xticklabels(return_months, rotation=45)
@@ -1095,11 +1095,11 @@ def _plot_loop_result(loop_results: dict, config):
     ax8.set_yticks(np.arange(y_count))
     ax8.set_ylim(y_count - 0.5, -0.5)
     ax8.set_yticklabels(list(return_years))
-    ax8.set_title('Yearly returns')
+    ax8.set_title('Yearly Returns')
     ax8.grid(False)
 
     # 绘制月度收益率Histo直方图
-    ax9.set_title('monthly returns histo')
+    ax9.set_title('Monthly Return Histo')
     ax9.hist(monthly_return_df.values.flatten(), bins=18, alpha=0.5,
              label='monthly returns')
     ax9.grid(False)
@@ -1315,18 +1315,20 @@ def _plot_test_result(opti_eval_res: list,
             with pd.option_context('mode.use_inf_as_na', True):
                 opti_label = f'opti:{opti_indicator_df[name].mean():.2f}±{opti_indicator_df[name].std():.2f}'
                 test_label = f'test:{test_indicator_df[name].mean():.2f}±{test_indicator_df[name].std():.2f}'
+                opti_v = opti_indicator_df[name].fillna(np.nan)
+                test_v = test_indicator_df[name].fillna(np.nan)
                 if p_type == 0 or p_type == 'errorbar':
-                    max_v = opti_indicator_df[name].max()
-                    min_v = opti_indicator_df[name].min()
-                    mean = opti_indicator_df[name].mean()
-                    std = opti_indicator_df[name].std()
+                    max_v = np.nanmax(opti_v)
+                    min_v = np.nanmin(opti_v)
+                    mean = np.nanmean(opti_v)
+                    std = np.nanstd(opti_v)
                     ax.errorbar(1, mean, std, fmt='ok', lw=3)
                     ax.errorbar(1, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='red', lw=1,
                                 label=opti_label)
-                    max_v = test_indicator_df[name].max()
-                    min_v = test_indicator_df[name].min()
-                    mean = test_indicator_df[name].mean()
-                    std = test_indicator_df[name].std()
+                    max_v = np.nanmax(test_v)
+                    min_v = np.nanmin(test_v)
+                    mean = np.nanmean(test_v)
+                    std = np.nanstd(test_v)
                     ax.errorbar(2, mean, std, fmt='ok', lw=3)
                     ax.errorbar(2, mean, np.array(mean - min_v, max_v - mean).T, fmt='.k', ecolor='green', lw=1,
                                 label=test_label)
@@ -1337,22 +1339,24 @@ def _plot_test_result(opti_eval_res: list,
                     ax.set_xlim(0.25, len(labels) + 0.75)
                     ax.legend()
                 elif p_type == 1 or p_type == 'scatter':
-                    ax.scatter(opti_indicator_df[name].fillna(np.nan),
-                               test_indicator_df[name].fillna(np.nan),
-                               label=name, marker='^', alpha=0.9)
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        ax.scatter(opti_v, test_v,
+                                   label=name, marker='^', alpha=0.9)
                     ax.set_title(opti_label)
                     ax.set_ylabel(test_label)
                     ax.legend()
                 elif p_type == 2 or p_type == 'histo':
-                    ax.hist(opti_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
-                            label=opti_label)
-                    ax.hist(test_indicator_df[name].fillna(np.nan), bins=15, alpha=0.5,
-                            label=test_label)
+                    if not all(pd.isna(opti_v)):
+                        ax.hist(opti_v, bins=15, alpha=0.5,
+                                label=opti_label)
+                    if not all(pd.isna(test_v)):
+                        ax.hist(test_v, bins=15, alpha=0.5,
+                                label=test_label)
                     ax.legend()
                 elif p_type == 3 or p_type == 'violin':
-                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
-                                                     test_indicator_df[name].fillna(np.nan)]).T,
-                                           columns=[opti_label, test_label])
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                               columns=[opti_label, test_label])
                     ax.violinplot(data_df)
                     labels = ['opti', 'test']
                     ax.set_xticks(np.arange(1, len(labels) + 1))
@@ -1360,9 +1364,9 @@ def _plot_test_result(opti_eval_res: list,
                     ax.set_xlim(0.25, len(labels) + 0.75)
                     ax.legend()
                 else:
-                    data_df = pd.DataFrame(np.array([opti_indicator_df[name].fillna(np.nan),
-                                                     test_indicator_df[name].fillna(np.nan)]).T,
-                                           columns=[opti_label, test_label])
+                    if not (all(pd.isna(opti_v)) and all(pd.isna(test_v))):
+                        data_df = pd.DataFrame(np.array([opti_v, test_v]).T,
+                                               columns=[opti_label, test_label])
                     ax.boxplot(data_df)
                     labels = ['opti', 'test']
                     ax.set_xticks(np.arange(1, len(labels) + 1))
