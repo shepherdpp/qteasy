@@ -3183,11 +3183,30 @@ class SelectingAvgIndicator(FactorSorter):
         PT型：百分比持仓比例信号
     信号规则：
         使用data_types指定一种数据类型，将股票过去的datatypes数据取平均值，将该平均值作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
 
     策略属性缺省值：
     默认参数：(True, 'even', 'greater', 0, 0, 0.25)
     数据类型：eps 每股收益，单数据输入
-    采样频率：天
+    采样频率：年
     窗口长度：270
     参数范围：[(True, False),
              ('even', 'linear', 'proportion'),
@@ -3225,10 +3244,42 @@ class SelectingAvgIndicator(FactorSorter):
 
 
 class SelectingNDayLast(FactorSorter):
-    """ 以股票过去N天前的量价作为选股指标
-        N是策略参数，通过pars设置，选择的股价种类为策略属性，通过data_types设置
-        默认的data_types为'close'
+    """ 以股票N天前的价格或数据指标作为选股因子选股
+        基础选股策略：以股票的N日前历史数据作为选股因子，因子排序参数以策略属性的形式控制
 
+    策略参数：
+        n: int, 股票历史数据的前置期
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        在每个选股周期使用N日前的历史数据作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
+
+    策略属性缺省值：
+    默认参数：(2,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：月
+    窗口长度：100
+    参数范围：[(2, 100)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(2,)):
@@ -3254,12 +3305,42 @@ class SelectingNDayLast(FactorSorter):
 
 
 class SelectingNDayAvg(FactorSorter):
-    """ 根据股票以前n天的平均价格选股
-        价格类型可以选open/high/low/close/vol等
-        具体的价格类型在data_types属性中设置，默认价格为'close'
+    """ 以股票过去N天的价格或数据指标的平均值作为选股因子选股
+        基础选股策略：以股票的前N日历史数据平均值作为选股因子，因子排序参数以策略属性的形式控制
 
-        策略参数为n，一个大于2小于150的正整数
+    策略参数：
+        n: int, 股票历史数据的选择期
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        在每个选股周期使用过去N日的历史数据平均值作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
 
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：月
+    窗口长度：150
+    参数范围：[(2, 150)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -3286,11 +3367,41 @@ class SelectingNDayAvg(FactorSorter):
 
 
 class SelectingNDayChange(FactorSorter):
-    """ 根据股票以前n天的股价变动幅度作为选股因子
-        具体的价格类型在data_types属性中设置，默认价格为'close'
+    """ 基础选股策略：根据股票以前n天的股价或数据变动幅度作为选股因子进行选股
 
-        策略参数为n，一个大于2小于150的正整数
+    策略参数：
+        n: int, 股票历史数据的选择期
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        在每个选股周期使用过去N日的历史数据平均值作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
 
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：月
+    窗口长度：150
+    参数范围：[(2, 150)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -3318,11 +3429,41 @@ class SelectingNDayChange(FactorSorter):
 
 
 class SelectingNDayRateChange(FactorSorter):
-    """ 根据股票以前n天的股价变动比例作为选股因子
-        具体的价格类型在data_types属性中设置，默认价格为'close'
+    """ 基础选股策略：根据股票以前n天的股价变动比例作为选股因子
 
-        策略参数为n，一个大于2小于150的正整数
+    策略参数：
+        n: int, 股票历史数据的选择期
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        在每个选股周期使用以前n天的股价变动比例作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
 
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：close 收盘价，单数据输入
+    采样频率：月
+    窗口长度：150
+    参数范围：[(2, 150)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):
@@ -3350,10 +3491,40 @@ class SelectingNDayRateChange(FactorSorter):
 
 
 class SelectingNDayVolatility(FactorSorter):
-    """ 根据股票以前n天的股价变动幅度作为选股因子
+    """ 根据股票以前n天的股价波动率作为选股因子
+    策略参数：
+        n: int, 股票历史数据的选择期
+    信号类型：
+        PT型：百分比持仓比例信号
+    信号规则：
+        在每个选股周期使用以前n天的股价波动率作为选股因子进行选股
+        通过以下策略属性控制选股方法：
+        *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
+        *condition:         str ,   确定股票的筛选条件，默认值'any'
+                                    'any'        :默认值，选择所有可用股票
+                                    'greater'    :筛选出因子大于ubound的股票
+                                    'less'       :筛选出因子小于lbound的股票
+                                    'between'    :筛选出因子介于lbound与ubound之间的股票
+                                    'not_between':筛选出因子不在lbound与ubound之间的股票
+        *lbound:            float,  执行条件筛选时的指标下界, 默认值np.-inf
+        *ubound:            float,  执行条件筛选时的指标上界, 默认值np.inf
+        *sort_ascending:    bool,   排序方法，默认值: False,
+                                    True: 优先选择因子最小的股票,
+                                    False, 优先选择因子最大的股票
+        *weighting:         str ,   确定如何分配选中股票的权重
+                                    默认值: 'even'
+                                    'even'       :所有被选中的股票都获得同样的权重
+                                    'linear'     :权重根据因子排序线性分配
+                                    'distance'   :股票的权重与他们的指标与最低之间的差值（距离）成比例
+                                    'proportion' :权重与股票的因子分值成正比
 
-        策略参数为n，一个大于2小于150的正整数
-
+    策略属性缺省值：
+    默认参数：(14,)
+    数据类型：high,low,close 最高价，最低价，收盘价，多数据输入
+    采样频率：月
+    窗口长度：150
+    参数范围：[(2, 150)]
+    策略不支持参考数据，不支持交易数据
     """
 
     def __init__(self, pars=(14,)):

@@ -708,13 +708,13 @@ class GeneralStg(BaseStrategy):
         realize()方法的输出就是交易信号(1D ndarray),shape为(M,)，M为股票的个数，dtype为float
         ndarray中每个元素代表相应股票的操作信号。在不同的信号类型时，交易信号的含义不同：
 
-            signal type  |        PT          |            PS            |         VS
+             signal type   |         PT           |            PS           |       VS
             ------------------------------------------------------------------------------------
-               sig > 1   |        N/A         |            N/A           |   Buy in sig shares
-            1 >= sig > 0 |Buy to sig position | Buy with sig% of cash    |   Buy in sig shares
-               sig = 0   |Sell to hold 0 share|        Do Nothing        |       Do Nothing
-            0 > sig >= -1|       N/A          | Sell sig% of share hold  |    Sell sig shares
-              sig < -1   |       N/A          |           N/A            |    Sell sig shares
+                sig > 1    |         N/A          |           N/A           | Buy in sig shares
+             1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in sig shares
+                sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do Nothing
+             0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell sig shares
+               sig < -1    |         N/A          |           N/A           |  Sell sig shares
 
         按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
         中，并产生交易信号了。
@@ -803,7 +803,7 @@ class FactorSorter(BaseStrategy):
             bt_price_type:              策略回测时所使用的历史价格种类，可以定义为开盘、收盘、最高、最低价中的一种
             reference_data_types:       参考数据类型，用于生成交易策略的历史数据，但是与具体的股票无关，可用于所有的股票的信号
                                         生成，如指数、宏观经济数据等。
-            *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5
+            *max_sel_count:     float,  选股限额，表示最多选出的股票的数量，默认值：0.5，表示选中50%的股票
             *condition:         str ,   确定股票的筛选条件，默认值'any'
                                         'any'        :默认值，选择所有可用股票
                                         'greater'    :筛选出因子大于ubound的股票
@@ -936,13 +936,13 @@ class FactorSorter(BaseStrategy):
 
         在使用FactorSorter策略类时，建议将信号类型设置为PT,此时策略根据选股因子生成的交易信号含义如下:
 
-            signal type  |         PT prefered type       |
+             signal type   |         PT prefered type     |
             -----------------------------------------------
-               sig > 1   |              N/A               |
-            1 >= sig > 0 |      Buy to sig position       |
-               sig = 0   |      Sell to hold 0 share      |
-            0 > sig >= -1|             N/A                |
-              sig < -1   |             N/A                |
+                sig > 1    |              N/A             |
+             1 >= sig > 0  |      Buy to sig position     |
+                sig = 0    |      Sell to hold 0 share    |
+             0 > sig >= -1 |             N/A              |
+               sig < -1    |             N/A              |
         关于Strategy类的更详细说明，请参见qteasy的文档。
 
     """
@@ -1240,13 +1240,13 @@ class RuleIterator(BaseStrategy):
 
         在不同的信号类型下，信号的含义不同。
 
-            signal type  |        PT          |            PS            |         VS
+             signal type   |         PT           |            PS           |       VS
             ------------------------------------------------------------------------------------
-               sig > 1   |        N/A         |            N/A           |   Buy in sig shares
-            1 >= sig > 0 |Buy to sig position | Buy with sig% of cash    |   Buy in sig shares
-               sig = 0   |Sell to hold 0 share|        Do Nothing        |       Do Nothing
-            0 > sig >= -1|       N/A          | Sell sig% of share hold  |    Sell sig shares
-              sig < -1   |       N/A          |           N/A            |    Sell sig shares
+                sig > 1    |         N/A          |           N/A           | Buy in sig shares
+             1 >= sig > 0  | Buy to sig position  | Buy with sig% of cash   | Buy in sig shares
+                sig = 0    | Sell to hold 0 share |        Do Nothing       |     Do Nothing
+             0 > sig >= -1 |         N/A          | Sell sig% of share hold |  Sell sig shares
+               sig < -1    |         N/A          |           N/A           |  Sell sig shares
 
         按照前述规则设置好策略的参数，并在realize函数中定义好逻辑规则后，一个策略就可以被添加到Operator
         中，并产生交易信号了。
