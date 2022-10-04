@@ -87,104 +87,6 @@ class TimingCrossline(RuleIterator):
             return 0
 
 
-class TimingMACD(RuleIterator):
-    """MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
-
-    策略参数：
-        s: int, 短周期指数平滑均线计算日期；
-        l: int, 长周期指数平滑均线计算日期；
-        m: int, MACD中间值DEA的计算周期；
-    信号类型：
-        PT型：目标仓位百分比
-    信号规则：
-        计算MACD值：
-        1，当MACD值大于0时，设置仓位目标为1
-        3，当MACD值小于0时，设置仓位目标为0
-
-    策略属性缺省值：
-    默认参数：(12, 26, 9)
-    数据类型：close 收盘价，单数据输入
-    采样频率：天
-    窗口长度：270
-    参数范围：[(10, 250), (10, 250), (10, 250)]
-    策略不支持参考数据，不支持交易数据
-    """
-
-    def __init__(self, pars: tuple = (12, 26, 9)):
-        super().__init__(pars=pars,
-                         par_count=3,
-                         par_types=['int', 'int', 'int'],
-                         par_range=[(10, 250), (10, 250), (10, 250)],
-                         name='MACD',
-                         description='MACD strategy, determine long/short position according to differences of '
-                                     'exponential weighted moving average prices',
-                         data_types='close')
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, l, m = self.pars
-        else:
-            s, l, m = pars
-        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
-        h = h.T
-
-        # 计算指数的指数移动平均价格
-        diff = ema(h[0], s) - ema(h[0], l)
-        dea = ema(diff, m)
-        _macd = 2 * (diff - dea)
-        cat = 1 if _macd[-1] > 0 else 0
-        return cat
-
-
-class TimingTRIX(RuleIterator):
-    """TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断
-
-    策略参数：
-        s: int, 均线参数，单位为日，用于计算周期为S的三重平滑指数移动平均线TRIX
-        m: int, 平滑均线参数，用于计算TRIX的M日简单移动平均线
-    信号类型：
-        PT型：目标仓位百分比
-    信号规则：
-        计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：
-        1， TRIX位于MATRIX上方时，设置仓位目标为1
-        2， TRIX位于MATRIX下方时，设置仓位目标位-1
-
-    策略属性缺省值：
-    默认参数：(25, 125)
-    数据类型：close 收盘价，单数据输入
-    采样频率：天
-    窗口长度：270
-    参数范围：[(2, 50), (3, 150)]
-    策略不支持参考数据，不支持交易数据
-    """
-
-    def __init__(self, pars=(25, 125)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'int'],
-                         par_range=[(2, 50), (3, 150)],
-                         name='TRIX',
-                         description='TRIX strategy, determine long/short position according to triple exponential '
-                                     'weighted moving average prices',
-                         data_freq='d',
-                         sample_freq='d',
-                         window_length=270,
-                         data_types='close')
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            s, m = self.pars
-        else:
-            s, m = pars
-        h = h.T
-        trx = trix(h[0], s) * 100
-        matrix = sma(trx, m)
-        if trx[-1] > matrix[-1]:
-            return 1
-        else:
-            return -1
-
-
 class TimingCDL(RuleIterator):
     """CDL择时策略，在K线图中找到符合要求的cdldoji模式
 
@@ -333,57 +235,6 @@ class TimingBBand(RuleIterator):
             return -1.
         else:
             return 0.
-
-
-class TimingSAREXT(RuleIterator):
-    """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
-
-    策略参数：
-        a: int, Parabolic SAR参数：加速度
-        m: float, maximum最大值
-    信号类型：
-        PT型：仓位百分比目标信号
-    信号规则：
-        计算Parabolic SAR：
-        1，当Parabolic SAR大于0时，输出多头
-        2，当Parabolic SAR小于0时，输出空头
-
-    策略属性缺省值：
-    默认参数：(0, 3)
-    数据类型：high, low最高价和最低价，多数据输入
-    采样频率：天
-    窗口长度：200
-    参数范围：[(-100, 100), (0, 5)]
-    策略不支持参考数据，不支持交易数据
-    """
-
-    def __init__(self, pars=(0, 3)):
-        super().__init__(pars=pars,
-                         par_count=2,
-                         par_types=['int', 'float'],
-                         par_range=[(-100, 100), (0, 5)],
-                         name='Parabolic SAREXT',
-                         description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
-                         window_length=200,
-                         data_types='high, low')
-
-    def realize(self, h, r=None, t=None, pars=None):
-        if pars is None:
-            a, m = self.pars
-        else:
-            a, m = pars
-        h = h.T
-        sar = sarext(h[0], h[1], a, m)[-1]
-        # 策略:
-        # 当指标大于0时，输出多头
-        # 当指标小于0时，输出空头
-        if sar > 0:
-            cat = 1
-        elif sar < 0:
-            cat = -1
-        else:
-            cat = 0
-        return cat
 
 
 # Built-in Single-cross-line strategies:
@@ -1751,6 +1602,154 @@ class SLPWMA(RuleIterator):
 # the long/short positions or operation signals are generated
 # according to the momentum of prices calculated in different
 # methods
+class TimingSAREXT(RuleIterator):
+    """扩展抛物线SAR策略，当指标大于0时发出买入信号，当指标小于0时发出卖出信号
+
+    策略参数：
+        a: int, Parabolic SAR参数：加速度
+        m: float, maximum最大值
+    信号类型：
+        PT型：仓位百分比目标信号
+    信号规则：
+        计算Parabolic SAR：
+        1，当Parabolic SAR大于0时，输出多头
+        2，当Parabolic SAR小于0时，输出空头
+
+    策略属性缺省值：
+    默认参数：(0, 3)
+    数据类型：high, low最高价和最低价，多数据输入
+    采样频率：天
+    窗口长度：200
+    参数范围：[(-100, 100), (0, 5)]
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars=(0, 3)):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['int', 'float'],
+                         par_range=[(-100, 100), (0, 5)],
+                         name='Parabolic SAREXT',
+                         description='Parabolic SAR Extended Strategy, determine buy/sell signals by Parabolic SAR',
+                         window_length=200,
+                         data_types='high, low')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            a, m = self.pars
+        else:
+            a, m = pars
+        h = h.T
+        sar = sarext(h[0], h[1], a, m)[-1]
+        # 策略:
+        # 当指标大于0时，输出多头
+        # 当指标小于0时，输出空头
+        if sar > 0:
+            cat = 1
+        elif sar < 0:
+            cat = -1
+        else:
+            cat = 0
+        return cat
+
+
+class TimingMACD(RuleIterator):
+    """MACD择时策略类，运用MACD均线策略，生成目标仓位百分比
+
+    策略参数：
+        s: int, 短周期指数平滑均线计算日期；
+        l: int, 长周期指数平滑均线计算日期；
+        m: int, MACD中间值DEA的计算周期；
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        计算MACD值：
+        1，当MACD值大于0时，设置仓位目标为1
+        3，当MACD值小于0时，设置仓位目标为0
+
+    策略属性缺省值：
+    默认参数：(12, 26, 9)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(10, 250), (10, 250), (10, 250)]
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars: tuple = (12, 26, 9)):
+        super().__init__(pars=pars,
+                         par_count=3,
+                         par_types=['int', 'int', 'int'],
+                         par_range=[(10, 250), (10, 250), (10, 250)],
+                         name='MACD',
+                         description='MACD strategy, determine long/short position according to differences of '
+                                     'exponential weighted moving average prices',
+                         data_types='close')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            s, l, m = self.pars
+        else:
+            s, l, m = pars
+        # 临时处理措施，在策略实现层对传入的数据切片，后续应该在策略实现层以外事先对数据切片，保证传入的数据符合data_types参数即可
+        h = h.T
+
+        # 计算指数的指数移动平均价格
+        diff = ema(h[0], s) - ema(h[0], l)
+        dea = ema(diff, m)
+        _macd = 2 * (diff - dea)
+        cat = 1 if _macd[-1] > 0 else 0
+        return cat
+
+
+class TimingTRIX(RuleIterator):
+    """TRIX择时策略，使用股票价格的三重平滑指数移动平均价格进行多空判断
+
+    策略参数：
+        s: int, 均线参数，单位为日，用于计算周期为S的三重平滑指数移动平均线TRIX
+        m: int, 平滑均线参数，用于计算TRIX的M日简单移动平均线
+    信号类型：
+        PT型：目标仓位百分比
+    信号规则：
+        计算价格的三重平滑指数移动平均价TRIX，再计算M日TRIX的移动平均：
+        1， TRIX位于MATRIX上方时，设置仓位目标为1
+        2， TRIX位于MATRIX下方时，设置仓位目标位-1
+
+    策略属性缺省值：
+    默认参数：(25, 125)
+    数据类型：close 收盘价，单数据输入
+    采样频率：天
+    窗口长度：270
+    参数范围：[(2, 50), (3, 150)]
+    策略不支持参考数据，不支持交易数据
+    """
+
+    def __init__(self, pars=(25, 125)):
+        super().__init__(pars=pars,
+                         par_count=2,
+                         par_types=['int', 'int'],
+                         par_range=[(2, 50), (3, 150)],
+                         name='TRIX',
+                         description='TRIX strategy, determine long/short position according to triple exponential '
+                                     'weighted moving average prices',
+                         data_freq='d',
+                         sample_freq='d',
+                         window_length=270,
+                         data_types='close')
+
+    def realize(self, h, r=None, t=None, pars=None):
+        if pars is None:
+            s, m = self.pars
+        else:
+            s, m = pars
+        h = h.T
+        trx = trix(h[0], s) * 100
+        matrix = sma(trx, m)
+        if trx[-1] > matrix[-1]:
+            return 1
+        else:
+            return -1
+
 
 class ADX(RuleIterator):
     """ ADX指标（平均定向运动指数）选股策略：
