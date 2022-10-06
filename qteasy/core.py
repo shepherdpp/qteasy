@@ -1590,6 +1590,9 @@ def run(operator, **kwargs):
             )  # 生成交易清单
         et = time.time()
         run_time_prepare_data = (et - st)
+        if config.report:
+            # TODO: 研究：是否需要用qt.config.report参数来控制实时信号显示的报告
+            pass
         _print_operation_signal(
                 op_list=op_list,
                 run_time_prepare_data=run_time_prepare_data,
@@ -1621,10 +1624,10 @@ def run(operator, **kwargs):
                 config=config,
                 stage='loop'
         )
-        # 格式化输出回测结果
-        _print_loop_result(loop_result, config)
+        if config.report:
+            # 格式化输出回测结果
+            _print_loop_result(loop_result, config)
         if config.visual:
-            # 如果config.visual == True，则：
             # 图表输出投资回报历史曲线
             _plot_loop_result(loop_result, config)
 
@@ -1674,7 +1677,8 @@ def run(operator, **kwargs):
         )
         # 评价回测结果——计算参考数据收益率以及平均年化收益率
         opti_eval_res = result_pool.extra
-        _print_test_result(opti_eval_res, config=config)
+        if config.report:
+            _print_test_result(opti_eval_res, config=config)
         if config.visual:
             pass
             # _plot_test_result(opti_eval_res, config=config)
@@ -1694,7 +1698,8 @@ def run(operator, **kwargs):
 
             # 评价回测结果——计算参考数据收益率以及平均年化收益率
             test_eval_res = result_pool.extra
-            _print_test_result(test_eval_res, config)
+            if config.report:
+                _print_test_result(test_eval_res, config)
             if config.visual:
                 _plot_test_result(test_eval_res=test_eval_res, opti_eval_res=opti_eval_res, config=config)
 
@@ -1722,8 +1727,11 @@ def run(operator, **kwargs):
 
                 # 评价回测结果——计算参考数据收益率以及平均年化收益率
                 test_eval_res = result_pool.extra
-                _print_test_result(test_eval_res, config)
+                if config.report:
+                    # TODO: 应该有一个专门的函数print_montecarlo_test_report
+                    _print_test_result(test_eval_res, config)
                 if config.visual:  # 如果config.visual == True
+                    # TODO: 应该有一个专门的函数plot_montecarlo_test_result
                     pass
 
         return optimal_pars
