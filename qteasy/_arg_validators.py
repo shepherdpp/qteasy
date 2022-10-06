@@ -241,10 +241,19 @@ def _valid_qt_kwargs():
                                  'level':     1,
                                  'text':      '作为基准收益的资产的价格类型。'},
 
+        'report':               {'Default':   True,
+                                 'Validator': lambda value: isinstance(value, bool),
+                                 'level':     1,
+                                 'text':      '为True时打印运行结果报告\n'
+                                              '实时模式显示策略运行报告，'
+                                              '回测模式显示回测结果报告，'
+                                              '优化模式显示优化结果报告'},
+
         'visual':               {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
                                  'level':     1,
-                                 'text':      '为True时使用图表显示回测的结果'},
+                                 'text':      '为True时使用图表显示可视化运行结果\n'
+                                              '（回测模式显示回测报告，优化模式显示优化结果报告）'},
 
         'buy_sell_points':      {'Default':   True,
                                  'Validator': lambda value: isinstance(value, bool),
