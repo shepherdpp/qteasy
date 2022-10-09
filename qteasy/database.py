@@ -1972,6 +1972,20 @@ class DataSource:
     def __str__(self):
         return self.connection_type
 
+    def info(self):
+        """ 格式化打印database对象的各种主要信息
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def overview(self):
+        """ 以表格形式列出所有数据表的当前数据状态
+
+        :return:
+        """
+        raise NotImplementedError
+
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
         """ 检查文件是否已存在
