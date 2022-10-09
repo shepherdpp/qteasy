@@ -6256,6 +6256,15 @@ class TestOperatorAndStrategy(unittest.TestCase):
 
     def test_info(self):
         """Test information output of Operator"""
+        stg = qt.built_in.SelectingNDayRateChange()
+        print(f'test printing information of strategies, in verbose mode')
+        self.op[0].info()
+        stg.info()
+
+        print(f'test printing information of strategies, in simple mode')
+        self.op[0].info(verbose=False)
+        stg.info(verbose=False)
+
         print(f'test printing information of operator object')
         self.op.info()
 
