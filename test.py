@@ -14319,6 +14319,11 @@ class TestDataSource(unittest.TestCase):
         ds.get_table_info('fund_hourly')
         ds.get_table_info('fund_nav')
 
+    def test_table_overview(self):
+        """ 所有数据表的基本信息打印"""
+        ds = qt.QT_DATA_SOURCE
+        ds.overview()
+
     def test_get_related_tables(self):
         """根据数据名称查找相关数据表及数据列名称"""
         # 精确查找数据表及数据列

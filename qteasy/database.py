@@ -1984,7 +1984,24 @@ class DataSource:
 
         :return:
         """
-        raise NotImplementedError
+        all_tables = get_table_map()
+        all_table_names = all_tables.index
+        all_info = []
+        print('Analyzing tables...')
+        total_table_count = len(all_table_names)
+        from .utilfuncs import progress_bar
+        completed_reading_count = 0
+        for table_name in all_table_names:
+            progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing table: <{table_name}>')
+            all_info.append(self.get_table_info(table_name, verbose=False, print_info=False))
+            completed_reading_count += 1
+
+        all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size',
+                                                   'pk1', 'records1', 'min1', 'max1',
+                                                   'pk2', 'records2', 'min2', 'max2'])
+        all_info.index = all_info['table']
+        return all_info
+
 
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
@@ -2782,14 +2799,35 @@ class DataSource:
         else:
             return f'{size}/{rows} rows'
 
-    def get_table_info(self, table, verbose=True):
+    def get_table_info(self, table, verbose=True, print_info=True):
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
         :param table:
         :param verbose: 是否显示更多信息，如是，显示表结构等信息
+        :param print_info: 是否打印输出所有结果
         :return:
+            一个tuple，包含数据表的结构化信息：
+            (table name:    数据表名称
+             table_exists:  bool，数据表是否存在
+             table_size:    int，数据表占用磁盘空间
+             primary_key1:  str，数据表第一个主键名称
+             pk_count1:     int，数据表第一个主键记录数量
+             pk_min1:       obj，数据表主键1起始记录
+             pk_max1:       obj，数据表主键2最终记录
+             primary_key2:  str，数据表第二个主键名称
+             pk_count2:     int，数据表第二个主键记录
+             pk_min2:       obj，数据表主键2起始记录
+             pk_max2:       obj，数据表主键2最终记录)
         """
+        pk1 = None
+        pk_records1 = None
+        pk_min1 = None
+        pk_max1 = None
+        pk2 = None
+        pk_records2 = None
+        pk_min2 = None
+        pk_max2 = None
         if not isinstance(table, str):
             raise TypeError(f'table should be name of a table, got {type(table)} instead')
         if not table.lower() in TABLE_SOURCE_MAP:
@@ -2805,11 +2843,10 @@ class DataSource:
         table_exists = self.table_data_exists(table)
         if table_exists:
             table_size = self.get_data_table_size(table, human=True)
-            print(f'<{table}>, {table_size} on disc\n'
-                  f'primary keys: \n'
-                  f'-----------------------------------')
         else:
-            print(f'<{table}>, data not downloaded\n'
+            table_size = '0 MB'
+        if print_info:
+            print(f'<{table}>, {table_size} on disc\n'
                   f'primary keys: \n'
                   f'-----------------------------------')
         pk_count = 0
@@ -2820,19 +2857,43 @@ class DataSource:
             record_count = 'unknown'
             if len(pk_min_max_count) == 3:
                 record_count = pk_min_max_count[2]
-            if pk == critical_key:
-                critical = "       *<CRITICAL>*"
             if len(pk_min_max_count) == 0:
-                print(f'{pk_count}:  {pk}:{critical}\n    No data!')
-            else:
+                pk_min_max_count = ['N/A', 'N/A']
+            if print_info:
+                if pk == critical_key:
+                    critical = "       *<CRITICAL>*"
                 print(f'{pk_count}:  {pk}:{critical}\n'
                       f'    <{record_count}> entries\n'
                       f'    starts:'
                       f' {pk_min_max_count[0]}, end: {pk_min_max_count[1]}')
-        if verbose:
+            if pk_count == 0:
+                pk1 = pk
+                pk_records1 = record_count
+                pk_min1 = pk_min_max_count[0]
+                pk_max1 = pk_min_max_count[1]
+            elif pk_count == 1:
+                pk2 = pk
+                pk_records2 = record_count
+                pk_min2 = pk_min_max_count[0]
+                pk_max2 = pk_min_max_count[1]
+            else:
+                pass
+        if verbose and print_info:
             print(f'\ncolumns of table:\n'
                   f'------------------------------------\n'
                   f'{table_schema}\n')
+        return (table,
+                table_exists,
+                table_size,
+                pk1,
+                pk_records1,
+                pk_min1,
+                pk_max1,
+                pk2,
+                pk_records2,
+                pk_min2,
+                pk_max2
+                )
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
