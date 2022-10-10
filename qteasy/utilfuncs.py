@@ -375,7 +375,7 @@ def progress_bar(prog: int, total: int = 100, comments: str = '',
     if total > 0:
         if prog > total:
             prog = total
-        progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]'\
+        progress_str = f'\r \r[{PROGRESS_BAR[int(prog / total * 40)]}]' \
                        f'{prog}/{total}-{np.round(prog / total * 100, 1)}%  {comments}'
         sys.stdout.write(progress_str)
         sys.stdout.flush()
@@ -395,8 +395,8 @@ def maybe_trade_day(date):
                        [1, 2, 3, 3, 4, 5, 1, 2, 3, 1, 2, 3, 4, 5, 6, 7])
     try:
         date = pd.to_datetime(date)
-    except:
-        raise TypeError('date is not a valid date time format, cannot be converted to timestamp')
+    except Exception:
+        raise Exception('date is not a valid date time format, cannot be converted to timestamp')
     if date.weekday() > 4:
         return False
     for m, d in zip(public_holidays[0], public_holidays[1]):
@@ -481,6 +481,7 @@ def is_market_trade_day(date, exchange: str = 'SSE'):
         is_open = exchange_trade_cal.loc[_date].is_open
         return is_open == 1
     else:
+        # TODO: Not yet implemented
         raise NotImplementedError
 
 

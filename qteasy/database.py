@@ -1993,15 +1993,15 @@ class DataSource:
         completed_reading_count = 0
         for table_name in all_table_names:
             progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing table: <{table_name}>')
-            all_info.append(self.get_table_info(table_name, verbose=False, print_info=False))
+            all_info.append(self.get_table_info(table_name, verbose=False, print_info=False, human=True))
             completed_reading_count += 1
-
-        all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size',
+        progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing completed!')
+        all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size', 'records',
                                                    'pk1', 'records1', 'min1', 'max1',
                                                    'pk2', 'records2', 'min2', 'max2'])
         all_info.index = all_info['table']
+        all_info.drop(columns=['table'], inplace=True)
         return all_info
-
 
     # 文件操作层函数，只操作文件，不修改数据
     def file_exists(self, file_name):
@@ -2157,6 +2157,10 @@ class DataSource:
             return -1
         except Exception as e:
             raise RuntimeError(f'{e}, unknown error encountered.')
+
+    def get_file_rows(self, file_name):
+        """获取csv、hdf、fether文件中数据的行数"""
+        raise NotImplementedError
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
@@ -2777,40 +2781,48 @@ class DataSource:
         else:
             raise TypeError(f'Invalid source type: {self.source_type}')
 
-    def get_data_table_size(self, table, human=True):
+    def get_data_table_size(self, table, human=True, string_form=True):
         """ 获取数据表占用磁盘空间的大小
 
         :param table: 数据表名称
         :param human: True时显示容易阅读的形式，如1.5MB而不是1590868， False时返回字节数
+        :param string_form: True时以字符串形式返回结果，便于打印
         :return:
-            str
+            tuple:
+            size: int / str:
+            row
         """
         if self.source_type == 'file':
             size = self.get_file_size(table)
+            # rows = self.get_file_rows(table) # self.get_file_rows is not yet implemented
             rows = 'unknown'
         elif self.source_type == 'db':
             rows, size = self.get_db_table_size(table)
         else:
             raise RuntimeError(f'unknown source type: {self.source_type}')
         if size == -1:
-            return None
+            return 0, 0
+        if not string_form:
+            return size, rows
         if human:
-            return f'{human_file_size(size)}/{human_units(rows)} rows'
+            return f'{human_file_size(size)}', f'{human_units(rows)}'
         else:
-            return f'{size}/{rows} rows'
+            return f'{size}', f'{rows}'
 
-    def get_table_info(self, table, verbose=True, print_info=True):
+    def get_table_info(self, table, verbose=True, print_info=True, human=True):
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
         :param table:
         :param verbose: 是否显示更多信息，如是，显示表结构等信息
         :param print_info: 是否打印输出所有结果
+        :param human: 是否给出容易阅读的字符串形式
         :return:
             一个tuple，包含数据表的结构化信息：
             (table name:    数据表名称
              table_exists:  bool，数据表是否存在
-             table_size:    int，数据表占用磁盘空间
+             table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+             table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
              primary_key1:  str，数据表第一个主键名称
              pk_count1:     int，数据表第一个主键记录数量
              pk_min1:       obj，数据表主键1起始记录
@@ -2841,14 +2853,19 @@ class DataSource:
                                      'dtypes':  dtypes,
                                      'remarks': remarks})
         table_exists = self.table_data_exists(table)
-        if table_exists:
-            table_size = self.get_data_table_size(table, human=True)
-        else:
-            table_size = '0 MB'
         if print_info:
-            print(f'<{table}>, {table_size} on disc\n'
+            if table_exists:
+                table_size, table_rows = self.get_data_table_size(table, human=human)
+            else:
+                table_size, table_rows = '0 MB', '0'
+            print(f'<{table}>, {table_size}/{table_rows} records on disc\n'
                   f'primary keys: \n'
                   f'-----------------------------------')
+        else:
+            if table_exists:
+                table_size, table_rows = self.get_data_table_size(table, string_form=False, human=human)
+            else:
+                table_size, table_rows = 0, 0
         pk_count = 0
         for pk in primary_keys:
             pk_min_max_count = self.get_table_data_coverage(table, pk, min_max_only=True)
@@ -2885,6 +2902,7 @@ class DataSource:
         return (table,
                 table_exists,
                 table_size,
+                table_rows,
                 pk1,
                 pk_records1,
                 pk_min1,
