@@ -779,6 +779,8 @@ def human_file_size(file_size: int) -> str:
     :param file_size: int 表示文件大小的数字，单位为字节
     :return:
     """
+    if not isinstance(file_size, (float, int)):
+        return f'{file_size}'
     if file_size > 2 ** 40:
         return f'{file_size / 1048576 / 1048576 :.3f}TB'
     if file_size > 2 ** 30:
@@ -791,20 +793,31 @@ def human_file_size(file_size: int) -> str:
         return f'{file_size}Byte'
 
 
-def human_units(number: int) -> str:
-    """ 将一个整型数字转化为以GB/MB/KB/Byte为单位的文件大小字符串
+def human_units(number: int, short_form=True) -> str:
+    """ 将一个整型数字转化为以K/M/B/T为单位的文件大小字符串
 
     :param number: int 表示文件大小的数字，单位为字节
+    :param short_form: bool, True时使用K/M/B/T 代表 thousand/million/billion/trillion
     :return:
     """
-    if number > 2 ** 40:
-        return f'{number / 1000000 / 1000000 :.3f}trillion'
-    if number > 2 ** 30:
-        return f'{number / 1000000 / 1000 :.2f}billion'
-    elif number > 2 ** 20:
-        return f'{number / 1000000 :.1f}million'
-    elif number > 2 ** 10:
-        return f'{number / 1000 :.0f}K'
+    if not isinstance(number, (float, int)):
+        return f'{number}'
+    unit_dict = {'K': 'thousand',
+                 'M': 'million',
+                 'B': 'billion',
+                 'T': 'trillion'}
+    if short_form:
+        unit_form = list(unit_dict.keys())
+    else:
+        unit_form = list(unit_dict.values())
+    if number > 1E12:
+        return f'{number / 1000000 / 1000000 :.3f}{unit_form[3]}'
+    if number > 1E9:
+        return f'{number / 1000000 / 1000 :.2f}{unit_form[2]}'
+    elif number > 1E6:
+        return f'{number / 1000000 :.1f}{unit_form[1]}'
+    elif number > 1E3:
+        return f'{number / 1000 :.0f}{unit_form[0]}'
     else:
         return f'{number}'
 

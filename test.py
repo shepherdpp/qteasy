@@ -14200,6 +14200,7 @@ class TestDataSource(unittest.TestCase):
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'ignore')
                 print(f'-- Done! --')
+                ds.overview()
 
             for ds in all_data_sources:
                 print(f'reading table arr ({table}) from tushare for '
@@ -14209,6 +14210,7 @@ class TestDataSource(unittest.TestCase):
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200301')
                 print(f'got arr from arr source {ds.source_type}-{ds.connection_type}:\n{df}')
+                ds.overview()
 
             # 下载数据并添加到表中
             print(f'downloading table arr ({table}) with parameter: \n'
@@ -14220,6 +14222,7 @@ class TestDataSource(unittest.TestCase):
                       f'datasource: {ds.source_type}-{ds.connection_type}')
                 ds.update_table_data(table, df, 'update')
                 print(f'-- Done! --')
+                ds.overview()
 
             for ds in all_data_sources:
                 print(f'reading table arr ({table}) from tushare for '
@@ -14229,10 +14232,13 @@ class TestDataSource(unittest.TestCase):
                 else:
                     df = ds.read_table_data(table, start='20200101', end='20200201')
                 print(f'got arr from arr source {ds.source_type}-{ds.connection_type}:\n{df}')
+                ds.overview()
 
             # 删除所有的表
             for ds in all_data_sources:
                 ds.drop_table_data(table)
+                print('all table data are cleared')
+                ds.overview()
 
     def test_get_history_panel_data(self):
         """ test getting arr, from real database """
@@ -14322,7 +14328,10 @@ class TestDataSource(unittest.TestCase):
     def test_table_overview(self):
         """ 所有数据表的基本信息打印"""
         ds = qt.QT_DATA_SOURCE
-        print(ds.overview())
+        ov = ds.overview()
+        print(ov[['has_data', 'size', 'records']])
+        print(ov[['pk1', 'min1', 'max1']])
+        print(ov[['pk2', 'min2', 'max2']])
 
     def test_get_related_tables(self):
         """根据数据名称查找相关数据表及数据列名称"""

@@ -1979,8 +1979,10 @@ class DataSource:
         """
         raise NotImplementedError
 
-    def overview(self):
+    def overview(self, print_out=True):
         """ 以表格形式列出所有数据表的当前数据状态
+
+        :param print_out: bool, 是否打印数据表总揽
 
         :return:
         """
@@ -2001,6 +2003,9 @@ class DataSource:
                                                    'pk2', 'records2', 'min2', 'max2'])
         all_info.index = all_info['table']
         all_info.drop(columns=['table'], inplace=True)
+        if print_out:
+            print('following tables contain local data, to view complete list, print returned DataFrame')
+            print(all_info.loc[all_info.has_data == True][['has_data', 'size', 'records']])
         return all_info
 
     # 文件操作层函数，只操作文件，不修改数据
@@ -2863,7 +2868,7 @@ class DataSource:
                   f'-----------------------------------')
         else:
             if table_exists:
-                table_size, table_rows = self.get_data_table_size(table, string_form=False, human=human)
+                table_size, table_rows = self.get_data_table_size(table, string_form=human, human=human)
             else:
                 table_size, table_rows = 0, 0
         pk_count = 0
@@ -2883,12 +2888,12 @@ class DataSource:
                       f'    <{record_count}> entries\n'
                       f'    starts:'
                       f' {pk_min_max_count[0]}, end: {pk_min_max_count[1]}')
-            if pk_count == 0:
+            if pk_count == 1:
                 pk1 = pk
                 pk_records1 = record_count
                 pk_min1 = pk_min_max_count[0]
                 pk_max1 = pk_min_max_count[1]
-            elif pk_count == 1:
+            elif pk_count == 2:
                 pk2 = pk
                 pk_records2 = record_count
                 pk_min2 = pk_min_max_count[0]
