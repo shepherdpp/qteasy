@@ -372,17 +372,36 @@ class BaseStrategy:
         str2 = f'{self.name})'
         return ''.join([str1, str2])
 
-    def info(self, verbose: bool = False):
+    def info(self, verbose: bool = True):
         """打印所有相关信息和主要属性"""
-        print(f'{type(self)} at {hex(id(self))}\nStrategy type: {self.name}')
-        print('Optimization Tag and opti ranges:', self.opt_tag, self.par_range)
+        stg_type = self.__class__.__bases__[0].__name__
+        print(f'Strategy_type:      {stg_type}\n'
+              f'Strategy name:      {self.name}\n'
+              f'Description:        {self.description}')
         if self._pars is not None:
-            print('Parameter Loaded:', type(self._pars), self._pars)
+            print('Strategy Parameter:', self._pars)
         else:
-            print('No Parameter!')
-        # 在verbose == True时打印更多的额外信息
+            print('Strategy Parameter: No Parameter!')
+        # 在verbose == True时打印更多的额外信息, 以表格形式打印所有参数职
         if verbose:
-            print('Information of the strategy:\n', self.name, self.description)
+            print(f'\n'
+                  f'Strategy Properties     Property Value\n'
+                  f'---------------------------------------\n'
+                  f'Parameter count         {self.par_count}\n'
+                  f'Parameter types         {self.par_types}\n'
+                  f'Parameter range         {self.par_range}\n'
+                  f'Data frequency          {self.data_freq}\n'
+                  f'Sample frequency        {self.sample_freq}\n'
+                  f'Window length           {self.window_length}\n'
+                  f'Data types              {self.data_types}')
+            if stg_type == 'FactorSorter':
+                print(f'Max select count        {self.max_sel_count}\n'
+                      f'Sort Ascending:         {self.sort_ascending}\n'
+                      f'Weighting               {self.weighting}\n'
+                      f'Filter Condition        {self.condition}\n'
+                      f'Filter ubound           {self.ubound}\n'
+                      f'Filter lbound           {self.lbound}')
+        print()
 
     def set_pars(self, pars: (tuple, dict)) -> int:
         """设置策略参数，在设置之前对参数的个数进行检查

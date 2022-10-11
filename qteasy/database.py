@@ -1972,7 +1972,65 @@ class DataSource:
     def __str__(self):
         return self.connection_type
 
+    def info(self):
+        """ 格式化打印database对象的各种主要信息
+
+        :return:
+        """
+        raise NotImplementedError
+
+    def overview(self, print_out=True):
+        """ 以表格形式列出所有数据表的当前数据状态
+
+        :param print_out: bool, 是否打印数据表总揽
+
+        :return:
+        """
+        all_tables = get_table_map()
+        all_table_names = all_tables.index
+        all_info = []
+        print('Analyzing tables...')
+        total_table_count = len(all_table_names)
+        from .utilfuncs import progress_bar
+        completed_reading_count = 0
+        for table_name in all_table_names:
+            progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing table: <{table_name}>')
+            all_info.append(self.get_table_info(table_name, verbose=False, print_info=False, human=True))
+            completed_reading_count += 1
+        progress_bar(completed_reading_count, total_table_count, comments=f'Analyzing completed!')
+        all_info = pd.DataFrame(all_info, columns=['table', 'has_data', 'size', 'records',
+                                                   'pk1', 'records1', 'min1', 'max1',
+                                                   'pk2', 'records2', 'min2', 'max2'])
+        all_info.index = all_info['table']
+        all_info.drop(columns=['table'], inplace=True)
+        if print_out:
+            info_to_print = all_info.loc[all_info.has_data == True][['has_data', 'size', 'records', 'min2', 'max2']]
+            print('\nFollowing tables contain local data, to view complete list, print returned DataFrame')
+            print(info_to_print.to_string(columns=['has_data',
+                                                   'size',
+                                                   'records',
+                                                   'min2',
+                                                   'max2'],
+                                          header=['Has_data',
+                                                  'Size_on_disk',
+                                                  'Record_count',
+                                                  'Record_start',
+                                                  'Record_end'],
+                                          justify='center'
+                                          )
+                  )
+        return all_info
+
     # 文件操作层函数，只操作文件，不修改数据
+    def get_file_path_name(self, file_name):
+        """获取完整文件路径名"""
+        if self.source_type == 'db':
+            raise RuntimeError('can not check file system while source type is "db"')
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        file_path_name = self.file_path + file_name + '.' + self.file_type
+        return file_path_name
+
     def file_exists(self, file_name):
         """ 检查文件是否已存在
 
@@ -1980,11 +2038,7 @@ class DataSource:
         :return:
         Boolean: 文件存在时返回真，否则返回假
         """
-        if self.source_type == 'db':
-            raise RuntimeError('can not check file system while source type is "db"')
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_path_name = self.get_file_path_name(file_name)
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
@@ -1995,16 +2049,13 @@ class DataSource:
         :return:
         str: file_name 如果数据保存成功，返回完整文件路径名称
         """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-
-        file_path_name = self.file_path + file_name
+        file_path_name = self.get_file_path_name(file_name)
         if self.file_type == 'csv':
-            df.to_csv(file_path_name + '.csv')
+            df.to_csv(file_path_name)
         elif self.file_type == 'fth':
-            df.reset_index().to_feather(file_path_name + '.fth')
+            df.reset_index().to_feather(file_path_name)
         elif self.file_type == 'hdf':
-            df.to_hdf(file_path_name + '.hdf', key='df')
+            df.to_hdf(file_path_name, key='df')
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
         return len(df)
@@ -2030,8 +2081,7 @@ class DataSource:
         :return:
             DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        file_path_name = self.get_file_path_name(file_name)
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
@@ -2039,9 +2089,9 @@ class DataSource:
             start = pd.to_datetime(start).strftime('%Y-%m-%d')
             end = pd.to_datetime(end).strftime('%Y-%m-%d')
 
-        file_path_name = self.file_path + file_name
         if self.file_type == 'csv':
-            df_reader = pd.read_csv(file_path_name + '.csv', chunksize=chunk_size)
+            # 这里针对csv文件进行了优化，通过分块读取文件，避免当文件过大时导致读取异常
+            df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
             df_picker = (chunk for chunk in df_reader)
             if (share_like_pk is not None) and (date_like_pk is not None):
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
@@ -2055,9 +2105,11 @@ class DataSource:
             df = pd.concat(df_picker)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'hdf':
-            df = pd.read_hdf(file_path_name + '.hdf', 'df')
+            # hdf5的大文件读取尚未优化
+            df = pd.read_hdf(file_path_name, 'df')
         elif self.file_type == 'fth':
-            df = pd.read_feather(file_path_name + '.fth')
+            # feather大文件读取尚未优化
+            df = pd.read_feather(file_path_name)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
@@ -2114,11 +2166,8 @@ class DataSource:
         :return:
             str representing file size
         """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-
         import os
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_path_name = self.get_file_path_name(file_name)
         try:
             file_size = os.path.getsize(file_path_name)
             return file_size
@@ -2126,6 +2175,22 @@ class DataSource:
             return -1
         except Exception as e:
             raise RuntimeError(f'{e}, unknown error encountered.')
+
+    def get_file_rows(self, file_name):
+        """获取csv、hdf、fether文件中数据的行数"""
+        file_path_name = self.get_file_path_name(file_name)
+        if self.file_type == 'csv':
+            with open(file_path_name, 'r') as fp:
+                line_count = None
+                for line_count, line in enumerate(fp):
+                    pass
+                return line_count
+        elif self.file_type == 'hdf':
+            df = pd.read_hdf(file_path_name, 'df')
+            return len(df)
+        elif self.file_type == 'fth':
+            df = pd.read_feather(file_path_name)
+            return len(df)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
@@ -2746,36 +2811,65 @@ class DataSource:
         else:
             raise TypeError(f'Invalid source type: {self.source_type}')
 
-    def get_data_table_size(self, table, human=True):
+    def get_data_table_size(self, table, human=True, string_form=True):
         """ 获取数据表占用磁盘空间的大小
 
         :param table: 数据表名称
         :param human: True时显示容易阅读的形式，如1.5MB而不是1590868， False时返回字节数
+        :param string_form: True时以字符串形式返回结果，便于打印
         :return:
-            str
+            tuple:
+            size: int / str:
+            row
         """
         if self.source_type == 'file':
             size = self.get_file_size(table)
-            rows = 'unknown'
+            rows = self.get_file_rows(table)
+            # rows = 'unknown'
         elif self.source_type == 'db':
             rows, size = self.get_db_table_size(table)
         else:
             raise RuntimeError(f'unknown source type: {self.source_type}')
         if size == -1:
-            return None
+            return 0, 0
+        if not string_form:
+            return size, rows
         if human:
-            return f'{human_file_size(size)}/{human_units(rows)} rows'
+            return f'{human_file_size(size)}', f'{human_units(rows)}'
         else:
-            return f'{size}/{rows} rows'
+            return f'{size}', f'{rows}'
 
-    def get_table_info(self, table, verbose=True):
+    def get_table_info(self, table, verbose=True, print_info=True, human=True):
         """ 获取并打印数据表的相关信息，包括数据表是否已有数据，数据量大小，占用磁盘空间、数据覆盖范围，
             以及数据下载方法
 
         :param table:
         :param verbose: 是否显示更多信息，如是，显示表结构等信息
+        :param print_info: 是否打印输出所有结果
+        :param human: 是否给出容易阅读的字符串形式
         :return:
+            一个tuple，包含数据表的结构化信息：
+            (table name:    数据表名称
+             table_exists:  bool，数据表是否存在
+             table_size:    int/str，数据表占用磁盘空间，human 为True时返回容易阅读的字符串
+             table_rows:    int/str，数据表的行数，human 为True时返回容易阅读的字符串
+             primary_key1:  str，数据表第一个主键名称
+             pk_count1:     int，数据表第一个主键记录数量
+             pk_min1:       obj，数据表主键1起始记录
+             pk_max1:       obj，数据表主键2最终记录
+             primary_key2:  str，数据表第二个主键名称
+             pk_count2:     int，数据表第二个主键记录
+             pk_min2:       obj，数据表主键2起始记录
+             pk_max2:       obj，数据表主键2最终记录)
         """
+        pk1 = None
+        pk_records1 = None
+        pk_min1 = None
+        pk_max1 = None
+        pk2 = None
+        pk_records2 = None
+        pk_min2 = None
+        pk_max2 = None
         if not isinstance(table, str):
             raise TypeError(f'table should be name of a table, got {type(table)} instead')
         if not table.lower() in TABLE_SOURCE_MAP:
@@ -2789,15 +2883,19 @@ class DataSource:
                                      'dtypes':  dtypes,
                                      'remarks': remarks})
         table_exists = self.table_data_exists(table)
-        if table_exists:
-            table_size = self.get_data_table_size(table, human=True)
-            print(f'<{table}>, {table_size} on disc\n'
+        if print_info:
+            if table_exists:
+                table_size, table_rows = self.get_data_table_size(table, human=human)
+            else:
+                table_size, table_rows = '0 MB', '0'
+            print(f'<{table}>, {table_size}/{table_rows} records on disc\n'
                   f'primary keys: \n'
                   f'-----------------------------------')
         else:
-            print(f'<{table}>, data not downloaded\n'
-                  f'primary keys: \n'
-                  f'-----------------------------------')
+            if table_exists:
+                table_size, table_rows = self.get_data_table_size(table, string_form=human, human=human)
+            else:
+                table_size, table_rows = 0, 0
         pk_count = 0
         for pk in primary_keys:
             pk_min_max_count = self.get_table_data_coverage(table, pk, min_max_only=True)
@@ -2806,19 +2904,44 @@ class DataSource:
             record_count = 'unknown'
             if len(pk_min_max_count) == 3:
                 record_count = pk_min_max_count[2]
-            if pk == critical_key:
-                critical = "       *<CRITICAL>*"
             if len(pk_min_max_count) == 0:
-                print(f'{pk_count}:  {pk}:{critical}\n    No data!')
-            else:
+                pk_min_max_count = ['N/A', 'N/A']
+            if print_info:
+                if pk == critical_key:
+                    critical = "       *<CRITICAL>*"
                 print(f'{pk_count}:  {pk}:{critical}\n'
                       f'    <{record_count}> entries\n'
                       f'    starts:'
                       f' {pk_min_max_count[0]}, end: {pk_min_max_count[1]}')
-        if verbose:
+            if pk_count == 1:
+                pk1 = pk
+                pk_records1 = record_count
+                pk_min1 = pk_min_max_count[0]
+                pk_max1 = pk_min_max_count[1]
+            elif pk_count == 2:
+                pk2 = pk
+                pk_records2 = record_count
+                pk_min2 = pk_min_max_count[0]
+                pk_max2 = pk_min_max_count[1]
+            else:
+                pass
+        if verbose and print_info:
             print(f'\ncolumns of table:\n'
                   f'------------------------------------\n'
                   f'{table_schema}\n')
+        return (table,
+                table_exists,
+                table_size,
+                table_rows,
+                pk1,
+                pk_records1,
+                pk_min1,
+                pk_max1,
+                pk2,
+                pk_records2,
+                pk_min2,
+                pk_max2
+                )
 
     # ==============
     # 顶层函数，包括用于组合HistoryPanel的数据获取接口函数，以及自动或手动下载本地数据的操作函数
