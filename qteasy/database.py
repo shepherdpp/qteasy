@@ -2004,11 +2004,33 @@ class DataSource:
         all_info.index = all_info['table']
         all_info.drop(columns=['table'], inplace=True)
         if print_out:
-            print('following tables contain local data, to view complete list, print returned DataFrame')
-            print(all_info.loc[all_info.has_data == True][['has_data', 'size', 'records']])
+            info_to_print = all_info.loc[all_info.has_data == True][['has_data', 'size', 'records', 'min2', 'max2']]
+            print('\nFollowing tables contain local data, to view complete list, print returned DataFrame')
+            print(info_to_print.to_string(columns=['has_data',
+                                                   'size',
+                                                   'records',
+                                                   'min2',
+                                                   'max2'],
+                                          header=['Has_data',
+                                                  'Size_on_disk',
+                                                  'Record_count',
+                                                  'Record_start',
+                                                  'Record_end'],
+                                          justify='center'
+                                          )
+                  )
         return all_info
 
     # 文件操作层函数，只操作文件，不修改数据
+    def get_file_path_name(self, file_name):
+        """获取完整文件路径名"""
+        if self.source_type == 'db':
+            raise RuntimeError('can not check file system while source type is "db"')
+        if not isinstance(file_name, str):
+            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        file_path_name = self.file_path + file_name + '.' + self.file_type
+        return file_path_name
+
     def file_exists(self, file_name):
         """ 检查文件是否已存在
 
@@ -2016,11 +2038,7 @@ class DataSource:
         :return:
         Boolean: 文件存在时返回真，否则返回假
         """
-        if self.source_type == 'db':
-            raise RuntimeError('can not check file system while source type is "db"')
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_path_name = self.get_file_path_name(file_name)
         return path.exists(file_path_name)
 
     def write_file(self, df, file_name):
@@ -2031,16 +2049,13 @@ class DataSource:
         :return:
         str: file_name 如果数据保存成功，返回完整文件路径名称
         """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-
-        file_path_name = self.file_path + file_name
+        file_path_name = self.get_file_path_name(file_name)
         if self.file_type == 'csv':
-            df.to_csv(file_path_name + '.csv')
+            df.to_csv(file_path_name)
         elif self.file_type == 'fth':
-            df.reset_index().to_feather(file_path_name + '.fth')
+            df.reset_index().to_feather(file_path_name)
         elif self.file_type == 'hdf':
-            df.to_hdf(file_path_name + '.hdf', key='df')
+            df.to_hdf(file_path_name, key='df')
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
         return len(df)
@@ -2066,8 +2081,7 @@ class DataSource:
         :return:
             DataFrame：从文件中读取的DataFrame，如果数据有主键，将主键设置为df的index
         """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
+        file_path_name = self.get_file_path_name(file_name)
         if not self.file_exists(file_name):
             # 如果文件不存在，则返回空的DataFrame
             return pd.DataFrame()
@@ -2075,9 +2089,9 @@ class DataSource:
             start = pd.to_datetime(start).strftime('%Y-%m-%d')
             end = pd.to_datetime(end).strftime('%Y-%m-%d')
 
-        file_path_name = self.file_path + file_name
         if self.file_type == 'csv':
-            df_reader = pd.read_csv(file_path_name + '.csv', chunksize=chunk_size)
+            # 这里针对csv文件进行了优化，通过分块读取文件，避免当文件过大时导致读取异常
+            df_reader = pd.read_csv(file_path_name, chunksize=chunk_size)
             df_picker = (chunk for chunk in df_reader)
             if (share_like_pk is not None) and (date_like_pk is not None):
                 df_picker = (chunk.loc[(chunk[share_like_pk].isin(shares)) &
@@ -2091,9 +2105,11 @@ class DataSource:
             df = pd.concat(df_picker)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         elif self.file_type == 'hdf':
-            df = pd.read_hdf(file_path_name + '.hdf', 'df')
+            # hdf5的大文件读取尚未优化
+            df = pd.read_hdf(file_path_name, 'df')
         elif self.file_type == 'fth':
-            df = pd.read_feather(file_path_name + '.fth')
+            # feather大文件读取尚未优化
+            df = pd.read_feather(file_path_name)
             set_primary_key_index(df, primary_key=primary_key, pk_dtypes=pk_dtypes)
         else:  # for some unexpected cases
             raise TypeError(f'Invalid file type: {self.file_type}')
@@ -2150,11 +2166,8 @@ class DataSource:
         :return:
             str representing file size
         """
-        if not isinstance(file_name, str):
-            raise TypeError(f'file_name name must be a string, {file_name} is not a valid input!')
-
         import os
-        file_path_name = self.file_path + file_name + '.' + self.file_type
+        file_path_name = self.get_file_path_name(file_name)
         try:
             file_size = os.path.getsize(file_path_name)
             return file_size
@@ -2165,7 +2178,19 @@ class DataSource:
 
     def get_file_rows(self, file_name):
         """获取csv、hdf、fether文件中数据的行数"""
-        raise NotImplementedError
+        file_path_name = self.get_file_path_name(file_name)
+        if self.file_type == 'csv':
+            with open(file_path_name, 'r') as fp:
+                line_count = None
+                for line_count, line in enumerate(fp):
+                    pass
+                return line_count
+        elif self.file_type == 'hdf':
+            df = pd.read_hdf(file_path_name, 'df')
+            return len(df)
+        elif self.file_type == 'fth':
+            df = pd.read_feather(file_path_name)
+            return len(df)
 
     # 数据库操作层函数，只操作具体的数据表，不操作数据
     def read_database(self, db_table, share_like_pk=None, shares=None, date_like_pk=None, start=None, end=None):
@@ -2799,8 +2824,8 @@ class DataSource:
         """
         if self.source_type == 'file':
             size = self.get_file_size(table)
-            # rows = self.get_file_rows(table) # self.get_file_rows is not yet implemented
-            rows = 'unknown'
+            rows = self.get_file_rows(table)
+            # rows = 'unknown'
         elif self.source_type == 'db':
             rows, size = self.get_db_table_size(table)
         else:

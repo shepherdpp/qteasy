@@ -10026,7 +10026,7 @@ class TestUtilityFuncs(unittest.TestCase):
         self.assertFalse(maybe_trade_day('2020-01-01'))
         self.assertFalse(maybe_trade_day('2020/10/06'))
 
-        self.assertRaises(TypeError, maybe_trade_day, 'aaa')
+        self.assertRaises(Exception, maybe_trade_day, 'aaa')
 
     def test_prev_trade_day(self):
         """test the function prev_trade_day()
