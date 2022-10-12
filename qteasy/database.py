@@ -2005,7 +2005,7 @@ class DataSource:
         all_info.drop(columns=['table'], inplace=True)
         if print_out:
             info_to_print = all_info.loc[all_info.has_data == True][['has_data', 'size', 'records', 'min2', 'max2']]
-            print('\nFollowing tables contain local data, to view complete list, print returned DataFrame')
+            print(f'\n{self}\nFollowing tables contain local data, to view complete list, print returned DataFrame')
             print(info_to_print.to_string(columns=['has_data',
                                                    'size',
                                                    'records',

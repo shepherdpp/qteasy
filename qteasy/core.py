@@ -893,6 +893,11 @@ def get_table_info(table_name, verbose):
     return qteasy.QT_DATA_SOURCE.get_table_info(table=table_name, verbose=verbose)
 
 
+def get_table_overview():
+    """ 显示QT_DATA_SOURCE数据源的数据总览"""
+    return qteasy.QT_DATA_SOURCE.overview()
+
+
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
 def is_ready(**kwargs):
