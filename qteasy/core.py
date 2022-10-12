@@ -898,6 +898,58 @@ def get_table_overview():
     return qteasy.QT_DATA_SOURCE.overview()
 
 
+def get_history_data(htypes,
+                     shares=None,
+                     start=None,
+                     end=None,
+                     freq=None,
+                     asset_type=None,
+                     adj=None,
+                     fill_gap_how=None):
+    """ 从默认数据源获取历史数据
+
+    :param htypes:
+    :param shares:
+    :param start:
+    :param end:
+    :param freq:
+    :param asset_type:
+    :param adj:
+    :param fill_gap_how:
+    :return:
+    """
+    if htypes is None:
+        raise ValueError(f'htype should not be None')
+
+    if shares is None:
+        shares = qteasy.QT_CONFIG.asset_pool
+
+    one_year = pd.Timedelta(365, 'd')
+    one_week = pd.Timedelta(7, 'd')
+    if (start is None) and (end is None):
+        end = pd.to_datetime('today')
+        start = end - one_year
+    elif start is None:
+        try:
+            end = pd.to_datetime(end)
+        except Exception:
+            raise Exception(f'end date can not be converted to a datetime')
+        start = end - one_year
+    elif end is None:
+        try:
+            start = pd.to_datetime(start)
+        except Exception:
+            raise Exception(f'start date can not be converted to a datetime')
+        end = start + one_year
+    else:
+        try:
+            start = pd.to_datetime(start)
+            end = pd.to_datetime(end)
+        except Exception:
+            raise Exception(f'start and end must be both datetime')
+        if end - start <= one_week:
+            raise ValueError(f'End date should be at least one week after start date')
+
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
 def is_ready(**kwargs):

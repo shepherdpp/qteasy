@@ -17,7 +17,7 @@ from logging.handlers import TimedRotatingFileHandler
 
 from .core import get_realtime_holdings, get_realtime_trades, filter_stock_codes, filter_stocks, get_table_info
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
-from .core import run, get_basic_info
+from .core import run, get_basic_info, get_table_overview
 from .history import HistoryPanel, get_history_panel
 from .history import dataframe_to_hp, stack_dataframes
 from .operator import Operator
