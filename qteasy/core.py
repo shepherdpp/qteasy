@@ -905,7 +905,8 @@ def get_history_data(htypes,
                      freq=None,
                      asset_type=None,
                      adj=None,
-                     fill_gap_how=None):
+                     fill_gap_how=None,
+                     as_data_frame=None):
     """ 从默认数据源获取历史数据
 
     :param htypes:
@@ -916,6 +917,7 @@ def get_history_data(htypes,
     :param asset_type:
     :param adj:
     :param fill_gap_how:
+    :param as_data_frame: bool, 是否返回DataFrame，默认True，否则返回HistoryPanel
     :return:
     """
     if htypes is None:
@@ -949,6 +951,29 @@ def get_history_data(htypes,
             raise Exception(f'start and end must be both datetime')
         if end - start <= one_week:
             raise ValueError(f'End date should be at least one week after start date')
+
+    if freq is None:
+        freq = 'd'
+
+    if asset_type is None:
+        asset_type = 'any'
+
+    if adj is None:
+        adj = 'n'
+
+    if fill_gap_how is None:
+        fill_gap_how = 'ffill'
+
+    if as_data_frame is None:
+        as_data_frame = True
+
+    return get_history_panel(htypes=htypes,
+                             shares=shares,
+                             start=start,
+                             end=end,
+                             freq=freq,
+                             asset_type=asset_type,
+                             adj=adj)
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
