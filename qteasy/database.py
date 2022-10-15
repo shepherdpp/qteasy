@@ -1046,8 +1046,8 @@ DATA_TABLE_MAP = {
     ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '备用股票技术指标 - 近6月涨幅'],
 }
 TABLE_SOURCE_MAP_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                                'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
-                                'start_end_chunk_size']
+                            'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
+                            'start_end_chunk_size']
 TABLE_SOURCE_MAP = {
 
     'trade_calendar':
@@ -2972,6 +2972,7 @@ class DataSource:
             获取的历史数据的频率，包括以下选项：
              - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
              - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+             如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
 
         :param asset_type: str, list
             限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
@@ -3025,7 +3026,7 @@ class DataSource:
             for tbl in tables_to_read:
                 if htyp in table_data_columns[tbl]:
                     df = table_data_acquired[tbl]
-                    # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstac，成为多列、单index的数据
+                    # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstack，成为多列、单index的数据
                     if not df.empty:
                         htyp_series = df[htyp]
                         new_df = htyp_series.unstack(level=0)
@@ -3559,6 +3560,82 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
 
     return None
 
+
+def freq_up(hist_data, target_freq, how='ffill'):
+    """ 升高获取数据的频率，通过插值的方式在低频数据中插入数据，使历史数据的时间频率
+    符合target_freq
+
+    :param hist_data: pd.DataFrame
+        历史数据，是一个index为日期/时间的DataFrame
+
+    :param target_freq: str
+        历史数据的目标频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+
+    :param how: str
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        例如，填充下列数据(?表示插入的数据）
+            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+        缺失数据的填充方法如下:
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+        - 'nan': 使用NaN值填充缺失数据：
+            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+        - 'zero': 使用0值填充缺失数据：
+            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+
+    :return:
+        DataFrame:
+        一个重新设定index并填充好数据的历史数据DataFrame
+    """
+    raise NotImplementedError
+
+
+def freq_down(hist_data, target_freq, how='last'):
+    """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
+    符合target_freq
+
+    :param hist_data: pd.DataFrame
+        历史数据，是一个index为日期/时间的DataFrame
+
+    :param target_freq: str
+        历史数据的目标频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+
+    :param how: str
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+        数据合并方法:
+        - 'last': 使用合并区间的最后一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'close': 与last相同，使用合并区间的最后一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'first': 使用合并区间的第一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'open': 与first相同，使用合并区间的第一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'max': 使用合并区间的最大值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'high': 与max相同，使用合并区间的最大值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'min': 使用合并区间的最小值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'low': 与min相同，使用合并区间的最小值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'avg': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+    :return:
+        DataFrame:
+        一个重新设定index并填充好数据的历史数据DataFrame
+    """
+    raise NotImplementedError
 
 # noinspection PyUnresolvedReferences
 def set_primary_key_frame(df, primary_key, pk_dtypes):
