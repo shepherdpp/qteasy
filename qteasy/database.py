@@ -876,7 +876,8 @@ DATA_TABLE_MAP = {
     ('investincome_of_ebt', 'q', 'E'):                ['financial', 'investincome_of_ebt', '上市公司财务指标 - 价值变动净收益/利润总额'],
     ('n_op_profit_of_ebt', 'q', 'E'):                 ['financial', 'n_op_profit_of_ebt', '上市公司财务指标 - 营业外收支净额/利润总额'],
     ('tax_to_ebt', 'q', 'E'):                         ['financial', 'tax_to_ebt', '上市公司财务指标 - 所得税/利润总额'],
-    ('dtprofit_to_profit', 'q', 'E'):                 ['financial', 'dtprofit_to_profit', '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
+    ('dtprofit_to_profit', 'q', 'E'):                 ['financial', 'dtprofit_to_profit',
+                                                       '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
     ('salescash_to_or', 'q', 'E'):                    ['financial', 'salescash_to_or', '上市公司财务指标 - 销售商品提供劳务收到的现金/营业收入'],
     ('ocf_to_or', 'q', 'E'):                          ['financial', 'ocf_to_or', '上市公司财务指标 - 经营活动产生的现金流量净额/营业收入'],
     ('ocf_to_opincome', 'q', 'E'):                    ['financial', 'ocf_to_opincome',
@@ -889,13 +890,16 @@ DATA_TABLE_MAP = {
     ('nca_to_assets', 'q', 'E'):                      ['financial', 'nca_to_assets', '上市公司财务指标 - 非流动资产/总资产'],
     ('tbassets_to_totalassets', 'q', 'E'):            ['financial', 'tbassets_to_totalassets', '上市公司财务指标 - 有形资产/总资产'],
     ('int_to_talcap', 'q', 'E'):                      ['financial', 'int_to_talcap', '上市公司财务指标 - 带息债务/全部投入资本'],
-    ('eqt_to_talcapital', 'q', 'E'):                  ['financial', 'eqt_to_talcapital', '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
+    ('eqt_to_talcapital', 'q', 'E'):                  ['financial', 'eqt_to_talcapital',
+                                                       '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
     ('currentdebt_to_debt', 'q', 'E'):                ['financial', 'currentdebt_to_debt', '上市公司财务指标 - 流动负债/负债合计'],
     ('longdeb_to_debt', 'q', 'E'):                    ['financial', 'longdeb_to_debt', '上市公司财务指标 - 非流动负债/负债合计'],
-    ('ocf_to_shortdebt', 'q', 'E'):                   ['financial', 'ocf_to_shortdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
+    ('ocf_to_shortdebt', 'q', 'E'):                   ['financial', 'ocf_to_shortdebt',
+                                                       '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
     ('debt_to_eqt', 'q', 'E'):                        ['financial', 'debt_to_eqt', '上市公司财务指标 - 产权比率'],
     ('eqt_to_debt', 'q', 'E'):                        ['financial', 'eqt_to_debt', '上市公司财务指标 - 归属于母公司的股东权益/负债合计'],
-    ('eqt_to_interestdebt', 'q', 'E'):                ['financial', 'eqt_to_interestdebt', '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
+    ('eqt_to_interestdebt', 'q', 'E'):                ['financial', 'eqt_to_interestdebt',
+                                                       '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
     ('tangibleasset_to_debt', 'q', 'E'):              ['financial', 'tangibleasset_to_debt', '上市公司财务指标 - 有形资产/负债合计'],
     ('tangasset_to_intdebt', 'q', 'E'):               ['financial', 'tangasset_to_intdebt', '上市公司财务指标 - 有形资产/带息债务'],
     ('tangibleasset_to_netdebt', 'q', 'E'):           ['financial', 'tangibleasset_to_netdebt', '上市公司财务指标 - 有形资产/净债务'],
@@ -935,13 +939,15 @@ DATA_TABLE_MAP = {
     ('q_saleexp_to_gr', 'q', 'E'):                    ['financial', 'q_saleexp_to_gr', '上市公司财务指标 - 销售费用／营业总收入 (单季度)'],
     ('q_adminexp_to_gr', 'q', 'E'):                   ['financial', 'q_adminexp_to_gr', '上市公司财务指标 - 管理费用／营业总收入 (单季度)'],
     ('q_finaexp_to_gr', 'q', 'E'):                    ['financial', 'q_finaexp_to_gr', '上市公司财务指标 - 财务费用／营业总收入 (单季度)'],
-    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['financial', 'q_impair_to_gr_ttm', '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
+    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['financial', 'q_impair_to_gr_ttm',
+                                                       '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
     ('q_gc_to_gr', 'q', 'E'):                         ['financial', 'q_gc_to_gr', '上市公司财务指标 - 营业总成本／营业总收入 (单季度)'],
     ('q_op_to_gr', 'q', 'E'):                         ['financial', 'q_op_to_gr', '上市公司财务指标 - 营业利润／营业总收入(单季度)'],
     ('q_roe', 'q', 'E'):                              ['financial', 'q_roe', '上市公司财务指标 - 净资产收益率(单季度)'],
     ('q_dt_roe', 'q', 'E'):                           ['financial', 'q_dt_roe', '上市公司财务指标 - 净资产单季度收益率(扣除非经常损益)'],
     ('q_npta', 'q', 'E'):                             ['financial', 'q_npta', '上市公司财务指标 - 总资产净利润(单季度)'],
-    ('q_opincome_to_ebt', 'q', 'E'):                  ['financial', 'q_opincome_to_ebt', '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
+    ('q_opincome_to_ebt', 'q', 'E'):                  ['financial', 'q_opincome_to_ebt',
+                                                       '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
     ('q_investincome_to_ebt', 'q', 'E'):              ['financial', 'q_investincome_to_ebt',
                                                        '上市公司财务指标 - 价值变动净收益／利润总额(单季度)'],
     ('q_dtprofit_to_profit', 'q', 'E'):               ['financial', 'q_dtprofit_to_profit',
@@ -3054,9 +3060,10 @@ class DataSource:
                           f'{conflict_cols}', DataConflictWarning)
         # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
         if all(df.empty for df in df_by_htypes.values()):
-            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please: \n'
-                               f'find datatable for data type:  qteasy.find_history_data(\'data_type\')\n'
-                               f'check table data coverage:     DataSource.get_table_info(\'table_name\')\n'
+            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please '
+                               f'check data source availability: \n'
+                               f'check availability of all tables:  qt.get_table_overview()\nor\n'
+                               f'check specific table:              qt.get_table_info(\'table_name\')\n'
                                f'fill datasource:               DataSource.refill_local_source(\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
@@ -3636,6 +3643,7 @@ def freq_down(hist_data, target_freq, how='last'):
         一个重新设定index并填充好数据的历史数据DataFrame
     """
     raise NotImplementedError
+
 
 # noinspection PyUnresolvedReferences
 def set_primary_key_frame(df, primary_key, pk_dtypes):

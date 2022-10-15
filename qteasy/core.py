@@ -429,7 +429,7 @@ def apply_loop(operator: Operator,
     amounts_matrix = []
     total_value = 0
     trade_data = np.empty(shape=(share_count, 5))  # 交易汇总数据表，包含最近成交、交易价格、持仓数量、
-                                                   # 持有现金等数据的数组，用于realtime信号生成
+    # 持有现金等数据的数组，用于realtime信号生成
     recent_amounts_change = np.empty(shape=(share_count,))  # 中间变量，保存最近的一次交易数量
     recent_trade_prices = np.empty(shape=(share_count,))  # 中间变量，保存最近一次的成交价格
     # 保存trade_log_table数据：
@@ -797,11 +797,12 @@ def filter_stock_codes(date: str = 'today', **kwargs) -> list:
 
 
 def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
-    """ 根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
+    """ 等同于get_stock_info()
+        根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
     
     :param code_or_name: 
         证券代码或名称，
-        如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全剧匹配
+        如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
         如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
         
@@ -824,8 +825,12 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
     :return: dict
-        一个dict，包含找到的基本信息如下：
-        -
+        当仅找到一个匹配是，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
+        - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
+        - 指数信息：指数名、全名、发行人、种类、发行日期
+        - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
+        - 期货：   期货名称
+        - 期权：   期权名称
     """
     matched_codes = match_ts_code(code_or_name, asset_types=asset_types, match_full_name=match_full_name)
 
@@ -883,6 +888,49 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
             print('-------------------------------------------')
 
 
+def get_stock_info(code_or_name: str, asset_types=None, match_full_name=False, printout=True, verbose=False):
+    """ 等同于get_basic_info()
+        根据输入的信息，查找股票、基金、指数或期货、期权的基本信息
+
+    :param code_or_name:
+        证券代码或名称，
+        如果是证券代码，可以含后缀也可以不含后缀，含后缀时精确查找、不含后缀时全局匹配
+        如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
+        如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
+
+    :param asset_types:
+        证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
+        - E     股票
+        - IDX   指数
+        - FD    基金
+        - FT    期货
+        - OPT   期权
+
+    :param match_full_name: bool
+        是否匹配股票或基金的全名，默认否，如果匹配全名，耗时更长
+
+    :param printout: bool
+        如果为True，打印匹配到的结果
+
+    :param verbose: bool
+        当匹配到的证券太多时（多于五个），是否显示完整的信息
+        - False 默认值，只显示匹配度最高的内容
+        - True  显示所有匹配到的内容
+    :return: dict
+        当仅找到一个匹配是，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
+        - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
+        - 指数信息：指数名、全名、发行人、种类、发行日期
+        - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
+        - 期货：   期货名称
+        - 期权：   期权名称
+    """
+    return get_basic_info(code_or_name=code_or_name,
+                          asset_types=asset_types,
+                          match_full_name=match_full_name,
+                          printout=printout,
+                          verbose=verbose)
+
+
 def get_table_info(table_name, verbose):
     """
 
@@ -893,9 +941,102 @@ def get_table_info(table_name, verbose):
     return qteasy.QT_DATA_SOURCE.get_table_info(table=table_name, verbose=verbose)
 
 
-def get_table_overview():
-    """ 显示QT_DATA_SOURCE数据源的数据总览"""
-    return qteasy.QT_DATA_SOURCE.overview()
+def get_table_overview(data_source=None):
+    """ 显示默认数据源或指定数据源的数据总览
+
+    :param data_source: Object
+        一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview
+    """
+    from .database import DataSource
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
+    return data_source.overview()
+
+
+def refill_data_source(data_source=None, *args, **kwargs):
+    """ 填充数据到默认数据源或指定数据源
+
+    :param data_source: Object
+        一个data_source 对象,默认为None，如果为None，则显示默认数据源的overview
+
+    :param *args
+        DataSource.refill_data_source的数据下载参数：
+        tables:
+            需要补充的本地数据表，可以同时给出多个table的名称，逗号分隔字符串和字符串列表都合法：
+            例如，下面两种方式都合法且相同：
+                table='stock_indicator, stock_daily, income, stock_adj_factor'
+                table=['stock_indicator', 'stock_daily', 'income', 'stock_adj_factor']
+            除了直接给出表名称以外，还可以通过表类型指明多个表，可以同时输入多个类型的表：
+                - 'all'     : 所有的表
+                - 'cal'     : 交易日历表
+                - 'basics'  : 所有的基础信息表
+                - 'adj'     : 所有的复权因子表
+                - 'data'    : 所有的历史数据表
+                - 'events'  : 所有的历史事件表(如股票更名、更换基金经理、基金份额变动等)
+                - 'report'  : 财务报表
+                - 'comp'    : 指数成分表
+
+        dtypes:
+            通过指定dtypes来确定需要更新的表单，只要包含指定的dtype的数据表都会被选中
+            如果给出了tables，则dtypes参数会被忽略
+
+        freqs:
+            通过指定tables或dtypes来确定需要更新的表单时，指定freqs可以限定表单的范围
+            如果tables != all时，给出freq会排除掉freq与之不符的数据表
+
+        asset_types:
+            通过指定tables或dtypes来确定需要更新的表单时，指定asset_types可以限定表单的范围
+            如果tables != all时，给出asset_type会排除掉与之不符的数据表
+
+        start_date:
+            限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+
+        end_date:
+            限定数据下载的时间范围，如果给出start_date/end_date，只有这个时间段内的数据会被下载
+
+        code_range:
+            限定下载数据的证券代码范围，代码不需要给出类型后缀，只需要给出数字代码即可。
+            可以多种形式确定范围，以下输入均为合法输入：
+            - '000001'
+                没有指定asset_types时，000001.SZ, 000001.SH ... 等所有代码都会被选中下载
+                如果指定asset_types，只有符合类型的证券数据会被下载
+            - '000001, 000002, 000003'
+            - ['000001', '000002', '000003']
+                两种写法等效，列表中列举出的证券数据会被下载
+            - '000001:000300'
+                从'000001'开始到'000300'之间的所有证券数据都会被下载
+
+        merge_type: str
+            数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
+            - 'ignore' 默认值，不下载重复的数据
+            - 'update' 下载并更新本地数据的重复部分
+
+        reversed_par_seq: Bool
+            是否逆序参数下载数据， 默认False
+            - True:  逆序参数下载数据
+            - False: 顺序参数下载数据
+
+        parallel: Bool
+            是否启用多线程下载数据，默认True
+            - True:  启用多线程下载数据
+            - False: 禁用多线程下载
+
+        process_count: int
+            启用多线程下载时，同时开启的线程数，默认值为设备的CPU核心数
+
+        chunk_size: int
+            保存数据到本地时，为了减少文件/数据库读取次数，将下载的数据累计一定数量后
+            再批量保存到本地，chunk_size即批量，默认值100
+
+    """
+    from .database import DataSource
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+    if not isinstance(data_source, DataSource):
+        raise TypeError(f'A DataSource object must be passed, got {type(data_source)} instead.')
+    data_source.refill_local_source(*args, **kwargs)
 
 
 def get_history_data(htypes,
@@ -974,6 +1115,7 @@ def get_history_data(htypes,
                              freq=freq,
                              asset_type=asset_type,
                              adj=adj)
+
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
 #  config参数，使所有参数直接可用。并发出warning，不要在后续的使用过程中调整参数
@@ -1295,7 +1437,7 @@ def check_and_prepare_hist_data(oper: Operator, config):
             freq=oper.op_data_freq,
             asset_type=config.asset_type,
             adj=config.backtest_price_adj
-    )   #.slice_to_dataframe(share='none')
+    )  # .slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.bt_price_types
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -1337,13 +1479,13 @@ def check_and_prepare_hist_data(oper: Operator, config):
     benchmark_end = regulate_date_format(max(all_ends))
 
     hist_benchmark = get_history_panel(
-                start=benchmark_start,
-                end=benchmark_end,
-                shares=config.benchmark_asset,
-                htypes=config.benchmark_dtype,
-                freq=oper.op_data_freq,
-                asset_type=config.benchmark_asset_type,
-                adj=config.backtest_price_adj
+            start=benchmark_start,
+            end=benchmark_end,
+            shares=config.benchmark_asset,
+            htypes=config.benchmark_dtype,
+            freq=oper.op_data_freq,
+            asset_type=config.benchmark_asset_type,
+            adj=config.backtest_price_adj
     ).slice_to_dataframe(htype='close')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
