@@ -756,6 +756,7 @@ class HistoryPanel():
 
         return res_df
 
+    # TODO: implement this method
     def flatten_to_dataframe(self, multi_index=True):
         """ 将一个HistoryPanel"展平"成为一个DataFrame
             HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
@@ -783,11 +784,13 @@ class HistoryPanel():
         """
         raise NotImplementedError
 
+    # TODO: implement this method
     def to_multi_index_dataframe(self):
         """ 等同于HistoryPanel.flatten_to_dataframe(multi_index=True)
 
         :return:
         """
+        raise NotImplementedError
 
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
@@ -817,6 +820,10 @@ class HistoryPanel():
             for htype in self.htypes:
                 df_dict[htype] = self.slice_to_dataframe(htype=htype)
             return df_dict
+
+    def unstack(self,  by: str = 'share') -> dict:
+        """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称"""
+        return self.to_df_dict(by=by)
 
     # TODO: implement this method
     def head(self, row_count=5):
@@ -976,6 +983,19 @@ def dataframe_to_hp(df: pd.DataFrame,
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
+def from_single_dataframe(df: pd.DataFrame,
+                          hdates=None,
+                          htypes=None,
+                          shares=None,
+                          column_type: str = None) -> HistoryPanel:
+    """ 函数dataframe_to_hp()的别称，等同于dataframe_to_hp()"""
+    return dataframe_to_hp(df=df,
+                           hdates=hdates,
+                           htypes=htypes,
+                           shares=shares,
+                           column_type=column_type)
+
+
 def from_multi_index_dataframe(df: pd.DataFrame):
     """ 将一个含有multi-index的DataFrame转化为一个HistoryPanel
 
@@ -1123,6 +1143,15 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
                         levels=combined_shares,
                         rows=combined_index,
                         columns=combined_htypes)
+
+
+def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+    """ 函数stack_dataframes()的别称，等同于函数stack_dataframes()"""
+    return stack_dataframes(dfs=dfs,
+                            dataframe_as=dataframe_as,
+                            shares=shares,
+                            htypes=htypes,
+                            fill_value=fill_value)
 
 
 # ==================
