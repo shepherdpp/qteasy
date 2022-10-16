@@ -3599,7 +3599,20 @@ def freq_up(hist_data, target_freq, how='ffill'):
         DataFrame:
         一个重新设定index并填充好数据的历史数据DataFrame
     """
-    raise NotImplementedError
+    if not isinstance(target_freq, str):
+        raise TypeError
+    resampled = hist_data.resample(target_freq)
+    if how == 'ffill':
+        return resampled.ffill()
+    elif how == 'bfill':
+        return resampled.bfill()
+    elif how == 'nan':
+        return resampled.last()
+    elif how == 'zero':
+        return resampled.last().fillna(0)
+    else:
+        # for some unexpected case
+        raise ValueError(f'freq_up method {how} can not be recognized.')
 
 
 def freq_down(hist_data, target_freq, how='last'):
@@ -3620,29 +3633,40 @@ def freq_down(hist_data, target_freq, how='last'):
         例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
         数据合并方法:
-        - 'last': 使用合并区间的最后一个值。如：
+        - 'last'/'close': 使用合并区间的最后一个值。如：
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'close': 与last相同，使用合并区间的最后一个值。如：
+        - 'first'/'open': 使用合并区间的第一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'max'/'high': 使用合并区间的最大值作为合并值：
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'first': 使用合并区间的第一个值。如：
+        - 'min'/'low': 使用合并区间的最小值作为合并值：
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'open': 与first相同，使用合并区间的第一个值。如：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'max': 使用合并区间的最大值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'high': 与max相同，使用合并区间的最大值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
-        - 'min': 使用合并区间的最小值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'low': 与min相同，使用合并区间的最小值作为合并值：
-            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
-        - 'avg': 使用合并区间的平均值作为合并值：
+        - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+        - 'sum'/'total': 使用合并区间的平均值作为合并值：
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
     :return:
         DataFrame:
         一个重新设定index并填充好数据的历史数据DataFrame
     """
-    raise NotImplementedError
+    if not isinstance(target_freq, str):
+        raise TypeError
+    resampled = hist_data.resample(target_freq)
+    if how in ['last', 'close']:
+        return resampled.last()
+    elif how in ['first', 'open']:
+        return resampled.first()
+    elif how in ['max', 'high']:
+        return resampled.max()
+    elif how in ['min', 'low']:
+        return resampled.min()
+    elif how == ['avg', 'mean']:
+        return resampled.mean()
+    elif how == ['sum', 'total']:
+        return resampled.sum()
+    else:
+        # for some unexpected case
+        raise ValueError(f'freq_up method {how} can not be recognized.')
 
 
 # noinspection PyUnresolvedReferences
