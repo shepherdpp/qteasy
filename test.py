@@ -14405,6 +14405,25 @@ class TestDataSource(unittest.TestCase):
         # 全部无法精确匹配时，报错
         self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')
 
+    def test_freq_resample(self):
+        """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（日频到日频以下时，仅保留交易时段）"""
+        print(f'build test data')
+        daily_index = pd.timedelta_range(start='20200101', end='20200331', freq='d')
+        weekly_index = pd.timedelta_range(start='20200101', end='20200331', freq='w')
+        monthly_index = pd.timedelta_range(start='20200101', end='20200331', freq='m')
+        print(daily_index, weekly_index, monthly_index)
+        print(f'test freq up, above daily freq')
+
+        print(f'test freq up, below daily freq')
+
+        print(f'test freq up, across daily freq')
+
+        print(f'test freq donw, above daily freq')
+
+        print(f'test freq down, below daily freq')
+
+        print(f'test freq down, across daily freq')
+
 
 def test_suite(*args):
     suite = unittest.TestSuite()
