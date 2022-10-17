@@ -3064,7 +3064,7 @@ class DataSource:
                                f'check data source availability: \n'
                                f'check availability of all tables:  qt.get_table_overview()\nor\n'
                                f'check specific table:              qt.get_table_info(\'table_name\')\n'
-                               f'fill datasource:               DataSource.refill_local_source(\'table_name\', '
+                               f'fill datasource:                   DataSource.refill_local_source(\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         if adj.lower() not in ['none', 'n']:
@@ -3088,7 +3088,7 @@ class DataSource:
                 for af in adj_factors:
                     combined_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
                 # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
-                # 但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
+                #  但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
                 if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
                     expanded_factors = combined_factors.reindex(price_df.index.date)
                     expanded_factors.index = price_df.index
@@ -3568,7 +3568,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
-def freq_up(hist_data, target_freq, how='ffill'):
+def _freq_up(hist_data, target_freq, how='ffill'):
     """ 升高获取数据的频率，通过插值的方式在低频数据中插入数据，使历史数据的时间频率
     符合target_freq
 
@@ -3601,6 +3601,8 @@ def freq_up(hist_data, target_freq, how='ffill'):
     """
     if not isinstance(target_freq, str):
         raise TypeError
+    # this new function is used to resample index according to new frequency
+    resampled_index = _resample_index(hist_data.index, target_freq)
     resampled = hist_data.resample(target_freq)
     if how == 'ffill':
         return resampled.ffill()
@@ -3612,10 +3614,10 @@ def freq_up(hist_data, target_freq, how='ffill'):
         return resampled.last().fillna(0)
     else:
         # for some unexpected case
-        raise ValueError(f'freq_up method {how} can not be recognized.')
+        raise ValueError(f'_freq_up method {how} can not be recognized.')
 
 
-def freq_down(hist_data, target_freq, how='last'):
+def _freq_down(hist_data, target_freq, how='last'):
     """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
     符合target_freq
 
@@ -3666,7 +3668,17 @@ def freq_down(hist_data, target_freq, how='last'):
         return resampled.sum()
     else:
         # for some unexpected case
-        raise ValueError(f'freq_up method {how} can not be recognized.')
+        raise ValueError(f'_freq_up method {how} can not be recognized.')
+
+
+def _resample_index(index, target_freq):
+    """ resample index
+
+    :param index:
+    :param target_freq:
+    :return:
+    """
+    raise NotImplementedError
 
 
 # noinspection PyUnresolvedReferences
