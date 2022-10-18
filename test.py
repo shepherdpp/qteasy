@@ -14408,10 +14408,16 @@ class TestDataSource(unittest.TestCase):
     def test_freq_resample(self):
         """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（日频到日频以下时，仅保留交易时段）"""
         print(f'build test data')
-        daily_index = pd.timedelta_range(start='20200101', end='20200331', freq='d')
-        weekly_index = pd.timedelta_range(start='20200101', end='20200331', freq='w')
-        monthly_index = pd.timedelta_range(start='20200101', end='20200331', freq='m')
+        daily_index = pd.date_range(start='20200101', end='20200331', freq='d')
+        weekly_index = pd.date_range(start='20200101', end='20200331', freq='W-Fri')
+        monthly_index = pd.date_range(start='20200101', end='20200331', freq='M')
+
         print(daily_index, weekly_index, monthly_index)
+
+        sub_daily_index = pd.date_range(start='20200101', end='20200110', freq='d')
+        hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
+        min_index = pd.date_range(start='20200101', end='20200110', freq='15min')
+        print(sub_daily_index, hourly_index, min_index)
         print(f'test freq up, above daily freq')
 
         print(f'test freq up, below daily freq')
@@ -14423,6 +14429,7 @@ class TestDataSource(unittest.TestCase):
         print(f'test freq down, below daily freq')
 
         print(f'test freq down, across daily freq')
+        raise NotImplementedError
 
 
 def test_suite(*args):
