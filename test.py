@@ -14412,12 +14412,23 @@ class TestDataSource(unittest.TestCase):
         weekly_index = pd.date_range(start='20200101', end='20200331', freq='W-Fri')
         monthly_index = pd.date_range(start='20200101', end='20200331', freq='M')
 
-        print(daily_index, weekly_index, monthly_index)
-
         sub_daily_index = pd.date_range(start='20200101', end='20200110', freq='d')
         hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
         min_index = pd.date_range(start='20200101', end='20200110', freq='15min')
-        print(sub_daily_index, hourly_index, min_index)
+
+        test_data1 = np.random.randint(20, size=(13, 7)).astype('float')  # 用于daily_index数据
+        test_data2 = np.random.randint(20, size=(217, 11)).astype('float')  # 用于sub_daily_index数据
+
+        columns1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        columns2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+
+        daily_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
+        sub_daily_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
+
+        print(daily_index, weekly_index, monthly_index, daily_data)
+        print(sub_daily_index, hourly_index, min_index,
+              sub_daily_data)
+
         print(f'test freq up, above daily freq')
 
         print(f'test freq up, below daily freq')
