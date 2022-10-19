@@ -14414,6 +14414,7 @@ class TestDataSource(unittest.TestCase):
 
         sub_daily_index = pd.date_range(start='20200101', end='20200110', freq='d')
         hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
+        hourly_index_tt = hourly_index[hourly_index.indexer_between_time('9:00:00', '15:00:00')]
         min_index = pd.date_range(start='20200101', end='20200110', freq='15min')
 
         test_data1 = np.random.randint(20, size=(13, 7)).astype('float')  # 用于daily_index数据
@@ -14426,7 +14427,7 @@ class TestDataSource(unittest.TestCase):
         sub_daily_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
 
         print(daily_index, weekly_index, monthly_index, daily_data)
-        print(sub_daily_index, hourly_index, min_index,
+        print(sub_daily_index, hourly_index, hourly_index_tt, min_index,
               sub_daily_data)
 
         print(f'test freq up, above daily freq')

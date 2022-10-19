@@ -7,7 +7,7 @@
 # Desc:
 #   Local historical data management.
 # ======================================
-
+import numpy as np
 import pymysql
 from sqlalchemy import create_engine
 import pandas as pd
@@ -3669,6 +3669,26 @@ def _freq_down(hist_data, target_freq, how='last'):
     else:
         # for some unexpected case
         raise ValueError(f'_freq_up method {how} can not be recognized.')
+
+
+def _trade_time_index(start, end, periods, freq, start_am, end_am, start_pm, end_pm):
+    """ 生成一个符合交易时间段的datetime index
+
+    :param start:
+    :param end:
+    :param periods:
+    :param freq:
+    :param start_am:
+    :param end_am:
+    :param start_pm:
+    :param end_pm:
+    :return:
+    """
+    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq)
+    idx_am = time_index.indexer_between_time(start_am, end_am)
+    idx_pm = time_index.indexer_between_time(start_pm, end_pm)
+    idxer = np.union1d(idx_am, idx_pm)
+    return time_index[idxer]
 
 
 def _resample_index(index, target_freq):
