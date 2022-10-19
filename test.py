@@ -14443,6 +14443,10 @@ class TestDataSource(unittest.TestCase):
         print(f'test freq down, across daily freq')
         raise NotImplementedError
 
+    def test_trade_time_index(self):
+        """ 测试函数是否能正确生成交易时段的indexer"""
+
+
 
 def test_suite(*args):
     suite = unittest.TestSuite()

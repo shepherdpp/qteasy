@@ -3671,7 +3671,18 @@ def _freq_down(hist_data, target_freq, how='last'):
         raise ValueError(f'_freq_up method {how} can not be recognized.')
 
 
-def _trade_time_index(start, end, periods, freq, start_am, end_am, start_pm, end_pm):
+def _trade_time_index(start=None,
+                      end=None,
+                      periods=None,
+                      freq=None,
+                      start_am='9:30:00',
+                      end_am='11:30:00',
+                      include_start_am=True,
+                      include_end_am=True,
+                      start_pm='13:00:00',
+                      end_pm='15:00:00',
+                      include_start_pm=False,
+                      include_end_pm=True):
     """ 生成一个符合交易时间段的datetime index
 
     :param start:
@@ -3680,13 +3691,19 @@ def _trade_time_index(start, end, periods, freq, start_am, end_am, start_pm, end
     :param freq:
     :param start_am:
     :param end_am:
+    :param include_start_am:
+    :param include_end_am:
     :param start_pm:
     :param end_pm:
+    :param include_start_pm
+    :param include_end_pm
     :return:
     """
     time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq)
-    idx_am = time_index.indexer_between_time(start_am, end_am)
-    idx_pm = time_index.indexer_between_time(start_pm, end_pm)
+    idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
+                                             include_start=include_start_am, include_end=include_end_am)
+    idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
+                                             include_start=include_start_pm, include_end=include_end_pm)
     idxer = np.union1d(idx_am, idx_pm)
     return time_index[idxer]
 
