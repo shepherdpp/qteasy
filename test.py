@@ -75,7 +75,7 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col
+from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -14445,8 +14445,62 @@ class TestDataSource(unittest.TestCase):
 
     def test_trade_time_index(self):
         """ 测试函数是否能正确生成交易时段的indexer"""
+        print('create datetime index with freq "D"')
+        indexer = _trade_time_index('20200101', '20200105', freq='d')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200101'),
+                                         pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103'),
+                                         pd.to_datetime('20200104'),
+                                         pd.to_datetime('20200105')])
 
+        print('create datetime index with freq "30min" with default trade time')
+        indexer = _trade_time_index('20200101', '20200102', freq='30min')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
 
+        print('create datetime index with freq "w" and check if all dates are Fridays')
+        indexer = _trade_time_index('20200101', '20200201', freq='w')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertTrue(
+                all(day.day_name() == 'Friday' for day in indexer)
+                        )
+
+        print('create datetime index with start/end/periods')
+        print('when freq can be inferred')
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=49)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+        print('when freq can NOT be inferred')
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with start/periods/freq')
 
 def test_suite(*args):
     suite = unittest.TestSuite()

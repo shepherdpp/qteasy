@@ -3699,13 +3699,47 @@ def _trade_time_index(start=None,
     :param include_end_pm
     :return:
     """
+    # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
+    if freq is not None:
+        freq = str(freq).lower()
+        main_freq = freq.split('-')[0]
+        if main_freq[-1:] in ['w']:
+            freq = main_freq + '-FRI'
+
     time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq)
-    idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
-                                             include_start=include_start_am, include_end=include_end_am)
-    idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
-                                             include_start=include_start_pm, include_end=include_end_pm)
-    idxer = np.union1d(idx_am, idx_pm)
-    return time_index[idxer]
+    # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
+    if not time_index.freqstr is None:
+        freq_str = time_index.freqstr.lower().split('-')[0]
+    else:
+        freq_str = time_index.inferred_freq
+        if freq_str is not None:
+            freq_str = freq_str.lower()
+        else:
+            time_delta = time_index[1] - time_index[0]
+            if time_delta < pd.Timedelta(1, 'd'):
+                freq_str = 'H'
+            else:
+                freq_str = 'D'
+    ''' freq_str有以下几种不同的情况：
+        min:        T
+        hour:       H
+        day:        D
+        week:       W-SUN/...
+        month:      M
+        quarter:    Q-DEC/...
+        year:       A-DEC/...
+        由于周、季、年三种情况存在符合字符串，因此需要split
+    '''
+    import pdb; pdb.set_trace()
+    if freq_str[-1:] in ['t', 'h']:
+        idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
+                                                 include_start=include_start_am, include_end=include_end_am)
+        idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
+                                                 include_start=include_start_pm, include_end=include_end_pm)
+        idxer = np.union1d(idx_am, idx_pm)
+        return time_index[idxer]
+    else:
+        return time_index
 
 
 def _resample_index(index, target_freq):
