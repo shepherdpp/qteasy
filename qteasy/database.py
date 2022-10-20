@@ -3568,7 +3568,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
-def _freq_up(hist_data, target_freq, how='ffill'):
+def _freq_up(hist_data, target_freq, method='ffill'):
     """ 升高获取数据的频率，通过插值的方式在低频数据中插入数据，使历史数据的时间频率
     符合target_freq
 
@@ -3581,7 +3581,7 @@ def _freq_up(hist_data, target_freq, how='ffill'):
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
          如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
 
-    :param how: str
+    :param method: str
         数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
         例如，填充下列数据(?表示插入的数据）
             [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
@@ -3604,20 +3604,20 @@ def _freq_up(hist_data, target_freq, how='ffill'):
     # this new function is used to resample index according to new frequency
     resampled_index = _resample_index(hist_data.index, target_freq)
     resampled = hist_data.resample(target_freq)
-    if how == 'ffill':
+    if method == 'ffill':
         return resampled.ffill()
-    elif how == 'bfill':
+    elif method == 'bfill':
         return resampled.bfill()
-    elif how == 'nan':
+    elif method == 'nan':
         return resampled.last()
-    elif how == 'zero':
+    elif method == 'zero':
         return resampled.last().fillna(0)
     else:
         # for some unexpected case
-        raise ValueError(f'_freq_up method {how} can not be recognized.')
+        raise ValueError(f'_freq_up method {method} can not be recognized.')
 
 
-def _freq_down(hist_data, target_freq, how='last'):
+def _freq_down(hist_data, target_freq, method='last'):
     """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
     符合target_freq
 
@@ -3630,7 +3630,7 @@ def _freq_down(hist_data, target_freq, how='last'):
          - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
          如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
 
-    :param how: str
+    :param method: str
         数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
         例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
@@ -3654,21 +3654,25 @@ def _freq_down(hist_data, target_freq, how='last'):
     if not isinstance(target_freq, str):
         raise TypeError
     resampled = hist_data.resample(target_freq)
-    if how in ['last', 'close']:
-        return resampled.last()
-    elif how in ['first', 'open']:
+    data_index = hist_data.index
+    resampled_index = _trade_time_index(start=data_index[0], end=data_index[-1], freq=target_freq)
+    if method in ['last', 'close']:
+        resampled = resampled.last()
+        import pdb; pdb.set_trace()
+        return resampled.reindex(index=resampled_index)
+    elif method in ['first', 'open']:
         return resampled.first()
-    elif how in ['max', 'high']:
+    elif method in ['max', 'high']:
         return resampled.max()
-    elif how in ['min', 'low']:
+    elif method in ['min', 'low']:
         return resampled.min()
-    elif how == ['avg', 'mean']:
+    elif method == ['avg', 'mean']:
         return resampled.mean()
-    elif how == ['sum', 'total']:
+    elif method == ['sum', 'total']:
         return resampled.sum()
     else:
         # for some unexpected case
-        raise ValueError(f'_freq_up method {how} can not be recognized.')
+        raise ValueError(f'_freq_up method {method} can not be recognized.')
 
 
 def _trade_time_index(start=None,
@@ -3717,9 +3721,9 @@ def _trade_time_index(start=None,
         else:
             time_delta = time_index[1] - time_index[0]
             if time_delta < pd.Timedelta(1, 'd'):
-                freq_str = 'H'
+                freq_str = 'h'
             else:
-                freq_str = 'D'
+                freq_str = 'd'
     ''' freq_str有以下几种不同的情况：
         min:        T
         hour:       H
@@ -3730,7 +3734,6 @@ def _trade_time_index(start=None,
         year:       A-DEC/...
         由于周、季、年三种情况存在符合字符串，因此需要split
     '''
-    import pdb; pdb.set_trace()
     if freq_str[-1:] in ['t', 'h']:
         idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
                                                  include_start=include_start_am, include_end=include_end_am)

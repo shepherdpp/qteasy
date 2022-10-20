@@ -76,6 +76,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import _freq_up, _freq_down
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -14436,9 +14437,10 @@ class TestDataSource(unittest.TestCase):
 
         print(f'test freq up, across daily freq')
 
-        print(f'test freq donw, above daily freq')
+        print(f'test freq down, above daily freq')
 
         print(f'test freq down, below daily freq')
+        print(_freq_down(daily_data, target_freq='w', method='last'))
 
         print(f'test freq down, across daily freq')
         raise NotImplementedError
@@ -14490,6 +14492,21 @@ class TestDataSource(unittest.TestCase):
                          )
         print('when freq can NOT be inferred')
         indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        self.assertEqual(len(indexer), 8)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:47:45.306122448',
+                                              '2020-01-01 10:17:08.571428571',
+                                              '2020-01-01 10:46:31.836734693',
+                                              '2020-01-01 11:15:55.102040816',
+                                              '2020-01-01 13:13:28.163265306',
+                                              '2020-01-01 13:42:51.428571428',
+                                              '2020-01-01 14:12:14.693877551',
+                                              '2020-01-01 14:41:37.959183673'])
+                              )
+                         )
+
+        print('create datetime index with start/periods/freq')
+        indexer = _trade_time_index(start='20200101', freq='30min', periods=49)
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
                          list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
@@ -14499,8 +14516,6 @@ class TestDataSource(unittest.TestCase):
                                               '2020-01-01 15:00:00'])
                               )
                          )
-
-        print('create datetime index with start/periods/freq')
 
 def test_suite(*args):
     suite = unittest.TestSuite()
