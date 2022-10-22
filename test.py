@@ -14430,6 +14430,42 @@ class TestDataSource(unittest.TestCase):
         print(f'test freq up, above daily freq')
 
         print(f'test freq up, below daily freq')
+        print(weekly_data)
+        print('resample weekly data to daily ffill')
+        resampled = _freq_up(weekly_data, target_freq='d', method='ffill')
+        print(resampled)
+        sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily bfill')
+        resampled = _freq_up(weekly_data, target_freq='2w-Fri', method='bfill')
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily none')
+        resampled = _freq_up(weekly_data, target_freq='2w-Wed', method='nan')
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily zero')
+        resampled = _freq_up(weekly_data, target_freq='m', method='zero')
+        print(resampled)
+        sampled_rows = [4, 8, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
 
         print(f'test freq up, across daily freq')
 
@@ -14472,6 +14508,36 @@ class TestDataSource(unittest.TestCase):
             res = resampled.iloc[pos].values
             # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly max')
+        resampled = _freq_down(weekly_data, target_freq='m', method='high')
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly avg')
+        resampled = _freq_down(weekly_data, target_freq='m', method='mean')
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('test wrong parameter: resample weekly data to daily avg')
+        resampled = _freq_down(weekly_data, target_freq='d', method='mean')
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
             self.assertTrue(np.allclose(res, target))
 
         print(f'test freq down, across daily freq')

@@ -3602,20 +3602,24 @@ def _freq_up(hist_data, target_freq, method='ffill'):
     """
     if not isinstance(target_freq, str):
         raise TypeError
-    # this new function is used to resample index according to new frequency
-    resampled_index = _resample_index(hist_data.index, target_freq)
+
     resampled = hist_data.resample(target_freq)
     if method == 'ffill':
-        return resampled.ffill()
+        resampled = resampled.ffill()
     elif method == 'bfill':
-        return resampled.bfill()
-    elif method == 'nan':
-        return resampled.last()
+        resampled = resampled.bfill()
+    elif method in ['nan', 'none']:
+        resampled = resampled.last()
     elif method == 'zero':
-        return resampled.last().fillna(0)
+        resampled = resampled.last().fillna(0)
     else:
         # for some unexpected case
         raise ValueError(f'_freq_up method {method} can not be recognized.')
+
+    # the following should only be done in sub-daily mode
+    resampled_index = resampled.index
+    resampled_index = _trade_time_index(start=resampled_index[0], end=resampled_index[-1], freq=target_freq)
+    return resampled.reindex(index=resampled_index)
 
 
 def _freq_down(hist_data, target_freq, method='last'):
