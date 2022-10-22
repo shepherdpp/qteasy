@@ -3656,24 +3656,26 @@ def _freq_down(hist_data, target_freq, method='last'):
         raise TypeError
     resampled = hist_data.resample(target_freq)
     data_index = hist_data.index
-    resampled_index = _trade_time_index(start=data_index[0], end=data_index[-1], freq=target_freq)
     if method in ['last', 'close']:
         resampled = resampled.last()
-        import pdb; pdb.set_trace()
-        return resampled.reindex(index=resampled_index)
     elif method in ['first', 'open']:
-        return resampled.first()
+        resampled = resampled.first()
     elif method in ['max', 'high']:
-        return resampled.max()
+        resampled = resampled.max()
     elif method in ['min', 'low']:
-        return resampled.min()
-    elif method == ['avg', 'mean']:
-        return resampled.mean()
-    elif method == ['sum', 'total']:
-        return resampled.sum()
+        resampled = resampled.min()
+    elif method in ['avg', 'mean']:
+        resampled = resampled.mean()
+    elif method in ['sum', 'total']:
+        resampled = resampled.sum()
     else:
         # for unexpected cases
-        raise ValueError(f'_freq_up method {method} can not be recognized.')
+        raise ValueError(f'_freq_down method {method} can not be recognized.')
+
+    # the following should only be done in sub-daily mode
+    resampled_index = resampled.index
+    resampled_index = _trade_time_index(start=resampled_index[0], end=resampled_index[-1], freq=target_freq)
+    return resampled.reindex(index=resampled_index)
 
 
 def _trade_time_index(start=None,

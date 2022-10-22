@@ -14424,9 +14424,8 @@ class TestDataSource(unittest.TestCase):
         columns1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         columns2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
 
-        daily_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
-        sub_daily_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
-
+        weekly_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
+        hourly_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
 
         print(f'test freq up, above daily freq')
 
@@ -14437,11 +14436,43 @@ class TestDataSource(unittest.TestCase):
         print(f'test freq down, above daily freq')
 
         print(f'test freq down, below daily freq')
-        print(daily_data)
-        print('resample daily data to weekly sunday last')
-        print(_freq_down(daily_data, target_freq='w-Sun', method='last'))
-        print('resample daily data to weekly Friday last')
-        print(_freq_down(daily_data, target_freq='w-Fri', method='last'))
+        print(weekly_data)
+        print('resample weekly data to bi-weekly sunday last')
+        resampled = _freq_down(weekly_data, target_freq='2w-Sun', method='last')
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Friday last')
+        resampled = _freq_down(weekly_data, target_freq='2w-Fri', method='last')
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Wednesday first')
+        resampled = _freq_down(weekly_data, target_freq='2w-Wed', method='first')
+        print(resampled)
+        sampled_rows = [0, 1, 3, 5, 7, 9]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly sum')
+        resampled = _freq_down(weekly_data, target_freq='m', method='sum')
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
 
         print(f'test freq down, across daily freq')
         raise NotImplementedError
