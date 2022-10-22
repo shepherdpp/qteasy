@@ -14427,9 +14427,6 @@ class TestDataSource(unittest.TestCase):
         daily_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
         sub_daily_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
 
-        print(daily_index, weekly_index, monthly_index, daily_data)
-        print(sub_daily_index, hourly_index, hourly_index_tt, min_index,
-              sub_daily_data)
 
         print(f'test freq up, above daily freq')
 
@@ -14440,7 +14437,11 @@ class TestDataSource(unittest.TestCase):
         print(f'test freq down, above daily freq')
 
         print(f'test freq down, below daily freq')
-        print(_freq_down(daily_data, target_freq='w', method='last'))
+        print(daily_data)
+        print('resample daily data to weekly sunday last')
+        print(_freq_down(daily_data, target_freq='w-Sun', method='last'))
+        print('resample daily data to weekly Friday last')
+        print(_freq_down(daily_data, target_freq='w-Fri', method='last'))
 
         print(f'test freq down, across daily freq')
         raise NotImplementedError
@@ -14470,12 +14471,12 @@ class TestDataSource(unittest.TestCase):
                               )
                          )
 
-        print('create datetime index with freq "w" and check if all dates are Fridays')
+        print('create datetime index with freq "w" and check if all dates are Sundays (default)')
         indexer = _trade_time_index('20200101', '20200201', freq='w')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
         self.assertTrue(
-                all(day.day_name() == 'Friday' for day in indexer)
+                all(day.day_name() == 'Sunday' for day in indexer)
                         )
 
         print('create datetime index with start/end/periods')
@@ -14516,6 +14517,8 @@ class TestDataSource(unittest.TestCase):
                                               '2020-01-01 15:00:00'])
                               )
                          )
+
+        print('test false input')
 
 def test_suite(*args):
     suite = unittest.TestSuite()

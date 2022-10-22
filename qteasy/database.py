@@ -3172,7 +3172,8 @@ class DataSource:
                             reversed_par_seq=False,
                             parallel=True,
                             process_count=None,
-                            chunk_size=100):
+                            chunk_size=100,
+                            save_log=False):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
         :param tables:
@@ -3671,7 +3672,7 @@ def _freq_down(hist_data, target_freq, method='last'):
     elif method == ['sum', 'total']:
         return resampled.sum()
     else:
-        # for some unexpected case
+        # for unexpected cases
         raise ValueError(f'_freq_up method {method} can not be recognized.')
 
 
@@ -3706,13 +3707,10 @@ def _trade_time_index(start=None,
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
     if freq is not None:
         freq = str(freq).lower()
-        main_freq = freq.split('-')[0]
-        if main_freq[-1:] in ['w']:
-            freq = main_freq + '-FRI'
 
     time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq)
     # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
-    if not time_index.freqstr is None:
+    if time_index.freqstr is not None:
         freq_str = time_index.freqstr.lower().split('-')[0]
     else:
         freq_str = time_index.inferred_freq
