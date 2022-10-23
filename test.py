@@ -76,7 +76,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
-from qteasy.database import _freq_up, _freq_down
+from qteasy.database import _resample_data
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -14419,21 +14419,75 @@ class TestDataSource(unittest.TestCase):
         min_index = pd.date_range(start='20200101', end='20200110', freq='15min')
 
         test_data1 = np.random.randint(20, size=(13, 7)).astype('float')  # 用于daily_index数据
-        test_data2 = np.random.randint(20, size=(217, 11)).astype('float')  # 用于sub_daily_index数据
+        test_data2 = np.random.randint(10, size=(217, 11)).astype('float')  # 用于sub_daily_index数据
 
         columns1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
         columns2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
 
         weekly_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
         hourly_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
+        hourly_data_tt = hourly_data.reindex(index=hourly_index_tt)
 
         print(f'test resample, above daily freq')
-        print(hourly_data)
+        print(hourly_data.head(25))
+        print(hourly_data_tt.head(15))
+        print(f'verify that resampled from hourly data and hourly tt data are the same')
+        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        resampled_tt = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        self.assertTrue(np.allclose(resampled, resampled_tt))
+        print('checks resample hourly data to 15 min')
+        print(resampled.head(25))
+        sampled_rows = [(0, 2), (2, 6), (6, 9), (None, None), (9, 12), (12, 16), (16, 16)]
+        for day in range(9):
+            for pos in range(len(sampled_rows)):
+                start = sampled_rows[pos][0]
+                end = sampled_rows[pos][1]
+                if start is None:
+                    continue
+                for row in range(start + day * 17, end + day * 17):
+                    try:
+                        res = hourly_data_tt.iloc[pos + day * 7].values
+                        target = resampled.iloc[row].values
+                        self.assertTrue(np.allclose(res, target))
+                    except:
+                        import pdb; pdb.set_trace()
+
+        print('checks resample hourly data to 2d')
+        resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
+        resampled_2 = _resample_data(hourly_data, target_freq='2d', method='bfill')
+        resampled_3 = _resample_data(hourly_data, target_freq='2d', method='nan')
+        resampled_4 = _resample_data(hourly_data, target_freq='2d', method='zero')
+        print(resampled_1)
+        print(resampled_2)
+        print(resampled_3)
+        print(resampled_4)
+        print('resample with improper methods and check if they are same as "first"')
+        self.assertTrue(np.allclose(resampled_1, resampled_2))
+        self.assertTrue(np.allclose(resampled_1, resampled_3))
+        self.assertTrue(np.allclose(resampled_1, resampled_4))
+
+        print('check sample hourly data to d with proper methods')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
+        print(resampled_1)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print(resampled_2)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
+            self.assertTrue(np.allclose(res, target))
 
         print(f'test resample, below daily freq')
         print(weekly_data)
         print('resample weekly data to daily ffill')
-        resampled = _freq_up(weekly_data, target_freq='d', method='ffill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='ffill')
         print(resampled)
         sampled_rows = [(0, 7), (7, 14), (14, 21), (21, 28), (28, 35), (35, 42),
                         (42, 49), (49, 56), (56, 63), (63, 70), (70, 77), (77, 84)]
@@ -14444,7 +14498,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to daily bfill')
-        resampled = _freq_up(weekly_data, target_freq='d', method='bfill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='bfill')
         print(resampled)
         sampled_rows = [(0, 1), (1, 8), (8, 15), (15, 22), (22, 29), (29, 36),
                         (36, 43), (43, 50), (50, 57), (57, 64), (64, 71), (71, 78), (78, 84)]
@@ -14455,7 +14509,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to daily none')
-        resampled = _freq_up(weekly_data, target_freq='d', method='nan')
+        resampled = _resample_data(weekly_data, target_freq='d', method='nan')
         print(resampled)
         sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
         for pos in range(len(resampled)):
@@ -14468,7 +14522,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(all(np.isnan(item) for item in res))
 
         print('resample weekly data to daily zero')
-        resampled = _freq_up(weekly_data, target_freq='d', method='zero')
+        resampled = _resample_data(weekly_data, target_freq='d', method='zero')
         print(resampled)
         sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
         for pos in range(len(resampled)):
@@ -14481,7 +14535,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(all(item == 0. for item in res))
 
         print('resample weekly data to bi-weekly sunday last')
-        resampled = _freq_down(weekly_data, target_freq='2w-Sun', method='last')
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last')
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10]
         for pos in range(len(sampled_rows)):
@@ -14490,7 +14544,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Friday last')
-        resampled = _freq_down(weekly_data, target_freq='2w-Fri', method='last')
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last')
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10, 12]
         for pos in range(len(sampled_rows)):
@@ -14499,7 +14553,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Wednesday first')
-        resampled = _freq_down(weekly_data, target_freq='2w-Wed', method='first')
+        resampled = _resample_data(weekly_data, target_freq='2w-Wed', method='first')
         print(resampled)
         sampled_rows = [0, 1, 3, 5, 7, 9]
         for pos in range(len(sampled_rows)):
@@ -14508,7 +14562,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly sum')
-        resampled = _freq_down(weekly_data, target_freq='m', method='sum')
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum')
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -14518,7 +14572,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly max')
-        resampled = _freq_down(weekly_data, target_freq='m', method='high')
+        resampled = _resample_data(weekly_data, target_freq='m', method='high')
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -14528,7 +14582,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly avg')
-        resampled = _freq_down(weekly_data, target_freq='m', method='mean')
+        resampled = _resample_data(weekly_data, target_freq='m', method='mean')
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
