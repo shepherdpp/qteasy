@@ -14409,14 +14409,9 @@ class TestDataSource(unittest.TestCase):
     def test_freq_resample(self):
         """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（日频到日频以下时，仅保留交易时段）"""
         print(f'build test data')
-        daily_index = pd.date_range(start='20200101', end='20200331', freq='d')
         weekly_index = pd.date_range(start='20200101', end='20200331', freq='W-Fri')
-        monthly_index = pd.date_range(start='20200101', end='20200331', freq='M')
-
-        sub_daily_index = pd.date_range(start='20200101', end='20200110', freq='d')
         hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
         hourly_index_tt = hourly_index[hourly_index.indexer_between_time('9:00:00', '15:00:00')]
-        min_index = pd.date_range(start='20200101', end='20200110', freq='15min')
 
         test_data1 = np.random.randint(20, size=(13, 7)).astype('float')  # 用于daily_index数据
         test_data2 = np.random.randint(10, size=(217, 11)).astype('float')  # 用于sub_daily_index数据
@@ -14487,6 +14482,20 @@ class TestDataSource(unittest.TestCase):
             if not np.allclose(res, target):
                 import pdb; pdb.set_trace()
             self.assertTrue(np.allclose(res, target))
+
+        print('resample daily data to 30min data')
+        daily_data = _resample_data(hourly_data, target_freq='d', method='last').iloc[0:4]
+        print(daily_data)
+        resampled = _resample_data(daily_data, target_freq='30min', method='ffill')
+        print(resampled)
+        # TODO: last day data missing when resampling daily data to sub-daily data
+        #   this is to be improved
+        sampled_rows = [(0, 9), (9, 18), (18, 27)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = daily_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
 
         print(f'test resample, below daily freq')
         print(weekly_data)
