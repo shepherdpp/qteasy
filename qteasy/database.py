@@ -3617,6 +3617,7 @@ def _resample_data(hist_data, target_freq, method='last'):
         DataFrame:
         一个重新设定index并填充好数据的历史数据DataFrame
     """
+
     if not isinstance(target_freq, str):
         raise TypeError
     resampled = hist_data.resample(target_freq)
@@ -3715,16 +3716,6 @@ def _trade_time_index(start=None,
         return time_index[idxer]
     else:
         return time_index
-
-
-def _resample_index(index, target_freq):
-    """ resample index
-
-    :param index:
-    :param target_freq:
-    :return:
-    """
-    raise NotImplementedError
 
 
 # noinspection PyUnresolvedReferences

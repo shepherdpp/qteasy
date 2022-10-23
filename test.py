@@ -9777,7 +9777,8 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
     def test_get_history_panel(self):
-        # test get history panel data
+        """ 测试是否能正确获取HistoryPanel"""
+        print('test get history panel data')#
         hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           htypes='wt-000003.SH, close, wt-000300.SH',
                                           start='20210101',
@@ -9789,7 +9790,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
         print(hp)
 
-        # test get history panel data without shares
+        print('test get history panel data without shares')#
         hp = qt.history.get_history_panel(shares=None,
                                           htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH',
                                           start='20210101',
@@ -9800,6 +9801,13 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
         self.assertEqual(hp.shares, ['none'])
         print(hp)
+
+        print('test get history panel data from converting multiple frequencies')
+
+        print('test get history panel data with / without all NaN values')
+
+        print('test getting history panel with incomplete arguments')
+        raise NotImplementedError
 
     def test_ffill_data(self):
         """ 测试前向填充NaN值"""

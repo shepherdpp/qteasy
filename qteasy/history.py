@@ -1164,7 +1164,9 @@ def get_history_panel(htypes,
                       freq=None,
                       asset_type: str = None,
                       adj: str = None,
-                      data_source=None):
+                      data_source=None,
+                      keep_nan=False,
+                      resample_method='last'):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -1213,6 +1215,14 @@ def get_history_panel(htypes,
              - none / n: 不复权(默认值)
              - back / b: 后复权
              - forward / fw / f: 前复权
+
+        :param keep_nan: bool
+            是否保留全NaN的行
+
+        :param resample_method: str
+            如果数据需要升频或降频时，调整频率的方法
+            详情请参阅database._resample_data()的docstring
+
     :param data_source: DataSource Object
     :return:
     """
@@ -1341,6 +1351,16 @@ def get_history_panel(htypes,
         if pure_ref_dfs:
             new_reference_dfs.update(pure_ref_dfs)
         all_dfs = {htyp: new_reference_dfs[htyp] for htyp in htypes}
+
+    # resample所有的df，使他们的数据频率和时间对齐
+    # TODO: 目前存在一个问题：当日频数据仍然处理为日频时，会出现周六周日即非交易日的数据
+    #   这个问题的原因在于database生成resample_index的时候，没有考虑交易日。
+    #   解决方案似乎可以考虑在resample时引入交易日
+    #   或者考虑在historyPanel的组成df中增加选项 -保留/不保留全NaN的行
+    for htyp in htypes:
+        from .database import _resample_data
+        df = all_dfs[htyp]
+        all_dfs[htyp] = _resample_data(df, target_freq=freq, method='last')
 
     if shares:
         result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
