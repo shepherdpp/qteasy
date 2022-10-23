@@ -14470,18 +14470,22 @@ class TestDataSource(unittest.TestCase):
         resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
         resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
         print(resampled_1)
-        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        sampled_rows = [23, 47, 71, 95, 119, 143, 167, 191]
         for pos in range(len(sampled_rows)):
-            res = resampled.iloc[pos].values
-            target = weekly_data.iloc[sampled_rows[pos]].values
+            res = resampled_1.iloc[pos].values
+            target = hourly_data.iloc[sampled_rows[pos]].values
             self.assertTrue(np.allclose(res, target))
 
         print(resampled_2)
-        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        sampled_row_starts = [0, 24, 48, 72, 96, 120, 144, 168]
+        sampled_row_ends = [24, 48, 72, 96, 120, 144, 168, 192]
         for pos in range(len(sampled_rows)):
-            res = resampled.iloc[pos].values
-            # import pdb; pdb.set_trace()
-            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
+            res = resampled_2.iloc[pos].values
+            start = sampled_row_starts[pos]
+            end = sampled_row_ends[pos]
+            target = hourly_data.iloc[start:end].values.mean(0)
+            if not np.allclose(res, target):
+                import pdb; pdb.set_trace()
             self.assertTrue(np.allclose(res, target))
 
         print(f'test resample, below daily freq')
@@ -14590,9 +14594,6 @@ class TestDataSource(unittest.TestCase):
             # import pdb; pdb.set_trace()
             target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
             self.assertTrue(np.allclose(res, target))
-
-        print(f'test freq up, across daily freq')
-        raise NotImplementedError
 
     def test_trade_time_index(self):
         """ 测试函数是否能正确生成交易时段的indexer"""
