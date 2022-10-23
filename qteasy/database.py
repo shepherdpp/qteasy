@@ -3569,60 +3569,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
-def _freq_up(hist_data, target_freq, method='ffill'):
-    """ 升高获取数据的频率，通过插值的方式在低频数据中插入数据，使历史数据的时间频率
-    符合target_freq
-
-    :param hist_data: pd.DataFrame
-        历史数据，是一个index为日期/时间的DataFrame
-
-    :param target_freq: str
-        历史数据的目标频率，包括以下选项：
-         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
-         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
-         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
-
-    :param method: str
-        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
-        例如，填充下列数据(?表示插入的数据）
-            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
-        缺失数据的填充方法如下:
-        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
-        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
-            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
-        - 'nan': 使用NaN值填充缺失数据：
-            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
-        - 'zero': 使用0值填充缺失数据：
-            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
-
-    :return:
-        DataFrame:
-        一个重新设定index并填充好数据的历史数据DataFrame
-    """
-    if not isinstance(target_freq, str):
-        raise TypeError
-
-    resampled = hist_data.resample(target_freq)
-    if method == 'ffill':
-        resampled = resampled.ffill()
-    elif method == 'bfill':
-        resampled = resampled.bfill()
-    elif method in ['nan', 'none']:
-        resampled = resampled.last()
-    elif method == 'zero':
-        resampled = resampled.last().fillna(0)
-    else:
-        # for some unexpected case
-        raise ValueError(f'_freq_up method {method} can not be recognized.')
-
-    # the following should only be done in sub-daily mode
-    resampled_index = resampled.index
-    resampled_index = _trade_time_index(start=resampled_index[0], end=resampled_index[-1], freq=target_freq)
-    return resampled.reindex(index=resampled_index)
-
-
-def _freq_down(hist_data, target_freq, method='last'):
+def _resample_data(hist_data, target_freq, method='last'):
     """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
     符合target_freq
 
@@ -3636,6 +3583,7 @@ def _freq_down(hist_data, target_freq, method='last'):
          如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
 
     :param method: str
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
         数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
         例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
@@ -3652,6 +3600,19 @@ def _freq_down(hist_data, target_freq, method='last'):
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
         - 'sum'/'total': 使用合并区间的平均值作为合并值：
             [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        例如，填充下列数据(?表示插入的数据）
+            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+        缺失数据的填充方法如下:
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+        - 'nan': 使用NaN值填充缺失数据：
+            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+        - 'zero': 使用0值填充缺失数据：
+            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
     :return:
         DataFrame:
         一个重新设定index并填充好数据的历史数据DataFrame
@@ -3659,7 +3620,6 @@ def _freq_down(hist_data, target_freq, method='last'):
     if not isinstance(target_freq, str):
         raise TypeError
     resampled = hist_data.resample(target_freq)
-    data_index = hist_data.index
     if method in ['last', 'close']:
         resampled = resampled.last()
     elif method in ['first', 'open']:
@@ -3672,9 +3632,17 @@ def _freq_down(hist_data, target_freq, method='last'):
         resampled = resampled.mean()
     elif method in ['sum', 'total']:
         resampled = resampled.sum()
+    elif method == 'ffill':
+        resampled = resampled.ffill()
+    elif method == 'bfill':
+        resampled = resampled.bfill()
+    elif method in ['nan', 'none']:
+        resampled = resampled.first()
+    elif method == 'zero':
+        resampled = resampled.first().fillna(0)
     else:
         # for unexpected cases
-        raise ValueError(f'_freq_down method {method} can not be recognized.')
+        raise ValueError(f'resample method {method} can not be recognized.')
 
     # the following should only be done in sub-daily mode
     resampled_index = resampled.index
