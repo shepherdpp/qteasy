@@ -1165,8 +1165,9 @@ def get_history_panel(htypes,
                       asset_type: str = None,
                       adj: str = None,
                       data_source=None,
-                      keep_nan=False,
-                      resample_method='last'):
+                      drop_nan=True,
+                      resample_method='last',
+                      as_data_frame=False):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -1216,12 +1217,21 @@ def get_history_panel(htypes,
              - back / b: 后复权
              - forward / fw / f: 前复权
 
-        :param keep_nan: bool
+        :param drop_nan: bool
             是否保留全NaN的行
 
         :param resample_method: str
             如果数据需要升频或降频时，调整频率的方法
             详情请参阅database._resample_data()的docstring
+
+        :param drop_nan: bool 默认 True
+            是否删除全部为NaN的数据
+
+        :param resample_method: str
+            处理数据频率更新时的方法
+
+        :param as_data_frame: bool 默认False
+            是否返回DataFrame对象，True时返回HistoryPanel对象
 
     :param data_source: DataSource Object
     :return:
@@ -1352,15 +1362,23 @@ def get_history_panel(htypes,
             new_reference_dfs.update(pure_ref_dfs)
         all_dfs = {htyp: new_reference_dfs[htyp] for htyp in htypes}
 
-    # resample所有的df，使他们的数据频率和时间对齐
+    # 处理所有的df，根据设定执行以下几个步骤：
+    #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
+    #  2，检查整行NaN值得情况，根据设定去掉或保留这些行
+    #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
     # TODO: 目前存在一个问题：当日频数据仍然处理为日频时，会出现周六周日即非交易日的数据
     #   这个问题的原因在于database生成resample_index的时候，没有考虑交易日。
     #   解决方案似乎可以考虑在resample时引入交易日
     #   或者考虑在historyPanel的组成df中增加选项 -保留/不保留全NaN的行
     for htyp in htypes:
-        from .database import _resample_data
-        df = all_dfs[htyp]
-        all_dfs[htyp] = _resample_data(df, target_freq=freq, method='last')
+        if resample_method is not None:
+            from .database import _resample_data
+            all_dfs[htyp] = _resample_data(all_dfs[htyp], target_freq=freq, method=resample_method)
+        if drop_nan:
+            all_dfs[htyp] = all_dfs[htyp].dropna(how='all')
+    if as_data_frame:
+        # TODO: 将所有df合并为一个multi_index的DataFrame
+        return all_dfs
 
     if shares:
         result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)

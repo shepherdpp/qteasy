@@ -1046,7 +1046,8 @@ def get_history_data(htypes,
                      freq=None,
                      asset_type=None,
                      adj=None,
-                     fill_gap_how=None,
+                     keep_nan=None,
+                     resample_method=None,
                      as_data_frame=None):
     """ 从默认数据源获取历史数据
 
@@ -1057,7 +1058,8 @@ def get_history_data(htypes,
     :param freq:
     :param asset_type:
     :param adj:
-    :param fill_gap_how:
+    :param keep_nan:
+    :param resample_method:
     :param as_data_frame: bool, 是否返回DataFrame，默认True，否则返回HistoryPanel
     :return:
     """
@@ -1102,8 +1104,8 @@ def get_history_data(htypes,
     if adj is None:
         adj = 'n'
 
-    if fill_gap_how is None:
-        fill_gap_how = 'ffill'
+    if resample_method is None:
+        resample_method = 'ffill'
 
     if as_data_frame is None:
         as_data_frame = True
@@ -1114,7 +1116,10 @@ def get_history_data(htypes,
                              end=end,
                              freq=freq,
                              asset_type=asset_type,
-                             adj=adj)
+                             adj=adj,
+                             resample_method=resample_method,
+                             drop_nan=keep_nan,
+                             as_data_frame=as_data_frame)
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整

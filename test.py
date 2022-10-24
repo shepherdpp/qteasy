@@ -9797,7 +9797,8 @@ class TestHistoryPanel(unittest.TestCase):
                                           end='20210202',
                                           freq='d',
                                           asset_type='any',
-                                          adj='none')
+                                          adj='none',
+                                          drop_nan=True)
         self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
         self.assertEqual(hp.shares, ['none'])
         print(hp)
