@@ -22,13 +22,13 @@ import datetime
 import qteasy
 from .history import get_history_panel, HistoryPanel, stack_dataframes
 from .utilfuncs import time_str_format, progress_bar, str_to_list, regulate_date_format, match_ts_code
-from .utilfuncs import is_market_trade_day, next_market_trade_day, nearest_market_trade_day
+from .utilfuncs import next_market_trade_day
 from .utilfuncs import AVAILABLE_ASSET_TYPES, _partial_lev_ratio
 from .space import Space, ResultPool
 from .finance import Cost, CashPlan
 from .operator import Operator
-from .visual import _plot_loop_result, _print_loop_result, _print_test_result, \
-    _print_operation_signal, _plot_test_result
+from .visual import _plot_loop_result, _print_loop_result, _print_test_result
+from .visual import _print_operation_signal, _plot_test_result
 from .evaluate import evaluate, performance_statistics
 from ._arg_validators import _update_config_kwargs, ConfigDict
 

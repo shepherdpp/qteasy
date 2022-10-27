@@ -3798,26 +3798,72 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
-def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
+def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_freq=False):
     """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
         仅支持精确匹配。无法精确匹配数据表时，报错
 
-    :param htypes:
-    :param freq:
-    :param asset_type:
-    :param method: 两种匹配方式：
-                    - 'exact': 一一对应匹配，针对输入的每一个参数匹配一张数据表
-                    举例：
-                        输入为: ['close', 'pe'], ['E', 'IDX'] 时，输出为：
-                        ['stock_daily', 'index_indicator'], ['close', 'pe']
-                    - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
-                    举例：
-                        输入为: ['close', 'pe'], ['E', 'IDX']时，输出为：
-                        ['stock_daily', 'index_daily', 'stock_indicator', 'index_indicator'],
-                        ['close', 'close', 'pe', 'pe']
+    :param htypes: (str, list)
+        需要查找的的数据类型，该数据类型必须能在data_table_map中找到，包括所有内置数据类型，
+        也包括自定义数据类型（自定义数据类型必须事先添加到data_table_map中），
+        否则会导致输出None(当method为'exact'时)，或被忽略(当method为'permute'时)
+        当输入类型为str时，可以接受逗号分隔的字符串表示多个不同的data type
+        如下面两种输入等效：
+        'close, open, high' == ['close', 'open', 'high']
+
+    :param freq: (str, list) default 'd'
+        所需数据的频率，数据频率必须符合标准频率定义，即包含以下关键字：
+        min / hour / H / d / w / M / Q / Y
+        同时支持含数字或附加信息的频率如：
+        5min / 2d / W-Fri
+        如果输入的频率在data_table_map中无法找到，则根据soft_freq的值采取不同处理方式：
+        - 如果soft_freq == True:
+            则允许在已有的data_table_map中查找最接近的freq并输出
+            在这种情况下不会因为data_table_map中不存在一致的freq导致输出为None
+        - 如果soft_freq == False:
+            输出None
+
+    :param asset_type: (str, list) default 'E'
+        所需数据的资产类型。该资产类型必须能在data_table_map中找到，
+        否则会导致输出None(当method为'exact'时)，或被忽略(当method为'permute'时)
+        输入逗号分隔的多个asset_type等效于多个asset_type的list
+
+    :param method: str
+        决定htype和asset_type数据的匹配方式以及输出的数据表数量：
+        - 'exact': 完全匹配，针对输入的每一个参数匹配一张数据表
+          输出的数据列数量与htype/freq/asset_type的最大数量相同，
+          如果输入的数据中freq与asset_type数量不足时，自动补足
+          如果输入的数据中freq与asset_type数量太多时，自动忽略
+          当输入的htype或asset_type中有一个或多个无法在data_table_map中找到匹配项时，对应的输出为None
+        举例：
+            输入为:
+                ['close', 'pe'], ['d', 'd'], ['E', 'IDX'] 时，
+            输出为:
+                {'stock_daily':     'close',
+                 'index_indicator': 'pe'}
+
+        - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
+          输出的数据列数量与htype/freq/asset_type的数量乘积相同
+          当某一个htype或asset_type的组合无法在data_table_map中找到时，忽略该组合
+        举例：
+            输入为:
+                ['close', 'pe'], ['d'], ['E', 'IDX']时，
+            输出为:
+                {'stock_daily':     'close',
+                 'index_daily':     'close',
+                 'stock_indicator': 'pe',
+                 'index_indicator': 'pe'}
+
+    :param soft_freq: bool, default False
+        决定freq的匹配方式：
+        - True: 允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
+          失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
+          或被忽略(当method为'permute'时)
+        - False:不允许不完全匹配的freq，当输入的freq无法匹配时输出None(当method为'exact'时)，
+          或被忽略(当method为'permute'时)
+
     :return:
-        一个dict:
-        {table: columns}
+        一个dict, key为需要的数据所在数据表，value为该数据表中的数据列:
+        {tables: columns}
     """
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
