@@ -3805,7 +3805,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     :param htypes: (str, list)
         需要查找的的数据类型，该数据类型必须能在data_table_map中找到，包括所有内置数据类型，
         也包括自定义数据类型（自定义数据类型必须事先添加到data_table_map中），
-        否则会导致输出None(当method为'exact'时)，或被忽略(当method为'permute'时)
+        否则会被忽略
         当输入类型为str时，可以接受逗号分隔的字符串表示多个不同的data type
         如下面两种输入等效：
         'close, open, high' == ['close', 'open', 'high']
@@ -3817,14 +3817,13 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         5min / 2d / W-Fri
         如果输入的频率在data_table_map中无法找到，则根据soft_freq的值采取不同处理方式：
         - 如果soft_freq == True:
-            则允许在已有的data_table_map中查找最接近的freq并输出
-            在这种情况下不会因为data_table_map中不存在一致的freq导致输出为None
+            在已有的data_table_map中查找最接近的freq并输出
         - 如果soft_freq == False:
-            输出None
+            该项被忽略
 
     :param asset_type: (str, list) default 'E'
         所需数据的资产类型。该资产类型必须能在data_table_map中找到，
-        否则会导致输出None(当method为'exact'时)，或被忽略(当method为'permute'时)
+        否则会被忽略
         输入逗号分隔的多个asset_type等效于多个asset_type的list
 
     :param method: str
@@ -3833,25 +3832,26 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
           输出的数据列数量与htype/freq/asset_type的最大数量相同，
           如果输入的数据中freq与asset_type数量不足时，自动补足
           如果输入的数据中freq与asset_type数量太多时，自动忽略
-          当输入的htype或asset_type中有一个或多个无法在data_table_map中找到匹配项时，对应的输出为None
+          当输入的htype或asset_type中有一个或多个无法在data_table_map中找到匹配项时，该项会被忽略
         举例：
             输入为:
                 ['close', 'pe'], ['d', 'd'], ['E', 'IDX'] 时，
             输出为:
-                {'stock_daily':     'close',
-                 'index_indicator': 'pe'}
+                {'stock_daily':     ['close'],
+                 'index_indicator': ['pe']}
 
         - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
-          输出的数据列数量与htype/freq/asset_type的数量乘积相同
+          输出的数据列数量与htype/freq/asset_type的数量乘积相同，但同一张表中的数据列会
+          被合并
           当某一个htype或asset_type的组合无法在data_table_map中找到时，忽略该组合
         举例：
             输入为:
-                ['close', 'pe'], ['d'], ['E', 'IDX']时，
+                ['close', 'pe', 'open'], ['d'], ['E', 'IDX']时，
             输出为:
-                {'stock_daily':     'close',
-                 'index_daily':     'close',
-                 'stock_indicator': 'pe',
-                 'index_indicator': 'pe'}
+                {'stock_daily':     ['close', 'open'],
+                 'index_daily':     ['close', 'open'],
+                 'stock_indicator': ['pe'],
+                 'index_indicator': ['pe']}
 
     :param soft_freq: bool, default False
         决定freq的匹配方式：
@@ -3881,9 +3881,11 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     if method.lower() == 'exact':
         # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
         idx_count = max(len(htypes), len(freq), len(asset_type))
+        freq_padder = freq[0] if len(freq) == 1 else 'd'
+        asset_padder = asset_type[0] if len(asset_type) == 1 else 'E'
         htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
-        freq = input_to_list(freq, idx_count, padder='d')
-        asset_type = input_to_list(asset_type, idx_count, padder='E')
+        freq = input_to_list(freq, idx_count, padder=freq_padder)
+        asset_type = input_to_list(asset_type, idx_count, padder=asset_padder)
         dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
     elif method.lower() == 'permute':
         # 排列组合方式
@@ -3901,8 +3903,9 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         matched_tables = [item for item in matched_tables if pd.notna(item)]
         if len(matched_tables) == 0:
             raise KeyError()
-    # 处理列表中的重复数据
-
+    #
+    if soft_freq:
+        pass
     return matched_tables
 
 

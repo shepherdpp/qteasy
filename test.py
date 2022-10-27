@@ -14414,6 +14414,47 @@ class TestDataSource(unittest.TestCase):
         )
         # 全部无法精确匹配时，报错
         self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')
+        # 当soft_freq为True时，匹配查找相应的可等分freq
+        tbls = htype_to_table_col(htypes='close, open', freq='2d',
+                                  asset_type='E, IDX', method='exact', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, open', freq='2d, 2d', "
+              f"asset_type='E, IDX', method='exact', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close'],
+                 'index_daily': ['open']}
+        )
+
+        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min',
+                                  asset_type='E, IDX', method='permute', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
+              f"asset_type='E, IDX', method='permute', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_weekly':    ['close'],
+                 'index_weekly':    ['close'],
+                 'stock_5min':      ['close'],
+                 'index_5min':      ['close'],
+                 'stock_indicator': ['pe'],
+                 'index_indicator': ['pe'],
+                 'income':          ['invest_income']
+                 }
+        )
+
+        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun',
+                                  asset_type='E, IDX', method='exact', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
+              f"asset_type='E, IDX', method='exact', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_weekly':    ['close'],
+                 'index_indicator': ['pe'],
+                 'income':          ['invest_income']
+                 }
+        )
 
     def test_freq_resample(self):
         """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（日频到日频以下时，仅保留交易时段）"""
