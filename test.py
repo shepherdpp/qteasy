@@ -14457,7 +14457,7 @@ class TestDataSource(unittest.TestCase):
         )
 
     def test_freq_resample(self):
-        """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（日频到日频以下时，仅保留交易时段）"""
+        """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（频率到日频以下时，仅保留交易时段）"""
         print(f'build test data')
         weekly_index = pd.date_range(start='20200101', end='20200331', freq='W-Fri')
         hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
@@ -14727,6 +14727,7 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('test false input')
+
 
 def test_suite(*args):
     suite = unittest.TestSuite()

@@ -3655,6 +3655,8 @@ def _trade_time_index(start=None,
                       end=None,
                       periods=None,
                       freq=None,
+                      include_start=True,
+                      include_end=True,
                       start_am='9:30:00',
                       end_am='11:30:00',
                       include_start_am=True,
@@ -3664,26 +3666,37 @@ def _trade_time_index(start=None,
                       include_start_pm=False,
                       include_end_pm=True):
     """ 生成一个符合交易时间段的datetime index
+      TODO: 生成频率为d级别的index时，需要考虑去掉周末
 
-    :param start:
-    :param end:
-    :param periods:
-    :param freq:
-    :param start_am:
-    :param end_am:
-    :param include_start_am:
-    :param include_end_am:
-    :param start_pm:
-    :param end_pm:
-    :param include_start_pm
-    :param include_end_pm
+    :param start:           日期时间序列的开始日期/时间
+    :param end:             日期时间序列的终止日期/时间
+    :param periods:         日期时间序列的分段数量
+    :param freq:            日期时间序列的频率
+    :param include_start:   日期时间序列是否包含开始日期/时间
+    :param include_end:     日期时间序列是否包含结束日期/时间
+    :param start_am:        早晨交易时段的开始时间
+    :param end_am:          早晨交易时段的结束时间
+    :param include_start_am:早晨交易时段是否包括开始时间
+    :param include_end_am:  早晨交易时段是否包括结束时间
+    :param start_pm:        下午交易时段的开始时间
+    :param end_pm:          下午交易时段的结束时间
+    :param include_start_pm 下午交易时段是否包含开始时间
+    :param include_end_pm   下午交易时段是否包含结束时间
     :return:
     """
     # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
     if freq is not None:
         freq = str(freq).lower()
+    # 检查时间序列区间的开闭状况
+    closed=None
+    if include_start:
+        closed='left'
+    if include_end:
+        closed='right'
+    if include_start and include_end:
+        closed=None
 
-    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq)
+    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
     # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
     if time_index.freqstr is not None:
         freq_str = time_index.freqstr.lower().split('-')[0]
@@ -3705,7 +3718,7 @@ def _trade_time_index(start=None,
         month:      M
         quarter:    Q-DEC/...
         year:       A-DEC/...
-        由于周、季、年三种情况存在符合字符串，因此需要split
+        由于周、季、年三种情况存在复合字符串，因此需要split
     '''
     if freq_str[-1:] in ['t', 'h']:
         idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
@@ -3892,8 +3905,34 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         dtype_idx = (htypes, freq, asset_type)
     else:
         raise KeyError(f'invalid method {method}')
+    # 开始从dtype_map中查找内容
+    found_dtypes = dtype_map.loc[dtype_idx]
+    not_matched = found_dtypes.isna().all(axis=1)
+    all_found = not_matched.all()
+    if not all_found:
+        # 有部分htype/freq/type组合没有找到结果，这部分index需要调整
+        unmatched_index = found_dtypes.loc[not_matched].index
+        unmatched_dtypes = [item[0] for item in unmatched_index]
+        unmatched_freqs = [item[1] for item in unmatched_index]
+        unmatched_atypes = [item[2] for item in unmatched_index]
+        map_index = dtype_map.index
+        all_dtypes = map_index.get_level_values(0)
+        all_freqs = map_index.get_level_values(1)
+        all_atypes = map_index.get_level_values(2)
+        for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
+            try:
+                rematched_dtype_loc = all_dtypes.get_loc(dt)
+                rematched_atype_loc = all_atypes.get_loc(at)
+            except Exception:
+                # 如果产生Exception，说明dt或at无法在所有的index中找到匹配项
+                # 此时应该返回一个新的
+                raise Exception(f'dtype ({dt}) or asset_type ({at}) can not be found in dtype map')
+
+            available_freqs = all_freqs[rematched_dtype_loc & rematched_atype_loc]
+
+        import pdb; pdb.set_trace()
     try:
-        group = dtype_map.loc[dtype_idx].groupby(['table_name'])
+        group = found_dtypes.groupby(['table_name'])
         matched_tables = group['column'].apply(list).to_dict()
     except KeyError as e:
         raise e
