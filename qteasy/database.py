@@ -3890,6 +3890,10 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
             asset_type = str_to_list(asset_type)
 
     # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+
+    # 并开始从dtype_map中查找内容,
+    # - exact模式下使用reindex确保找足数量，按照输入组合的数量查找，找不到的输出NaN
+    # - permute模式下使用.loc返回排列组合，找不到的情形返回空DataFrame
     dtype_map = get_dtype_map()
     if method.lower() == 'exact':
         # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
@@ -3900,15 +3904,19 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         freq = input_to_list(freq, idx_count, padder=freq_padder)
         asset_type = input_to_list(asset_type, idx_count, padder=asset_padder)
         dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
+
+        # 查找内容
+        found_dtypes = dtype_map.reindex(index=dtype_idx)
     elif method.lower() == 'permute':
-        # 排列组合方式
         dtype_idx = (htypes, freq, asset_type)
-    else:
+        # 查找内容
+        found_dtypes = dtype_map.loc[dtype_idx]
+    else:  # for some unexpected cases
         raise KeyError(f'invalid method {method}')
-    # 开始从dtype_map中查找内容
-    found_dtypes = dtype_map.loc[dtype_idx]
+    # 检查找到的数据中是否有NaN值，即未精确匹配到的值，确认是由于dtype/atype不对还是freq不对造成的
+    # 如果是freq不对造成的，则需要抖动freq后重新匹配
     not_matched = found_dtypes.isna().all(axis=1)
-    all_found = not_matched.all()
+    all_found = ~not_matched.any()  # 如果没有任何组合未找到，等价于全部组合都找到了
     if not all_found:
         # 有部分htype/freq/type组合没有找到结果，这部分index需要调整
         unmatched_index = found_dtypes.loc[not_matched].index
@@ -3920,22 +3928,22 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         all_freqs = map_index.get_level_values(1)
         all_atypes = map_index.get_level_values(2)
         for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
+            import pdb; pdb.set_trace()
             try:
                 rematched_dtype_loc = all_dtypes.get_loc(dt)
                 rematched_atype_loc = all_atypes.get_loc(at)
-            except Exception:
-                # 如果产生Exception，说明dt或at无法在所有的index中找到匹配项
-                # 此时应该返回一个新的
-                raise Exception(f'dtype ({dt}) or asset_type ({at}) can not be found in dtype map')
-
+            except KeyError:
+                # 如果产生Exception，说明dt或at无法精确匹配
+                # 此时应该保留全NoN输出
+                continue
+                # raise KeyError(f'dtype ({dt}) or asset_type ({at}) can not be found in dtype map')
+            # 否则就是freq无法精确匹配，此时需要抖动freq
             available_freqs = all_freqs[rematched_dtype_loc & rematched_atype_loc]
 
-        import pdb; pdb.set_trace()
-    try:
-        group = found_dtypes.groupby(['table_name'])
-        matched_tables = group['column'].apply(list).to_dict()
-    except KeyError as e:
-        raise e
+    # 从found_dtypes中提取数据并整理为dict
+    group = found_dtypes.groupby(['table_name'])
+    matched_tables = group['column'].apply(list).to_dict()
+
     if any(pd.isna(item) for item in matched_tables):
         # 部分输入数据匹配到nan值
         print(f'some of the input items are invalid, they will be removed')
@@ -3946,6 +3954,35 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
     if soft_freq:
         pass
     return matched_tables
+
+
+def freq_dither(freq, freq_list):
+    """ 频率抖动，将一个目标频率抖动到频率列表中的一个频率上，
+
+    :param freq:
+    :param freq_list:
+    :return:
+    """
+    # pass
+    # 抖动规则如下：
+    #         0，频率的级别定义从高到低如下：
+    #             1min - 5min - 15min - 30min - hour - d/w - m - q - y
+    #         1，如果目标频率是复合频率如w-Fri，将其转化为单一频率
+    #         2，如果目标频率是数量频率如2d等，但其单位频率不是min/t，将其转化为其单位频率
+    #         3，如果频率列表中已经含有目标频率，则抖动的结果就是目标频率
+    #         4，如果频率列表中不含目标频率，将目标频率升高一级后再抖动
+    #
+
+    if freq in freq_list:
+        return freq
+
+
+def freq_level(freq):
+    """ 确定并返回freqency的级别
+
+    :param freq:
+    :return:
+    """
 
 
 # noinspection PyTypeChecker
