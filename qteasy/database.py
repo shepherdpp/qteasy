@@ -1031,25 +1031,25 @@ DATA_TABLE_MAP = {
     ('free_share', 'd', 'E'):                         ['stock_indicator', 'free_share', '股票技术指标 - 自由流通股本 （万）'],
     ('total_mv', 'd', 'E'):                           ['stock_indicator', 'total_mv', '股票技术指标 - 总市值 （万元）'],
     ('circ_mv', 'd', 'E'):                            ['stock_indicator', 'circ_mv', '股票技术指标 - 流通市值（万元）'],
-    ('vol_ratio', 'd', 'E'):                          ['stock_indicator2', 'vol_ratio', '备用股票技术指标 - 量比'],
-    ('turn_over', 'd', 'E'):                          ['stock_indicator2', 'turn_over', '备用股票技术指标 - 换手率'],
-    ('swing', 'd', 'E'):                              ['stock_indicator2', 'swing', '备用股票技术指标 - 振幅'],
-    ('selling', 'd', 'E'):                            ['stock_indicator2', 'selling', '备用股票技术指标 - 内盘（主动卖，手）'],
-    ('buying', 'd', 'E'):                             ['stock_indicator2', 'buying', '备用股票技术指标 - 外盘（主动买， 手）'],
-    ('total_share_b', 'd', 'E'):                      ['stock_indicator2', 'total_share', '备用股票技术指标 - 总股本(亿)'],
-    ('float_share_b', 'd', 'E'):                      ['stock_indicator2', 'float_share', '备用股票技术指标 - 流通股本(亿)'],
-    ('pe_2', 'd', 'E'):                               ['stock_indicator2', 'pe', '备用股票技术指标 - 市盈(动)'],
-    ('industry', 'd', 'E'):                           ['stock_indicator2', 'industry', '备用股票技术指标 - 所属行业'],
-    ('area', 'd', 'E'):                               ['stock_indicator2', 'area', '备用股票技术指标 - 所属地域'],
-    ('float_mv_2', 'd', 'E'):                         ['stock_indicator2', 'float_mv', '备用股票技术指标 - 流通市值'],
-    ('total_mv_2', 'd', 'E'):                         ['stock_indicator2', 'total_mv', '备用股票技术指标 - 总市值'],
-    ('avg_price', 'd', 'E'):                          ['stock_indicator2', 'avg_price', '备用股票技术指标 - 平均价'],
-    ('strength', 'd', 'E'):                           ['stock_indicator2', 'strength', '备用股票技术指标 - 强弱度(%)'],
-    ('activity', 'd', 'E'):                           ['stock_indicator2', 'activity', '备用股票技术指标 - 活跃度(%)'],
-    ('avg_turnover', 'd', 'E'):                       ['stock_indicator2', 'avg_turnover', '备用股票技术指标 - 笔换手'],
-    ('attack', 'd', 'E'):                             ['stock_indicator2', 'attack', '备用股票技术指标 - 攻击波(%)'],
-    ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '备用股票技术指标 - 近3月涨幅'],
-    ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '备用股票技术指标 - 近6月涨幅'],
+    ('vol_ratio', 'd', 'E'):                          ['stock_indicator2', 'vol_ratio', '股票技术指标 - 量比'],
+    ('turn_over', 'd', 'E'):                          ['stock_indicator2', 'turn_over', '股票技术指标 - 换手率'],
+    ('swing', 'd', 'E'):                              ['stock_indicator2', 'swing', '股票技术指标 - 振幅'],
+    ('selling', 'd', 'E'):                            ['stock_indicator2', 'selling', '股票技术指标 - 内盘（主动卖，手）'],
+    ('buying', 'd', 'E'):                             ['stock_indicator2', 'buying', '股票技术指标 - 外盘（主动买， 手）'],
+    ('total_share_b', 'd', 'E'):                      ['stock_indicator2', 'total_share', '股票技术指标 - 总股本(亿)'],
+    ('float_share_b', 'd', 'E'):                      ['stock_indicator2', 'float_share', '股票技术指标 - 流通股本(亿)'],
+    ('pe_2', 'd', 'E'):                               ['stock_indicator2', 'pe', '股票技术指标 - 动态市盈率'],
+    ('industry', 'd', 'E'):                           ['stock_indicator2', 'industry', '股票技术指标 - 所属行业'],
+    ('area', 'd', 'E'):                               ['stock_indicator2', 'area', '股票技术指标 - 所属地域'],
+    ('float_mv_2', 'd', 'E'):                         ['stock_indicator2', 'float_mv', '股票技术指标 - 流通市值'],
+    ('total_mv_2', 'd', 'E'):                         ['stock_indicator2', 'total_mv', '股票技术指标 - 总市值'],
+    ('avg_price', 'd', 'E'):                          ['stock_indicator2', 'avg_price', '股票技术指标 - 平均价'],
+    ('strength', 'd', 'E'):                           ['stock_indicator2', 'strength', '股票技术指标 - 强弱度(%)'],
+    ('activity', 'd', 'E'):                           ['stock_indicator2', 'activity', '股票技术指标 - 活跃度(%)'],
+    ('avg_turnover', 'd', 'E'):                       ['stock_indicator2', 'avg_turnover', '股票技术指标 - 笔换手'],
+    ('attack', 'd', 'E'):                             ['stock_indicator2', 'attack', '股票技术指标 - 攻击波(%)'],
+    ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '股票技术指标 - 近3月涨幅'],
+    ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
 TABLE_SOURCE_MAP_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
                             'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
@@ -3968,7 +3968,7 @@ def freq_dither(freq, freq_list):
     #         0，频率的级别定义从高到低如下：
     #             1min - 5min - 15min - 30min - hour - d/w - m - q - y
     #         1，如果目标频率是复合频率如w-Fri，将其转化为单一频率
-    #         2，如果目标频率是数量频率如2d等，但其单位频率不是min/t，将其转化为其单位频率
+    #         2，如果目标频率是数量频率如2d等，但其单位频率不是min/，将其转化为其单位频率
     #         3，设定当前频率 = 目标频率，开始查找：
     #         4，在频率列表中查找相同级别的频率
     #         5，如果找到：设定待查频率 = 找到的频率，跳转12
@@ -3981,32 +3981,97 @@ def freq_dither(freq, freq_list):
     #         12，找到待查频率：确认当前频率能否被待查频率整除（仅对min而言）
     #         13，不能被待查频率整除：跳转6
     #         14，能被待查频率整除：返回待查频率为最终结果
-    #         15，不能找到可用结果：返回None
+    #         15，不能找到可用结果：返回None\
 
-    if freq in freq_list:
-        return freq
+    freq_split = freq.split('-')
+    qty_part = None
+    main_freq = None
+    sub_freq = None
+    if len(freq_split) == 1:
+        main_freq = freq_split[0].lower()
+    elif len(freq_split) >= 2:
+        main_freq = freq_split[0].lower()
+        sub_freq = freq_split[1].lower()
+    else:  # for some unexpected cases
+        raise KeyError(f'freq ({freq}) can not be recognized')
+
+    # 继续拆分main_freq与qty_part， 但是对于5min
+    if (len(main_freq) > 1) and (main_freq != 'min'):
+        import re
+        qty_part = ''.join(re.findall('\d+', main_freq))
+        # 另外一种处理方法
+        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
+        qty_len = len(qty_part)
+        main_freq = main_freq[qty_len:]
+        qty_part = int(qty_part)
+
+    current_freq = main_freq
+    search_direction = 'up'
+
+    # 逐渐提升频率搜索可用频率
+    while True:
+        if current_freq in freq_list:
+            current_freq_qty = 1 if current_freq[-3:] != 'MIN' else int(current_freq[:-3])
+            if qty_part % current_freq_qty == 0:
+                # 如果找到匹配项，但qty不能整除，如
+                break
+            else:
+                continue
+        if (current_freq is None) and (search_direction == 'up'):
+            search_direction = 'down'
+        if (current_freq is None) and (search_direction == 'down'):
+            break
+        current_freq = next_main_freq(current_freq, search_direction)
 
 
-def freq_level(freq):
+def get_main_freq(freq):
+    """ 获取freqstring的main_freq
+        如：
+        - '25d' -> 'D'
+        - 'w-Fri' -> 'W'
+        - '75min' -> '15MIN'
+        - '90min' -> '30MIN'
+
+    :param freq:
+    :return:
+    """
+    raise NotImplementedError
+
+def get_main_freq_level(freq):
     """ 确定并返回freqency的级别
 
     :param freq:
     :return:
     """
-    freqency_level = {'1min':   100,
-                      '5min':   90,
-                      '15min':  80,
-                      '30min':  70,
-                      'hour':   60,
-                      'd':      50,
-                      'w':      50,
-                      'm':      40,
-                      'q':      30,
-                      'y':      20}
-    if freq in freqency_level.keys:
-        return freqency_level[freq]
+    from .utilfuncs import TIME_FREQ_LEVELS, TIME_FREQ_STRINGS
+    freq = freq.upper()
+    if freq in TIME_FREQ_STRINGS:
+        return TIME_FREQ_LEVELS[freq]
     else:
-        raise KeyError(f'key ({freq}) is not valid!')
+        return None
+
+
+def next_main_freq(freq, direction='up'):
+    """
+
+    :param freq: main_freq string
+    :param direction: 'up' / 'down'
+    :return:
+    """
+    from .utilfuncs import TIME_FREQ_STRINGS, TIME_FREQ_LEVELS
+    freq = freq.upper()
+    if freq not in TIME_FREQ_STRINGS:
+        return None
+    level = get_main_freq_level(freq)
+    if direction == 'up':
+        target = level + 10
+    else:
+        target = level - 10
+    levels = np.array(list(TIME_FREQ_LEVELS.values()))
+    freqs = np.array(list(TIME_FREQ_LEVELS.keys()))
+    target_level = levels.searchsorted(target)
+    target_freq = freqs[target_level]
+    return target_freq
 
 
 # noinspection PyTypeChecker
@@ -4081,6 +4146,15 @@ def find_history_data(s):
         例如，输入"pe"或"市盈率"都可以匹配到市盈率数据类型，并且提供该数据类型的相关信息
         相关信息如：
         调用名称、中文简介、所属数据表、数据频率、证券类型等等
+
+        TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
+          方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
+          存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
+          指导如何精确定位数据，至于数据列名仅作为参考信息存在。
+
+        TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
+
+        TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
 
         例如：
         >>> import qteasy as qt

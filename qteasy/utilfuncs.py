@@ -16,13 +16,21 @@ import time
 from numba import njit
 from functools import wraps
 
-TIME_FREQ_STRINGS = ['MIN', '1MIN', '5MIN', '15MIN', '30MIN',
-                     'H',
-                     'D', '5D', '10D',
-                     'W',
-                     'M',
-                     'Q',
-                     'Y']
+TIME_FREQ_LEVELS = {
+    'Y':      10,
+    'Q':      20,
+    'W':      30,
+    'M':      30,
+    'D':      40,
+    'H':      50,
+    '30MIN':  60,
+    '15MIN':  70,
+    '5MIN':   80,
+    '1MIN':   90,
+    'T':    100,
+    'TICK': 100,
+}
+TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
 AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']
 PROGRESS_BAR = {0:  '----------------------------------------', 1: '#---------------------------------------',
                 2:  '##--------------------------------------', 3: '###-------------------------------------',
@@ -704,7 +712,8 @@ def match_ts_code(code: str, asset_types='all', match_full_name=False):
               'FT':     [futures codes 期货代码],
               'OPT':    [options codes 期权代码]}
     """
-    ds = qteasy.QT_DATA_SOURCE
+    from qteasy import QT_DATA_SOURCE
+    ds = QT_DATA_SOURCE
     df_s, df_i, df_f, df_ft, df_o = ds.get_all_basic_table_data()
     asset_type_basics = {k: v for k, v in zip(AVAILABLE_ASSET_TYPES, [df_s, df_i, df_ft, df_f, df_o])}
 

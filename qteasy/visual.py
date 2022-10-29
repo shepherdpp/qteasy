@@ -452,6 +452,8 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         plot_type = 'ohlc'
     elif plot_type.lower() in ['renko', 'r']:
         plot_type = 'renko'
+    elif plot_type.lower() in ['line', 'l']:
+        plot_type = 'line'
     elif plot_type.lower() in ['none', 'n']:
         plot_type = 'none'
         no_visual = True
@@ -503,7 +505,9 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         stock = None
     else:
         stock = matched_codes[0]
-    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end, freq=freq,
+    if not interactive:
+        pass
+    return _mpf_plot(stock_data=stock_data, stock=stock, start=start, end=end, freq=freq,
                      asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, data_source=data_source,
                      **kwargs)
 

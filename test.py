@@ -76,7 +76,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
-from qteasy.database import _resample_data
+from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -14727,6 +14727,37 @@ class TestDataSource(unittest.TestCase):
                          )
 
         print('test false input')
+
+    def test_freq_manipulations(self):
+        """ 测试频率操作函数"""
+        print('test get_main_freq_level function')
+        self.assertEqual(get_main_freq_level('5min'), 80)
+        self.assertEqual(get_main_freq_level('15min'), 70)
+        self.assertEqual(get_main_freq_level('w'), 30)
+        self.assertIsNone(get_main_freq_level('wrong_input'), None)
+
+        print('test next_main_freq function')
+        self.assertEqual(next_main_freq('5min', 'up'), '1MIN')
+        self.assertEqual(next_main_freq('w'), 'D')
+        self.assertEqual(next_main_freq('m', 'up'), 'D')
+        self.assertEqual(next_main_freq('d', 'down'), 'W')
+        self.assertEqual(next_main_freq('15min', 'down'), '30MIN')
+        self.assertEqual(next_main_freq('30min', 'down'), 'H')
+
+        print('test freq_dither function')
+        self.assertEqual(freq_dither('d', ['15min', 'd', 'w', 'm']), 'd')
+        self.assertEqual(freq_dither('3d', ['15min', 'd', 'w', 'm']), 'd')
+        self.assertEqual(freq_dither('w', ['15min', 'd', 'w', 'm']), 'w')
+        self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'w', 'm']), 'w')
+        self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'm']), 'd')
+        self.assertEqual(freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm']), '15min')
+        self.assertEqual(freq_dither('40min', ['5min', '15min', '30min', 'd', 'w', 'm']), '5min')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30min')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15min')
+        self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5min')
+        self.assertEqual(freq_dither('d', ['w', 'm']), 'w')
+        self.assertEqual(freq_dither('d', ['m']), 'm')
+        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w']), 'd')
 
 
 def test_suite(*args):

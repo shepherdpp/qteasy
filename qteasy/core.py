@@ -863,7 +863,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
     if (matched_count == 0) and (not match_full_name):
         print(f'No match found! To get better result, you can\n'
               f'- pass "match_full_name=True" to match full names of stocks and funds')
-    if (matched_count == 0) and (asset_types is None):
+    elif (matched_count == 0) and (asset_types is not None):
         print(f'No match found! To get better result, you can\n'
               f'- pass "asset_type=None" to match all asset types')
     elif matched_count <= 5:
