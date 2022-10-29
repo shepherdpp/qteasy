@@ -27,8 +27,9 @@ TIME_FREQ_LEVELS = {
     '15MIN':  70,
     '5MIN':   80,
     '1MIN':   90,
-    'T':    100,
-    'TICK': 100,
+    'MIN':    90,
+    'T':      100,
+    'TICK':   100,
 }
 TIME_FREQ_STRINGS = list(TIME_FREQ_LEVELS.keys())
 AVAILABLE_ASSET_TYPES = ['E', 'IDX', 'FT', 'FD', 'OPT']

@@ -3963,66 +3963,30 @@ def freq_dither(freq, freq_list):
     :param freq_list:
     :return:
     """
-    # pass
-    # 抖动算法如下：
-    #         0，频率的级别定义从高到低如下：
-    #             1min - 5min - 15min - 30min - hour - d/w - m - q - y
-    #         1，如果目标频率是复合频率如w-Fri，将其转化为单一频率
-    #         2，如果目标频率是数量频率如2d等，但其单位频率不是min/，将其转化为其单位频率
-    #         3，设定当前频率 = 目标频率，开始查找：
-    #         4，在频率列表中查找相同级别的频率
-    #         5，如果找到：设定待查频率 = 找到的频率，跳转12
-    #         6，如果无法找到，且当前频率不是最高级：则将当前频率升高一级，跳转4
-    #         7，如果无法找到，且当前频率已经最高级：则设定当前频率 = 目标频率
-    #         8，如果当前频率不是最低级：将当前频率降低一级，如果已经最低级，跳转15
-    #         9，在频率列表中查找相同级别的频率
-    #         10，如果找到：设定待查频率 = 找到的频率，跳转12
-    #         11，如果无法找到，跳转第8
-    #         12，找到待查频率：确认当前频率能否被待查频率整除（仅对min而言）
-    #         13，不能被待查频率整除：跳转6
-    #         14，能被待查频率整除：返回待查频率为最终结果
-    #         15，不能找到可用结果：返回None\
+    """抖动算法如下：
+            0，从频率string中提取目标qty，目标主频、副频
+            3，设定当前频率 = 目标主频，开始查找：
+            4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
+            5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
+            6，否则从低频列表中取最高主频，返回它
+    """
 
-    freq_split = freq.split('-')
-    qty_part = None
-    main_freq = None
-    sub_freq = None
-    if len(freq_split) == 1:
-        main_freq = freq_split[0].lower()
-    elif len(freq_split) >= 2:
-        main_freq = freq_split[0].lower()
-        sub_freq = freq_split[1].lower()
-    else:  # for some unexpected cases
-        raise KeyError(f'freq ({freq}) can not be recognized')
+    qty, main_freq, sub_freq = get_main_freq(freq)
 
-    # 继续拆分main_freq与qty_part， 但是对于5min
-    if (len(main_freq) > 1) and (main_freq != 'min'):
-        import re
-        qty_part = ''.join(re.findall('\d+', main_freq))
-        # 另外一种处理方法
-        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
-        qty_len = len(qty_part)
-        main_freq = main_freq[qty_len:]
-        qty_part = int(qty_part)
+    level_list = np.array([get_main_freq_level(freq_string) for freq_string in freq_list])
+    freq_level = get_main_freq_level(freq)
 
-    current_freq = main_freq
-    search_direction = 'up'
+    level_list_sorter = level_list.argsort()
+    insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
+    upper_level_arg_list = level_list_sorter[insert_pos:]
+    lower_level_arg_list = level_list_sorter[:insert_pos]
+    import pdb; pdb.set_trace()
 
-    # 逐渐提升频率搜索可用频率
-    while True:
-        if current_freq in freq_list:
-            current_freq_qty = 1 if current_freq[-3:] != 'MIN' else int(current_freq[:-3])
-            if qty_part % current_freq_qty == 0:
-                # 如果找到匹配项，但qty不能整除，如
-                break
-            else:
-                continue
-        if (current_freq is None) and (search_direction == 'up'):
-            search_direction = 'down'
-        if (current_freq is None) and (search_direction == 'down'):
-            break
-        current_freq = next_main_freq(current_freq, search_direction)
-
+    if len(upper_level_arg_list) > 0:
+        return freq_list[upper_level_arg_list[0]]
+    if len(lower_level_arg_list) > 0:
+        return freq_list[lower_level_arg_list[-1]]
+    return None
 
 def get_main_freq(freq):
     """ 获取freqstring的main_freq
@@ -4034,8 +3998,44 @@ def get_main_freq(freq):
 
     :param freq:
     :return:
+        tuple: (qty, main_freq, sub_freq)
+        qty, int
+        main_freq, str
+        sub_freq, str
     """
-    raise NotImplementedError
+    import re
+    from .utilfuncs import TIME_FREQ_STRINGS
+
+    freq_split = freq.split('-')
+    qty = 1
+    main_freq = freq_split[0].upper()
+    sub_freq = ''
+    if len(freq_split) >= 2:
+        sub_freq = freq_split[1].upper()
+
+    # 继续拆分main_freq与qty_part
+    if len(main_freq) > 1:
+        maybe_qty = ''.join(re.findall('\d+', main_freq))
+        # 另外一种处理方法
+        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
+        qty_len = len(maybe_qty)
+        if qty_len > 0:
+            main_freq = main_freq[qty_len:]
+            qty = int(maybe_qty)
+
+    if main_freq not in TIME_FREQ_STRINGS:
+        return None, None, None
+
+    if main_freq == 'MIN':
+        available_qty = [''.join(re.findall('\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
+        available_qty = [int(item) for item in available_qty if len(item) > 0]
+        qty_fitness = [qty % item for item in available_qty]
+        min_qty = available_qty[qty_fitness.index(0)]
+        main_freq = str(min_qty) + main_freq
+        qty = qty // min_qty
+
+    return qty, main_freq, sub_freq
+
 
 def get_main_freq_level(freq):
     """ 确定并返回freqency的级别
@@ -4044,9 +4044,9 @@ def get_main_freq_level(freq):
     :return:
     """
     from .utilfuncs import TIME_FREQ_LEVELS, TIME_FREQ_STRINGS
-    freq = freq.upper()
-    if freq in TIME_FREQ_STRINGS:
-        return TIME_FREQ_LEVELS[freq]
+    qty, main_freq, sub_freq = get_main_freq(freq)
+    if main_freq in TIME_FREQ_STRINGS:
+        return TIME_FREQ_LEVELS[main_freq]
     else:
         return None
 

@@ -77,6 +77,7 @@ from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
 from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
 from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
+from qteasy.database import get_main_freq
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -14730,6 +14731,19 @@ class TestDataSource(unittest.TestCase):
 
     def test_freq_manipulations(self):
         """ 测试频率操作函数"""
+        print('test get_main_freq function')
+        self.assertEqual(get_main_freq('t'), (1, 'T', ''))
+        self.assertEqual(get_main_freq('min'), (1, '1MIN', ''))
+        self.assertEqual(get_main_freq('15min'), (1, '15MIN', ''))
+        self.assertEqual(get_main_freq('75min'), (5, '15MIN', ''))
+        self.assertEqual(get_main_freq('90min'), (3, '30MIN', ''))
+        self.assertEqual(get_main_freq('60min'), (2, '30MIN', ''))
+        self.assertEqual(get_main_freq('H'), (1, 'H', ''))
+        self.assertEqual(get_main_freq('14d'), (14, 'D', ''))
+        self.assertEqual(get_main_freq('2w-Fri'), (2, 'W', 'FRI'))
+        self.assertEqual(get_main_freq('w'), (1, 'W', ''))
+        self.assertEqual(get_main_freq('wrong_input'), (None, None, None))
+
         print('test get_main_freq_level function')
         self.assertEqual(get_main_freq_level('5min'), 80)
         self.assertEqual(get_main_freq_level('15min'), 70)
