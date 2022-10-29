@@ -806,7 +806,7 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         如果是证券名称，可以包含通配符模糊查找，也可以通过名称模糊查找
         如果精确匹配到一个证券代码，返回一个字典，包含该证券代码的相关信息
         
-    :param asset_types:
+    :param asset_types: 默认None
         证券类型，接受列表或逗号分隔字符串，包含认可的资产类型：
         - E     股票
         - IDX   指数
@@ -824,8 +824,9 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         当匹配到的证券太多时（多于五个），是否显示完整的信息
         - False 默认值，只显示匹配度最高的内容
         - True  显示所有匹配到的内容
+
     :return: dict
-        当仅找到一个匹配是，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
+        当仅找到一个匹配时，返回一个dict，包含找到的基本信息，根据不同的证券类型，找到的信息不同：
         - 股票信息：公司名、地区、行业、全名、上市状态、上市日期
         - 指数信息：指数名、全名、发行人、种类、发行日期
         - 基金：   基金名、管理人、托管人、基金类型、发行日期、发行数量、投资类型、类型
@@ -859,7 +860,13 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
         basics = asset_type_basics[a_type][info_columns[a_type]]
         return basics.loc[asset_codes[0]].to_dict()
 
-    if matched_count <= 5:
+    if (matched_count == 0) and (not match_full_name):
+        print(f'No match found! To get better result, you can\n'
+              f'- pass "match_full_name=True" to match full names of stocks and funds')
+    if (matched_count == 0) and (asset_types is None):
+        print(f'No match found! To get better result, you can\n'
+              f'- pass "asset_type=None" to match all asset types')
+    elif matched_count <= 5:
         print(f'found {matched_count} matches, matched codes are {matched_codes}')
     else:
         if verbose:
@@ -875,7 +882,9 @@ def get_basic_info(code_or_name: str, asset_types=None, match_full_name=False, p
                     asset_best_matched[a_type] = {key: matched_codes[a_type][key]}
             print(f'Too many matched codes {matched_count}, best matched are\n'
                   f'{asset_best_matched}\n'
-                  f'pass "verbose=Ture" to view all matched assets')
+                  f'To fine tune results, you can\n'
+                  f'- pass "verbose=Ture" to view all matched assets\n'
+                  f'- pass "asset_type=<asset_type>" to limit hit count')
     for a_type in asset_best_matched:
         if a_type == 'count':
             continue
