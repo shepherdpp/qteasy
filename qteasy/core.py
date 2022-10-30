@@ -1760,6 +1760,7 @@ def run(operator, **kwargs):
         2, 在back_test模式或模式1下, 返回: loop_result
         3, 在optimization模式或模式2下: 返回一个list，包含所有优化后的策略参数
     """
+    #TODO: 在运行过程中适当位置加入log信息
     try:
         # 如果operator尚未准备好,is_ready()会检查汇总所有问题点并raise
         operator.is_ready()
@@ -1801,11 +1802,13 @@ def run(operator, **kwargs):
     """
 
     if run_mode == 0 or run_mode == 'signal':
-        # 进入实时信号生成模式：
-        # TODO: mode 0应该是自动定时运行，预留实盘交易接口
-        #  循环定时运行由QT级别的参数设定，设定快捷键，通过快捷键进行常用控制
-        #  定时运行时自动打印交易状态变量和交易信号
-        #  如果实现实盘交易接口，则在获取授权后自动发送/接收交易信号并监控交易结果
+        '''进入实时信号生成模式：
+        
+        '''
+        # TODO: mode0 应该是自动定时运行，预留实盘交易接口
+        #   循环定时运行由QT级别的参数设定，设定快捷键，通过快捷键进行常用控制
+        #   定时运行时自动打印交易状态变量和交易信号
+        #   如果实现实盘交易接口，则在获取授权后自动发送 / 接收交易信号并监控交易结果
         holdings = get_realtime_holdings()
         trade_result = get_realtime_trades()
         trade_data = build_trade_data(holdings, trade_result)

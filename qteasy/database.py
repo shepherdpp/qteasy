@@ -3928,7 +3928,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         all_freqs = map_index.get_level_values(1)
         all_atypes = map_index.get_level_values(2)
         for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
-            import pdb; pdb.set_trace()
+            # import pdb; pdb.set_trace()
             try:
                 rematched_dtype_loc = all_dtypes.get_loc(dt)
                 rematched_atype_loc = all_atypes.get_loc(at)
@@ -3973,6 +3973,7 @@ def freq_dither(freq, freq_list):
 
     qty, main_freq, sub_freq = get_main_freq(freq)
 
+    freq_list = [get_main_freq(freq_string)[1] for freq_string in freq_list]
     level_list = np.array([get_main_freq_level(freq_string) for freq_string in freq_list])
     freq_level = get_main_freq_level(freq)
 
@@ -3983,7 +3984,14 @@ def freq_dither(freq, freq_list):
     import pdb; pdb.set_trace()
 
     if len(upper_level_arg_list) > 0:
-        return freq_list[upper_level_arg_list[0]]
+        # 在upper_list中位于第一位的可能是freq的同级频率，
+        # 如果输出同级频率，需要确保该频率与freq一致，否则就需要跳过它
+        maybe_found = freq_list[upper_level_arg_list[0]]
+        if (get_main_freq_level(maybe_found) > freq_level) or (maybe_found == main_freq):
+            return maybe_found
+        # 查找下一个maybe_found
+        return freq_list[upper_level_arg_list[1]]
+
     if len(lower_level_arg_list) > 0:
         return freq_list[lower_level_arg_list[-1]]
     return None
