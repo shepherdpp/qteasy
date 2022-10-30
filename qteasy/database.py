@@ -3981,7 +3981,7 @@ def freq_dither(freq, freq_list):
     insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
     upper_level_arg_list = level_list_sorter[insert_pos:]
     lower_level_arg_list = level_list_sorter[:insert_pos]
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     if len(upper_level_arg_list) > 0:
         # 在upper_list中位于第一位的可能是freq的同级频率，
@@ -4070,16 +4070,19 @@ def next_main_freq(freq, direction='up'):
     freq = freq.upper()
     if freq not in TIME_FREQ_STRINGS:
         return None
+    qty, main_freq, sub_freq = get_main_freq(freq)
     level = get_main_freq_level(freq)
-    if direction == 'up':
-        target = level + 10
-    else:
-        target = level - 10
-    levels = np.array(list(TIME_FREQ_LEVELS.values()))
-    freqs = np.array(list(TIME_FREQ_LEVELS.keys()))
-    target_level = levels.searchsorted(target)
-    target_freq = freqs[target_level]
-    return target_freq
+    freqs = list(TIME_FREQ_LEVELS.keys())
+    target_pos = freqs.index(main_freq)
+    target_freq = freqs[target_pos]
+    while True:
+        if direction == 'up':
+            target_pos += 1
+        elif direction == 'down':
+            target_pos -= 1
+        # import pdb; pdb.set_trace()
+        if get_main_freq_level(target_freq) != level:
+            return target_freq
 
 
 # noinspection PyTypeChecker

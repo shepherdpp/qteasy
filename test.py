@@ -14769,9 +14769,9 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30MIN')
         self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15MIN')
         self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
-        self.assertEqual(freq_dither('d', ['w', 'm']), 'w')
-        self.assertEqual(freq_dither('d', ['m']), 'm')
-        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w']), 'd')
+        self.assertEqual(freq_dither('d', ['w', 'm']), 'W')
+        self.assertEqual(freq_dither('d', ['m']), 'M')
+        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w']), 'D')
 
 
 def test_suite(*args):

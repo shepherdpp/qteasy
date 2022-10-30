@@ -19,8 +19,8 @@ from functools import wraps
 TIME_FREQ_LEVELS = {
     'Y':      10,
     'Q':      20,
-    'W':      30,
     'M':      30,
+    'W':      30,
     'D':      40,
     'H':      50,
     '30MIN':  60,
