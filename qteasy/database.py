@@ -3871,8 +3871,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         - True: 允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
           失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
           或被忽略(当method为'permute'时)
-        - False:不允许不完全匹配的freq，当输入的freq无法匹配时输出None(当method为'exact'时)，
-          或被忽略(当method为'permute'时)
+        - False:不允许不完全匹配的freq，当输入的freq无法匹配时输出None(当method为'exact'时)
 
     :return:
         一个dict, key为需要的数据所在数据表，value为该数据表中的数据列:
@@ -3893,7 +3892,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
 
     # 并开始从dtype_map中查找内容,
     # - exact模式下使用reindex确保找足数量，按照输入组合的数量查找，找不到的输出NaN
-    # - permute模式下使用.loc返回排列组合，找不到的情形返回空DataFrame
+    # - permute模式下将dtype/freq/atype排列组合后查找所有可能的数据表，找不到的输出NaN
     dtype_map = get_dtype_map()
     if method.lower() == 'exact':
         # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
@@ -3905,19 +3904,23 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         asset_type = input_to_list(asset_type, idx_count, padder=asset_padder)
         dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
 
-        # 查找内容
-        found_dtypes = dtype_map.reindex(index=dtype_idx)
     elif method.lower() == 'permute':
-        dtype_idx = (htypes, freq, asset_type)
-        # 查找内容
-        found_dtypes = dtype_map.loc[dtype_idx]
+        import itertools
+        dtype_idx = list(itertools.product(htypes, freq, asset_type))
+
     else:  # for some unexpected cases
         raise KeyError(f'invalid method {method}')
+
+    # 查找内容
+    found_dtypes = dtype_map.reindex(index=dtype_idx)
+
     # 检查找到的数据中是否有NaN值，即未精确匹配到的值，确认是由于dtype/atype不对还是freq不对造成的
     # 如果是freq不对造成的，则需要抖动freq后重新匹配
     not_matched = found_dtypes.isna().all(axis=1)
     all_found = ~not_matched.any()  # 如果没有任何组合未找到，等价于全部组合都找到了
-    if not all_found:
+    # 在soft_freq模式下，进一步确认无法找到数据的原因，如果因为freq不匹配，则抖动freq后重新查找
+    rematched_tables = {}
+    if (not all_found) and soft_freq:
         # 有部分htype/freq/type组合没有找到结果，这部分index需要调整
         unmatched_index = found_dtypes.loc[not_matched].index
         unmatched_dtypes = [item[0] for item in unmatched_index]
@@ -3927,6 +3930,8 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
         all_dtypes = map_index.get_level_values(0)
         all_freqs = map_index.get_level_values(1)
         all_atypes = map_index.get_level_values(2)
+
+        rematched_dtype_index = []
         for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
             # import pdb; pdb.set_trace()
             try:
@@ -3934,25 +3939,48 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
                 rematched_atype_loc = all_atypes.get_loc(at)
             except KeyError:
                 # 如果产生Exception，说明dt或at无法精确匹配
-                # 此时应该保留全NoN输出
+                # 此时应该保留全NaN输出
                 continue
                 # raise KeyError(f'dtype ({dt}) or asset_type ({at}) can not be found in dtype map')
             # 否则就是freq无法精确匹配，此时需要抖动freq
-            available_freqs = all_freqs[rematched_dtype_loc & rematched_atype_loc]
+            '''
+            原本使用下面的方法获取同时满足两个条件的freq的集合
+            available_freq_list = all_freqs[rematched_dtype_loc & rematched_atype_loc]
+            available_freq_list = list(set(available_freq_list))
+            但是rematched_dtype_loc和rematched_atype_loc有时候类型不同，因此无法直接&
+            例如，当dt = invest_income 时，rematched_dtype_loc返回值为一个数字209，
+            而当at = E 时，rematched_atype_loc返回值为一个bool series
+            两者无法直接进行 & 运算，因此会导致错误结果
+            因此直接使用集合交集运算
+            '''
+            dtype_freq_list = set(all_freqs[rematched_dtype_loc])
+            atype_freq_list = set(all_freqs[rematched_atype_loc])
+            available_freq_list = dtype_freq_list.intersection(atype_freq_list)
+
+            # 当无法找到available freq list时，跳过这一步
+            if len(available_freq_list) == 0:
+                continue
+
+            dithered_freq = freq_dither(fr, available_freq_list)
+            # 将抖动后生成的新的dtype ID保存下来
+            rematched_dtype_index.append((dt, dithered_freq.lower(), at))
+            if dt == 'invest_income':
+                import pdb; pdb.set_trace()
+        # 抖动freq后生成的index中可能有重复项，需要去掉重复项
+        rematched_dtype_index_unduplicated = list(set(rematched_dtype_index))
+        # 通过去重后的index筛选出所需的dtypes
+        rematched_dtypes = dtype_map.reindex(index=rematched_dtype_index_unduplicated)
+        # 合并成组后生成dict
+        group = rematched_dtypes.groupby(['table_name'])
+        rematched_tables = group['column'].apply(list).to_dict()
 
     # 从found_dtypes中提取数据并整理为dict
     group = found_dtypes.groupby(['table_name'])
     matched_tables = group['column'].apply(list).to_dict()
 
-    if any(pd.isna(item) for item in matched_tables):
-        # 部分输入数据匹配到nan值
-        print(f'some of the input items are invalid, they will be removed')
-        matched_tables = [item for item in matched_tables if pd.notna(item)]
-        if len(matched_tables) == 0:
-            raise KeyError()
-    #
     if soft_freq:
-        pass
+        # 将找到的dtypes与重新匹配的dtypes合并
+        matched_tables.update(rematched_tables)
     return matched_tables
 
 

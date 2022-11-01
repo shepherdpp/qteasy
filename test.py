@@ -14390,10 +14390,10 @@ class TestDataSource(unittest.TestCase):
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                {'index_daily':  ['open', 'close'],
-                 'index_weekly': ['open', 'close'],
-                 'stock_daily':  ['open', 'close'],
-                 'stock_weekly': ['open', 'close']}
+                {'index_daily':  ['close', 'open'],
+                 'index_weekly': ['close', 'open'],
+                 'stock_daily':  ['close', 'open'],
+                 'stock_weekly': ['close', 'open']}
         )
         # 部分无法精确匹配时，只输出可以匹配的部分
         tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
@@ -14413,8 +14413,14 @@ class TestDataSource(unittest.TestCase):
                 tbls,
                 {'stock_daily': ['close']}
         )
-        # 全部无法精确匹配时，报错
-        self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')
+        # 全部无法精确匹配时，不报错，输出空集合
+        tbls = htype_to_table_col(htypes='clese, opan', freq='d, t', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {}
+        )
         # 当soft_freq为True时，匹配查找相应的可等分freq
         tbls = htype_to_table_col(htypes='close, open', freq='2d',
                                   asset_type='E, IDX', method='exact', soft_freq=True)
@@ -14436,8 +14442,8 @@ class TestDataSource(unittest.TestCase):
                 tbls,
                 {'stock_weekly':    ['close'],
                  'index_weekly':    ['close'],
-                 'stock_5min':      ['close'],
-                 'index_5min':      ['close'],
+                 'stock_15min':     ['close'],
+                 'index_15min':     ['close'],
                  'stock_indicator': ['pe'],
                  'index_indicator': ['pe'],
                  'income':          ['invest_income']

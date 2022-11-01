@@ -311,16 +311,34 @@ def labels_to_dict(input_labels: [list, str], target_list: [list, range]) -> dic
     return dict(zip(input_labels, range(len(target_list))))
 
 
-def str_to_list(input_string, sep_char: str = ','):
-    """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义"""
+def str_to_list(input_string, sep_char: str = ',', case=None, dim=None, padder=None):
+    """将逗号或其他分割字符分隔的字符串序列去除多余的空格后分割成字符串列表，分割字符可自定义
+
+        :param input_string, str: 需要分割的字符串
+        :param sep_char, str: 字符串分隔符， 默认','
+        :param case, str, 默认None, 是否改变大小写，upper输出全大写, lower输出全消协
+        :param dim，需要生成的目标list的元素数量
+        :param padder，当元素数量不足的时候用来补充的元素
+    """
     assert isinstance(input_string, str), f'InputError, input is not a string!, got {type(input_string)}'
     if input_string == "":
         return list()
     res = input_string.replace(' ', '').split(sep_char)
+    if case == 'upper':
+        res = [string.upper() for string in res]
+    elif case == 'lower':
+        res = [string.lower() for string in res]
+    else:
+        pass
+    res_len = len(res)
+    if dim is None:
+        dim = res_len
+    if (res_len < dim) and (padder is not None):
+        res.extend([padder] * dim - res_len)
     return res
 
 
-# TODO: this function can be merged with str_to_list()
+# TODO: this function can be merged with str_to_list(), NO, different functions
 def input_to_list(pars: [str, int, list], dim: int, padder=None):
     """将输入的参数转化为List，同时确保输出的List对象中元素的数量至少为dim，不足dim的用padder补足
 
