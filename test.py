@@ -14745,15 +14745,17 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(get_main_freq('wrong_input'), (None, None, None))
 
         print('test get_main_freq_level function')
-        self.assertEqual(get_main_freq_level('5min'), 80)
-        self.assertEqual(get_main_freq_level('15min'), 70)
-        self.assertEqual(get_main_freq_level('w'), 30)
+        self.assertEqual(get_main_freq_level('5min'), 90)
+        self.assertEqual(get_main_freq_level('15min'), 80)
+        self.assertEqual(get_main_freq_level('w'), 40)
         self.assertIsNone(get_main_freq_level('wrong_input'), None)
 
         print('test next_main_freq function')
         self.assertEqual(next_main_freq('5min', 'up'), '1MIN')
-        self.assertEqual(next_main_freq('w'), 'D')
-        self.assertEqual(next_main_freq('m', 'up'), 'D')
+        self.assertEqual(next_main_freq('w', 'up'), 'D')
+        self.assertEqual(next_main_freq('m', 'up'), 'W')
+        self.assertEqual(next_main_freq('w', 'down'), 'M')
+        self.assertEqual(next_main_freq('m', 'down'), 'Q')
         self.assertEqual(next_main_freq('d', 'down'), 'W')
         self.assertEqual(next_main_freq('15min', 'down'), '30MIN')
         self.assertEqual(next_main_freq('30min', 'down'), 'H')
@@ -14769,9 +14771,9 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30MIN')
         self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15MIN')
         self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
-        self.assertEqual(freq_dither('d', ['w', 'm']), 'W')
-        self.assertEqual(freq_dither('d', ['m']), 'M')
-        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w']), 'D')
+        self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
+        self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
+        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
 
 
 def test_suite(*args):

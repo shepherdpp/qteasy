@@ -3966,9 +3966,11 @@ def freq_dither(freq, freq_list):
     """抖动算法如下：
             0，从频率string中提取目标qty，目标主频、副频
             3，设定当前频率 = 目标主频，开始查找：
-            4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
-            5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
-            6，否则从低频列表中取最高主频，返回它
+            # 4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
+            # 5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
+            # 6，否则从低频列表中取最高主频，返回它
+            另一种方法
+            4，逐次升高
     """
 
     qty, main_freq, sub_freq = get_main_freq(freq)
@@ -3981,7 +3983,6 @@ def freq_dither(freq, freq_list):
     insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
     upper_level_arg_list = level_list_sorter[insert_pos:]
     lower_level_arg_list = level_list_sorter[:insert_pos]
-    # import pdb; pdb.set_trace()
 
     if len(upper_level_arg_list) > 0:
         # 在upper_list中位于第一位的可能是freq的同级频率，
@@ -3995,6 +3996,7 @@ def freq_dither(freq, freq_list):
     if len(lower_level_arg_list) > 0:
         return freq_list[lower_level_arg_list[-1]]
     return None
+
 
 def get_main_freq(freq):
     """ 获取freqstring的main_freq
@@ -4074,8 +4076,8 @@ def next_main_freq(freq, direction='up'):
     level = get_main_freq_level(freq)
     freqs = list(TIME_FREQ_LEVELS.keys())
     target_pos = freqs.index(main_freq)
-    target_freq = freqs[target_pos]
     while True:
+        target_freq = freqs[target_pos]
         if direction == 'up':
             target_pos += 1
         elif direction == 'down':
