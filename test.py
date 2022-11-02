@@ -9791,7 +9791,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
         print(hp)
 
-        print('test get history panel data without shares')#
+        print('test get history panel data without shares')
         hp = qt.history.get_history_panel(shares=None,
                                           htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH',
                                           start='20210101',
@@ -9805,6 +9805,17 @@ class TestHistoryPanel(unittest.TestCase):
         print(hp)
 
         print('test get history panel data from converting multiple frequencies')
+        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
+                                          htypes='wt-000003.SH, close, pe, eps, total_income',
+                                          start='20210101',
+                                          end='20210202',
+                                          freq='d',
+                                          asset_type='any',
+                                          adj='none',
+                                          drop_nan=True)
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'total_income'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
 
         print('test get history panel data with / without all NaN values')
 

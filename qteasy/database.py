@@ -3620,6 +3620,8 @@ def _resample_data(hist_data, target_freq, method='last'):
 
     if not isinstance(target_freq, str):
         raise TypeError
+    if hist_data.empty:
+        return hist_data
     resampled = hist_data.resample(target_freq)
     if method in ['last', 'close']:
         resampled = resampled.last()
@@ -3933,7 +3935,6 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
 
         rematched_dtype_index = []
         for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
-            # import pdb; pdb.set_trace()
             try:
                 rematched_dtype_loc = all_dtypes.get_loc(dt)
                 rematched_atype_loc = all_atypes.get_loc(at)
@@ -3964,8 +3965,7 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_
             dithered_freq = freq_dither(fr, available_freq_list)
             # 将抖动后生成的新的dtype ID保存下来
             rematched_dtype_index.append((dt, dithered_freq.lower(), at))
-            if dt == 'invest_income':
-                import pdb; pdb.set_trace()
+
         # 抖动freq后生成的index中可能有重复项，需要去掉重复项
         rematched_dtype_index_unduplicated = list(set(rematched_dtype_index))
         # 通过去重后的index筛选出所需的dtypes
