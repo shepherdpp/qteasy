@@ -9808,8 +9808,8 @@ class TestHistoryPanel(unittest.TestCase):
         hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           htypes='wt-000003.SH, close, pe, eps, total_income',
                                           start='20210101',
-                                          end='20210202',
-                                          freq='d',
+                                          end='20210502',
+                                          freq='w',
                                           asset_type='any',
                                           adj='none',
                                           drop_nan=True)

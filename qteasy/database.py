@@ -3010,10 +3010,12 @@ class DataSource:
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
         table_map = get_table_map()
+        # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
         tables_to_read = htype_to_table_col(
                 htypes=htypes,
                 freq=freq,
-                asset_type=asset_type
+                asset_type=asset_type,
+                soft_freq=True
         )
         table_data_acquired = {}
         table_data_columns = {}
@@ -3046,6 +3048,12 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
+
+        import pdb;
+        pdb.set_trace()
+        # TODO: 将获取的数据进行resample，以便将数据填充到相应的时间区间中
+        #   填充时需要强制指定开始及结束日期
+
         # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
         for htyp in htypes:
@@ -3569,7 +3577,7 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
-def _resample_data(hist_data, target_freq, method='last'):
+def _resample_data(hist_data, target_freq, method='last', business_day=True, force_start=None, force_end=None):
     """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
     符合target_freq
 
@@ -3613,6 +3621,19 @@ def _resample_data(hist_data, target_freq, method='last'):
             [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
         - 'zero': 使用0值填充缺失数据：
             [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+
+    :param business_day: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+
+    :param force_start: str, Datetime like, 默认None
+        是否强制开始日期
+
+    :param force_start: str, Datetime like, 默认None
+        是否强制结束日期
+
     :return:
         DataFrame:
         一个重新设定index并填充好数据的历史数据DataFrame
@@ -3620,7 +3641,23 @@ def _resample_data(hist_data, target_freq, method='last'):
 
     if not isinstance(target_freq, str):
         raise TypeError
+    target_freq = target_freq.upper()
+    # 如果hist_data为空，直接返回
     if hist_data.empty:
+        return hist_data
+    # 如果要求强制转换自然日频率为工作日频率
+    if business_day:
+        if target_freq == 'D':
+            target_freq = 'B'
+        elif target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
+    # 如果hist_data的freq与target_freq一致，也可以直接返回
+    if hist_data.index.freqstr == target_freq:
+        return hist_data
+    # 如果hist_data的freq为None，可以infer freq
+    if hist_data.index.inferred_freq == target_freq:
         return hist_data
     resampled = hist_data.resample(target_freq)
     if method in ['last', 'close']:
@@ -3647,9 +3684,21 @@ def _resample_data(hist_data, target_freq, method='last'):
         # for unexpected cases
         raise ValueError(f'resample method {method} can not be recognized.')
 
-    # the following should only be done in sub-daily mode
+    # 重新整理index，确保index的时间必须在交易时段内
+    # TODO: 此处功能不明确。force start/end发生在resample之后，实际上无法填充这里reindex的时间
+    #   应该先reindex将数据填满force_start/force_end之后，再resample
+    #   这里应该仅针对频率高于D的数据强制切割交易时间段，且做成optional的
     resampled_index = resampled.index
-    resampled_index = _trade_time_index(start=resampled_index[0], end=resampled_index[-1], freq=target_freq)
+    if force_start is None:
+        start = resampled_index[0]
+    else:
+        start = pd.to_datetime(force_start)
+    if force_end is None:
+        end = resampled_index[-1]
+    else:
+        end = pd.to_datetime(force_end)
+
+    resampled_index = _trade_time_index(start=start, end=end, freq=target_freq)
     return resampled.reindex(index=resampled_index)
 
 
@@ -3668,7 +3717,6 @@ def _trade_time_index(start=None,
                       include_start_pm=False,
                       include_end_pm=True):
     """ 生成一个符合交易时间段的datetime index
-      TODO: 生成频率为d级别的index时，需要考虑去掉周末
 
     :param start:           日期时间序列的开始日期/时间
     :param end:             日期时间序列的终止日期/时间
