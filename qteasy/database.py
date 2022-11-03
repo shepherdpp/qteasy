@@ -3577,7 +3577,13 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
-def _resample_data(hist_data, target_freq, method='last', business_day=True, force_start=None, force_end=None):
+def _resample_data(hist_data, target_freq,
+                   method='last',
+                   b_days_only=True,
+                   trade_time_only=True,
+                   forced_start=None,
+                   forced_end=None,
+                   **kwargs):
     """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
     符合target_freq
 
@@ -3622,17 +3628,33 @@ def _resample_data(hist_data, target_freq, method='last', business_day=True, for
         - 'zero': 使用0值填充缺失数据：
             [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
 
-    :param business_day: bool 默认True
+    :param b_days_only: bool 默认True
         是否强制转换自然日频率为工作日，即：
         'D' -> 'B'
         'W' -> 'W-FRI'
         'M' -> 'BM'
 
-    :param force_start: str, Datetime like, 默认None
-        是否强制开始日期
+    :param trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
 
-    :param force_start: str, Datetime like, 默认None
-        是否强制结束日期
+    :param forced_start: str, Datetime like, 默认None
+        强制开始日期，如果为None，则使用hist_data的第一天为开始日期
+
+    :param forced_start: str, Datetime like, 默认None
+        强制结束日期，如果为None，则使用hist_data的最后一天为结束日期
+
+    :param **kwargs:
+        用于生成trade_time_index的参数，包括：
+        :param include_start:   日期时间序列是否包含开始日期/时间
+        :param include_end:     日期时间序列是否包含结束日期/时间
+        :param start_am:        早晨交易时段的开始时间
+        :param end_am:          早晨交易时段的结束时间
+        :param include_start_am:早晨交易时段是否包括开始时间
+        :param include_end_am:  早晨交易时段是否包括结束时间
+        :param start_pm:        下午交易时段的开始时间
+        :param end_pm:          下午交易时段的结束时间
+        :param include_start_pm 下午交易时段是否包含开始时间
+        :param include_end_pm   下午交易时段是否包含结束时间
 
     :return:
         DataFrame:
@@ -3646,7 +3668,7 @@ def _resample_data(hist_data, target_freq, method='last', business_day=True, for
     if hist_data.empty:
         return hist_data
     # 如果要求强制转换自然日频率为工作日频率
-    if business_day:
+    if b_days_only:
         if target_freq == 'D':
             target_freq = 'B'
         elif target_freq in ['W', 'W-SUN']:
@@ -3689,16 +3711,16 @@ def _resample_data(hist_data, target_freq, method='last', business_day=True, for
     #   应该先reindex将数据填满force_start/force_end之后，再resample
     #   这里应该仅针对频率高于D的数据强制切割交易时间段，且做成optional的
     resampled_index = resampled.index
-    if force_start is None:
+    if forced_start is None:
         start = resampled_index[0]
     else:
-        start = pd.to_datetime(force_start)
-    if force_end is None:
+        start = pd.to_datetime(forced_start)
+    if forced_end is None:
         end = resampled_index[-1]
     else:
-        end = pd.to_datetime(force_end)
+        end = pd.to_datetime(forced_end)
 
-    resampled_index = _trade_time_index(start=start, end=end, freq=target_freq)
+    resampled_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
     return resampled.reindex(index=resampled_index)
 
 
