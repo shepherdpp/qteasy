@@ -3048,11 +3048,9 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
-
-        import pdb;
-        pdb.set_trace()
-        # TODO: 将获取的数据进行resample，以便将数据填充到相应的时间区间中
-        #   填充时需要强制指定开始及结束日期
+        # debug
+        # import pdb;
+        # pdb.set_trace()
 
         # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
@@ -3720,8 +3718,22 @@ def _resample_data(hist_data, target_freq,
     else:
         end = pd.to_datetime(forced_end)
 
-    resampled_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
-    return resampled.reindex(index=resampled_index)
+    if trade_time_only:
+        expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
+    else:
+        expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
+    resampled = resampled.reindex(index=expanded_index)
+
+    # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
+    if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
+        if method == 'ffill':
+            resampled.ffill(inplace=True)
+        elif method == 'bfill':
+            resampled.bfill(inplace=True)
+        elif method == 'zero':
+            resampled.fillna(0, inplace=True)
+
+    return resampled
 
 
 def _trade_time_index(start=None,

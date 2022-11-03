@@ -1166,8 +1166,11 @@ def get_history_panel(htypes,
                       adj: str = None,
                       data_source=None,
                       drop_nan=True,
-                      resample_method='last',
-                      as_data_frame=False):
+                      resample_method='ffill',
+                      b_days_only=True,
+                      trade_time_only=True,
+                      as_data_frame=False,
+                      **kwargs):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -1222,16 +1225,64 @@ def get_history_panel(htypes,
 
         :param resample_method: str
             如果数据需要升频或降频时，调整频率的方法
-            详情请参阅database._resample_data()的docstring
+            调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+            数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+            例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+            数据合并方法:
+            - 'last'/'close': 使用合并区间的最后一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'first'/'open': 使用合并区间的第一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'max'/'high': 使用合并区间的最大值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'min'/'low': 使用合并区间的最小值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+            - 'sum'/'total': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
 
-        :param drop_nan: bool 默认 True
-            是否删除全部为NaN的数据
+            数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+            例如，填充下列数据(?表示插入的数据）
+                [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+            缺失数据的填充方法如下:
+            - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+            - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+            - 'nan': 使用NaN值填充缺失数据：
+                [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+            - 'zero': 使用0值填充缺失数据：
+                [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+
+        :param b_days_only: bool 默认True
+            是否强制转换自然日频率为工作日，即：
+            'D' -> 'B'
+            'W' -> 'W-FRI'
+            'M' -> 'BM'
+
+        :param trade_time_only: bool, 默认True
+            为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
 
         :param resample_method: str
             处理数据频率更新时的方法
 
         :param as_data_frame: bool 默认False
             是否返回DataFrame对象，True时返回HistoryPanel对象
+
+        :param **kwargs:
+            用于生成trade_time_index的参数，包括：
+            :param include_start:   日期时间序列是否包含开始日期/时间
+            :param include_end:     日期时间序列是否包含结束日期/时间
+            :param start_am:        早晨交易时段的开始时间
+            :param end_am:          早晨交易时段的结束时间
+            :param include_start_am:早晨交易时段是否包括开始时间
+            :param include_end_am:  早晨交易时段是否包括结束时间
+            :param start_pm:        下午交易时段的开始时间
+            :param end_pm:          下午交易时段的结束时间
+            :param include_start_pm 下午交易时段是否包含开始时间
+            :param include_end_pm   下午交易时段是否包含结束时间
 
     :param data_source: DataSource Object
     :return:
@@ -1373,7 +1424,18 @@ def get_history_panel(htypes,
     for htyp in htypes:
         if resample_method is not None:
             from .database import _resample_data
-            all_dfs[htyp] = _resample_data(all_dfs[htyp], target_freq=freq, method=resample_method)
+            # debug
+            # if htyp == 'eps': import pdb; pdb.set_trace()
+            all_dfs[htyp] = _resample_data(
+                    all_dfs[htyp],
+                    target_freq=freq,
+                    method=resample_method,
+                    forced_start=start,
+                    forced_end=end,
+                    b_days_only=b_days_only,
+                    trade_time_only=trade_time_only,
+                    **kwargs
+            )
         if drop_nan:
             all_dfs[htyp] = all_dfs[htyp].dropna(how='all')
     if as_data_frame:
