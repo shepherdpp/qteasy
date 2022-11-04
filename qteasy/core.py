@@ -1055,21 +1055,116 @@ def get_history_data(htypes,
                      freq=None,
                      asset_type=None,
                      adj=None,
-                     keep_nan=None,
-                     resample_method=None,
-                     as_data_frame=None):
-    """ 从默认数据源获取历史数据
+                     as_data_frame=None,
+                     **kwargs):
+    """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
+        需要的HistoryPanel数据对象
 
-    :param htypes:
-    :param shares:
-    :param start:
-    :param end:
-    :param freq:
-    :param asset_type:
-    :param adj:
-    :param keep_nan:
-    :param resample_method:
-    :param as_data_frame: bool, 是否返回DataFrame，默认True，否则返回HistoryPanel
+        :param htypes: [str, list]
+            需要获取的历史数据类型集合，可以是以逗号分隔的数据类型字符串或者数据类型字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     'open, high, low, close'
+             - list:    ['open', 'high', 'low', 'close']
+            特殊htypes的处理：
+            以下特殊htypes将被特殊处理"
+             - wt-000300.SH:
+                指数权重数据，如果htype是一个wt开头的复合体，则获取该指数的股票权重数据
+                获取的数据的htypes同样为wt-000300.SH型
+             - close-000300.SH:
+                给出一个htype和ts_code的复合体，且shares为None时，返回不含任何share
+                的参考数据
+
+        :param shares: [str, list]
+            需要获取历史数据的证券代码集合，可以是以逗号分隔的证券代码字符串或者证券代码字符列表，
+            如以下两种输入方式皆合法且等效：
+             - str:     '000001.SZ, 000002.SZ, 000004.SZ, 000005.SZ'
+             - list:    ['000001.SZ', '000002.SZ', '000004.SZ', '000005.SZ']
+
+        :param start: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的开始日期/时间(如果可用)
+
+        :param end: str
+            YYYYMMDD HH:MM:SS 格式的日期/时间，获取的历史数据的结束日期/时间(如果可用)
+
+        :param freq: str
+            获取的历史数据的频率，包括以下选项：
+             - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+             - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+
+        :param asset_type: str, list
+            限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
+            逗号分隔字符串或字符串列表，例如: 'E, IDX' 和 ['E', 'IDX']都是合法输入
+             - any: 可以获取任意资产类型的证券数据(默认值)
+             - E:   只获取股票类型证券的数据
+             - IDX: 只获取指数类型证券的数据
+             - FT:  只获取期货类型证券的数据
+             - FD:  只获取基金类型证券的数据
+
+        :param adj: str
+            对于某些数据，可以获取复权数据，需要通过复权因子计算，复权选项包括：
+             - none / n: 不复权(默认值)
+             - back / b: 后复权
+             - forward / fw / f: 前复权
+
+        :param resample_method: str
+            处理数据频率更新时的方法
+
+        :param as_data_frame: bool 默认False
+            是否返回DataFrame对象，True时返回HistoryPanel对象
+
+        :param **kwargs:
+            用于生成trade_time_index的参数，包括：
+            :param drop_nan: bool
+                是否保留全NaN的行
+            :param resample_method: str
+                如果数据需要升频或降频时，调整频率的方法
+                调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+                数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+                例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+                数据合并方法:
+                - 'last'/'close': 使用合并区间的最后一个值。如：
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+                - 'first'/'open': 使用合并区间的第一个值。如：
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+                - 'max'/'high': 使用合并区间的最大值作为合并值：
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+                - 'min'/'low': 使用合并区间的最小值作为合并值：
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+                - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+                - 'sum'/'total': 使用合并区间的平均值作为合并值：
+                    [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+                数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+                例如，填充下列数据(?表示插入的数据）
+                    [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+                缺失数据的填充方法如下:
+                - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                    [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+                - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                    [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+                - 'nan': 使用NaN值填充缺失数据：
+                    [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+                - 'zero': 使用0值填充缺失数据：
+                    [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+            :param b_days_only: bool 默认True
+                是否强制转换自然日频率为工作日，即：
+                'D' -> 'B'
+                'W' -> 'W-FRI'
+                'M' -> 'BM'
+            :param trade_time_only: bool, 默认True
+                为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+            :param include_start:   日期时间序列是否包含开始日期/时间
+            :param include_end:     日期时间序列是否包含结束日期/时间
+            :param start_am:        早晨交易时段的开始时间
+            :param end_am:          早晨交易时段的结束时间
+            :param include_start_am:早晨交易时段是否包括开始时间
+            :param include_end_am:  早晨交易时段是否包括结束时间
+            :param start_pm:        下午交易时段的开始时间
+            :param end_pm:          下午交易时段的结束时间
+            :param include_start_pm 下午交易时段是否包含开始时间
+            :param include_end_pm   下午交易时段是否包含结束时间
     :return:
     """
     if htypes is None:
@@ -1113,9 +1208,6 @@ def get_history_data(htypes,
     if adj is None:
         adj = 'n'
 
-    if resample_method is None:
-        resample_method = 'ffill'
-
     if as_data_frame is None:
         as_data_frame = True
 
@@ -1126,9 +1218,8 @@ def get_history_data(htypes,
                              freq=freq,
                              asset_type=asset_type,
                              adj=adj,
-                             resample_method=resample_method,
-                             drop_nan=keep_nan,
-                             as_data_frame=as_data_frame)
+                             as_data_frame=as_data_frame,
+                             **kwargs)
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
