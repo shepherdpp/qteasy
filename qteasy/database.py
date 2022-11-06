@@ -151,7 +151,8 @@ dtypes:                     数据列的数据类型，包括：
                             varchar(N) - 长度不超过N的字符串类型
                             float:
                             double:
-                            date
+                            date:
+                            int:
 
 remarks:                    数据列含义说明
 
@@ -1061,11 +1062,24 @@ TABLE_SOURCE_MAP = {
          'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', '', ''],
 
     'stock_basic':
-        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', ''],
+        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '',
+         ''],
 
     'stock_names':
         ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic',
          '', '', ''],
+
+    'stock_company':
+        ['stock_company', '上市公司基本信息', 'basics', 'E', 'none', 'stock_company', 'exchange', 'list', 'SSE, SZSE, BSE',
+         '', '', ''],
+
+    'stk_managers':
+        ['stk_managers', '上市公司管理层', 'events', 'E', 'd', 'stk_managers', 'ts_code', 'table_index', 'stock_basic',
+         '', 'Y', ''],
+
+    'new_share':
+        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_share', 'none', 'none', 'none',
+         '', 'Y', '200'],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', 'index_basic', 'market', 'list',
@@ -1306,12 +1320,48 @@ TABLE_STRUCTURES = {
                          'remarks':    ['证券代码', '开始日期', '证券名称', '结束日期', '公告日期', '变更原因'],
                          'prime_keys': [0, 1]},
 
-    'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
-                                        'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
+    'stock_company':    {'columns':    ['ts_code', 'exchange', 'chairman', 'manager', 'secretary',
+                                        'reg_capital', 'setup_date', 'province', 'city', 'introduction',
+                                        'website', 'email', 'office', 'employees', 'main_business', 'business_scope'],
+                         'dtypes':     ['varchar(10)', 'varchar(10)', 'varchar(10)', 'varchar(10)', 'varchar(10)',
+                                        'float', 'date', 'varchar(20)', 'varchar(20)', 'text',
+                                        'varchar(50)', 'varchar(50)', 'varchar(50)', 'int', 'text', 'text'],
+                         'remarks':    ['股票代码', '交易所代码', '法人代表', '总经理', '董秘',
+                                        '注册资本', '注册日期', '所在省份', '所在城市', '公司介绍',
+                                        '公司主页', '电子邮件', '办公室', '员工人数', '主要业务及产品', '经营范围'],
+                         'prime_keys': [0]},
+
+    'stk_managers':     {'columns':    ['s_code', 'ann_date', 'name', 'gender', 'lev',
+                                        'title', 'edu', 'national', 'birthday', 'begin_date',
+                                        'end_date', 'resume'],
+                         'dtypes':     ['varchar(10)', 'date', 'varchar(10)', 'varchar(10)', 'varchar(20)',
+                                        'varchar(30)', 'varchar(30)', 'varchar(30)', 'varchar(10)', 'date',
+                                        'date', 'text'],
+                         'remarks':    ['TS股票代码', '公告日期', '姓名', '性别', '岗位类别',
+                                        '岗位', '学历', '国籍', '出生年月', '上任日期',
+                                        '离任日期', '个人简历'],
+                         'prime_keys': [0, 1]},
+
+    'new_share':        {'columns':    ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
+                                        'amount', 'market_amount', 'price', 'pe', 'limit_amount',
+                                        'funds', 'ballot'],
+                         'dtypes':     ['varchar(20)', 'varchar(20)', 'varchar(50)', 'date', 'date',
+                                        'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float'],
+                         'remarks':    ['TS股票代码', '申购代码', '名称', '上网发行日期', '上市日期',
+                                        '发行总量（万股）', '上网发行总量（万股）', '发行价格', '市盈率', '个人申购上限（万股）',
+                                        '募集资金（亿元）', '中签率'],
+                         'prime_keys': [0, 1]},
+
+    'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher',
+                                        'index_type', 'category', 'base_date', 'base_point', 'list_date', 'weight_rule',
+                                        'desc', 'exp_date'],
                          'dtypes':     ['varchar(24)', 'varchar(40)', 'varchar(80)', 'varchar(8)', 'varchar(30)',
-                                        'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
-                         'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方', '指数风格', '指数类别', '基期', '基点',
-                                        '发布日期', '加权方式', '描述', '终止日期'],
+                                        'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text',
+                                        'text', 'date'],
+                         'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方',
+                                        '指数风格', '指数类别', '基期', '基点', '发布日期', '加权方式',
+                                        '描述', '终止日期'],
                          'prime_keys': [0]},
 
     'fund_basic':       {'columns':    ['ts_code', 'name', 'management', 'custodian', 'fund_type', 'found_date',
