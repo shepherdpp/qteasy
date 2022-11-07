@@ -14529,30 +14529,52 @@ class TestDataSource(unittest.TestCase):
         self.assertTrue(np.allclose(resampled_1, resampled_3))
         self.assertTrue(np.allclose(resampled_1, resampled_4))
 
-        print('check sample hourly data to d with proper methods')
-        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
-        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
+        print('check sample hourly data to d with proper methods, with none business days')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False)
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean', b_days_only=False)
         print(resampled_1)
-        sampled_rows = [23, 47, 71, 95, 119, 143, 167, 191]
+        sampled_rows = [23, 47, 71, 95, 119, 143, 167, 191, 215]
         for pos in range(len(sampled_rows)):
             res = resampled_1.iloc[pos].values
             target = hourly_data.iloc[sampled_rows[pos]].values
+            print(f'resampled row is \n{res}\n'
+                  f'target row is \n{target}')
             self.assertTrue(np.allclose(res, target))
 
         print(resampled_2)
-        sampled_row_starts = [0, 24, 48, 72, 96, 120, 144, 168]
-        sampled_row_ends = [24, 48, 72, 96, 120, 144, 168, 192]
+        sampled_row_starts = [0, 24, 48, 72, 96, 120, 144, 168, 192]
+        sampled_row_ends = [24, 48, 72, 96, 120, 144, 168, 192, 216]
         for pos in range(len(sampled_rows)):
             res = resampled_2.iloc[pos].values
             start = sampled_row_starts[pos]
             end = sampled_row_ends[pos]
             target = hourly_data.iloc[start:end].values.mean(0)
-            if not np.allclose(res, target):
-                import pdb; pdb.set_trace()
+            self.assertTrue(np.allclose(res, target))
+
+        print('check sample hourly data to d with proper methods, without none business days')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
+        print(resampled_1)
+        sampled_rows = [23, 47, 71, 143, 167, 191, 215]
+        for pos in range(len(sampled_rows)):
+            res = resampled_1.iloc[pos].values
+            target = hourly_data.iloc[sampled_rows[pos]].values
+            print(f'resampled row is \n{res}\n'
+                  f'target row is \n{target}')
+            self.assertTrue(np.allclose(res, target))
+
+        print(resampled_2)
+        sampled_row_starts = [0, 24, 48, 120, 144, 168, 192]
+        sampled_row_ends = [24, 48, 72, 144, 168, 192, 216]
+        for pos in range(len(sampled_rows)):
+            res = resampled_2.iloc[pos].values
+            start = sampled_row_starts[pos]
+            end = sampled_row_ends[pos]
+            target = hourly_data.iloc[start:end].values.mean(0)
             self.assertTrue(np.allclose(res, target))
 
         print('resample daily data to 30min data')
-        daily_data = _resample_data(hourly_data, target_freq='d', method='last').iloc[0:4]
+        daily_data = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
         print(daily_data)
         resampled = _resample_data(daily_data, target_freq='30min', method='ffill')
         print(resampled)
@@ -14568,7 +14590,7 @@ class TestDataSource(unittest.TestCase):
         print(f'test resample, below daily freq')
         print(weekly_data)
         print('resample weekly data to daily ffill')
-        resampled = _resample_data(weekly_data, target_freq='d', method='ffill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='ffill', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 7), (7, 14), (14, 21), (21, 28), (28, 35), (35, 42),
                         (42, 49), (49, 56), (56, 63), (63, 70), (70, 77), (77, 84)]
@@ -14579,7 +14601,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to daily bfill')
-        resampled = _resample_data(weekly_data, target_freq='d', method='bfill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='bfill', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1), (1, 8), (8, 15), (15, 22), (22, 29), (29, 36),
                         (36, 43), (43, 50), (50, 57), (57, 64), (64, 71), (71, 78), (78, 84)]
@@ -14590,7 +14612,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to daily none')
-        resampled = _resample_data(weekly_data, target_freq='d', method='nan')
+        resampled = _resample_data(weekly_data, target_freq='d', method='nan', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
         for pos in range(len(resampled)):
@@ -14603,7 +14625,7 @@ class TestDataSource(unittest.TestCase):
                 self.assertTrue(all(np.isnan(item) for item in res))
 
         print('resample weekly data to daily zero')
-        resampled = _resample_data(weekly_data, target_freq='d', method='zero')
+        resampled = _resample_data(weekly_data, target_freq='d', method='zero', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
         for pos in range(len(resampled)):
@@ -14615,8 +14637,18 @@ class TestDataSource(unittest.TestCase):
             else:
                 self.assertTrue(all(item == 0. for item in res))
 
-        print('resample weekly data to bi-weekly sunday last')
-        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last')
+        print('resample weekly data to bi-weekly sunday last with none business days')
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to bi-weekly sunday last without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10]
         for pos in range(len(sampled_rows)):
@@ -14625,7 +14657,17 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Friday last')
-        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last')
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Friday last without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 2, 4, 6, 8, 10, 12]
         for pos in range(len(sampled_rows)):
@@ -14634,7 +14676,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to biweekly Wednesday first')
-        resampled = _resample_data(weekly_data, target_freq='2w-Wed', method='first')
+        resampled = _resample_data(weekly_data, target_freq='2w-Wed', method='first', b_days_only=False)
         print(resampled)
         sampled_rows = [0, 1, 3, 5, 7, 9]
         for pos in range(len(sampled_rows)):
@@ -14643,7 +14685,18 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly sum')
-        resampled = _resample_data(weekly_data, target_freq='m', method='sum')
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly sum without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -14653,7 +14706,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly max')
-        resampled = _resample_data(weekly_data, target_freq='m', method='high')
+        resampled = _resample_data(weekly_data, target_freq='m', method='high', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -14663,7 +14716,7 @@ class TestDataSource(unittest.TestCase):
             self.assertTrue(np.allclose(res, target))
 
         print('resample weekly data to monthly avg')
-        resampled = _resample_data(weekly_data, target_freq='m', method='mean')
+        resampled = _resample_data(weekly_data, target_freq='m', method='mean', b_days_only=False)
         print(resampled)
         sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
         for pos in range(len(sampled_rows)):
@@ -14676,6 +14729,7 @@ class TestDataSource(unittest.TestCase):
         """ 测试函数是否能正确生成交易时段的indexer"""
         print('create datetime index with freq "D"')
         indexer = _trade_time_index('20200101', '20200105', freq='d')
+        print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 5)
         self.assertEqual(list(indexer), [pd.to_datetime('20200101'),
@@ -14686,6 +14740,7 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with freq "30min" with default trade time')
         indexer = _trade_time_index('20200101', '20200102', freq='30min')
+        print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
@@ -14699,8 +14754,9 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with freq "w" and check if all dates are Sundays (default)')
         indexer = _trade_time_index('20200101', '20200201', freq='w')
+        print(f'the output is {indexer}')
         self.assertIsInstance(indexer, pd.DatetimeIndex)
-        self.assertEqual(len(indexer), 5)
+        self.assertEqual(len(indexer), 4)
         self.assertTrue(
                 all(day.day_name() == 'Sunday' for day in indexer)
                         )
@@ -14708,6 +14764,7 @@ class TestDataSource(unittest.TestCase):
         print('create datetime index with start/end/periods')
         print('when freq can be inferred')
         indexer = _trade_time_index(start='20200101', end='20200102', periods=49)
+        print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
                          list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
@@ -14719,6 +14776,7 @@ class TestDataSource(unittest.TestCase):
                          )
         print('when freq can NOT be inferred')
         indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 8)
         self.assertEqual(list(indexer),
                          list(pd.to_datetime(['2020-01-01 09:47:45.306122448',
@@ -14734,6 +14792,7 @@ class TestDataSource(unittest.TestCase):
 
         print('create datetime index with start/periods/freq')
         indexer = _trade_time_index(start='20200101', freq='30min', periods=49)
+        print(f'the output is {indexer}')
         self.assertEqual(len(indexer), 9)
         self.assertEqual(list(indexer),
                          list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',

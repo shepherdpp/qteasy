@@ -3715,14 +3715,6 @@ def _resample_data(hist_data, target_freq,
     # 如果hist_data为空，直接返回
     if hist_data.empty:
         return hist_data
-    # 如果要求强制转换自然日频率为工作日频率
-    if b_days_only:
-        if target_freq == 'D':
-            target_freq = 'B'
-        elif target_freq in ['W', 'W-SUN']:
-            target_freq = 'W-FRI'
-        elif target_freq == 'M':
-            target_freq = 'BM'
     # 如果hist_data的freq与target_freq一致，也可以直接返回
     if hist_data.index.freqstr == target_freq:
         return hist_data
@@ -3754,10 +3746,8 @@ def _resample_data(hist_data, target_freq,
         # for unexpected cases
         raise ValueError(f'resample method {method} can not be recognized.')
 
-    # 重新整理index，确保index的时间必须在交易时段内
-    # TODO: 此处功能不明确。force start/end发生在resample之后，实际上无法填充这里reindex的时间
-    #   应该先reindex将数据填满force_start/force_end之后，再resample
-    #   这里应该仅针对频率高于D的数据强制切割交易时间段，且做成optional的
+    # 完成resample频率切换后，根据设置去除非工作日或非交易时段的数据
+    # 并填充空数据
     resampled_index = resampled.index
     if forced_start is None:
         start = resampled_index[0]
@@ -3768,6 +3758,23 @@ def _resample_data(hist_data, target_freq,
     else:
         end = pd.to_datetime(forced_end)
 
+    # 如果要求强制转换自然日频率为工作日频率
+    # 原来的版本在resample之前就强制转换自然日到工作日，但是测试发现，pd的resample有一个bug：
+    # 这个bug会导致method为last时，最后一个工作日的数据取自周日，而不是周五
+    # 在实际测试中发现，如果将2020-01-01到2020-01-10之间的Hourly数据汇总到工作日时
+    # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
+    # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
+    # 了周五，这样可能会导致错误的结果
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将周六周日的数据去除
+    if b_days_only:
+        if target_freq == 'D':
+            target_freq = 'B'
+        elif target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
+
+    # 如果要求去掉非交易时段的数据
     if trade_time_only:
         expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
     else:

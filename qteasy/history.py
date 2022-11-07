@@ -1288,6 +1288,7 @@ def get_history_panel(htypes,
     :return:
     """
     # 检查数据合法性：
+    # TODO: 应该考虑将这部分内容移到core.get_history_data()函数中去
     from qteasy.utilfuncs import TIME_FREQ_STRINGS, AVAILABLE_ASSET_TYPES
     if shares is None:
         shares = ''
@@ -1307,9 +1308,6 @@ def get_history_panel(htypes,
     if isinstance(htypes, list):
         if not all(isinstance(item, str) for item in htypes):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
-
-    if (not isinstance(start, str)) and (not isinstance(end, str)):
-        raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
 
     if not isinstance(freq, str):
         raise TypeError(f'freq should be a string, got {type(freq)} instead')
