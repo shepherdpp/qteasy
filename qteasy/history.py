@@ -1415,15 +1415,9 @@ def get_history_panel(htypes,
     #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
     #  2，检查整行NaN值得情况，根据设定去掉或保留这些行
     #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
-    # TODO: 目前存在一个问题：当日频数据仍然处理为日频时，会出现周六周日即非交易日的数据
-    #   这个问题的原因在于database生成resample_index的时候，没有考虑交易日。
-    #   解决方案似乎可以考虑在resample时引入交易日
-    #   或者考虑在historyPanel的组成df中增加选项 -保留/不保留全NaN的行
     for htyp in htypes:
         if resample_method is not None:
             from .database import _resample_data
-            # debug
-            # if htyp == 'eps': import pdb; pdb.set_trace()
             all_dfs[htyp] = _resample_data(
                     all_dfs[htyp],
                     target_freq=freq,

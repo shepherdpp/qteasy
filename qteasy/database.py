@@ -3715,7 +3715,13 @@ def _resample_data(hist_data, target_freq,
     # 如果hist_data为空，直接返回
     if hist_data.empty:
         return hist_data
+    if b_days_only:
+        if target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
     # 如果hist_data的freq与target_freq一致，也可以直接返回
+    # TODO: 这里有bug：强制start/end的情形需要排除
     if hist_data.index.freqstr == target_freq:
         return hist_data
     # 如果hist_data的freq为None，可以infer freq
@@ -3766,13 +3772,10 @@ def _resample_data(hist_data, target_freq,
     # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
     # 了周五，这样可能会导致错误的结果
     # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将周六周日的数据去除
+    # 不过仅对freq为'D'的频率如此操作
     if b_days_only:
         if target_freq == 'D':
             target_freq = 'B'
-        elif target_freq in ['W', 'W-SUN']:
-            target_freq = 'W-FRI'
-        elif target_freq == 'M':
-            target_freq = 'BM'
 
     # 如果要求去掉非交易时段的数据
     if trade_time_only:
