@@ -1080,6 +1080,98 @@ class TestCoreSubFuncs(unittest.TestCase):
         qt.find_history_data('net_profit')
         qt.find_history_data('净利润')
 
+    def test_get_history_data(self):
+        """ 测试get_history_data。大部份功能性测试在TestHistoryPanle.test_get_history_panel中完成
+        这里只关注参数自动完善功能以及包含完整shares和htypes输入的功能"""
+        print('test basic functions')
+        print('read data with all parameters and output dataframe grouped by htypes')
+        res = qt.get_history_data(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                  htypes='open, high, low, close',
+                                  start='20210101',
+                                  end='20210115',
+                                  freq='d',
+                                  asset_type='E',
+                                  adj='f',
+                                  group_by='htypes')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
+        self.assertEqual(list(res.keys()), ['open', 'high', 'low', 'close'])
+        first_df = res['open']
+        first_index = first_df.index
+        first_columns = first_df.columns
+        for df in res.values():
+            self.assertEqual(list(first_index), list(df.index))
+            self.assertEqual(list(first_columns), list(df.columns))
+
+        print('read data with all parameters and output dataframe grouped by shares')
+        res = qt.get_history_data(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                  htypes='open, high, low, close',
+                                  start='20210101',
+                                  end='20210115',
+                                  freq='d',
+                                  asset_type='E',
+                                  adj='f',
+                                  group_by='shares')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
+        self.assertEqual(list(res.keys()), ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_df = res['000002.SZ']
+        first_index = first_df.index
+        first_columns = first_df.columns
+        for df in res.values():
+            self.assertEqual(list(first_index), list(df.index))
+            self.assertEqual(list(first_columns), list(df.columns))
+
+        print('test function with missing parameters')
+        res = qt.get_history_data(htypes='open, high, low, close')
+        print(res)
+
+        res = qt.get_history_data(htypes='open, close, vol',
+                                  shares='000651.SZ, 513100.SH')
+        print(res)
+
+        print('test function with wrong parameters')
+        print('wrong share code')
+        res = qt.get_history_data(htypes='open, close, vol',
+                                  shares='missing_code, 513100.SH')
+        print(res)
+        print('wrong date')
+        self.assertRaises(ValueError,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          start='20220101',
+                          end='20210101'
+                          )
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          start='wrong_date',
+                          end='20210101'
+                          )
+        print('wrong freq')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          freq='wrong_freq'
+                          )
+        print('wrong asset_type')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          asset_type='wrong_type'
+                          )
+        print('wrong adj')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          adj='wrong_adj'
+                          )
+
 
 class TestEvaluations(unittest.TestCase):
     """Test all evaluation functions in core.py"""
@@ -9777,121 +9869,6 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
         self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
-    def test_get_history_panel(self):
-        """ 测试是否能正确获取HistoryPanel"""
-        print('test get history panel data')  #
-        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
-                                          htypes='wt-000003.SH, close, wt-000300.SH',
-                                          start='20210101',
-                                          end='20210802',
-                                          freq='m',
-                                          asset_type='any',
-                                          adj='none')
-        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
-        print(hp)
-
-        print('test get history panel data without shares')
-        hp = qt.history.get_history_panel(shares=None,
-                                          htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH',
-                                          start='20210101',
-                                          end='20210202',
-                                          freq='d',
-                                          asset_type='any',
-                                          adj='none',
-                                          drop_nan=True)
-        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
-        self.assertEqual(hp.shares, ['none'])
-        print(hp)
-
-        print('test get history panel data from converting multiple frequencies')
-        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
-                                          htypes='wt-000003.SH, close, pe, eps, revenue_ps',
-                                          start='20210101',
-                                          end='20210502',
-                                          freq='w',
-                                          asset_type='any',
-                                          adj='none',
-                                          drop_nan=True)
-        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
-        print(hp)
-
-        print('test get history panel data with / without all NaN values')
-        hp = qt.history.get_history_panel(shares='000002.SZ, 000001.SZ, 000300.SH',
-                                          htypes='open, high, low, close',
-                                          start='20210101',
-                                          end='20210115',
-                                          freq='d',
-                                          asset_type='any',
-                                          adj='none',
-                                          b_days_only=False,
-                                          resample_method='none',
-                                          drop_nan=False)
-        print(hp)
-        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
-        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
-        first_3_rows = hp[:, :, 0:3]
-        row_9_til_10 = hp[:, :, 8:10]
-        self.assertTrue(np.all(np.isnan(first_3_rows)))
-        self.assertTrue(np.all(np.isnan(row_9_til_10)))
-
-        print('test getting history panel specific asset_type')
-        hp = qt.history.get_history_panel(shares='000002.SZ, 000001.SZ, 000300.SH',
-                                          htypes='open, high, low, close',
-                                          start='20210101',
-                                          end='20210115',
-                                          freq='d',
-                                          asset_type='E',
-                                          adj='f')
-        print(hp)
-        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
-        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
-        all_idx_data = hp[:, '000300.SH']
-        self.assertTrue(np.all(np.isnan(all_idx_data)))
-
-        print('test getting history panel with wrong parameters')
-        print('datetime not recognized')
-        self.assertRaises(Exception,
-                          qt.history.get_history_panel,
-                          shares='000002.SZ, 000001.SZ, 000300.SH',
-                          htypes='open, high, low, close',
-                          start='not_a_time',
-                          end='20210115',
-                          freq='d',
-                          asset_type='E',
-                          adj='f')
-        print('freq not recognized')
-        self.assertRaises(Exception,
-                          qt.history.get_history_panel,
-                          shares='000002.SZ, 000001.SZ, 000300.SH',
-                          htypes='open, high, low, close',
-                          start='20210101',
-                          end='20210115',
-                          freq='wrong_freq',
-                          asset_type='E',
-                          adj='f')
-        print('asset_type not recognized')
-        self.assertRaises(Exception,
-                          qt.history.get_history_panel,
-                          shares='000002.SZ, 000001.SZ, 000300.SH',
-                          htypes='open, high, low, close',
-                          start='202101001',
-                          end='20210115',
-                          freq='d',
-                          asset_type='wront_asset_type',
-                          adj='f')
-        print('adj not recognized')
-        self.assertRaises(Exception,
-                          qt.history.get_history_panel,
-                          shares='000002.SZ, 000001.SZ, 000300.SH',
-                          htypes='open, high, low, close',
-                          start='202101001',
-                          end='20210115',
-                          freq='d',
-                          asset_type='E',
-                          adj='wrong_adj')
-
     def test_ffill_data(self):
         """ 测试前向填充NaN值"""
         d = np.array([[[0.03, 0.88, 0.2],
@@ -9943,6 +9920,95 @@ class TestHistoryPanel(unittest.TestCase):
                        [0.25, 0.36, 0.32],
                        [0.81, 0.94, 0.04]]])
         self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
+
+    def test_get_history_panel(self):
+        """ 测试是否能正确获取HistoryPanel"""
+        print('test get history panel data')  #
+        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, wt-000300.SH',
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
+                                          end='20210802', freq='m', asset_type='any', adj='none')
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        print('test get history panel data without shares')
+        hp = qt.history.get_history_panel(htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH', shares=None,
+                                          start='20210101', end='20210202', freq='d', asset_type='any', adj='none',
+                                          drop_nan=True)
+        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
+        self.assertEqual(hp.shares, ['none'])
+        print(hp)
+
+        print('test get history panel data from converting multiple frequencies')
+        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, pe, eps, revenue_ps',
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
+                                          end='20210502', freq='w', asset_type='any', adj='none', drop_nan=True)
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        print('test get history panel data with / without all NaN values')
+        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210101', end='20210115', freq='d', asset_type='any', adj='none',
+                                          drop_nan=False, resample_method='none', b_days_only=False)
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_3_rows = hp[:, :, 0:3]
+        row_9_til_10 = hp[:, :, 8:10]
+        self.assertTrue(np.all(np.isnan(first_3_rows)))
+        self.assertTrue(np.all(np.isnan(row_9_til_10)))
+
+        print('test getting history panel specific asset_type')
+        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210101', end='20210115', freq='d', asset_type='E', adj='f')
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        all_idx_data = hp[:, '000300.SH']
+        self.assertTrue(np.all(np.isnan(all_idx_data)))
+
+        print('test getting history panel with wrong parameters')
+        print('datetime not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='not_a_time',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='f')
+        print('freq not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='20210101',
+                          end='20210115',
+                          freq='wrong_freq',
+                          asset_type='E',
+                          adj='f')
+        print('asset_type not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='wront_asset_type',
+                          adj='f')
+        print('adj not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='wrong_adj')
 
 
 class RetryableError(Exception):

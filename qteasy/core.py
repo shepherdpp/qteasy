@@ -1056,6 +1056,7 @@ def get_history_data(htypes,
                      asset_type=None,
                      adj=None,
                      as_data_frame=None,
+                     group_by=None,
                      **kwargs):
     """ 从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
@@ -1111,6 +1112,11 @@ def get_history_data(htypes,
 
         :param as_data_frame: bool 默认False
             是否返回DataFrame对象，True时返回HistoryPanel对象
+
+        :param group_by: str, 默认'shares'
+            如果返回DataFrame对象，设置dataframe的分组策略
+            - 'shares' / 'share' / 's': 每一个share组合为一个dataframe
+            - 'htypes' / 'htype' / 'h': 每一个htype组合为一个dataframe
 
         :param **kwargs:
             用于生成trade_time_index的参数，包括：
@@ -1176,7 +1182,7 @@ def get_history_data(htypes,
     one_year = pd.Timedelta(365, 'd')
     one_week = pd.Timedelta(7, 'd')
     if (start is None) and (end is None):
-        end = pd.to_datetime('today')
+        end = pd.to_datetime('today').date()
         start = end - one_year
     elif start is None:
         try:
@@ -1195,7 +1201,7 @@ def get_history_data(htypes,
             start = pd.to_datetime(start)
             end = pd.to_datetime(end)
         except Exception:
-            raise Exception(f'start and end must be both datetime')
+            raise Exception(f'start and end must be both datetime like')
         if end - start <= one_week:
             raise ValueError(f'End date should be at least one week after start date')
 
@@ -1211,15 +1217,20 @@ def get_history_data(htypes,
     if as_data_frame is None:
         as_data_frame = True
 
-    return get_history_panel(htypes=htypes,
-                             shares=shares,
-                             start=start,
-                             end=end,
-                             freq=freq,
-                             asset_type=asset_type,
-                             adj=adj,
-                             as_data_frame=as_data_frame,
-                             **kwargs)
+    if group_by is None:
+        group_by = 'shares'
+    if group_by in ['shares', 'share', 's']:
+        group_by = 'shares'
+    elif group_by in ['htypes', 'htype', 'h']:
+        group_by = 'htypes'
+
+    hp = get_history_panel(htypes=htypes, shares=shares, start=start, end=end, freq=freq, asset_type=asset_type,
+                           adj=adj, **kwargs)
+
+    if as_data_frame:
+        return hp.unstack(by=group_by)
+    else:
+        return hp
 
 
 # TODO: 在这个函数中对config的各项参数进行检查和处理，将对各个日期的检查和更新（如交易日调整等）放在这里，直接调整
@@ -1521,28 +1532,17 @@ def check_and_prepare_hist_data(oper: Operator, config):
     window_offset = pd.Timedelta(int(window_length * 1.6), window_offset_freq)
 
     # 合并生成交易信号和回测所需历史数据，数据类型包括交易信号数据和回测价格数据
-    hist_op = get_history_panel(
-            shares=config.asset_pool,
-            htypes=oper.all_price_and_data_types,
-            start=regulate_date_format(
-                    pd.to_datetime(invest_start) - window_offset),
-            end=invest_end,
-            freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj
-    ) if run_mode <= 1 else HistoryPanel()
+    hist_op = get_history_panel(htypes=oper.all_price_and_data_types, shares=config.asset_pool,
+                                start=regulate_date_format(
+                                        pd.to_datetime(invest_start) - window_offset), end=invest_end,
+                                freq=oper.op_data_freq, asset_type=config.asset_type, adj=config.backtest_price_adj) \
+        if run_mode <= 1 else HistoryPanel()
 
     # 解析参考数据类型，获取参考数据
-    hist_ref = get_history_panel(
-            shares=None,
-            htypes=oper.op_ref_types,
-            start=regulate_date_format(
-                    pd.to_datetime(invest_start) - window_offset),
-            end=invest_end,
-            freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj
-    )  # .slice_to_dataframe(share='none')
+    hist_ref = get_history_panel(htypes=oper.op_ref_types, shares=None, start=regulate_date_format(
+            pd.to_datetime(invest_start) - window_offset), end=invest_end, freq=oper.op_data_freq,
+                                 asset_type=config.asset_type,
+                                 adj=config.backtest_price_adj)  # .slice_to_dataframe(share='none')
     # 生成用于数据回测的历史数据，格式为HistoryPanel，包含用于计算交易结果的所有历史价格种类
     bt_price_types = oper.bt_price_types
     back_trade_prices = hist_op.slice(htypes=bt_price_types)
@@ -1550,28 +1550,16 @@ def check_and_prepare_hist_data(oper: Operator, config):
     back_trade_prices.fillinf(0)
 
     # 生成用于策略优化训练的训练和测试历史数据集合和回测价格类型集合
-    hist_opti = get_history_panel(
-            shares=config.asset_pool,
-            htypes=oper.all_price_and_data_types,
-            start=regulate_date_format(
-                    pd.to_datetime(opti_test_start) - window_offset),
-            end=opti_test_end,
-            freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj
-    ) if run_mode == 2 else HistoryPanel()
+    hist_opti = get_history_panel(htypes=oper.all_price_and_data_types, shares=config.asset_pool,
+                                  start=regulate_date_format(
+                                          pd.to_datetime(opti_test_start) - window_offset), end=opti_test_end,
+                                  freq=oper.op_data_freq, asset_type=config.asset_type,
+                                  adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
 
     # 生成用于优化策略测试的测试历史数据集合
-    hist_opti_ref = get_history_panel(
-            shares=None,
-            htypes=oper.op_ref_types,
-            start=regulate_date_format(
-                    pd.to_datetime(opti_test_start) - window_offset),
-            end=opti_test_end,
-            freq=oper.op_data_freq,
-            asset_type=config.asset_type,
-            adj=config.backtest_price_adj
-    ) if run_mode == 2 else HistoryPanel()
+    hist_opti_ref = get_history_panel(htypes=oper.op_ref_types, shares=None, start=regulate_date_format(
+            pd.to_datetime(opti_test_start) - window_offset), end=opti_test_end, freq=oper.op_data_freq,
+                                      asset_type=config.asset_type, adj=config.backtest_price_adj) if run_mode == 2 else HistoryPanel()
 
     opti_trade_prices = hist_opti.slice(htypes=bt_price_types)
     opti_trade_prices.fillinf(0)
@@ -1583,15 +1571,10 @@ def check_and_prepare_hist_data(oper: Operator, config):
     benchmark_start = regulate_date_format(min(all_starts))
     benchmark_end = regulate_date_format(max(all_ends))
 
-    hist_benchmark = get_history_panel(
-            start=benchmark_start,
-            end=benchmark_end,
-            shares=config.benchmark_asset,
-            htypes=config.benchmark_dtype,
-            freq=oper.op_data_freq,
-            asset_type=config.benchmark_asset_type,
-            adj=config.backtest_price_adj
-    ).slice_to_dataframe(htype='close')
+    hist_benchmark = get_history_panel(htypes=config.benchmark_dtype, shares=config.benchmark_asset,
+                                       start=benchmark_start, end=benchmark_end, freq=oper.op_data_freq,
+                                       asset_type=config.benchmark_asset_type,
+                                       adj=config.backtest_price_adj).slice_to_dataframe(htype='close')
 
     return hist_op, hist_ref, back_trade_prices, hist_opti, hist_opti_ref, opti_trade_prices, hist_benchmark, \
            invest_cash_plan, opti_cash_plan, test_cash_plan

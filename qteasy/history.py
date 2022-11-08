@@ -804,7 +804,8 @@ class HistoryPanel():
         :return:
             dict
         """
-        assert isinstance(by, str)
+        if not isinstance(by, str):
+            raise TypeError(f'by ({by}) should be a string, and either "shares" or "htypes", got {type(by)}')
         assert by.lower() in ['share', 'shares', 'htype', 'htypes']
 
         df_dict = {}
@@ -1157,19 +1158,8 @@ def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, h
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-def get_history_panel(htypes,
-                      shares=None,
-                      start=None,
-                      end=None,
-                      freq=None,
-                      asset_type: str = None,
-                      adj: str = None,
-                      data_source=None,
-                      drop_nan=True,
-                      resample_method='ffill',
-                      b_days_only=True,
-                      trade_time_only=True,
-                      as_data_frame=False,
+def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asset_type: str = None, adj: str = None,
+                      data_source=None, drop_nan=True, resample_method='ffill', b_days_only=True, trade_time_only=True,
                       **kwargs):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
@@ -1267,9 +1257,6 @@ def get_history_panel(htypes,
 
         :param resample_method: str
             处理数据频率更新时的方法
-
-        :param as_data_frame: bool 默认False
-            是否返回DataFrame对象，True时返回HistoryPanel对象
 
         :param **kwargs:
             用于生成trade_time_index的参数，包括：
@@ -1438,9 +1425,6 @@ def get_history_panel(htypes,
             )
         if drop_nan:
             all_dfs[htyp] = all_dfs[htyp].dropna(how='all')
-    if as_data_frame:
-        # TODO: 将所有df合并为一个multi_index的DataFrame
-        return all_dfs
 
     if shares:
         result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
