@@ -8931,7 +8931,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.htypes = 'close,open,high,low'
         self.data2 = np.random.randint(10, size=(10, 5))
         self.data3 = np.random.randint(10, size=(10, 4))
-        self.data4 = np.random.randint(10, size=(10, ))
+        self.data4 = np.random.randint(10, size=(10,))
         self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
         self.hp2 = qt.HistoryPanel(values=self.data2, levels=self.shares, columns='close', rows=self.index)
         self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index2)
@@ -9779,7 +9779,7 @@ class TestHistoryPanel(unittest.TestCase):
 
     def test_get_history_panel(self):
         """ 测试是否能正确获取HistoryPanel"""
-        print('test get history panel data')#
+        print('test get history panel data')  #
         hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
                                           htypes='wt-000003.SH, close, wt-000300.SH',
                                           start='20210101',
@@ -9806,21 +9806,91 @@ class TestHistoryPanel(unittest.TestCase):
 
         print('test get history panel data from converting multiple frequencies')
         hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
-                                          htypes='wt-000003.SH, close, pe, eps, total_income',
+                                          htypes='wt-000003.SH, close, pe, eps, revenue_ps',
                                           start='20210101',
                                           end='20210502',
                                           freq='w',
                                           asset_type='any',
                                           adj='none',
                                           drop_nan=True)
-        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'total_income'])
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
         self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
         print(hp)
 
         print('test get history panel data with / without all NaN values')
+        hp = qt.history.get_history_panel(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          htypes='open, high, low, close',
+                                          start='20210101',
+                                          end='20210115',
+                                          freq='d',
+                                          asset_type='any',
+                                          adj='none',
+                                          b_days_only=False,
+                                          resample_method='none',
+                                          drop_nan=False)
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_3_rows = hp[:, :, 0:3]
+        row_9_til_10 = hp[:, :, 8:10]
+        self.assertTrue(np.all(np.isnan(first_3_rows)))
+        self.assertTrue(np.all(np.isnan(row_9_til_10)))
 
-        print('test getting history panel with incomplete arguments')
-        raise NotImplementedError
+        print('test getting history panel specific asset_type')
+        hp = qt.history.get_history_panel(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          htypes='open, high, low, close',
+                                          start='20210101',
+                                          end='20210115',
+                                          freq='d',
+                                          asset_type='E',
+                                          adj='f')
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        all_idx_data = hp[:, '000300.SH']
+        self.assertTrue(np.all(np.isnan(all_idx_data)))
+
+        print('test getting history panel with wrong parameters')
+        print('datetime not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='not_a_time',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='f')
+        print('freq not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='20210101',
+                          end='20210115',
+                          freq='wrong_freq',
+                          asset_type='E',
+                          adj='f')
+        print('asset_type not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='wront_asset_type',
+                          adj='f')
+        print('adj not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='wrong_adj')
 
     def test_ffill_data(self):
         """ 测试前向填充NaN值"""
@@ -14386,7 +14456,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(
                 tbls,
                 {'index_weekly': ['open'],
-                 'stock_daily': ['close']}
+                 'stock_daily':  ['close']}
         )
         tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
         print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
@@ -14394,7 +14464,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(
                 tbls,
                 {'stk_managers': ['name'],
-                 'stock_daily': ['close']}
+                 'stock_daily':  ['close']}
         )
         tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
         print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
@@ -14513,7 +14583,8 @@ class TestDataSource(unittest.TestCase):
                         target = resampled.iloc[row].values
                         self.assertTrue(np.allclose(res, target))
                     except:
-                        import pdb; pdb.set_trace()
+                        import pdb;
+                        pdb.set_trace()
 
         print('checks resample hourly data to 2d')
         resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
@@ -14759,7 +14830,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(len(indexer), 4)
         self.assertTrue(
                 all(day.day_name() == 'Sunday' for day in indexer)
-                        )
+        )
 
         print('create datetime index with start/end/periods')
         print('when freq can be inferred')

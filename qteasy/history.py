@@ -1309,6 +1309,14 @@ def get_history_panel(htypes,
         if not all(isinstance(item, str) for item in htypes):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
 
+    if (start is None) or (end is None):
+        raise KeyError(f'both start and end should be some type of datetime or like')
+    try:
+        start = pd.to_datetime(start)
+        end = pd.to_datetime(end)
+    except Exception:
+        raise Exception(f'both or one of start and end can not be converted to datetime format')
+
     if not isinstance(freq, str):
         raise TypeError(f'freq should be a string, got {type(freq)} instead')
     if freq.upper() not in TIME_FREQ_STRINGS:
