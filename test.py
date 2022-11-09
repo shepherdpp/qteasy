@@ -9645,7 +9645,7 @@ class TestHistoryPanel(unittest.TestCase):
 
         print('test raise assertion error')
         self.assertRaises(AssertionError, self.hp.to_df_dict, by='random text')
-        self.assertRaises(AssertionError, self.hp.to_df_dict, by=3)
+        self.assertRaises(TypeError, self.hp.to_df_dict, by=3)
 
         print('test empty hp')
         df_dict = qt.HistoryPanel().to_df_dict('share')
