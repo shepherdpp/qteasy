@@ -7,7 +7,7 @@
 # Desc:
 #   Local historical data management.
 # ======================================
-
+import numpy as np
 import pymysql
 from sqlalchemy import create_engine
 import pandas as pd
@@ -151,7 +151,8 @@ dtypes:                     数据列的数据类型，包括：
                             varchar(N) - 长度不超过N的字符串类型
                             float:
                             double:
-                            date
+                            date:
+                            int:
 
 remarks:                    数据列含义说明
 
@@ -876,7 +877,8 @@ DATA_TABLE_MAP = {
     ('investincome_of_ebt', 'q', 'E'):                ['financial', 'investincome_of_ebt', '上市公司财务指标 - 价值变动净收益/利润总额'],
     ('n_op_profit_of_ebt', 'q', 'E'):                 ['financial', 'n_op_profit_of_ebt', '上市公司财务指标 - 营业外收支净额/利润总额'],
     ('tax_to_ebt', 'q', 'E'):                         ['financial', 'tax_to_ebt', '上市公司财务指标 - 所得税/利润总额'],
-    ('dtprofit_to_profit', 'q', 'E'):                 ['financial', 'dtprofit_to_profit', '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
+    ('dtprofit_to_profit', 'q', 'E'):                 ['financial', 'dtprofit_to_profit',
+                                                       '上市公司财务指标 - 扣除非经常损益后的净利润/净利润'],
     ('salescash_to_or', 'q', 'E'):                    ['financial', 'salescash_to_or', '上市公司财务指标 - 销售商品提供劳务收到的现金/营业收入'],
     ('ocf_to_or', 'q', 'E'):                          ['financial', 'ocf_to_or', '上市公司财务指标 - 经营活动产生的现金流量净额/营业收入'],
     ('ocf_to_opincome', 'q', 'E'):                    ['financial', 'ocf_to_opincome',
@@ -889,13 +891,16 @@ DATA_TABLE_MAP = {
     ('nca_to_assets', 'q', 'E'):                      ['financial', 'nca_to_assets', '上市公司财务指标 - 非流动资产/总资产'],
     ('tbassets_to_totalassets', 'q', 'E'):            ['financial', 'tbassets_to_totalassets', '上市公司财务指标 - 有形资产/总资产'],
     ('int_to_talcap', 'q', 'E'):                      ['financial', 'int_to_talcap', '上市公司财务指标 - 带息债务/全部投入资本'],
-    ('eqt_to_talcapital', 'q', 'E'):                  ['financial', 'eqt_to_talcapital', '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
+    ('eqt_to_talcapital', 'q', 'E'):                  ['financial', 'eqt_to_talcapital',
+                                                       '上市公司财务指标 - 归属于母公司的股东权益/全部投入资本'],
     ('currentdebt_to_debt', 'q', 'E'):                ['financial', 'currentdebt_to_debt', '上市公司财务指标 - 流动负债/负债合计'],
     ('longdeb_to_debt', 'q', 'E'):                    ['financial', 'longdeb_to_debt', '上市公司财务指标 - 非流动负债/负债合计'],
-    ('ocf_to_shortdebt', 'q', 'E'):                   ['financial', 'ocf_to_shortdebt', '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
+    ('ocf_to_shortdebt', 'q', 'E'):                   ['financial', 'ocf_to_shortdebt',
+                                                       '上市公司财务指标 - 经营活动产生的现金流量净额/流动负债'],
     ('debt_to_eqt', 'q', 'E'):                        ['financial', 'debt_to_eqt', '上市公司财务指标 - 产权比率'],
     ('eqt_to_debt', 'q', 'E'):                        ['financial', 'eqt_to_debt', '上市公司财务指标 - 归属于母公司的股东权益/负债合计'],
-    ('eqt_to_interestdebt', 'q', 'E'):                ['financial', 'eqt_to_interestdebt', '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
+    ('eqt_to_interestdebt', 'q', 'E'):                ['financial', 'eqt_to_interestdebt',
+                                                       '上市公司财务指标 - 归属于母公司的股东权益/带息债务'],
     ('tangibleasset_to_debt', 'q', 'E'):              ['financial', 'tangibleasset_to_debt', '上市公司财务指标 - 有形资产/负债合计'],
     ('tangasset_to_intdebt', 'q', 'E'):               ['financial', 'tangasset_to_intdebt', '上市公司财务指标 - 有形资产/带息债务'],
     ('tangibleasset_to_netdebt', 'q', 'E'):           ['financial', 'tangibleasset_to_netdebt', '上市公司财务指标 - 有形资产/净债务'],
@@ -935,13 +940,15 @@ DATA_TABLE_MAP = {
     ('q_saleexp_to_gr', 'q', 'E'):                    ['financial', 'q_saleexp_to_gr', '上市公司财务指标 - 销售费用／营业总收入 (单季度)'],
     ('q_adminexp_to_gr', 'q', 'E'):                   ['financial', 'q_adminexp_to_gr', '上市公司财务指标 - 管理费用／营业总收入 (单季度)'],
     ('q_finaexp_to_gr', 'q', 'E'):                    ['financial', 'q_finaexp_to_gr', '上市公司财务指标 - 财务费用／营业总收入 (单季度)'],
-    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['financial', 'q_impair_to_gr_ttm', '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
+    ('q_impair_to_gr_ttm', 'q', 'E'):                 ['financial', 'q_impair_to_gr_ttm',
+                                                       '上市公司财务指标 - 资产减值损失／营业总收入(单季度)'],
     ('q_gc_to_gr', 'q', 'E'):                         ['financial', 'q_gc_to_gr', '上市公司财务指标 - 营业总成本／营业总收入 (单季度)'],
     ('q_op_to_gr', 'q', 'E'):                         ['financial', 'q_op_to_gr', '上市公司财务指标 - 营业利润／营业总收入(单季度)'],
     ('q_roe', 'q', 'E'):                              ['financial', 'q_roe', '上市公司财务指标 - 净资产收益率(单季度)'],
     ('q_dt_roe', 'q', 'E'):                           ['financial', 'q_dt_roe', '上市公司财务指标 - 净资产单季度收益率(扣除非经常损益)'],
     ('q_npta', 'q', 'E'):                             ['financial', 'q_npta', '上市公司财务指标 - 总资产净利润(单季度)'],
-    ('q_opincome_to_ebt', 'q', 'E'):                  ['financial', 'q_opincome_to_ebt', '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
+    ('q_opincome_to_ebt', 'q', 'E'):                  ['financial', 'q_opincome_to_ebt',
+                                                       '上市公司财务指标 - 经营活动净收益／利润总额(单季度)'],
     ('q_investincome_to_ebt', 'q', 'E'):              ['financial', 'q_investincome_to_ebt',
                                                        '上市公司财务指标 - 价值变动净收益／利润总额(单季度)'],
     ('q_dtprofit_to_profit', 'q', 'E'):               ['financial', 'q_dtprofit_to_profit',
@@ -1025,29 +1032,29 @@ DATA_TABLE_MAP = {
     ('free_share', 'd', 'E'):                         ['stock_indicator', 'free_share', '股票技术指标 - 自由流通股本 （万）'],
     ('total_mv', 'd', 'E'):                           ['stock_indicator', 'total_mv', '股票技术指标 - 总市值 （万元）'],
     ('circ_mv', 'd', 'E'):                            ['stock_indicator', 'circ_mv', '股票技术指标 - 流通市值（万元）'],
-    ('vol_ratio', 'd', 'E'):                          ['stock_indicator2', 'vol_ratio', '备用股票技术指标 - 量比'],
-    ('turn_over', 'd', 'E'):                          ['stock_indicator2', 'turn_over', '备用股票技术指标 - 换手率'],
-    ('swing', 'd', 'E'):                              ['stock_indicator2', 'swing', '备用股票技术指标 - 振幅'],
-    ('selling', 'd', 'E'):                            ['stock_indicator2', 'selling', '备用股票技术指标 - 内盘（主动卖，手）'],
-    ('buying', 'd', 'E'):                             ['stock_indicator2', 'buying', '备用股票技术指标 - 外盘（主动买， 手）'],
-    ('total_share_b', 'd', 'E'):                      ['stock_indicator2', 'total_share', '备用股票技术指标 - 总股本(亿)'],
-    ('float_share_b', 'd', 'E'):                      ['stock_indicator2', 'float_share', '备用股票技术指标 - 流通股本(亿)'],
-    ('pe_2', 'd', 'E'):                               ['stock_indicator2', 'pe', '备用股票技术指标 - 市盈(动)'],
-    ('industry', 'd', 'E'):                           ['stock_indicator2', 'industry', '备用股票技术指标 - 所属行业'],
-    ('area', 'd', 'E'):                               ['stock_indicator2', 'area', '备用股票技术指标 - 所属地域'],
-    ('float_mv_2', 'd', 'E'):                         ['stock_indicator2', 'float_mv', '备用股票技术指标 - 流通市值'],
-    ('total_mv_2', 'd', 'E'):                         ['stock_indicator2', 'total_mv', '备用股票技术指标 - 总市值'],
-    ('avg_price', 'd', 'E'):                          ['stock_indicator2', 'avg_price', '备用股票技术指标 - 平均价'],
-    ('strength', 'd', 'E'):                           ['stock_indicator2', 'strength', '备用股票技术指标 - 强弱度(%)'],
-    ('activity', 'd', 'E'):                           ['stock_indicator2', 'activity', '备用股票技术指标 - 活跃度(%)'],
-    ('avg_turnover', 'd', 'E'):                       ['stock_indicator2', 'avg_turnover', '备用股票技术指标 - 笔换手'],
-    ('attack', 'd', 'E'):                             ['stock_indicator2', 'attack', '备用股票技术指标 - 攻击波(%)'],
-    ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '备用股票技术指标 - 近3月涨幅'],
-    ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '备用股票技术指标 - 近6月涨幅'],
+    ('vol_ratio', 'd', 'E'):                          ['stock_indicator2', 'vol_ratio', '股票技术指标 - 量比'],
+    ('turn_over', 'd', 'E'):                          ['stock_indicator2', 'turn_over', '股票技术指标 - 换手率'],
+    ('swing', 'd', 'E'):                              ['stock_indicator2', 'swing', '股票技术指标 - 振幅'],
+    ('selling', 'd', 'E'):                            ['stock_indicator2', 'selling', '股票技术指标 - 内盘（主动卖，手）'],
+    ('buying', 'd', 'E'):                             ['stock_indicator2', 'buying', '股票技术指标 - 外盘（主动买， 手）'],
+    ('total_share_b', 'd', 'E'):                      ['stock_indicator2', 'total_share', '股票技术指标 - 总股本(亿)'],
+    ('float_share_b', 'd', 'E'):                      ['stock_indicator2', 'float_share', '股票技术指标 - 流通股本(亿)'],
+    ('pe_2', 'd', 'E'):                               ['stock_indicator2', 'pe', '股票技术指标 - 动态市盈率'],
+    ('industry', 'd', 'E'):                           ['stock_indicator2', 'industry', '股票技术指标 - 所属行业'],
+    ('area', 'd', 'E'):                               ['stock_indicator2', 'area', '股票技术指标 - 所属地域'],
+    ('float_mv_2', 'd', 'E'):                         ['stock_indicator2', 'float_mv', '股票技术指标 - 流通市值'],
+    ('total_mv_2', 'd', 'E'):                         ['stock_indicator2', 'total_mv', '股票技术指标 - 总市值'],
+    ('avg_price', 'd', 'E'):                          ['stock_indicator2', 'avg_price', '股票技术指标 - 平均价'],
+    ('strength', 'd', 'E'):                           ['stock_indicator2', 'strength', '股票技术指标 - 强弱度(%)'],
+    ('activity', 'd', 'E'):                           ['stock_indicator2', 'activity', '股票技术指标 - 活跃度(%)'],
+    ('avg_turnover', 'd', 'E'):                       ['stock_indicator2', 'avg_turnover', '股票技术指标 - 笔换手'],
+    ('attack', 'd', 'E'):                             ['stock_indicator2', 'attack', '股票技术指标 - 攻击波(%)'],
+    ('interval_3', 'd', 'E'):                         ['stock_indicator2', 'interval_3', '股票技术指标 - 近3月涨幅'],
+    ('interval_6', 'd', 'E'):                         ['stock_indicator2', 'interval_6', '股票技术指标 - 近6月涨幅'],
 }
 TABLE_SOURCE_MAP_COLUMNS = ['structure', 'desc', 'table_usage', 'asset_type', 'freq', 'tushare', 'fill_arg_name',
-                                'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
-                                'start_end_chunk_size']
+                            'fill_arg_type', 'arg_rng', 'arg_allowed_code_suffix', 'arg_allow_start_end',
+                            'start_end_chunk_size']
 TABLE_SOURCE_MAP = {
 
     'trade_calendar':
@@ -1055,11 +1062,24 @@ TABLE_SOURCE_MAP = {
          'SSE,SZSE,BSE,CFFEX,SHFE,CZCE,DCE,INE', '', '', ''],
 
     'stock_basic':
-        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '', ''],
+        ['stock_basic', '股票基本信息', 'basics', 'E', 'none', 'stock_basic', 'exchange', 'list', 'SSE,SZSE,BSE', '', '',
+         ''],
 
     'stock_names':
         ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic',
          '', '', ''],
+
+    'stock_company':
+        ['stock_company', '上市公司基本信息', 'basics', 'E', 'none', 'stock_company', 'exchange', 'list', 'SSE, SZSE, BSE',
+         '', '', ''],
+
+    'stk_managers':
+        ['stk_managers', '上市公司管理层', 'events', 'E', 'd', 'stk_managers', 'ts_code', 'table_index', 'stock_basic',
+         '', 'Y', ''],
+
+    'new_share':
+        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_share', 'none', 'none', 'none',
+         '', 'Y', '200'],
 
     'index_basic':
         ['index_basic', '指数基本信息', 'basics', 'IDX', 'none', 'index_basic', 'market', 'list',
@@ -1300,12 +1320,48 @@ TABLE_STRUCTURES = {
                          'remarks':    ['证券代码', '开始日期', '证券名称', '结束日期', '公告日期', '变更原因'],
                          'prime_keys': [0, 1]},
 
-    'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher', 'index_type', 'category',
-                                        'base_date', 'base_point', 'list_date', 'weight_rule', 'desc', 'exp_date'],
+    'stock_company':    {'columns':    ['ts_code', 'exchange', 'chairman', 'manager', 'secretary',
+                                        'reg_capital', 'setup_date', 'province', 'city', 'introduction',
+                                        'website', 'email', 'office', 'employees', 'main_business', 'business_scope'],
+                         'dtypes':     ['varchar(10)', 'varchar(10)', 'varchar(10)', 'varchar(10)', 'varchar(10)',
+                                        'float', 'date', 'varchar(20)', 'varchar(20)', 'text',
+                                        'varchar(50)', 'varchar(50)', 'varchar(50)', 'int', 'text', 'text'],
+                         'remarks':    ['股票代码', '交易所代码', '法人代表', '总经理', '董秘',
+                                        '注册资本', '注册日期', '所在省份', '所在城市', '公司介绍',
+                                        '公司主页', '电子邮件', '办公室', '员工人数', '主要业务及产品', '经营范围'],
+                         'prime_keys': [0]},
+
+    'stk_managers':     {'columns':    ['s_code', 'ann_date', 'name', 'gender', 'lev',
+                                        'title', 'edu', 'national', 'birthday', 'begin_date',
+                                        'end_date', 'resume'],
+                         'dtypes':     ['varchar(10)', 'date', 'varchar(10)', 'varchar(10)', 'varchar(20)',
+                                        'varchar(30)', 'varchar(30)', 'varchar(30)', 'varchar(10)', 'date',
+                                        'date', 'text'],
+                         'remarks':    ['TS股票代码', '公告日期', '姓名', '性别', '岗位类别',
+                                        '岗位', '学历', '国籍', '出生年月', '上任日期',
+                                        '离任日期', '个人简历'],
+                         'prime_keys': [0, 1]},
+
+    'new_share':        {'columns':    ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
+                                        'amount', 'market_amount', 'price', 'pe', 'limit_amount',
+                                        'funds', 'ballot'],
+                         'dtypes':     ['varchar(20)', 'varchar(20)', 'varchar(50)', 'date', 'date',
+                                        'float', 'float', 'float', 'float', 'float',
+                                        'float', 'float'],
+                         'remarks':    ['TS股票代码', '申购代码', '名称', '上网发行日期', '上市日期',
+                                        '发行总量（万股）', '上网发行总量（万股）', '发行价格', '市盈率', '个人申购上限（万股）',
+                                        '募集资金（亿元）', '中签率'],
+                         'prime_keys': [0, 1]},
+
+    'index_basic':      {'columns':    ['ts_code', 'name', 'fullname', 'market', 'publisher',
+                                        'index_type', 'category', 'base_date', 'base_point', 'list_date', 'weight_rule',
+                                        'desc', 'exp_date'],
                          'dtypes':     ['varchar(24)', 'varchar(40)', 'varchar(80)', 'varchar(8)', 'varchar(30)',
-                                        'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text', 'text', 'date'],
-                         'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方', '指数风格', '指数类别', '基期', '基点',
-                                        '发布日期', '加权方式', '描述', '终止日期'],
+                                        'varchar(30)', 'varchar(6)', 'date', 'float', 'date', 'text',
+                                        'text', 'date'],
+                         'remarks':    ['证券代码', '简称', '指数全称', '市场', '发布方',
+                                        '指数风格', '指数类别', '基期', '基点', '发布日期', '加权方式',
+                                        '描述', '终止日期'],
                          'prime_keys': [0]},
 
     'fund_basic':       {'columns':    ['ts_code', 'name', 'management', 'custodian', 'fund_type', 'found_date',
@@ -1989,7 +2045,7 @@ class DataSource:
         all_tables = get_table_map()
         all_table_names = all_tables.index
         all_info = []
-        print('Analyzing tables...')
+        print('Analyzing local data source tables... depending on size of tables, it may take a few minutes')
         total_table_count = len(all_table_names)
         from .utilfuncs import progress_bar
         completed_reading_count = 0
@@ -2005,7 +2061,7 @@ class DataSource:
         all_info.drop(columns=['table'], inplace=True)
         if print_out:
             info_to_print = all_info.loc[all_info.has_data == True][['has_data', 'size', 'records', 'min2', 'max2']]
-            print('\nFollowing tables contain local data, to view complete list, print returned DataFrame')
+            print(f'\n{self}\nFollowing tables contain local data, to view complete list, print returned DataFrame')
             print(info_to_print.to_string(columns=['has_data',
                                                    'size',
                                                    'records',
@@ -2972,6 +3028,7 @@ class DataSource:
             获取的历史数据的频率，包括以下选项：
              - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
              - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+             如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
 
         :param asset_type: str, list
             限定获取的数据中包含的资产种类，包含以下选项或下面选项的组合，合法的组合方式包括
@@ -3003,10 +3060,12 @@ class DataSource:
 
         # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表，以及目标列
         table_map = get_table_map()
+        # 设置soft_freq = True以通过抖动频率查找频率不同但类型相同的数据表
         tables_to_read = htype_to_table_col(
                 htypes=htypes,
                 freq=freq,
-                asset_type=asset_type
+                asset_type=asset_type,
+                soft_freq=True
         )
         table_data_acquired = {}
         table_data_columns = {}
@@ -3025,7 +3084,7 @@ class DataSource:
             for tbl in tables_to_read:
                 if htyp in table_data_columns[tbl]:
                     df = table_data_acquired[tbl]
-                    # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstac，成为多列、单index的数据
+                    # 从本地读取的DF中的数据是按multi_index的形式stack起来的，因此需要unstack，成为多列、单index的数据
                     if not df.empty:
                         htyp_series = df[htyp]
                         new_df = htyp_series.unstack(level=0)
@@ -3039,6 +3098,10 @@ class DataSource:
                         df_by_htypes[htyp] = old_df.join(new_df,
                                                          how='outer',
                                                          rsuffix='_y')
+        # debug
+        # import pdb;
+        # pdb.set_trace()
+
         # 如果在历史数据合并后发现列名称冲突，发出警告信息，并删除后添加的列
         conflict_cols = ''
         for htyp in htypes:
@@ -3053,10 +3116,11 @@ class DataSource:
                           f'{conflict_cols}', DataConflictWarning)
         # 如果提取的数据全部为空DF，说明DataSource可能数据不足，报错并建议
         if all(df.empty for df in df_by_htypes.values()):
-            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please: \n'
-                               f'find datatable for data type:  qteasy.find_history_data(\'data_type\')\n'
-                               f'check table data coverage:     DataSource.get_table_info(\'table_name\')\n'
-                               f'fill datasource:               DataSource.refill_local_source(\'table_name\', '
+            raise RuntimeError(f'Empty data extracted from DataSource {self.connection_type}, Please '
+                               f'check data source availability: \n'
+                               f'check availability of all tables:  qt.get_table_overview()\nor\n'
+                               f'check specific table:              qt.get_table_info(\'table_name\')\n'
+                               f'fill datasource:                   DataSource.refill_local_source(\'table_name\', '
                                f'**kwargs)')
         # 如果需要复权数据，计算复权价格
         if adj.lower() not in ['none', 'n']:
@@ -3080,7 +3144,7 @@ class DataSource:
                 for af in adj_factors:
                     combined_factors *= adj_factors[af].reindex(columns=all_ts_codes).fillna(1.0)
                 # 得到合并后的复权因子，如果数据的频率为日级(包括周、月)，直接相乘即可
-                # 但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
+                #  但如果数据的频率是分钟级，则需要将复权因子也扩展到分钟级，才能相乘
                 if freq in ['min', '1min', '5min', '15min', '30min', 'h']:
                     expanded_factors = combined_factors.reindex(price_df.index.date)
                     expanded_factors.index = price_df.index
@@ -3164,7 +3228,8 @@ class DataSource:
                             reversed_par_seq=False,
                             parallel=True,
                             process_count=None,
-                            chunk_size=100):
+                            chunk_size=100,
+                            save_log=False):
         """ 补充本地数据，手动或自动运行补充本地数据库
 
         :param tables:
@@ -3560,6 +3625,256 @@ def set_primary_key_index(df, primary_key, pk_dtypes):
     return None
 
 
+def _resample_data(hist_data, target_freq,
+                   method='last',
+                   b_days_only=True,
+                   trade_time_only=True,
+                   forced_start=None,
+                   forced_end=None,
+                   **kwargs):
+    """ 降低获取数据的频率，通过插值的方式将高频数据降频合并为低频数据，使历史数据的时间频率
+    符合target_freq
+
+    :param hist_data: pd.DataFrame
+        历史数据，是一个index为日期/时间的DataFrame
+
+    :param target_freq: str
+        历史数据的目标频率，包括以下选项：
+         - 1/5/15/30min 1/5/15/30分钟频率周期数据(如K线)
+         - H/D/W/M 分别代表小时/天/周/月 周期数据(如K线)
+         如果下载的数据频率与目标freq不相同，将通过升频或降频使其与目标频率相同
+
+    :param method: str
+        调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+        数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+        例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+        数据合并方法:
+        - 'last'/'close': 使用合并区间的最后一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'first'/'open': 使用合并区间的第一个值。如：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'max'/'high': 使用合并区间的最大值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+        - 'min'/'low': 使用合并区间的最小值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+        - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+        - 'sum'/'total': 使用合并区间的平均值作为合并值：
+            [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+        数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+        例如，填充下列数据(?表示插入的数据）
+            [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+        缺失数据的填充方法如下:
+        - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+        - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+            [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+        - 'nan': 使用NaN值填充缺失数据：
+            [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+        - 'zero': 使用0值填充缺失数据：
+            [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+
+    :param b_days_only: bool 默认True
+        是否强制转换自然日频率为工作日，即：
+        'D' -> 'B'
+        'W' -> 'W-FRI'
+        'M' -> 'BM'
+
+    :param trade_time_only: bool, 默认True
+        为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+
+    :param forced_start: str, Datetime like, 默认None
+        强制开始日期，如果为None，则使用hist_data的第一天为开始日期
+
+    :param forced_start: str, Datetime like, 默认None
+        强制结束日期，如果为None，则使用hist_data的最后一天为结束日期
+
+    :param **kwargs:
+        用于生成trade_time_index的参数，包括：
+        :param include_start:   日期时间序列是否包含开始日期/时间
+        :param include_end:     日期时间序列是否包含结束日期/时间
+        :param start_am:        早晨交易时段的开始时间
+        :param end_am:          早晨交易时段的结束时间
+        :param include_start_am:早晨交易时段是否包括开始时间
+        :param include_end_am:  早晨交易时段是否包括结束时间
+        :param start_pm:        下午交易时段的开始时间
+        :param end_pm:          下午交易时段的结束时间
+        :param include_start_pm 下午交易时段是否包含开始时间
+        :param include_end_pm   下午交易时段是否包含结束时间
+
+    :return:
+        DataFrame:
+        一个重新设定index并填充好数据的历史数据DataFrame
+    """
+
+    if not isinstance(target_freq, str):
+        raise TypeError
+    target_freq = target_freq.upper()
+    # 如果hist_data为空，直接返回
+    if hist_data.empty:
+        return hist_data
+    if b_days_only:
+        if target_freq in ['W', 'W-SUN']:
+            target_freq = 'W-FRI'
+        elif target_freq == 'M':
+            target_freq = 'BM'
+    # 如果hist_data的freq与target_freq一致，也可以直接返回
+    # TODO: 这里有bug：强制start/end的情形需要排除
+    if hist_data.index.freqstr == target_freq:
+        return hist_data
+    # 如果hist_data的freq为None，可以infer freq
+    if hist_data.index.inferred_freq == target_freq:
+        return hist_data
+    resampled = hist_data.resample(target_freq)
+    if method in ['last', 'close']:
+        resampled = resampled.last()
+    elif method in ['first', 'open']:
+        resampled = resampled.first()
+    elif method in ['max', 'high']:
+        resampled = resampled.max()
+    elif method in ['min', 'low']:
+        resampled = resampled.min()
+    elif method in ['avg', 'mean']:
+        resampled = resampled.mean()
+    elif method in ['sum', 'total']:
+        resampled = resampled.sum()
+    elif method == 'ffill':
+        resampled = resampled.ffill()
+    elif method == 'bfill':
+        resampled = resampled.bfill()
+    elif method in ['nan', 'none']:
+        resampled = resampled.first()
+    elif method == 'zero':
+        resampled = resampled.first().fillna(0)
+    else:
+        # for unexpected cases
+        raise ValueError(f'resample method {method} can not be recognized.')
+
+    # 完成resample频率切换后，根据设置去除非工作日或非交易时段的数据
+    # 并填充空数据
+    resampled_index = resampled.index
+    if forced_start is None:
+        start = resampled_index[0]
+    else:
+        start = pd.to_datetime(forced_start)
+    if forced_end is None:
+        end = resampled_index[-1]
+    else:
+        end = pd.to_datetime(forced_end)
+
+    # 如果要求强制转换自然日频率为工作日频率
+    # 原来的版本在resample之前就强制转换自然日到工作日，但是测试发现，pd的resample有一个bug：
+    # 这个bug会导致method为last时，最后一个工作日的数据取自周日，而不是周五
+    # 在实际测试中发现，如果将2020-01-01到2020-01-10之间的Hourly数据汇总到工作日时
+    # 2020-01-03是周五，汇总时本来应该将2020-01-03 23:00:00的数据作为当天的数据
+    # 但是实际上2020-01-05 23:00:00 的数据被错误地放置到了周五，也就是周日的数据被放到
+    # 了周五，这样可能会导致错误的结果
+    # 因此解决方案是，仍然按照'D'频率来resample，然后再通过reindex将周六周日的数据去除
+    # 不过仅对freq为'D'的频率如此操作
+    if b_days_only:
+        if target_freq == 'D':
+            target_freq = 'B'
+
+    # 如果要求去掉非交易时段的数据
+    if trade_time_only:
+        expanded_index = _trade_time_index(start=start, end=end, freq=target_freq, **kwargs)
+    else:
+        expanded_index = pd.date_range(start=start, end=end, freq=target_freq)
+    resampled = resampled.reindex(index=expanded_index)
+
+    # 如果在数据开始或末尾增加了空数据（因为forced start/forced end），需要根据情况填充
+    if (expanded_index[-1] > resampled_index[-1]) or (expanded_index[0] < resampled_index[0]):
+        if method == 'ffill':
+            resampled.ffill(inplace=True)
+        elif method == 'bfill':
+            resampled.bfill(inplace=True)
+        elif method == 'zero':
+            resampled.fillna(0, inplace=True)
+
+    return resampled
+
+
+def _trade_time_index(start=None,
+                      end=None,
+                      periods=None,
+                      freq=None,
+                      include_start=True,
+                      include_end=True,
+                      start_am='9:30:00',
+                      end_am='11:30:00',
+                      include_start_am=True,
+                      include_end_am=True,
+                      start_pm='13:00:00',
+                      end_pm='15:00:00',
+                      include_start_pm=False,
+                      include_end_pm=True):
+    """ 生成一个符合交易时间段的datetime index
+
+    :param start:           日期时间序列的开始日期/时间
+    :param end:             日期时间序列的终止日期/时间
+    :param periods:         日期时间序列的分段数量
+    :param freq:            日期时间序列的频率
+    :param include_start:   日期时间序列是否包含开始日期/时间
+    :param include_end:     日期时间序列是否包含结束日期/时间
+    :param start_am:        早晨交易时段的开始时间
+    :param end_am:          早晨交易时段的结束时间
+    :param include_start_am:早晨交易时段是否包括开始时间
+    :param include_end_am:  早晨交易时段是否包括结束时间
+    :param start_pm:        下午交易时段的开始时间
+    :param end_pm:          下午交易时段的结束时间
+    :param include_start_pm 下午交易时段是否包含开始时间
+    :param include_end_pm   下午交易时段是否包含结束时间
+    :return:
+    """
+    # 检查输入数据, freq不能为除了min、h、d、w、m、q、a之外的其他形式
+    if freq is not None:
+        freq = str(freq).lower()
+    # 检查时间序列区间的开闭状况
+    closed=None
+    if include_start:
+        closed='left'
+    if include_end:
+        closed='right'
+    if include_start and include_end:
+        closed=None
+
+    time_index = pd.date_range(start=start, end=end, periods=periods, freq=freq, closed=closed)
+    # 判断time_index的freq，当freq小于一天时，需要按交易时段取出部分index
+    if time_index.freqstr is not None:
+        freq_str = time_index.freqstr.lower().split('-')[0]
+    else:
+        freq_str = time_index.inferred_freq
+        if freq_str is not None:
+            freq_str = freq_str.lower()
+        else:
+            time_delta = time_index[1] - time_index[0]
+            if time_delta < pd.Timedelta(1, 'd'):
+                freq_str = 'h'
+            else:
+                freq_str = 'd'
+    ''' freq_str有以下几种不同的情况：
+        min:        T
+        hour:       H
+        day:        D
+        week:       W-SUN/...
+        month:      M
+        quarter:    Q-DEC/...
+        year:       A-DEC/...
+        由于周、季、年三种情况存在复合字符串，因此需要split
+    '''
+    if freq_str[-1:] in ['t', 'h']:
+        idx_am = time_index.indexer_between_time(start_time=start_am, end_time=end_am,
+                                                 include_start=include_start_am, include_end=include_end_am)
+        idx_pm = time_index.indexer_between_time(start_time=start_pm, end_time=end_pm,
+                                                 include_start=include_start_pm, include_end=include_end_pm)
+        idxer = np.union1d(idx_am, idx_pm)
+        return time_index[idxer]
+    else:
+        return time_index
+
+
 # noinspection PyUnresolvedReferences
 def set_primary_key_frame(df, primary_key, pk_dtypes):
     """ 与set_primary_key_index的功能相反，将index中的值放入DataFrame中，
@@ -3640,26 +3955,71 @@ def get_primary_key_range(df, primary_key, pk_dtypes):
     return res
 
 
-def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
+def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute', soft_freq=False):
     """ 根据输入的字符串htypes\freq\asset_type,查找包含该data_type的数据表以及column
         仅支持精确匹配。无法精确匹配数据表时，报错
 
-    :param htypes:
-    :param freq:
-    :param asset_type:
-    :param method: 两种匹配方式：
-                    - 'exact': 一一对应匹配，针对输入的每一个参数匹配一张数据表
-                    举例：
-                        输入为: ['close', 'pe'], ['E', 'IDX'] 时，输出为：
-                        ['stock_daily', 'index_indicator'], ['close', 'pe']
-                    - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
-                    举例：
-                        输入为: ['close', 'pe'], ['E', 'IDX']时，输出为：
-                        ['stock_daily', 'index_daily', 'stock_indicator', 'index_indicator'],
-                        ['close', 'close', 'pe', 'pe']
+    :param htypes: (str, list)
+        需要查找的的数据类型，该数据类型必须能在data_table_map中找到，包括所有内置数据类型，
+        也包括自定义数据类型（自定义数据类型必须事先添加到data_table_map中），
+        否则会被忽略
+        当输入类型为str时，可以接受逗号分隔的字符串表示多个不同的data type
+        如下面两种输入等效：
+        'close, open, high' == ['close', 'open', 'high']
+
+    :param freq: (str, list) default 'd'
+        所需数据的频率，数据频率必须符合标准频率定义，即包含以下关键字：
+        min / hour / H / d / w / M / Q / Y
+        同时支持含数字或附加信息的频率如：
+        5min / 2d / W-Fri
+        如果输入的频率在data_table_map中无法找到，则根据soft_freq的值采取不同处理方式：
+        - 如果soft_freq == True:
+            在已有的data_table_map中查找最接近的freq并输出
+        - 如果soft_freq == False:
+            该项被忽略
+
+    :param asset_type: (str, list) default 'E'
+        所需数据的资产类型。该资产类型必须能在data_table_map中找到，
+        否则会被忽略
+        输入逗号分隔的多个asset_type等效于多个asset_type的list
+
+    :param method: str
+        决定htype和asset_type数据的匹配方式以及输出的数据表数量：
+        - 'exact': 完全匹配，针对输入的每一个参数匹配一张数据表
+          输出的数据列数量与htype/freq/asset_type的最大数量相同，
+          如果输入的数据中freq与asset_type数量不足时，自动补足
+          如果输入的数据中freq与asset_type数量太多时，自动忽略
+          当输入的htype或asset_type中有一个或多个无法在data_table_map中找到匹配项时，该项会被忽略
+        举例：
+            输入为:
+                ['close', 'pe'], ['d', 'd'], ['E', 'IDX'] 时，
+            输出为:
+                {'stock_daily':     ['close'],
+                 'index_indicator': ['pe']}
+
+        - 'permute': 排列组合，针对输入数据的排列组合输出匹配的数据表
+          输出的数据列数量与htype/freq/asset_type的数量乘积相同，但同一张表中的数据列会
+          被合并
+          当某一个htype或asset_type的组合无法在data_table_map中找到时，忽略该组合
+        举例：
+            输入为:
+                ['close', 'pe', 'open'], ['d'], ['E', 'IDX']时，
+            输出为:
+                {'stock_daily':     ['close', 'open'],
+                 'index_daily':     ['close', 'open'],
+                 'stock_indicator': ['pe'],
+                 'index_indicator': ['pe']}
+
+    :param soft_freq: bool, default False
+        决定freq的匹配方式：
+        - True: 允许不完全匹配输入的freq，优先查找更高且能够等分匹配的频率，
+          失败时查找更低的频率，如果都失败，则输出None(当method为'exact'时)，
+          或被忽略(当method为'permute'时)
+        - False:不允许不完全匹配的freq，当输入的freq无法匹配时输出None(当method为'exact'时)
+
     :return:
-        一个dict:
-        {table: columns}
+        一个dict, key为需要的数据所在数据表，value为该数据表中的数据列:
+        {tables: columns}
     """
     if isinstance(htypes, str):
         htypes = str_to_list(htypes)
@@ -3673,33 +4033,228 @@ def htype_to_table_col(htypes, freq='d', asset_type='E', method='permute'):
             asset_type = str_to_list(asset_type)
 
     # 根据资产类型、数据类型和频率找到应该下载数据的目标数据表
+
+    # 并开始从dtype_map中查找内容,
+    # - exact模式下使用reindex确保找足数量，按照输入组合的数量查找，找不到的输出NaN
+    # - permute模式下将dtype/freq/atype排列组合后查找所有可能的数据表，找不到的输出NaN
     dtype_map = get_dtype_map()
     if method.lower() == 'exact':
         # 一一对应方式，仅严格按照输入数据的数量一一列举数据表名称：
         idx_count = max(len(htypes), len(freq), len(asset_type))
+        freq_padder = freq[0] if len(freq) == 1 else 'd'
+        asset_padder = asset_type[0] if len(asset_type) == 1 else 'E'
         htypes = input_to_list(htypes, idx_count, padder=htypes[-1])
-        freq = input_to_list(freq, idx_count, padder='d')
-        asset_type = input_to_list(asset_type, idx_count, padder='E')
+        freq = input_to_list(freq, idx_count, padder=freq_padder)
+        asset_type = input_to_list(asset_type, idx_count, padder=asset_padder)
         dtype_idx = [(h, f, a) for h, f, a in zip(htypes, freq, asset_type)]
-    elif method.lower() == 'permute':
-        # 排列组合方式
-        dtype_idx = (htypes, freq, asset_type)
-    else:
-        raise KeyError(f'invalid method {method}')
-    try:
-        group = dtype_map.loc[dtype_idx].groupby(['table_name'])
-        matched_tables = group['column'].apply(list).to_dict()
-    except KeyError as e:
-        raise e
-    if any(pd.isna(item) for item in matched_tables):
-        # 部分输入数据匹配到nan值
-        print(f'some of the input items are invalid, they will be removed')
-        matched_tables = [item for item in matched_tables if pd.notna(item)]
-        if len(matched_tables) == 0:
-            raise KeyError()
-    # 处理列表中的重复数据
 
+    elif method.lower() == 'permute':
+        import itertools
+        dtype_idx = list(itertools.product(htypes, freq, asset_type))
+
+    else:  # for some unexpected cases
+        raise KeyError(f'invalid method {method}')
+
+    # 查找内容
+    found_dtypes = dtype_map.reindex(index=dtype_idx)
+
+    # 检查找到的数据中是否有NaN值，即未精确匹配到的值，确认是由于dtype/atype不对还是freq不对造成的
+    # 如果是freq不对造成的，则需要抖动freq后重新匹配
+    not_matched = found_dtypes.isna().all(axis=1)
+    all_found = ~not_matched.any()  # 如果没有任何组合未找到，等价于全部组合都找到了
+    # 在soft_freq模式下，进一步确认无法找到数据的原因，如果因为freq不匹配，则抖动freq后重新查找
+    rematched_tables = {}
+    if (not all_found) and soft_freq:
+        # 有部分htype/freq/type组合没有找到结果，这部分index需要调整
+        unmatched_index = found_dtypes.loc[not_matched].index
+        unmatched_dtypes = [item[0] for item in unmatched_index]
+        unmatched_freqs = [item[1] for item in unmatched_index]
+        unmatched_atypes = [item[2] for item in unmatched_index]
+        map_index = dtype_map.index
+        all_dtypes = map_index.get_level_values(0)
+        all_freqs = map_index.get_level_values(1)
+        all_atypes = map_index.get_level_values(2)
+
+        rematched_dtype_index = []
+        for dt, fr, at in zip(unmatched_dtypes, unmatched_freqs, unmatched_atypes):
+            try:
+                rematched_dtype_loc = all_dtypes.get_loc(dt)
+                rematched_atype_loc = all_atypes.get_loc(at)
+            except KeyError:
+                # 如果产生Exception，说明dt或at无法精确匹配
+                # 此时应该保留全NaN输出
+                continue
+                # raise KeyError(f'dtype ({dt}) or asset_type ({at}) can not be found in dtype map')
+            # 否则就是freq无法精确匹配，此时需要抖动freq
+            '''
+            原本使用下面的方法获取同时满足两个条件的freq的集合
+            available_freq_list = all_freqs[rematched_dtype_loc & rematched_atype_loc]
+            available_freq_list = list(set(available_freq_list))
+            但是rematched_dtype_loc和rematched_atype_loc有时候类型不同，因此无法直接&
+            例如，当dt = invest_income 时，rematched_dtype_loc返回值为一个数字209，
+            而当at = E 时，rematched_atype_loc返回值为一个bool series
+            两者无法直接进行 & 运算，因此会导致错误结果
+            因此直接使用集合交集运算
+            '''
+            dtype_freq_list = set(all_freqs[rematched_dtype_loc])
+            atype_freq_list = set(all_freqs[rematched_atype_loc])
+            available_freq_list = dtype_freq_list.intersection(atype_freq_list)
+
+            # 当无法找到available freq list时，跳过这一步
+            if len(available_freq_list) == 0:
+                continue
+
+            dithered_freq = freq_dither(fr, available_freq_list)
+            # 将抖动后生成的新的dtype ID保存下来
+            rematched_dtype_index.append((dt, dithered_freq.lower(), at))
+
+        # 抖动freq后生成的index中可能有重复项，需要去掉重复项
+        rematched_dtype_index_unduplicated = list(set(rematched_dtype_index))
+        # 通过去重后的index筛选出所需的dtypes
+        rematched_dtypes = dtype_map.reindex(index=rematched_dtype_index_unduplicated)
+        # 合并成组后生成dict
+        group = rematched_dtypes.groupby(['table_name'])
+        rematched_tables = group['column'].apply(list).to_dict()
+
+    # 从found_dtypes中提取数据并整理为dict
+    group = found_dtypes.groupby(['table_name'])
+    matched_tables = group['column'].apply(list).to_dict()
+
+    if soft_freq:
+        # 将找到的dtypes与重新匹配的dtypes合并
+        matched_tables.update(rematched_tables)
     return matched_tables
+
+
+def freq_dither(freq, freq_list):
+    """ 频率抖动，将一个目标频率抖动到频率列表中的一个频率上，
+
+    :param freq:
+    :param freq_list:
+    :return:
+    """
+    """抖动算法如下：
+            0，从频率string中提取目标qty，目标主频、副频
+            3，设定当前频率 = 目标主频，开始查找：
+            # 4，将频率列表中的频率按level排序，并找到当前频率的插入位置，将列表分为高频列表与低频列表
+            # 5，如果高频列表不为空，则从高频列表中取最低的主频，返回它
+            # 6，否则从低频列表中取最高主频，返回它
+            另一种方法
+            4，逐次升高
+    """
+
+    qty, main_freq, sub_freq = get_main_freq(freq)
+
+    freq_list = [get_main_freq(freq_string)[1] for freq_string in freq_list]
+    level_list = np.array([get_main_freq_level(freq_string) for freq_string in freq_list])
+    freq_level = get_main_freq_level(freq)
+
+    level_list_sorter = level_list.argsort()
+    insert_pos = level_list.searchsorted(freq_level, sorter=level_list_sorter)
+    upper_level_arg_list = level_list_sorter[insert_pos:]
+    lower_level_arg_list = level_list_sorter[:insert_pos]
+
+    if len(upper_level_arg_list) > 0:
+        # 在upper_list中位于第一位的可能是freq的同级频率，
+        # 如果输出同级频率，需要确保该频率与freq一致，否则就需要跳过它
+        maybe_found = freq_list[upper_level_arg_list[0]]
+        if (get_main_freq_level(maybe_found) > freq_level) or (maybe_found == main_freq):
+            return maybe_found
+        # 查找下一个maybe_found
+        return freq_list[upper_level_arg_list[1]]
+
+    if len(lower_level_arg_list) > 0:
+        return freq_list[lower_level_arg_list[-1]]
+    return None
+
+
+def get_main_freq(freq):
+    """ 获取freqstring的main_freq
+        如：
+        - '25d' -> 'D'
+        - 'w-Fri' -> 'W'
+        - '75min' -> '15MIN'
+        - '90min' -> '30MIN'
+
+    :param freq:
+    :return:
+        tuple: (qty, main_freq, sub_freq)
+        qty, int
+        main_freq, str
+        sub_freq, str
+    """
+    import re
+    from .utilfuncs import TIME_FREQ_STRINGS
+
+    freq_split = freq.split('-')
+    qty = 1
+    main_freq = freq_split[0].upper()
+    sub_freq = ''
+    if len(freq_split) >= 2:
+        sub_freq = freq_split[1].upper()
+
+    # 继续拆分main_freq与qty_part
+    if len(main_freq) > 1:
+        maybe_qty = ''.join(re.findall('\d+', main_freq))
+        # 另外一种处理方法
+        # qty_part = ''.join(list(filter(lambda x: x.isdigit(), main_freq)))
+        qty_len = len(maybe_qty)
+        if qty_len > 0:
+            main_freq = main_freq[qty_len:]
+            qty = int(maybe_qty)
+
+    if main_freq not in TIME_FREQ_STRINGS:
+        return None, None, None
+
+    if main_freq == 'MIN':
+        available_qty = [''.join(re.findall('\d+', freq_string)) for freq_string in TIME_FREQ_STRINGS]
+        available_qty = [int(item) for item in available_qty if len(item) > 0]
+        qty_fitness = [qty % item for item in available_qty]
+        min_qty = available_qty[qty_fitness.index(0)]
+        main_freq = str(min_qty) + main_freq
+        qty = qty // min_qty
+
+    return qty, main_freq, sub_freq
+
+
+def get_main_freq_level(freq):
+    """ 确定并返回freqency的级别
+
+    :param freq:
+    :return:
+    """
+    from .utilfuncs import TIME_FREQ_LEVELS, TIME_FREQ_STRINGS
+    qty, main_freq, sub_freq = get_main_freq(freq)
+    if main_freq in TIME_FREQ_STRINGS:
+        return TIME_FREQ_LEVELS[main_freq]
+    else:
+        return None
+
+
+def next_main_freq(freq, direction='up'):
+    """
+
+    :param freq: main_freq string
+    :param direction: 'up' / 'down'
+    :return:
+    """
+    from .utilfuncs import TIME_FREQ_STRINGS, TIME_FREQ_LEVELS
+    freq = freq.upper()
+    if freq not in TIME_FREQ_STRINGS:
+        return None
+    qty, main_freq, sub_freq = get_main_freq(freq)
+    level = get_main_freq_level(freq)
+    freqs = list(TIME_FREQ_LEVELS.keys())
+    target_pos = freqs.index(main_freq)
+    while True:
+        target_freq = freqs[target_pos]
+        if direction == 'up':
+            target_pos += 1
+        elif direction == 'down':
+            target_pos -= 1
+        # import pdb; pdb.set_trace()
+        if get_main_freq_level(target_freq) != level:
+            return target_freq
 
 
 # noinspection PyTypeChecker
@@ -3774,6 +4329,15 @@ def find_history_data(s):
         例如，输入"pe"或"市盈率"都可以匹配到市盈率数据类型，并且提供该数据类型的相关信息
         相关信息如：
         调用名称、中文简介、所属数据表、数据频率、证券类型等等
+
+        TODO: 重写或检查此函数，原来的想法是允许数据表中存在相同的列名，此处通过搜索的
+          方式找到所有匹配的列。现在的新架构为每一个列赋予了一个唯一的ID，相同的列名仍然
+          存在但是已经不作为ID使用，因此在输出表中应该列出该数据的ID、freq、Atype用于
+          指导如何精确定位数据，至于数据列名仅作为参考信息存在。
+
+        TODO: 作为一个qt主函数，应增加功能：通过kwargs提供Atype和freq的筛选功能
+
+        TODO: 作为一个qt主函数，增加功能：允许模糊匹配remarks
 
         例如：
         >>> import qteasy as qt

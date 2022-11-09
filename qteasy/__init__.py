@@ -15,10 +15,11 @@ import numpy as np
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
-from .core import get_realtime_holdings, get_realtime_trades, filter_stock_codes, filter_stocks, get_table_info
+from .core import run
 from .core import info, is_ready, configure, configuration, save_config, load_config, reset_config
-from .core import run, get_basic_info
-from .history import HistoryPanel, get_history_panel
+from .core import get_basic_info, get_stock_info, get_table_overview, refill_data_source, get_history_data
+from .core import get_realtime_holdings, get_realtime_trades, filter_stock_codes, filter_stocks, get_table_info
+from .history import HistoryPanel
 from .history import dataframe_to_hp, stack_dataframes
 from .operator import Operator
 from .strategy import RuleIterator, GeneralStg, FactorSorter
@@ -30,6 +31,7 @@ from ._arg_validators import QT_CONFIG
 
 from pathlib import Path
 
+# 设置logger以及运行日志的存储路径
 logger_core = logging.getLogger('core')
 logger_core.setLevel(logging.DEBUG)
 debug_handler = TimedRotatingFileHandler(filename='qteasy/log/qteasy.log', backupCount=3, when='midnight')
@@ -41,7 +43,8 @@ debug_handler.setFormatter(formatter)
 logger_core.addHandler(debug_handler)
 logger_core.addHandler(error_handler)
 
-qt_local_configs = {}  # 存储本地配置文件的配置
+# 准备从本地配置文件中读取预先存储的qteasy配置
+qt_local_configs = {}
 
 # 解析qteasy的本地安装路径
 QT_ROOT_PATH = str(Path('.').resolve()) + '/'
@@ -91,7 +94,7 @@ except Exception as e:
 # 读取其他本地配置属性，更新QT_CONFIG, 允许用户自定义参数存在
 configure(only_built_in_keys=False, **qt_local_configs)
 
-# 建立默认的本地数据源
+# 连接默认的本地数据源
 QT_DATA_SOURCE = DataSource(
         source_type=QT_CONFIG['local_data_source'],
         file_type=QT_CONFIG['local_data_file_type'],
@@ -102,8 +105,9 @@ QT_DATA_SOURCE = DataSource(
         password=QT_CONFIG['local_db_password'],
         db=QT_CONFIG['local_db_name']
 )
-logger_core.info(f'local data source created: {QT_DATA_SOURCE}')
+logger_core.info(f'local data source connected: {QT_DATA_SOURCE}')
 
+# 初始化默认交易日历
 QT_TRADE_CALENDAR = QT_DATA_SOURCE.read_table_data('trade_calendar')
 if not QT_TRADE_CALENDAR.empty:
     QT_TRADE_CALENDAR = QT_TRADE_CALENDAR
@@ -114,8 +118,10 @@ else:
                         f'properly.\nrun "qt.QT_DATA_SOURCE.refill_data_source(\'trade_calendar\')" to '
                         f'download trade calendar data')
 
+# 设置qteasy运行过程中忽略某些numpy计算错误报警
 np.seterr(divide='ignore', invalid='ignore')
 logger_core.info('qteasy loaded!')
 
+# 设置qteasy回测交易报告以及错误报告的存储路径
 QT_ERR_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['error_log_file_path']
 QT_TRADE_LOG_PATH = QT_ROOT_PATH + QT_CONFIG['trade_log_file_path']

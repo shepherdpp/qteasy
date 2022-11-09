@@ -452,6 +452,8 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         plot_type = 'ohlc'
     elif plot_type.lower() in ['renko', 'r']:
         plot_type = 'renko'
+    elif plot_type.lower() in ['line', 'l']:
+        plot_type = 'line'
     elif plot_type.lower() in ['none', 'n']:
         plot_type = 'none'
         no_visual = True
@@ -503,7 +505,9 @@ def candle(stock=None, start=None, end=None, stock_data=None, asset_type=None, f
         stock = None
     else:
         stock = matched_codes[0]
-    return _mpf_plot(stock_data=stock_data, share_name=None, stock=stock, start=start, end=end, freq=freq,
+    if not interactive:
+        pass
+    return _mpf_plot(stock_data=stock_data, stock=stock, start=start, end=end, freq=freq,
                      asset_type=asset_type, plot_type=plot_type, no_visual=no_visual, data_source=data_source,
                      **kwargs)
 
@@ -720,9 +724,9 @@ def _get_mpf_data(stock, asset_type=None, adj='none', freq='d', data_source=None
         htypes = 'close,high,low,open,vol'
     # fullname = this_stock.fullname.values[0]
     # 读取该股票从上市第一天到今天的全部历史数据，包括ohlc和volume数据
-    data = get_history_panel(start=start_date, end=end_date, freq=freq, shares=stock,
-                             htypes=htypes, asset_type=asset_type,
-                             adj=adj, data_source=data_source).slice_to_dataframe(share=stock)
+    data = get_history_panel(htypes=htypes, shares=stock, start=start_date, end=end_date, freq=freq,
+                             asset_type=asset_type, adj=adj, data_source=data_source,
+                             resample_method='none').slice_to_dataframe(share=stock)
     # 如果读取的是nav净值，将nav改为close，并填充open/high/low三列为NaN值
     is_out_fund = False
     if 'open' not in data.columns:

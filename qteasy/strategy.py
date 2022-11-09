@@ -392,7 +392,7 @@ class BaseStrategy:
                   f'Parameter range         {self.par_range}\n'
                   f'Data frequency          {self.data_freq}\n'
                   f'Sample frequency        {self.sample_freq}\n'
-                  f'Window length           {self.window_length}\n'
+                  f'Window length           {self.window_length}\n' 
                   f'Data types              {self.data_types}')
             if stg_type == 'FactorSorter':
                 print(f'Max select count        {self.max_sel_count}\n'

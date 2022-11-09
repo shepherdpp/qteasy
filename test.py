@@ -75,7 +75,9 @@ from qteasy.tafuncs import minmaxindex, mult, sub, sum
 from qteasy.history import stack_dataframes, dataframe_to_hp, ffill_3d_data
 
 from qteasy.database import DataSource, set_primary_key_index, set_primary_key_frame
-from qteasy.database import get_primary_key_range, htype_to_table_col
+from qteasy.database import get_primary_key_range, htype_to_table_col, _trade_time_index
+from qteasy.database import _resample_data, freq_dither, get_main_freq_level, next_main_freq
+from qteasy.database import get_main_freq
 
 from qteasy.strategy import BaseStrategy, RuleIterator, GeneralStg, FactorSorter
 
@@ -1077,6 +1079,98 @@ class TestCoreSubFuncs(unittest.TestCase):
         qt.find_history_data('市值')
         qt.find_history_data('net_profit')
         qt.find_history_data('净利润')
+
+    def test_get_history_data(self):
+        """ 测试get_history_data。大部份功能性测试在TestHistoryPanle.test_get_history_panel中完成
+        这里只关注参数自动完善功能以及包含完整shares和htypes输入的功能"""
+        print('test basic functions')
+        print('read data with all parameters and output dataframe grouped by htypes')
+        res = qt.get_history_data(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                  htypes='open, high, low, close',
+                                  start='20210101',
+                                  end='20210115',
+                                  freq='d',
+                                  asset_type='E',
+                                  adj='f',
+                                  group_by='htypes')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
+        self.assertEqual(list(res.keys()), ['open', 'high', 'low', 'close'])
+        first_df = res['open']
+        first_index = first_df.index
+        first_columns = first_df.columns
+        for df in res.values():
+            self.assertEqual(list(first_index), list(df.index))
+            self.assertEqual(list(first_columns), list(df.columns))
+
+        print('read data with all parameters and output dataframe grouped by shares')
+        res = qt.get_history_data(shares='000002.SZ, 000001.SZ, 000300.SH',
+                                  htypes='open, high, low, close',
+                                  start='20210101',
+                                  end='20210115',
+                                  freq='d',
+                                  asset_type='E',
+                                  adj='f',
+                                  group_by='shares')
+        self.assertIsInstance(res, dict)
+        self.assertTrue(all(isinstance(item, pd.DataFrame) for item in res.values()))
+        self.assertEqual(list(res.keys()), ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_df = res['000002.SZ']
+        first_index = first_df.index
+        first_columns = first_df.columns
+        for df in res.values():
+            self.assertEqual(list(first_index), list(df.index))
+            self.assertEqual(list(first_columns), list(df.columns))
+
+        print('test function with missing parameters')
+        res = qt.get_history_data(htypes='open, high, low, close')
+        print(res)
+
+        res = qt.get_history_data(htypes='open, close, vol',
+                                  shares='000651.SZ, 513100.SH')
+        print(res)
+
+        print('test function with wrong parameters')
+        print('wrong share code')
+        res = qt.get_history_data(htypes='open, close, vol',
+                                  shares='missing_code, 513100.SH')
+        print(res)
+        print('wrong date')
+        self.assertRaises(ValueError,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          start='20220101',
+                          end='20210101'
+                          )
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          start='wrong_date',
+                          end='20210101'
+                          )
+        print('wrong freq')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          freq='wrong_freq'
+                          )
+        print('wrong asset_type')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          asset_type='wrong_type'
+                          )
+        print('wrong adj')
+        self.assertRaises(Exception,
+                          qt.get_history_data,
+                          htypes='open, close, vol',
+                          shares='missing_code, 513100.SH',
+                          adj='wrong_adj'
+                          )
 
 
 class TestEvaluations(unittest.TestCase):
@@ -8929,7 +9023,7 @@ class TestHistoryPanel(unittest.TestCase):
         self.htypes = 'close,open,high,low'
         self.data2 = np.random.randint(10, size=(10, 5))
         self.data3 = np.random.randint(10, size=(10, 4))
-        self.data4 = np.random.randint(10, size=(10, ))
+        self.data4 = np.random.randint(10, size=(10,))
         self.hp = qt.HistoryPanel(values=self.data, levels=self.shares, columns=self.htypes, rows=self.index)
         self.hp2 = qt.HistoryPanel(values=self.data2, levels=self.shares, columns='close', rows=self.index)
         self.hp3 = qt.HistoryPanel(values=self.data3, levels='000100', columns=self.htypes, rows=self.index2)
@@ -9551,7 +9645,7 @@ class TestHistoryPanel(unittest.TestCase):
 
         print('test raise assertion error')
         self.assertRaises(AssertionError, self.hp.to_df_dict, by='random text')
-        self.assertRaises(AssertionError, self.hp.to_df_dict, by=3)
+        self.assertRaises(TypeError, self.hp.to_df_dict, by=3)
 
         print('test empty hp')
         df_dict = qt.HistoryPanel().to_df_dict('share')
@@ -9775,31 +9869,6 @@ class TestHistoryPanel(unittest.TestCase):
         self.assertTrue(np.allclose(new_values, temp_hp.values, 7, equal_nan=True))
         self.assertTrue(np.all(~np.isnan(temp_hp.values)))
 
-    def test_get_history_panel(self):
-        # test get history panel data
-        hp = qt.history.get_history_panel(shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH',
-                                          htypes='wt-000003.SH, close, wt-000300.SH',
-                                          start='20210101',
-                                          end='20210802',
-                                          freq='m',
-                                          asset_type='any',
-                                          adj='none')
-        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
-        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
-        print(hp)
-
-        # test get history panel data without shares
-        hp = qt.history.get_history_panel(shares=None,
-                                          htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH',
-                                          start='20210101',
-                                          end='20210202',
-                                          freq='d',
-                                          asset_type='any',
-                                          adj='none')
-        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
-        self.assertEqual(hp.shares, ['none'])
-        print(hp)
-
     def test_ffill_data(self):
         """ 测试前向填充NaN值"""
         d = np.array([[[0.03, 0.88, 0.2],
@@ -9851,6 +9920,95 @@ class TestHistoryPanel(unittest.TestCase):
                        [0.25, 0.36, 0.32],
                        [0.81, 0.94, 0.04]]])
         self.assertTrue(np.allclose(ffill_3d_data(d, 0), t))
+
+    def test_get_history_panel(self):
+        """ 测试是否能正确获取HistoryPanel"""
+        print('test get history panel data')  #
+        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, wt-000300.SH',
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
+                                          end='20210802', freq='m', asset_type='any', adj='none')
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'wt-000300.SH'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        print('test get history panel data without shares')
+        hp = qt.history.get_history_panel(htypes='close-000002.SZ, pe-000001.SZ, open-000300.SH', shares=None,
+                                          start='20210101', end='20210202', freq='d', asset_type='any', adj='none',
+                                          drop_nan=True)
+        self.assertEqual(hp.htypes, ['close-000002.SZ', 'pe-000001.SZ', 'open-000300.SH'])
+        self.assertEqual(hp.shares, ['none'])
+        print(hp)
+
+        print('test get history panel data from converting multiple frequencies')
+        hp = qt.history.get_history_panel(htypes='wt-000003.SH, close, pe, eps, revenue_ps',
+                                          shares='000001.SZ, 000002.SZ, 900901.SH, 601728.SH', start='20210101',
+                                          end='20210502', freq='w', asset_type='any', adj='none', drop_nan=True)
+        self.assertEqual(hp.htypes, ['wt-000003.SH', 'close', 'pe', 'eps', 'revenue_ps'])
+        self.assertEqual(hp.shares, ['000001.SZ', '000002.SZ', '900901.SH', '601728.SH'])
+        print(hp)
+
+        print('test get history panel data with / without all NaN values')
+        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210101', end='20210115', freq='d', asset_type='any', adj='none',
+                                          drop_nan=False, resample_method='none', b_days_only=False)
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        first_3_rows = hp[:, :, 0:3]
+        row_9_til_10 = hp[:, :, 8:10]
+        self.assertTrue(np.all(np.isnan(first_3_rows)))
+        self.assertTrue(np.all(np.isnan(row_9_til_10)))
+
+        print('test getting history panel specific asset_type')
+        hp = qt.history.get_history_panel(htypes='open, high, low, close', shares='000002.SZ, 000001.SZ, 000300.SH',
+                                          start='20210101', end='20210115', freq='d', asset_type='E', adj='f')
+        print(hp)
+        self.assertEqual(hp.htypes, ['open', 'high', 'low', 'close'])
+        self.assertEqual(hp.shares, ['000002.SZ', '000001.SZ', '000300.SH'])
+        all_idx_data = hp[:, '000300.SH']
+        self.assertTrue(np.all(np.isnan(all_idx_data)))
+
+        print('test getting history panel with wrong parameters')
+        print('datetime not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='not_a_time',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='f')
+        print('freq not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='20210101',
+                          end='20210115',
+                          freq='wrong_freq',
+                          asset_type='E',
+                          adj='f')
+        print('asset_type not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='wront_asset_type',
+                          adj='f')
+        print('adj not recognized')
+        self.assertRaises(Exception,
+                          qt.history.get_history_panel,
+                          shares='000002.SZ, 000001.SZ, 000300.SH',
+                          htypes='open, high, low, close',
+                          start='202101001',
+                          end='20210115',
+                          freq='d',
+                          asset_type='E',
+                          adj='wrong_adj')
 
 
 class RetryableError(Exception):
@@ -14364,7 +14522,7 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(
                 tbls,
                 {'index_weekly': ['open'],
-                 'stock_daily': ['close']}
+                 'stock_daily':  ['close']}
         )
         tbls = htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')
         print("by: htype_to_table_col(htypes='close, manager_name', freq='d', asset_type='E')")
@@ -14372,17 +14530,17 @@ class TestDataSource(unittest.TestCase):
         self.assertEqual(
                 tbls,
                 {'stk_managers': ['name'],
-                 'stock_daily': ['close']}
+                 'stock_daily':  ['close']}
         )
         tbls = htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')
         print("by: htype_to_table_col(htypes='close, open', freq='d, w', asset_type='E, IDX')")
         print(f'found table: {tbls}')
         self.assertEqual(
                 tbls,
-                {'index_daily':  ['open', 'close'],
-                 'index_weekly': ['open', 'close'],
-                 'stock_daily':  ['open', 'close'],
-                 'stock_weekly': ['open', 'close']}
+                {'index_daily':  ['close', 'open'],
+                 'index_weekly': ['close', 'open'],
+                 'stock_daily':  ['close', 'open'],
+                 'stock_weekly': ['close', 'open']}
         )
         # 部分无法精确匹配时，只输出可以匹配的部分
         tbls = htype_to_table_col(htypes='close, opan', freq='d, w', asset_type='E, IDX')
@@ -14402,8 +14560,433 @@ class TestDataSource(unittest.TestCase):
                 tbls,
                 {'stock_daily': ['close']}
         )
-        # 全部无法精确匹配时，报错
-        self.assertRaises(Exception, htype_to_table_col, 'clese, opan', 'd, t', 'E, IDX', 'exact')
+        # 全部无法精确匹配时，不报错，输出空集合
+        tbls = htype_to_table_col(htypes='clese, opan', freq='d, t', asset_type='E, IDX', method='exact')
+        print("by: htype_to_table_col(htypes='close, opan', freq='d, t', asset_type='E, IDX', method='exact')")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {}
+        )
+        # 当soft_freq为True时，匹配查找相应的可等分freq
+        tbls = htype_to_table_col(htypes='close, open', freq='2d',
+                                  asset_type='E, IDX', method='exact', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, open', freq='2d, 2d', "
+              f"asset_type='E, IDX', method='exact', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_daily': ['close'],
+                 'index_daily': ['open']}
+        )
+
+        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min',
+                                  asset_type='E, IDX', method='permute', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
+              f"asset_type='E, IDX', method='permute', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_weekly':    ['close'],
+                 'index_weekly':    ['close'],
+                 'stock_15min':     ['close'],
+                 'index_15min':     ['close'],
+                 'stock_indicator': ['pe'],
+                 'index_indicator': ['pe'],
+                 'income':          ['invest_income']
+                 }
+        )
+
+        tbls = htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun',
+                                  asset_type='E, IDX', method='exact', soft_freq=True)
+        print(f"by: htype_to_table_col(htypes='close, pe, invest_income', freq='w-Sun, 45min', "
+              f"asset_type='E, IDX', method='exact', soft_freq=True)")
+        print(f'found table: {tbls}')
+        self.assertEqual(
+                tbls,
+                {'stock_weekly':    ['close'],
+                 'index_indicator': ['pe'],
+                 'income':          ['invest_income']
+                 }
+        )
+
+    def test_freq_resample(self):
+        """ 测试freq_up与freq_down两个函数，确认是否能按股市交易规则正确转换数据频率（频率到日频以下时，仅保留交易时段）"""
+        print(f'build test data')
+        weekly_index = pd.date_range(start='20200101', end='20200331', freq='W-Fri')
+        hourly_index = pd.date_range(start='20200101', end='20200110', freq='H')
+        hourly_index_tt = hourly_index[hourly_index.indexer_between_time('9:00:00', '15:00:00')]
+
+        test_data1 = np.random.randint(20, size=(13, 7)).astype('float')  # 用于daily_index数据
+        test_data2 = np.random.randint(10, size=(217, 11)).astype('float')  # 用于sub_daily_index数据
+
+        columns1 = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
+        columns2 = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K']
+
+        weekly_data = pd.DataFrame(test_data1, index=weekly_index, columns=columns1)
+        hourly_data = pd.DataFrame(test_data2, index=hourly_index, columns=columns2)
+        hourly_data_tt = hourly_data.reindex(index=hourly_index_tt)
+
+        print(f'test resample, above daily freq')
+        print(hourly_data.head(25))
+        print(hourly_data_tt.head(15))
+        print(f'verify that resampled from hourly data and hourly tt data are the same')
+        resampled = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        resampled_tt = _resample_data(hourly_data, target_freq='15min', method='ffill')
+        self.assertTrue(np.allclose(resampled, resampled_tt))
+        print('checks resample hourly data to 15 min')
+        print(resampled.head(25))
+        sampled_rows = [(0, 2), (2, 6), (6, 9), (None, None), (9, 12), (12, 16), (16, 16)]
+        for day in range(9):
+            for pos in range(len(sampled_rows)):
+                start = sampled_rows[pos][0]
+                end = sampled_rows[pos][1]
+                if start is None:
+                    continue
+                for row in range(start + day * 17, end + day * 17):
+                    try:
+                        res = hourly_data_tt.iloc[pos + day * 7].values
+                        target = resampled.iloc[row].values
+                        self.assertTrue(np.allclose(res, target))
+                    except:
+                        import pdb;
+                        pdb.set_trace()
+
+        print('checks resample hourly data to 2d')
+        resampled_1 = _resample_data(hourly_data, target_freq='2d', method='ffill')
+        resampled_2 = _resample_data(hourly_data, target_freq='2d', method='bfill')
+        resampled_3 = _resample_data(hourly_data, target_freq='2d', method='nan')
+        resampled_4 = _resample_data(hourly_data, target_freq='2d', method='zero')
+        print(resampled_1)
+        print(resampled_2)
+        print(resampled_3)
+        print(resampled_4)
+        print('resample with improper methods and check if they are same as "first"')
+        self.assertTrue(np.allclose(resampled_1, resampled_2))
+        self.assertTrue(np.allclose(resampled_1, resampled_3))
+        self.assertTrue(np.allclose(resampled_1, resampled_4))
+
+        print('check sample hourly data to d with proper methods, with none business days')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False)
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean', b_days_only=False)
+        print(resampled_1)
+        sampled_rows = [23, 47, 71, 95, 119, 143, 167, 191, 215]
+        for pos in range(len(sampled_rows)):
+            res = resampled_1.iloc[pos].values
+            target = hourly_data.iloc[sampled_rows[pos]].values
+            print(f'resampled row is \n{res}\n'
+                  f'target row is \n{target}')
+            self.assertTrue(np.allclose(res, target))
+
+        print(resampled_2)
+        sampled_row_starts = [0, 24, 48, 72, 96, 120, 144, 168, 192]
+        sampled_row_ends = [24, 48, 72, 96, 120, 144, 168, 192, 216]
+        for pos in range(len(sampled_rows)):
+            res = resampled_2.iloc[pos].values
+            start = sampled_row_starts[pos]
+            end = sampled_row_ends[pos]
+            target = hourly_data.iloc[start:end].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('check sample hourly data to d with proper methods, without none business days')
+        resampled_1 = _resample_data(hourly_data, target_freq='d', method='last')
+        resampled_2 = _resample_data(hourly_data, target_freq='d', method='mean')
+        print(resampled_1)
+        sampled_rows = [23, 47, 71, 143, 167, 191, 215]
+        for pos in range(len(sampled_rows)):
+            res = resampled_1.iloc[pos].values
+            target = hourly_data.iloc[sampled_rows[pos]].values
+            print(f'resampled row is \n{res}\n'
+                  f'target row is \n{target}')
+            self.assertTrue(np.allclose(res, target))
+
+        print(resampled_2)
+        sampled_row_starts = [0, 24, 48, 120, 144, 168, 192]
+        sampled_row_ends = [24, 48, 72, 144, 168, 192, 216]
+        for pos in range(len(sampled_rows)):
+            res = resampled_2.iloc[pos].values
+            start = sampled_row_starts[pos]
+            end = sampled_row_ends[pos]
+            target = hourly_data.iloc[start:end].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample daily data to 30min data')
+        daily_data = _resample_data(hourly_data, target_freq='d', method='last', b_days_only=False).iloc[0:4]
+        print(daily_data)
+        resampled = _resample_data(daily_data, target_freq='30min', method='ffill')
+        print(resampled)
+        # TODO: last day data missing when resampling daily data to sub-daily data
+        #   this is to be improved
+        sampled_rows = [(0, 9), (9, 18), (18, 27)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = daily_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+
+        print(f'test resample, below daily freq')
+        print(weekly_data)
+        print('resample weekly data to daily ffill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='ffill', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 7), (7, 14), (14, 21), (21, 28), (28, 35), (35, 42),
+                        (42, 49), (49, 56), (56, 63), (63, 70), (70, 77), (77, 84)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = weekly_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily bfill')
+        resampled = _resample_data(weekly_data, target_freq='d', method='bfill', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1), (1, 8), (8, 15), (15, 22), (22, 29), (29, 36),
+                        (36, 43), (43, 50), (50, 57), (57, 64), (64, 71), (71, 78), (78, 84)]
+        for pos in range(len(sampled_rows)):
+            for row in range(sampled_rows[pos][0], sampled_rows[pos][1]):
+                res = weekly_data.iloc[pos].values
+                target = resampled.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to daily none')
+        resampled = _resample_data(weekly_data, target_freq='d', method='nan', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
+        for pos in range(len(resampled)):
+            res = resampled.iloc[pos].values
+            if pos in sampled_rows:
+                row = sampled_rows.index(pos)
+                target = weekly_data.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+            else:
+                self.assertTrue(all(np.isnan(item) for item in res))
+
+        print('resample weekly data to daily zero')
+        resampled = _resample_data(weekly_data, target_freq='d', method='zero', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 7, 14, 21, 28, 35, 42, 49, 56, 63, 70, 77, 84]
+        for pos in range(len(resampled)):
+            res = resampled.iloc[pos].values
+            if pos in sampled_rows:
+                row = sampled_rows.index(pos)
+                target = weekly_data.iloc[row].values
+                self.assertTrue(np.allclose(res, target))
+            else:
+                self.assertTrue(all(item == 0. for item in res))
+
+        print('resample weekly data to bi-weekly sunday last with none business days')
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to bi-weekly sunday last without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='2w-Sun', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Friday last')
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Friday last without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='2w-Fri', method='last', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 2, 4, 6, 8, 10, 12]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to biweekly Wednesday first')
+        resampled = _resample_data(weekly_data, target_freq='2w-Wed', method='first', b_days_only=False)
+        print(resampled)
+        sampled_rows = [0, 1, 3, 5, 7, 9]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            target = weekly_data.iloc[sampled_rows[pos]].values
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly sum')
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly sum without none business days')
+        # TODO: without business days
+        resampled = _resample_data(weekly_data, target_freq='m', method='sum', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.sum(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly max')
+        resampled = _resample_data(weekly_data, target_freq='m', method='high', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.max(0)
+            self.assertTrue(np.allclose(res, target))
+
+        print('resample weekly data to monthly avg')
+        resampled = _resample_data(weekly_data, target_freq='m', method='mean', b_days_only=False)
+        print(resampled)
+        sampled_rows = [(0, 1, 2, 3, 4), (5, 6, 7, 8), (9, 10, 11, 12)]
+        for pos in range(len(sampled_rows)):
+            res = resampled.iloc[pos].values
+            # import pdb; pdb.set_trace()
+            target = weekly_data.iloc[np.array(sampled_rows[pos])].values.mean(0)
+            self.assertTrue(np.allclose(res, target))
+
+    def test_trade_time_index(self):
+        """ 测试函数是否能正确生成交易时段的indexer"""
+        print('create datetime index with freq "D"')
+        indexer = _trade_time_index('20200101', '20200105', freq='d')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 5)
+        self.assertEqual(list(indexer), [pd.to_datetime('20200101'),
+                                         pd.to_datetime('20200102'),
+                                         pd.to_datetime('20200103'),
+                                         pd.to_datetime('20200104'),
+                                         pd.to_datetime('20200105')])
+
+        print('create datetime index with freq "30min" with default trade time')
+        indexer = _trade_time_index('20200101', '20200102', freq='30min')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+
+        print('create datetime index with freq "w" and check if all dates are Sundays (default)')
+        indexer = _trade_time_index('20200101', '20200201', freq='w')
+        print(f'the output is {indexer}')
+        self.assertIsInstance(indexer, pd.DatetimeIndex)
+        self.assertEqual(len(indexer), 4)
+        self.assertTrue(
+                all(day.day_name() == 'Sunday' for day in indexer)
+        )
+
+        print('create datetime index with start/end/periods')
+        print('when freq can be inferred')
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=49)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+        print('when freq can NOT be inferred')
+        indexer = _trade_time_index(start='20200101', end='20200102', periods=50)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 8)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:47:45.306122448',
+                                              '2020-01-01 10:17:08.571428571',
+                                              '2020-01-01 10:46:31.836734693',
+                                              '2020-01-01 11:15:55.102040816',
+                                              '2020-01-01 13:13:28.163265306',
+                                              '2020-01-01 13:42:51.428571428',
+                                              '2020-01-01 14:12:14.693877551',
+                                              '2020-01-01 14:41:37.959183673'])
+                              )
+                         )
+
+        print('create datetime index with start/periods/freq')
+        indexer = _trade_time_index(start='20200101', freq='30min', periods=49)
+        print(f'the output is {indexer}')
+        self.assertEqual(len(indexer), 9)
+        self.assertEqual(list(indexer),
+                         list(pd.to_datetime(['2020-01-01 09:30:00', '2020-01-01 10:00:00',
+                                              '2020-01-01 10:30:00', '2020-01-01 11:00:00',
+                                              '2020-01-01 11:30:00', '2020-01-01 13:30:00',
+                                              '2020-01-01 14:00:00', '2020-01-01 14:30:00',
+                                              '2020-01-01 15:00:00'])
+                              )
+                         )
+
+        print('test false input')
+
+    def test_freq_manipulations(self):
+        """ 测试频率操作函数"""
+        print('test get_main_freq function')
+        self.assertEqual(get_main_freq('t'), (1, 'T', ''))
+        self.assertEqual(get_main_freq('min'), (1, '1MIN', ''))
+        self.assertEqual(get_main_freq('15min'), (1, '15MIN', ''))
+        self.assertEqual(get_main_freq('75min'), (5, '15MIN', ''))
+        self.assertEqual(get_main_freq('90min'), (3, '30MIN', ''))
+        self.assertEqual(get_main_freq('60min'), (2, '30MIN', ''))
+        self.assertEqual(get_main_freq('H'), (1, 'H', ''))
+        self.assertEqual(get_main_freq('14d'), (14, 'D', ''))
+        self.assertEqual(get_main_freq('2w-Fri'), (2, 'W', 'FRI'))
+        self.assertEqual(get_main_freq('w'), (1, 'W', ''))
+        self.assertEqual(get_main_freq('wrong_input'), (None, None, None))
+
+        print('test get_main_freq_level function')
+        self.assertEqual(get_main_freq_level('5min'), 90)
+        self.assertEqual(get_main_freq_level('15min'), 80)
+        self.assertEqual(get_main_freq_level('w'), 40)
+        self.assertIsNone(get_main_freq_level('wrong_input'), None)
+
+        print('test next_main_freq function')
+        self.assertEqual(next_main_freq('5min', 'up'), '1MIN')
+        self.assertEqual(next_main_freq('w', 'up'), 'D')
+        self.assertEqual(next_main_freq('m', 'up'), 'W')
+        self.assertEqual(next_main_freq('w', 'down'), 'M')
+        self.assertEqual(next_main_freq('m', 'down'), 'Q')
+        self.assertEqual(next_main_freq('d', 'down'), 'W')
+        self.assertEqual(next_main_freq('15min', 'down'), '30MIN')
+        self.assertEqual(next_main_freq('30min', 'down'), 'H')
+
+        print('test freq_dither function')
+        self.assertEqual(freq_dither('d', ['15min', 'd', 'w', 'm']), 'D')
+        self.assertEqual(freq_dither('3d', ['15min', 'd', 'w', 'm']), 'D')
+        self.assertEqual(freq_dither('w', ['15min', 'd', 'w', 'm']), 'W')
+        self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'w', 'm']), 'W')
+        self.assertEqual(freq_dither('w-Fri', ['15min', 'd', 'm']), 'D')
+        self.assertEqual(freq_dither('45min', ['5min', '15min', '30min', 'd', 'w', 'm']), '15MIN')
+        self.assertEqual(freq_dither('40min', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', '30min', 'd', 'w', 'm']), '30MIN')
+        self.assertEqual(freq_dither('90min', ['5min', '15min', 'd', 'w', 'm']), '15MIN')
+        self.assertEqual(freq_dither('t', ['5min', '15min', '30min', 'd', 'w', 'm']), '5MIN')
+        self.assertEqual(freq_dither('d', ['w', 'm', 'q']), 'W')
+        self.assertEqual(freq_dither('d', ['m', 'q']), 'M')
+        self.assertEqual(freq_dither('m', ['5min', '15min', '30min', 'd', 'w', 'q']), 'W')
 
 
 def test_suite(*args):

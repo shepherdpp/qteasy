@@ -756,6 +756,7 @@ class HistoryPanel():
 
         return res_df
 
+    # TODO: implement this method
     def flatten_to_dataframe(self, multi_index=True):
         """ 将一个HistoryPanel"展平"成为一个DataFrame
             HistoryPanel的多层数据会被"平铺"到DataFrame的列，变成一个MultiIndex
@@ -783,11 +784,13 @@ class HistoryPanel():
         """
         raise NotImplementedError
 
+    # TODO: implement this method
     def to_multi_index_dataframe(self):
         """ 等同于HistoryPanel.flatten_to_dataframe(multi_index=True)
 
         :return:
         """
+        raise NotImplementedError
 
     def to_df_dict(self, by: str = 'share') -> dict:
         """ 将一个HistoryPanel转化为一个dict，这个dict的keys是HP中的shares，values是每个shares对应的历史数据
@@ -801,7 +804,8 @@ class HistoryPanel():
         :return:
             dict
         """
-        assert isinstance(by, str)
+        if not isinstance(by, str):
+            raise TypeError(f'by ({by}) should be a string, and either "shares" or "htypes", got {type(by)}')
         assert by.lower() in ['share', 'shares', 'htype', 'htypes']
 
         df_dict = {}
@@ -817,6 +821,10 @@ class HistoryPanel():
             for htype in self.htypes:
                 df_dict[htype] = self.slice_to_dataframe(htype=htype)
             return df_dict
+
+    def unstack(self,  by: str = 'share') -> dict:
+        """ 等同于方法self.to_df_dict(), 是方法self.to_df_dict()的别称"""
+        return self.to_df_dict(by=by)
 
     # TODO: implement this method
     def head(self, row_count=5):
@@ -976,6 +984,19 @@ def dataframe_to_hp(df: pd.DataFrame,
     return HistoryPanel(values=history_panel_value, levels=shares, rows=hdates, columns=htypes)
 
 
+def from_single_dataframe(df: pd.DataFrame,
+                          hdates=None,
+                          htypes=None,
+                          shares=None,
+                          column_type: str = None) -> HistoryPanel:
+    """ 函数dataframe_to_hp()的别称，等同于dataframe_to_hp()"""
+    return dataframe_to_hp(df=df,
+                           hdates=hdates,
+                           htypes=htypes,
+                           shares=shares,
+                           column_type=column_type)
+
+
 def from_multi_index_dataframe(df: pd.DataFrame):
     """ 将一个含有multi-index的DataFrame转化为一个HistoryPanel
 
@@ -1125,17 +1146,21 @@ def stack_dataframes(dfs: [list, dict], dataframe_as: str = 'shares', shares=Non
                         columns=combined_htypes)
 
 
+def from_df_dict(dfs: [list, dict], dataframe_as: str = 'shares', shares=None, htypes=None, fill_value=None):
+    """ 函数stack_dataframes()的别称，等同于函数stack_dataframes()"""
+    return stack_dataframes(dfs=dfs,
+                            dataframe_as=dataframe_as,
+                            shares=shares,
+                            htypes=htypes,
+                            fill_value=fill_value)
+
+
 # ==================
 # High level functions that creates HistoryPanel that fits the requirement of trade strategies
 # ==================
-def get_history_panel(htypes,
-                      shares=None,
-                      start=None,
-                      end=None,
-                      freq=None,
-                      asset_type: str = None,
-                      adj: str = None,
-                      data_source=None):
+def get_history_panel(htypes, shares=None, start=None, end=None, freq=None, asset_type: str = None, adj: str = None,
+                      data_source=None, drop_nan=True, resample_method='ffill', b_days_only=True, trade_time_only=True,
+                      **kwargs):
     """ 最主要的历史数据获取函数，从本地DataSource（数据库/csv/hdf/fth）获取所需的数据并组装为适应与策略
         需要的HistoryPanel数据对象
 
@@ -1184,10 +1209,73 @@ def get_history_panel(htypes,
              - none / n: 不复权(默认值)
              - back / b: 后复权
              - forward / fw / f: 前复权
+
+        :param drop_nan: bool
+            是否保留全NaN的行
+
+        :param resample_method: str
+            如果数据需要升频或降频时，调整频率的方法
+            调整数据频率分为数据降频和升频，在两种不同情况下，可用的method不同：
+            数据降频就是将多个数据合并为一个，从而减少数据的数量，但保留尽可能多的信息，
+            例如，合并下列数据(每一个tuple合并为一个数值，?表示合并后的数值）
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(?), (?), (?)]
+            数据合并方法:
+            - 'last'/'close': 使用合并区间的最后一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'first'/'open': 使用合并区间的第一个值。如：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'max'/'high': 使用合并区间的最大值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(3), (5), (7)]
+            - 'min'/'low': 使用合并区间的最小值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(1), (4), (6)]
+            - 'avg'/'mean': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+            - 'sum'/'total': 使用合并区间的平均值作为合并值：
+                [(1, 2, 3), (4, 5), (6, 7)] 合并后变为: [(2), (4.5), (6.5)]
+
+            数据升频就是在已有数据中插入新的数据，插入的新数据是缺失数据，需要填充。
+            例如，填充下列数据(?表示插入的数据）
+                [1, 2, 3] 填充后变为: [?, 1, ?, 2, ?, 3, ?]
+            缺失数据的填充方法如下:
+            - 'ffill': 使用缺失数据之前的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [NaN, 1, 1, 2, 2, 3, 3]
+            - 'bfill': 使用缺失数据之后的最近可用数据填充，如果没有可用数据，填充为NaN。如：
+                [1, 2, 3] 填充后变为: [1, 1, 2, 2, 3, 3, NaN]
+            - 'nan': 使用NaN值填充缺失数据：
+                [1, 2, 3] 填充后变为: [NaN, 1, NaN, 2, NaN, 3, NaN]
+            - 'zero': 使用0值填充缺失数据：
+                [1, 2, 3] 填充后变为: [0, 1, 0, 2, 0, 3, 0]
+
+        :param b_days_only: bool 默认True
+            是否强制转换自然日频率为工作日，即：
+            'D' -> 'B'
+            'W' -> 'W-FRI'
+            'M' -> 'BM'
+
+        :param trade_time_only: bool, 默认True
+            为True时 仅生成交易时间段内的数据，交易时间段的参数通过**kwargs设定
+
+        :param resample_method: str
+            处理数据频率更新时的方法
+
+        :param **kwargs:
+            用于生成trade_time_index的参数，包括：
+            :param include_start:   日期时间序列是否包含开始日期/时间
+            :param include_end:     日期时间序列是否包含结束日期/时间
+            :param start_am:        早晨交易时段的开始时间
+            :param end_am:          早晨交易时段的结束时间
+            :param include_start_am:早晨交易时段是否包括开始时间
+            :param include_end_am:  早晨交易时段是否包括结束时间
+            :param start_pm:        下午交易时段的开始时间
+            :param end_pm:          下午交易时段的结束时间
+            :param include_start_pm 下午交易时段是否包含开始时间
+            :param include_end_pm   下午交易时段是否包含结束时间
+
     :param data_source: DataSource Object
     :return:
     """
     # 检查数据合法性：
+    # TODO: 应该考虑将这部分内容移到core.get_history_data()函数中去
     from qteasy.utilfuncs import TIME_FREQ_STRINGS, AVAILABLE_ASSET_TYPES
     if shares is None:
         shares = ''
@@ -1208,8 +1296,13 @@ def get_history_panel(htypes,
         if not all(isinstance(item, str) for item in htypes):
             raise TypeError(f'all items in shares list should be a string, got otherwise')
 
-    if (not isinstance(start, str)) and (not isinstance(end, str)):
-        raise TypeError(f'start and end should be both datetime string in format "YYYYMMDD hh:mm:ss"')
+    if (start is None) or (end is None):
+        raise KeyError(f'both start and end should be some type of datetime or like')
+    try:
+        start = pd.to_datetime(start)
+        end = pd.to_datetime(end)
+    except Exception:
+        raise Exception(f'both or one of start and end can not be converted to datetime format')
 
     if not isinstance(freq, str):
         raise TypeError(f'freq should be a string, got {type(freq)} instead')
@@ -1312,6 +1405,26 @@ def get_history_panel(htypes,
         if pure_ref_dfs:
             new_reference_dfs.update(pure_ref_dfs)
         all_dfs = {htyp: new_reference_dfs[htyp] for htyp in htypes}
+
+    # 处理所有的df，根据设定执行以下几个步骤：
+    #  1，确保所有的DataFrame都有同样的时间频率，如果时间频率小于日频，输出时间仅包含交易时间内，如果频率为日频，排除周末
+    #  2，检查整行NaN值得情况，根据设定去掉或保留这些行
+    #  3，如果设定"as_data_frame"，直接返回DataFrame（multi-index)
+    for htyp in htypes:
+        if resample_method is not None:
+            from .database import _resample_data
+            all_dfs[htyp] = _resample_data(
+                    all_dfs[htyp],
+                    target_freq=freq,
+                    method=resample_method,
+                    forced_start=start,
+                    forced_end=end,
+                    b_days_only=b_days_only,
+                    trade_time_only=trade_time_only,
+                    **kwargs
+            )
+        if drop_nan:
+            all_dfs[htyp] = all_dfs[htyp].dropna(how='all')
 
     if shares:
         result_hp = stack_dataframes(all_dfs, dataframe_as='htypes', htypes=htypes, shares=shares)
