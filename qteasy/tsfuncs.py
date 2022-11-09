@@ -260,7 +260,8 @@ def stock_company(ts_code: str = None,
         10    000011.SZ      刘声向     王航军       范维平  5.959791e+04   19830117       广东
     """
     if fields is None:
-        fields = 'ts_code,chairman,manager,secretary,reg_capital,setup_date,province'
+        fields = 'ts_code,exchange,chairman,manager,secretary,reg_capital,setup_date,province,city,introduction,' \
+                 'website,email,office,employees,main_business,business_scope'
     pro = ts.pro_api()
     res = pro.stock_company(ts_code=ts_code, exchange=exchange, fields=fields)
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'

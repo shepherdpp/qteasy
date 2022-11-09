@@ -2790,7 +2790,9 @@ class DataSource:
         # 否则判断df基本与table匹配，根据Constraints，添加缺少的列(通常为NULL列)
         missing_columns = [col for col in table_columns if col not in dnld_columns]
         if len(missing_columns) >= (len(table_columns) * 0.25):
-            raise ValueError(f'there are too many missing columns in downloaded df, can not merge to local table')
+            raise ValueError(f'there are too many missing columns in downloaded df, can not merge to local table:'
+                             f'table_columns:\n{[table_columns]}\n'
+                             f'downloaded:\n{[dnld_columns]}')
         else:
             pass  # 在后面调整列顺序时会同时添加缺的列并调整顺序
         # 删除数据中过多的列，不允许出现缺少列
