@@ -270,7 +270,7 @@ def stock_company(ts_code: str = None,
     return res
 
 
-@retry(Exception, mute=True, logger=logger_core)
+@retry(Exception, mute=True, logger=logger_core, tries=10)
 def stk_managers(ts_code: str = None,
                  ann_date: str = None,
                  start: str = None,
