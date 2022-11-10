@@ -1580,6 +1580,21 @@ def check_and_prepare_hist_data(oper: Operator, config):
            invest_cash_plan, opti_cash_plan, test_cash_plan
 
 
+def reconnect_ds(data_source=None):
+    """ （当数据库连接超时时）重新连接到data source，如果不指定具体的data_source，则重新连接默认数据源
+
+    :param data_source:
+    :return:
+    """
+    if data_source is None:
+        data_source = qteasy.QT_DATA_SOURCE
+
+    if not isinstance(data_source, qteasy.DataSource):
+        raise TypeError(f'data source not recognized!')
+
+    data_source.reconnect()
+
+
 # TODO: 将check_and_prepare_data()的代码拆分后移植到下面三个方法中
 def check_and_prepare_real_time_data(operator, config):
     """ 在run_mode == 0的情况下准备相应的历史数据
