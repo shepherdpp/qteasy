@@ -110,7 +110,7 @@ def trade_calendar(exchange: str = 'SSE',
         return list(pd.to_datetime(trade_cal.cal_date))
 
 
-@retry(Exception, mute=True, logger=logger_core)
+@retry(Exception, mute=True, logger=logger_core, tries=10)
 def name_change(ts_code: str = None,
                 start: str = None,
                 end: str = None):
@@ -267,6 +267,56 @@ def stock_company(ts_code: str = None,
     logger_core.info(f'downloaded {len(res)} rows of data from tushare'
                      f' table stock_company with ts_code={ts_code}, exchange={exchange}'
                      f'fields={fields}')
+    return res
+
+
+@retry(Exception, mute=True, logger=logger_core)
+def stk_managers(ts_code: str = None,
+                 ann_date: str = None,
+                 start: str = None,
+                 end: str = None) -> pd.DataFrame:
+    """
+
+    :param ts_code: str, 股票代码
+    :param ann_date: str, 交易所代码 ，SSE上交所 SZSE深交所
+    ;param start:
+    :param end:
+    :return: pd.DataFrame
+        column          type    default     description
+        ts_code	        str	    Y	        TS股票代码
+        ann_date	    str	    Y	        公告日期
+        name	        str	    Y	        姓名
+        gender	        str	    Y	        性别
+        lev	            str	    Y	        岗位类别
+        title	        str	    Y	        岗位
+        edu	            str	    Y	        学历
+        national	    str	    Y	        国籍
+        birthday	    str	    Y	        出生年月
+        begin_date	    str	    Y	        上任日期
+        end_date	    str	    Y	        离任日期
+        resume	        str	    N	        个人简历
+    example:
+        pro.stk_managers(ts_code='000001.SZ')
+    output:
+            ts_code  ann_date     name    gender  ... national  birthday begin_date  end_date
+        0    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20180815  20190604
+        1    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20170629  20190604
+        2    000001.SZ  20190604  姚贵平      M  ...       中国     1961   20180129  20190604
+        3    000001.SZ  20190309   吴鹏      M  ...       中国     1965   20110817  20190309
+        4    000001.SZ  20190307  孙永桢      F  ...       中国     1968   20181025      None
+        5    000001.SZ  20180816  杨志群      M  ...       中国     1970   20180815      None
+        6    000001.SZ  20180816  郭世邦      M  ...       中国     1965   20180815      None
+        7    000001.SZ  20180405  何之江      M  ...       中国     1965   20170513  20180405
+        8    000001.SZ  20180203  项有志      M  ...       中国     1964   20170913      None
+        9    000001.SZ  20180130  杨如生      M  ...       中国   196802   20161107      None
+        10   000001.SZ  20180130  蔡方方      F  ...       中国     1974   20161107      None
+    """
+    fields = 'ts_code, ann_date, name, gender, lev, title, edu, national, birthday, begin_date, end_date, resume'
+    pro = ts.pro_api()
+    res = pro.stk_managers(ts_code=ts_code, ann_date=ann_date, start=start, end=end, fields=fields)
+    logger_core.info(f'downloaded {len(res)} rows of data from tushare'
+                     f' table stk_managers with ts_code={ts_code}, ann_date={ann_date}'
+                     f' start={start}, end={end}')
     return res
 
 

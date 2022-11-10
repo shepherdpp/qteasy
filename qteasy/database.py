@@ -1067,18 +1067,18 @@ TABLE_SOURCE_MAP = {
 
     'stock_names':
         ['name_changes', '股票名称变更', 'events', 'E', 'none', 'name_change', 'ts_code', 'table_index', 'stock_basic',
-         '', '', ''],
+         '', 'Y', ''],
 
     'stock_company':
         ['stock_company', '上市公司基本信息', 'basics', 'E', 'none', 'stock_company', 'exchange', 'list', 'SSE, SZSE, BSE',
          '', '', ''],
 
     'stk_managers':
-        ['stk_managers', '上市公司管理层', 'events', 'E', 'd', 'stk_managers', 'ts_code', 'table_index', 'stock_basic',
-         '', 'Y', ''],
+        ['stk_managers', '上市公司管理层', 'events', 'E', 'd', 'stk_managers', 'ann_date', 'datetime', '19901211',
+         '', '', ''],
 
     'new_share':
-        ['new_share', 'IPO新股列表', 'basics', 'E', 'd', 'new_share', 'none', 'none', 'none',
+        ['new_share', 'IPO新股列表', 'events', 'E', 'd', 'new_share', 'none', 'none', 'none',
          '', 'Y', '200'],
 
     'index_basic':
@@ -1323,24 +1323,24 @@ TABLE_STRUCTURES = {
     'stock_company':    {'columns':    ['ts_code', 'exchange', 'chairman', 'manager', 'secretary',
                                         'reg_capital', 'setup_date', 'province', 'city', 'introduction',
                                         'website', 'email', 'office', 'employees', 'main_business', 'business_scope'],
-                         'dtypes':     ['varchar(10)', 'varchar(10)', 'varchar(10)', 'varchar(10)', 'varchar(10)',
+                         'dtypes':     ['varchar(10)', 'varchar(10)', 'varchar(48)', 'varchar(48)', 'varchar(48)',
                                         'float', 'date', 'varchar(20)', 'varchar(20)', 'text',
-                                        'varchar(50)', 'varchar(50)', 'varchar(50)', 'int', 'text', 'text'],
+                                        'varchar(50)', 'text', 'text', 'int', 'text', 'text'],
                          'remarks':    ['股票代码', '交易所代码', '法人代表', '总经理', '董秘',
                                         '注册资本', '注册日期', '所在省份', '所在城市', '公司介绍',
-                                        '公司主页', '电子邮件', '办公室', '员工人数', '主要业务及产品', '经营范围'],
+                                        '公司主页', '电子邮件', '办公室地址', '员工人数', '主要业务及产品', '经营范围'],
                          'prime_keys': [0]},
 
-    'stk_managers':     {'columns':    ['s_code', 'ann_date', 'name', 'gender', 'lev',
+    'stk_managers':     {'columns':    ['ts_code', 'ann_date', 'name', 'gender', 'lev',
                                         'title', 'edu', 'national', 'birthday', 'begin_date',
                                         'end_date', 'resume'],
                          'dtypes':     ['varchar(10)', 'date', 'varchar(10)', 'varchar(10)', 'varchar(20)',
-                                        'varchar(30)', 'varchar(30)', 'varchar(30)', 'varchar(10)', 'date',
-                                        'date', 'text'],
+                                        'varchar(30)', 'varchar(30)', 'varchar(30)', 'varchar(10)', 'varchar(10)',
+                                        'varchar(10)', 'text'],
                          'remarks':    ['TS股票代码', '公告日期', '姓名', '性别', '岗位类别',
                                         '岗位', '学历', '国籍', '出生年月', '上任日期',
                                         '离任日期', '个人简历'],
-                         'prime_keys': [0, 1]},
+                         'prime_keys': [0, 1, 2]},
 
     'new_share':        {'columns':    ['ts_code', 'sub_code', 'name', 'ipo_date', 'issue_date',
                                         'amount', 'market_amount', 'price', 'pe', 'limit_amount',
@@ -2747,7 +2747,10 @@ class DataSource:
             raise NotImplementedError
         elif channel == 'tushare':
             # 通过tushare的API下载数据
-            dnld_data = acquire_data(table, **kwargs)
+            try:
+                dnld_data = acquire_data(table, **kwargs)
+            except Exception as e:
+                raise Exception(f'data {table} can not be acquired from tushare\n{e}')
         else:
             raise NotImplementedError
         res = set_primary_key_frame(dnld_data, primary_key=primary_keys, pk_dtypes=pk_dtypes)
@@ -3226,7 +3229,7 @@ class DataSource:
                             start_date=None,
                             end_date=None,
                             code_range=None,
-                            merge_type='ignore',
+                            merge_type='update',
                             reversed_par_seq=False,
                             parallel=True,
                             process_count=None,
@@ -3281,8 +3284,8 @@ class DataSource:
 
         :param merge_type: str
             数据混合方式，当获取的数据与本地数据的key重复时，如何处理重复的数据：
-            - 'ignore' 默认值，不下载重复的数据
-            - 'update' 下载并更新本地数据的重复部分
+            - 'update' 默认值，下载并更新本地数据的重复部分，使用下载的数据覆盖本地数据
+            - 'ignore' 不覆盖本地的数据，在将数据复制到本地时，先去掉本地已经存在的数据，会导致速度降低
 
         :param reversed_par_seq: Bool
             是否逆序参数下载数据， 默认False
@@ -3529,12 +3532,6 @@ class DataSource:
                 else:
                     progress_bar(total, total, f'[{table}:None>'
                                                f'{total_written}wrtn in {strftime_elapsed}\n')
-                # print(f'\ntasks completed in {time_str_format(time_elapsed)}! {completed} data acquired with '
-                #       f'{total} {arg_name} params '
-                #       f'from {arg_coverage[0]} to {arg_coverage[-1]} ')
-                # if len(additional_args) > 0:
-                #     print(f'with additional arguments: {additional_args}\n')
-                # print(f'{total_written} rows of data written to: {self}\n')
             except Exception as e:
                 self.update_table_data(table, dnld_data)
                 warnings.warn(f'\n{e} process interrupted, tried to write {total_written} rows, '
