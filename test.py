@@ -10,6 +10,7 @@
 # ======================================
 import unittest
 
+import qteasy
 import qteasy as qt
 import pandas as pd
 from pandas import Timestamp
@@ -13479,6 +13480,15 @@ class FastExperiments(unittest.TestCase):
 
     def test_fast_experiments(self):
         """temp test"""
+        # ds = qteasy.QT_DATA_SOURCE
+        # ds.refill_local_source(tables='stk_managers',
+        #                        start_date='20180101',
+        #                        end_date='20200101',
+        #                        parallel=True,
+        #                        reversed_par_seq=False)
+        # df = ds.acquire_table_data('stk_managers', 'tushare', ann_date='20200102')
+        # print(df)
+        # ds.update_table_data('stk_managers', df)
         pass
 
 

@@ -164,7 +164,8 @@ def time_str_format(t: float, estimation: bool = False, short_form: bool = False
     :param short_form: 时间输出形式，默认为False，输出格式为"XX hour XX day XX min XX sec", 为True时输出"XXD XXH XX'XX".XXX"
     :return:
     """
-    assert isinstance(t, float), f'TypeError: t should be a float number, got {type(t)}'
+    assert isinstance(t, (float, int)), f'TypeError: t should be a number, got {type(t)}'
+    t = float(t)
     assert t >= 0, f'ValueError, t should be greater than 0, got minus number'
     # debug
     # print(f'time input is {t}')
