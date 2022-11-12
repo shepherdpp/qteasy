@@ -1298,17 +1298,37 @@ def configure(config=None, reset=False, only_built_in_keys=True, **kwargs):
         _update_config_kwargs(set_config, default_kwargs, raise_if_key_not_existed=True)
 
 
-def configuration(level=0, up_to=0, default=False, verbose=False):
-    """ 显示qt当前的环境变量，
+def configuration(config=None, level=0, up_to=0, default=True, verbose=False):
+    """ 显示qt当前的配置变量，
 
-    :param level:
-    :param up_to
-    :param default:
-    :param verbose:
+    :param config: str, list
+        需要显示的配置变量名称，如果不给出任何名称，则按level，up_to等方式显示所有的匹配的变量名
+        可以以逗号分隔字符串的形式给出一个或多个变量名，也可以list形式给出一个或多个变量名
+        以下两种方式等价：
+        'local_data_source, local_data_file_type, local_data_file_path'
+        ['local_data_source', 'local_data_file_type', 'local_data_file_path']
+
+    :param level: 默认0
+        需要显示的配置变量的级别。
+        如果给出了config，则忽略此参数
+
+    :param up_to: 默认0
+        需要显示的配置变量的级别上限，需要配合level设置。
+        例如，当level == 0, up_to == 2时
+        会显示级别在0～2之间的所有配置变量
+        如果给出了config，则忽略此参数
+
+    :param default: 默认False
+        是否显示配置变量的默认值，如果True，会同时显示配置变量的当前值和默认值
+
+    :param verbose: 默认False
+        是否显示完整说明信息，如果True，会同时显示配置变量的详细说明
+
     :return:
     """
     assert isinstance(level, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(level)}'
-    assert isinstance(up_to, int) and (0 <= level <= 5), f'InputError, level should be an integer, got {type(up_to)}'
+    assert isinstance(up_to, int) and (0 <= up_to <= 5), f'InputError, up_to level should be an integer, ' \
+                                                         f'got {type(up_to)}'
     if up_to <= level:
         up_to = level
     if up_to == level:
@@ -1316,7 +1336,16 @@ def configuration(level=0, up_to=0, default=False, verbose=False):
     else:
         level = list(range(level, up_to + 1))
 
-    kwargs = QT_CONFIG.keys()
+    if config is None:
+        kwargs = QT_CONFIG.keys()
+    else:
+        if isinstance(config, str):
+            config = str_to_list(config)
+        if not isinstance(config, list):
+            raise TypeError(f'config should be a string or list of strings, got {type(config)}')
+        assert all(isinstance(item, str) for item in config)
+        kwargs = config
+        level = [0, 1, 2, 3, 4, 5]
     print(_vkwargs_to_text(kwargs=kwargs, level=level, info=default, verbose=verbose))
 
 

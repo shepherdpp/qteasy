@@ -44,11 +44,11 @@ def _valid_qt_kwargs():
     A valid kwargs table is a `dict` of `dict`s.  The keys of the outer dict are the
     valid key-words for the function.  The value for each key is a dict containing
     4 specific keys: "Default", "Validator", "level", and "text" with the following values:
-        "Default"      - The default value for the kwarg if none is specified.
-        "Validator"    - A function that takes the caller specified value for the kwarg,
+        "Default"      - The default value for the config if none is specified.
+        "Validator"    - A function that takes the caller specified value for the config,
                          and validates that it is the correct type, and (for kwargs with
                          a limited set of allowed values) may also validate that the
-                         kwarg value is one of the allowed values.
+                         config value is one of the allowed values.
         "level"        - The display level of the key-word, for the user can choose to
                          display different levels of key-words at a time to save time
         "text"         - The explanatory text of the key-words, can be displayed for
@@ -146,7 +146,7 @@ def _valid_qt_kwargs():
                                                                                                  'db'],
                                  'level':     4,
                                  'text':      '确定本地历史数据存储方式：\n'
-                                              'file      - 历史数据以本地文件的形式存储，\n'
+                                              'file     - 历史数据以本地文件的形式存储，\n'
                                               '           文件格式在"local_data_file_type"属性中指定，包括csv/hdf等多种选项\n'
                                               'database - 历史数据存储在一个mysql数据库中\n'
                                               '           选择此选项时，需要在配置文件中配置数据库的连接信息\n'
@@ -668,15 +668,15 @@ def _validate_vkwargs_dict(vkwargs):
     """
     for key, value in vkwargs.items():
         if len(value) != 4:
-            raise ValueError(f'Items != 2 in valid kwarg table, for kwarg {key}')
+            raise ValueError(f'Items != 2 in valid config table, for config {key}')
         if 'Default' not in value:
-            raise ValueError(f'Missing "Default" value for kwarg {key}')
+            raise ValueError(f'Missing "Default" value for config {key}')
         if 'Validator' not in value:
-            raise ValueError(f'Missing "Validator" function for kwarg {key}')
+            raise ValueError(f'Missing "Validator" function for config {key}')
         if 'level' not in value:
-            raise ValueError(f'Missing "level" identifier for kwarg {key}')
+            raise ValueError(f'Missing "level" identifier for config {key}')
         if 'text' not in value:
-            raise ValueError(f'Missing "text" string for kwarg {key}')
+            raise ValueError(f'Missing "text" string for config {key}')
 
 
 def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
@@ -690,6 +690,7 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     :param verbose:
     :return:
     """
+    from qteasy.utilfuncs import reindent
     if isinstance(level, int):
         levels = [level]
     elif isinstance(level, list):
@@ -697,23 +698,24 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
     else:
         raise TypeError(f'level should be an integer or list of integers, got {type(level)}')
     assert all(isinstance(item, int) for item in levels), f'TypeError, levels should be a list of integers'
-    column_w_key = 21
+    column_w_key = 22
     column_w_current = 15
     column_offset_description = 4
     vkwargs = _valid_qt_kwargs()
     output_strings = list()
     if info:
-        output_strings.append('Key                   Current        Default\n')
+        output_strings.append('No. Config-Key            Cur Val        Default val\n')
         if verbose:
-            output_strings.append('Description\n')
-        output_strings.append('------------------------------------------------\n')
+            output_strings.append('      Description\n')
+        output_strings.append('----------------------------------------------------\n')
     else:
-        output_strings.append('Key                   Current        \n')
-        output_strings.append('-------------------------------------\n')
+        output_strings.append('No. Config-Key            Cur Val        \n')
+        output_strings.append('-----------------------------------------\n')
+    no = 0
     for key in kwargs:
         if key not in vkwargs:
             from qteasy import logger_core
-            logger_core.warning(f'Unrecognized kwarg={str(key)}')
+            logger_core.warning(f'Unrecognized config={str(key)}')
             cur_value = str(QT_CONFIG[key])
             default_value = 'N/A'
             description = 'Customer defined argument key'
@@ -726,12 +728,14 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
             else:
                 continue
 
-        output_strings.append(f'{str(key)}:{" " * (column_w_key - len(str(key)))}')
+        no += 1
+        output_strings.append(f'{no: <4}')
+        output_strings.append(f'{str(key): <{column_w_key}}')
         if info:
-            output_strings.append(f'{cur_value}{" " * (column_w_current - len(cur_value))}'
+            output_strings.append(f'{cur_value: <{column_w_current}}'
                                   f'<{default_value}>\n')
             if verbose:
-                output_strings.append(f'{" " * column_offset_description}{description}\n')
+                output_strings.append(f'{reindent(description, 6): <{column_w_key + column_w_current * 2}}\n\n')
         else:
             output_strings.append(f'{cur_value}\n')
     return ''.join(output_strings)
@@ -739,9 +743,9 @@ def _vkwargs_to_text(kwargs, level=0, info=False, verbose=False):
 
 def _initialize_config_kwargs(kwargs, vkwargs):
     """ Given a "valid kwargs table" and some kwargs, verify that each key-word
-        is valid per the kwargs table, and that the value of the kwarg is the
+        is valid per the kwargs table, and that the value of the config is the
         correct type.  Fill a configuration dictionary with the default value
-        for each kwarg, and then substitute in any values that were provided
+        for each config, and then substitute in any values that were provided
         as kwargs and return the configuration dictionary.
 
     :param kwargs: keywords that is given by user
@@ -817,7 +821,7 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
     """
     vkwargs = _valid_qt_kwargs()
     if key not in vkwargs:
-        err_msg = f'kwarg <{key}> is not a built-in parameter key, please check your input!'
+        err_msg = f'config <{key}> is not a built-in parameter key, please check your input!'
         if raise_if_key_not_existed:
             raise KeyError(err_msg)
         else:
@@ -827,17 +831,17 @@ def _validate_key_and_value(key, value, raise_if_key_not_existed=False):
         try:
             valid = vkwargs[key]['Validator'](value)
         except Exception as ex:
-            ex.extra_info = f'kwarg {key} validator raised exception to value: {str(value)}'
+            ex.extra_info = f'config {key} validator raised exception to value: {str(value)}'
             raise
         if not valid:
             import inspect
             v = inspect.getsource(vkwargs[key]['Validator']).strip()
             raise TypeError(
-                    f'kwarg {key} validator returned False for value: {str(value)} of type {type(value)}\n'
+                    f'config {key} validator returned False for value: {str(value)} of type {type(value)}\n'
                     f'Extra information: \n{vkwargs[key]["text"]}\n    ' + v)
             # ---------------------------------------------------------------
             #      At this point , if we have not raised an exception,
-            #      then kwarg is valid as far as we can tell.
+            #      then config is valid as far as we can tell.
 
     return True
 
@@ -911,20 +915,20 @@ def _num_or_seq_of_num(value):
 def _bypass_kwarg_validation(value):
     """ For some kwargs, we either don't know enough, or
         the validation is too complex to make it worth while,
-        so we bypass kwarg validation.  If the kwarg is
+        so we bypass config validation.  If the config is
         invalid, then eventually an exception will be
-        raised at the time the kwarg value is actually used.
+        raised at the time the config value is actually used.
     """
     return True
 
 
 def _kwarg_not_implemented(value):
-    """ If you want to list a kwarg in a valid_kwargs dict for a given
+    """ If you want to list a config in a valid_kwargs dict for a given
         function, but you have not yet, or don't yet want to, implement
-        the kwarg; or you simply want to (temporarily) disable the kwarg,
-        then use this function as the kwarg validator
+        the config; or you simply want to (temporarily) disable the config,
+        then use this function as the config validator
     """
-    raise NotImplementedError('kwarg NOT implemented.')
+    raise NotImplementedError('config NOT implemented.')
 
 
 def _validate_asset_pool(kwargs):
